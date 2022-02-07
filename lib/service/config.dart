@@ -162,7 +162,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Future<Map<String, dynamic>?> loadFromFile(File? configFile) async {
     try {
       String? configContent = (await configFile?.exists() == true) ? await configFile?.readAsString() : null;
-      return _configFromJsonString(configContent);
+      return configFromJsonString(configContent);
     } catch (e) {
       debugPrint(e.toString());
       return null;
@@ -197,7 +197,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
-  Map<String, dynamic>? _configFromJsonString(String? configJsonString) {
+  @protected
+  Map<String, dynamic>? configFromJsonString(String? configJsonString) {
     dynamic configJson =  JsonUtils.decode(configJsonString);
     List<dynamic>? jsonList = (configJson is List) ? configJson : null;
     if (jsonList != null) {
@@ -260,7 +261,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
-      _config = (configString != null) ? _configFromJsonString(configString) : null;
+      _config = (configString != null) ? configFromJsonString(configString) : null;
       if (_config != null) {
         configFile.writeAsStringSync(configString!, flush: true);
         NotificationService().notify(notifyConfigChanged, null);
@@ -285,7 +286,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @protected
   void updateFromNet() {
     loadAsStringFromNet().then((String? configString) {
-      Map<String, dynamic>? config = _configFromJsonString(configString);
+      Map<String, dynamic>? config = configFromJsonString(configString);
       if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !const DeepCollectionEquality().equals(_config, config))  {
         _config = config;
         configFile.writeAsString(configString!, flush: true);
