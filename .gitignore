@@ -1,61 +1,29 @@
-#Common
-/build
-/ios/build
-/.idea
-/.dart_tool
-/.vscode
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
 
-#Flutter
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
+/pubspec.lock
+**/doc/api/
+.dart_tool/
 .packages
-.project
-.flutter-plugins
-.flutter-plugins-dependencies
-
-#Android
-/android/local.properties
-/android/.gradle
-/android/.idea
-/android/.settings
-/android/android.iml
-/android/illinois-client-android.iml
-/android/app/app.iml
-/android/app/android-app.iml
-/android/app/.externalNativeBuild
-/android/app/bin
-/android/app/.idea
-/android/app/.classpath
-/android/app/.settings
-/android/app/gradlew
-/android/app/gradlew.bat
-/android/app/local.properties
-/android/app/gradle
-
-#iOS
-DerivedData
-xcuserdata
-/ios/.symlinks
-/ios/Pods
-/ios/Podfile.lock
-/ios/Flutter/App.framework
-/ios/Flutter/Flutter.podspec
-/ios/Flutter/Flutter.framework
-/ios/Flutter/Generated.xcconfig
-/ios/Flutter/.last_build_id
-/ios/Flutter/flutter_assets/*
-/ios/Flutter/flutter_export_environment.sh
-
-#Secret/Private files
-/.travis.yml
-/secrets.tar.enc
-
-/assets/configs.json.enc
-/assets/config.keys.json
-
-/ios/Runner/GoogleService-Info-Dev.plist
-/ios/Runner/GoogleService-Info-Prod.plist
-
-/android/keys.properties
-/android/app/src/debug/google-services.json
-/android/app/src/release/google-services.json
-/android/app/src/profile/google-services.json
-
+build/
