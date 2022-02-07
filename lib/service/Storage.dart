@@ -14,400 +14,344 @@
  * limitations under the License.
  */
 
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:illinois/model/illinicash/IlliniCashBallance.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/storage.dart' as rokwire;
+import 'package:rokwire_plugin/model/inbox.dart';
+import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class Storage extends rokwire.Storage {
+class Storage with Service {
 
-  static String get notifySettingChanged => rokwire.Storage.notifySettingChanged;
+  static const String notifySettingChanged  = 'edu.illinois.rokwire.setting.changed';
+  
+  static const String _ecryptionKeyId  = 'edu.illinois.rokwire.encryption.storage.key';
+  static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
+
+  SharedPreferences? _sharedPreferences;
+  String? _encryptionKey;
+  String? _encryptionIV;
 
   // Singletone Factory
 
-  @protected
-  Storage.internal() : super.internal();
+  static Storage? _instance;
 
-  factory Storage() => ((rokwire.Storage.instance is Storage) ? (rokwire.Storage.instance as Storage) : (rokwire.Storage.instance = Storage.internal()));
-
-
-  // Overrides
-
-  @override String get configEnvKey => 'config_environment';
-  @override String get reportedUpgradeVersionsKey  => 'reported_upgrade_versions';
-
-  // User: readonly, backward compatability only.
-
-  static const String _userKey  = 'user';
-
-  Map<String, dynamic>? get userProfile {
-    return JsonUtils.decodeMap(getStringWithName(_userKey));
-  }
-
-  // Dining: readonly, backward compatability only.
-
-  static const String excludedFoodIngredientsPrefsKey  = 'excluded_food_ingredients_prefs';
-
-  Set<String>? get excludedFoodIngredientsPrefs {
-    List<String>? list = getStringListWithName(excludedFoodIngredientsPrefsKey);
-    return (list != null) ? Set.from(list) : null;
-  }
-
-  static const String includedFoodTypesPrefsKey  = 'included_food_types_prefs';
-
-  Set<String>? get includedFoodTypesPrefs {
-    List<String>? list = getStringListWithName(includedFoodTypesPrefsKey);
-    return (list != null) ? Set.from(list) : null;
-  }
-
-  // Notifications
-
-  bool? getNotifySetting(String name) {
-    return getBoolWithName(name);
-  }
-
-  void setNotifySetting(String name, bool? value) {
-    return setBoolWithName(name, value);
-  }
-
-  /////////////
-  // Polls
-
-  static const String selectedPollTypeKey  = 'selected_poll_type';
-
-  int? get selectedPollType {
-    return getIntWithName(selectedPollTypeKey);
-  }
-
-  set selectedPollType(int? value) {
-    setIntWithName(selectedPollTypeKey, value);
-  }
-
-  ///////////////
-  // On Boarding
-
-  static const String onBoardingPassedKey  = 'on_boarding_passed';
-  static const String onBoardingExploreChoiceKey  = 'on_boarding_explore_campus';
-  static const String onBoardingPersonalizeChoiceKey  = 'on_boarding_personalize';
-  static const String onBoardingImproveChoiceKey  = 'on_boarding_improve';
-
-  bool? get onBoardingPassed {
-    return getBoolWithName(onBoardingPassedKey, defaultValue: false);
-  }
-
-  set onBoardingPassed(bool? showOnBoarding) {
-    setBoolWithName(onBoardingPassedKey, showOnBoarding);
-  }
-
-  set onBoardingExploreCampus(bool? exploreCampus) {
-    setBoolWithName(onBoardingExploreChoiceKey, exploreCampus);
-  }
-
-  bool? get onBoardingExploreCampus {
-    return getBoolWithName(onBoardingExploreChoiceKey, defaultValue: true);
-  }
-
-  set onBoardingPersonalizeChoice(bool? personalize) {
-    setBoolWithName(onBoardingPersonalizeChoiceKey, personalize);
-  }
-
-  bool? get onBoardingPersonalizeChoice {
-    return getBoolWithName(onBoardingPersonalizeChoiceKey, defaultValue: true);
-  }
-
-  set onBoardingImproveChoice(bool? personalize) {
-    setBoolWithName(onBoardingImproveChoiceKey, personalize);
-  }
-
-  bool? get onBoardingImproveChoice {
-    return getBoolWithName(onBoardingImproveChoiceKey, defaultValue: true);
-  }
-
-  ////////////////////////////
-  // Privacy Update Version
-
-  static const String privacyUpdateVersionKey  = 'privacy_update_version';
-
-  String? get privacyUpdateVersion {
-    return getStringWithName(privacyUpdateVersionKey);
-  }
-
-  set privacyUpdateVersion(String? value) {
-    setStringWithName(privacyUpdateVersionKey, value);
-  }
-
-  ////////////////////////////
-  // Upgrade Message Version
-
-  static const String _userLoginVersionKey = 'user_login_version';
-
-  String? get userLoginVersion {
-    return getStringWithName(_userLoginVersionKey);
-  }
-
-  set userLoginVersion(String? value) {
-    setStringWithName(_userLoginVersionKey, value);
-  }
-
-  ////////////////////////////
-  // Last Run Version
-
-  static const String lastRunVersionKey  = 'last_run_version';
-
-  String? get lastRunVersion {
-    return getStringWithName(lastRunVersionKey);
-  }
-
-  set lastRunVersion(String? value) {
-    setStringWithName(lastRunVersionKey, value);
-  }
-
-  ////////////////
-  // IlliniCash
-
-  static const String illiniCashBallanceKey  = '_illinicash_ballance';
-
-  IlliniCashBallance? get illiniCashBallance {
-    return IlliniCashBallance.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(illiniCashBallanceKey)));
-  }
-
-  set illiniCashBallance(IlliniCashBallance? value) {
-    setEncryptedStringWithName(illiniCashBallanceKey, value != null ? json.encode(value.toJson()) : null);
-  }
-
-  /////////////////////
-  // Date offset
-
-  static const String offsetDateKey  = 'settings_offset_date';
-
-  set offsetDate(DateTime? value) {
-    setStringWithName(offsetDateKey, AppDateTime().formatDateTime(value, ignoreTimeZone: true));
-  }
-
-  DateTime? get offsetDate {
-    String? dateString = getStringWithName(offsetDateKey);
-    return StringUtils.isNotEmpty(dateString) ? DateTimeUtils.dateTimeFromString(dateString) : null;
-  }
-
-  /////////////////
-  // Language
-
-  @override String get currentLanguageKey => 'current_language';
-
-  //////////////////
-  // Favorites
-
-  static const String favoritesDialogWasVisibleKey  = 'favorites_dialog_was_visible';
-
-  bool? get favoritesDialogWasVisible {
-    return getBoolWithName(favoritesDialogWasVisibleKey, defaultValue: false);
-  }
-
-  set favoritesDialogWasVisible(bool? value) {
-    setBoolWithName(favoritesDialogWasVisibleKey, value);
-  }
-
-  //////////////
-  // Recent Items
-
-  static const String recentItemsKey  = '_recent_items_json_string';
+  static Storage? get instance => _instance;
   
-  List<dynamic>? get recentItems {
-    final String? jsonString = getStringWithName(recentItemsKey);
-    return JsonUtils.decode(jsonString);
-  }
+  @protected
+  static set instance(Storage? value) => _instance = value;
 
-  set recentItems(List<dynamic>? recentItems) {
-    setStringWithName(recentItemsKey, recentItems != null ? json.encode(recentItems) : null);
-  }
+  factory Storage() => _instance ?? (_instance = Storage.internal());
 
-  //////////////
-  // Local Date/Time
+  @protected
+  Storage.internal();
 
-  static const String useDeviceLocalTimeZoneKey  = 'use_device_local_time_zone';
-
-  bool? get useDeviceLocalTimeZone {
-    return getBoolWithName(useDeviceLocalTimeZoneKey, defaultValue: true);
-  }
-
-  set useDeviceLocalTimeZone(bool? value) {
-    setBoolWithName(useDeviceLocalTimeZoneKey, value);
-  }
-
-
-  //////////////
-  // Debug
-
-  static const String debugMapThresholdDistanceKey  = 'debug_map_threshold_distance';
-
-  int? get debugMapThresholdDistance {
-    return getIntWithName(debugMapThresholdDistanceKey, defaultValue: 200);
-  }
-
-  set debugMapThresholdDistance(int? value) {
-    setIntWithName(debugMapThresholdDistanceKey, value);
-  }
+  // Service 
 
   @override
-  String get debugGeoFenceRegionRadiusKey  => 'debug_geo_fence_region_radius';
-
-  static const String debugDisableLiveGameCheckKey  = 'debug_disable_live_game_check';
-
-  bool? get debugDisableLiveGameCheck {
-    return getBoolWithName(debugDisableLiveGameCheckKey, defaultValue: false);
+  Future<void> initService() async {
+    _sharedPreferences = await SharedPreferences.getInstance();
+    _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
+    _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
+    
+    if (_sharedPreferences == null) {
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.fatal,
+        title: 'Storage Initialization Failed',
+        description: 'Failed to initialize application preferences storage.',
+      );
+    }
+    else if ((_encryptionKey == null) || (_encryptionIV == null)) {
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.fatal,
+        title: 'Storage Initialization Failed',
+        description: 'Failed to initialize encryption keys.',
+      );
+    }
+    else {
+      await super.initService();
+    }
   }
 
-  set debugDisableLiveGameCheck(bool? value) {
-    setBoolWithName(debugDisableLiveGameCheckKey, value);
-  }
+  // Encryption
 
-  static const String debugMapLocationProviderKey  = 'debug_map_location_provider';
-
-  bool? get debugMapLocationProvider {
-    return getBoolWithName(debugMapLocationProviderKey, defaultValue: false);
-  }
-
-  set debugMapLocationProvider(bool? value) {
-    setBoolWithName(debugMapLocationProviderKey, value);
-  }
-
-  static const String debugMapHideLevelsKey  = 'debug_map_hide_levels';
-
-  bool? get debugMapHideLevels {
-    return getBoolWithName(debugMapHideLevelsKey, defaultValue: false);
-  }
-
-  set debugMapHideLevels(bool? value) {
-    setBoolWithName(debugMapHideLevelsKey, value);
-  }
-
-  static const String debugLastInboxMessageKey  = 'debug_last_inbox_message';
-
-  String? get debugLastInboxMessage {
-    return getStringWithName(debugLastInboxMessageKey);
-  }
-
-  set debugLastInboxMessage(String? value) {
-    setStringWithName(debugLastInboxMessageKey, value);
-  }
-
-  //////////////
-  // Firebase
-
-// static const String firebaseMessagingSubscriptionTopisKey  = 'firebase_subscription_topis';
-// Replacing "firebase_subscription_topis" with "firebase_messaging_subscription_topis" key ensures that
-// all subsciptions will be applied again through Notifications BB APIs
-  @override String get inboxFirebaseMessagingSubscriptionTopicsKey => 'firebase_messaging_subscription_topis';
-
-  @override String get inboxFirebaseMessagingTokenKey => 'inbox_firebase_messaging_token';
-  @override String get inboxFirebaseMessagingUserIdKey => 'inbox_firebase_messaging_user_id';
-  @override String get inboxUserInfoKey => 'inbox_user_info';
-
-  //////////////
-  // Polls
-
+  String  get encryptionKeyId => _ecryptionKeyId;
+  String? get encryptionKey => _encryptionKey;
   
-  @override String get activePollsKey  => 'active_polls';
+  String  get encryptionIVId => _encryptionIVId;
+  String? get encryptionIV => _encryptionIV;
 
-  /////////////
-  // Styles
-
-  @override String get stylesContentModeKey => 'styles_content_mode';
-
-  /////////////
-  // Voter
-
-  static const String _voterHiddenForPeriodKey = 'voter_hidden_for_period';
-
-  bool? get voterHiddenForPeriod {
-    return getBoolWithName(_voterHiddenForPeriodKey, defaultValue: false);
+  String? encrypt(String? value) {
+    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+      AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
   }
 
-  set voterHiddenForPeriod(bool? value) {
-    setBoolWithName(_voterHiddenForPeriodKey, value);
+  String? decrypt(String? value) {
+    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+      AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
   }
 
-  /////////////
-  // Http Proxy
+  // Utilities
 
-  @override String get httpProxyEnabledKey => 'http_proxy_enabled';
-  @override String get httpProxyHostKey => 'http_proxy_host';
-  @override String get httpProxyPortKey => 'http_proxy_port';
-  
-  //////////////////
-  // Guide
-
-  static const String _guideContentSourceKey = 'guide_content_source';
-
-  String? get guideContentSource {
-    return getStringWithName(_guideContentSourceKey);
+  String? getStringWithName(String name, {String? defaultValue}) {
+    return _sharedPreferences?.getString(name) ?? defaultValue;
   }
 
-  set guideContentSource(String? value) {
-    setStringWithName(_guideContentSourceKey, value);
+  void setStringWithName(String name, String? value) {
+    if (value != null) {
+      _sharedPreferences?.setString(name, value);
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
   }
 
-  //////////////////
+  String? getEncryptedStringWithName(String name, {String? defaultValue}) {
+    String? value = _sharedPreferences?.getString(name);
+    if (value != null) {
+      if ((_encryptionKey != null) && (_encryptionIV != null)) {
+        value = decrypt(value);
+      }
+      else {
+        value = null;
+      }
+    }
+    return value ?? defaultValue;
+  }
+
+  void setEncryptedStringWithName(String name, String? value) {
+    if (value != null) {
+      if ((_encryptionKey != null) && (_encryptionIV != null)) {
+        value = encrypt(value);
+        _sharedPreferences?.setString(name, value!);
+      }
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  List<String>? getStringListWithName(String name, {List<String>? defaultValue}) {
+    return _sharedPreferences?.getStringList(name) ?? defaultValue;
+  }
+
+  void setStringListWithName(String name, List<String>? value) {
+    if (value != null) {
+      _sharedPreferences?.setStringList(name, value);
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  bool? getBoolWithName(String name, {bool? defaultValue}) {
+    return _sharedPreferences?.getBool(name) ?? defaultValue;
+  }
+
+  void setBoolWithName(String name, bool? value) {
+    if(value != null) {
+      _sharedPreferences?.setBool(name, value);
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  int? getIntWithName(String name, {int? defaultValue}) {
+    return _sharedPreferences?.getInt(name) ?? defaultValue;
+  }
+
+  void setIntWithName(String name, int? value) {
+    if (value != null) {
+      _sharedPreferences?.setInt(name, value);
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  double? getDoubleWithName(String name, {double? defaultValue}) {
+    return _sharedPreferences?.getDouble(name) ?? defaultValue;
+  }
+
+  void setDoubleWithName(String name, double? value) {
+    if (value != null) {
+      _sharedPreferences?.setDouble(name, value);
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+
+  dynamic operator [](String name) {
+    return _sharedPreferences?.get(name);
+  }
+
+  void operator []=(String key, dynamic value) {
+    if (value is String) {
+      _sharedPreferences?.setString(key, value);
+    }
+    else if (value is int) {
+      _sharedPreferences?.setInt(key, value);
+    }
+    else if (value is double) {
+      _sharedPreferences?.setDouble(key, value);
+    }
+    else if (value is bool) {
+      _sharedPreferences?.setBool(key, value);
+    }
+    else if (value is List) {
+      _sharedPreferences?.setStringList(key, value.cast<String>());
+    }
+    else if (value == null) {
+      _sharedPreferences?.remove(key);
+    }
+  }
+
+  void deleteEverything(){
+    if (_sharedPreferences != null) {
+      for(String key in _sharedPreferences!.getKeys()){
+        _sharedPreferences!.remove(key);
+      }
+    }
+  }
+
+  // Config
+
+  String get configEnvKey => 'edu.illinois.rokwire.config_environment';
+  String? get configEnvironment => getStringWithName(configEnvKey);
+  set configEnvironment(String? value) => setStringWithName(configEnvKey, value);
+
+  // Upgrade
+
+  String get reportedUpgradeVersionsKey  => 'edu.illinois.rokwire.reported_upgrade_versions';
+
+  Set<String> get reportedUpgradeVersions {
+    List<String>? list = getStringListWithName(reportedUpgradeVersionsKey);
+    return (list != null) ? Set.from(list) : <String>{};
+  }
+
+  set reportedUpgradeVersion(String? version) {
+    if (version != null) {
+      Set<String> versions = reportedUpgradeVersions;
+      versions.add(version);
+      setStringListWithName(reportedUpgradeVersionsKey, versions.toList());
+    }
+  }
+
   // Auth2
-
-  @override String get auth2AnonymousIdKey => 'auth2AnonymousId';
-  @override String get auth2AnonymousTokenKey => 'auth2AnonymousToken';
-  @override String get auth2AnonymousPrefsKey => 'auth2AnonymousPrefs';
-  @override String get auth2AnonymousProfileKey => 'auth2AnonymousProfile';
-  @override String get auth2TokenKey => 'auth2Token';
-  @override String get auth2AccountKey => 'auth2Account';
   
-  String get auth2UiucTokenKey => 'auth2UiucToken';
-  Auth2Token? get auth2UiucToken => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2UiucTokenKey)));
-  set auth2UiucToken(Auth2Token? value) => setEncryptedStringWithName(auth2UiucTokenKey, JsonUtils.encode(value?.toJson()));
+  String get auth2AnonymousIdKey => 'edu.illinois.rokwire.auth2.anonymous.id';
+  String? get auth2AnonymousId => getStringWithName(configEnvKey);
+  set auth2AnonymousId(String? value) => setStringWithName(configEnvKey, value);
 
-  String get auth2CardTimeKey => 'auth2CardTime';
-  int? get auth2CardTime => getIntWithName(auth2CardTimeKey);
-  set auth2CardTime(int? value) => setIntWithName(auth2CardTimeKey, value);
+  String get auth2AnonymousTokenKey => 'edu.illinois.rokwire.auth2.anonymous.token';
+  Auth2Token? get auth2AnonymousToken => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousTokenKey)));
+  set auth2AnonymousToken(Auth2Token? value) => setEncryptedStringWithName(auth2AnonymousTokenKey, JsonUtils.encode(value?.toJson()));
 
-  //////////////////
+  String get auth2AnonymousPrefsKey => 'edu.illinois.rokwire.auth2.anonymous.prefs';
+  Auth2UserPrefs? get auth2AnonymousPrefs => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousPrefsKey)));
+  set auth2AnonymousPrefs(Auth2UserPrefs? value) => setEncryptedStringWithName(auth2AnonymousPrefsKey, JsonUtils.encode(value?.toJson()));
+
+  String get auth2AnonymousProfileKey => 'edu.illinois.rokwire.auth2.anonymous.profile';
+  Auth2UserProfile? get auth2AnonymousProfile =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousProfileKey)));
+  set auth2AnonymousProfile(Auth2UserProfile? value) => setEncryptedStringWithName(auth2AnonymousProfileKey, JsonUtils.encode(value?.toJson()));
+
+  String get auth2TokenKey => 'edu.illinois.rokwire.auth2.token';
+  Auth2Token? get auth2Token => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2TokenKey)));
+  set auth2Token(Auth2Token? value) => setEncryptedStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
+
+  String get auth2AccountKey => 'edu.illinois.rokwire.auth2.account';
+  Auth2Account? get auth2Account => Auth2Account.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AccountKey)));
+  set auth2Account(Auth2Account? value) => setEncryptedStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
+
+  // Http Proxy
+  String get httpProxyEnabledKey =>  'edu.illinois.rokwire.http_proxy.enabled';
+  bool? get httpProxyEnabled => getBoolWithName(httpProxyEnabledKey);
+  set httpProxyEnabled(bool? value) => setBoolWithName(httpProxyEnabledKey, value);
+
+  String get httpProxyHostKey => 'edu.illinois.rokwire.http_proxy.host';
+  String? get httpProxyHost => getStringWithName(httpProxyHostKey);
+  set httpProxyHost(String? value) =>  setStringWithName(httpProxyHostKey, value);
+  
+  String get httpProxyPortKey => 'edu.illinois.rokwire.http_proxy.port';
+  String? get httpProxyPort => getStringWithName(httpProxyPortKey);
+  set httpProxyPort(String? value) => setStringWithName(httpProxyPortKey, value);
+
+  // Language
+  String get currentLanguageKey => 'edu.illinois.rokwire.current_language';
+  String? get currentLanguage => getStringWithName(currentLanguageKey);
+  set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
+
+  // Styles
+  String get stylesContentModeKey => 'edu.illinois.rokwire.styles.content_mode';
+  String? get stylesContentMode => getStringWithName(stylesContentModeKey);
+  set stylesContentMode(String? value) => setStringWithName(stylesContentModeKey, value);
+
+  // Inbox
+  String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
+  String? get inboxFirebaseMessagingToken => getStringWithName(inboxFirebaseMessagingTokenKey);
+  set inboxFirebaseMessagingToken(String? value) => setStringWithName(inboxFirebaseMessagingTokenKey, value);
+
+  String get inboxFirebaseMessagingUserIdKey => 'edu.illinois.rokwire.inbox.firebase_messaging.user_id';
+  String? get inboxFirebaseMessagingUserId => getStringWithName(inboxFirebaseMessagingUserIdKey);
+  set inboxFirebaseMessagingUserId(String? value) => setStringWithName(inboxFirebaseMessagingUserIdKey, value);
+
+  String get inboxUserInfoKey => 'edu.illinois.rokwire.inbox.user_info';
+  InboxUserInfo? get inboxUserInfo => InboxUserInfo.fromJson(JsonUtils.decode(getStringWithName(inboxUserInfoKey)));
+  set inboxUserInfo(InboxUserInfo? value) => setStringWithName(inboxUserInfoKey, JsonUtils.encode(value?.toJson()));
+
+  // Firebase
+  String get inboxFirebaseMessagingSubscriptionTopicsKey => 'edu.illinois.rokwire.inbox.firebase_messaging.subscription_topis';
+  Set<String>? get inboxFirebaseMessagingSubscriptionTopics => SetUtils.from(getStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey));
+  set inboxFirebaseMessagingSubscriptionTopics(Set<String>? value) => setStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey, ListUtils.from(value));
+
+  void addInboxFirebaseMessagingSubscriptionTopic(String? value) {
+    if (value != null) {
+      Set<String> topics = inboxFirebaseMessagingSubscriptionTopics ?? {};
+      topics.add(value);
+      inboxFirebaseMessagingSubscriptionTopics = topics;
+    }
+  }
+
+  void removeInboxFirebaseMessagingSubscriptionTopic(String? value) {
+    if (value != null) {
+      Set<String>? topics = inboxFirebaseMessagingSubscriptionTopics;
+      topics?.remove(value);
+      inboxFirebaseMessagingSubscriptionTopics = topics;
+    }
+  }
+
+  // Debug
+  String get debugGeoFenceRegionRadiusKey  => 'edu.illinois.rokwire.debug.geo_fence.region_radius';
+  int? get debugGeoFenceRegionRadius => getIntWithName(debugGeoFenceRegionRadiusKey);
+  set debugGeoFenceRegionRadius(int? value) => setIntWithName(debugGeoFenceRegionRadiusKey, value);
+
+  // Polls
+  String get activePollsKey  => 'edu.illinois.rokwire.polls.active_polls';
+  String? get activePolls => getStringWithName(activePollsKey);
+  set activePolls(String? value) => setStringWithName(activePollsKey, value);
+
   // Calendar
 
-  @override String get calendarEventsTableKey => 'calendar_events_table';
-  @override String get calendarEnableSaveKey => 'calendar_enabled_to_save';
-  @override String get calendarEnablePromptKey => 'calendar_enabled_to_prompt';
-
-  //////////////////
-  // GIES
-
-  static const String _giesNavPagesKey  = 'gies_nav_pages';
-
-  List<String>? get giesNavPages {
-    return getStringListWithName(_giesNavPagesKey);
+  String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
+  Map<String, String>? get calendarEventsTable {
+    try { return JsonUtils.decodeMap(getStringWithName(calendarEventsTableKey))?.cast<String, String>(); }
+    catch(e) { debugPrint(e.toString()); return null; }
   }
+  set calendarEventsTable(Map<String, String>? table) => setStringWithName(calendarEventsTableKey, JsonUtils.encode(table));
 
-  set giesNavPages(List<String>? value) {
-    setStringListWithName(_giesNavPagesKey, value);
-  }
+  String get calendarEnableSaveKey => 'edu.illinois.rokwire.calendar.save_enabled';
+  bool? get calendarEnabledToSave => getBoolWithName(calendarEnableSaveKey, defaultValue: true);
+  set calendarEnabledToSave(bool? value) => setBoolWithName(calendarEnableSaveKey, value);
 
-  static const String _giesCompletedPagesKey  = 'gies_completed_pages';
-
-  
-  Set<String>? get giesCompletedPages {
-    List<String>? pagesList = getStringListWithName(_giesCompletedPagesKey);
-    return (pagesList != null) ? Set.from(pagesList) : null;
-  }
-
-  set giesCompletedPages(Set<String>? value) {
-    List<String>? pagesList = (value != null) ? List.from(value) : null;
-    setStringListWithName(_giesCompletedPagesKey, pagesList);
-  }
-
-  static const String _giesNotesKey = 'gies_notes';
-
-  String? get giesNotes {
-    return getStringWithName(_giesNotesKey);
-  }
-
-  set giesNotes(String? value) {
-    setStringWithName(_giesNotesKey, value);
-  }
+  String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
+  bool? get calendarCanPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: false);
+  set calendarCanPrompt(bool? value) => setBoolWithName(calendarEnablePromptKey, value);
 }

@@ -15,46 +15,15 @@
 *.iws
 .idea/
 
-# VS Code related
-.vscode/
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
 
 # Flutter/Dart/Pub related
+# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
+/pubspec.lock
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
 .packages
-.pub-cache/
-.pub/
-/build/
-
-# Web related
-lib/generated_plugin_registrant.dart
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Secret/Private files
-/.travis.yml
-/secrets.tar.enc
-
-/assets/configs.json.enc
-/assets/config.keys.json
-
-/ios/Runner/GoogleService-Info-Dev.plist
-/ios/Runner/GoogleService-Info-Prod.plist
-
-/android/keys.properties
-/android/app/src/debug/google-services.json
-/android/app/src/release/google-services.json
-/android/app/src/profile/google-services.json
-
+build/
