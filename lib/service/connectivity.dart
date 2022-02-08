@@ -72,6 +72,7 @@ class Connectivity with Service {
   @override
   void destroyService() {
     _connectivitySubscription?.cancel();
+    _connectivitySubscription = null;
   }
 
   void _onConnectivityChanged(connectivity.ConnectivityResult result) {
@@ -82,7 +83,7 @@ class Connectivity with Service {
     if (_connectivityStatus != status) {
       _connectivityStatus = status;
       Log.d("Connectivity: ${_connectivityStatus?.toString()}" );
-      NotificationService().notify(notifyStatusChanged, null);
+      NotificationService().notify(notifyStatusChanged, _connectivityStatus);
     }
   }
 
