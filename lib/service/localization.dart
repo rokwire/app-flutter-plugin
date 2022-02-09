@@ -104,6 +104,10 @@ class Localization with Service implements NotificationsListener {
 
   // Locale
 
+  Locale? get defaultLocale {
+    return _defaultLocale;
+  }
+
   Locale? get currentLocale {
     return _currentLocale ?? _defaultLocale;
   }
@@ -284,6 +288,10 @@ class Localization with Service implements NotificationsListener {
 
   String? getStringEx(String? key, String? defaults)  {
     return getString(key, defaults: defaults);
+  }
+
+  String getStringDef(String? key, String defaults)  {
+    return getString(key, defaults: defaults)!;
   }
 
   String? getStringFromMapping(String? text, Map<String, dynamic>? stringsMap) {

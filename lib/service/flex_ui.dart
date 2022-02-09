@@ -457,7 +457,7 @@ class FlexUI with Service implements NotificationsListener {
           if (key == 'os') {
             target = Platform.operatingSystem;
           }
-          else if (key == 'envirnment') {
+          else if (key == 'environment') {
             target = configEnvToString(Config().configEnvironment);
           }
           else if (key == 'build') {

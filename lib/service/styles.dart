@@ -40,6 +40,7 @@ class Styles extends Service implements NotificationsListener{
 
   StylesContentMode? _contentMode;
   Map<String, dynamic>? _stylesData;
+  Map<String, dynamic>? get stylesData => _stylesData;
   
   UiColors? _colors;
   UiColors? get colors => _colors;
