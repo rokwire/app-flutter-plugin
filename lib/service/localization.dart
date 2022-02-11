@@ -290,10 +290,6 @@ class Localization with Service implements NotificationsListener {
     return getString(key) ?? defaults;
   }
 
-  String getStringDef(String? key, String defaults)  {
-    return getString(key, defaults: defaults)!;
-  }
-
   String? getStringFromMapping(String? text, Map<String, dynamic>? stringsMap) {
     if ((text != null) && (stringsMap != null)) {
       String? entry;
