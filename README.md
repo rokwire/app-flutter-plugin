@@ -15,9 +15,12 @@ Rokwire services Flutter plugin for Flutter bases client applications. Powered b
 ## Integration
 
 ### Add this repo as submodule of the main repo
+```
 git submodule add https://github.com/rokwire/services-flutter-pligin.git <plugin-name>
+```
 
 ### Add dependency of rokwire_plugin in pubspec.yaml of the main project
+```
   rokwire_plugin:
     path: <plugin-name>
-
+```

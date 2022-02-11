@@ -286,8 +286,8 @@ class Localization with Service implements NotificationsListener {
     return ((value != null) && (value is String)) ? value : defaults;
   }
 
-  String? getStringEx(String? key, String? defaults)  {
-    return getString(key, defaults: defaults);
+  String getStringEx(String key, String defaults)  {
+    return getString(key) ?? defaults;
   }
 
   String getStringDef(String? key, String defaults)  {
@@ -314,7 +314,7 @@ class Localization with Service implements NotificationsListener {
       text = Localization().getStringFromMapping(key, stringsMap); // returns 'key' if text is not found
       //2. If there is no text for this key then get text value from strings
       if (StringUtils.isEmpty(text) || text == key) {
-        text = Localization().getStringEx(key, defaults);
+        text = Localization().getString(key, defaults: defaults);
       }
     }
     return StringUtils.ensureNotEmpty(text, defaultValue: defaults);

@@ -486,8 +486,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
 
   // Getters: settings
-  int get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
-  int get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
+  int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
+  int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
+  int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
   
   // Getters: other
   String? deepLinkRedirectUrl(String? deepLink) {
