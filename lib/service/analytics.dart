@@ -265,7 +265,7 @@ class Analytics with Service implements NotificationsListener {
 
           if (packets.isNotEmpty) {
             sendPacket('[$packets]').then((bool success) {
-              if (success) {
+              if (success && rowIDs.isNotEmpty) {
                 _database!.execute("DELETE FROM `$databaseTable` WHERE `$databaseRowID` in ($rowIDs)").then((_){
                   //Log.d("Analytics: sent packets $rowIDs");
                   _inTimer = false;
@@ -282,6 +282,9 @@ class Analytics with Service implements NotificationsListener {
               //Log.d("Analytics: sent packets $rowIDs");
               _inTimer = false;
             });
+          }
+          else {
+            _inTimer = false;
           }
         }
         else {
