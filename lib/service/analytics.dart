@@ -23,6 +23,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -35,9 +36,10 @@ class Analytics with Service implements NotificationsListener {
   // Database Data
 
   static const String   _databaseName         = "analytics.db";
-  static const int      _databaseVersion      = 1;
+  static const int      _databaseVersion      = 2;
   static const String   _databaseTable        = "events";
-  static const String   _databaseColumn       = "packet";
+  static const String   _databasePacket       = "packet";
+  static const String   _databaseTimestamp    = "timestamp";
   static const String   _databaseRowID        = "rowid";
   static const int      _databaseMaxPackCount = 64;
   static const Duration _timerTick            = Duration(milliseconds: 100);
@@ -61,7 +63,8 @@ class Analytics with Service implements NotificationsListener {
   String   get databaseName         => _databaseName;
   int      get databaseVersion      => _databaseVersion;
   String   get databaseTable        => _databaseTable;
-  String   get databaseColumn       => _databaseColumn;
+  String   get databasePacket       => _databasePacket;
+  String   get databaseTimestamp    => _databaseTimestamp;
   String   get databaseRowID        => _databaseRowID;
   int      get databaseMaxPackCount => _databaseMaxPackCount;
   Duration get timerTick            => _timerTick;
@@ -173,9 +176,16 @@ class Analytics with Service implements NotificationsListener {
     if (_database == null) {
       String databasePath = await getDatabasesPath();
       String databaseFile = join(databasePath, databaseName);
-      _database = await openDatabase(databaseFile, version: databaseVersion, onCreate: (db, version) {
-        return db.execute("CREATE TABLE IF NOT EXISTS $databaseTable($databaseColumn TEXT NOT NULL)",);
-      });
+      _database = await openDatabase(databaseFile, version: databaseVersion,
+        onCreate: (Database db, int version) async {
+          await db.execute("CREATE TABLE IF NOT EXISTS `$databaseTable` (`$databaseTimestamp` INTEGER DEFAULT NULL, `$databasePacket` TEXT NOT NULL)",);
+        },
+        onUpgrade: (Database db, int oldVersion, int newVersion) async {
+          if (oldVersion < 2) {
+            await db.execute("ALTER TABLE `$databaseTable` ADD COLUMN `$databaseTimestamp` INTEGER DEFAULT NULL",);
+          }
+        }
+      );
     }
   }
 
@@ -211,9 +221,12 @@ class Analytics with Service implements NotificationsListener {
   // Packets Processing
   
   @protected
-  Future<int> savePacket(String? packet) async {
-    if ((packet != null) && (_database != null)) {
-      int result = await _database!.insert(databaseTable, { databaseColumn : packet });
+  Future<int> savePacket(String packet, int? timestamp) async {
+    if (_database != null) {
+      int result = await _database!.insert(databaseTable, {
+        databasePacket : packet,
+        databaseTimestamp : timestamp
+      });
       //Log.d("Analytics: scheduled packet #$result $packet");
       initTimer();
       return result;
@@ -226,38 +239,50 @@ class Analytics with Service implements NotificationsListener {
     
     if ((_database != null) && !_inTimer && (_connectionStatus != ConnectivityStatus.none)) {
       _inTimer = true;
+
+      int? deliveryTimeout = Config().analyticsDeliveryTimeout;
+      int? filterTimestamp = (deliveryTimeout != null) ? (DateTime.now().millisecondsSinceEpoch - (deliveryTimeout * 1000)) : null;
       
-      _database!.rawQuery("SELECT $databaseRowID, $databaseColumn FROM $databaseTable ORDER BY $databaseRowID LIMIT $databaseMaxPackCount").then((List<Map<String, dynamic>> records) {
+      _database!.rawQuery("SELECT `$databaseRowID`, `$databasePacket`, `$databaseTimestamp` FROM `$databaseTable` ORDER BY `$databaseRowID` LIMIT $databaseMaxPackCount").then((List<Map<String, dynamic>> records) {
         if (records.isNotEmpty) {
 
           String packets = '', rowIDs = '';
           for (Map<String, dynamic> record in records) {
 
-            if (packets.isNotEmpty) {
-              packets += ',';
+            int? recordTimestamp = JsonUtils.intValue(record[databaseTimestamp]);
+            if ((filterTimestamp == null) || (recordTimestamp == null) || (filterTimestamp < recordTimestamp)) {
+              if (packets.isNotEmpty) {
+                packets += ',';
+              }
+              packets += '${record[databasePacket]}';
             }
-            packets += '${record[databaseColumn]}';
 
             if (rowIDs.isNotEmpty) {
               rowIDs += ',';
             }
             rowIDs += '${record[databaseRowID]}';
           }
-          packets = '[' + packets + ']';
-          rowIDs = '(' + rowIDs + ')';
 
-          sendPacket(packets).then((bool success) {
-            if (success) {
-              _database!.execute("DELETE FROM $databaseTable WHERE $databaseRowID in $rowIDs").then((_){
-                //Log.d("Analytics: sent packets $rowIDs");
+          if (packets.isNotEmpty) {
+            sendPacket('[$packets]').then((bool success) {
+              if (success) {
+                _database!.execute("DELETE FROM `$databaseTable` WHERE `$databaseRowID` in ($rowIDs)").then((_){
+                  //Log.d("Analytics: sent packets $rowIDs");
+                  _inTimer = false;
+                });
+              }
+              else {
+                //Log.d("Analytics: failed to send packets $rowIDs");
                 _inTimer = false;
-              });
-            }
-            else {
-              //Log.d("Analytics: failed to send packets $rowIDs");
+              }
+            });
+          }
+          else if (rowIDs.isNotEmpty) {
+            _database!.execute("DELETE FROM `$databaseTable` WHERE `$databaseRowID` in ($rowIDs)").then((_){
+              //Log.d("Analytics: sent packets $rowIDs");
               _inTimer = false;
-            }
-          });
+            });
+          }
         }
         else {
           closeTimer();
@@ -297,11 +322,9 @@ class Analytics with Service implements NotificationsListener {
 
   // Public Accessories
 
-  void logEvent(Map<String, dynamic>? event) {
-    if (event != null) {
-      String packet = json.encode(event);
-      debugPrint('Analytics: $packet');
-      savePacket(packet);
-    }
+  void logEvent(Map<String, dynamic> event, { int? timestamp }) {
+    String packet = json.encode(event);
+    debugPrint('Analytics: $packet');
+    savePacket(packet, timestamp);
   }
 }
