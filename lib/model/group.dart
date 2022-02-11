@@ -37,6 +37,7 @@ class Group {
   DateTime?           dateUpdatedUtc;
 
   bool?               authManEnabled;
+  bool?               onlyAdminsCanCreatePolls;
   String?             authManGroupName;
 
   String?             imageURL;
@@ -70,7 +71,7 @@ class Group {
     try { title             = json['title'];      } catch(e) { debugPrint(e.toString()); }
     try { description       = json['description'];  } catch(e) { debugPrint(e.toString()); }
     try { privacy           = groupPrivacyFromString(json['privacy']); } catch(e) { debugPrint(e.toString()); }
-    try { certified         = json['certified']; } catch(e) { debugPrint(e.toString()); }
+    try { certified          = json['certified']; } catch(e) { debugPrint(e.toString()); }
     try { authManEnabled    = json['authman_enabled']; } catch(e) { debugPrint(e.toString()); }
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
@@ -81,28 +82,30 @@ class Group {
     try { membershipQuest   = GroupMembershipQuest.fromJson(json['membershipQuest']); } catch(e) { debugPrint(e.toString()); }
     try { members           = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); }
     try { questions         = GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])); } catch(e) { debugPrint(e.toString()); }
+    try { onlyAdminsCanCreatePolls = json['only_admins_can_create_polls']; } catch(e) { debugPrint(e.toString()); }
   }
 
   Map<String, dynamic> toJson({bool withId = true}) {
     Map<String, dynamic> json = {};
     if(withId){
-      json['id']                 = id;
+      json['id']                         = id;
     }
-    json['category']             = category;
-    json['type']                 = type;
-    json['title']                = title;
-    json['description']          = description;
-    json['privacy']              = groupPrivacyToString(privacy);
-    json['certified']            = certified;
-    json['authman_enabled']      = authManEnabled;
-    json['authman_group']        = authManGroupName;
-    json['date_created']         = groupUtcDateTimeToString(dateCreatedUtc);
-    json['date_updated']         = groupUtcDateTimeToString(dateUpdatedUtc);
-    json['image_url']            = imageURL;
-    json['web_url']              = webURL;
-    json['tags']                 = tags;
-    json['members']              = Member.listToJson(members);
-    json['membership_questions'] = GroupMembershipQuestion.listToStringList(questions);
+    json['category']                     = category;
+    json['type']                         = type;
+    json['title']                        = title;
+    json['description']                  = description;
+    json['privacy']                      = groupPrivacyToString(privacy);
+    json['certified']                     = certified;
+    json['authman_enabled']              = authManEnabled;
+    json['authman_group']                = authManGroupName;
+    json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
+    json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
+    json['image_url']                    = imageURL;
+    json['web_url']                      = webURL;
+    json['tags']                         = tags;
+    json['members']                      = Member.listToJson(members);
+    json['membership_questions']         = GroupMembershipQuestion.listToStringList(questions);
+    json['only_admins_can_create_polls'] = onlyAdminsCanCreatePolls;
 
     return json;
   }
@@ -114,8 +117,9 @@ class Group {
     title             = other?.title;
     description       = other?.description;
     privacy           = other?.privacy;
-    certified         = other?.certified;
+    certified          = other?.certified;
     authManEnabled    = other?.authManEnabled;
+    onlyAdminsCanCreatePolls = other?.onlyAdminsCanCreatePolls;
     authManGroupName  = other?.authManGroupName;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
