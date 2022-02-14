@@ -104,6 +104,10 @@ class Localization with Service implements NotificationsListener {
 
   // Locale
 
+  Locale? get defaultLocale {
+    return _defaultLocale;
+  }
+
   Locale? get currentLocale {
     return _currentLocale ?? _defaultLocale;
   }

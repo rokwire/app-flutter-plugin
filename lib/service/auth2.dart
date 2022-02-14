@@ -200,6 +200,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   // Getters
+  Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
+  Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
+  Auth2LoginType get emailLoginType => Auth2LoginType.email;
 
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
@@ -213,17 +216,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2LoginType? get loginType => _account?.authType?.loginType;
 
   bool get isLoggedIn => (_account?.id != null);
-  bool get isOidcLoggedIn => (_account?.authType?.loginType == Auth2LoginType.oidcIllinois);
-  bool get isPhoneLoggedIn => (_account?.authType?.loginType == Auth2LoginType.phoneTwilio);
-  bool get isEmailLoggedIn => (_account?.authType?.loginType == Auth2LoginType.email);
+  bool get isOidcLoggedIn => (_account?.authType?.loginType == oidcLoginType);
+  bool get isPhoneLoggedIn => (_account?.authType?.loginType == phoneLoginType);
+  bool get isEmailLoggedIn => (_account?.authType?.loginType == emailLoginType);
 
-  bool get isOidcLinked => _account?.isAuthTypeLinked(Auth2LoginType.oidcIllinois) ?? false;
-  bool get isPhoneLinked => _account?.isAuthTypeLinked(Auth2LoginType.phoneTwilio) ?? false;
-  bool get isEmailLinked => _account?.isAuthTypeLinked(Auth2LoginType.email) ?? false;
+  bool get isOidcLinked => _account?.isAuthTypeLinked(oidcLoginType) ?? false;
+  bool get isPhoneLinked => _account?.isAuthTypeLinked(phoneLoginType) ?? false;
+  bool get isEmailLinked => _account?.isAuthTypeLinked(emailLoginType) ?? false;
 
-  List<String> get linkedOidcIds => _account?.getLinkedIdsForAuthType(Auth2LoginType.oidcIllinois) ?? [];
-  List<String> get linkedPhoneIds => _account?.getLinkedIdsForAuthType(Auth2LoginType.phoneTwilio) ?? [];
-  List<String> get linkedEmailIds => _account?.getLinkedIdsForAuthType(Auth2LoginType.email) ?? [];
+  List<String> get linkedOidcIds => _account?.getLinkedIdsForAuthType(oidcLoginType) ?? [];
+  List<String> get linkedPhoneIds => _account?.getLinkedIdsForAuthType(phoneLoginType) ?? [];
+  List<String> get linkedEmailIds => _account?.getLinkedIdsForAuthType(emailLoginType) ?? [];
 
   bool get hasUin => (0 < (uin?.length ?? 0));
   String? get uin => _account?.authType?.uiucUser?.uin;
@@ -282,7 +285,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
-        'device': _deviceInfo
+        'device': deviceInfo
       });
       
       Response? response = await Network().post(url, headers: headers, body: post);
@@ -311,7 +314,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       if (_oidcAuthenticationCompleters == null) {
         _oidcAuthenticationCompleters = <Completer<bool?>>[];
-        NotificationService().notify(notifyLoginStarted, Auth2LoginType.oidcIllinois);
+        NotificationService().notify(notifyLoginStarted, oidcLoginType);
 
         _OidcLogin? oidcLogin = await getOidcData();
         if (oidcLogin?.loginUrl != null) {
@@ -342,7 +345,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     _processingOidcAuthentication = true;
     bool result = (_oidcLink == true) ?
-      await linkAccountAuthType(Auth2LoginType.oidcIllinois, uri.toString(), _oidcLogin?.params) :
+      await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params) :
       await processOidcAuthentication(uri);
     _processingOidcAuthentication = false;
 
@@ -358,7 +361,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.oidcIllinois),
+        'auth_type': auth2LoginTypeToString(oidcLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -366,7 +369,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'params': _oidcLogin?.params,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
-        'device': _deviceInfo,
+        'device': deviceInfo,
       });
       _oidcLogin = null;
 
@@ -429,7 +432,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.oidcIllinois),
+        'auth_type': auth2LoginTypeToString(oidcLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -465,7 +468,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void completeOidcAuthentication(bool? success) {
     
-    _notifyLogin(Auth2LoginType.oidcIllinois, success);
+    _notifyLogin(oidcLoginType, success);
 
     _oidcLogin = null;
     _oidcLink = null;
@@ -484,14 +487,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<bool> authenticateWithPhone(String? phoneNumber) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null)) {
-      NotificationService().notify(notifyLoginStarted, Auth2LoginType.phoneTwilio);
+      NotificationService().notify(notifyLoginStarted, phoneLoginType);
 
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.phoneTwilio),
+        'auth_type': auth2LoginTypeToString(phoneLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -500,7 +503,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
-        'device': _deviceInfo,
+        'device': deviceInfo,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
@@ -516,7 +519,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.phoneTwilio),
+        'auth_type': auth2LoginTypeToString(phoneLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -526,13 +529,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
-        'device': _deviceInfo,
+        'device': deviceInfo,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       bool result = await processLoginResponse(responseJson);
-      _notifyLogin(Auth2LoginType.phoneTwilio, result);
+      _notifyLogin(phoneLoginType, result);
       return result;
     }
     return false;
@@ -543,14 +546,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null) && (password != null)) {
       
-      NotificationService().notify(notifyLoginStarted, Auth2LoginType.email);
+      NotificationService().notify(notifyLoginStarted, emailLoginType);
 
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.email),
+        'auth_type': auth2LoginTypeToString(emailLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -560,17 +563,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
-        'device': _deviceInfo,
+        'device': deviceInfo,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
-        _notifyLogin(Auth2LoginType.email, result);
+        _notifyLogin(emailLoginType, result);
         return result ? Auth2EmailSignInResult.succeded : Auth2EmailSignInResult.failed;
       }
       else {
-        _notifyLogin(Auth2LoginType.email, false);
+        _notifyLogin(emailLoginType, false);
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'unverified') {
           return Auth2EmailSignInResult.failedNotActivated;
@@ -590,7 +593,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.email),
+        'auth_type': auth2LoginTypeToString(emailLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -604,7 +607,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
-        'device': _deviceInfo,
+        'device': deviceInfo,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
@@ -625,7 +628,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.email),
+        'auth_type': auth2LoginTypeToString(emailLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -648,7 +651,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.email),
+        'auth_type': auth2LoginTypeToString(emailLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -669,7 +672,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.email),
+        'auth_type': auth2LoginTypeToString(emailLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -746,7 +749,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Device Info
 
-  Map<String, dynamic> get _deviceInfo {
+  @protected
+  Map<String, dynamic> get deviceInfo {
     return {
       'type': "mobile",
       'device_id': _deviceId,
