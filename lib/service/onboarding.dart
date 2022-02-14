@@ -84,12 +84,12 @@ class Onboarding with Service implements NotificationsListener {
 
 
   Widget? get startPanel {
-    if (_contentCodes == null) return null;
-    
-    for (int index = 0; index < _contentCodes!.length; index++) {
-      OnboardingPanel? nextPanel = createPanel(code: _contentCodes![index], context: {});
-      if ((nextPanel != null) && (nextPanel is Widget) && nextPanel.onboardingCanDisplay && (nextPanel is Widget)) {
-        return nextPanel as Widget;
+    if (_contentCodes != null) {
+      for (int index = 0; index < _contentCodes!.length; index++) {
+        OnboardingPanel? nextPanel = createPanel(code: _contentCodes![index], context: {});
+        if ((nextPanel != null) && (nextPanel is Widget) && nextPanel.onboardingCanDisplay && (nextPanel is Widget)) {
+          return nextPanel as Widget;
+        }
       }
     }
     return null;
