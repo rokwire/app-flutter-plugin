@@ -16,6 +16,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final SemanticsSortKey? sortKey;
@@ -104,5 +106,116 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   // PreferredSizeWidget
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class SliverToutHeaderBar extends StatelessWidget {
+
+  final bool pinned;
+  final bool floating;
+  final double? expandedHeight;
+  final Color? backgroundColor;
+
+  final Widget? flexWidget;
+  final String? flexImageUrl;
+  final Color?  flexBackColor;
+  final Color?  flexRightToLeftTriangleColor;
+  final double? flexRightToLeftTriangleHeight;
+  final Color?  flexLeftToRightTriangleColor;
+  final double? flexLeftToRightTriangleHeight;
+
+  final Widget? leadingWidget;
+  final String? leadingLabel;
+  final String? leadingHint;
+  final EdgeInsetsGeometry? leadingPadding;
+  final Size? leadingOvalSize;
+  final Color? leadingOvalColor;
+  final String? leadingAsset;
+  final void Function(BuildContext context)? onLeading;
+
+  const SliverToutHeaderBar({Key? key,
+    this.pinned = false,
+    this.floating = false,
+    this.expandedHeight,
+    this.backgroundColor,
+
+    this.flexWidget,
+    this.flexImageUrl,
+    this.flexBackColor,
+    this.flexRightToLeftTriangleColor,
+    this.flexRightToLeftTriangleHeight,
+    this.flexLeftToRightTriangleColor,
+    this.flexLeftToRightTriangleHeight,
+
+    this.leadingWidget,
+    this.leadingLabel,
+    this.leadingHint,
+    this.leadingPadding,
+    this.leadingOvalSize,
+    this.leadingOvalColor,
+    this.leadingAsset,
+    this.onLeading,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverAppBar(
+      pinned: pinned,
+      floating: floating,
+      expandedHeight: expandedHeight,
+      backgroundColor: backgroundColor,
+      flexibleSpace: flexWidget ?? buildFlexibleSpace(context),
+      leading: leadingWidget ?? buildLeadingWidget(context),
+    );
+  }
+
+  // Flexible Space
+  @protected
+  Widget? buildFlexibleSpace(BuildContext context) =>
+    Semantics(container: true, excludeSemantics: true, child:
+      FlexibleSpaceBar(background:
+        Container(color: flexBackColor, child:
+          Stack(alignment: Alignment.bottomCenter, children: <Widget>[
+                buildFlexibleInterior(context),
+                buildFlexibleLeftToRightTriangle(context),
+                buildFlexibleLeftTriangle(context),
+              ],
+            ),
+          ))
+      );
+
+  @protected
+  Widget buildFlexibleInterior(BuildContext context) => (flexImageUrl != null)
+    ? Positioned.fill(child: Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true))
+    : Container();
+
+  @protected
+  Widget buildFlexibleLeftToRightTriangle(BuildContext context) => CustomPaint(
+    painter: TrianglePainter(painterColor: flexLeftToRightTriangleColor, horzDir: TriangleHorzDirection.leftToRight),
+    child: Container(height: flexLeftToRightTriangleHeight,),
+  );
+
+  @protected
+  Widget buildFlexibleLeftTriangle(BuildContext context) => CustomPaint(
+    painter: TrianglePainter(painterColor: flexRightToLeftTriangleColor),
+    child: Container(height: flexRightToLeftTriangleHeight,),
+  );
+
+  //Leading
+  @protected
+  Widget? buildLeadingWidget(BuildContext context) => (leadingAsset != null) ?
+    Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
+      Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
+        GestureDetector(onTap: () => (onLeading ?? leadingHandler)(context), child:
+          ClipOval(child:
+            Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
+              Image.asset(leadingAsset!, excludeFromSemantics: true)
+            ),
+          ),
+        ),
+      )
+    ) : null;
+
+  @protected
+  void leadingHandler(BuildContext context) {}
 }
 
