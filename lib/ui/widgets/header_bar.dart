@@ -19,6 +19,8 @@ import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
+// HeaderBar
+
 class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final SemanticsSortKey? sortKey;
   
@@ -107,6 +109,8 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
+
+// SliverToutHeaderBar
 
 class SliverToutHeaderBar extends StatelessWidget {
 
@@ -219,3 +223,98 @@ class SliverToutHeaderBar extends StatelessWidget {
   void leadingHandler(BuildContext context) {}
 }
 
+// SliverHeaderBar
+
+class SliverHeaderBar extends StatelessWidget {
+  
+  final bool pinned;
+  final bool floating;
+  final double? elevation;
+  final Color? backgroundColor;
+
+  final Widget? leadingWidget;
+  final String? leadingLabel;
+  final String? leadingHint;
+  final String? leadingAsset;
+  final void Function(BuildContext context)? onLeading;
+    
+  final Widget? titleWidget;
+  final String? title;
+  final TextStyle? textStyle;
+  final Color? textColor;
+  final String? fontFamily;
+  final double? fontSize;
+  final double? letterSpacing;
+  final int? maxLines;
+  final TextAlign? textAlign;
+  final bool? centerTitle;
+
+  final List<Widget>? actions;
+
+  const SliverHeaderBar({Key? key,
+    this.pinned = false,
+    this.floating = false,
+    this.elevation,
+    this.backgroundColor,
+
+    this.leadingWidget,
+    this.leadingLabel,
+    this.leadingHint,
+    this.leadingAsset,
+    this.onLeading,
+    
+    this.titleWidget,
+    this.title,
+    this.textStyle,
+    this.textColor,
+    this.fontFamily,
+    this.fontSize,
+    this.letterSpacing,
+    this.maxLines,
+    this.textAlign,
+    this.centerTitle,
+
+    this.actions,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return buildAppBar(context);
+  }
+
+  SliverAppBar buildAppBar(BuildContext context) {
+    return SliverAppBar(
+      pinned: pinned,
+      floating: floating,
+      backgroundColor: backgroundColor,
+      elevation: 0,
+      leading : leadingWidget ?? buildLeadingWidget(context),
+      title: titleWidget ?? buildTitleWidget(context),
+      centerTitle: centerTitle,
+      actions: actions,
+    );
+  }
+
+  // Leading
+  @protected
+  Widget? buildLeadingWidget(BuildContext context) {
+    Image? image = leadingImage;
+    return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
+      IconButton(icon: image, onPressed: () => (onLeading ?? leadingHandler)(context))
+    ) : null;
+  }
+
+  
+  @protected
+  Image? get leadingImage => (leadingAsset != null) ? Image.asset(leadingAsset!, excludeFromSemantics: true) : null;
+
+  @protected
+  void leadingHandler(BuildContext context) {}
+
+  // Title
+  @protected
+  Widget? buildTitleWidget(BuildContext context) => Text(title ?? '', style: textStyle ?? titleTextStyle, textAlign: textAlign, maxLines: maxLines);
+
+  @protected
+  TextStyle? get titleTextStyle => TextStyle(color: textColor, fontFamily: fontFamily, fontSize: fontSize, letterSpacing: letterSpacing,);
+}
