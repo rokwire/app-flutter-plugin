@@ -28,6 +28,7 @@ class RoundedButton extends StatefulWidget {
   final double contentWeight;
   final MainAxisAlignment conentAlignment;
   
+  final Widget? textWidget;
   final TextStyle? textStyle;
   final Color? textColor;
   final String? fontFamily;
@@ -69,6 +70,7 @@ class RoundedButton extends StatefulWidget {
     this.contentWeight           = 1.0,
     this.conentAlignment         = MainAxisAlignment.center,
 
+    this.textWidget,
     this.textStyle,
     this.textColor,            //= Styles().colors.fillColorPrimary
     this.fontFamily,           //= Styles().fontFamilies.bold
@@ -115,6 +117,7 @@ class _RoundedButtonState extends State<RoundedButton> {
   Color get _textColor => widget.textColor ?? Styles().colors!.fillColorPrimary!;
   String get _fontFamily => widget.fontFamily ?? Styles().fontFamilies!.bold!;
   TextStyle get _textStyle => widget.textStyle ?? TextStyle(fontFamily: _fontFamily, fontSize: widget.fontSize, color: _textColor);
+  Widget get _textWidget => widget.textWidget ?? Text(widget.label, style: _textStyle, textAlign: widget.textAlign,);
 
   Color get _borderColor => widget.borderColor ?? Styles().colors!.fillColorSecondary!;
 
@@ -221,11 +224,11 @@ class _RoundedButtonState extends State<RoundedButton> {
       rowContent.add((0.0 < widget.contentWeight) ?
         Expanded(child:
           Padding(padding: widget.padding, child:
-            Text(widget.label, style: _textStyle, textAlign: widget.textAlign,)
+            _textWidget
           )
         ) :
         Padding(padding: widget.padding, child:
-          Text(widget.label, style: _textStyle, textAlign: widget.textAlign,)
+          _textWidget
         )
       );
 
@@ -244,7 +247,7 @@ class _RoundedButtonState extends State<RoundedButton> {
     else {
       return Semantics(excludeSemantics: true, child:
         Padding(padding: widget.padding, child:
-          Text(widget.label, style: _textStyle, textAlign: widget.textAlign,)
+          _textWidget
         )
       );
     }
