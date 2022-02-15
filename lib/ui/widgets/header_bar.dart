@@ -28,7 +28,7 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final String? leadingLabel;
   final String? leadingHint;
   final String? leadingAsset;
-  final void Function(BuildContext context)? onLeading;
+  final void Function()? onLeading;
     
   final Widget? titleWidget;
   final String? title;
@@ -87,13 +87,22 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   Widget? buildLeadingWidget(BuildContext context) {
     Image? image = leadingImage;
     return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
-      IconButton(icon: image, onPressed: () => (onLeading ?? leadingHandler)(context))
+      IconButton(icon: image, onPressed: () => onTapLeading(context))
     ) : null;
   }
 
-  
   @protected
   Image? get leadingImage => (leadingAsset != null) ? Image.asset(leadingAsset!, excludeFromSemantics: true) : null;
+
+  @protected
+  void onTapLeading(BuildContext context) {
+    if (onLeading != null) {
+      onLeading!();
+    }
+    else {
+      leadingHandler(context);
+    }
+  }
 
   @protected
   void leadingHandler(BuildContext context) {}
@@ -134,7 +143,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   final Size? leadingOvalSize;
   final Color? leadingOvalColor;
   final String? leadingAsset;
-  final void Function(BuildContext context)? onLeading;
+  final void Function()? onLeading;
 
   const SliverToutHeaderBar({Key? key,
     this.pinned = false,
@@ -209,7 +218,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   Widget? buildLeadingWidget(BuildContext context) => (leadingAsset != null) ?
     Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
       Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
-        GestureDetector(onTap: () => (onLeading ?? leadingHandler)(context), child:
+        GestureDetector(onTap: () => onTapLeading(context), child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
               Image.asset(leadingAsset!, excludeFromSemantics: true)
@@ -218,6 +227,16 @@ class SliverToutHeaderBar extends StatelessWidget {
         ),
       )
     ) : null;
+
+  @protected
+  void onTapLeading(BuildContext context) {
+    if (onLeading != null) {
+      onLeading!();
+    }
+    else {
+      leadingHandler(context);
+    }
+  }
 
   @protected
   void leadingHandler(BuildContext context) {}
@@ -236,7 +255,7 @@ class SliverHeaderBar extends StatelessWidget {
   final String? leadingLabel;
   final String? leadingHint;
   final String? leadingAsset;
-  final void Function(BuildContext context)? onLeading;
+  final void Function()? onLeading;
     
   final Widget? titleWidget;
   final String? title;
@@ -300,13 +319,23 @@ class SliverHeaderBar extends StatelessWidget {
   Widget? buildLeadingWidget(BuildContext context) {
     Image? image = leadingImage;
     return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
-      IconButton(icon: image, onPressed: () => (onLeading ?? leadingHandler)(context))
+      IconButton(icon: image, onPressed: () => onTapLeading(context))
     ) : null;
   }
 
   
   @protected
   Image? get leadingImage => (leadingAsset != null) ? Image.asset(leadingAsset!, excludeFromSemantics: true) : null;
+
+  @protected
+  void onTapLeading(BuildContext context) {
+    if (onLeading != null) {
+      onLeading!();
+    }
+    else {
+      leadingHandler(context);
+    }
+  }
 
   @protected
   void leadingHandler(BuildContext context) {}
