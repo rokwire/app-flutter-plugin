@@ -345,7 +345,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     _processingOidcAuthentication = true;
     bool result = (_oidcLink == true) ?
-      await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params) :
+      await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params) == Auth2LinkResult.succeded :
       await processOidcAuthentication(uri);
     _processingOidcAuthentication = false;
 
@@ -697,7 +697,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Account Linking
 
-  Future<bool> linkAccountAuthType(Auth2LoginType? loginType, dynamic creds, Map<String, dynamic>? params) async {
+  Future<Auth2LinkResult> linkAccountAuthType(Auth2LoginType? loginType, dynamic creds, Map<String, dynamic>? params) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (loginType != null)) {
       String url = "${Config().coreUrl}/services/auth/account/auth-type/link";
       Map<String, String> headers = {
@@ -712,15 +712,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       _oidcLink = null;
 
       Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
-      Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-      List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
-      if (authTypes != null) {
-        Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
-        NotificationService().notify(notifyLinkChanged);
-        return true;
+      if (response?.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
+        if (authTypes != null) {
+          Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
+          NotificationService().notify(notifyLinkChanged);
+          return Auth2LinkResult.succeded;
+        }
+      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'verification-expired') {
+        return Auth2LinkResult.failedActivationExpired;
+      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'unverified') {
+        return Auth2LinkResult.failedNotActivated;
+      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+        return Auth2LinkResult.failedAccountExist;
+      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'invalid') {
+        return Auth2LinkResult.failedInvalid;
       }
     }
-    return false;
+    return Auth2LinkResult.failed;
   }
 
   Future<bool> unlinkAccountAuthType(Auth2LoginType? loginType, String identifier) async {
@@ -1061,4 +1071,13 @@ enum Auth2EmailSignInResult {
   failed,
   failedActivationExpired,
   failedNotActivated,
+}
+
+enum Auth2LinkResult {
+  succeded,
+  failed,
+  failedActivationExpired,
+  failedNotActivated,
+  failedAccountExist,
+  failedInvalid,
 }
