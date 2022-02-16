@@ -197,16 +197,16 @@ class Auth2Account {
     return false;
   }
 
-  List<String> getLinkedIdsForAuthType(Auth2LoginType loginType) {
-    List<String> ids = [];
+  List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
+    List<Auth2Type> linkedTypes = [];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType && authType.identifier != null) {
-          ids.add(authType.identifier!);
+        if (authType.loginType == loginType) {
+          linkedTypes.add(authType);
         }
       }
     }
-    return ids;
+    return linkedTypes;
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);

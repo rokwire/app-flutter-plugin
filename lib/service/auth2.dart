@@ -224,9 +224,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPhoneLinked => _account?.isAuthTypeLinked(phoneLoginType) ?? false;
   bool get isEmailLinked => _account?.isAuthTypeLinked(emailLoginType) ?? false;
 
-  List<String> get linkedOidcIds => _account?.getLinkedIdsForAuthType(oidcLoginType) ?? [];
-  List<String> get linkedPhoneIds => _account?.getLinkedIdsForAuthType(phoneLoginType) ?? [];
-  List<String> get linkedEmailIds => _account?.getLinkedIdsForAuthType(emailLoginType) ?? [];
+  List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcLoginType) ?? [];
+  List<Auth2Type> get linkedPhone => _account?.getLinkedForAuthType(phoneLoginType) ?? [];
+  List<Auth2Type> get linkedEmail => _account?.getLinkedForAuthType(emailLoginType) ?? [];
 
   bool get hasUin => (0 < (uin?.length ?? 0));
   String? get uin => _account?.authType?.uiucUser?.uin;
@@ -637,7 +637,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2EmailSignUpResult.failed;
   }
 
-  Future<Auth2EmailAccountState?> checkEmailAccountState(String? email) async {
+  Future<Auth2EmailAccountState?> checkEmailAccountState(String? email, String operation) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
       String url = "${Config().coreUrl}/services/auth/account/exists";
       Map<String, String> headers = {
@@ -649,6 +649,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
         'user_identifier': email,
+        'operation': operation,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
@@ -660,7 +661,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool> resetEmailPassword(String? email) async {
+  Future<Auth2EmailForgotPasswordResult> resetEmailPassword(String? email) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
       String url = "${Config().coreUrl}/services/auth/credential/forgot/initiate";
       Map<String, String> headers = {
@@ -1100,6 +1101,13 @@ enum Auth2EmailSignInResult {
   failedActivationExpired,
   failedNotActivated,
   failedInvalid,
+}
+
+enum Auth2EmailForgotPasswordResult {
+  succeded,
+  failed,
+  failedActivationExpired,
+  failedNotActivated,
 }
 
 enum Auth2LinkResult {
