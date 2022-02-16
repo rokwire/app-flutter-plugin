@@ -485,7 +485,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Phone Authentication
 
-  Future<bool> authenticateWithPhone(String? phoneNumber) async {
+  Future<Auth2PhoneSignUpResult> authenticateWithPhone(String? phoneNumber) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null)) {
       NotificationService().notify(notifyLoginStarted, phoneLoginType);
 
@@ -507,12 +507,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      return (response?.statusCode == 200);
+      if (response?.statusCode == 200) {
+        return Auth2PhoneSignUpResult.succeded;
+      }
+      else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+        return Auth2PhoneSignUpResult.failedAccountExist;
+      }
     }
-    return false;
+    return Auth2PhoneSignUpResult.failed;
   }
 
-  Future<bool> handlePhoneAuthentication(String? phoneNumber, String? code) async {
+  Future<Auth2PhoneSignInResult> handlePhoneAuthentication(String? phoneNumber, String? code) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null) && (code != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -533,12 +538,20 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-      bool result = await processLoginResponse(responseJson);
-      _notifyLogin(phoneLoginType, result);
-      return result;
+      if (response?.statusCode == 200) {
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        _notifyLogin(phoneLoginType, result);
+        return result ? Auth2PhoneSignInResult.succeded : Auth2PhoneSignInResult.failed;
+      }
+      else {
+        _notifyLogin(phoneLoginType, false);
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'invalid') {
+          return Auth2PhoneSignInResult.failedInvalid;
+        }
+      }
     }
-    return false;
+    return Auth2PhoneSignInResult.failed;
   }
 
   // Email Authentication
@@ -580,6 +593,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
         else if (error?.status == 'verification-expired') {
           return Auth2EmailSignInResult.failedActivationExpired;
+        }
+        else if (error?.status == 'invalid') {
+          return Auth2EmailSignInResult.failedInvalid;
         }
       }
     }
@@ -1054,6 +1070,18 @@ class _OidcLogin {
 
 }
 
+enum Auth2PhoneSignUpResult {
+  succeded,
+  failed,
+  failedAccountExist,
+}
+
+enum Auth2PhoneSignInResult {
+  succeded,
+  failed,
+  failedInvalid,
+}
+
 enum Auth2EmailAccountState {
   nonExistent,
   unverified,
@@ -1071,6 +1099,7 @@ enum Auth2EmailSignInResult {
   failed,
   failedActivationExpired,
   failedNotActivated,
+  failedInvalid,
 }
 
 enum Auth2LinkResult {
