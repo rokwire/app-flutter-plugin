@@ -677,9 +677,20 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      return (response?.statusCode == 200);
+      if (response?.statusCode == 200) {
+        return Auth2EmailForgotPasswordResult.succeded;
+      }
+      else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'verification-expired') {
+          return Auth2EmailForgotPasswordResult.failedActivationExpired;
+        } 
+        else if (error?.status == 'unverified') {
+          return Auth2EmailForgotPasswordResult.failedNotActivated;
+        }
+      }
     }
-    return false;
+    return Auth2EmailForgotPasswordResult.failed;
   }
 
   Future<bool> resentActivationEmail(String? email) async {
@@ -737,15 +748,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           NotificationService().notify(notifyLinkChanged);
           return Auth2LinkResult.succeded;
         }
-      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'verification-expired') {
-        return Auth2LinkResult.failedActivationExpired;
-      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'unverified') {
-        return Auth2LinkResult.failedNotActivated;
-      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2LinkResult.failedAccountExist;
-      } else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'invalid') {
-        return Auth2LinkResult.failedInvalid;
       }
+      else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'verification-expired') {
+          return Auth2LinkResult.failedActivationExpired;
+        }
+        else if (error?.status == 'unverified') {
+          return Auth2LinkResult.failedNotActivated;
+        }
+        else if (error?.status == 'already-exists') {
+          return Auth2LinkResult.failedAccountExist;
+        }
+        else if (error?.status == 'invalid') {
+          return Auth2LinkResult.failedInvalid;
+        }
+      } 
     }
     return Auth2LinkResult.failed;
   }
