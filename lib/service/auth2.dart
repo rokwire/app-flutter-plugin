@@ -485,7 +485,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Phone Authentication
 
-  Future<Auth2PhoneSignUpResult> authenticateWithPhone(String? phoneNumber) async {
+  Future<Auth2PhoneRequestCodeResult> authenticateWithPhone(String? phoneNumber) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null)) {
       NotificationService().notify(notifyLoginStarted, phoneLoginType);
 
@@ -508,16 +508,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        return Auth2PhoneSignUpResult.succeded;
+        return Auth2PhoneRequestCodeResult.succeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2PhoneSignUpResult.failedAccountExist;
+        return Auth2PhoneRequestCodeResult.failedAccountExist;
       }
     }
-    return Auth2PhoneSignUpResult.failed;
+    return Auth2PhoneRequestCodeResult.failed;
   }
 
-  Future<Auth2PhoneSignInResult> handlePhoneAuthentication(String? phoneNumber, String? code) async {
+  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null) && (code != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -541,17 +541,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(phoneLoginType, result);
-        return result ? Auth2PhoneSignInResult.succeded : Auth2PhoneSignInResult.failed;
+        return result ? Auth2PhoneSendCodeResult.succeded : Auth2PhoneSendCodeResult.failed;
       }
       else {
         _notifyLogin(phoneLoginType, false);
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'invalid') {
-          return Auth2PhoneSignInResult.failedInvalid;
+          return Auth2PhoneSendCodeResult.failedInvalid;
         }
       }
     }
-    return Auth2PhoneSignInResult.failed;
+    return Auth2PhoneSendCodeResult.failed;
   }
 
   // Email Authentication
@@ -1089,13 +1089,13 @@ class _OidcLogin {
 
 }
 
-enum Auth2PhoneSignUpResult {
+enum Auth2PhoneRequestCodeResult {
   succeded,
   failed,
   failedAccountExist,
 }
 
-enum Auth2PhoneSignInResult {
+enum Auth2PhoneSendCodeResult {
   succeded,
   failed,
   failedInvalid,
