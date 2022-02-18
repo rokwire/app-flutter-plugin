@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11)
-- Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1)
-- Added RoundedButton to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Added header bars to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Added ribbon buttons to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Added tab bar widget to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Added web panel to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Added FlexContentWidget to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added capability to filter staled analytics packets before sending them to log service [#4](https://github.com/rokwire/app-flutter-plugin/issues/4).
+- Added SectionHeading and TileButton to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added FlexContentWidget to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added web panel to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added tab bar widget to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added ribbon buttons to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added header bars to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added RoundedButton to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+### Changed
+- Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1)
 
 ## [0.0.1] - 2022-02-07
 ### Added

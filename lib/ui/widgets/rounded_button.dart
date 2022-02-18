@@ -46,13 +46,13 @@ class RoundedButton extends StatefulWidget {
   final String? hint;
   final bool enabled;
 
-  final BoxBorder? border;
+  final Border? border;
   final Color? borderColor;
   final double borderWidth;
   final List<BoxShadow>? borderShadow;
   final double? maxBorderRadius;
 
-  final BoxBorder? secondaryBorder;
+  final Border? secondaryBorder;
   final Color? secondaryBorderColor;
   final double? secondaryBorderWidth;
 
@@ -196,9 +196,9 @@ class _RoundedButtonState extends State<RoundedButton> {
 
     BorderRadiusGeometry? borderRadius = (_contentSize != null) ? BorderRadius.circular((widget.maxBorderRadius != null) ? min(_contentSize!.height / 2, widget.maxBorderRadius!) : (_contentSize!.height / 2)) : null;
 
-    BoxBorder border = widget.border ?? Border.all(color: _borderColor, width: widget.borderWidth);
+    Border border = widget.border ?? Border.all(color: _borderColor, width: widget.borderWidth);
 
-    BoxBorder? secondaryBorder = widget.secondaryBorder ?? ((widget.secondaryBorderColor != null) ? Border.all(
+    Border? secondaryBorder = widget.secondaryBorder ?? ((widget.secondaryBorderColor != null) ? Border.all(
       color: widget.secondaryBorderColor!,
       width: widget.secondaryBorderWidth ?? widget.borderWidth
     ) : null);
