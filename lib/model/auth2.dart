@@ -197,16 +197,16 @@ class Auth2Account {
     return false;
   }
 
-  List<String> getLinkedIdsForAuthType(Auth2LoginType loginType) {
-    List<String> ids = [];
+  List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
+    List<Auth2Type> linkedTypes = [];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType && authType.identifier != null) {
-          ids.add(authType.identifier!);
+        if (authType.loginType == loginType) {
+          linkedTypes.add(authType);
         }
       }
     }
-    return ids;
+    return linkedTypes;
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
@@ -505,13 +505,14 @@ class Auth2Type {
   final String? identifier;
   final bool? active;
   final bool? active2fa;
+  final bool? unverified;
   final String? code;
   final Map<String, dynamic>? params;
   
   final Auth2UiucUser? uiucUser;
   final Auth2LoginType? loginType;
   
-  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.code, this.params}) :
+  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.unverified, this.code, this.params}) :
     uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null,
     loginType = auth2LoginTypeFromString(code);
 
@@ -521,6 +522,7 @@ class Auth2Type {
       identifier: JsonUtils.stringValue(json['identifier']),
       active: JsonUtils.boolValue(json['active']),
       active2fa: JsonUtils.boolValue(json['active_2fa']),
+      unverified: JsonUtils.boolValue(json['unverified']),
       code: JsonUtils.stringValue(json['code']),
       params: JsonUtils.mapValue(json['params']),
     ) : null;
@@ -532,6 +534,7 @@ class Auth2Type {
       'identifier': identifier,
       'active': active,
       'active_2fa': active2fa,
+      'unverified': unverified,
       'code': code,
       'params': params,
     };
@@ -544,6 +547,7 @@ class Auth2Type {
       (other.identifier == identifier) &&
       (other.active == active) &&
       (other.active2fa == active2fa) &&
+      (other.unverified == unverified) &&
       (other.code == code) &&
       const DeepCollectionEquality().equals(other.params, params);
 
@@ -553,6 +557,7 @@ class Auth2Type {
     (identifier?.hashCode ?? 0) ^
     (active?.hashCode ?? 0) ^
     (active2fa?.hashCode ?? 0) ^
+    (unverified?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(params));
 
