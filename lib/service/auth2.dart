@@ -637,7 +637,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2EmailSignUpResult.failed;
   }
 
-  Future<Auth2EmailAccountState?> checkEmailAccountState(String? email, String operation) async {
+  Future<Auth2EmailAccountState?> checkEmailAccountState(String? email) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
       String url = "${Config().coreUrl}/services/auth/account/exists";
       Map<String, String> headers = {
@@ -649,7 +649,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
         'user_identifier': email,
-        'operation': operation,
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
@@ -721,6 +720,52 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       NotificationService().notify(result ? notifyLoginSucceeded : notifyLoginFailed, loginType);
       NotificationService().notify(notifyLoginFinished, loginType);
     }
+  }
+
+  // Account Checks
+
+  Future<bool?> canSignIn(String? identifier, Auth2LoginType loginType) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (identifier != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/can-sign-in";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(loginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'user_identifier': identifier,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response?.statusCode == 200) {
+        return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
+      }
+    }
+    return null;
+  }
+
+  Future<bool?> canLink(String? identifier, Auth2LoginType loginType) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (identifier != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/can-link";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(loginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'user_identifier': identifier,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response?.statusCode == 200) {
+        return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
+      }
+    }
+    return null;
   }
 
   // Account Linking
