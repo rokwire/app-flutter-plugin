@@ -16,9 +16,13 @@
 
 import 'dart:async';
 import 'dart:core';
+import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/model/event.dart';
 
@@ -34,6 +38,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class Groups with Service implements NotificationsListener {
 
+  static const String notifyUserGroupsUpdated       = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated   = "edu.illinois.rokwire.groups.membership.updated";
   static const String notifyGroupEventsUpdated      = "edu.illinois.rokwire.groups.events.updated";
   static const String notifyGroupCreated            = "edu.illinois.rokwire.group.created";
@@ -56,6 +61,9 @@ class Groups with Service implements NotificationsListener {
 
   final List<Completer<void>> _loginCompleters = [];
   List<Completer<void>> get loginCompleters => _loginCompleters;
+
+  List<Group>? _userGroups;
+  static const String _userGroupsCacheFileName = "user.groups.json";
 
   bool _loggedIn = false;
   bool get loggedIn => _loggedIn;
@@ -92,10 +100,10 @@ class Groups with Service implements NotificationsListener {
   }
 
   @override
-  Future<void> initService() async{
+  Future<void> initService() async {
     await super.initService();
 
-    waitForLogin();
+    await Future.wait([waitForLogin(), _initUserGroups()]);
   }
 
   @override
@@ -114,16 +122,17 @@ class Groups with Service implements NotificationsListener {
   void onNotification(String name, dynamic param) {
     if (name == DeepLink.notifyUri) {
       onDeepLinkUri(param);
-    } if(name == Auth2.notifyLoginSucceeded){
-      waitForLogin();
-    } if(name == Auth2.notifyLogout){
+    } else if (name == Auth2.notifyLoginSucceeded) {
+      _updateUserGroupsFromNet();
+    } else if (name == Auth2.notifyLogout) {
       _loggedIn = false;
+      _clearUserGroups();
     }
   }
 
   // Current User Membership
 
-  Future<bool> isAdminForGroup(String groupId) async{
+  Future<bool> isAdminForGroup(String groupId) async {
     Group? group = await loadGroup(groupId);
     return group?.currentUserIsAdmin ?? false;
   }
@@ -193,11 +202,20 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<Group>?> loadGroups({bool myGroups = false}) async {
+    if (myGroups) {
+      await _updateUserGroupsFromNet();
+      return userGroups;
+    } else {
+      return await _loadAllGroups();
+    }
+  }
+
+  Future<List<Group>?> _loadAllGroups() async {
     await waitForLogin();
-    if ((Config().groupsUrl != null) && ((myGroups != true) || Auth2().isLoggedIn)) {
+    if (Config().groupsUrl != null) {
       try {
-        String url = myGroups ? '${Config().groupsUrl}/user/groups' : '${Config().groupsUrl}/groups';
-        Response? response = await Network().get(url, auth: Auth2(),);
+        String url = '${Config().groupsUrl}/groups';
+        Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         List<dynamic>? groupsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeList(responseBody) : null;
@@ -206,7 +224,7 @@ class Groups with Service implements NotificationsListener {
         debugPrint(e.toString());
       }
     }
-    
+
     return null;
   }
 
@@ -285,6 +303,7 @@ class Groups with Service implements NotificationsListener {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
           if (StringUtils.isNotEmpty(groupId)) {
             NotificationService().notify(notifyGroupCreated, group.id);
+            _updateUserGroupsFromNet();
             return null; // succeeded
           }
         }
@@ -340,6 +359,7 @@ class Groups with Service implements NotificationsListener {
     int responseCode = response?.statusCode ?? -1;
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupDeleted, null);
+      _updateUserGroupsFromNet();
       return true;
     } else {
       Log.i('Failed to delete group. Reason:\n${response?.body}');
@@ -403,6 +423,7 @@ class Groups with Service implements NotificationsListener {
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupMembershipQuit, group);
       NotificationService().notify(notifyGroupUpdated, group.id);
+      _updateUserGroupsFromNet();
       return true;
     } else {
       String? responseString = response?.body;
@@ -422,6 +443,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
+          _updateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -447,6 +469,7 @@ class Groups with Service implements NotificationsListener {
             NotificationService().notify(notifyGroupMembershipSwitchToMember, group);
           }
           NotificationService().notify(notifyGroupUpdated, group!.id);
+          _updateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -465,6 +488,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupMembershipRemoved, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
+          _updateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -769,6 +793,109 @@ class Groups with Service implements NotificationsListener {
       for (Map<String, dynamic> groupDetail in groupDetailsCache) {
         processGroupDetail(groupDetail);
       }
+    }
+  }
+
+  // Cache
+
+  List<Group>? get userGroups {
+    return _userGroups;
+  }
+
+  List<String>? get userGroupNames {
+    if(userGroups != null) {
+      List<String> userGroupNames = [];
+      for (Group group in userGroups!) {
+        String? groupTitle = group.title;
+        if (groupTitle != null) {
+          userGroupNames.add(groupTitle);
+        }
+      }
+      return userGroupNames;
+    }
+    return null;
+  }
+
+  Future<void> _initUserGroups() async {
+    List<Group>? groups = await _loadUserGroupsFromCache();
+    _applyUserGroups(groups);
+    _updateUserGroupsFromNet();
+  }
+
+  Future<bool> _updateUserGroupsFromNet() async {
+    await waitForLogin();
+    String? serviceUrl = Config().groupsUrl;
+    if (StringUtils.isNotEmpty(serviceUrl) && Auth2().isLoggedIn) {
+      Response? response = await Network().get('$serviceUrl/user/groups', auth: Auth2());
+      String? responseString = response?.body;
+      int responseCode = response?.statusCode ?? -1;
+      if (response?.statusCode == 200) {
+        List<Group>? groups = Group.listFromJson(JsonUtils.decodeList(responseString));
+        if (groups != null) {
+          if (!const DeepCollectionEquality().equals(_userGroups, groups)) {
+            _applyUserGroups(groups);
+            await _saveContentStringToCache(_userGroupsCacheFileName, responseString);
+            return true;
+          }
+        }
+      } else {
+        debugPrint('Failed to load user groups. Code: $responseCode.\nResponse: $responseString');
+      }
+    }
+    return false;
+  }
+
+  void _applyUserGroups(List<Group>? groups) {
+    _userGroups = groups;
+    NotificationService().notify(notifyUserGroupsUpdated);
+  }
+
+  void _clearUserGroups() {
+    _applyUserGroups(null);
+    _saveContentStringToCache(_userGroupsCacheFileName, null);
+  }
+
+  // Utils
+
+  static Future<List<Group>?> _loadUserGroupsFromCache() async {
+    return Group.listFromJson(JsonUtils.decodeList(await _loadContentStringFromCache(_userGroupsCacheFileName)));
+  }
+
+  static Future<File?> _getCacheFile(String fileName) async {
+    try {
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+      String cacheFilePath = join(appDocDir.path, fileName);
+      return File(cacheFilePath);
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<String?> _loadContentStringFromCache(String fileName) async {
+    try {
+      File? cacheFile = await _getCacheFile(fileName);
+      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<void> _saveContentStringToCache(String fileName, String? value) async {
+    try {
+      File? cacheFile = await _getCacheFile(fileName);
+      if (value != null) {
+        await cacheFile?.writeAsString(value, flush: true);
+      }
+      else {
+        await cacheFile?.delete();
+      }
+    }
+    catch(e) { 
+      debugPrint(e.toString());
     }
   }
 }
