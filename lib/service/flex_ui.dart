@@ -25,6 +25,7 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -71,6 +72,7 @@ class FlexUI with Service implements NotificationsListener {
 //    Auth2.notifyCardChanged,
 //    IlliniCash.notifyBallanceUpdated,
       AppLivecycle.notifyStateChanged,
+      Groups.notifyUserGroupsUpdated,
     ]);
   }
 
@@ -113,7 +115,8 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2UserPrefs.notifyRolesChanged) ||
         (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
         (name == Auth2.notifyLoginChanged) ||
-        (name == Auth2.notifyLinkChanged))
+        (name == Auth2.notifyLinkChanged) ||
+        (name == Groups.notifyUserGroupsUpdated))
     {
       updateContent();
     }
@@ -308,6 +311,12 @@ class FlexUI with Service implements NotificationsListener {
       return false;
     }
 
+    Map<String, dynamic>? groupRules = rules['groups'];
+    dynamic groupRule = (groupRules != null) ? (((pathEntry != null) ? groupRules[pathEntry] : null) ?? groupRules[entry]) : null;
+    if ((groupRule != null) && !localeEvalGroupRule(groupRule, rules)) {
+      return false;
+    }
+
     Map<String, dynamic>? privacyRules = rules['privacy'];
     dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
     if ((privacyRule != null) && !localeEvalPrivacyRule(privacyRule)) {
@@ -392,6 +401,79 @@ class FlexUI with Service implements NotificationsListener {
       }
     }
     return null;
+  }
+
+  @protected
+  bool localeEvalGroupRule(dynamic groupRule, Map<String, dynamic> rules) {
+    return BoolExpr.eval(groupRule, (String? argument) {
+      if (argument != null) {
+        bool? not, all, any;
+        if (not = argument.startsWith('~')) {
+          argument = argument.substring(1);
+        }
+        if (all = argument.endsWith('!')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        else if (any = argument.endsWith('?')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        
+        Set<String>? groupNames = localeEvalGroupParam(argument, rules);
+        Set<String>? userGroupNames = (Groups().userGroupNames != null) ? Set.from(Groups().userGroupNames!) : null;
+        if (groupNames != null) {
+          if (not == true) {
+            if (userGroupNames != null) {
+              groupNames = userGroupNames.difference(groupNames);
+            }
+          }
+
+          if (all == true) {
+            return const DeepCollectionEquality().equals(userGroupNames, groupNames);
+          }
+          else if (any == true) {
+            return userGroupNames?.intersection(groupNames).isNotEmpty ?? false;
+          }
+          else {
+            return userGroupNames?.containsAll(groupNames) ?? false;
+          }
+        } else {
+          return false;
+        }
+      }
+      return null;
+    });
+  }
+
+  @protected
+  Set<String>? localeEvalGroupParam(String? groupParam, Map<String, dynamic> rules) {
+    if (groupParam != null) {
+      if (RegExp("{.+}").hasMatch(groupParam)) {
+        Set<String> groupNames = <String>{};
+        String rolesStr = groupParam.substring(1, groupParam.length - 1);
+        List<String> groupsStrList = rolesStr.split(',');
+        for (String groupNameStr in groupsStrList) {
+          groupNameStr = groupNameStr.trim();
+          bool platformEval = _localeEvalPlatformGroupRule(groupNameStr, rules);
+          if (platformEval) {
+            groupNames.add(groupNameStr);
+          }
+        }
+        return groupNames;
+      }
+      else {
+        bool platformEval = _localeEvalPlatformGroupRule(groupParam, rules);
+        if (platformEval) {
+          return { groupParam };
+        }
+      }
+    }
+    return null;
+  }
+
+  bool _localeEvalPlatformGroupRule(String groupName, Map<String, dynamic> rules) {
+    Map<String, dynamic>? platformRules = JsonUtils.mapValue(rules['platform']);
+    Map<String, dynamic>? groupRule = platformRules != null ? JsonUtils.mapValue(platformRules['groups.$groupName']) : null;
+    return localeEvalPlatformRule(groupRule);
   }
 
   @protected

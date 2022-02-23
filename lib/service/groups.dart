@@ -38,6 +38,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class Groups with Service implements NotificationsListener {
 
+  static const String notifyUserGroupsUpdated       = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated   = "edu.illinois.rokwire.groups.membership.updated";
   static const String notifyGroupEventsUpdated      = "edu.illinois.rokwire.groups.events.updated";
   static const String notifyGroupCreated            = "edu.illinois.rokwire.group.created";
@@ -801,6 +802,20 @@ class Groups with Service implements NotificationsListener {
     return _userGroups;
   }
 
+  List<String>? get userGroupNames {
+    if(userGroups != null) {
+      List<String> userGroupNames = [];
+      for (Group group in userGroups!) {
+        String? groupTitle = group.title;
+        if (groupTitle != null) {
+          userGroupNames.add(groupTitle);
+        }
+      }
+      return userGroupNames;
+    }
+    return null;
+  }
+
   Future<void> _initUserGroups() async {
     List<Group>? groups = await _loadUserGroupsFromCache();
     _applyUserGroups(groups);
@@ -832,6 +847,7 @@ class Groups with Service implements NotificationsListener {
 
   void _applyUserGroups(List<Group>? groups) {
     _userGroups = groups;
+    NotificationService().notify(notifyUserGroupsUpdated);
   }
 
   void _clearUserGroups() {
