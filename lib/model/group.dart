@@ -131,6 +131,54 @@ class Group {
     membershipQuest   = GroupMembershipQuest.fromOther(other?.membershipQuest);
   }
 
+  @override
+  bool operator ==(dynamic other) =>
+    (other is Group) &&
+      (other.id == id) &&
+      (other.category == category) &&
+      (other.type == type) &&
+      (other.title == title) &&
+      (other.description == description) &&
+      (other.privacy == privacy) &&
+      (other.certified == certified) &&
+      (other.dateCreatedUtc == dateCreatedUtc) &&
+      (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      
+      (other.authManEnabled == authManEnabled) &&
+      (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
+      (other.authManGroupName == authManGroupName) &&
+      
+      (other.imageURL == imageURL) &&
+      (other.webURL == webURL) &&
+      (const DeepCollectionEquality().equals(other.members, members)) &&
+      (const DeepCollectionEquality().equals(other.tags, tags)) &&
+      (const DeepCollectionEquality().equals(other.questions, questions)) &&
+      (other.membershipQuest == membershipQuest);
+
+
+  @override
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (category?.hashCode ?? 0) ^
+    (type?.hashCode ?? 0) ^
+    (title?.hashCode ?? 0) ^
+    (description?.hashCode ?? 0) ^
+    (privacy?.hashCode ?? 0) ^
+    (certified?.hashCode ?? 0) ^
+    (dateCreatedUtc?.hashCode ?? 0) ^
+    (dateUpdatedUtc?.hashCode ?? 0) ^
+
+    (authManEnabled?.hashCode ?? 0) ^
+    (onlyAdminsCanCreatePolls?.hashCode ?? 0) ^
+    (authManGroupName?.hashCode ?? 0) ^
+
+    (imageURL?.hashCode ?? 0) ^
+    (webURL?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(members)) ^
+    (const DeepCollectionEquality().hash(tags)) ^
+    (const DeepCollectionEquality().hash(questions)) ^
+    (membershipQuest?.hashCode ?? 0);
+
   List<Member> getMembersByStatus(GroupMemberStatus? status){
     if(CollectionUtils.isNotEmpty(members) && status != null){
       return members!.where((member) => member.status == status).toList();
@@ -390,35 +438,33 @@ class Member {
 
 
   @override
-  bool operator == (dynamic other) {
-    return (other is Member) &&
-           (other.id == id) &&
-           (other.userId == userId) &&
-           (other.externalId == externalId) &&
-           (other.name == name) &&
-           (other.email == email) &&
-           (other.photoURL == photoURL) &&
-           (other.status == status) &&
-           (other.officerTitle == officerTitle) &&
-           (other.dateCreatedUtc == dateCreatedUtc) &&
-           (other.dateUpdatedUtc == dateUpdatedUtc) &&
-            const DeepCollectionEquality().equals(other.answers, answers);
-  }
+  bool operator ==(dynamic other) =>
+    (other is Member) &&
+      (other.id == id) &&
+      (other.userId == userId) &&
+      (other.externalId == externalId) &&
+      (other.name == name) &&
+      (other.email == email) &&
+      (other.photoURL == photoURL) &&
+      (other.status == status) &&
+      (other.officerTitle == officerTitle) &&
+      (other.dateCreatedUtc == dateCreatedUtc) &&
+      (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      const DeepCollectionEquality().equals(other.answers, answers);
 
   @override
-  int get hashCode {
-    return (id?.hashCode ?? 0) ^
-           (userId?.hashCode ?? 0) ^
-           (externalId?.hashCode ?? 0) ^
-           (name?.hashCode ?? 0) ^
-           (email?.hashCode ?? 0) ^
-           (photoURL?.hashCode ?? 0) ^
-           (status?.hashCode ?? 0) ^
-           (officerTitle?.hashCode ?? 0) ^
-           (dateCreatedUtc?.hashCode ?? 0) ^
-           (dateUpdatedUtc?.hashCode ?? 0) ^
-           (answers?.hashCode ?? 0);
-  }
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (userId?.hashCode ?? 0) ^
+    (externalId?.hashCode ?? 0) ^
+    (name?.hashCode ?? 0) ^
+    (email?.hashCode ?? 0) ^
+    (photoURL?.hashCode ?? 0) ^
+    (status?.hashCode ?? 0) ^
+    (officerTitle?.hashCode ?? 0) ^
+    (dateCreatedUtc?.hashCode ?? 0) ^
+    (dateUpdatedUtc?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(answers));
 
   bool get isAdmin           => status == GroupMemberStatus.admin;
   bool get isMember          => status == GroupMemberStatus.member;
@@ -519,6 +565,15 @@ class GroupMembershipQuest {
     json['steps']     = GroupMembershipStep.listToJson(steps);
     return json;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipQuest) &&
+      const DeepCollectionEquality().equals(other.steps, steps);
+
+  @override
+  int get hashCode =>
+    (const DeepCollectionEquality().hash(steps));
 }
 
 //////////////////////////////
@@ -562,6 +617,17 @@ class GroupMembershipStep {
     json['eventIds']    = eventIds;
     return json;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipStep) &&
+      (other.description == description) &&
+      const DeepCollectionEquality().equals(other.eventIds, eventIds);
+
+  @override
+  int get hashCode =>
+    (description?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(eventIds));
 
   static List<GroupMembershipStep>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipStep>? values;
@@ -612,6 +678,15 @@ class GroupMembershipQuestion {
   String? toStirng() {
     return question;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipQuestion) &&
+      (other.question == question);
+
+  @override
+  int get hashCode =>
+    (question?.hashCode ?? 0);
 
   static List<GroupMembershipQuestion>? listFromOthers(List<GroupMembershipQuestion>? others) {
     List<GroupMembershipQuestion>? values;
@@ -667,6 +742,16 @@ class GroupMembershipAnswer {
     };
   }
 
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipAnswer) &&
+      (other.question == question) &&
+      (other.answer == answer);
+
+  @override
+  int get hashCode =>
+    (question?.hashCode ?? 0) ^
+    (answer?.hashCode ?? 0);
 
   static List<GroupMembershipAnswer>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipAnswer>? values;
