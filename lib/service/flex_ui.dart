@@ -419,8 +419,8 @@ class FlexUI with Service implements NotificationsListener {
         }
         
         Set<String>? targetGroups = localeEvalGroupParam(argument, rules);
-        Set<String>? userGroups = Groups().userGroupNames;
-        if ((targetGroups != null) && (userGroups != null)) {
+        Set<String> userGroups = Groups().userGroupNames ?? {};
+        if (targetGroups != null) {
           if (not == true) {
             targetGroups = userGroups.difference(targetGroups);
           }
