@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Add auth requests to new Core BB endpoints [#19](https://github.com/rokwire/app-flutter-plugin/issues/19)
 - Group rules in FlexUI [#18](https://github.com/rokwire/app-flutter-plugin/issues/18).
 - Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11)
 - Added capability to filter staled analytics packets before sending them to log service [#4](https://github.com/rokwire/app-flutter-plugin/issues/4).
