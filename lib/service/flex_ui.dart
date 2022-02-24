@@ -418,26 +418,22 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? groupNames = localeEvalGroupParam(argument, rules);
-        Set<String>? userGroupNames = (Groups().userGroupNames != null) ? Set.from(Groups().userGroupNames!) : null;
-        if (groupNames != null) {
+        Set<String>? targetGroups = localeEvalGroupParam(argument, rules);
+        Set<String>? userGroups = Groups().userGroupNames;
+        if ((targetGroups != null) && (userGroups != null)) {
           if (not == true) {
-            if (userGroupNames != null) {
-              groupNames = userGroupNames.difference(groupNames);
-            }
+            targetGroups = userGroups.difference(targetGroups);
           }
 
           if (all == true) {
-            return const DeepCollectionEquality().equals(userGroupNames, groupNames);
+            return const DeepCollectionEquality().equals(userGroups, targetGroups);
           }
           else if (any == true) {
-            return userGroupNames?.intersection(groupNames).isNotEmpty ?? false;
+            return userGroups.intersection(targetGroups).isNotEmpty;
           }
           else {
-            return userGroupNames?.containsAll(groupNames) ?? false;
+            return userGroups.containsAll(targetGroups);
           }
-        } else {
-          return false;
         }
       }
       return null;
@@ -448,32 +444,19 @@ class FlexUI with Service implements NotificationsListener {
   Set<String>? localeEvalGroupParam(String? groupParam, Map<String, dynamic> rules) {
     if (groupParam != null) {
       if (RegExp("{.+}").hasMatch(groupParam)) {
-        Set<String> groupNames = <String>{};
+        Set<String> groups = <String>{};
         String rolesStr = groupParam.substring(1, groupParam.length - 1);
         List<String> groupsStrList = rolesStr.split(',');
         for (String groupNameStr in groupsStrList) {
-          groupNameStr = groupNameStr.trim();
-          bool platformEval = _localeEvalPlatformGroupRule(groupNameStr, rules);
-          if (platformEval) {
-            groupNames.add(groupNameStr);
-          }
+          groups.add(groupNameStr.trim());
         }
-        return groupNames;
+        return groups;
       }
       else {
-        bool platformEval = _localeEvalPlatformGroupRule(groupParam, rules);
-        if (platformEval) {
-          return { groupParam };
-        }
+        return { groupParam };
       }
     }
     return null;
-  }
-
-  bool _localeEvalPlatformGroupRule(String groupName, Map<String, dynamic> rules) {
-    Map<String, dynamic>? platformRules = JsonUtils.mapValue(rules['platform']);
-    Map<String, dynamic>? groupRule = platformRules != null ? JsonUtils.mapValue(platformRules['groups.$groupName']) : null;
-    return localeEvalPlatformRule(groupRule);
   }
 
   @protected
