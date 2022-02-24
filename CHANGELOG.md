@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1)
 - Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375)
+### Fixed
+- Match Core BB JSON keys in Auth Profile [#22](https://github.com/rokwire/app-flutter-plugin/issues/22)
 
 ## [0.0.1] - 2022-02-07
 ### Added
