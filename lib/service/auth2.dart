@@ -35,7 +35,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   _OidcLogin? _oidcLogin;
   bool? _oidcLink;
-  List<Completer<bool?>>? _oidcAuthenticationCompleters;
+  List<Completer<Auth2OidcAuthenticateResult?>>? _oidcAuthenticationCompleters;
   bool? _processingOidcAuthentication;
   Timer? _oidcAuthenticationTimer;
 
@@ -309,11 +309,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
-  Future<bool?> authenticateWithOidc({bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({bool? link}) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
 
       if (_oidcAuthenticationCompleters == null) {
-        _oidcAuthenticationCompleters = <Completer<bool?>>[];
+        _oidcAuthenticationCompleters = <Completer<Auth2OidcAuthenticateResult?>>[];
         NotificationService().notify(notifyLoginStarted, oidcLoginType);
 
         _OidcLogin? oidcLogin = await getOidcData();
@@ -323,30 +323,44 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           await _launchUrl(_oidcLogin?.loginUrl);
         }
         else {
-          completeOidcAuthentication(false);
-          return false;
+          completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
+          return Auth2OidcAuthenticateResult.failed;
         }
       }
 
-      Completer<bool?> completer = Completer<bool?>();
+      Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
       _oidcAuthenticationCompleters!.add(completer);
       return completer.future;
     }
     
-    return false;
+    return Auth2OidcAuthenticateResult.failed;
   }
 
   @protected
-  Future<bool> handleOidcAuthentication(Uri uri) async {
+  Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
     
     RokwirePlugin.dismissSafariVC();
     
     cancelOidcAuthenticationTimer();
 
     _processingOidcAuthentication = true;
-    bool result = (_oidcLink == true) ?
-      await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params) == Auth2LinkResult.succeded :
-      await processOidcAuthentication(uri);
+    Auth2OidcAuthenticateResult result;
+    if (_oidcLink == true) {
+      Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params);
+      switch (linkResult) {
+        case Auth2LinkResult.succeeded:
+          result = Auth2OidcAuthenticateResult.succeeded;
+          break;
+        case Auth2LinkResult.failedAccountExist:
+          result = Auth2OidcAuthenticateResult.failedAccountExist;
+          break;
+        default:
+          result = Auth2OidcAuthenticateResult.failed;
+      }
+    } else {
+      bool processResult = await processOidcAuthentication(uri);
+      result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
+    }
     _processingOidcAuthentication = false;
 
     completeOidcAuthentication(result);
@@ -466,19 +480,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  void completeOidcAuthentication(bool? success) {
+  void completeOidcAuthentication(Auth2OidcAuthenticateResult? result) {
     
-    _notifyLogin(oidcLoginType, success);
+    _notifyLogin(oidcLoginType, result == Auth2OidcAuthenticateResult.succeeded);
 
     _oidcLogin = null;
     _oidcLink = null;
 
     if (_oidcAuthenticationCompleters != null) {
-      List<Completer<bool?>> loginCompleters = _oidcAuthenticationCompleters!;
+      List<Completer<Auth2OidcAuthenticateResult?>> loginCompleters = _oidcAuthenticationCompleters!;
       _oidcAuthenticationCompleters = null;
 
-      for(Completer<bool?> completer in loginCompleters){
-        completer.complete(success);
+      for(Completer<Auth2OidcAuthenticateResult?> completer in loginCompleters){
+        completer.complete(result);
       }
     }
   }
@@ -508,7 +522,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        return Auth2PhoneRequestCodeResult.succeded;
+        return Auth2PhoneRequestCodeResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
         return Auth2PhoneRequestCodeResult.failedAccountExist;
@@ -541,7 +555,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(phoneLoginType, result);
-        return result ? Auth2PhoneSendCodeResult.succeded : Auth2PhoneSendCodeResult.failed;
+        return result ? Auth2PhoneSendCodeResult.succeeded : Auth2PhoneSendCodeResult.failed;
       }
       else {
         _notifyLogin(phoneLoginType, false);
@@ -583,7 +597,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(emailLoginType, result);
-        return result ? Auth2EmailSignInResult.succeded : Auth2EmailSignInResult.failed;
+        return result ? Auth2EmailSignInResult.succeeded : Auth2EmailSignInResult.failed;
       }
       else {
         _notifyLogin(emailLoginType, false);
@@ -628,7 +642,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        return Auth2EmailSignUpResult.succeded;
+        return Auth2EmailSignUpResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
         return Auth2EmailSignUpResult.failedAccountExist;
@@ -677,7 +691,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        return Auth2EmailForgotPasswordResult.succeded;
+        return Auth2EmailForgotPasswordResult.succeeded;
       }
       else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
@@ -791,7 +805,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         if (authTypes != null) {
           Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
           NotificationService().notify(notifyLinkChanged);
-          return Auth2LinkResult.succeded;
+          return Auth2LinkResult.succeeded;
         }
       }
       else {
@@ -1135,13 +1149,13 @@ class _OidcLogin {
 }
 
 enum Auth2PhoneRequestCodeResult {
-  succeded,
+  succeeded,
   failed,
   failedAccountExist,
 }
 
 enum Auth2PhoneSendCodeResult {
-  succeded,
+  succeeded,
   failed,
   failedInvalid,
 }
@@ -1153,13 +1167,13 @@ enum Auth2EmailAccountState {
 }
 
 enum Auth2EmailSignUpResult {
-  succeded,
+  succeeded,
   failed,
   failedAccountExist,
 }
 
 enum Auth2EmailSignInResult {
-  succeded,
+  succeeded,
   failed,
   failedActivationExpired,
   failedNotActivated,
@@ -1167,14 +1181,20 @@ enum Auth2EmailSignInResult {
 }
 
 enum Auth2EmailForgotPasswordResult {
-  succeded,
+  succeeded,
   failed,
   failedActivationExpired,
   failedNotActivated,
 }
 
+enum Auth2OidcAuthenticateResult {
+  succeeded,
+  failed,
+  failedAccountExist,
+}
+
 enum Auth2LinkResult {
-  succeded,
+  succeeded,
   failed,
   failedActivationExpired,
   failedNotActivated,
