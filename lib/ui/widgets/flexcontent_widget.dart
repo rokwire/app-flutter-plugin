@@ -115,7 +115,7 @@ class FlexContentWidget extends StatefulWidget {
 
   @protected
   Widget buildButtons(BuildContext context, List<dynamic>? buttonsJsonContent) {
-    if (CollectionUtils.isEmpty(buttonsJsonContent)) {
+    if (CollectionUtils.isNotEmpty(buttonsJsonContent)) {
       List<Widget> buttons = [];
       for (dynamic buttonsJsonEntry in buttonsJsonContent!) {
         Widget? buttonEntry = buildButtonEntry(context, JsonUtils.mapValue(buttonsJsonEntry));

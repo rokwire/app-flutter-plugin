@@ -19,8 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added header bars to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added RoundedButton to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 ### Changed
-- Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1)
-- Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375)
+- Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1).
+- Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375).
+### Fixed
+- Fixed crash in FlexContentWidget when no buttons definition persists.
 
 ## [0.0.1] - 2022-02-07
 ### Added
