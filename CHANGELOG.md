@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375).
 ### Fixed
 - Fixed crash in FlexContentWidget when no buttons definition persists.
+- Android: plugin initialization [#27](https://github.com/rokwire/app-flutter-plugin/issues/27).
 
 ## [0.0.1] - 2022-02-07
 ### Added
