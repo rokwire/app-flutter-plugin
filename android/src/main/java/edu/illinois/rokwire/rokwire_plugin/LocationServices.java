@@ -37,9 +37,7 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
     private MethodChannel.Result _requestPermisionResult;
 
     public LocationServices() {
-        if (_instance == null) {
-            _instance = this;
-        }
+        _instance = this;
     }
 
     public static LocationServices getInstance() {

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Match Core BB JSON keys in Auth Profile [#22](https://github.com/rokwire/app-flutter-plugin/issues/22)
 - Fixed crash in FlexContentWidget when no buttons definition persists.
+- Android: plugin initialization [#27](https://github.com/rokwire/app-flutter-plugin/issues/27).
 
 ## [0.0.1] - 2022-02-07
 ### Added
