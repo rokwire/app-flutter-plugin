@@ -267,7 +267,7 @@ class Auth2UserProfile {
   
       address: JsonUtils.stringValue(json['address']),
       state: JsonUtils.stringValue(json['state']),
-      zip: JsonUtils.stringValue(json['zip']),
+      zip: JsonUtils.stringValue(json['zip_code']),
       country: JsonUtils.stringValue(json['country']),
     ) : null;
   }
@@ -313,7 +313,7 @@ class Auth2UserProfile {
 
       'address': _address,
       'state': _state,
-      'zip': _zip,
+      'zip_code': _zip,
       'country': _country,
     };
   }
