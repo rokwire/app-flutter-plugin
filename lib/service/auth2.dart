@@ -1148,11 +1148,23 @@ class _OidcLogin {
 
 }
 
+// Auth2PhoneRequestCodeResult
+
 enum Auth2PhoneRequestCodeResult {
   succeeded,
   failed,
   failedAccountExist,
 }
+
+Auth2PhoneRequestCodeResult auth2PhoneRequestCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value) {
+    case Auth2LinkResult.succeeded: return Auth2PhoneRequestCodeResult.succeeded;
+    case Auth2LinkResult.failedAccountExist: return Auth2PhoneRequestCodeResult.failedAccountExist;
+    default: return Auth2PhoneRequestCodeResult.failed;
+  }
+}
+
+// Auth2PhoneSendCodeResult
 
 enum Auth2PhoneSendCodeResult {
   succeeded,
@@ -1160,17 +1172,39 @@ enum Auth2PhoneSendCodeResult {
   failedInvalid,
 }
 
+Auth2PhoneSendCodeResult auth2PhoneSendCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value) {
+    case Auth2LinkResult.succeeded: return Auth2PhoneSendCodeResult.succeeded;
+    case Auth2LinkResult.failedInvalid: return Auth2PhoneSendCodeResult.failedInvalid;
+    default: return Auth2PhoneSendCodeResult.failed;
+  }
+}
+
+// Auth2EmailAccountState
+
 enum Auth2EmailAccountState {
   nonExistent,
   unverified,
   verified,
 }
 
+// Auth2EmailSignUpResult
+
 enum Auth2EmailSignUpResult {
   succeeded,
   failed,
   failedAccountExist,
 }
+
+Auth2EmailSignUpResult auth2EmailSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value) {
+    case Auth2LinkResult.succeeded: return Auth2EmailSignUpResult.succeeded;
+    case Auth2LinkResult.failedAccountExist: return Auth2EmailSignUpResult.failedAccountExist;
+    default: return Auth2EmailSignUpResult.failed;
+  }
+}
+
+// Auth2EmailSignInResult
 
 enum Auth2EmailSignInResult {
   succeeded,
@@ -1180,6 +1214,18 @@ enum Auth2EmailSignInResult {
   failedInvalid,
 }
 
+Auth2EmailSignInResult auth2EmailSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value) {
+    case Auth2LinkResult.succeeded: return Auth2EmailSignInResult.succeeded;
+    case Auth2LinkResult.failedNotActivated: return Auth2EmailSignInResult.failedNotActivated;
+    case Auth2LinkResult.failedActivationExpired: return Auth2EmailSignInResult.failedActivationExpired;
+    case Auth2LinkResult.failedInvalid: return Auth2EmailSignInResult.failedInvalid;
+    default: return Auth2EmailSignInResult.failed;
+  }
+}
+
+// Auth2EmailForgotPasswordResult
+
 enum Auth2EmailForgotPasswordResult {
   succeeded,
   failed,
@@ -1187,11 +1233,15 @@ enum Auth2EmailForgotPasswordResult {
   failedNotActivated,
 }
 
+// Auth2OidcAuthenticateResult
+
 enum Auth2OidcAuthenticateResult {
   succeeded,
   failed,
   failedAccountExist,
 }
+
+// Auth2LinkResult
 
 enum Auth2LinkResult {
   succeeded,
