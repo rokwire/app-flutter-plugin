@@ -138,7 +138,7 @@ class _RoundedButtonState extends State<RoundedButton> {
     super.initState();
 
     WidgetsBinding.instance!.addPostFrameCallback((_) {
-      _evalHeight();
+      _evalContentSize();
     });
   }
 
@@ -263,7 +263,7 @@ class _RoundedButtonState extends State<RoundedButton> {
     ): Container();
   }
 
-  void _evalHeight() {
+  void _evalContentSize() {
     try {
       final RenderObject? renderBox = _contentKey.currentContext?.findRenderObject();
       if (renderBox is RenderBox) {
