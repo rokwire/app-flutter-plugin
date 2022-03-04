@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ribbon buttons to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added header bars to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added RoundedButton to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added progress capability to RoundedButton [#29](https://github.com/rokwire/app-flutter-plugin/issues/29).
 ### Changed
 - Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1).
 - Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375).
