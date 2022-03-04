@@ -64,30 +64,6 @@ class RibbonButton extends StatefulWidget {
   _RibbonButtonState createState() => _RibbonButtonState();
 
   @protected
-  Color? get ensuredBackgroundColor => backgroundColor ?? Styles().colors?.white;
-
-  @protected
-  Color? get ensuredTextColor => textColor ?? Styles().colors?.fillColorPrimary;
-
-  @protected
-  String? get ensuredFontFamily => fontFamily ?? Styles().fontFamilies?.bold;
-
-  @protected
-  double? get ensuredFontSize => fontSize;
-
-  @protected
-  TextStyle get ensuredTextStyle => textStyle ?? TextStyle(fontFamily: ensuredFontFamily, fontSize: ensuredFontSize, color: ensuredTextColor);
-
-  @protected
-  Widget get ensuredTextWidget => textWidget ?? Text(label ?? '', style: ensuredTextStyle, textAlign: textAlign,);
-
-  @protected
-  Widget? get leftIconImage => (leftIconAsset != null) ? Image.asset(leftIconAsset!, excludeFromSemantics: true) : null;
-  
-  @protected
-  Widget? get rightIconImage => (rightIconAsset != null) ? Image.asset(rightIconAsset!, excludeFromSemantics: true) : null;
-
-  @protected
   void onTapWidget(BuildContext context) {
     if (onTap != null) {
       onTap!();
@@ -97,20 +73,34 @@ class RibbonButton extends StatefulWidget {
 
 class _RibbonButtonState extends State<RibbonButton> {
 
+  Color? get _backgroundColor => widget.backgroundColor ?? Styles().colors?.white;
+
+  Color? get _textColor => widget.textColor ?? Styles().colors?.fillColorPrimary;
+
+  String? get _fontFamily => widget.fontFamily ?? Styles().fontFamilies?.bold;
+
+  TextStyle get ensuredTextStyle => widget.textStyle ?? TextStyle(fontFamily: _fontFamily, fontSize: widget.fontSize, color: _textColor);
+
+  Widget get _textWidget => widget.textWidget ?? Text(widget.label ?? '', style: ensuredTextStyle, textAlign: widget.textAlign,);
+
+  Widget? get _leftIconImage => (widget.leftIconAsset != null) ? Image.asset(widget.leftIconAsset!, excludeFromSemantics: true) : null;
+  
+  Widget? get _rightIconImage => (widget.rightIconAsset != null) ? Image.asset(widget.rightIconAsset!, excludeFromSemantics: true) : null;
+
   @override
   Widget build(BuildContext context) {
-    Widget? leftIconWidget = widget.leftIcon ?? widget.leftIconImage;
-    Widget? rightIconWidget = widget.rightIcon ?? widget.rightIconImage;
+    Widget? leftIconWidget = widget.leftIcon ?? _leftIconImage;
+    Widget? rightIconWidget = widget.rightIcon ?? _rightIconImage;
     return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
       GestureDetector(onTap: () => widget.onTapWidget(context), child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
-            Container(decoration: BoxDecoration(color: widget.ensuredBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
+            Container(decoration: BoxDecoration(color: _backgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
               Padding(padding: widget.padding, child:
                 Row(children: <Widget>[
                   (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
-                    widget.ensuredTextWidget
+                    _textWidget
                   ),
                   (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
