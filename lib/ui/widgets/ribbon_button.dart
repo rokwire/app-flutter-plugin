@@ -3,7 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class RibbonButton extends StatelessWidget {
+class RibbonButton extends StatefulWidget {
   final String? label;
   final void Function()? onTap;
   final Color? backgroundColor;
@@ -60,12 +60,26 @@ class RibbonButton extends StatelessWidget {
     this.semanticsValue,
   }) : super(key: key);
 
-  Color? get _backgroundColor => backgroundColor ?? Styles().colors?.white;
-  
-  Color? get _textColor => textColor ?? Styles().colors?.fillColorPrimary;
-  String? get _fontFamily => fontFamily ?? Styles().fontFamilies?.bold;
-  TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: _fontFamily, fontSize: fontSize, color: _textColor);
-  Widget get _textWidget => textWidget ?? Text(label ?? '', style: _textStyle, textAlign: textAlign,);
+  @override
+  _RibbonButtonState createState() => _RibbonButtonState();
+
+  @protected
+  Color? get ensuredBackgroundColor => backgroundColor ?? Styles().colors?.white;
+
+  @protected
+  Color? get ensuredTextColor => textColor ?? Styles().colors?.fillColorPrimary;
+
+  @protected
+  String? get ensuredFontFamily => fontFamily ?? Styles().fontFamilies?.bold;
+
+  @protected
+  double? get ensuredFontSize => fontSize;
+
+  @protected
+  TextStyle get ensuredTextStyle => textStyle ?? TextStyle(fontFamily: ensuredFontFamily, fontSize: ensuredFontSize, color: ensuredTextColor);
+
+  @protected
+  Widget get ensuredTextWidget => textWidget ?? Text(label ?? '', style: ensuredTextStyle, textAlign: textAlign,);
 
   @protected
   Widget? get leftIconImage => (leftIconAsset != null) ? Image.asset(leftIconAsset!, excludeFromSemantics: true) : null;
@@ -73,22 +87,32 @@ class RibbonButton extends StatelessWidget {
   @protected
   Widget? get rightIconImage => (rightIconAsset != null) ? Image.asset(rightIconAsset!, excludeFromSemantics: true) : null;
 
+  @protected
+  void onTapWidget(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
+    }
+  }
+}
+
+class _RibbonButtonState extends State<RibbonButton> {
+
   @override
   Widget build(BuildContext context) {
-    Widget? leftIconWidget = leftIcon ?? leftIconImage;
-    Widget? rightIconWidget = rightIcon ?? rightIconImage;
-    return Semantics(label: label, hint: hint, value : semanticsValue, button: true, excludeSemantics: true, child:
-      GestureDetector(onTap: () => onTapWidget(context), child:
+    Widget? leftIconWidget = widget.leftIcon ?? widget.leftIconImage;
+    Widget? rightIconWidget = widget.rightIcon ?? widget.rightIconImage;
+    return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
+      GestureDetector(onTap: () => widget.onTapWidget(context), child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
-            Container(decoration: BoxDecoration(color: _backgroundColor, border: border, borderRadius: borderRadius, boxShadow: borderShadow), child:
-              Padding(padding: padding, child:
+            Container(decoration: BoxDecoration(color: widget.ensuredBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
+              Padding(padding: widget.padding, child:
                 Row(children: <Widget>[
-                  (leftIconWidget != null) ? Padding(padding: leftIconPadding, child: leftIconWidget) : Container(),
+                  (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
-                    _textWidget
+                    widget.ensuredTextWidget
                   ),
-                  (rightIconWidget != null) ? Padding(padding: rightIconPadding, child: rightIconWidget) : Container(),
+                  (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
               ),
             )
@@ -96,13 +120,6 @@ class RibbonButton extends StatelessWidget {
         ],),
       ),
     );
-  }
-
-  @protected
-  void onTapWidget(BuildContext context) {
-    if (onTap != null) {
-      onTap!();
-    }
   }
 }
 
