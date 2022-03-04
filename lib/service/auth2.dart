@@ -347,16 +347,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     Auth2OidcAuthenticateResult result;
     if (_oidcLink == true) {
       Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params);
-      switch (linkResult) {
-        case Auth2LinkResult.succeeded:
-          result = Auth2OidcAuthenticateResult.succeeded;
-          break;
-        case Auth2LinkResult.failedAccountExist:
-          result = Auth2OidcAuthenticateResult.failedAccountExist;
-          break;
-        default:
-          result = Auth2OidcAuthenticateResult.failed;
-      }
+      result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
     } else {
       bool processResult = await processOidcAuthentication(uri);
       result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
@@ -1239,6 +1230,14 @@ enum Auth2OidcAuthenticateResult {
   succeeded,
   failed,
   failedAccountExist,
+}
+
+Auth2OidcAuthenticateResult auth2OidcAuthenticateResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value) {
+    case Auth2LinkResult.succeeded: return Auth2OidcAuthenticateResult.succeeded;
+    case Auth2LinkResult.failedAccountExist: return Auth2OidcAuthenticateResult.failedAccountExist;
+    default: return Auth2OidcAuthenticateResult.failed;
+  }
 }
 
 // Auth2LinkResult
