@@ -23,9 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow more functions in services to be overridden [#1](https://github.com/rokwire/app-flutter-plugin/issues/1).
 - Content expose method uploadImage() [#1375](https://github.com/rokwire/illinois-app/issues/1375).
 ### Fixed
-- Match Core BB JSON keys in Auth Profile [#22](https://github.com/rokwire/app-flutter-plugin/issues/22)
+- Match Core BB JSON keys in Auth Profile [#22](https://github.com/rokwire/app-flutter-plugin/issues/22).
 - Fixed crash in FlexContentWidget when no buttons definition persists.
 - Android: plugin initialization [#27](https://github.com/rokwire/app-flutter-plugin/issues/27).
+- Do not acknowledge pending membership in FlexUI [#31](https://github.com/rokwire/app-flutter-plugin/issues/31).
 
 ## [0.0.1] - 2022-02-07
 ### Added
