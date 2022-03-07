@@ -937,7 +937,7 @@ class Groups with Service implements NotificationsListener {
     if (groups != null) {
       groupNames = {};
       for (Group group in groups) {
-        if (group.title != null) {
+        if (group.currentUserIsMemberOrAdmin && (group.title != null)) {
           groupNames.add(group.title!);
         }
       }
