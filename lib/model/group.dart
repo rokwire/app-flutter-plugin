@@ -217,13 +217,11 @@ class Group {
   }
 
   bool get currentUserIsMember{
-    Member? currentUser = currentUserAsMember;
-    return (currentUser?.isMember ?? false);
+    return (currentUserAsMember?.isMember ?? false);
   }
 
   bool get currentUserIsMemberOrAdmin{
-    Member? currentUser = currentUserAsMember;
-    return (currentUser?.isMember ?? false) || (currentUser?.isAdmin ?? false);
+    return (currentUserAsMember?.isMemberOrAdmin ?? false);
   }
 
   bool get currentUserCanJoin {
@@ -468,6 +466,7 @@ class Member {
 
   bool get isAdmin           => status == GroupMemberStatus.admin;
   bool get isMember          => status == GroupMemberStatus.member;
+  bool get isMemberOrAdmin   => isMember || isAdmin;
   bool get isPendingMember   => status == GroupMemberStatus.pending;
   bool get isRejected        => status == GroupMemberStatus.rejected;
 
