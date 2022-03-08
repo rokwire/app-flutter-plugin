@@ -60,7 +60,7 @@ class Content /* with Service */ {
         Uint8List imageContent = response.bodyBytes;
         // 3. call the Content service api
         String fileName = const Uuid().v1();
-        return _uploadImage(storagePath: storageDir, imageBytes: imageContent, fileName: fileName, width: width, mediaType: contentType);
+        return uploadImage(storagePath: storageDir, imageBytes: imageContent, fileName: fileName, width: width, mediaType: contentType);
       } else {
         return ImagesResult.error(ImagesErrorType.contentTypeNotSupported, "The provided content type is not supported");
       }
@@ -80,7 +80,7 @@ class Content /* with Service */ {
         List<int> imageBytes = await image.readAsBytes();
         String fileName = basename(image.path);
         String? contentType = mime(fileName);
-        return _uploadImage(storagePath: storagePath, imageBytes: imageBytes, width: width, fileName: fileName, mediaType: contentType);
+        return uploadImage(storagePath: storagePath, imageBytes: imageBytes, width: width, fileName: fileName, mediaType: contentType);
       }
     }
     catch(e) {
@@ -89,7 +89,7 @@ class Content /* with Service */ {
     return null;
   }
 
-  Future<ImagesResult> _uploadImage({List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType}) async {
+  Future<ImagesResult> uploadImage({List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing images BB url.');

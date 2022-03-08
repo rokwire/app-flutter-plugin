@@ -37,6 +37,7 @@ class Group {
   DateTime?           dateUpdatedUtc;
 
   bool?               authManEnabled;
+  bool?               onlyAdminsCanCreatePolls;
   String?             authManGroupName;
 
   String?             imageURL;
@@ -70,7 +71,7 @@ class Group {
     try { title             = json['title'];      } catch(e) { debugPrint(e.toString()); }
     try { description       = json['description'];  } catch(e) { debugPrint(e.toString()); }
     try { privacy           = groupPrivacyFromString(json['privacy']); } catch(e) { debugPrint(e.toString()); }
-    try { certified         = json['certified']; } catch(e) { debugPrint(e.toString()); }
+    try { certified          = json['certified']; } catch(e) { debugPrint(e.toString()); }
     try { authManEnabled    = json['authman_enabled']; } catch(e) { debugPrint(e.toString()); }
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
@@ -81,28 +82,30 @@ class Group {
     try { membershipQuest   = GroupMembershipQuest.fromJson(json['membershipQuest']); } catch(e) { debugPrint(e.toString()); }
     try { members           = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); }
     try { questions         = GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])); } catch(e) { debugPrint(e.toString()); }
+    try { onlyAdminsCanCreatePolls = json['only_admins_can_create_polls']; } catch(e) { debugPrint(e.toString()); }
   }
 
   Map<String, dynamic> toJson({bool withId = true}) {
     Map<String, dynamic> json = {};
     if(withId){
-      json['id']                 = id;
+      json['id']                         = id;
     }
-    json['category']             = category;
-    json['type']                 = type;
-    json['title']                = title;
-    json['description']          = description;
-    json['privacy']              = groupPrivacyToString(privacy);
-    json['certified']            = certified;
-    json['authman_enabled']      = authManEnabled;
-    json['authman_group']        = authManGroupName;
-    json['date_created']         = groupUtcDateTimeToString(dateCreatedUtc);
-    json['date_updated']         = groupUtcDateTimeToString(dateUpdatedUtc);
-    json['image_url']            = imageURL;
-    json['web_url']              = webURL;
-    json['tags']                 = tags;
-    json['members']              = Member.listToJson(members);
-    json['membership_questions'] = GroupMembershipQuestion.listToStringList(questions);
+    json['category']                     = category;
+    json['type']                         = type;
+    json['title']                        = title;
+    json['description']                  = description;
+    json['privacy']                      = groupPrivacyToString(privacy);
+    json['certified']                     = certified;
+    json['authman_enabled']              = authManEnabled;
+    json['authman_group']                = authManGroupName;
+    json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
+    json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
+    json['image_url']                    = imageURL;
+    json['web_url']                      = webURL;
+    json['tags']                         = tags;
+    json['members']                      = Member.listToJson(members);
+    json['membership_questions']         = GroupMembershipQuestion.listToStringList(questions);
+    json['only_admins_can_create_polls'] = onlyAdminsCanCreatePolls;
 
     return json;
   }
@@ -114,8 +117,9 @@ class Group {
     title             = other?.title;
     description       = other?.description;
     privacy           = other?.privacy;
-    certified         = other?.certified;
+    certified          = other?.certified;
     authManEnabled    = other?.authManEnabled;
+    onlyAdminsCanCreatePolls = other?.onlyAdminsCanCreatePolls;
     authManGroupName  = other?.authManGroupName;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
@@ -126,6 +130,54 @@ class Group {
     questions         = GroupMembershipQuestion.listFromOthers(other?.questions);
     membershipQuest   = GroupMembershipQuest.fromOther(other?.membershipQuest);
   }
+
+  @override
+  bool operator ==(dynamic other) =>
+    (other is Group) &&
+      (other.id == id) &&
+      (other.category == category) &&
+      (other.type == type) &&
+      (other.title == title) &&
+      (other.description == description) &&
+      (other.privacy == privacy) &&
+      (other.certified == certified) &&
+      (other.dateCreatedUtc == dateCreatedUtc) &&
+      (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      
+      (other.authManEnabled == authManEnabled) &&
+      (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
+      (other.authManGroupName == authManGroupName) &&
+      
+      (other.imageURL == imageURL) &&
+      (other.webURL == webURL) &&
+      (const DeepCollectionEquality().equals(other.members, members)) &&
+      (const DeepCollectionEquality().equals(other.tags, tags)) &&
+      (const DeepCollectionEquality().equals(other.questions, questions)) &&
+      (other.membershipQuest == membershipQuest);
+
+
+  @override
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (category?.hashCode ?? 0) ^
+    (type?.hashCode ?? 0) ^
+    (title?.hashCode ?? 0) ^
+    (description?.hashCode ?? 0) ^
+    (privacy?.hashCode ?? 0) ^
+    (certified?.hashCode ?? 0) ^
+    (dateCreatedUtc?.hashCode ?? 0) ^
+    (dateUpdatedUtc?.hashCode ?? 0) ^
+
+    (authManEnabled?.hashCode ?? 0) ^
+    (onlyAdminsCanCreatePolls?.hashCode ?? 0) ^
+    (authManGroupName?.hashCode ?? 0) ^
+
+    (imageURL?.hashCode ?? 0) ^
+    (webURL?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(members)) ^
+    (const DeepCollectionEquality().hash(tags)) ^
+    (const DeepCollectionEquality().hash(questions)) ^
+    (membershipQuest?.hashCode ?? 0);
 
   List<Member> getMembersByStatus(GroupMemberStatus? status){
     if(CollectionUtils.isNotEmpty(members) && status != null){
@@ -165,13 +217,11 @@ class Group {
   }
 
   bool get currentUserIsMember{
-    Member? currentUser = currentUserAsMember;
-    return (currentUser?.isMember ?? false);
+    return (currentUserAsMember?.isMember ?? false);
   }
 
   bool get currentUserIsMemberOrAdmin{
-    Member? currentUser = currentUserAsMember;
-    return (currentUser?.isMember ?? false) || (currentUser?.isAdmin ?? false);
+    return (currentUserAsMember?.isMemberOrAdmin ?? false);
   }
 
   bool get currentUserCanJoin {
@@ -386,38 +436,37 @@ class Member {
 
 
   @override
-  bool operator == (dynamic other) {
-    return (other is Member) &&
-           (other.id == id) &&
-           (other.userId == userId) &&
-           (other.externalId == externalId) &&
-           (other.name == name) &&
-           (other.email == email) &&
-           (other.photoURL == photoURL) &&
-           (other.status == status) &&
-           (other.officerTitle == officerTitle) &&
-           (other.dateCreatedUtc == dateCreatedUtc) &&
-           (other.dateUpdatedUtc == dateUpdatedUtc) &&
-            const DeepCollectionEquality().equals(other.answers, answers);
-  }
+  bool operator ==(dynamic other) =>
+    (other is Member) &&
+      (other.id == id) &&
+      (other.userId == userId) &&
+      (other.externalId == externalId) &&
+      (other.name == name) &&
+      (other.email == email) &&
+      (other.photoURL == photoURL) &&
+      (other.status == status) &&
+      (other.officerTitle == officerTitle) &&
+      (other.dateCreatedUtc == dateCreatedUtc) &&
+      (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      const DeepCollectionEquality().equals(other.answers, answers);
 
   @override
-  int get hashCode {
-    return (id?.hashCode ?? 0) ^
-           (userId?.hashCode ?? 0) ^
-           (externalId?.hashCode ?? 0) ^
-           (name?.hashCode ?? 0) ^
-           (email?.hashCode ?? 0) ^
-           (photoURL?.hashCode ?? 0) ^
-           (status?.hashCode ?? 0) ^
-           (officerTitle?.hashCode ?? 0) ^
-           (dateCreatedUtc?.hashCode ?? 0) ^
-           (dateUpdatedUtc?.hashCode ?? 0) ^
-           (answers?.hashCode ?? 0);
-  }
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (userId?.hashCode ?? 0) ^
+    (externalId?.hashCode ?? 0) ^
+    (name?.hashCode ?? 0) ^
+    (email?.hashCode ?? 0) ^
+    (photoURL?.hashCode ?? 0) ^
+    (status?.hashCode ?? 0) ^
+    (officerTitle?.hashCode ?? 0) ^
+    (dateCreatedUtc?.hashCode ?? 0) ^
+    (dateUpdatedUtc?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(answers));
 
   bool get isAdmin           => status == GroupMemberStatus.admin;
   bool get isMember          => status == GroupMemberStatus.member;
+  bool get isMemberOrAdmin   => isMember || isAdmin;
   bool get isPendingMember   => status == GroupMemberStatus.pending;
   bool get isRejected        => status == GroupMemberStatus.rejected;
 
@@ -515,6 +564,15 @@ class GroupMembershipQuest {
     json['steps']     = GroupMembershipStep.listToJson(steps);
     return json;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipQuest) &&
+      const DeepCollectionEquality().equals(other.steps, steps);
+
+  @override
+  int get hashCode =>
+    (const DeepCollectionEquality().hash(steps));
 }
 
 //////////////////////////////
@@ -558,6 +616,17 @@ class GroupMembershipStep {
     json['eventIds']    = eventIds;
     return json;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipStep) &&
+      (other.description == description) &&
+      const DeepCollectionEquality().equals(other.eventIds, eventIds);
+
+  @override
+  int get hashCode =>
+    (description?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(eventIds));
 
   static List<GroupMembershipStep>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipStep>? values;
@@ -608,6 +677,15 @@ class GroupMembershipQuestion {
   String? toStirng() {
     return question;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipQuestion) &&
+      (other.question == question);
+
+  @override
+  int get hashCode =>
+    (question?.hashCode ?? 0);
 
   static List<GroupMembershipQuestion>? listFromOthers(List<GroupMembershipQuestion>? others) {
     List<GroupMembershipQuestion>? values;
@@ -663,6 +741,16 @@ class GroupMembershipAnswer {
     };
   }
 
+  @override
+  bool operator ==(other) =>
+    (other is GroupMembershipAnswer) &&
+      (other.question == question) &&
+      (other.answer == answer);
+
+  @override
+  int get hashCode =>
+    (question?.hashCode ?? 0) ^
+    (answer?.hashCode ?? 0);
 
   static List<GroupMembershipAnswer>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipAnswer>? values;

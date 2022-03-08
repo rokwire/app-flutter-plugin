@@ -25,6 +25,7 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -71,6 +72,7 @@ class FlexUI with Service implements NotificationsListener {
 //    Auth2.notifyCardChanged,
 //    IlliniCash.notifyBallanceUpdated,
       AppLivecycle.notifyStateChanged,
+      Groups.notifyUserGroupsUpdated,
     ]);
   }
 
@@ -113,7 +115,8 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2UserPrefs.notifyRolesChanged) ||
         (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
         (name == Auth2.notifyLoginChanged) ||
-        (name == Auth2.notifyLinkChanged))
+        (name == Auth2.notifyLinkChanged) ||
+        (name == Groups.notifyUserGroupsUpdated))
     {
       updateContent();
     }
@@ -308,6 +311,12 @@ class FlexUI with Service implements NotificationsListener {
       return false;
     }
 
+    Map<String, dynamic>? groupRules = rules['groups'];
+    dynamic groupRule = (groupRules != null) ? (((pathEntry != null) ? groupRules[pathEntry] : null) ?? groupRules[entry]) : null;
+    if ((groupRule != null) && !localeEvalGroupRule(groupRule, rules)) {
+      return false;
+    }
+
     Map<String, dynamic>? privacyRules = rules['privacy'];
     dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
     if ((privacyRule != null) && !localeEvalPrivacyRule(privacyRule)) {
@@ -395,6 +404,62 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
+  bool localeEvalGroupRule(dynamic groupRule, Map<String, dynamic> rules) {
+    return BoolExpr.eval(groupRule, (String? argument) {
+      if (argument != null) {
+        bool? not, all, any;
+        if (not = argument.startsWith('~')) {
+          argument = argument.substring(1);
+        }
+        if (all = argument.endsWith('!')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        else if (any = argument.endsWith('?')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        
+        Set<String>? targetGroups = localeEvalGroupParam(argument, rules);
+        Set<String> userGroups = Groups().userGroupNames ?? {};
+        if (targetGroups != null) {
+          if (not == true) {
+            targetGroups = userGroups.difference(targetGroups);
+          }
+
+          if (all == true) {
+            return const DeepCollectionEquality().equals(userGroups, targetGroups);
+          }
+          else if (any == true) {
+            return userGroups.intersection(targetGroups).isNotEmpty;
+          }
+          else {
+            return userGroups.containsAll(targetGroups);
+          }
+        }
+      }
+      return null;
+    });
+  }
+
+  @protected
+  Set<String>? localeEvalGroupParam(String? groupParam, Map<String, dynamic> rules) {
+    if (groupParam != null) {
+      if (RegExp("{.+}").hasMatch(groupParam)) {
+        Set<String> groups = <String>{};
+        String rolesStr = groupParam.substring(1, groupParam.length - 1);
+        List<String> groupsStrList = rolesStr.split(',');
+        for (String groupNameStr in groupsStrList) {
+          groups.add(groupNameStr.trim());
+        }
+        return groups;
+      }
+      else {
+        return { groupParam };
+      }
+    }
+    return null;
+  }
+
+  @protected
   bool localeEvalPrivacyRule(dynamic privacyRule) {
     return (privacyRule is int) ? Auth2().privacyMatch(privacyRule) : true; // allow everything that is not defined or we do not understand
   }
@@ -457,7 +522,7 @@ class FlexUI with Service implements NotificationsListener {
           if (key == 'os') {
             target = Platform.operatingSystem;
           }
-          else if (key == 'envirnment') {
+          else if (key == 'environment') {
             target = configEnvToString(Config().configEnvironment);
           }
           else if (key == 'build') {

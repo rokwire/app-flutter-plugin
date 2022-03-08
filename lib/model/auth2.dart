@@ -69,11 +69,12 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, email, phone, phoneTwilio, oidc, oidcIllinois }
+enum Auth2LoginType { anonymous, apiKey, email, phone, phoneTwilio, oidc, oidcIllinois }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
     case Auth2LoginType.anonymous: return 'anonymous';
+    case Auth2LoginType.apiKey: return 'api_key';
     case Auth2LoginType.email: return 'email';
     case Auth2LoginType.phone: return 'phone';
     case Auth2LoginType.phoneTwilio: return 'twilio_phone';
@@ -85,8 +86,11 @@ String? auth2LoginTypeToString(Auth2LoginType value) {
 Auth2LoginType? auth2LoginTypeFromString(String? value) {
   if (value == 'anonymous') {
     return Auth2LoginType.anonymous;
-  } 
-  if (value == 'email') {
+  }
+  else if (value == 'api_key') {
+    return Auth2LoginType.apiKey;
+  }
+  else if (value == 'email') {
     return Auth2LoginType.email;
   }
   else if (value == 'phone') {
@@ -193,16 +197,16 @@ class Auth2Account {
     return false;
   }
 
-  List<String> getLinkedIdsForAuthType(Auth2LoginType loginType) {
-    List<String> ids = [];
+  List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
+    List<Auth2Type> linkedTypes = [];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType && authType.identifier != null) {
-          ids.add(authType.identifier!);
+        if (authType.loginType == loginType) {
+          linkedTypes.add(authType);
         }
       }
     }
-    return ids;
+    return linkedTypes;
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
@@ -263,7 +267,7 @@ class Auth2UserProfile {
   
       address: JsonUtils.stringValue(json['address']),
       state: JsonUtils.stringValue(json['state']),
-      zip: JsonUtils.stringValue(json['zip']),
+      zip: JsonUtils.stringValue(json['zip_code']),
       country: JsonUtils.stringValue(json['country']),
     ) : null;
   }
@@ -309,7 +313,7 @@ class Auth2UserProfile {
 
       'address': _address,
       'state': _state,
-      'zip': _zip,
+      'zip_code': _zip,
       'country': _country,
     };
   }
@@ -501,13 +505,14 @@ class Auth2Type {
   final String? identifier;
   final bool? active;
   final bool? active2fa;
+  final bool? unverified;
   final String? code;
   final Map<String, dynamic>? params;
   
   final Auth2UiucUser? uiucUser;
   final Auth2LoginType? loginType;
   
-  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.code, this.params}) :
+  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.unverified, this.code, this.params}) :
     uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null,
     loginType = auth2LoginTypeFromString(code);
 
@@ -517,6 +522,7 @@ class Auth2Type {
       identifier: JsonUtils.stringValue(json['identifier']),
       active: JsonUtils.boolValue(json['active']),
       active2fa: JsonUtils.boolValue(json['active_2fa']),
+      unverified: JsonUtils.boolValue(json['unverified']),
       code: JsonUtils.stringValue(json['code']),
       params: JsonUtils.mapValue(json['params']),
     ) : null;
@@ -528,6 +534,7 @@ class Auth2Type {
       'identifier': identifier,
       'active': active,
       'active_2fa': active2fa,
+      'unverified': unverified,
       'code': code,
       'params': params,
     };
@@ -540,6 +547,7 @@ class Auth2Type {
       (other.identifier == identifier) &&
       (other.active == active) &&
       (other.active2fa == active2fa) &&
+      (other.unverified == unverified) &&
       (other.code == code) &&
       const DeepCollectionEquality().equals(other.params, params);
 
@@ -549,6 +557,7 @@ class Auth2Type {
     (identifier?.hashCode ?? 0) ^
     (active?.hashCode ?? 0) ^
     (active2fa?.hashCode ?? 0) ^
+    (unverified?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(params));
 

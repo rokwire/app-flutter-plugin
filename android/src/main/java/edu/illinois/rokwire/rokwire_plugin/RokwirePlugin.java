@@ -53,9 +53,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   private static RokwirePlugin _instance = null;
 
   public RokwirePlugin() {
-    if (_instance == null) {
-      _instance = this;
-    }
+    _instance = this;
   }
 
   public static RokwirePlugin getInstance() {

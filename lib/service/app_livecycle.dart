@@ -58,7 +58,7 @@ class AppLivecycle with Service {
 
   @override
   void createService() {
-    _initBinding();
+    initBinding();
   }
 
   @override
@@ -68,10 +68,11 @@ class AppLivecycle with Service {
 
   @override
   void initServiceUI() {
-    _initBinding();
+    initBinding();
   }
 
-  void _initBinding() {
+  @protected
+  void initBinding() {
     if ((WidgetsBinding.instance != null) && (_bindingObserver == null)) {
       _bindingObserver = AppLivecycleWidgetsBindingObserver(onAppLivecycleChange:_onAppLivecycleChangeState);
       WidgetsBinding.instance!.addObserver(_bindingObserver!);
