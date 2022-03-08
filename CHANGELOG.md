@@ -5,13 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Updated homepage and author details in rokwire_plugin.podspec [#34](https://github.com/rokwire/app-flutter-plugin/issues/34).
 
 ## [0.0.2] - 2022-03-07
 ### Added
-- OIDC auth result codes [#25](https://github.com/rokwire/app-flutter-plugin/issues/25)
-- Add auth requests to new Core BB endpoints [#19](https://github.com/rokwire/app-flutter-plugin/issues/19)
+- OIDC auth result codes [#25](https://github.com/rokwire/app-flutter-plugin/issues/25).
+- Add auth requests to new Core BB endpoints [#19](https://github.com/rokwire/app-flutter-plugin/issues/19).
 - Group rules in FlexUI [#18](https://github.com/rokwire/app-flutter-plugin/issues/18).
-- Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11)
+- Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11).
 - Added capability to filter staled analytics packets before sending them to log service [#4](https://github.com/rokwire/app-flutter-plugin/issues/4).
 - Added miscelanious controls to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added progress capability to RoundedButton [#29](https://github.com/rokwire/app-flutter-plugin/issues/29).

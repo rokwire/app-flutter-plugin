@@ -9,9 +9,9 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 Rokwire Flutter plugin
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://rokwire.org'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = { 'University of Illinois at Urbana-Champaign' => 'rokwire@illinois.edu' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
