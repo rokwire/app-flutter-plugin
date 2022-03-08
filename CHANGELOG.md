@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 - Updated homepage and author details in rokwire_plugin.podspec [#34](https://github.com/rokwire/app-flutter-plugin/issues/34).
+### Added
+- ExpandableText control [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 
 ## [0.0.2] - 2022-03-07
 ### Added
