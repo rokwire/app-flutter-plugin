@@ -28,6 +28,7 @@ class FilterListItemWidget extends StatelessWidget {
   final TextStyle? selectedDescriptionTextStyle;
 
   final bool selected;
+  final EdgeInsetsGeometry padding;
   final GestureTapCallback? onTap;
   
   final Widget? icon;
@@ -48,6 +49,7 @@ class FilterListItemWidget extends StatelessWidget {
     this.selectedDescriptionTextStyle,
     
     this.selected = false,
+    this.padding = const EdgeInsets.all(16),
     this.onTap,
 
     this.icon,
@@ -94,7 +96,7 @@ class FilterListItemWidget extends StatelessWidget {
     return Semantics(label: title, button: true, selected: selected, excludeSemantics: true, child:
       InkWell(onTap: onTap, child:
         Container(color: (selected ? Styles().colors?.background : Colors.white), child:
-          Padding(padding: const EdgeInsets.all(16), child:
+          Padding(padding: padding, child:
             Row(mainAxisSize: MainAxisSize.max, children: contentList),
           ),
         ),
