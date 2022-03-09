@@ -40,16 +40,16 @@ import 'package:url_launcher/url_launcher.dart';
   }
 */
 
-class FlexContentWidget extends StatefulWidget {
+class FlexContent extends StatefulWidget {
   final String? assetsKey;
   final Map<String, dynamic>? jsonContent;
   final void Function(BuildContext context)? onClose;
 
-  const FlexContentWidget({Key? key, this.assetsKey, this.jsonContent, this.onClose}) : super(key: key);
+  const FlexContent({Key? key, this.assetsKey, this.jsonContent, this.onClose}) : super(key: key);
 
-  static FlexContentWidget? fromAssets(String assetsKey, { void Function(BuildContext context)? onClose }) {
+  static FlexContent? fromAssets(String assetsKey, { void Function(BuildContext context)? onClose }) {
     Map<String, dynamic>? jsonContent = JsonUtils.mapValue(Assets()[assetsKey]);
-    return (jsonContent != null) ? FlexContentWidget(assetsKey: assetsKey, jsonContent: jsonContent, onClose: onClose) : null;
+    return (jsonContent != null) ? FlexContent(assetsKey: assetsKey, jsonContent: jsonContent, onClose: onClose) : null;
   }
 
   @override
@@ -224,7 +224,7 @@ class FlexContentWidget extends StatefulWidget {
   }
 }
 
-class FlexContentWidgetState extends State<FlexContentWidget> implements NotificationsListener {
+class FlexContentWidgetState extends State<FlexContent> implements NotificationsListener {
   bool _visible = true;
   Map<String, dynamic>? _jsonContent;
 
