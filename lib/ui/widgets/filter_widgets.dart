@@ -63,7 +63,7 @@ class FilterListItemWidget extends StatelessWidget {
 
   @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.medium, fontSize: 16, color: Styles().colors?.fillColorPrimary);
   @protected TextStyle? get defaultSelectedTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
-  TextStyle? get _titleTextStyle => selected ? (selectedTitleTextStyle ?? defaultSelectedTitleTextStyle) : (titleTextStyle ?? selectedTitleTextStyle);
+  TextStyle? get _titleTextStyle => selected ? (selectedTitleTextStyle ?? defaultSelectedTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
   
   @protected TextStyle? get defaultDescriptionTextStyle         => defaultTitleTextStyle;
   @protected TextStyle? get defaultSelectedDescriptionTextStyle => defaultSelectedTitleTextStyle;
@@ -106,54 +106,71 @@ class FilterListItemWidget extends StatelessWidget {
 }
 
 class FilterSelectorWidget extends StatelessWidget {
-  final String? label;
+  final String? title;
+  final TextStyle? titleTextStyle;
+  final TextStyle? activeTitleTextStyle;
+
   final String? hint;
-  final String? labelFontFamily;
-  final double labelFontSize;
+  final EdgeInsetsGeometry padding;
   final bool active;
-  final EdgeInsets padding;
-  final bool visible;
   final GestureTapCallback? onTap;
 
-  const FilterSelectorWidget(
-      {Key? key, required this.label,
-        this.hint,
-        this.labelFontFamily,
-        this.labelFontSize = 16,
-        this.active = false,
-        this.padding = const EdgeInsets.only(left: 4, right: 4, top: 12),
-        this.visible = false,
-        this.onTap}) : super(key: key);
+  final Widget? icon;
+  final String? iconAsset;
+  final EdgeInsetsGeometry iconPadding;
+
+  final Widget? activeIcon;
+  final String? activeIconAsset;
+  final EdgeInsetsGeometry activeIconPadding;
+
+  const FilterSelectorWidget({ Key? key,
+    this.title,
+    this.titleTextStyle,
+    this.activeTitleTextStyle,
+    
+    this.hint,
+    this.padding = const EdgeInsets.only(left: 4, right: 4, top: 12),
+    this.active = false,
+    this.onTap,
+    
+    this.icon,
+    this.iconAsset,
+    this.iconPadding = const EdgeInsets.symmetric(horizontal: 4),
+
+    this.activeIcon,
+    this.activeIconAsset,
+    this.activeIconPadding = const EdgeInsets.symmetric(horizontal: 4),
+
+  }) : super(key: key);
+
+  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
+  @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorSecondary);
+  TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
+
+  Widget? get _iconImage => (iconAsset != null) ? Image.asset(iconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _iconWidget => icon ?? _iconImage;
+
+  Widget? get _activeIconImage => (activeIconAsset != null) ? Image.asset(activeIconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _activeIconWidget => activeIcon ?? _activeIconImage;
 
   @override
   Widget build(BuildContext context) {
-    return Visibility(
-        visible: visible,
-        child: Semantics(
-            label: label,
-            hint: hint,
-            excludeSemantics: true,
-            button: true,
-            child: InkWell(
-                onTap: onTap,
-                  child: Padding(
-                    padding: padding,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(
-                          label!,
-                          style: TextStyle(
-                              fontSize: labelFontSize, color: (active ? Styles().colors!.fillColorSecondary : Styles().colors!.fillColorPrimary), fontFamily: labelFontFamily ?? Styles().fontFamilies!.bold),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Image.asset(active ? 'images/icon-up.png' : 'images/icon-down.png', excludeFromSemantics: true),
-                        )
-                      ],
-                    ),
-                  ),
-                )));
+    List<Widget> contentList = <Widget>[
+      Text(title ?? '', style: _titleTextStyle, ),
+    ];
+
+    Widget? iconWidget = active ? _activeIconWidget : _iconWidget;
+    EdgeInsetsGeometry iconWidgetPadding = active ? activeIconPadding : iconPadding;
+    if (iconWidget != null) {
+      contentList.add(Padding(padding: iconWidgetPadding, child: iconWidget));
+    }
+
+    return Semantics(label: title, hint: hint, excludeSemantics: true, button: true, child:
+      InkWell(onTap: onTap, child:
+        Padding(padding: padding, child:
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: contentList,),
+        ),
+      ),
+    );
   }
 }
