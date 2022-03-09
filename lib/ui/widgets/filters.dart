@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
-class FilterListItemWidget extends StatelessWidget {
+class FilterListItem extends StatelessWidget {
   final String? title;
   final TextStyle? titleTextStyle;
   final TextStyle? selectedTitleTextStyle;
@@ -39,7 +39,7 @@ class FilterListItemWidget extends StatelessWidget {
   final String? selectedIconAsset;
   final EdgeInsetsGeometry selectedIconPadding;
 
-  const FilterListItemWidget({ Key? key,
+  const FilterListItem({ Key? key,
     this.title,
     this.titleTextStyle,
     this.selectedTitleTextStyle,
@@ -105,7 +105,7 @@ class FilterListItemWidget extends StatelessWidget {
   }
 }
 
-class FilterSelectorWidget extends StatelessWidget {
+class FilterSelector extends StatelessWidget {
   final String? title;
   final TextStyle? titleTextStyle;
   final TextStyle? activeTitleTextStyle;
@@ -123,7 +123,7 @@ class FilterSelectorWidget extends StatelessWidget {
   final String? activeIconAsset;
   final EdgeInsetsGeometry activeIconPadding;
 
-  const FilterSelectorWidget({ Key? key,
+  const FilterSelector({ Key? key,
     this.title,
     this.titleTextStyle,
     this.activeTitleTextStyle,
