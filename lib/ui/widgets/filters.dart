@@ -113,6 +113,7 @@ class FilterSelector extends StatelessWidget {
   final String? hint;
   final EdgeInsetsGeometry padding;
   final bool active;
+  final bool expanded;
   final GestureTapCallback? onTap;
 
   final Widget? icon;
@@ -131,6 +132,7 @@ class FilterSelector extends StatelessWidget {
     this.hint,
     this.padding = const EdgeInsets.only(left: 4, right: 4, top: 12),
     this.active = false,
+    this.expanded = false,
     this.onTap,
     
     this.icon,
@@ -155,8 +157,9 @@ class FilterSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget titleWidget = Text(title ?? '', style: _titleTextStyle, overflow: TextOverflow.ellipsis);
     List<Widget> contentList = <Widget>[
-      Text(title ?? '', style: _titleTextStyle, ),
+      expanded ? Expanded(child: titleWidget) : titleWidget,
     ];
 
     Widget? iconWidget = active ? _activeIconWidget : _iconWidget;
@@ -168,7 +171,7 @@ class FilterSelector extends StatelessWidget {
     return Semantics(label: title, hint: hint, excludeSemantics: true, button: true, child:
       InkWell(onTap: onTap, child:
         Padding(padding: padding, child:
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: contentList,),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min, children: contentList,),
         ),
       ),
     );
