@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Widget class names updated to exclude "Widget" suffix [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - ScaleableFilterSelectorWidget control merged to FilterSelector widget [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - HomeHeader control moved to plugin as SectionRibbonHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- ImageHolderListItem moved to plugin as ImageSlantHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
  
 ## [0.0.2] - 2022-03-07
 ### Added
