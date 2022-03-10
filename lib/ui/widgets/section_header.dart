@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -348,5 +352,51 @@ class SectionRibbonHeader extends StatelessWidget {
     fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
     fontSize: subTitleFontSize
   );
+}
 
+class ImageSlantHeader extends StatelessWidget {
+  final String? imageUrl;
+  final Widget? child;
+
+  final String slantImageAsset;
+  final Color? slantImageColor;
+  final double slantImageHeadingHeight;
+  final double slantImageHeight;
+
+  const ImageSlantHeader({Key? key,
+    this.imageUrl,
+    this.child,
+
+    required this.slantImageAsset,
+    this.slantImageColor,
+    this.slantImageHeadingHeight = 72,
+    this.slantImageHeight = 112,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Image networkImage = Image.network(imageUrl!, headers: Config().networkAuthHeaders);
+    Completer<ui.Image> networkImageCompleter = Completer<ui.Image>();
+    networkImage.image.resolve(const ImageConfiguration()).addListener(ImageStreamListener((ImageInfo info, bool syncCall) => networkImageCompleter.complete(info.image)));
+
+    return Stack(alignment: Alignment.topCenter, children: <Widget>[
+      Image(image: networkImage.image, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,),
+      FutureBuilder<ui.Image>(future: networkImageCompleter.future, builder: (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
+        double displayHeight = (snapshot.data != null) ? (snapshot.data!.height * MediaQuery.of(context).size.width / snapshot.data!.width) : 240;
+        return Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
+          Stack(alignment: Alignment.topCenter, children: <Widget>[
+            Column(children: <Widget>[
+              Container(height: slantImageHeadingHeight, color: _slantImageColor,),
+              SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
+                Image.asset(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+              ),
+            ],),
+            child ?? Container(),
+          ])
+        );
+      }),
+    ]);
+  }
+
+  Color? get _slantImageColor => slantImageColor ?? Styles().colors?.fillColorSecondary;
 }
