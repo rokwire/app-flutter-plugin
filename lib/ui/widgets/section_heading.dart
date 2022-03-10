@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
-class SectionHeading extends StatelessWidget{
+class SectionSlantHeading extends StatelessWidget{
   final String? title;
   final Color? titleTextColor;
   final String? titleFontFamilly;
@@ -55,7 +55,7 @@ class SectionHeading extends StatelessWidget{
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
 
-  const SectionHeading({
+  const SectionSlantHeading({
     Key? key,
 
     this.title,
