@@ -34,6 +34,7 @@ class SectionSlantHeader extends StatelessWidget {
   final TextStyle? subTitleTextStyle;
   final EdgeInsetsGeometry subTitlePadding;
   
+  final Widget? titleIcon;
   final String? titleIconAsset;
   final EdgeInsetsGeometry titleIconPadding;
 
@@ -47,6 +48,7 @@ class SectionSlantHeader extends StatelessWidget {
   final double slantImageHeadingHeight;
   final double slantImageHeight;
 
+  final Widget? rightIcon;
   final String? rightIconLabel;
   final String? rightIconAsset;
   final void Function()? rightIconAction;
@@ -72,6 +74,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.subTitleTextStyle,
     this.subTitlePadding = const EdgeInsets.only(left: 50, right: 16),
 
+    this.titleIcon,
     this.titleIconAsset,
     this.titleIconPadding = const EdgeInsets.only(right: 16),
 
@@ -85,6 +88,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.slantImageHeadingHeight = 40,
     this.slantImageHeight = 112,
     
+    this.rightIcon,
     this.rightIconLabel,
     this.rightIconAsset,
     this.rightIconAction,
@@ -122,10 +126,10 @@ class SectionSlantHeader extends StatelessWidget {
 
     // Build Title Row
     List<Widget> titleList = <Widget>[];
-    if (titleIconAsset != null) {
+    if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+          titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
         )
       );
     }
@@ -138,12 +142,12 @@ class SectionSlantHeader extends StatelessWidget {
       ),
     );
     
-    if (rightIconAsset != null) {
+    if ((rightIcon != null) || (rightIconAsset != null)) {
       titleList.add(
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, child:
-              Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+              rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
             )
           )
         ),
@@ -198,4 +202,151 @@ class SectionSlantHeader extends StatelessWidget {
     fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
     fontSize: subTitleFontSize
   );
+}
+
+class SectionRibbonHeader extends StatelessWidget {
+  final String? title;
+  final Color? titleTextColor;
+  final String? titleFontFamilly;
+  final double titleFontSize;
+  final TextStyle? titleTextStyle;
+  final EdgeInsetsGeometry titlePadding;
+
+  final String? subTitle;
+  final Color? subTitleTextColor;
+  final String? subTitleFontFamilly;
+  final double subTitleFontSize;
+  final TextStyle? subTitleTextStyle;
+  final EdgeInsetsGeometry subTitlePadding;
+
+  final Widget? titleIcon;
+  final String? titleIconAsset;
+  final EdgeInsetsGeometry titleIconPadding;
+
+  final Widget? rightIcon;
+  final String? rightIconLabel;
+  final String? rightIconAsset;
+  final void Function()? rightIconAction;
+  final EdgeInsetsGeometry rightIconPadding;
+
+  final Color? backgroundColor;
+  final EdgeInsetsGeometry padding;
+
+  const SectionRibbonHeader({Key? key,
+    this.title,
+    this.titleTextColor,
+    this.titleFontFamilly,
+    this.titleFontSize = 20,
+    this.titleTextStyle,
+    this.titlePadding = EdgeInsets.zero,
+    
+    this.subTitle,
+    this.subTitleTextColor,
+    this.subTitleFontFamilly,
+    this.subTitleFontSize = 16,
+    this.subTitleTextStyle,
+    this.subTitlePadding = EdgeInsets.zero,
+
+    this.titleIcon,
+    this.titleIconAsset,
+    this.titleIconPadding = const EdgeInsets.only(right: 12),
+
+    this.rightIcon,
+    this.rightIconLabel,
+    this.rightIconAsset,
+    this.rightIconAction,
+    this.rightIconPadding = const EdgeInsets.only(left: 12),
+
+    this.backgroundColor,
+    this.padding = const EdgeInsets.all(16),
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> titleList = <Widget>[];
+    List<Widget>? subTitleList = StringUtils.isNotEmpty(subTitle) ? <Widget>[] : null;
+    
+    Widget? titleIconWidget = ((titleIcon != null) || (titleIconAsset != null)) ?
+      Padding(padding: titleIconPadding, child:
+        titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+      ) : null;
+    if ((titleIconWidget != null)) {
+      titleList.add(titleIconWidget);
+      if (subTitleList != null) {
+        subTitleList.add(Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: titleIconWidget));
+      }
+    }
+
+    titleList.add(
+      Expanded(child:
+        Padding(padding: titlePadding, child:
+          Semantics(label: title, header: true, excludeSemantics: true, child:
+            Text(title ?? '', style: _titleTextStyle,)
+          ),
+        ),
+      ),
+    );
+
+    if (subTitleList != null) {
+      subTitleList.add(
+        Expanded(child:
+          Padding(padding: subTitlePadding, child:
+            Semantics(label: subTitle, header: true, excludeSemantics: true, child:
+              Text(subTitle ?? '', style: _subTitleTextStyle,)
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget? rightIconWidget = ((rightIcon != null) || (rightIconAsset != null)) ?
+      Padding(padding: rightIconPadding, child:
+        rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+      ) : null;
+    if (rightIconWidget != null) {
+      titleList.add(rightIconWidget);
+      if (subTitleList != null) {
+        subTitleList.add(Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: rightIconWidget));
+      }
+    }
+
+    Widget contentWidget = Container(color: _backgroundColor, padding: padding, child: (subTitleList != null) ?
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: titleList,),
+        Row(children: subTitleList,),
+      ],) :
+      Row(children: titleList,),
+    );
+
+    Widget? rightIconButton = ((rightIconWidget != null) && (rightIconAction != null)) ?
+      Semantics(label: rightIconLabel, button: true, child:
+        InkWell(onTap: rightIconAction, child:
+          Padding(padding: padding, child:
+            Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child:  rightIconWidget,),
+          )
+        )
+      ) : null;
+
+    return (rightIconButton != null) ?
+      Stack(children: [
+        contentWidget,
+        Align(alignment: Alignment.topRight, child: rightIconButton),
+      ],) :
+      contentWidget;
+  }
+
+  Color? get _backgroundColor => backgroundColor ?? Styles().colors?.fillColorPrimary;
+
+  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
+    color: titleTextColor ?? Styles().colors?.white,
+    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.extraBold,
+    fontSize: titleFontSize
+  );
+
+  TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
+    color: subTitleTextColor ?? Styles().colors?.white,
+    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
+    fontSize: subTitleFontSize
+  );
+
 }
