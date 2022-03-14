@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 class TileButton extends StatelessWidget {
@@ -178,5 +179,137 @@ class TileWideButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class TileToggleButton extends StatelessWidget {
+  final String? title;
+  final String? titleFontFamily;
+  final double titleFontSize;
+  final Color? titleColor;
+  final Color? selectedTitleColor;
+  final TextStyle? titleStyle;
+  final TextStyle? selectedTitleStyle;
+
+  final Widget? icon;
+  final Widget? selectedIcon;
+  final String? iconAsset;
+  final String? selectedIconAsset;
+  final double? iconWidth;
+  final BoxFit? iconFit;
+  
+  final Color backgroundColor;
+  final Color? selectedBackgroundColor;
+  final Color borderColor;
+  final Color? selectedBorderColor;
+  final BorderRadiusGeometry? borderRadius;
+  final double borderWidth;
+  final List<BoxShadow>? borderShadow;
+
+  final String? selectionMarkerAsset;
+  final Widget? selectionMarker;
+
+  final String? hint;
+  final String? semanticsValue;
+  final String? selectedSemanticsValue;
+  final bool selected;
+  final dynamic data;
+  final double? sortOrder;
+  final double contentSpacing;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+  final void Function(BuildContext, TileToggleButton)? onTap;
+
+  const TileToggleButton({Key? key,
+    this.title,
+    this.titleFontFamily,
+    this.titleFontSize = 17,
+    this.titleColor,
+    this.selectedTitleColor,
+    this.titleStyle,
+    this.selectedTitleStyle,
+    
+    this.icon,
+    this.selectedIcon,
+    this.iconAsset,
+    this.selectedIconAsset,
+    this.iconWidth,
+    this.iconFit,
+    
+    this.backgroundColor = Colors.white,
+    this.selectedBackgroundColor = Colors.white,
+    this.borderColor = Colors.white,
+    this.selectedBorderColor,
+    this.borderRadius,
+    this.borderWidth = 2.0,
+    this.borderShadow,
+
+    this.selectionMarkerAsset,
+    this.selectionMarker,
+
+    this.hint,
+    this.semanticsValue,
+    this.selectedSemanticsValue,
+    this.selected = false,
+    this.sortOrder,
+    this.data,
+    this.contentSpacing = 18,
+    this.margin = const EdgeInsets.only(top: 8, right: 8),
+    this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    this.onTap,
+  }) : super(key: key);
+
+  SemanticsSortKey? get _sortKey => (sortOrder != null) ? OrdinalSortKey(sortOrder!) : null;
+  String? get _semanticsValue => selected ? selectedSemanticsValue : semanticsValue;
+  
+  Color? get _backgroundColor => selected ? selectedBackgroundColor : backgroundColor;
+  Color get _borderColor => (selected ? (selectedBorderColor ?? Styles().colors?.fillColorPrimary) : borderColor) ?? borderColor;
+  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(6);
+  Border get _border => Border.all(color: _borderColor, width: borderWidth);
+  List<BoxShadow> get _borderShadow => borderShadow ?? [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  Decoration get _decoration => BoxDecoration(color: _backgroundColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+
+  Color? get _titleColor => selected ? (selectedTitleColor ?? Styles().colors?.fillColorPrimary) : (titleColor ?? Styles().colors?.fillColorPrimary);
+  String? get _titleFontFamily => titleFontFamily ?? Styles().fontFamilies?.bold;
+  TextStyle get _defaultTitleStyle => TextStyle(fontFamily: _titleFontFamily, fontSize: titleFontSize, color: _titleColor);
+  TextStyle get _titleStyle => (selected ? selectedTitleStyle : titleStyle) ?? _defaultTitleStyle;
+  Widget get _defaultTitleWidget => Text(title ?? '', textAlign: TextAlign.center, style: _titleStyle);
+  Widget get _titleWidget => _defaultTitleWidget;
+
+  String? get _iconAsset => selected ? selectedIconAsset : iconAsset;
+  Widget get _defaultIconWidget => (_iconAsset != null) ?  Image.asset(_iconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) : Container();
+  Widget get _iconWidget => (selected ? selectedIcon : icon) ?? _defaultIconWidget;
+
+  Widget get _selectionMarkerWidget => selectionMarker ?? Image.asset(selectionMarkerAsset ?? '', excludeFromSemantics: true);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(onTap: () => _onTap(context), child:
+      Semantics(label: title, excludeSemantics: true, sortKey: _sortKey, value: _semanticsValue, child:
+        Stack(children: <Widget>[
+          Padding(padding: margin, child:
+            Container(decoration: _decoration, child:
+              Padding(padding: padding, child:
+                Column(children: <Widget>[
+                  _iconWidget,
+                  Container(height: contentSpacing,),
+                  _titleWidget,
+                ],),
+              ),
+            ),
+          ),
+          Visibility(visible: selected, child:
+            Align(alignment: Alignment.topRight, child:
+              _selectionMarkerWidget,
+            ),
+          ),
+      ],
+    )));
+  }
+
+  void _onTap(BuildContext context) {
+    if (onTap != null) {
+      onTap!(context, this);
+    }
   }
 }
