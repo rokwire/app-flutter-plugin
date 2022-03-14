@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - HomeHeader control moved to plugin as SectionRibbonHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - ImageHolderListItem moved to plugin as ImageSlantHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - ModalImageDialog moved to plugin as ModalImagePanel [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- RoleGridButton moved to plugin as TileToggleButton [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
  
 ## [0.0.2] - 2022-03-07
 ### Added

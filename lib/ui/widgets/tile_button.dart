@@ -15,88 +15,10 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
-class WideTileButton extends StatelessWidget {
-  final String? title;
-  final Color? titleTextColor;
-  final String? titleFontFamilly;
-  final double titleFontSize;
-  final TextStyle? titleTextStyle;
-  
-  final String? iconAsset;
-
-  final Border? border;
-  final BorderRadiusGeometry? borderRadius;
-  final Color? borderColor;
-  final double borderWidth;
-  final List<BoxShadow>? borderShadow;
-
-  final String? hint;
-  final EdgeInsetsGeometry margin;
-  final EdgeInsetsGeometry padding;
-  final GestureTapCallback? onTap;
-
-  const WideTileButton({
-    Key? key,
-
-    this.title, 
-    this.titleTextColor,
-    this.titleFontFamilly,
-    this.titleFontSize = 20,
-    this.titleTextStyle,
-
-    this.iconAsset,
-    
-    this.border,
-    this.borderRadius,
-    this.borderColor,
-    this.borderWidth = 2.0,
-    this.borderShadow,
-
-    this.hint,
-    this.margin = const EdgeInsets.all(4),
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-    this.onTap
-  }) : super(key: key);
-
-  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
-    fontSize: titleFontSize
-  );
-
-  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
-  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
-  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
-  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
-  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> contentList = <Widget>[];
-    if (title != null) {
-      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: _titleTextStyle)));
-    } 
-    if (iconAsset != null) {
-      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
-    }
-
-    return GestureDetector(onTap: onTap, child:
-      Semantics(label: title, hint:hint, button: true, child:
-        Padding(padding: margin, child:
-          Container(decoration: _decoration, child:
-            Padding(padding: padding, child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceAround, mainAxisSize: MainAxisSize.max, children: contentList,),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class SmallTileButton extends StatelessWidget {
+class TileButton extends StatelessWidget {
   final String? title;
   final Color? titleTextColor;
   final String? titleFontFamilly;
@@ -117,7 +39,7 @@ class SmallTileButton extends StatelessWidget {
   final double contentSpacing;
   final GestureTapCallback? onTap;
 
-  const SmallTileButton({
+  const TileButton({
     Key? key,
 
     this.title, 
@@ -179,4 +101,215 @@ class SmallTileButton extends StatelessWidget {
   List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
   Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
 
+}
+
+class TileWideButton extends StatelessWidget {
+  final String? title;
+  final Color? titleTextColor;
+  final String? titleFontFamilly;
+  final double titleFontSize;
+  final TextStyle? titleTextStyle;
+  
+  final String? iconAsset;
+
+  final Border? border;
+  final BorderRadiusGeometry? borderRadius;
+  final Color? borderColor;
+  final double borderWidth;
+  final List<BoxShadow>? borderShadow;
+
+  final String? hint;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+  final GestureTapCallback? onTap;
+
+  const TileWideButton({
+    Key? key,
+
+    this.title, 
+    this.titleTextColor,
+    this.titleFontFamilly,
+    this.titleFontSize = 20,
+    this.titleTextStyle,
+
+    this.iconAsset,
+    
+    this.border,
+    this.borderRadius,
+    this.borderColor,
+    this.borderWidth = 2.0,
+    this.borderShadow,
+
+    this.hint,
+    this.margin = const EdgeInsets.all(4),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+    this.onTap
+  }) : super(key: key);
+
+  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
+    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
+    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
+    fontSize: titleFontSize
+  );
+
+  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
+  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
+  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
+  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
+  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> contentList = <Widget>[];
+    if (title != null) {
+      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: _titleTextStyle)));
+    } 
+    if (iconAsset != null) {
+      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
+    }
+
+    return GestureDetector(onTap: onTap, child:
+      Semantics(label: title, hint:hint, button: true, child:
+        Padding(padding: margin, child:
+          Container(decoration: _decoration, child:
+            Padding(padding: padding, child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceAround, mainAxisSize: MainAxisSize.max, children: contentList,),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TileToggleButton extends StatelessWidget {
+  final String? title;
+  final String? titleFontFamily;
+  final double titleFontSize;
+  final Color? titleColor;
+  final Color? selectedTitleColor;
+  final TextStyle? titleStyle;
+  final TextStyle? selectedTitleStyle;
+
+  final Widget? icon;
+  final Widget? selectedIcon;
+  final String? iconAsset;
+  final String? selectedIconAsset;
+  final double? iconWidth;
+  final BoxFit? iconFit;
+  
+  final Color backgroundColor;
+  final Color? selectedBackgroundColor;
+  final Color borderColor;
+  final Color? selectedBorderColor;
+  final BorderRadiusGeometry? borderRadius;
+  final double borderWidth;
+  final List<BoxShadow>? borderShadow;
+
+  final String? selectionMarkerAsset;
+  final Widget? selectionMarker;
+
+  final String? hint;
+  final String? semanticsValue;
+  final String? selectedSemanticsValue;
+  final bool selected;
+  final dynamic data;
+  final double? sortOrder;
+  final double contentSpacing;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+  final void Function(BuildContext, TileToggleButton)? onTap;
+
+  const TileToggleButton({Key? key,
+    this.title,
+    this.titleFontFamily,
+    this.titleFontSize = 17,
+    this.titleColor,
+    this.selectedTitleColor,
+    this.titleStyle,
+    this.selectedTitleStyle,
+    
+    this.icon,
+    this.selectedIcon,
+    this.iconAsset,
+    this.selectedIconAsset,
+    this.iconWidth,
+    this.iconFit,
+    
+    this.backgroundColor = Colors.white,
+    this.selectedBackgroundColor = Colors.white,
+    this.borderColor = Colors.white,
+    this.selectedBorderColor,
+    this.borderRadius,
+    this.borderWidth = 2.0,
+    this.borderShadow,
+
+    this.selectionMarkerAsset,
+    this.selectionMarker,
+
+    this.hint,
+    this.semanticsValue,
+    this.selectedSemanticsValue,
+    this.selected = false,
+    this.sortOrder,
+    this.data,
+    this.contentSpacing = 18,
+    this.margin = const EdgeInsets.only(top: 8, right: 8),
+    this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    this.onTap,
+  }) : super(key: key);
+
+  SemanticsSortKey? get _sortKey => (sortOrder != null) ? OrdinalSortKey(sortOrder!) : null;
+  String? get _semanticsValue => selected ? selectedSemanticsValue : semanticsValue;
+  
+  Color? get _backgroundColor => selected ? selectedBackgroundColor : backgroundColor;
+  Color get _borderColor => (selected ? (selectedBorderColor ?? Styles().colors?.fillColorPrimary) : borderColor) ?? borderColor;
+  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(6);
+  Border get _border => Border.all(color: _borderColor, width: borderWidth);
+  List<BoxShadow> get _borderShadow => borderShadow ?? [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  Decoration get _decoration => BoxDecoration(color: _backgroundColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+
+  Color? get _titleColor => selected ? (selectedTitleColor ?? Styles().colors?.fillColorPrimary) : (titleColor ?? Styles().colors?.fillColorPrimary);
+  String? get _titleFontFamily => titleFontFamily ?? Styles().fontFamilies?.bold;
+  TextStyle get _defaultTitleStyle => TextStyle(fontFamily: _titleFontFamily, fontSize: titleFontSize, color: _titleColor);
+  TextStyle get _titleStyle => (selected ? selectedTitleStyle : titleStyle) ?? _defaultTitleStyle;
+  Widget get _defaultTitleWidget => Text(title ?? '', textAlign: TextAlign.center, style: _titleStyle);
+  Widget get _titleWidget => _defaultTitleWidget;
+
+  String? get _iconAsset => selected ? selectedIconAsset : iconAsset;
+  Widget get _defaultIconWidget => (_iconAsset != null) ?  Image.asset(_iconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) : Container();
+  Widget get _iconWidget => (selected ? selectedIcon : icon) ?? _defaultIconWidget;
+
+  Widget get _selectionMarkerWidget => selectionMarker ?? Image.asset(selectionMarkerAsset ?? '', excludeFromSemantics: true);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(onTap: () => _onTap(context), child:
+      Semantics(label: title, excludeSemantics: true, sortKey: _sortKey, value: _semanticsValue, child:
+        Stack(children: <Widget>[
+          Padding(padding: margin, child:
+            Container(decoration: _decoration, child:
+              Padding(padding: padding, child:
+                Column(children: <Widget>[
+                  _iconWidget,
+                  Container(height: contentSpacing,),
+                  _titleWidget,
+                ],),
+              ),
+            ),
+          ),
+          Visibility(visible: selected, child:
+            Align(alignment: Alignment.topRight, child:
+              _selectionMarkerWidget,
+            ),
+          ),
+      ],
+    )));
+  }
+
+  void _onTap(BuildContext context) {
+    if (onTap != null) {
+      onTap!(context, this);
+    }
+  }
 }
