@@ -17,86 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
-class WideTileButton extends StatelessWidget {
-  final String? title;
-  final Color? titleTextColor;
-  final String? titleFontFamilly;
-  final double titleFontSize;
-  final TextStyle? titleTextStyle;
-  
-  final String? iconAsset;
-
-  final Border? border;
-  final BorderRadiusGeometry? borderRadius;
-  final Color? borderColor;
-  final double borderWidth;
-  final List<BoxShadow>? borderShadow;
-
-  final String? hint;
-  final EdgeInsetsGeometry margin;
-  final EdgeInsetsGeometry padding;
-  final GestureTapCallback? onTap;
-
-  const WideTileButton({
-    Key? key,
-
-    this.title, 
-    this.titleTextColor,
-    this.titleFontFamilly,
-    this.titleFontSize = 20,
-    this.titleTextStyle,
-
-    this.iconAsset,
-    
-    this.border,
-    this.borderRadius,
-    this.borderColor,
-    this.borderWidth = 2.0,
-    this.borderShadow,
-
-    this.hint,
-    this.margin = const EdgeInsets.all(4),
-    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-    this.onTap
-  }) : super(key: key);
-
-  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
-    fontSize: titleFontSize
-  );
-
-  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
-  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
-  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
-  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
-  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
-
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> contentList = <Widget>[];
-    if (title != null) {
-      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: _titleTextStyle)));
-    } 
-    if (iconAsset != null) {
-      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
-    }
-
-    return GestureDetector(onTap: onTap, child:
-      Semantics(label: title, hint:hint, button: true, child:
-        Padding(padding: margin, child:
-          Container(decoration: _decoration, child:
-            Padding(padding: padding, child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceAround, mainAxisSize: MainAxisSize.max, children: contentList,),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class SmallTileButton extends StatelessWidget {
+class TileButton extends StatelessWidget {
   final String? title;
   final Color? titleTextColor;
   final String? titleFontFamilly;
@@ -117,7 +38,7 @@ class SmallTileButton extends StatelessWidget {
   final double contentSpacing;
   final GestureTapCallback? onTap;
 
-  const SmallTileButton({
+  const TileButton({
     Key? key,
 
     this.title, 
@@ -179,4 +100,83 @@ class SmallTileButton extends StatelessWidget {
   List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
   Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
 
+}
+
+class TileWideButton extends StatelessWidget {
+  final String? title;
+  final Color? titleTextColor;
+  final String? titleFontFamilly;
+  final double titleFontSize;
+  final TextStyle? titleTextStyle;
+  
+  final String? iconAsset;
+
+  final Border? border;
+  final BorderRadiusGeometry? borderRadius;
+  final Color? borderColor;
+  final double borderWidth;
+  final List<BoxShadow>? borderShadow;
+
+  final String? hint;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+  final GestureTapCallback? onTap;
+
+  const TileWideButton({
+    Key? key,
+
+    this.title, 
+    this.titleTextColor,
+    this.titleFontFamilly,
+    this.titleFontSize = 20,
+    this.titleTextStyle,
+
+    this.iconAsset,
+    
+    this.border,
+    this.borderRadius,
+    this.borderColor,
+    this.borderWidth = 2.0,
+    this.borderShadow,
+
+    this.hint,
+    this.margin = const EdgeInsets.all(4),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+    this.onTap
+  }) : super(key: key);
+
+  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
+    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
+    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
+    fontSize: titleFontSize
+  );
+
+  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
+  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
+  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
+  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
+  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> contentList = <Widget>[];
+    if (title != null) {
+      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: _titleTextStyle)));
+    } 
+    if (iconAsset != null) {
+      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
+    }
+
+    return GestureDetector(onTap: onTap, child:
+      Semantics(label: title, hint:hint, button: true, child:
+        Padding(padding: margin, child:
+          Container(decoration: _decoration, child:
+            Padding(padding: padding, child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceAround, mainAxisSize: MainAxisSize.max, children: contentList,),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
