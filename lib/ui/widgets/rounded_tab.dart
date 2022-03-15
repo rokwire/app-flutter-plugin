@@ -70,7 +70,8 @@ class RoundedTab extends StatefulWidget {
 
   @protected Color? get defaultTextColor => selected ? Styles().colors?.white : Styles().colors?.fillColorPrimary;
   @protected Color? get displayTextColor => (selected ? selectedTextColor : textColor) ?? defaultTextColor;
-  @protected String? get displayFontFamily => fontFamily ?? Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected TextStyle get displayTextStyle => (selected ? selectedTextStyle : textStyle) ?? defaultTextStyle;
 
