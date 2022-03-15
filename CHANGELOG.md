@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ImageHolderListItem moved to plugin as ImageSlantHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - ModalImageDialog moved to plugin as ModalImagePanel [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - RoleGridButton moved to plugin as TileToggleButton [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Rounded moved to plugin [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- VerticalTitleContentSection moved to plugin as VerticalTitleValueSection [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- PopupDialog moved to plugin as PopupMessage [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
  
 ## [0.0.2] - 2022-03-07
 ### Added

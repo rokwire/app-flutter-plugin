@@ -76,6 +76,26 @@ class RibbonButton extends StatefulWidget {
     this.semanticsValue,
   }) : super(key: key);
 
+  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
+  @protected Color? get defaulttextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTextColor => textColor ?? defaulttextColor;
+  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
+  @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
+  @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
+
+  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Image.asset(leftIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Image.asset(rightIconAsset!, excludeFromSemantics: true) : null;
+
+  @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
+  @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
+  @protected double get defaultStrokeWidth => 2.0;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;
+
+  @protected bool get progressHidesLeftIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerLeft);
+  @protected bool get progressHidesRightIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerRight);
+
   @override
   _RibbonButtonState createState() => _RibbonButtonState();
 
@@ -92,21 +112,7 @@ class _RibbonButtonState extends State<RibbonButton> {
   final GlobalKey _contentKey = GlobalKey();
   Size? _contentSize;
 
-  Color? get _backgroundColor => widget.backgroundColor ?? Styles().colors?.white;
-  Color? get _textColor => widget.textColor ?? Styles().colors?.fillColorPrimary;
-  String? get _fontFamily => widget.fontFamily ?? Styles().fontFamilies?.bold;
-  TextStyle get ensuredTextStyle => widget.textStyle ?? TextStyle(fontFamily: _fontFamily, fontSize: widget.fontSize, color: _textColor);
-  Widget get _textWidget => widget.textWidget ?? Text(widget.label ?? '', style: ensuredTextStyle, textAlign: widget.textAlign,);
-
-  Widget? get _leftIconImage => (widget.leftIconAsset != null) ? Image.asset(widget.leftIconAsset!, excludeFromSemantics: true) : null;
-  Widget? get _rightIconImage => (widget.rightIconAsset != null) ? Image.asset(widget.rightIconAsset!, excludeFromSemantics: true) : null;
-
-  Color? get _progressColor => widget.progressColor ?? Styles().colors?.fillColorSecondary;
   double get _progressSize => widget.progressSize ?? ((_contentSize?.height ?? 0) / 2.5);
-  double get _progressStrokeWidth => widget.progressStrokeWidth ?? 2.0;
-
-  bool get _progressHidesLeftIcon => (widget.progress == true) && (widget.progressHidesIcon == true) && (widget.progressAlignment == Alignment.centerLeft);
-  bool get _progressHidesRightIcon => (widget.progress == true) && (widget.progressHidesIcon == true) && (widget.progressAlignment == Alignment.centerRight);
 
   @override
   void initState() {
@@ -125,18 +131,18 @@ class _RibbonButtonState extends State<RibbonButton> {
   }
 
   Widget get _contentWidget {
-    Widget? leftIconWidget = !_progressHidesLeftIcon ? (widget.leftIcon ?? _leftIconImage) : null;
-    Widget? rightIconWidget = !_progressHidesRightIcon ? (widget.rightIcon ?? _rightIconImage) : null;
+    Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
+    Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
     return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
       GestureDetector(onTap: () => widget.onTapWidget(context), child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
-            Container(key: _contentKey, decoration: BoxDecoration(color: _backgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
+            Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
               Padding(padding: widget.padding, child:
                 Row(children: <Widget>[
                   (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
-                    _textWidget
+                    widget.displayTextWidget
                   ),
                   (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
@@ -153,7 +159,7 @@ class _RibbonButtonState extends State<RibbonButton> {
       Padding(padding: widget.progressPadding, child:
         Align(alignment: widget.progressAlignment, child:
           SizedBox(height: _progressSize, width: _progressSize, child:
-            CircularProgressIndicator(strokeWidth: _progressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(_progressColor), )
+            CircularProgressIndicator(strokeWidth: widget.displayProgressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(widget.displayProgressColor), )
           ),
         ),
       ),
