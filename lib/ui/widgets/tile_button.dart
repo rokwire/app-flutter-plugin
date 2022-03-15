@@ -73,13 +73,13 @@ class TileButton extends StatelessWidget {
       contentList.add(Container(height: contentSpacing));
     } 
     if (title != null) {
-      contentList.add(Text(title!, textAlign: TextAlign.center, style: _titleTextStyle));
+      contentList.add(Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle));
     } 
 
     return GestureDetector(onTap: onTap, child:
       Semantics(label: title, hint: hint, button: true, excludeSemantics: true, child:
         Padding(padding: margin, child:
-          Container(decoration: _decoration, child:
+          Container(decoration: displayDecoration, child:
             Padding(padding: padding, child:
               Column(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: contentList,),
             ),
@@ -89,18 +89,29 @@ class TileButton extends StatelessWidget {
     );
   }
 
-  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
-    fontSize: titleFontSize
-  );
+  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
-  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
-  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
-  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
-  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
 
+  @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
+  @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
+
+  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
+  
+  @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
+  @protected BorderRadiusGeometry get displayBorderRadius => borderRadius ?? defaultBorderRadius;
+  
+  @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected Border get displayBorder => border ?? defaultBorder;
+  
+  @protected List<BoxShadow> get defaultBorderShadow => [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
+  @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
+  
+  @protected Decoration get defaultDecoration => BoxDecoration(color: displayBorderColor, borderRadius: displayBorderRadius, border: displayBorder, boxShadow: displayBorderShadow);
+  @protected Decoration get displayDecoration => defaultDecoration;
 }
 
 class TileWideButton extends StatelessWidget {
@@ -146,23 +157,35 @@ class TileWideButton extends StatelessWidget {
     this.onTap
   }) : super(key: key);
 
-  TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.fillColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.bold,
-    fontSize: titleFontSize
-  );
+  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  Color get _borderColor => borderColor ?? Styles().colors?.white ?? const Color(0x00FFFFFF);
-  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(4);
-  Border get _border => border ?? Border.all(color: _borderColor, width: borderWidth);
-  List<BoxShadow> get _borderShadow => borderShadow ?? [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
-  Decoration get _decoration => BoxDecoration(color: _borderColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
+
+  @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
+  @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
+
+  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
+
+  @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
+  @protected BorderRadiusGeometry get displayBorderRadius => borderRadius ?? defaultBorderRadius;
+
+  @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected Border get displayBorder => border ?? defaultBorder;
+
+  @protected List<BoxShadow> get defaultBorderShadow => [const BoxShadow(color: Color.fromRGBO(19, 41, 75, 0.3), spreadRadius: 2.0, blurRadius: 8.0, offset: Offset(0, 2))];
+  @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
+
+  @protected Decoration get defaultDecoration => BoxDecoration(color: displayBorderColor, borderRadius: displayBorderRadius, border: displayBorder, boxShadow: displayBorderShadow);
+  @protected Decoration get displayDecoration => defaultDecoration;
 
   @override
   Widget build(BuildContext context) {
     List<Widget> contentList = <Widget>[];
     if (title != null) {
-      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: _titleTextStyle)));
+      contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle)));
     } 
     if (iconAsset != null) {
       contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
@@ -171,7 +194,7 @@ class TileWideButton extends StatelessWidget {
     return GestureDetector(onTap: onTap, child:
       Semantics(label: title, hint:hint, button: true, child:
         Padding(padding: margin, child:
-          Container(decoration: _decoration, child:
+          Container(decoration: displayDecoration, child:
             Padding(padding: padding, child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceAround, mainAxisSize: MainAxisSize.max, children: contentList,),
             ),
@@ -259,48 +282,65 @@ class TileToggleButton extends StatelessWidget {
     this.onTap,
   }) : super(key: key);
 
-  SemanticsSortKey? get _sortKey => (sortOrder != null) ? OrdinalSortKey(sortOrder!) : null;
-  String? get _semanticsValue => selected ? selectedSemanticsValue : semanticsValue;
+  @protected SemanticsSortKey? get sortKey => (sortOrder != null) ? OrdinalSortKey(sortOrder!) : null;
+  @protected String? get displaySemanticsValue => selected ? selectedSemanticsValue : semanticsValue;
   
-  Color? get _backgroundColor => selected ? selectedBackgroundColor : backgroundColor;
-  Color get _borderColor => (selected ? (selectedBorderColor ?? Styles().colors?.fillColorPrimary) : borderColor) ?? borderColor;
-  BorderRadiusGeometry get _borderRadius => borderRadius ?? BorderRadius.circular(6);
-  Border get _border => Border.all(color: _borderColor, width: borderWidth);
-  List<BoxShadow> get _borderShadow => borderShadow ?? [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
-  Decoration get _decoration => BoxDecoration(color: _backgroundColor, borderRadius: _borderRadius, border: _border, boxShadow: _borderShadow);
+  @protected Color? get displayBackgroundColor => selected ? selectedBackgroundColor : backgroundColor;
+  
+  @protected Color get defaultSelectedBorderColor => Styles().colors?.fillColorPrimary ?? borderColor;
+  @protected Color get displaySelectedBorderColor => selectedBorderColor ?? defaultSelectedBorderColor;
+  @protected Color get displayBorderColor => selected ? displaySelectedBorderColor : borderColor;
 
-  Color? get _titleColor => selected ? (selectedTitleColor ?? Styles().colors?.fillColorPrimary) : (titleColor ?? Styles().colors?.fillColorPrimary);
-  String? get _titleFontFamily => titleFontFamily ?? Styles().fontFamilies?.bold;
-  TextStyle get _defaultTitleStyle => TextStyle(fontFamily: _titleFontFamily, fontSize: titleFontSize, color: _titleColor);
-  TextStyle get _titleStyle => (selected ? selectedTitleStyle : titleStyle) ?? _defaultTitleStyle;
-  Widget get _defaultTitleWidget => Text(title ?? '', textAlign: TextAlign.center, style: _titleStyle);
-  Widget get _titleWidget => _defaultTitleWidget;
+  @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(6);
+  @protected BorderRadiusGeometry get displayBorderRadius => borderRadius ?? defaultBorderRadius;
+  
+  @protected BoxBorder get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected BoxBorder get dislayBorder => defaultBorder;
 
-  String? get _iconAsset => selected ? selectedIconAsset : iconAsset;
-  Widget get _defaultIconWidget => (_iconAsset != null) ?  Image.asset(_iconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) : Container();
-  Widget get _iconWidget => (selected ? selectedIcon : icon) ?? _defaultIconWidget;
+  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
 
-  Widget get _selectionMarkerWidget => selectionMarker ?? Image.asset(selectionMarkerAsset ?? '', excludeFromSemantics: true);
+  @protected Decoration get defaultDecoration => BoxDecoration(color: displayBackgroundColor, borderRadius: displayBorderRadius, border: dislayBorder, boxShadow: displayBorderShadow);
+  @protected Decoration get displayDecoration => defaultDecoration;
+
+  @protected Color? get defaultTitleColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTitleColor => (selected ? selectedTitleColor : titleColor) ?? defaultTitleColor;
+
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
+  
+  @protected TextStyle get defaultTitleStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleColor);
+  @protected TextStyle get displayTitleStyle => (selected ? selectedTitleStyle : titleStyle) ?? defaultTitleStyle;
+  
+  @protected Widget get defaultTitleWidget => Text(title ?? '', textAlign: TextAlign.center, style: displayTitleStyle);
+  @protected Widget get displayTitleWidget => defaultTitleWidget;
+
+  @protected String? get displayIconAsset => selected ? selectedIconAsset : iconAsset;
+  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Image.asset(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) : Container();
+  @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
+
+  @protected Widget get defaultSelectionMarkerWidget => Image.asset(selectionMarkerAsset ?? '', excludeFromSemantics: true);
+  @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(onTap: () => _onTap(context), child:
-      Semantics(label: title, excludeSemantics: true, sortKey: _sortKey, value: _semanticsValue, child:
+      Semantics(label: title, excludeSemantics: true, sortKey: sortKey, value: displaySemanticsValue, child:
         Stack(children: <Widget>[
           Padding(padding: margin, child:
-            Container(decoration: _decoration, child:
+            Container(decoration: displayDecoration, child:
               Padding(padding: padding, child:
                 Column(children: <Widget>[
-                  _iconWidget,
+                  displayIconWidget,
                   Container(height: contentSpacing,),
-                  _titleWidget,
+                  displayTitleWidget,
                 ],),
               ),
             ),
           ),
           Visibility(visible: selected, child:
             Align(alignment: Alignment.topRight, child:
-              _selectionMarkerWidget,
+              displaySelectionMarkerWidget,
             ),
           ),
       ],
