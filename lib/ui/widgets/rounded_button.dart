@@ -102,36 +102,36 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
-  Color? get defaultBackgroundColor => Styles().colors?.white;
-  Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
+  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
-  Color? get defautTextColor => Styles().colors?.fillColorPrimary;
-  Color? get displayTextColor => textColor ?? defautTextColor;
-  String? get defaultFontFamily => Styles().fontFamilies?.bold;
-  String? get displayFontFamily => fontFamily ?? defaultFontFamily;
-  TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
-  TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
-  Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
-  Widget get displayTextWidget => textWidget ?? defaultTextWidget;
+  @protected Color? get defautTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTextColor => textColor ?? defautTextColor;
+  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
+  @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
+  @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
+  @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
+  @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
 
-  Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
-  Color get displayBorderColor => borderColor ?? defaultBorderColor;
-  Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
-  Border get displayBorder => border ?? defaultBorder;
-  double get displaySecondaryBorderWidth => secondaryBorderWidth ?? borderWidth;
-  Border? get defaultSecondaryBorder => (secondaryBorderColor != null) ? Border.all(color: secondaryBorderColor!, width: displaySecondaryBorderWidth) : null;
-  Border? get displaySecondaryBorder => secondaryBorder ?? defaultSecondaryBorder;
+  @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
+  @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
+  @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected Border get displayBorder => border ?? defaultBorder;
+  @protected double get displaySecondaryBorderWidth => secondaryBorderWidth ?? borderWidth;
+  @protected Border? get defaultSecondaryBorder => (secondaryBorderColor != null) ? Border.all(color: secondaryBorderColor!, width: displaySecondaryBorderWidth) : null;
+  @protected Border? get displaySecondaryBorder => secondaryBorder ?? defaultSecondaryBorder;
 
-  Widget get displayLeftIcon => leftIcon ?? Container();
-  EdgeInsetsGeometry get defaultLeftIconPadding => EdgeInsets.all(iconPadding);
-  EdgeInsetsGeometry get displayLeftIconPadding => leftIconPadding ?? defaultLeftIconPadding;
+  @protected Widget get displayLeftIcon => leftIcon ?? Container();
+  @protected EdgeInsetsGeometry get defaultLeftIconPadding => EdgeInsets.all(iconPadding);
+  @protected EdgeInsetsGeometry get displayLeftIconPadding => leftIconPadding ?? defaultLeftIconPadding;
   
-  Widget get displayRightIcon => rightIcon ?? Container();
-  EdgeInsetsGeometry get defaultRightIconPadding => EdgeInsets.all(iconPadding);
-  EdgeInsetsGeometry get displayRightIconPadding => rightIconPadding ?? defaultRightIconPadding;
+  @protected Widget get displayRightIcon => rightIcon ?? Container();
+  @protected EdgeInsetsGeometry get defaultRightIconPadding => EdgeInsets.all(iconPadding);
+  @protected EdgeInsetsGeometry get displayRightIconPadding => rightIconPadding ?? defaultRightIconPadding;
 
-  Color? get displayProgressColor => progressColor ?? displayBorderColor;
-  double get displayProgressStrokeWidth => progressStrokeWidth ?? borderWidth;
+  @protected Color? get displayProgressColor => progressColor ?? displayBorderColor;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? borderWidth;
 
   @override
   _RoundedButtonState createState() => _RoundedButtonState();
