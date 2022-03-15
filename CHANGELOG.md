@@ -5,20 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [1.0.0] - 2022-03-15
 ### Changed
 - Updated homepage and author details in rokwire_plugin.podspec [#34](https://github.com/rokwire/app-flutter-plugin/issues/34).
 ### Added
-- ExpandableText control [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- FilterListItemWidget and FilterSelectorWidget controls [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Widget class names updated to exclude "Widget" suffix [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- ScaleableFilterSelectorWidget control merged to FilterSelector widget [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- HomeHeader control moved to plugin as SectionRibbonHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- ImageHolderListItem moved to plugin as ImageSlantHeader [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- ModalImageDialog moved to plugin as ModalImagePanel [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- RoleGridButton moved to plugin as TileToggleButton [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- Rounded moved to plugin [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- VerticalTitleContentSection moved to plugin as VerticalTitleValueSection [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
-- PopupDialog moved to plugin as PopupMessage [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+- Added miscelanious controls to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
  
 ## [0.0.2] - 2022-03-07
 ### Added
