@@ -396,7 +396,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         profile: _anonymousProfile ?? Auth2UserProfile.empty());
 
       if ((token != null) && token.isValid && (account != null) && account.isValid) {
-        applyLogin(account, token, params: JsonUtils.mapValue(responseJson['params']));
+        await applyLogin(account, token, params: JsonUtils.mapValue(responseJson['params']));
         return true;
       }
     }

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.0.3] - 2022-03-17
+### Fixed
+- Wait for applyLogin in Auth2.processLoginResponse [#46](https://github.com/rokwire/app-flutter-plugin/issues/46).
+
 ## [0.0.2] - 2022-03-07
 ### Added
 - OIDC auth result codes [#25](https://github.com/rokwire/app-flutter-plugin/issues/25)
