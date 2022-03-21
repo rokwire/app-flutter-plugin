@@ -871,9 +871,10 @@ class GroupPost {
   final DateTime? dateUpdatedUtc;
   final bool? private;
   final List<GroupPost>? replies;
+  final List<Member>? members;
   final String? imageUrl;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies});
+  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members,});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? GroupPost(
@@ -886,7 +887,10 @@ class GroupPost {
         dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
         private: json['private'],
         imageUrl: JsonUtils.stringValue(json["image_url"]),
-        replies: GroupPost.fromJsonList(json['replies'])) : null;
+        replies: GroupPost.fromJsonList(json['replies']),
+        members: Member.listFromJson(json['to_members'])
+      ) : null;
+
   }
 
   Map<String, dynamic> toJson({bool create = false, bool update = false}) {
@@ -903,6 +907,9 @@ class GroupPost {
     }
     if(imageUrl!=null){
       json['image_url'] = imageUrl;
+    }
+    if(members!=null){
+      json['to_members'] = Member.listToJson(members);
     }
     return json;
   }
@@ -928,8 +935,9 @@ class PostDataModel {
   String? body;
   String? subject;
   String? imageUrl;
+  List<Member>? members;
 
-  PostDataModel({this.body, this.subject, this.imageUrl});
+  PostDataModel({this.body, this.subject, this.imageUrl, this.members});
 }
 
 //////////////////////////////
