@@ -667,16 +667,12 @@ class Groups with Service implements NotificationsListener {
 
   // Group Posts and Replies
 
-  Future<bool> createPost(String? groupId, GroupPost? post, {List<Member>? members}) async {
+  Future<bool> createPost(String? groupId, GroupPost? post) async {
     await waitForLogin();
     if (StringUtils.isEmpty(groupId) || (post == null)) {
       return false;
     }
-    Map postData = post.toJson(create: true);
-    if(CollectionUtils.isNotEmpty(members)){
-        postData["to_members"] = JsonUtils.encodeList(members ?? []);
-    }
-    String? requestBody = JsonUtils.encode(postData);
+    String? requestBody = JsonUtils.encode(post.toJson(create: true));
     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
     Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
     int responseCode = response?.statusCode ?? -1;
