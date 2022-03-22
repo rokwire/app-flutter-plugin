@@ -233,7 +233,10 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     private void unInitGeofenceClient() {
         if (geofencingClient != null) {
-            geofencingClient.removeGeofences(getGeofencePendingIntent());
+            if (geofencePendingIntent != null) {
+                geofencingClient.removeGeofences(geofencePendingIntent);
+                geofencePendingIntent = null;
+            }
             geofencingClient = null;
         }
     }
