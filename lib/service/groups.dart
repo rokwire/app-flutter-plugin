@@ -600,14 +600,39 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<bool> linkEventToGroup({String? groupId, String? eventId}) async {
+  Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     await waitForLogin();
     if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
         Map<String, dynamic> bodyMap = {"event_id":eventId};
+        if(CollectionUtils.isNotEmpty(toMembers)){
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+        }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
+        if((response?.statusCode ?? -1) == 200){
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return true;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false; // fail
+  }
+
+  Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
+    await waitForLogin();
+    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events';
+      try {
+        Map<String, dynamic> bodyMap = {"event_id":eventId};
+        if(CollectionUtils.isNotEmpty(toMembers)){
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+        }
+        String? body = JsonUtils.encode(bodyMap);
+        Response? response = await Network().put(url, auth: Auth2(),body: body);
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupUpdated, groupId);
           return true;
