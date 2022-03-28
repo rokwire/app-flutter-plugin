@@ -69,7 +69,7 @@ class Content /* with Service */ {
     }
   }
 
-  Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width}) async {
+  Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width, bool? isUserPic}) async {
     XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) {
       // User has cancelled operation
@@ -80,16 +80,22 @@ class Content /* with Service */ {
         List<int> imageBytes = await image.readAsBytes();
         String fileName = basename(image.path);
         String? contentType = mime(fileName);
-        return uploadImage(storagePath: storagePath, imageBytes: imageBytes, width: width, fileName: fileName, mediaType: contentType);
+        return uploadImage(
+            storagePath: storagePath,
+            imageBytes: imageBytes,
+            width: width,
+            fileName: fileName,
+            mediaType: contentType,
+            isUserPic: isUserPic);
       }
-    }
-    catch(e) {
+    } catch (e) {
       debugPrint(e.toString());
     }
     return null;
   }
 
-  Future<ImagesResult> uploadImage({List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType}) async {
+  Future<ImagesResult> uploadImage(
+      {List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType, bool? isUserPic}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing images BB url.');
@@ -100,23 +106,30 @@ class Content /* with Service */ {
     if (StringUtils.isEmpty(fileName)) {
       return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing file name.');
     }
-    if (StringUtils.isEmpty(storagePath)) {
+    if ((isUserPic != true) && StringUtils.isEmpty(storagePath)) {
       return ImagesResult.error(ImagesErrorType.storagePathNotSupplied, 'Missing storage path.');
     }
-    if ((width == null) || (width <= 0)) {
+    if ((isUserPic != true) && ((width == null) || (width <= 0))) {
       return ImagesResult.error(ImagesErrorType.dimensionsNotSupplied, 'Invalid image width. Please, provide positive number.');
     }
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
-    String url = "$serviceUrl/image";
+    String url = (isUserPic == true) ? "$serviceUrl/image/user/${Auth2().accountId}" : "$serviceUrl/image";
     Map<String, String> imageRequestFields = {
-      'path': storagePath!,
-      'width': width.toString(),
       'quality': 100.toString() // Use maximum quality - 100
     };
+    if (isUserPic != true) {
+      imageRequestFields.addAll({'path': storagePath!, 'width': width.toString()});
+    }
     StreamedResponse? response = await Network().multipartPost(
-        url: url, fileKey: 'fileName', fileName: fileName, fileBytes: imageBytes, contentType: mediaType, fields: imageRequestFields, auth: Auth2());
+        url: url,
+        fileKey: 'fileName',
+        fileName: fileName,
+        fileBytes: imageBytes,
+        contentType: mediaType,
+        fields: imageRequestFields,
+        auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
@@ -126,6 +139,22 @@ class Content /* with Service */ {
     } else {
       debugPrint("Failed to upload image. Reason: $responseCode $responseString");
       return ImagesResult.error(ImagesErrorType.uploadFailed, "Failed to upload image.", response);
+    }
+  }
+
+  Future<ImagesResult> deleteUserProfileImage() async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing content BB url.');
+    }
+    Response? response = await Network().delete(serviceUrl, auth: Auth2());
+    String? responseString = response?.body;
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return ImagesResult.succeed('User profile image deleted.');
+    } else {
+      debugPrint("Failed to delete user's profile image. Reason: $responseCode $responseString");
+      return ImagesResult.error(ImagesErrorType.deleteFailed, "Failed to delete user's profile image.", responseString);
     }
   }
 
@@ -146,6 +175,7 @@ enum ImagesErrorType {
   dimensionsNotSupplied,
   mediaTypeNotSupplied,
   uploadFailed,
+  deleteFailed,
 }
 
 class ImagesResult {
