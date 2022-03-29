@@ -116,7 +116,7 @@ class Content /* with Service */ {
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
-    String url = (isUserPic == true) ? "$serviceUrl/image/user/${Auth2().accountId}" : "$serviceUrl/image";
+    String url = (isUserPic == true) ? "$serviceUrl/profile_picture/${Auth2().accountId}" : "$serviceUrl/image";
     Map<String, String> imageRequestFields = {
       'quality': 100.toString() // Use maximum quality - 100
     };
@@ -148,7 +148,8 @@ class Content /* with Service */ {
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing content BB url.');
     }
-    Response? response = await Network().delete(serviceUrl, auth: Auth2());
+    String url = '$serviceUrl/profile_picture/${Auth2().accountId}';
+    Response? response = await Network().delete(url, auth: Auth2());
     String? responseString = response?.body;
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
