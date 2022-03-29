@@ -160,27 +160,27 @@ class Content /* with Service */ {
     }
   }
 
-  Future<Uint8List?> loadLargeUserProfileImage() async {
-    return loadUserProfileImage(UserProfileImageType.large);
+  Future<Uint8List?> loadLargeUserProfileImage({String? accountId}) async {
+    return loadUserProfileImage(UserProfileImageType.large, accountId: accountId);
   }
 
-  Future<Uint8List?> loadSmallUserProfileImage() async {
-    return loadUserProfileImage(UserProfileImageType.small);
+  Future<Uint8List?> loadSmallUserProfileImage({String? accountId}) async {
+    return loadUserProfileImage(UserProfileImageType.small, accountId: accountId);
   }
 
-  Future<Uint8List?> loadUserProfileImage(UserProfileImageType type) async {
+  Future<Uint8List?> loadUserProfileImage(UserProfileImageType type, {String? accountId}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       debugPrint('Missing content service url.');
       return null;
     }
-    String? accountId = Auth2().accountId;
-    if (StringUtils.isEmpty(accountId)) {
+    String? userAccountId = accountId ?? Auth2().accountId;
+    if (StringUtils.isEmpty(userAccountId)) {
       debugPrint('Missing account id.');
       return null;
     }
     String typeToString = _profileImageTypeToKeyString(type);
-    String url = '$serviceUrl/profile_picture/$accountId/$typeToString.webp';
+    String url = '$serviceUrl/profile_picture/$userAccountId/$typeToString.webp';
     Response? response = await Network().get(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseString = response?.body;
