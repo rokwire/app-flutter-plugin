@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
@@ -158,9 +159,52 @@ class Content /* with Service */ {
     }
   }
 
+  Future<Uint8List?> loadLargeUserProfileImage() async {
+    return loadUserProfileImage(UserProfileImageType.large);
+  }
+
+  Future<Uint8List?> loadSmallUserProfileImage() async {
+    return loadUserProfileImage(UserProfileImageType.small);
+  }
+
+  Future<Uint8List?> loadUserProfileImage(UserProfileImageType type) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      debugPrint('Missing content service url.');
+      return null;
+    }
+    String? accountId = Auth2().accountId;
+    if (StringUtils.isEmpty(accountId)) {
+      debugPrint('Missing account id.');
+      return null;
+    }
+    String typeToString = _profileImageTypeToKeyString(type);
+    String url = '$serviceUrl/profile_picture/$accountId/$typeToString.webp';
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return (responseString != null) ? await compute(base64Decode, responseString) : null;
+    } else {
+      debugPrint('Failed to retrieve user profile picture {$typeToString}. \nReason: $responseCode: $responseString');
+      return null;
+    }
+  }
+
   bool _isValidImage(String? contentType) {
     if (contentType == null) return false;
     return contentType.startsWith("image/");
+  }
+
+  static String _profileImageTypeToKeyString(UserProfileImageType type) {
+    switch (type) {
+      case UserProfileImageType.large:
+        return 'large';
+      case UserProfileImageType.medium:
+        return 'medium';
+      case UserProfileImageType.small:
+        return 'small';
+    }
   }
 }
 
@@ -193,3 +237,5 @@ class ImagesResult {
   ImagesResult.succeed(this.data) :
     resultType = ImagesResultType.succeeded;
 }
+
+enum UserProfileImageType { large, medium, small }
