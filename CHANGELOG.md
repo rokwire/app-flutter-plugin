@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GroupPost implements members param [#1450](https://github.com/rokwire/illinois-app/issues/1450).
 ### Fixed
 - Fixed crash on activity destroy in Android native side (#50).
+### Added
+- Get, Create, Update and Delete user's profile picture [#53](https://github.com/rokwire/app-flutter-plugin/issues/53).
 
 ## [1.0.0] - 2022-03-15
 ### Changed

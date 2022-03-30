@@ -16,8 +16,6 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/model/event.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
@@ -325,7 +323,6 @@ class Member {
   String?            externalId;
 	String?            name;
 	String?            email;
-	String?            photoURL;
   GroupMemberStatus? status;
   String?            officerTitle;
   
@@ -350,7 +347,6 @@ class Member {
     try { externalId  = json['external_id'];      } catch(e) { debugPrint(e.toString()); }
     try { name        = json['name'];     } catch(e) { debugPrint(e.toString()); }
     try { email       = json['email'];     } catch(e) { debugPrint(e.toString()); }
-    try { photoURL    = json['photo_url']; } catch(e) { debugPrint(e.toString()); }
     try { status       = groupMemberStatusFromString(json['status']); } catch(e) { debugPrint(e.toString()); }
     try { officerTitle = json['officerTitle']; } catch(e) { debugPrint(e.toString()); }
     try {
@@ -368,7 +364,6 @@ class Member {
     userId         = other?.userId;
     externalId     = other?.externalId;
     name           = other?.name;
-    photoURL       = other?.photoURL;
     status         = other?.status;
     officerTitle   = other?.officerTitle;
     answers        = other?.answers;
@@ -391,7 +386,6 @@ class Member {
     json['external_id']         = externalId;
     json['name']                = name;
     json['email']               = email;
-    json['photo_url']           = photoURL;
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
     json['answers']             = CollectionUtils.isNotEmpty(answers) ? answers!.map((answer) => answer.toJson()).toList() : null;
@@ -443,7 +437,6 @@ class Member {
       (other.externalId == externalId) &&
       (other.name == name) &&
       (other.email == email) &&
-      (other.photoURL == photoURL) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
@@ -457,7 +450,6 @@ class Member {
     (externalId?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
     (email?.hashCode ?? 0) ^
-    (photoURL?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
@@ -769,89 +761,6 @@ class GroupMembershipAnswer {
       json = [];
       for (GroupMembershipAnswer value in values) {
         json.add(value.toJson());
-      }
-    }
-    return json;
-  }
-}
-
-//////////////////////////////
-// GroupEvent
-
-class GroupEvent extends Event {
-  List<GroupEventComment>? comments;
-  
-  GroupEvent({Map<String, dynamic>? json}) : super(json: json) {
-    if (json != null) {
-      _initFromJson(json);
-    }
-  }
-
-  void _initFromJson(Map<String, dynamic> json) {
-    try { comments = GroupEventComment.listFromJson(json['comments']); } catch(e) { debugPrint(e.toString()); }
-  }
-
-  static GroupEvent? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? GroupEvent(json: json) : null;
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = super.toJson();
-    json['comments']  = GroupEventComment.listToJson(comments);
-    return json;
-  }
-}
-
-//////////////////////////////
-// GroupEventComment
-
-class GroupEventComment {
-  Member?       member;
-  DateTime?     dateCreated;
-	String?       text;
-
-  GroupEventComment({Map<String, dynamic>? json}) {
-    if (json != null) {
-      _initFromJson(json);
-    }
-  }
-
-  void _initFromJson(Map<String, dynamic> json) {
-    try { member      = Member.fromJson(json['member']); } catch(e) { debugPrint(e.toString()); }
-    try { dateCreated = DateTimeUtils.dateTimeFromString(json['dateCreated'], format: AppDateTime.iso8601DateTimeFormat); } catch(e) { debugPrint(e.toString()); }
-    try { text         = json['text']; } catch(e) { debugPrint(e.toString()); }
-  }
-
-  static GroupEventComment? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? GroupEventComment(json: json) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = {};
-    json['member'] = member?.toJson();
-    json['dateCreated'] = AppDateTime().formatDateTime(dateCreated, format: AppDateTime.iso8601DateTimeFormat);
-    json['text'] = text;
-    return json;
-  }
-
-  static List<GroupEventComment>? listFromJson(List<dynamic>? json) {
-    List<GroupEventComment>? values;
-    if (json != null) {
-      values = [];
-      for (dynamic entry in json) {
-        ListUtils.add(values, GroupEventComment.fromJson(JsonUtils.mapValue(entry)));
-      }
-    }
-    return values;
-  }
-
-  static List<dynamic>? listToJson(List<GroupEventComment>? values) {
-    List<dynamic>? json;
-    if (values != null) {
-      json = [];
-      for (GroupEventComment? value in values) {
-        json.add(value?.toJson());
       }
     }
     return json;
