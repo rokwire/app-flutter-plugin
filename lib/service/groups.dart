@@ -572,7 +572,7 @@ class Groups with Service implements NotificationsListener {
   /// 
   /// value - events (limited or not)
   ///
-  Future<Map<int, List<GroupEvent>>?> loadEvents (Group? group, {int limit = -1}) async {
+  Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
     await waitForLogin();
     if (group != null) {
       List<dynamic>? eventIds = await loadEventIds(group.id);
@@ -590,9 +590,9 @@ class Groups with Service implements NotificationsListener {
         SortUtils.sort(currentUserEvents);
         //limit the result count // limit available events
         List<Event> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
-        List<GroupEvent> groupEvents = <GroupEvent>[];
+        List<Event> groupEvents = <Event>[];
         for (Event event in visibleEvents) {
-          ListUtils.add(groupEvents, GroupEvent.fromJson(event.toJson()));
+          ListUtils.add(groupEvents, Event.fromJson(event.toJson()));
         }
         return {eventsCount: groupEvents};
       }
@@ -682,12 +682,6 @@ class Groups with Service implements NotificationsListener {
     }
     NotificationService().notify(Groups.notifyGroupEventsUpdated);
     return deleteResult;
-  }
-
-  // Event Comments
-
-  Future<bool> postEventComment(String groupId, String eventId, GroupEventComment comment) {
-    return Future<bool>.delayed(const Duration(seconds: 1), (){ return true; });
   }
 
   // Group Posts and Replies
