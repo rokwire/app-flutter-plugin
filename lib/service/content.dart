@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
@@ -116,7 +115,7 @@ class Content /* with Service */ {
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
-    String url = (isUserPic == true) ? "$serviceUrl/profile_picture/${Auth2().accountId}" : "$serviceUrl/image";
+    String url = (isUserPic == true) ? "$serviceUrl/profile_photo" : "$serviceUrl/image";
     Map<String, String> imageRequestFields = {
       'quality': 100.toString() // Use maximum quality - 100
     };
@@ -143,25 +142,25 @@ class Content /* with Service */ {
     }
   }
 
-  Future<ImagesResult> deleteUserProfileImage() async {
+  Future<ImagesResult> deleteCurrentUserProfileImage() async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing content BB url.');
     }
-    String url = '$serviceUrl/profile_picture/${Auth2().accountId}';
+    String url = '$serviceUrl/profile_photo';
     Response? response = await Network().delete(url, auth: Auth2());
-    String? responseString = response?.body;
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return ImagesResult.succeed('User profile image deleted.');
     } else {
+      String? responseString = response?.body;
       debugPrint("Failed to delete user's profile image. Reason: $responseCode $responseString");
       return ImagesResult.error(ImagesErrorType.deleteFailed, "Failed to delete user's profile image.", responseString);
     }
   }
 
-  Future<Uint8List?> loadLargeUserProfileImage({String? accountId}) async {
-    return loadUserProfileImage(UserProfileImageType.large, accountId: accountId);
+  Future<Uint8List?> loadDefaultUserProfileImage({String? accountId}) async {
+    return loadUserProfileImage(UserProfileImageType.defaultType, accountId: accountId);
   }
 
   Future<Uint8List?> loadSmallUserProfileImage({String? accountId}) async {
@@ -180,14 +179,13 @@ class Content /* with Service */ {
       return null;
     }
     String typeToString = _profileImageTypeToKeyString(type);
-    String url = '$serviceUrl/profile_picture/$userAccountId/$typeToString.webp';
+    String url = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
     Response? response = await Network().get(url, auth: Auth2());
     int? responseCode = response?.statusCode;
-    String? responseString = response?.body;
     if (responseCode == 200) {
-      return (responseString != null) ? await compute(base64Decode, responseString) : null;
+      return response!.bodyBytes;
     } else {
-      debugPrint('Failed to retrieve user profile picture {$typeToString}. \nReason: $responseCode: $responseString');
+      debugPrint('Failed to retrieve user profile picture {$typeToString}. \nReason: $responseCode: ${response?.body}');
       return null;
     }
   }
@@ -199,8 +197,8 @@ class Content /* with Service */ {
 
   static String _profileImageTypeToKeyString(UserProfileImageType type) {
     switch (type) {
-      case UserProfileImageType.large:
-        return 'large';
+      case UserProfileImageType.defaultType:
+        return 'default';
       case UserProfileImageType.medium:
         return 'medium';
       case UserProfileImageType.small:
@@ -239,4 +237,4 @@ class ImagesResult {
     resultType = ImagesResultType.succeeded;
 }
 
-enum UserProfileImageType { large, medium, small }
+enum UserProfileImageType { defaultType, medium, small }
