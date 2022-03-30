@@ -323,7 +323,6 @@ class Member {
   String?            externalId;
 	String?            name;
 	String?            email;
-	String?            photoURL;
   GroupMemberStatus? status;
   String?            officerTitle;
   
@@ -348,7 +347,6 @@ class Member {
     try { externalId  = json['external_id'];      } catch(e) { debugPrint(e.toString()); }
     try { name        = json['name'];     } catch(e) { debugPrint(e.toString()); }
     try { email       = json['email'];     } catch(e) { debugPrint(e.toString()); }
-    try { photoURL    = json['photo_url']; } catch(e) { debugPrint(e.toString()); }
     try { status       = groupMemberStatusFromString(json['status']); } catch(e) { debugPrint(e.toString()); }
     try { officerTitle = json['officerTitle']; } catch(e) { debugPrint(e.toString()); }
     try {
@@ -366,7 +364,6 @@ class Member {
     userId         = other?.userId;
     externalId     = other?.externalId;
     name           = other?.name;
-    photoURL       = other?.photoURL;
     status         = other?.status;
     officerTitle   = other?.officerTitle;
     answers        = other?.answers;
@@ -389,7 +386,6 @@ class Member {
     json['external_id']         = externalId;
     json['name']                = name;
     json['email']               = email;
-    json['photo_url']           = photoURL;
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
     json['answers']             = CollectionUtils.isNotEmpty(answers) ? answers!.map((answer) => answer.toJson()).toList() : null;
@@ -441,7 +437,6 @@ class Member {
       (other.externalId == externalId) &&
       (other.name == name) &&
       (other.email == email) &&
-      (other.photoURL == photoURL) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
@@ -455,7 +450,6 @@ class Member {
     (externalId?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
     (email?.hashCode ?? 0) ^
-    (photoURL?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^

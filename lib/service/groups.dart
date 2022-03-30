@@ -337,7 +337,6 @@ class Groups with Service implements NotificationsListener {
         Map<String, dynamic> json = group.toJson(withId: false);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
-        json["creator_photo_url"] = "";
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
@@ -420,7 +419,6 @@ class Groups with Service implements NotificationsListener {
         Map<String, dynamic> json = {};
         json["email"] = Auth2().account?.profile?.email ?? "";
         json["name"] = Auth2().account?.profile?.fullName ?? "";
-        json["creator_photo_url"] = "";
         json["member_answers"] = CollectionUtils.isNotEmpty(answers) ? answers!.map((e) => e.toJson()).toList() : [];
 
         String? body = JsonUtils.encode(json);
