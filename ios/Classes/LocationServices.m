@@ -22,7 +22,7 @@
 	if ([name isEqualToString:@"queryStatus"]) {
 		[self queryLocationServicesStatusWithFlutterResult:result];
 	}
-	else if ([name isEqualToString:@"requestPermision"]) {
+	else if ([name isEqualToString:@"requestPermission"]) {
 		[self requestLocationServicesPermisionWithFlutterResult:result];
 	}
 	else {

@@ -34,7 +34,7 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
 
     private static LocationServices _instance = null;
 
-    private MethodChannel.Result _requestPermisionResult;
+    private MethodChannel.Result _requestPermissionResult;
 
     public LocationServices() {
         _instance = this;
@@ -47,7 +47,7 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
     public void handleMethodCall(String name, Object params, MethodChannel.Result result) {
         if (name.equals("queryStatus")) {
             result.success(getLocationServicesStatus());
-        } else if (name.equals("requestPermision")) {
+        } else if (name.equals("requestPermission")) {
             requestLocationPermission(result);
         }
     }
@@ -93,7 +93,7 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
                     ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "request permission");
 
-                _requestPermisionResult = result;
+                _requestPermissionResult = result;
 
                 ActivityCompat.requestPermissions(activity,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
@@ -116,14 +116,14 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
     public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (_requestPermisionResult != null) {
+            if (_requestPermissionResult != null) {
 
                 boolean granted = (grantResults.length > 1 &&
                         grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                         grantResults[1] == PackageManager.PERMISSION_GRANTED);
                 Log.d(TAG, granted ? "granted" : "not granted");
-                _requestPermisionResult.success(granted ? "allowed" : "denied");
-                _requestPermisionResult = null;
+                _requestPermissionResult.success(granted ? "allowed" : "denied");
+                _requestPermissionResult = null;
                 if (granted) {
                     //TBD
                     //if (geofenceMonitor != null) {
