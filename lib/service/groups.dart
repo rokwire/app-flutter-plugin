@@ -659,6 +659,40 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<List<Member>?> loadGroupEventMemberSelection(groupId, eventId) async{
+    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v2';
+      try {
+        Response? response = await Network().get(url, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? groupEventLinkSettingsJson = (responseBody != null) ? JsonUtils.decodeList(responseBody) : null; //List of settings for all events //Probbably can pass paramether to backend
+          if(groupEventLinkSettingsJson?.isNotEmpty ?? false) { //Find settings for this event
+            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhere((element) {
+                if (element is Map<String, dynamic>) {
+                  String? id = JsonUtils.stringValue(element["event_id"]);
+                  if( id != null && id == eventId){
+                    return true;
+                  }
+                }
+                return false;
+              });
+
+            if(eventSettings != null && eventSettings is Map<String, dynamic>){
+              List<dynamic>? membersData = JsonUtils.listValue(eventSettings["to_members"]);
+              List<Member>? members= Member.listFromJson(membersData);
+              return members;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null; // fail
+  }
+
   Future<String?> updateGroupEvents(Event event) async {
     await waitForLogin();
     String? id = await Events().updateEvent(event);
