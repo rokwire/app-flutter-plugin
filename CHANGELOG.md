@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Group service: linkEventToGroup implements members param [#1487](https://github.com/rokwire/illinois-app/issues/1487).
 - GroupPost implements members param [#1450](https://github.com/rokwire/illinois-app/issues/1450).
+- Group service: implement loadGroupEventMemberSelection [#1519](https://github.com/rokwire/illinois-app/issues/1519).
 ### Fixed
 - Fixed crash on activity destroy in Android native side (#50).
 ### Added
