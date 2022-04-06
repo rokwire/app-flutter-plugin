@@ -168,26 +168,36 @@ class Content /* with Service */ {
   }
 
   Future<Uint8List?> loadUserProfileImage(UserProfileImageType type, {String? accountId}) async {
-    String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isEmpty(serviceUrl)) {
-      debugPrint('Missing content service url.');
+    String? url = getUserProfileImage(accountId: accountId, type: type);
+    if (StringUtils.isEmpty(url)) {
+      debugPrint('Failed to construct user profile image url.');
       return null;
     }
-    String? userAccountId = accountId ?? Auth2().accountId;
-    if (StringUtils.isEmpty(userAccountId)) {
-      debugPrint('Missing account id.');
-      return null;
-    }
-    String typeToString = _profileImageTypeToKeyString(type);
-    String url = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
     Response? response = await Network().get(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return response!.bodyBytes;
     } else {
-      debugPrint('Failed to retrieve user profile picture {$typeToString}. \nReason: $responseCode: ${response?.body}');
+      debugPrint('Failed to retrieve user profile picture for user {$accountId} and image type {${_profileImageTypeToKeyString(type)}}}. \nReason: $responseCode: ${response?.body}');
       return null;
     }
+  }
+
+  String? getUserProfileImage({String? accountId, UserProfileImageType? type = UserProfileImageType.small}) {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      debugPrint('Missing content service url.');
+      return null;
+    }
+
+    String? userAccountId = accountId ?? Auth2().accountId;
+    if (StringUtils.isEmpty(userAccountId)) {
+      debugPrint('Missing account id.');
+      return null;
+    }
+    String typeToString = _profileImageTypeToKeyString(type!);
+    String imageUrl = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
+    return imageUrl;
   }
 
   bool _isValidImage(String? contentType) {
