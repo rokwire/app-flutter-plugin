@@ -25,6 +25,8 @@ class ModalImagePanel extends StatelessWidget {
   final String imageUrl;
   final EdgeInsetsGeometry imagePadding;
 
+  final Map<String, String>? networkImageHeaders;
+
   final Widget? closeWidget;
   final String? closeLabel;
   final String? closeHint;
@@ -42,6 +44,7 @@ class ModalImagePanel extends StatelessWidget {
     required this.imageUrl,
     this.imagePadding = const EdgeInsets.symmetric(vertical: 64, horizontal: 32),
 
+    this.networkImageHeaders,
 
     this.closeWidget,
     this.closeLabel = 'Close Button',
@@ -60,7 +63,7 @@ class ModalImagePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Image networkImage = Image.network(imageUrl, headers: Config().networkAuthHeaders);
+    Image networkImage = Image.network(imageUrl, headers: (networkImageHeaders ?? Config().networkAuthHeaders));
     Completer<ui.Image> networkImageCompleter = Completer<ui.Image>();
     networkImage.image.resolve(const ImageConfiguration()).addListener(ImageStreamListener((ImageInfo info, bool syncCall) => networkImageCompleter.complete(info.image)));
     
