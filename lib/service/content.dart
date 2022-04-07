@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -77,7 +79,7 @@ class Content /* with Service */ {
     }
     try {
       if ((0 < await image.length())) {
-        List<int> imageBytes = await image.readAsBytes();
+        Uint8List? imageBytes = await _rotateImage(image.path);
         String fileName = basename(image.path);
         String? contentType = mime(fileName);
         return uploadImage(
@@ -198,6 +200,14 @@ class Content /* with Service */ {
     String typeToString = _profileImageTypeToKeyString(type!);
     String imageUrl = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
     return imageUrl;
+  }
+
+  Future<Uint8List?> _rotateImage(String filePath) async {
+    if (StringUtils.isEmpty(filePath)) {
+      return null;
+    }
+    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    return await rotatedImage.readAsBytes();
   }
 
   bool _isValidImage(String? contentType) {
