@@ -70,7 +70,7 @@ class InboxMessage with Favorite {
   static List<InboxMessage>? listFromJson(List<dynamic>? jsonList) {
     List<InboxMessage>? result;
     if (jsonList != null) {
-      result = [];
+      result = <InboxMessage>[];
       for (dynamic jsonEntry in jsonList) {
         ListUtils.add(result, InboxMessage.fromJson(JsonUtils.mapValue(jsonEntry)));
       }
@@ -185,7 +185,7 @@ class InboxRecepient {
   static List<InboxRecepient>? listFromJson(List<dynamic>? jsonList) {
     List<InboxRecepient>? result;
     if (jsonList != null) {
-      result = [];
+      result = <InboxRecepient>[];
       for (dynamic jsonEntry in jsonList) {
         ListUtils.add(result, InboxRecepient.fromJson(JsonUtils.mapValue(jsonEntry)));
       }

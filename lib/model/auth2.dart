@@ -198,7 +198,7 @@ class Auth2Account {
   }
 
   List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
-    List<Auth2Type> linkedTypes = [];
+    List<Auth2Type> linkedTypes = <Auth2Type>[];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
         if (authType.loginType == loginType) {

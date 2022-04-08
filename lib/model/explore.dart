@@ -58,7 +58,7 @@ abstract class Explore implements Comparable<Explore> {
   static List<Explore>? listFromJson(List<dynamic>? jsonList) {
     List<Explore>? explores;
     if (jsonList is List) {
-      explores = [];
+      explores = <Explore>[];
       for (dynamic jsonEntry in jsonList) {
         Explore? explore = Explore.fromJson(jsonEntry);
         if (explore != null) {

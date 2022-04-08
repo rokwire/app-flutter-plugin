@@ -136,7 +136,7 @@ class Poll {
   }
 
   static List<Poll> fromJsonList(List<dynamic>? jsonList) {
-    List<Poll> polls = [];
+    List<Poll> polls = <Poll>[];
     if (jsonList != null) {
       for (dynamic jsonEntry in jsonList) {
         ListUtils.add(polls, Poll.fromJson(jsonEntry));
@@ -245,7 +245,7 @@ class PollVote {
     return results;
   }
 
-  List<dynamic>?toVotesJson() {
+  List<dynamic>? toVotesJson() {
     List<dynamic>? votes;
     if (_votes != null) {
       votes = [];
