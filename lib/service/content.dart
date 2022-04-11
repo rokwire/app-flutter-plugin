@@ -22,6 +22,7 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -30,6 +31,8 @@ import 'package:uuid/uuid.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content /* with Service */ {
+
+  static const String notifyUserProfilePictureChanged = "edu.illinois.rokwire.content.user.picture.profile.changed";
   
   // Singletone Factory
 
@@ -137,6 +140,9 @@ class Content /* with Service */ {
     if (responseCode == 200) {
       Map<String, dynamic>? json = JsonUtils.decode(responseString);
       String? imageUrl = (json != null) ? json['url'] : null;
+      if (isUserPic == true) {
+        NotificationService().notify(notifyUserProfilePictureChanged, null);
+      }
       return ImagesResult.succeed(imageUrl);
     } else {
       debugPrint("Failed to upload image. Reason: $responseCode $responseString");
@@ -153,6 +159,7 @@ class Content /* with Service */ {
     Response? response = await Network().delete(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
+      NotificationService().notify(notifyUserProfilePictureChanged, null);
       return ImagesResult.succeed('User profile image deleted.');
     } else {
       String? responseString = response?.body;
