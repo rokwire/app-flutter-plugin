@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Image rotation before upload [#58](https://github.com/rokwire/app-flutter-plugin/issues/58).
 ### Added
 - Get, Create, Update and Delete user's profile picture [#53](https://github.com/rokwire/app-flutter-plugin/issues/53).
+- Send notification when user changes profile picture [#61](https://github.com/rokwire/app-flutter-plugin/issues/61).
 
 ## [1.0.0] - 2022-03-15
 ### Changed
