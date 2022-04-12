@@ -934,11 +934,13 @@ class Auth2UserPrefs {
     return _privacyLevel;
   }
   
-  set privacyLevel(int? value) {
+  void setPrivacyLevel({int? value, bool? preventNotification}) {
     if (_privacyLevel != value) {
       _privacyLevel = value;
-      NotificationService().notify(notifyPrivacyLevelChanged);
-      NotificationService().notify(notifyChanged, this);
+      if (preventNotification != true) {
+        NotificationService().notify(notifyPrivacyLevelChanged);
+        NotificationService().notify(notifyChanged, this);
+      }
     }
   }
 
