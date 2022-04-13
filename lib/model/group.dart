@@ -222,6 +222,10 @@ class Group {
     return (currentUserAsMember?.isMemberOrAdmin ?? false);
   }
 
+  bool get currentUserIsMemberOrAdminOrPending{
+    return (currentUserAsMember?.isMemberOrAdminOrPending ?? false);
+  }
+
   bool get currentUserCanJoin {
     return (currentUserAsMember == null) && (authManEnabled != true);
   }
@@ -456,11 +460,13 @@ class Member {
     (dateUpdatedUtc?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(answers));
 
-  bool get isAdmin           => status == GroupMemberStatus.admin;
-  bool get isMember          => status == GroupMemberStatus.member;
-  bool get isMemberOrAdmin   => isMember || isAdmin;
-  bool get isPendingMember   => status == GroupMemberStatus.pending;
-  bool get isRejected        => status == GroupMemberStatus.rejected;
+  bool get isAdmin          => status == GroupMemberStatus.admin;
+  bool get isMember         => status == GroupMemberStatus.member;
+  bool get isPendingMember  => status == GroupMemberStatus.pending;
+  bool get isRejected       => status == GroupMemberStatus.rejected;
+
+  bool get isMemberOrAdmin  => isMember || isAdmin;
+  bool get isMemberOrAdminOrPending  => isMemberOrAdmin || isPendingMember;
 
   static List<Member>? listFromJson(List<dynamic>? json) {
     List<Member>? values;
