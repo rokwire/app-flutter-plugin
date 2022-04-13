@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GroupPost implements members param [#1450](https://github.com/rokwire/illinois-app/issues/1450).
 - Group service: implement loadGroupEventMemberSelection [#1519](https://github.com/rokwire/illinois-app/issues/1519).
 - Provide possibility for skipping notification when privacy level is changed [#63](https://github.com/rokwire/app-flutter-plugin/issues/63).
+- Do not skip sending notification when changing privacy level [#65](https://github.com/rokwire/app-flutter-plugin/issues/65).
 ### Fixed
 - Fixed crash on activity destroy in Android native side (#50).
 - Image rotation before upload [#58](https://github.com/rokwire/app-flutter-plugin/issues/58).
