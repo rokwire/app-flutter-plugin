@@ -248,7 +248,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool privacyMatch(int requredPrivacyLevel) => 
     (prefs?.privacyLevel == null) || (prefs?.privacyLevel == 0) || (prefs!.privacyLevel! >= requredPrivacyLevel);
 
-  bool get canFavorite => privacyMatch(2);
+  bool get canFavorite => privacyMatch(4);
 
   bool isFavorite(Favorite? favorite) => prefs?.isFavorite(favorite) ?? false;
   bool isListFavorite(List<Favorite>? favorites) => prefs?.isListFavorite(favorites) ?? false;
