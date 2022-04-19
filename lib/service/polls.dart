@@ -105,29 +105,27 @@ class Polls with Service implements NotificationsListener {
 
   // Accessories
 
-  Future<PollsChunk?>? getMyPolls({String? cursor, List<String>? groupIds}) async {
-    return enabled ? getPolls({
-      "my_polls": true,
-      "group_ids": groupIds,
-    }) : null;
+  Future<PollsChunk?>? getMyPolls(String? cursor) async {
+    //TBD paging - load on portions
+    return getPolls(PollFilter(myPolls: true));
   }
 
-  Future<PollsChunk?>? getGroupPolls(List<String>? groupIds, {String? cursor}) async {
-    return enabled ? getPolls({
-      "group_ids": groupIds,
-    }) : null;
+  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {String? cursor}) async {
+    //TBD paging - load on portions
+    return getPolls(PollFilter(groupIds: groupIds));
   }
 
   Future<PollsChunk?>? getRecentPolls({String? cursor}) async {
-    return enabled ?  getPolls({
-      "statuses": ["created", "started"],
-    }) : null;
+    //TBD paging - load on portions
+    return getPolls(PollFilter(statuses: {PollStatus.created, PollStatus.opened}));
   }
 
   @protected
-  Future<PollsChunk?> getPolls(Map<String,dynamic> filter) async {
+  Future<PollsChunk?> getPolls(PollFilter filter) async {
     if (enabled) {
-      String? body = json.encode(filter);
+      String? body = JsonUtils.encode(filter.toJson());
+      //TBD: remove this comment
+      // String? body = JsonUtils.encode({'my_polls': true});
 
       String url = '${Config().quickPollsUrl}/polls';
 
@@ -277,7 +275,7 @@ class Polls with Service implements NotificationsListener {
   Future<Poll?> load({int? pollPin}) async {
     if (enabled) {
       if (pollPin != null) {
-        PollsChunk? chunk = await getPolls({"pin":pollPin, "statuses":["created", "started"]});
+        PollsChunk? chunk = await getPolls(PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened}));
         if(chunk?.polls?.isNotEmpty ?? false){
           List<Poll> results = [];
           for (Poll poll in chunk!.polls!) {
@@ -518,7 +516,7 @@ class Polls with Service implements NotificationsListener {
     PollChunk? pollChunk = _pollChunks[pollId];
     if ((pollChunk != null) && (pollChunk.eventClient == null) && (pollChunk.eventListener == null)) {
       try {
-        String url = "http://192.168.1.20/polls/api/polls/$pollId/events";//'${Config().quickPollsUrl}/events/$pollId';
+        String url = '${Config().quickPollsUrl}/polls/$pollId/events';
         pollChunk.eventClient = Client();
         /*pollChunk.eventSource = EventSource(Uri.parse(url),
             clientFactory: (){

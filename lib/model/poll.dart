@@ -341,3 +341,53 @@ class PollVote {
     }
   }
 }
+
+class PollFilter {
+  Set<String>? groupIds;
+  int? limit;
+  bool? myPolls;
+  int? offset;
+  PollOrder? order;
+  int? pinCode;
+  Set<String>? pollIds;
+  Set<PollStatus>? statuses;
+
+  PollFilter({this.groupIds, this.limit, this.myPolls, this.offset, this.order, this.pinCode, this.pollIds, this.statuses});
+
+  Map<String, dynamic>? toJson() {
+    Set<String>? statusSet;
+    if (CollectionUtils.isNotEmpty(statuses)) {
+      statusSet = <String>{};
+      for (PollStatus status in statuses!) {
+        statusSet.add(Poll.pollStatusToString(status)!);
+      }
+    }
+    
+    Map<String, dynamic> json = {
+      'group_ids': groupIds?.toList(),
+      'limit': limit,
+      'my_polls': myPolls,
+      'offset': offset,
+      'order': orderToString(order),
+      'pin': pinCode,
+      'poll_ids': pollIds?.toList(),
+      'statuses': statusSet?.toList()
+    };
+
+    json.removeWhere((key, value) => value == null);
+    return json;
+  }
+
+  static String? orderToString(PollOrder? order) {
+    switch (order) {
+      case PollOrder.asc:
+        return 'asc';
+      case PollOrder.desc:
+        return 'desc';
+      default:
+        return null;
+    }
+  }
+}
+
+enum PollOrder { asc, desc }
