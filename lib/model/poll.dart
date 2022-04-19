@@ -45,9 +45,10 @@ class Poll {
     this.status, this.results, this.userVote, this.groupId, this.uniqueVotersCount
   });
 
-  static Poll? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? Poll(
-      pollId: json['id'],
+  static Poll? fromJson(Map<String, dynamic>? outerJson) {
+    Map<String, dynamic>? json = outerJson != null ? outerJson["poll"] : null;
+    return (json != null) && outerJson != null ? Poll(
+      pollId: outerJson['id'],
       title: json['question'],
       options: List<String>.from(json['options']),
       
@@ -69,7 +70,7 @@ class Poll {
       userVote: PollVote.fromJson(votes:json['voted']),
 
       groupId: json['group_id'],
-      uniqueVotersCount: json['unique_voters_count'],
+      uniqueVotersCount: outerJson['unique_voters_count'],
     ) : null;
   }
 
