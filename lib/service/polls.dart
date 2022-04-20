@@ -151,8 +151,9 @@ class Polls with Service implements NotificationsListener {
 
   Future<void> create(Poll poll) async {
     if (enabled) {
+      String? body = JsonUtils.encode(poll.toJson());
       String url = '${Config().quickPollsUrl}/polls';
-      Response? response = await Network().post(url, body: json.encode(poll.toJson()), auth: Auth2());
+      Response? response = await Network().post(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseString = response?.body;
       if ((response != null) && (responseCode == 200)) {
