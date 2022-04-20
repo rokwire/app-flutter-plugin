@@ -115,20 +115,15 @@ class Polls with Service implements NotificationsListener {
     return getPolls(PollFilter(groupIds: groupIds));
   }
 
-  Future<PollsChunk?>? getRecentPolls({String? cursor}) async {
-    //TBD paging - load on portions
-    return getPolls(PollFilter(statuses: {PollStatus.created, PollStatus.opened}));
+  Future<PollsChunk?>? getRecentPolls({int? offset, int? limit}) async {
+    return getPolls(PollFilter(limit: (limit ?? 5), offset: offset, myPolls: true, statuses: {PollStatus.created, PollStatus.opened}));
   }
 
   @protected
   Future<PollsChunk?> getPolls(PollFilter filter) async {
     if (enabled) {
       String? body = JsonUtils.encode(filter.toJson());
-      //TBD: remove this comment
-      // String? body = JsonUtils.encode({'my_polls': true});
-
       String url = '${Config().quickPollsUrl}/polls';
-
       Response? response = await Network().get(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
