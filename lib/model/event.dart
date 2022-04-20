@@ -505,7 +505,7 @@ class Event with Explore implements Favorite {
   }
 
   void addRecurrentEvent(Event event) {
-    recurringEvents ??= [];
+    recurringEvents ??= <Event>[];
     recurringEvents!.add(event);
   }
 
@@ -535,7 +535,7 @@ class Event with Explore implements Favorite {
     if (isSuperEvent != true) {
       return;
     }
-    _subEvents ??= [];
+    _subEvents ??= <Event>[];
     _subEvents!.add(event);
   }
 
@@ -547,7 +547,7 @@ class Event with Explore implements Favorite {
     if (isSuperEvent != true) {
       return;
     }
-    _featuredEvents ??= [];
+    _featuredEvents ??= <Event>[];
     _featuredEvents!.add(event);
   }
 
@@ -555,7 +555,7 @@ class Event with Explore implements Favorite {
     if (subEventsJson == null || subEventsJson.isEmpty) {
       return null;
     }
-    List<Map<String, dynamic>> subEvents = [];
+    List<Map<String, dynamic>> subEvents = <Map<String, dynamic>>[];
     for (dynamic eventDynamic in subEventsJson) {
       if (eventDynamic is Map<String, dynamic>) {
         subEvents.add(eventDynamic);

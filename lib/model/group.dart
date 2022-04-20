@@ -629,7 +629,7 @@ class GroupMembershipStep {
   static List<GroupMembershipStep>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipStep>? values;
     if (json != null) {
-      values = [];
+      values = <GroupMembershipStep>[];
       for (dynamic entry in json) {
         ListUtils.add(values, GroupMembershipStep.fromJson(JsonUtils.mapValue(entry)));
       }
@@ -651,7 +651,7 @@ class GroupMembershipStep {
   static List<GroupMembershipStep>? listFromOthers(List<GroupMembershipStep>? others) {
     List<GroupMembershipStep>? values;
     if (others != null) {
-      values = [];
+      values = <GroupMembershipStep>[];
       for (GroupMembershipStep? other in others) {
           ListUtils.add(values, GroupMembershipStep.fromOther(other));
       }
@@ -688,7 +688,7 @@ class GroupMembershipQuestion {
   static List<GroupMembershipQuestion>? listFromOthers(List<GroupMembershipQuestion>? others) {
     List<GroupMembershipQuestion>? values;
     if (others != null) {
-      values = [];
+      values = <GroupMembershipQuestion>[];
       for (GroupMembershipQuestion? other in others) {
         ListUtils.add(values, GroupMembershipQuestion.fromString(other!.question));
       }
@@ -753,7 +753,7 @@ class GroupMembershipAnswer {
   static List<GroupMembershipAnswer>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipAnswer>? values;
     if (json != null) {
-      values = [];
+      values = <GroupMembershipAnswer>[];
       for (dynamic entry in json) {
         ListUtils.add(values, GroupMembershipAnswer.fromJson(JsonUtils.mapValue(entry)));
       }
@@ -836,7 +836,7 @@ class GroupPost {
   static List<GroupPost>? fromJsonList(List<dynamic>? jsonList) {
     List<GroupPost>? posts;
     if (jsonList != null) {
-      posts = [];
+      posts = <GroupPost>[];
       for (dynamic jsonEntry in jsonList) {
         ListUtils.add(posts, GroupPost.fromJson(jsonEntry));
       }

@@ -245,7 +245,7 @@ class GeoFenceBeacon {
   static List<GeoFenceBeacon>? listFromJsonList(List? values) {
     List<GeoFenceBeacon>? beacons;
     if (values != null) {
-      beacons = [];
+      beacons = <GeoFenceBeacon>[];
       for (dynamic value in values) {
         GeoFenceBeacon? beacon = GeoFenceBeacon.fromJson(value.cast<String, dynamic>());
         if (beacon != null) {
