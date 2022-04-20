@@ -93,11 +93,13 @@ class Network  {
 
         http.StreamedResponse? responseStream = await responseStreamFuture;
 
+        http.Response? response = (responseStream != null) ? await http.Response.fromStream(responseStream) : null;
+
         if (localClient != null) {
           localClient.close();
         }
 
-        return (responseStream != null) ? http.Response.fromStream(responseStream) : null;
+        return response;
       }
     } catch (e) { 
       Log.d(e.toString());
