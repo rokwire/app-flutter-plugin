@@ -105,17 +105,16 @@ class Polls with Service implements NotificationsListener {
 
   // Accessories
 
-  Future<PollsChunk?>? getMyPolls(String? cursor) async {
-    //TBD paging - load on portions
-    return getPolls(PollFilter(myPolls: true));
+  Future<PollsChunk?>? getMyPolls({int? offset, int? limit}) async {
+    return getPolls(PollFilter(myPolls: true, offset: offset, limit: limit));
   }
 
-  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {String? cursor}) async {
-    //TBD paging - load on portions
-    return getPolls(PollFilter(groupIds: groupIds));
+  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {int? offset, int? limit}) async {
+    return getPolls(PollFilter(groupIds: groupIds, offset: offset, limit: limit));
   }
 
   Future<PollsChunk?>? getRecentPolls({int? offset, int? limit}) async {
+    //TBD: handle properly which are the recent polls
     return getPolls(PollFilter(limit: (limit ?? 5), offset: offset, myPolls: true, statuses: {PollStatus.created, PollStatus.opened}));
   }
 
