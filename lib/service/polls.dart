@@ -105,23 +105,23 @@ class Polls with Service implements NotificationsListener {
 
   // Accessories
 
-  Future<PollsChunk?>? getMyPolls({int? offset, int? limit}) async {
-    return getPolls(PollFilter(myPolls: true, offset: offset, limit: limit));
+  Future<PollsChunk?>? getMyPolls({PollsCursor? cursor}) async {
+    return getPolls(PollFilter(myPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {int? offset, int? limit}) async {
-    return getPolls(PollFilter(groupIds: groupIds, offset: offset, limit: limit));
+  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {PollsCursor? cursor}) async {
+    return getPolls(PollFilter(groupIds: groupIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getRecentPolls({int? offset, int? limit}) async {
-    //TBD: handle properly which are the recent polls
-    return getPolls(PollFilter(limit: (limit ?? 5), offset: offset, myPolls: true, statuses: {PollStatus.created, PollStatus.opened}));
+  Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
+    return getPolls(PollFilter(
+        limit: _getLimit(cursor?.limit), offset: cursor?.offset, myPolls: true, statuses: {PollStatus.created, PollStatus.opened}));
   }
 
   @protected
-  Future<PollsChunk?> getPolls(PollFilter filter) async {
+  Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
     if (enabled) {
-      String? body = JsonUtils.encode(filter.toJson());
+      String? body = JsonUtils.encode(pollsFilter.toJson());
       String url = '${Config().quickPollsUrl}/polls';
       Response? response = await Network().get(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
@@ -129,7 +129,8 @@ class Polls with Service implements NotificationsListener {
       if ((response != null) && (responseCode == 200)) {
         List<dynamic>? responseJson = JsonUtils.decode(responseBody);
         if (responseJson != null) {
-          return PollsChunk(polls: Poll.fromJsonList(responseJson), cursor: null);
+          PollsCursor? pollsCursor = _increaseNextCursor(offset: pollsFilter.offset, limit: pollsFilter.limit, resultsCount: responseJson.length);
+          return PollsChunk(polls: Poll.fromJsonList(responseJson), cursor: pollsCursor);
         }
         else {
           throw PollsException(PollsError.serverResponseContent);
@@ -724,6 +725,24 @@ class Polls with Service implements NotificationsListener {
   // Enabled
 
   bool get enabled => StringUtils.isNotEmpty(Config().quickPollsUrl);
+
+  /////////////////////////
+  // Cursor
+
+  PollsCursor? _increaseNextCursor({int? offset, int? limit, int? resultsCount}) {
+    limit = _getLimit(limit);
+    if (offset == null) {
+      offset = resultsCount;
+    } else {
+      offset += (resultsCount ?? 0);
+    }
+
+    return PollsCursor(offset: offset, limit: limit);
+  }
+
+  int _getLimit(int? limit) {
+    return limit ?? 5;
+  }
 }
 
 class PollChunk {
@@ -775,7 +794,7 @@ enum PollUIStatus { waitingVote, presentVote, waitingClose, presentResult }
 
 class PollsChunk {
   List<Poll>? polls;
-  String? cursor;
+  PollsCursor? cursor;
   PollsChunk({this.polls, this.cursor});
 }
 
@@ -806,6 +825,13 @@ PollUIStatus? pollUIStatusFromString(String? value) {
   else {
     return null;
   }
+}
+
+class PollsCursor {
+  int? offset;
+  int? limit;
+
+  PollsCursor({this.offset, this.limit});
 }
 
 enum PollsError { serverResponse, serverResponseContent, internal }
