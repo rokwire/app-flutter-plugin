@@ -45,33 +45,35 @@ class Poll {
     this.status, this.results, this.userVote, this.groupId, this.uniqueVotersCount
   });
 
-  static Poll? fromJson(Map<String, dynamic>? outerJson) {
-    Map<String, dynamic>? json = outerJson != null ? outerJson["poll"] : null;
-    return (json != null) && outerJson != null ? Poll(
-      pollId: outerJson['id'],
-      title: json['question'],
-      options: List<String>.from(json['options']),
-      
-      //settings: PollSettings.fromJson(json['settings']),
-      settings: PollSettings(
-        allowMultipleOptions: json['multi_choice'],
-        allowRepeatOptions: json['repeat'],
-        hideResultsUntilClosed: !json['show_results'],
-        geoFence: json['geo_fence'],
-      ),
-      
-      creatorUserUuid: json['userid'],
-      creatorUserName: json['username'],
-      regionId: json['stadium'],
-      pinCode: json['pin'],
-      
-      status: pollStatusFromString(json['status']),
-      results: PollVote.fromJson(results:json['results'], total:json['total']),
-      userVote: PollVote.fromJson(votes:json['voted']),
+  static Poll? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
 
-      groupId: json['group_id'],
-      uniqueVotersCount: outerJson['unique_voters_count'],
-    ) : null;
+    Map<String, dynamic>? pollJson = json["poll"];
+    if (pollJson == null) {
+      return null;
+    }
+    return Poll(
+      pollId: json['id'],
+      title: pollJson['question'],
+      options: List<String>.from(pollJson['options']),
+      settings: PollSettings(
+        allowMultipleOptions: pollJson['multi_choice'],
+        allowRepeatOptions: pollJson['repeat'],
+        hideResultsUntilClosed: !(pollJson['show_results'] ?? false),
+        geoFence: (pollJson['geo_fence'] ?? false),
+      ),
+      creatorUserUuid: pollJson['userid'],
+      creatorUserName: pollJson['username'],
+      regionId: pollJson['stadium'],
+      pinCode: pollJson['pin'],
+      status: pollStatusFromString(pollJson['status']),
+      results: PollVote.fromJson(results: json['results'], total: json['total']),
+      userVote: PollVote.fromJson(votes: json['voted']),
+      groupId: pollJson['group_id'],
+      uniqueVotersCount: json['unique_voters_count'],
+    );
   }
 
   Map<String, dynamic> toJson() {
