@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- Next build on `develop` should refer to version 1.1.0 -->
+### Changed
+- Cleaned up laundry handling in application [#60](https://github.com/rokwire/app-flutter-plugin/issues/60).
 
 ## [1.0.1] - 2022-04-20
 ### Changed
