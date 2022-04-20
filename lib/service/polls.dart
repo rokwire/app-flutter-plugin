@@ -270,25 +270,29 @@ class Polls with Service implements NotificationsListener {
   Future<Poll?> load({int? pollPin}) async {
     if (enabled) {
       if (pollPin != null) {
-        PollsChunk? chunk = await getPolls(PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened}));
-        if(chunk?.polls?.isNotEmpty ?? false){
-          List<Poll> results = [];
-          for (Poll poll in chunk!.polls!) {
-            if (!poll.isGeoFenced || GeoFence().currentRegionIds.contains(poll.regionId)) {
-              results.add(poll);
+        PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
+        String? body = JsonUtils.encode(pollsFilter.toJson());
+        String url = '${Config().quickPollsUrl}/polls';
+        Response? response = await Network().get(url, body: body, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+          List<Poll>? polls = (responseList != null) ? Poll.fromJsonList(responseList) : null;
+          if (polls != null) {
+            Poll? poll = CollectionUtils.isNotEmpty(polls) ? polls.first : null;
+            if ((poll != null) && (_pollChunks[poll.pollId] == null)) {
+              addPollToChunks(poll);
+              NotificationService().notify(notifyCreated, poll.pollId);
             }
+            return poll;
+          } else {
+            throw PollsException(PollsError.serverResponseContent);
           }
-
-          Poll? poll = chunk.polls!.first;
-          addPollToChunks(poll);
-          NotificationService().notify(notifyCreated, poll.pollId);
-          return poll;
+        } else {
+          throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
         }
-        else {
-          throw PollsException(PollsError.serverResponseContent);
-        }
-      }
-      else {
+      } else {
         throw PollsException(PollsError.internal);
       }
     }
