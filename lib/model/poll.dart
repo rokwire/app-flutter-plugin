@@ -352,12 +352,13 @@ class PollFilter {
   Set<String>? groupIds;
   int? limit;
   bool? myPolls;
+  bool? respondedPolls;
   int? offset;
   int? pinCode;
   Set<String>? pollIds;
   Set<PollStatus>? statuses;
 
-  PollFilter({this.groupIds, this.limit, this.myPolls, this.offset, this.pinCode, this.pollIds, this.statuses});
+  PollFilter({this.groupIds, this.limit, this.myPolls, this.respondedPolls, this.offset, this.pinCode, this.pollIds, this.statuses});
 
   Map<String, dynamic>? toJson() {
     Set<String>? statusSet;
@@ -372,6 +373,7 @@ class PollFilter {
       'group_ids': groupIds?.toList(),
       'limit': limit,
       'my_polls': myPolls,
+      'responded_polls': respondedPolls,
       'offset': offset,
       'pin': pinCode,
       'poll_ids': pollIds?.toList(),

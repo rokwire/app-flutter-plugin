@@ -115,7 +115,7 @@ class Polls with Service implements NotificationsListener {
 
   Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
     return getPolls(PollFilter(
-        limit: _getLimit(cursor?.limit), offset: cursor?.offset, myPolls: true, statuses: {PollStatus.created, PollStatus.opened}));
+        limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
   @protected
