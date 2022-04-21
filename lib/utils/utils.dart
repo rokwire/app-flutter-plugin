@@ -484,7 +484,7 @@ class JsonUtils {
 
   static Set<String>? setStringsValue(dynamic value) {
     try {
-      return (value is List) ? Set.from(value.cast<String>()) : null;
+      return (value is List) ? Set<String>.from(value.cast<String>()) : null;
     }
     catch(e) {
       debugPrint(e.toString());
