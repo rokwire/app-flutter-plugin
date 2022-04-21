@@ -474,7 +474,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get notificationsUrl => JsonUtils.stringValue(platformBuildingBlocks["notifications_url"]);
   String? get locationsUrl     => JsonUtils.stringValue(platformBuildingBlocks["locations_url"]);
   String? get loggingUrl       => JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
-  String? get quickPollsUrl    => JsonUtils.stringValue(platformBuildingBlocks["polls_url"]);
+  // String? get quickPollsUrl    => JsonUtils.stringValue(platformBuildingBlocks["polls_url"]);
+  // TBD update configs with this value
+  String? get quickPollsUrl    => 'https://api-dev.rokwire.illinois.edu/polls/api';
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
