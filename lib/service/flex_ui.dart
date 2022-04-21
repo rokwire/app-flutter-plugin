@@ -25,6 +25,7 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/geo_fence.dart';
 import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -69,10 +70,10 @@ class FlexUI with Service implements NotificationsListener {
       Auth2UserPrefs.notifyPrivacyLevelChanged,
       Auth2.notifyLoginChanged,
       Auth2.notifyLinkChanged,
-//    Auth2.notifyCardChanged,
-//    IlliniCash.notifyBallanceUpdated,
       AppLivecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
+      GeoFence.notifyCurrentRegionsUpdated,
+      GeoFence.notifyCurrentBeaconsUpdated,
     ]);
   }
 
@@ -116,7 +117,9 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
         (name == Auth2.notifyLoginChanged) ||
         (name == Auth2.notifyLinkChanged) ||
-        (name == Groups.notifyUserGroupsUpdated))
+        (name == Groups.notifyUserGroupsUpdated) ||
+        (name == GeoFence.notifyCurrentRegionsUpdated) ||
+        (name == GeoFence.notifyCurrentBeaconsUpdated))
     {
       updateContent();
     }
@@ -317,6 +320,12 @@ class FlexUI with Service implements NotificationsListener {
       return false;
     }
 
+    Map<String, dynamic>? locationRules = rules['locations'];
+    dynamic locationRule = (locationRules != null) ? (((pathEntry != null) ? locationRules[pathEntry] : null) ?? locationRules[entry]) : null;
+    if ((locationRule != null) && !localeEvalLocationRule(locationRule, rules)) {
+      return false;
+    }
+
     Map<String, dynamic>? privacyRules = rules['privacy'];
     dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
     if ((privacyRule != null) && !localeEvalPrivacyRule(privacyRule)) {
@@ -418,7 +427,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetGroups = localeEvalGroupParam(argument, rules);
+        Set<String>? targetGroups = localeEvalStringParam(argument, rules);
         Set<String> userGroups = Groups().userGroupNames ?? {};
         if (targetGroups != null) {
           if (not == true) {
@@ -441,19 +450,52 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Set<String>? localeEvalGroupParam(String? groupParam, Map<String, dynamic> rules) {
-    if (groupParam != null) {
-      if (RegExp("{.+}").hasMatch(groupParam)) {
-        Set<String> groups = <String>{};
-        String rolesStr = groupParam.substring(1, groupParam.length - 1);
-        List<String> groupsStrList = rolesStr.split(',');
-        for (String groupNameStr in groupsStrList) {
-          groups.add(groupNameStr.trim());
+  bool localeEvalLocationRule(dynamic locationRule, Map<String, dynamic> rules) {
+    return BoolExpr.eval(locationRule, (String? argument) {
+      if (argument != null) {
+        bool? not, all, any;
+        if (not = argument.startsWith('~')) {
+          argument = argument.substring(1);
         }
-        return groups;
+        if (all = argument.endsWith('!')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        else if (any = argument.endsWith('?')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        
+        Set<String>? targetLocations = localeEvalStringParam(argument, rules);
+        Set<String> userLocations = GeoFence().currentRegionIds;
+        if (targetLocations != null) {
+          if (not == true) {
+            targetLocations = userLocations.difference(targetLocations);
+          }
+
+          if (all == true) {
+            return const DeepCollectionEquality().equals(userLocations, targetLocations);
+          }
+          else if (any == true) {
+            return userLocations.intersection(targetLocations).isNotEmpty;
+          }
+          else {
+            bool result = userLocations.containsAll(targetLocations);
+            return result;
+          }
+        }
+      }
+      return null;
+    });
+  }
+
+  @protected
+  Set<String>? localeEvalStringParam(String? stringParam, Map<String, dynamic> rules) {
+    if (stringParam != null) {
+      if (RegExp("{.+}").hasMatch(stringParam)) {
+        String stringsStr = stringParam.substring(1, stringParam.length - 1);
+        return Set<String>.from(stringsStr.split(','));
       }
       else {
-        return { groupParam };
+        return <String>{ stringParam };
       }
     }
     return null;
