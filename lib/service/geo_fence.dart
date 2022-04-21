@@ -45,7 +45,7 @@ class GeoFence with Service implements NotificationsListener {
   
   static const String _geoFenceName                = "geoFence.json";
 
-  static const bool _useAssets = true; // TMP
+  static const bool _useAssets = false;
 
   LinkedHashMap<String, GeoFenceRegion>? _regions;
   Map<String, bool> _regionOverrides = <String, bool>{};
