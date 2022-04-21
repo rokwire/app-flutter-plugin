@@ -558,7 +558,7 @@ class Polls with Service implements NotificationsListener {
               if (jsonData != null) {
                 String? eventType = jsonData['event_type'];
                 String? pollId = jsonData['poll_id'];
-                List<dynamic> results = jsonData['result'];
+                List<dynamic>? results = jsonData['result'];
                 onPollEvent(pollId, eventType, results);
               }
             }
