@@ -39,64 +39,71 @@ class Poll {
   String? groupId;           // The Id of the Group that the Poll belongs to.
   int? uniqueVotersCount;    // The number of unique users that voted
 
+  String? dateCreatedUtcString; // Date Created in UTC format
+  String? dateUpdatedUtcString; // Date Updated in UTC format
+
   Poll({
     this.pollId, this.title, this.options, this.settings,
     this.creatorUserUuid, this.creatorUserName, this.regionId, this.pinCode,
-    this.status, this.results, this.userVote, this.groupId, this.uniqueVotersCount
+    this.status, this.results, this.userVote, this.groupId, this.uniqueVotersCount,
+    this.dateCreatedUtcString, this.dateUpdatedUtcString
   });
 
   static Poll? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? Poll(
-      pollId: json['id'],
-      title: json['question'],
-      options: List<String>.from(json['options']),
-      
-      //settings: PollSettings.fromJson(json['settings']),
-      settings: PollSettings(
-        allowMultipleOptions: json['multi_choice'],
-        allowRepeatOptions: json['repeat'],
-        hideResultsUntilClosed: !json['show_results'],
-        geoFence: json['geo_fence'],
-      ),
-      
-      creatorUserUuid: json['userid'],
-      creatorUserName: json['username'],
-      regionId: json['stadium'],
-      pinCode: json['pin'],
-      
-      status: pollStatusFromString(json['status']),
-      results: PollVote.fromJson(results:json['results'], total:json['total']),
-      userVote: PollVote.fromJson(votes:json['voted']),
+    if (json == null) {
+      return null;
+    }
 
-      groupId: json['group_id'],
-      uniqueVotersCount: json['unique_voters_count'],
-    ) : null;
+    Map<String, dynamic>? pollJson = json["poll"];
+    if (pollJson == null) {
+      return null;
+    }
+    return Poll(
+        pollId: json['id'],
+        title: pollJson['question'],
+        options: List<String>.from(pollJson['options']),
+        settings: PollSettings(
+          allowMultipleOptions: pollJson['multi_choice'],
+          allowRepeatOptions: pollJson['repeat'],
+          hideResultsUntilClosed: !(pollJson['show_results'] ?? false),
+          geoFence: (pollJson['geo_fence'] ?? false),
+        ),
+        creatorUserUuid: pollJson['userid'],
+        creatorUserName: pollJson['username'],
+        regionId: pollJson['stadium'],
+        pinCode: pollJson['pin'],
+        status: pollStatusFromString(pollJson['status']),
+        results: PollVote.fromJson(results: json['results'], total: json['total']),
+        userVote: PollVote.fromJson(votes: json['voted']),
+        groupId: pollJson['group_id'],
+        uniqueVotersCount: json['unique_voters_count'],
+        dateCreatedUtcString: pollJson['date_created'],
+        dateUpdatedUtcString: pollJson['date_updated']);
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'poll': {
+        'userid': creatorUserUuid,
+        'username': creatorUserName,
+        'question': title,
+        'options': options,
+        'group_id': groupId,
+        'pin': pinCode,
+        'multi_choice': (settings?.allowMultipleOptions ?? false),
+        'repeat': (settings?.allowRepeatOptions ?? false),
+        'show_results': !(settings?.hideResultsUntilClosed ?? false),
+        'stadium': regionId,
+        'geo_fence': settings?.geoFence,
+        'status': pollStatusToString(status),
+        'date_created': dateCreatedUtcString,
+        'date_updated': dateUpdatedUtcString
+      },
       'id': pollId,
-      'question': title,
-      'options': options,
-      
-      //'settings': settings?.toJson(),
-      'multi_choice': (settings?.allowMultipleOptions ?? false),
-      'repeat': (settings?.allowRepeatOptions ?? false),
-      'show_results': !(settings?.hideResultsUntilClosed ?? false),
-      'geo_fence': settings?.geoFence,
-      
-      'userid': creatorUserUuid,
-      'username': creatorUserName,
-      'stadium': regionId,
-      'pin': pinCode,
-      
-      'status': pollStatusToString(status),
       'results': results?.toResultsJson(length: options?.length),
-      'total': results?.total,
       'voted': userVote?.toVotesJson(),
-
-      'group_id': groupId,
-      'unique_voters_count': uniqueVotersCount
+      'unique_voters_count': uniqueVotersCount,
+      'total': results?.total
     };
   }
 
@@ -224,7 +231,7 @@ class PollVote {
     return (votesMap != null) ? PollVote(votes:votesMap, total: total) : null;
   }
 
-  List<dynamic>?toResultsJson({int? length}) {
+  List<dynamic>? toResultsJson({int? length}) {
     List<dynamic>? results;
     if (_votes != null) {
       results = [];
@@ -338,5 +345,42 @@ class PollVote {
       });
       _updateTotal(deltaTotal);
     }
+  }
+}
+
+class PollFilter {
+  Set<String>? groupIds;
+  int? limit;
+  bool? myPolls;
+  bool? respondedPolls;
+  int? offset;
+  int? pinCode;
+  Set<String>? pollIds;
+  Set<PollStatus>? statuses;
+
+  PollFilter({this.groupIds, this.limit, this.myPolls, this.respondedPolls, this.offset, this.pinCode, this.pollIds, this.statuses});
+
+  Map<String, dynamic>? toJson() {
+    Set<String>? statusSet;
+    if (CollectionUtils.isNotEmpty(statuses)) {
+      statusSet = <String>{};
+      for (PollStatus status in statuses!) {
+        statusSet.add(Poll.pollStatusToString(status)!);
+      }
+    }
+    
+    Map<String, dynamic> json = {
+      'group_ids': groupIds?.toList(),
+      'limit': limit,
+      'my_polls': myPolls,
+      'responded_polls': respondedPolls,
+      'offset': offset,
+      'pin': pinCode,
+      'poll_ids': pollIds?.toList(),
+      'statuses': statusSet?.toList()
+    };
+
+    json.removeWhere((key, value) => value == null);
+    return json;
   }
 }
