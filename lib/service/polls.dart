@@ -470,23 +470,25 @@ class Polls with Service implements NotificationsListener {
   }
 
   @protected
-  void onPollEvent(String? pollId, String eventName, String eventData) {
-    Log.d('Polls: received event \'$eventName\' from EventStream for poll #$pollId');
+  void onPollEvent(String? pollId, String? eventType, List<dynamic>? resultsJson) {
+    Log.d('Polls: received event \'$eventType\' from EventStream for poll #$pollId');
     try {
-      if (eventName == 'status') {
-        List<dynamic>? jsonList = JsonUtils.decode(eventData);
-        String? statusString = ((jsonList != null) && jsonList.isNotEmpty) ? jsonList.first : null;
-        PollStatus? pollStatus = Poll.pollStatusFromString(statusString);
-        if (pollStatus != null) {
-          updatePollStatus(pollId, pollStatus);
-        }
-      }
-      else if (eventName == 'results') {
-        List<dynamic>? jsonList = JsonUtils.decode(eventData);
-        List<int>? results = (jsonList != null) ? jsonList.cast<int>() : null;
+      if (eventType == 'poll_updated') {
+        List<int>? results = (resultsJson != null) ? resultsJson.cast<int>() : null;
         PollVote? pollResults = (results != null) ? PollVote.fromJson(results: results) : null;
         if (pollResults != null) {
           updatePollResults(pollId, pollResults);
+        }
+      } else {
+        PollStatus? pollStatus;
+        if (eventType == 'poll_started') {
+          pollStatus = PollStatus.opened;
+        } else if (eventType == 'poll_end') {
+          pollStatus = PollStatus.closed;
+        }
+
+        if (pollStatus != null) {
+          updatePollStatus(pollId, pollStatus);
         }
       }
     }
@@ -541,18 +543,23 @@ class Polls with Service implements NotificationsListener {
         pollChunk.eventListener = response.asStream().listen((streamedResponse) {
           debugPrint("Received streamedResponse.statusCode:${streamedResponse.statusCode}");
           streamedResponse.stream.listen((data) {
-            // Data example: "event:results\ndata:[5,4]\n\n"
+            // Old Data example: "event:results\ndata:[5,4]\n\n"
+
+            // New data example: 
+            // {"event_type":"poll_started","poll_id":"6260f530eb9688e8db6681f2"}
+            // {"event_type":"poll_updated","poll_id":"6260f530eb9688e8db6681f2","result":[1,0]}
+            // {"event_type":"poll_end","poll_id":"6260f530eb9688e8db6681f2"}
+            // {"event_type":"poll_deleted","poll_id":"6260f530eb9688e8db6681f2"}
             String dataString = utf8.decode(data).trim();
             setEventListenerTimer(pollId);
             
-            if(dataString.isNotEmpty){
-              int pos1 = dataString.indexOf(":");
-              int pos2 = (0 <= pos1) ? dataString.indexOf("\n", pos1+1) : -1;
-              int pos3 = (0 <= pos2) ? dataString.indexOf(":", pos2+1) : -1;
-              if (0 <= pos3) {
-                String eventName = dataString.substring(pos1+1, pos2);
-                String eventData = dataString.substring(pos3+1);
-                onPollEvent(pollId, eventName, eventData);
+            if (StringUtils.isNotEmpty(dataString)){
+              Map<String, dynamic>? jsonData = JsonUtils.decodeMap(dataString);
+              if (jsonData != null) {
+                String? eventType = jsonData['event_type'];
+                String? pollId = jsonData['poll_id'];
+                List<dynamic> results = jsonData['result'];
+                onPollEvent(pollId, eventType, results);
               }
             }
 
