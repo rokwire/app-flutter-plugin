@@ -17,6 +17,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class GeoFenceRegion {
   final String? id;
@@ -29,18 +30,18 @@ class GeoFenceRegion {
 
   static GeoFenceRegion? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? GeoFenceRegion(
-      id: json['id'],
-      types: Set.from(json['types']),
-      name: json['name'],
-      enabled: json['enabled'],
-      data: GeoFenceLocation.fromJson(json['location']) ?? GeoFenceBeacon.fromJson(json['beacon']),
+      id: JsonUtils.stringValue(json['id']) ,
+      types: JsonUtils.setStringsValue(json['types']),
+      name: JsonUtils.stringValue(json['name']),
+      enabled: JsonUtils.boolValue(json['enabled']),
+      data: GeoFenceLocation.fromJson(JsonUtils.mapValue(json['location'])) ?? GeoFenceBeacon.fromJson(JsonUtils.mapValue(json['beacon'])),
     ) : null;
   }
 
   toJson({double? locationRadius}) {
     Map<String, dynamic> json = {
       'id': id,
-      'types': List.from(types!),
+      'types': (types != null) ? List.from(types!) : null,
       'name': name,
       'enabled': enabled,
     };
@@ -113,12 +114,12 @@ class GeoFenceRegion {
     return jsonList;
   }
 
-  static List<GeoFenceRegion>? filterList(Iterable<GeoFenceRegion>? regions, { bool? enabled }) {
+  static List<GeoFenceRegion>? filterList(Iterable<GeoFenceRegion>? regions, bool Function(GeoFenceRegion region) check) {
     List<GeoFenceRegion>? result;
     if (regions != null) {
       result = <GeoFenceRegion>[];
       for (GeoFenceRegion region in regions) {
-        if ((enabled == null) || (enabled == region.enabled)) {
+        if (check(region)) {
           result.add(region);
         }
       }
@@ -143,7 +144,7 @@ class GeoFenceRegion {
   int get hashCode {
     return
       (id?.hashCode ?? 0) ^
-      (types?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(types) ^
       (name?.hashCode ?? 0) ^
       (enabled?.hashCode ?? 0) ^
       (data?.hashCode ?? 0);
@@ -161,9 +162,9 @@ class GeoFenceLocation {
 
   static GeoFenceLocation? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? GeoFenceLocation(
-      latitude: json['latitude']?.toDouble(),
-      longitude: json['longitude']?.toDouble(),
-      radius: json['radius']?.toDouble(),
+      latitude: JsonUtils.doubleValue(json['latitude']),
+      longitude: JsonUtils.doubleValue(json['longitude']),
+      radius: JsonUtils.doubleValue(json['radius']),
     ) : null;
   }
 
@@ -186,11 +187,10 @@ class GeoFenceLocation {
 
   @override
   int get hashCode {
-    int value =
+    return
       (latitude?.hashCode ?? 0) ^
       (longitude?.hashCode ?? 0) ^
       (radius?.hashCode ?? 0);
-    return value;
   }
 }
 
@@ -203,9 +203,9 @@ class GeoFenceBeacon {
 
   static GeoFenceBeacon? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? GeoFenceBeacon(
-      uuid: json['uuid'],
-      major: json['major']?.toInt(),
-      minor: json['minor']?.toInt(),
+      uuid: JsonUtils.stringValue(json['uuid']),
+      major: JsonUtils.intValue(json['major']),
+      minor: JsonUtils.intValue(json['minor']),
     ) : null;
   }
 
@@ -235,11 +235,10 @@ class GeoFenceBeacon {
 
   @override
   int get hashCode {
-    int value =
+    return
       (uuid?.hashCode ?? 0) ^
       (major?.hashCode ?? 0) ^
       (minor?.hashCode ?? 0);
-    return value;
   }
 
   static List<GeoFenceBeacon>? listFromJsonList(List? values) {

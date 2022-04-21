@@ -338,6 +338,14 @@ class Storage with Service {
   String? get activePolls => getStringWithName(activePollsKey);
   set activePolls(String? value) => setStringWithName(activePollsKey, value);
 
+  // GeoFence JsonUtils
+  String get geoFenceRegionOverridesKey  => 'edu.illinois.rokwire.geo_fence.region_overrides';
+  Map<String, bool>? get geoFenceRegionOverrides {
+    try { return JsonUtils.decodeMap(getStringWithName(geoFenceRegionOverridesKey))?.cast<String, bool>(); }
+    catch(e) { debugPrint(e.toString()); return null; }
+  }
+  set geoFenceRegionOverrides(Map<String, bool>? value) => setStringWithName(geoFenceRegionOverridesKey, JsonUtils.encode(value));
+
   // Calendar
 
   String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
