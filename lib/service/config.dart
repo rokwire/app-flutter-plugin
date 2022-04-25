@@ -264,8 +264,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       _config = (configString != null) ? configFromJsonString(configString) : null;
       if (_config != null) {
         configFile.writeAsStringSync(configString!, flush: true);
-        NotificationService().notify(notifyConfigChanged, null);
-        
         checkUpgrade();
       }
       else {
