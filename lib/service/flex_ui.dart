@@ -73,7 +73,6 @@ class FlexUI with Service implements NotificationsListener {
       AppLivecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
       GeoFence.notifyCurrentRegionsUpdated,
-      GeoFence.notifyCurrentBeaconsUpdated,
     ]);
   }
 
@@ -118,8 +117,7 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2.notifyLoginChanged) ||
         (name == Auth2.notifyLinkChanged) ||
         (name == Groups.notifyUserGroupsUpdated) ||
-        (name == GeoFence.notifyCurrentRegionsUpdated) ||
-        (name == GeoFence.notifyCurrentBeaconsUpdated))
+        (name == GeoFence.notifyCurrentRegionsUpdated))
     {
       updateContent();
     }
@@ -268,7 +266,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   bool hasFeature(String feature) {
-    return (_features == null) || _features!.contains(feature);
+    return (_features != null) && _features!.contains(feature);
   }
 
   Future<void> update() async {
