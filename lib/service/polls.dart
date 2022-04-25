@@ -105,44 +105,32 @@ class Polls with Service implements NotificationsListener {
 
   // Accessories
 
-  Future<PollsChunk?>? getMyPolls({String? cursor, List<String>? groupIds}) async {
-    return enabled ? getPolls('mypolls', cursor, groupIds: groupIds) : null;
+  Future<PollsChunk?>? getMyPolls({PollsCursor? cursor}) async {
+    return getPolls(PollFilter(myPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getGroupPolls(List<String>? groupIds, {String? cursor}) async {
-    return enabled ? getPolls('grouppolls', cursor, groupIds: groupIds) : null;
+  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {PollsCursor? cursor}) async {
+    return getPolls(PollFilter(groupIds: groupIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getRecentPolls({String? cursor}) async {
-    return enabled ?  getPolls('recentpolls', cursor) : null;
+  Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
+    return getPolls(PollFilter(
+        limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
   @protected
-  Future<PollsChunk?> getPolls(String pollsType, String? cursor, {bool includeAccountId = true, List<String>? groupIds}) async {
+  Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
     if (enabled) {
-      String? body;
-      if (CollectionUtils.isNotEmpty(groupIds)) {
-        body = json.encode({'group_ids': groupIds});
-      }
-
-      String url = '${Config().quickPollsUrl}/$pollsType';
-      if (includeAccountId) {
-        url += '/${Auth2().accountId}';
-      }
-
-      if (cursor != null) {
-        url += '?cursor=$cursor';
-      }
-
+      String? body = JsonUtils.encode(pollsFilter.toJson());
+      String url = '${Config().quickPollsUrl}/polls';
       Response? response = await Network().get(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
       if ((response != null) && (responseCode == 200)) {
-        Map<String, dynamic>? responseJson = JsonUtils.decode(responseBody);
-        String? pollsCursor = (responseJson != null) ? responseJson['cursor'] : null;
-        List<dynamic>? pollsJson = (responseJson != null) ? responseJson['data'] : null;
-        if (pollsJson != null) {
-          return PollsChunk(polls: Poll.fromJsonList(pollsJson), cursor: pollsCursor);
+        List<dynamic>? responseJson = JsonUtils.decode(responseBody);
+        if (responseJson != null) {
+          PollsCursor? pollsCursor = _increaseNextCursor(offset: pollsFilter.offset, limit: pollsFilter.limit, resultsCount: responseJson.length);
+          return PollsChunk(polls: Poll.fromJsonList(responseJson), cursor: pollsCursor);
         }
         else {
           throw PollsException(PollsError.serverResponseContent);
@@ -163,8 +151,9 @@ class Polls with Service implements NotificationsListener {
 
   Future<void> create(Poll poll) async {
     if (enabled) {
-      String url = '${Config().quickPollsUrl}/pollcreate';
-      Response? response = await Network().post(url, body: json.encode(poll.toJson()), auth: Auth2());
+      String? body = JsonUtils.encode(poll.toJson());
+      String url = '${Config().quickPollsUrl}/polls';
+      Response? response = await Network().post(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseString = response?.body;
       if ((response != null) && (responseCode == 200)) {
@@ -210,7 +199,7 @@ class Polls with Service implements NotificationsListener {
   Future<void> open(String? pollId) async {
     if (enabled) {
       if (pollId != null) {
-        String url = '${Config().quickPollsUrl}/pollstart/$pollId';
+        String url = '${Config().quickPollsUrl}/polls/$pollId/start';
         Response? response = await Network().put(url, auth: Auth2());
         if ((response != null) && (response.statusCode == 200)) {
           onPollStarted(pollId).then((Poll? poll) {
@@ -238,13 +227,13 @@ class Polls with Service implements NotificationsListener {
   Future<void> vote(String? pollId, PollVote? vote) async {
     if (enabled) {
       if ((pollId != null) && (vote != null)) {
-        String url = '${Config().quickPollsUrl}/pollvote/$pollId';
+        String url = '${Config().quickPollsUrl}/polls/$pollId/vote';
         Map<String, dynamic> voteJson = {
           'userid': Auth2().accountId,
           'answer': vote.toVotesJson(),
         };
         String voteString = json.encode(voteJson);
-        Response? response = await Network().post(url, body: voteString, auth: Auth2());
+        Response? response = await Network().put(url, body: voteString, auth: Auth2());
         if ((response != null) && (response.statusCode == 200)) {
           NotificationService().notify(notifyLifecycleVote, getPoll(pollId: pollId));
           updatePollVote(pollId, vote);
@@ -262,7 +251,7 @@ class Polls with Service implements NotificationsListener {
   Future<void> close(String? pollId) async {
     if (enabled) {
       if (pollId != null) {
-        String url = '${Config().quickPollsUrl}/pollend/$pollId';
+        String url = '${Config().quickPollsUrl}/polls/$pollId/end';
         Response? response = await Network().put(url, auth: Auth2());
         if ((response != null) && (response.statusCode == 200)) {
           NotificationService().notify(notifyLifecycleClose, getPoll(pollId: pollId));
@@ -282,37 +271,29 @@ class Polls with Service implements NotificationsListener {
   Future<Poll?> load({int? pollPin}) async {
     if (enabled) {
       if (pollPin != null) {
-        String url = '${Config().quickPollsUrl}/pinpolls/$pollPin';
-        Response? response = await Network().get(url, auth: Auth2());
-        if (response?.statusCode == 200) {
-          Map<String, dynamic>? responseJson = JsonUtils.decode(response?.body);
-          List<dynamic>? responseList = (responseJson != null) ? responseJson['data'] : null;
+        PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
+        String? body = JsonUtils.encode(pollsFilter.toJson());
+        String url = '${Config().quickPollsUrl}/polls';
+        Response? response = await Network().get(url, body: body, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
           List<Poll>? polls = (responseList != null) ? Poll.fromJsonList(responseList) : null;
           if (polls != null) {
-            List<Poll> results = [];
-            for (Poll poll in polls) {
-              if (!poll.isGeoFenced || GeoFence().currentRegionIds.contains(poll.regionId)) {
-                results.add(poll);
-              }
-            }
-
-            Poll? poll = polls.isNotEmpty ? polls.first : null;
+            Poll? poll = CollectionUtils.isNotEmpty(polls) ? polls.first : null;
             if ((poll != null) && (_pollChunks[poll.pollId] == null)) {
               addPollToChunks(poll);
               NotificationService().notify(notifyCreated, poll.pollId);
-              //presentWaiting();
             }
             return poll;
-          }
-          else {
+          } else {
             throw PollsException(PollsError.serverResponseContent);
           }
+        } else {
+          throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
         }
-        else {
-          throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
-        }
-      }
-      else {
+      } else {
         throw PollsException(PollsError.internal);
       }
     }
@@ -489,23 +470,25 @@ class Polls with Service implements NotificationsListener {
   }
 
   @protected
-  void onPollEvent(String? pollId, String eventName, String eventData) {
-    Log.d('Polls: received event \'$eventName\' from EventStream for poll #$pollId');
+  void onPollEvent(String? pollId, String? eventType, List<dynamic>? resultsJson) {
+    Log.d('Polls: received event \'$eventType\' from EventStream for poll #$pollId');
     try {
-      if (eventName == 'status') {
-        List<dynamic>? jsonList = JsonUtils.decode(eventData);
-        String? statusString = ((jsonList != null) && jsonList.isNotEmpty) ? jsonList.first : null;
-        PollStatus? pollStatus = Poll.pollStatusFromString(statusString);
-        if (pollStatus != null) {
-          updatePollStatus(pollId, pollStatus);
-        }
-      }
-      else if (eventName == 'results') {
-        List<dynamic>? jsonList = JsonUtils.decode(eventData);
-        List<int>? results = (jsonList != null) ? jsonList.cast<int>() : null;
+      if (eventType == 'poll_updated') {
+        List<int>? results = (resultsJson != null) ? resultsJson.cast<int>() : null;
         PollVote? pollResults = (results != null) ? PollVote.fromJson(results: results) : null;
         if (pollResults != null) {
           updatePollResults(pollId, pollResults);
+        }
+      } else {
+        PollStatus? pollStatus;
+        if (eventType == 'poll_started') {
+          pollStatus = PollStatus.opened;
+        } else if (eventType == 'poll_end') {
+          pollStatus = PollStatus.closed;
+        }
+
+        if (pollStatus != null) {
+          updatePollStatus(pollId, pollStatus);
         }
       }
     }
@@ -535,7 +518,7 @@ class Polls with Service implements NotificationsListener {
     PollChunk? pollChunk = _pollChunks[pollId];
     if ((pollChunk != null) && (pollChunk.eventClient == null) && (pollChunk.eventListener == null)) {
       try {
-        String url = '${Config().quickPollsUrl}/events/$pollId';
+        String url = '${Config().quickPollsUrl}/polls/$pollId/events';
         pollChunk.eventClient = Client();
         /*pollChunk.eventSource = EventSource(Uri.parse(url),
             clientFactory: (){
@@ -560,18 +543,23 @@ class Polls with Service implements NotificationsListener {
         pollChunk.eventListener = response.asStream().listen((streamedResponse) {
           debugPrint("Received streamedResponse.statusCode:${streamedResponse.statusCode}");
           streamedResponse.stream.listen((data) {
-            // Data example: "event:results\ndata:[5,4]\n\n"
+            // Old Data example: "event:results\ndata:[5,4]\n\n"
+
+            // New data example: 
+            // {"event_type":"poll_started","poll_id":"6260f530eb9688e8db6681f2"}
+            // {"event_type":"poll_updated","poll_id":"6260f530eb9688e8db6681f2","result":[1,0]}
+            // {"event_type":"poll_end","poll_id":"6260f530eb9688e8db6681f2"}
+            // {"event_type":"poll_deleted","poll_id":"6260f530eb9688e8db6681f2"}
             String dataString = utf8.decode(data).trim();
             setEventListenerTimer(pollId);
             
-            if(dataString.isNotEmpty){
-              int pos1 = dataString.indexOf(":");
-              int pos2 = (0 <= pos1) ? dataString.indexOf("\n", pos1+1) : -1;
-              int pos3 = (0 <= pos2) ? dataString.indexOf(":", pos2+1) : -1;
-              if (0 <= pos3) {
-                String eventName = dataString.substring(pos1+1, pos2);
-                String eventData = dataString.substring(pos3+1);
-                onPollEvent(pollId, eventName, eventData);
+            if (StringUtils.isNotEmpty(dataString)){
+              Map<String, dynamic>? jsonData = JsonUtils.decodeMap(dataString);
+              if (jsonData != null) {
+                String? eventType = jsonData['event_type'];
+                String? pollId = jsonData['poll_id'];
+                List<dynamic>? results = jsonData['result'];
+                onPollEvent(pollId, eventType, results);
               }
             }
 
@@ -749,6 +737,24 @@ class Polls with Service implements NotificationsListener {
   // Enabled
 
   bool get enabled => StringUtils.isNotEmpty(Config().quickPollsUrl);
+
+  /////////////////////////
+  // Cursor
+
+  PollsCursor? _increaseNextCursor({int? offset, int? limit, int? resultsCount}) {
+    limit = _getLimit(limit);
+    if (offset == null) {
+      offset = resultsCount;
+    } else {
+      offset += (resultsCount ?? 0);
+    }
+
+    return PollsCursor(offset: offset, limit: limit);
+  }
+
+  int _getLimit(int? limit) {
+    return limit ?? 5;
+  }
 }
 
 class PollChunk {
@@ -800,7 +806,7 @@ enum PollUIStatus { waitingVote, presentVote, waitingClose, presentResult }
 
 class PollsChunk {
   List<Poll>? polls;
-  String? cursor;
+  PollsCursor? cursor;
   PollsChunk({this.polls, this.cursor});
 }
 
@@ -831,6 +837,13 @@ PollUIStatus? pollUIStatusFromString(String? value) {
   else {
     return null;
   }
+}
+
+class PollsCursor {
+  int? offset;
+  int? limit;
+
+  PollsCursor({this.offset, this.limit});
 }
 
 enum PollsError { serverResponse, serverResponseContent, internal }

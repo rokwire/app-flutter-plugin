@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Get, Create, Update and Delete user's profile picture [#53](https://github.com/rokwire/app-flutter-plugin/issues/53).
 - Send notification when user changes profile picture [#61](https://github.com/rokwire/app-flutter-plugin/issues/61).
+- Integrate new Polls BB [#70](https://github.com/rokwire/app-flutter-plugin/issues/70).
 
 ## [1.0.0] - 2022-03-15
 ### Changed
