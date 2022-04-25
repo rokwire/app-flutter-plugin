@@ -21,6 +21,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart';
+import 'package:collection/collection.dart';
 
 import 'package:rokwire_plugin/model/geo_fence.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -47,8 +48,11 @@ class GeoFence with Service implements NotificationsListener {
   static const bool _useAssets = false;
 
   LinkedHashMap<String, GeoFenceRegion>? _regions;
+  Map<String, bool> _regionOverrides = <String, bool>{};
+  Set<String> _insideRegions = <String>{};
   Set<String> _currentRegions = <String>{};
-  final Map<String, List<GeoFenceBeacon>> _currentBeacons = <String, List<GeoFenceBeacon>>{};
+  final Map<String, Set<GeoFenceBeacon>> _insideBeacons = <String, Set<GeoFenceBeacon>>{};
+  Map<String, Set<GeoFenceBeacon>> _currentBeacons = <String, Set<GeoFenceBeacon>>{};
 
   File?      _cacheFile;
   DateTime?  _pausedDateTime;
@@ -86,6 +90,7 @@ class GeoFence with Service implements NotificationsListener {
   Future<void> initService() async {
     _cacheFile = await getCacheFile();
     _debugRegionRadius = Storage().debugGeoFenceRegionRadius;
+    _regionOverrides = Storage().geoFenceRegionOverrides ?? <String, bool>{};
 
     _regions = useAssets ? await loadRegionsFromAssets() : await loadRegionsFromCache();
     if (_regions != null) {
@@ -93,12 +98,14 @@ class GeoFence with Service implements NotificationsListener {
     }
     else {
       String? jsonString = await loadRegionsStringFromNet();
-      _regions = _regionsFromJsonString(jsonString);
+      _regions = GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(jsonString));
       if (_regions != null) {
         saveRegionsStringToCache(jsonString);
       }      
     }
     
+    _updateCurrentRegions(notify: false);
+    _updateCurrentBeacons(notify: false);
     monitorRegions();
     await super.initService();
   }
@@ -140,11 +147,23 @@ class GeoFence with Service implements NotificationsListener {
   Set<String> get currentRegionIds {
     return _currentRegions;
   }
+  
+  Map<String, bool> get regionOverrides => _regionOverrides;
+
+  set regionOverrides(Map<String, bool> value) {
+    if (!const DeepCollectionEquality().equals(_regionOverrides, value)) {
+      Storage().geoFenceRegionOverrides = _regionOverrides = value;
+
+      _updateCurrentRegions();
+      _updateCurrentBeacons();
+      monitorRegions();
+    }
+  }
 
   List<GeoFenceRegion> regionsList({String? type, bool? enabled, GeoFenceRegionType? regionType, bool? inside}) {
     List<GeoFenceRegion> regions = [];
     if (_regions != null) {
-      _regions!.forEach((String? regionId, GeoFenceRegion? region){
+      _regions!.forEach((String? regionId, GeoFenceRegion? region) {
         if ((region != null) &&
             ((type == null) || (region.types?.contains(type) ?? false)) &&
             ((enabled == null) || (enabled == region.enabled)) &&
@@ -158,7 +177,7 @@ class GeoFence with Service implements NotificationsListener {
     return regions;
   }
 
-  List<GeoFenceBeacon>? currentBeaconsInRegion(String regionId) {
+  Set<GeoFenceBeacon>? currentBeaconsInRegion(String regionId) {
     return _currentBeacons[regionId];
   }
 
@@ -207,7 +226,7 @@ class GeoFence with Service implements NotificationsListener {
 
   @protected
   Future<LinkedHashMap<String, GeoFenceRegion>?> loadRegionsFromCache() async {
-    return _regionsFromJsonString(await loadRegionsStringFromCache());
+    return GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(await loadRegionsStringFromCache()));
   }
 
   @protected
@@ -238,39 +257,12 @@ class GeoFence with Service implements NotificationsListener {
   @protected
   Future<void> updateRegions() async {
     String? jsonString = await loadRegionsStringFromNet();
-    LinkedHashMap<String, GeoFenceRegion>? regions = _regionsFromJsonString(jsonString);
-    if ((regions != null) && !_areRegionsEqual(_regions, regions)) { // DeepCollectionEquality().equals(_regions, regions)
+    LinkedHashMap<String, GeoFenceRegion>? regions = GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(jsonString));
+    if ((regions != null) && !const DeepCollectionEquality().equals(_regions, regions)) { // DeepCollectionEquality().equals(_regions, regions)
       _regions = regions;
       monitorRegions();
       saveRegionsStringToCache(jsonString);
     }
-  }
-
-  static LinkedHashMap<String, GeoFenceRegion>? _regionsFromJsonString(String? jsonString) {
-    List<dynamic>? jsonList = JsonUtils.decode(jsonString);
-    return (jsonList != null) ? GeoFenceRegion.mapFromJsonList(jsonList) : null;
-  }
-
-  static bool _areRegionsEqual(LinkedHashMap<String, GeoFenceRegion>? regions1, LinkedHashMap<String, GeoFenceRegion>? regions2) {
-    if ((regions1 != null) && (regions2 != null)) {
-      if (regions1.length == regions2.length) {
-        for (String? regionId in regions1.keys) {
-          GeoFenceRegion? region1 = regions1[regionId];
-          GeoFenceRegion? region2 = regions2[regionId];
-          if (((region1 != null) && (region2 == null)) ||
-              ((region1 == null) && (region2 != null)) ||
-              ((region1 != null) && (region2 != null) && !(region1 == region1))
-          ) {
-            return false;
-          }
-        }
-        return true;
-      }
-    }
-    else if ((regions1 == null) && (regions2 == null)) {
-      return true;
-    }
-    return false;
   }
 
   // ignore: unused_element
@@ -280,33 +272,97 @@ class GeoFence with Service implements NotificationsListener {
 
   @protected
   Future<void> monitorRegions() async {
-    await RokwirePlugin.geoFence('monitorRegions', GeoFenceRegion.listToJsonList(GeoFenceRegion.filterList(_regions?.values, enabled: true), locationRadius: _debugRegionRadius?.toDouble()));
+    await RokwirePlugin.geoFence('monitorRegions', GeoFenceRegion.listToJsonList(GeoFenceRegion.filterList(_regions?.values, shouldMonitorRegion), locationRadius: _debugRegionRadius?.toDouble()));
   }
 
-  void _updateCurrentRegions(List<String>? regionIds) {
+  @protected
+  bool shouldMonitorRegion(GeoFenceRegion region) => (region.enabled == true) && !_regionOverrides.containsKey(region.id);
+
+  void _updateInsideRegions(List<String>? regionIds) {
     if (regionIds != null) {
-      Set<String> currentRegions = Set.from(regionIds);
-      if (_currentRegions != currentRegions) {
-        _currentRegions = currentRegions;
+      Set<String> insideRegions = Set.from(regionIds);
+      if (!const DeepCollectionEquality().equals(_insideRegions, insideRegions)) {
+        _insideRegions = insideRegions;
+        _updateCurrentRegions();
+      }
+    }
+  }
+
+  void _updateCurrentRegions({bool notify = true}) {
+    Set<String> currentRegions = <String>{};
+
+    // add regions that should be always current
+    _regionOverrides.forEach((String regionId, bool override) {
+      if (override == true) {
+        GeoFenceRegion? region = (_regions != null) ? _regions![regionId] : null;
+        if (region?.regionType == GeoFenceRegionType.location) {
+          currentRegions.add(regionId);
+        }
+      }
+    });
+
+    // add regions that are currently inside
+    for (String insideRegionId in _insideRegions) {
+      // skip regions that should be never current
+      if (_regionOverrides[insideRegionId] != false) {
+        currentRegions.add(insideRegionId);
+      }
+    }
+
+    if (!const DeepCollectionEquality().equals(_currentRegions, currentRegions)) {
+      _currentRegions = currentRegions;
+      if (notify) {
         NotificationService().notify(notifyCurrentRegionsUpdated);
       }
     }
   }
 
-  void _updateCurrentBeacons({String? regionId, List<GeoFenceBeacon>? beacons}) {
+  void _updateInsideBeacons({String? regionId, List<GeoFenceBeacon>? beaconsList}) {
     try {
       if (regionId != null) {
-        if (beacons != null) {
-          _currentBeacons[regionId] = beacons;
+        Set<GeoFenceBeacon>? beacons = (beaconsList != null) ? Set.from(beaconsList) : null;
+        if (!const DeepCollectionEquality().equals(_insideBeacons[regionId], beacons)) {
+          if (beacons != null) {
+            _insideBeacons[regionId] = Set<GeoFenceBeacon>.from(beacons);
+          }
+          else {
+            _insideBeacons.remove(regionId);
+          }
+          _updateCurrentBeacons();
         }
-        else {
-          _currentBeacons.remove(regionId);
-        }
-        NotificationService().notify(notifyCurrentBeaconsUpdated, regionId);
       }
     }
     catch(e) {
       debugPrint(e.toString());
+    }
+  }
+
+  void _updateCurrentBeacons({bool notify = true}) {
+    Map<String, Set<GeoFenceBeacon>> currentBeacons = <String, Set<GeoFenceBeacon>>{};
+
+    // add regions that should be always current
+    _regionOverrides.forEach((String regionId, bool override) {
+      if (override == true) {
+        GeoFenceRegion? region = (_regions != null) ? _regions![regionId] : null;
+        if (region?.beacon != null) {
+          currentBeacons[regionId] = <GeoFenceBeacon>{ region!.beacon! };
+        }
+      }
+    });
+
+    // add regions that are currently inside
+    _insideBeacons.forEach((String regionId, Set<GeoFenceBeacon> beacons) {
+      // skip regions that should be never current
+      if (_regionOverrides[regionId] != false) {
+        currentBeacons[regionId] = beacons;
+      }
+    });
+
+    if (!const DeepCollectionEquality().equals(_currentBeacons, currentBeacons)) {
+      _currentBeacons = currentBeacons;
+      if (notify) {
+        NotificationService().notify(notifyCurrentBeaconsUpdated);
+      }
     }
   }
 
@@ -324,13 +380,15 @@ class GeoFence with Service implements NotificationsListener {
       NotificationService().notify(notifyRegionExit, regionId);
     }
     else if (name == 'onCurrentRegionsChanged') {
-      _updateCurrentRegions(JsonUtils.listStringsValue(arguments));
+      _updateInsideRegions(JsonUtils.listStringsValue(arguments));
     }
     else if (name == 'onBeaconsInRegionChanged') {
       Map<String, dynamic>? params = JsonUtils.mapValue(arguments);
       String? regionId = (params != null) ? JsonUtils.stringValue(params['regionId']) : null;
-      List<GeoFenceBeacon>? beacons = (params != null) ? GeoFenceBeacon.listFromJsonList(params['beacons']) : null;
-      _updateCurrentBeacons(regionId: regionId, beacons: beacons);
+      List<GeoFenceBeacon>? beacons = (params != null) ? GeoFenceBeacon.listFromJsonList(JsonUtils.listValue(params['beacons'])) : null;
+      _updateInsideBeacons(regionId: regionId, beaconsList: beacons);
     }
   }
 }
+
+

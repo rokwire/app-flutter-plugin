@@ -106,7 +106,7 @@ class RokwirePlugin {
     int position = call.method.indexOf('.');
     if (0 <= position) {
       firstMethodComponent = call.method.substring(0, position);
-      nextMethodComponents = call.method.substring(position + 1, call.method.length - position - 1);
+      nextMethodComponents = call.method.substring(position + 1);
     }
 
     if (firstMethodComponent == 'geoFence') {

@@ -183,8 +183,13 @@ class MapUtils {
   }
 
   static void set<K, T>(Map<K, T>? map, K? key, T? value) {
-    if ((map != null) && (key != null) && (value != null)) {
-      map[key] = value;
+    if ((map != null) && (key != null)) {
+      if (value != null) {
+        map[key] = value;
+      }
+      else {
+        map.remove(key);
+      }
     }
   }
 }
@@ -484,7 +489,7 @@ class JsonUtils {
 
   static Set<String>? setStringsValue(dynamic value) {
     try {
-      return (value is List) ? Set.from(value.cast<String>()) : null;
+      return (value is List) ? Set<String>.from(value.cast<String>()) : null;
     }
     catch(e) {
       debugPrint(e.toString());

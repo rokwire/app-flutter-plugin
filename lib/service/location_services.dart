@@ -87,6 +87,8 @@ class LocationServices with Service implements NotificationsListener {
     }
   }
 
+  LocationServicesStatus? get lastStatus => _lastStatus;
+
   Future<LocationServicesStatus?> get status async {
     _lastStatus = _locationServicesStatusFromString(JsonUtils.stringValue(await RokwirePlugin.locationServices('queryStatus')));
     _updateLocationMonitor();
