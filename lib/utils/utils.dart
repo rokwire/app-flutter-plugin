@@ -183,8 +183,13 @@ class MapUtils {
   }
 
   static void set<K, T>(Map<K, T>? map, K? key, T? value) {
-    if ((map != null) && (key != null) && (value != null)) {
-      map[key] = value;
+    if ((map != null) && (key != null)) {
+      if (value != null) {
+        map[key] = value;
+      }
+      else {
+        map.remove(key);
+      }
     }
   }
 }
