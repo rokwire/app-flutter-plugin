@@ -147,20 +147,13 @@ class GeoFence with Service implements NotificationsListener {
   Set<String> get currentRegionIds {
     return _currentRegions;
   }
-
-  bool? getRegionOverride(String regionId) => _regionOverrides[regionId];
   
-  void setRegionOverride(String regionId, bool? value) {
-    if (_regionOverrides[regionId] != value) {
-      if (value != null) {
-        _regionOverrides[regionId] = value;
-      }
-      else {
-        _regionOverrides.remove(regionId);
-      }
-      
-      Storage().geoFenceRegionOverrides = _regionOverrides;
-      
+  Map<String, bool> get regionOverrides => _regionOverrides;
+
+  set regionOverrides(Map<String, bool> value) {
+    if (!const DeepCollectionEquality().equals(_regionOverrides, value)) {
+      Storage().geoFenceRegionOverrides = _regionOverrides = value;
+
       _updateCurrentRegions();
       _updateCurrentBeacons();
       monitorRegions();
