@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Added GeoFence location rules in FlexUI [#62](https://github.com/rokwire/app-flutter-plugin/issues/62).
 
+## [1.0.2] - 2022-04-27
+### Changed
+- Bring back the old Polls BB [#76](https://github.com/rokwire/app-flutter-plugin/issues/76).
+
 ## [1.0.1] - 2022-04-20
 ### Changed
 - Group service: linkEventToGroup implements members param [#1487](https://github.com/rokwire/illinois-app/issues/1487).
