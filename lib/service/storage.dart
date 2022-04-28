@@ -248,8 +248,8 @@ class Storage with Service {
   // Auth2
   
   String get auth2AnonymousIdKey => 'edu.illinois.rokwire.auth2.anonymous.id';
-  String? get auth2AnonymousId => getStringWithName(configEnvKey);
-  set auth2AnonymousId(String? value) => setStringWithName(configEnvKey, value);
+  String? get auth2AnonymousId => getStringWithName(auth2AnonymousIdKey);
+  set auth2AnonymousId(String? value) => setStringWithName(auth2AnonymousIdKey, value);
 
   String get auth2AnonymousTokenKey => 'edu.illinois.rokwire.auth2.anonymous.token';
   Auth2Token? get auth2AnonymousToken => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousTokenKey)));
