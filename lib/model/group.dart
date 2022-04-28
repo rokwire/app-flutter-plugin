@@ -38,6 +38,8 @@ class Group {
   bool?               onlyAdminsCanCreatePolls;
   String?             authManGroupName;
 
+  bool?               hiddenForSearch;
+
   String?             imageURL;
   String?             webURL;
   List<Member>?       members;
@@ -72,6 +74,7 @@ class Group {
     try { certified          = json['certified']; } catch(e) { debugPrint(e.toString()); }
     try { authManEnabled    = json['authman_enabled']; } catch(e) { debugPrint(e.toString()); }
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
+    try { hiddenForSearch   = json['hidden_for_search']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
     try { imageURL          = json['image_url'];     } catch(e) { debugPrint(e.toString()); }
@@ -96,6 +99,7 @@ class Group {
     json['certified']                     = certified;
     json['authman_enabled']              = authManEnabled;
     json['authman_group']                = authManGroupName;
+    json['hidden_for_search']            = hiddenForSearch;
     json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
     json['image_url']                    = imageURL;
@@ -119,6 +123,7 @@ class Group {
     authManEnabled    = other?.authManEnabled;
     onlyAdminsCanCreatePolls = other?.onlyAdminsCanCreatePolls;
     authManGroupName  = other?.authManGroupName;
+    hiddenForSearch   = other?.hiddenForSearch;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
     imageURL          = other?.imageURL;
@@ -145,6 +150,8 @@ class Group {
       (other.authManEnabled == authManEnabled) &&
       (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
       (other.authManGroupName == authManGroupName) &&
+
+      (other.hiddenForSearch == hiddenForSearch) &&
       
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
@@ -169,6 +176,8 @@ class Group {
     (authManEnabled?.hashCode ?? 0) ^
     (onlyAdminsCanCreatePolls?.hashCode ?? 0) ^
     (authManGroupName?.hashCode ?? 0) ^
+
+    (hiddenForSearch?.hashCode ?? 0) ^
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
