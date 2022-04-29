@@ -332,9 +332,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
 
-  // Getters: Config Asset Ackwowledgement
+  // Getters: Config Asset Acknowledgement
 
-  String? get appConfigUrl {                                                                 // "https://api-dev.rokwire.illinois.edu/app/configs"
+  String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
     return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
   } 

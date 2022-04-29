@@ -106,7 +106,7 @@ class LocationServices with Service implements NotificationsListener {
   Future<LocationServicesStatus?> requestPermission() async {
     _lastStatus = await status;
     if (_lastStatus == LocationServicesStatus.permissionNotDetermined) {
-      _lastStatus = _locationServicesStatusFromString(JsonUtils.stringValue(await RokwirePlugin.locationServices('requestPermision')));
+      _lastStatus = _locationServicesStatusFromString(JsonUtils.stringValue(await RokwirePlugin.locationServices('requestPermission')));
       _notifyStatusChanged();
     }
 

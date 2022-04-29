@@ -565,9 +565,14 @@ class Polls with Service implements NotificationsListener {
             setEventListenerTimer(pollId);
             
             if(dataString.isNotEmpty){
-              String eventName = dataString.substring(dataString.indexOf(":")+1, dataString.indexOf("\n"));
-              String eventData = dataString.substring(dataString.lastIndexOf(":")+1);
-              onPollEvent(pollId, eventName, eventData);
+              int pos1 = dataString.indexOf(":");
+              int pos2 = (0 <= pos1) ? dataString.indexOf("\n", pos1+1) : -1;
+              int pos3 = (0 <= pos2) ? dataString.indexOf(":", pos2+1) : -1;
+              if (0 <= pos3) {
+                String eventName = dataString.substring(pos1+1, pos2);
+                String eventData = dataString.substring(pos3+1);
+                onPollEvent(pollId, eventName, eventData);
+              }
             }
 
           }, onError: (e){

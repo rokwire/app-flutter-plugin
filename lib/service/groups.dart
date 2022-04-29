@@ -337,7 +337,6 @@ class Groups with Service implements NotificationsListener {
         Map<String, dynamic> json = group.toJson(withId: false);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
-        json["creator_photo_url"] = "";
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
@@ -420,7 +419,6 @@ class Groups with Service implements NotificationsListener {
         Map<String, dynamic> json = {};
         json["email"] = Auth2().account?.profile?.email ?? "";
         json["name"] = Auth2().account?.profile?.fullName ?? "";
-        json["creator_photo_url"] = "";
         json["member_answers"] = CollectionUtils.isNotEmpty(answers) ? answers!.map((e) => e.toJson()).toList() : [];
 
         String? body = JsonUtils.encode(json);
@@ -572,7 +570,7 @@ class Groups with Service implements NotificationsListener {
   /// 
   /// value - events (limited or not)
   ///
-  Future<Map<int, List<GroupEvent>>?> loadEvents (Group? group, {int limit = -1}) async {
+  Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
     await waitForLogin();
     if (group != null) {
       List<dynamic>? eventIds = await loadEventIds(group.id);
@@ -590,9 +588,9 @@ class Groups with Service implements NotificationsListener {
         SortUtils.sort(currentUserEvents);
         //limit the result count // limit available events
         List<Event> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
-        List<GroupEvent> groupEvents = <GroupEvent>[];
+        List<Event> groupEvents = <Event>[];
         for (Event event in visibleEvents) {
-          ListUtils.add(groupEvents, GroupEvent.fromJson(event.toJson()));
+          ListUtils.add(groupEvents, Event.fromJson(event.toJson()));
         }
         return {eventsCount: groupEvents};
       }
@@ -600,14 +598,39 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<bool> linkEventToGroup({String? groupId, String? eventId}) async {
+  Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     await waitForLogin();
     if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
         Map<String, dynamic> bodyMap = {"event_id":eventId};
+        if(CollectionUtils.isNotEmpty(toMembers)){
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+        }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
+        if((response?.statusCode ?? -1) == 200){
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return true;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false; // fail
+  }
+
+  Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
+    await waitForLogin();
+    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events';
+      try {
+        Map<String, dynamic> bodyMap = {"event_id":eventId};
+        if(CollectionUtils.isNotEmpty(toMembers)){
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+        }
+        String? body = JsonUtils.encode(bodyMap);
+        Response? response = await Network().put(url, auth: Auth2(),body: body);
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupUpdated, groupId);
           return true;
@@ -636,6 +659,40 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<List<Member>?> loadGroupEventMemberSelection(groupId, eventId) async{
+    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v2';
+      try {
+        Response? response = await Network().get(url, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? groupEventLinkSettingsJson = (responseBody != null) ? JsonUtils.decodeList(responseBody) : null; //List of settings for all events //Probbably can pass paramether to backend
+          if(groupEventLinkSettingsJson?.isNotEmpty ?? false) { //Find settings for this event
+            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhere((element) {
+                if (element is Map<String, dynamic>) {
+                  String? id = JsonUtils.stringValue(element["event_id"]);
+                  if( id != null && id == eventId){
+                    return true;
+                  }
+                }
+                return false;
+              });
+
+            if(eventSettings != null && eventSettings is Map<String, dynamic>){
+              List<dynamic>? membersData = JsonUtils.listValue(eventSettings["to_members"]);
+              List<Member>? members= Member.listFromJson(membersData);
+              return members;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null; // fail
+  }
+
   Future<String?> updateGroupEvents(Event event) async {
     await waitForLogin();
     String? id = await Events().updateEvent(event);
@@ -657,12 +714,6 @@ class Groups with Service implements NotificationsListener {
     }
     NotificationService().notify(Groups.notifyGroupEventsUpdated);
     return deleteResult;
-  }
-
-  // Event Comments
-
-  Future<bool> postEventComment(String groupId, String eventId, GroupEventComment comment) {
-    return Future<bool>.delayed(const Duration(seconds: 1), (){ return true; });
   }
 
   // Group Posts and Replies

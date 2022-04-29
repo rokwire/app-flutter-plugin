@@ -102,36 +102,48 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
+  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
+  
+  @protected Color? get defautTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTextColor => textColor ?? defautTextColor;
+  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
+  @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
+  @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
+  @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
+  @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
+
+  @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
+  @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
+  @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected Border get displayBorder => border ?? defaultBorder;
+  @protected double get displaySecondaryBorderWidth => secondaryBorderWidth ?? borderWidth;
+  @protected Border? get defaultSecondaryBorder => (secondaryBorderColor != null) ? Border.all(color: secondaryBorderColor!, width: displaySecondaryBorderWidth) : null;
+  @protected Border? get displaySecondaryBorder => secondaryBorder ?? defaultSecondaryBorder;
+
+  @protected Widget get displayLeftIcon => leftIcon ?? Container();
+  @protected EdgeInsetsGeometry get defaultLeftIconPadding => EdgeInsets.all(iconPadding);
+  @protected EdgeInsetsGeometry get displayLeftIconPadding => leftIconPadding ?? defaultLeftIconPadding;
+  
+  @protected Widget get displayRightIcon => rightIcon ?? Container();
+  @protected EdgeInsetsGeometry get defaultRightIconPadding => EdgeInsets.all(iconPadding);
+  @protected EdgeInsetsGeometry get displayRightIconPadding => rightIconPadding ?? defaultRightIconPadding;
+
+  @protected Color? get displayProgressColor => progressColor ?? displayBorderColor;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? borderWidth;
+
   @override
   _RoundedButtonState createState() => _RoundedButtonState();
-
-
 }
 
 class _RoundedButtonState extends State<RoundedButton> {
   final GlobalKey _contentKey = GlobalKey();
   Size? _contentSize;
 
-  Color? get _backgroundColor => widget.backgroundColor ?? Styles().colors?.white;
-  
-  Color? get _textColor => widget.textColor ?? Styles().colors?.fillColorPrimary;
-  String? get _fontFamily => widget.fontFamily ?? Styles().fontFamilies?.bold;
-  TextStyle get _textStyle => widget.textStyle ?? TextStyle(fontFamily: _fontFamily, fontSize: widget.fontSize, color: _textColor);
-  Widget get _textWidget => widget.textWidget ?? Text(widget.label, style: _textStyle, textAlign: widget.textAlign,);
-
-  Color get _borderColor => widget.borderColor ?? Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
-
-  Widget get _leftIcon => widget.leftIcon ?? Container();
-  EdgeInsetsGeometry get _leftIconPadding => widget.leftIconPadding ?? EdgeInsets.all(widget.iconPadding);
-  bool get _hasLeftIcon => (widget.leftIcon != null) || (widget.leftIconPadding != null);
-  
-  Widget get _rightIcon => widget.rightIcon ?? Container();
-  EdgeInsetsGeometry get _rightIconPadding => widget.rightIconPadding ?? EdgeInsets.all(widget.iconPadding);
-  bool get _hasRightIcon => (widget.rightIcon != null) || (widget.rightIconPadding != null);
-
-  Color? get _progressColor => widget.progressColor ?? _borderColor;
-  double get _progressSize => widget.progressSize ?? ((_contentSize?.height ?? 0) / 2);
-  double get _progressStrokeWidth => widget.progressStrokeWidth ?? widget.borderWidth;
+  double get progressSize => widget.progressSize ?? ((_contentSize?.height ?? 0) / 2);
+  bool get hasLeftIcon => (widget.leftIcon != null) || (widget.leftIconPadding != null);
+  bool get hasRightIcon => (widget.rightIcon != null) || (widget.rightIconPadding != null);
 
   @override
   void initState() {
@@ -194,17 +206,10 @@ class _RoundedButtonState extends State<RoundedButton> {
 
   Widget get _borderContent {
 
+    Border? secondaryBorder = widget.displaySecondaryBorder;
     BorderRadiusGeometry? borderRadius = (_contentSize != null) ? BorderRadius.circular((widget.maxBorderRadius != null) ? min(_contentSize!.height / 2, widget.maxBorderRadius!) : (_contentSize!.height / 2)) : null;
-
-    Border border = widget.border ?? Border.all(color: _borderColor, width: widget.borderWidth);
-
-    Border? secondaryBorder = widget.secondaryBorder ?? ((widget.secondaryBorderColor != null) ? Border.all(
-      color: widget.secondaryBorderColor!,
-      width: widget.secondaryBorderWidth ?? widget.borderWidth
-    ) : null);
-
-    return Container(key: _contentKey, decoration: BoxDecoration(color: _backgroundColor, border: border, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
-      ? Container(decoration: BoxDecoration(color: _backgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
+    return Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
+      ? Container(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
       : _innerContent
     );
   }
@@ -213,31 +218,31 @@ class _RoundedButtonState extends State<RoundedButton> {
     if ((widget.rightIcon != null) || (widget.leftIcon != null)) {
       List<Widget> rowContent = <Widget>[];
       
-      if (_hasLeftIcon) {
-        rowContent.add(Padding(padding: _leftIconPadding, child: _leftIcon,));
+      if (hasLeftIcon) {
+        rowContent.add(Padding(padding: widget.displayLeftIconPadding, child: widget.displayLeftIcon,));
       }
-      else if (_hasRightIcon && (widget.textAlign == TextAlign.center)) {
+      else if (hasRightIcon && (widget.textAlign == TextAlign.center)) {
         // add space keeper at left to keep text content centered
-        rowContent.add(Padding(padding: _rightIconPadding, child: Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: _rightIcon)));
+        rowContent.add(Padding(padding: widget.displayRightIconPadding, child: Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: widget.displayRightIcon)));
       }
 
       rowContent.add((0.0 < widget.contentWeight) ?
         Expanded(child:
           Padding(padding: widget.padding, child:
-            _textWidget
+            widget.displayTextWidget
           )
         ) :
         Padding(padding: widget.padding, child:
-          _textWidget
+          widget.displayTextWidget
         )
       );
 
-      if (_hasRightIcon) {
-        rowContent.add(Padding(padding: _rightIconPadding, child: _rightIcon,));
+      if (hasRightIcon) {
+        rowContent.add(Padding(padding: widget.displayRightIconPadding, child: widget.displayRightIcon,));
       }
-      else if (_hasLeftIcon && (widget.textAlign == TextAlign.center)) {
+      else if (hasLeftIcon && (widget.textAlign == TextAlign.center)) {
         // add space keeper at right to keep text content centered
-        rowContent.add(Padding(padding: _leftIconPadding, child: Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: _leftIcon)));
+        rowContent.add(Padding(padding: widget.displayLeftIconPadding, child: Visibility(visible: false, maintainSize: true, maintainAnimation: true, maintainState: true, child: widget.displayLeftIcon)));
       }
 
       return Semantics(excludeSemantics: true, child:
@@ -247,7 +252,7 @@ class _RoundedButtonState extends State<RoundedButton> {
     else {
       return Semantics(excludeSemantics: true, child:
         Padding(padding: widget.padding, child:
-          _textWidget
+          widget.displayTextWidget
         )
       );
     }
@@ -256,8 +261,8 @@ class _RoundedButtonState extends State<RoundedButton> {
   Widget get _progressContent {
     return (_contentSize != null) ? SizedBox(width: _contentSize!.width, height: _contentSize!.height,
       child: Align(alignment: Alignment.center,
-        child: SizedBox(height: _progressSize, width: _progressSize,
-            child: CircularProgressIndicator(strokeWidth: _progressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(_progressColor), )
+        child: SizedBox(height: progressSize, width: progressSize,
+            child: CircularProgressIndicator(strokeWidth: widget.displayProgressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(widget.displayProgressColor), )
         ),
       ),
     ): Container();

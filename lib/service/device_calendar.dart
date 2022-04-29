@@ -179,7 +179,7 @@ class DeviceCalendar with Service {
     if (permissionsGranted.isSuccess && !permissionsGranted.data!) {
       permissionsGranted = await _deviceCalendarPlugin.requestPermissions();
       if (!permissionsGranted.isSuccess || !permissionsGranted.data!) {
-        onRequestPermisionFailed();
+        onRequestPermissionFailed();
         return false;
       }
     }
@@ -188,7 +188,7 @@ class DeviceCalendar with Service {
   }
 
   @protected
-  void onRequestPermisionFailed() {
+  void onRequestPermissionFailed() {
     AppToast.show("Unable to save event to calendar. Permissions not granted");
   }
 

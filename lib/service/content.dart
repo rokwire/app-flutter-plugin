@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -28,6 +31,8 @@ import 'package:uuid/uuid.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content /* with Service */ {
+
+  static const String notifyUserProfilePictureChanged = "edu.illinois.rokwire.content.user.picture.profile.changed";
   
   // Singletone Factory
 
@@ -69,7 +74,7 @@ class Content /* with Service */ {
     }
   }
 
-  Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width}) async {
+  Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width, bool? isUserPic}) async {
     XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) {
       // User has cancelled operation
@@ -77,19 +82,25 @@ class Content /* with Service */ {
     }
     try {
       if ((0 < await image.length())) {
-        List<int> imageBytes = await image.readAsBytes();
+        Uint8List? imageBytes = await _rotateImage(image.path);
         String fileName = basename(image.path);
         String? contentType = mime(fileName);
-        return uploadImage(storagePath: storagePath, imageBytes: imageBytes, width: width, fileName: fileName, mediaType: contentType);
+        return uploadImage(
+            storagePath: storagePath,
+            imageBytes: imageBytes,
+            width: width,
+            fileName: fileName,
+            mediaType: contentType,
+            isUserPic: isUserPic);
       }
-    }
-    catch(e) {
+    } catch (e) {
       debugPrint(e.toString());
     }
     return null;
   }
 
-  Future<ImagesResult> uploadImage({List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType}) async {
+  Future<ImagesResult> uploadImage(
+      {List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType, bool? isUserPic}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing images BB url.');
@@ -100,28 +111,38 @@ class Content /* with Service */ {
     if (StringUtils.isEmpty(fileName)) {
       return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing file name.');
     }
-    if (StringUtils.isEmpty(storagePath)) {
+    if ((isUserPic != true) && StringUtils.isEmpty(storagePath)) {
       return ImagesResult.error(ImagesErrorType.storagePathNotSupplied, 'Missing storage path.');
     }
-    if ((width == null) || (width <= 0)) {
+    if ((isUserPic != true) && ((width == null) || (width <= 0))) {
       return ImagesResult.error(ImagesErrorType.dimensionsNotSupplied, 'Invalid image width. Please, provide positive number.');
     }
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
-    String url = "$serviceUrl/image";
+    String url = (isUserPic == true) ? "$serviceUrl/profile_photo" : "$serviceUrl/image";
     Map<String, String> imageRequestFields = {
-      'path': storagePath!,
-      'width': width.toString(),
       'quality': 100.toString() // Use maximum quality - 100
     };
+    if (isUserPic != true) {
+      imageRequestFields.addAll({'path': storagePath!, 'width': width.toString()});
+    }
     StreamedResponse? response = await Network().multipartPost(
-        url: url, fileKey: 'fileName', fileName: fileName, fileBytes: imageBytes, contentType: mediaType, fields: imageRequestFields, auth: Auth2());
+        url: url,
+        fileKey: 'fileName',
+        fileName: fileName,
+        fileBytes: imageBytes,
+        contentType: mediaType,
+        fields: imageRequestFields,
+        auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
       Map<String, dynamic>? json = JsonUtils.decode(responseString);
       String? imageUrl = (json != null) ? json['url'] : null;
+      if (isUserPic == true) {
+        NotificationService().notify(notifyUserProfilePictureChanged, null);
+      }
       return ImagesResult.succeed(imageUrl);
     } else {
       debugPrint("Failed to upload image. Reason: $responseCode $responseString");
@@ -129,9 +150,87 @@ class Content /* with Service */ {
     }
   }
 
+  Future<ImagesResult> deleteCurrentUserProfileImage() async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing content BB url.');
+    }
+    String url = '$serviceUrl/profile_photo';
+    Response? response = await Network().delete(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      NotificationService().notify(notifyUserProfilePictureChanged, null);
+      return ImagesResult.succeed('User profile image deleted.');
+    } else {
+      String? responseString = response?.body;
+      debugPrint("Failed to delete user's profile image. Reason: $responseCode $responseString");
+      return ImagesResult.error(ImagesErrorType.deleteFailed, "Failed to delete user's profile image.", responseString);
+    }
+  }
+
+  Future<Uint8List?> loadDefaultUserProfileImage({String? accountId}) async {
+    return loadUserProfileImage(UserProfileImageType.defaultType, accountId: accountId);
+  }
+
+  Future<Uint8List?> loadSmallUserProfileImage({String? accountId}) async {
+    return loadUserProfileImage(UserProfileImageType.small, accountId: accountId);
+  }
+
+  Future<Uint8List?> loadUserProfileImage(UserProfileImageType type, {String? accountId}) async {
+    String? url = getUserProfileImage(accountId: accountId, type: type);
+    if (StringUtils.isEmpty(url)) {
+      debugPrint('Failed to construct user profile image url.');
+      return null;
+    }
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return response!.bodyBytes;
+    } else {
+      debugPrint('Failed to retrieve user profile picture for user {$accountId} and image type {${_profileImageTypeToKeyString(type)}}}. \nReason: $responseCode: ${response?.body}');
+      return null;
+    }
+  }
+
+  String? getUserProfileImage({String? accountId, UserProfileImageType? type = UserProfileImageType.small}) {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      debugPrint('Missing content service url.');
+      return null;
+    }
+
+    String? userAccountId = accountId ?? Auth2().accountId;
+    if (StringUtils.isEmpty(userAccountId)) {
+      debugPrint('Missing account id.');
+      return null;
+    }
+    String typeToString = _profileImageTypeToKeyString(type!);
+    String imageUrl = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
+    return imageUrl;
+  }
+
+  Future<Uint8List?> _rotateImage(String filePath) async {
+    if (StringUtils.isEmpty(filePath)) {
+      return null;
+    }
+    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    return await rotatedImage.readAsBytes();
+  }
+
   bool _isValidImage(String? contentType) {
     if (contentType == null) return false;
     return contentType.startsWith("image/");
+  }
+
+  static String _profileImageTypeToKeyString(UserProfileImageType type) {
+    switch (type) {
+      case UserProfileImageType.defaultType:
+        return 'default';
+      case UserProfileImageType.medium:
+        return 'medium';
+      case UserProfileImageType.small:
+        return 'small';
+    }
   }
 }
 
@@ -146,6 +245,7 @@ enum ImagesErrorType {
   dimensionsNotSupplied,
   mediaTypeNotSupplied,
   uploadFailed,
+  deleteFailed,
 }
 
 class ImagesResult {
@@ -163,3 +263,5 @@ class ImagesResult {
   ImagesResult.succeed(this.data) :
     resultType = ImagesResultType.succeeded;
 }
+
+enum UserProfileImageType { defaultType, medium, small }

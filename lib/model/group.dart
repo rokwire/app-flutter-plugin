@@ -16,8 +16,6 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/model/event.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
@@ -224,6 +222,10 @@ class Group {
     return (currentUserAsMember?.isMemberOrAdmin ?? false);
   }
 
+  bool get currentUserIsMemberOrAdminOrPending{
+    return (currentUserAsMember?.isMemberOrAdminOrPending ?? false);
+  }
+
   bool get currentUserCanJoin {
     return (currentUserAsMember == null) && (authManEnabled != true);
   }
@@ -325,7 +327,6 @@ class Member {
   String?            externalId;
 	String?            name;
 	String?            email;
-	String?            photoURL;
   GroupMemberStatus? status;
   String?            officerTitle;
   
@@ -350,7 +351,6 @@ class Member {
     try { externalId  = json['external_id'];      } catch(e) { debugPrint(e.toString()); }
     try { name        = json['name'];     } catch(e) { debugPrint(e.toString()); }
     try { email       = json['email'];     } catch(e) { debugPrint(e.toString()); }
-    try { photoURL    = json['photo_url']; } catch(e) { debugPrint(e.toString()); }
     try { status       = groupMemberStatusFromString(json['status']); } catch(e) { debugPrint(e.toString()); }
     try { officerTitle = json['officerTitle']; } catch(e) { debugPrint(e.toString()); }
     try {
@@ -368,7 +368,6 @@ class Member {
     userId         = other?.userId;
     externalId     = other?.externalId;
     name           = other?.name;
-    photoURL       = other?.photoURL;
     status         = other?.status;
     officerTitle   = other?.officerTitle;
     answers        = other?.answers;
@@ -391,7 +390,6 @@ class Member {
     json['external_id']         = externalId;
     json['name']                = name;
     json['email']               = email;
-    json['photo_url']           = photoURL;
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
     json['answers']             = CollectionUtils.isNotEmpty(answers) ? answers!.map((answer) => answer.toJson()).toList() : null;
@@ -443,7 +441,6 @@ class Member {
       (other.externalId == externalId) &&
       (other.name == name) &&
       (other.email == email) &&
-      (other.photoURL == photoURL) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
@@ -457,18 +454,19 @@ class Member {
     (externalId?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
     (email?.hashCode ?? 0) ^
-    (photoURL?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(answers));
 
-  bool get isAdmin           => status == GroupMemberStatus.admin;
-  bool get isMember          => status == GroupMemberStatus.member;
-  bool get isMemberOrAdmin   => isMember || isAdmin;
-  bool get isPendingMember   => status == GroupMemberStatus.pending;
-  bool get isRejected        => status == GroupMemberStatus.rejected;
+  bool get isAdmin          => status == GroupMemberStatus.admin;
+  bool get isMember         => status == GroupMemberStatus.member;
+  bool get isPendingMember  => status == GroupMemberStatus.pending;
+  bool get isRejected       => status == GroupMemberStatus.rejected;
+
+  bool get isMemberOrAdmin  => isMember || isAdmin;
+  bool get isMemberOrAdminOrPending  => isMemberOrAdmin || isPendingMember;
 
   static List<Member>? listFromJson(List<dynamic>? json) {
     List<Member>? values;
@@ -776,89 +774,6 @@ class GroupMembershipAnswer {
 }
 
 //////////////////////////////
-// GroupEvent
-
-class GroupEvent extends Event {
-  List<GroupEventComment>? comments;
-  
-  GroupEvent({Map<String, dynamic>? json}) : super(json: json) {
-    if (json != null) {
-      _initFromJson(json);
-    }
-  }
-
-  void _initFromJson(Map<String, dynamic> json) {
-    try { comments = GroupEventComment.listFromJson(json['comments']); } catch(e) { debugPrint(e.toString()); }
-  }
-
-  static GroupEvent? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? GroupEvent(json: json) : null;
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = super.toJson();
-    json['comments']  = GroupEventComment.listToJson(comments);
-    return json;
-  }
-}
-
-//////////////////////////////
-// GroupEventComment
-
-class GroupEventComment {
-  Member?       member;
-  DateTime?     dateCreated;
-	String?       text;
-
-  GroupEventComment({Map<String, dynamic>? json}) {
-    if (json != null) {
-      _initFromJson(json);
-    }
-  }
-
-  void _initFromJson(Map<String, dynamic> json) {
-    try { member      = Member.fromJson(json['member']); } catch(e) { debugPrint(e.toString()); }
-    try { dateCreated = DateTimeUtils.dateTimeFromString(json['dateCreated'], format: AppDateTime.iso8601DateTimeFormat); } catch(e) { debugPrint(e.toString()); }
-    try { text         = json['text']; } catch(e) { debugPrint(e.toString()); }
-  }
-
-  static GroupEventComment? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? GroupEventComment(json: json) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = {};
-    json['member'] = member?.toJson();
-    json['dateCreated'] = AppDateTime().formatDateTime(dateCreated, format: AppDateTime.iso8601DateTimeFormat);
-    json['text'] = text;
-    return json;
-  }
-
-  static List<GroupEventComment>? listFromJson(List<dynamic>? json) {
-    List<GroupEventComment>? values;
-    if (json != null) {
-      values = [];
-      for (dynamic entry in json) {
-        ListUtils.add(values, GroupEventComment.fromJson(JsonUtils.mapValue(entry)));
-      }
-    }
-    return values;
-  }
-
-  static List<dynamic>? listToJson(List<GroupEventComment>? values) {
-    List<dynamic>? json;
-    if (values != null) {
-      json = [];
-      for (GroupEventComment? value in values) {
-        json.add(value?.toJson());
-      }
-    }
-    return json;
-  }
-}
-
-//////////////////////////////
 // GroupPost
 
 class GroupPost {
@@ -871,9 +786,10 @@ class GroupPost {
   final DateTime? dateUpdatedUtc;
   final bool? private;
   final List<GroupPost>? replies;
+  final List<Member>? members;
   final String? imageUrl;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies});
+  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members,});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? GroupPost(
@@ -886,7 +802,10 @@ class GroupPost {
         dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
         private: json['private'],
         imageUrl: JsonUtils.stringValue(json["image_url"]),
-        replies: GroupPost.fromJsonList(json['replies'])) : null;
+        replies: GroupPost.fromJsonList(json['replies']),
+        members: Member.listFromJson(json['to_members'])
+      ) : null;
+
   }
 
   Map<String, dynamic> toJson({bool create = false, bool update = false}) {
@@ -903,6 +822,9 @@ class GroupPost {
     }
     if(imageUrl!=null){
       json['image_url'] = imageUrl;
+    }
+    if(members!=null){
+      json['to_members'] = Member.listToJson(members);
     }
     return json;
   }
@@ -928,8 +850,9 @@ class PostDataModel {
   String? body;
   String? subject;
   String? imageUrl;
+  List<Member>? members;
 
-  PostDataModel({this.body, this.subject, this.imageUrl});
+  PostDataModel({this.body, this.subject, this.imageUrl, this.members});
 }
 
 //////////////////////////////

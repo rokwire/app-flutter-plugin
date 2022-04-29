@@ -6,16 +6,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.0.2] - 2022-04-27
+### Changed
+- Bring back the old Polls BB [#76](https://github.com/rokwire/app-flutter-plugin/issues/76).
+
+## [1.0.1] - 2022-04-20
+### Changed
+- Group service: linkEventToGroup implements members param [#1487](https://github.com/rokwire/illinois-app/issues/1487).
+- GroupPost implements members param [#1450](https://github.com/rokwire/illinois-app/issues/1450).
+- Group service: implement loadGroupEventMemberSelection [#1519](https://github.com/rokwire/illinois-app/issues/1519).
+- Provide possibility for skipping notification when privacy level is changed [#63](https://github.com/rokwire/app-flutter-plugin/issues/63).
+- Do not skip sending notification when changing privacy level [#65](https://github.com/rokwire/app-flutter-plugin/issues/65).
+- Update favorite icon availability for privacy level 4+ [#68](https://github.com/rokwire/app-flutter-plugin/issues/68).
+### Fixed
+- Fixed crash on activity destroy in Android native side (#50).
+- Image rotation before upload [#58](https://github.com/rokwire/app-flutter-plugin/issues/58).
+### Added
+- Get, Create, Update and Delete user's profile picture [#53](https://github.com/rokwire/app-flutter-plugin/issues/53).
+- Send notification when user changes profile picture [#61](https://github.com/rokwire/app-flutter-plugin/issues/61).
+- Integrate new Polls BB [#70](https://github.com/rokwire/app-flutter-plugin/issues/70).
+
+## [1.0.0] - 2022-03-15
+### Changed
+- Updated homepage and author details in rokwire_plugin.podspec [#34](https://github.com/rokwire/app-flutter-plugin/issues/34).
+### Added
+- Added miscelanious controls to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
+ 
 ## [0.0.3] - 2022-03-17
 ### Fixed
 - Wait for applyLogin in Auth2.processLoginResponse [#46](https://github.com/rokwire/app-flutter-plugin/issues/46).
 
 ## [0.0.2] - 2022-03-07
 ### Added
-- OIDC auth result codes [#25](https://github.com/rokwire/app-flutter-plugin/issues/25)
-- Add auth requests to new Core BB endpoints [#19](https://github.com/rokwire/app-flutter-plugin/issues/19)
+- OIDC auth result codes [#25](https://github.com/rokwire/app-flutter-plugin/issues/25).
+- Add auth requests to new Core BB endpoints [#19](https://github.com/rokwire/app-flutter-plugin/issues/19).
 - Group rules in FlexUI [#18](https://github.com/rokwire/app-flutter-plugin/issues/18).
-- Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11)
+- Fix issues with account linking [#11](https://github.com/rokwire/app-flutter-plugin/issues/11).
 - Added capability to filter staled analytics packets before sending them to log service [#4](https://github.com/rokwire/app-flutter-plugin/issues/4).
 - Added miscelanious controls to UI section [#2](https://github.com/rokwire/app-flutter-plugin/issues/2).
 - Added progress capability to RoundedButton [#29](https://github.com/rokwire/app-flutter-plugin/issues/29).

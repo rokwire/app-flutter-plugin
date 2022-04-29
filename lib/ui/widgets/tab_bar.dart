@@ -7,14 +7,14 @@ import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
-class TabBarWidget extends StatefulWidget {
+class TabBar extends StatefulWidget {
 
   final TabController? tabController;
 
-  const TabBarWidget({Key? key, this.tabController}) : super(key: key);
+  const TabBar({Key? key, this.tabController}) : super(key: key);
 
   @override
-  _TabBarWidgetState createState() => _TabBarWidgetState();
+  _TabBarState createState() => _TabBarState();
 
   @protected
   Color? get backgroundColor {
@@ -39,7 +39,7 @@ class TabBarWidget extends StatefulWidget {
   String get flexUiSection => 'tabbar';
 }
 
-class _TabBarWidgetState extends State<TabBarWidget> implements NotificationsListener {
+class _TabBarState extends State<TabBar> implements NotificationsListener {
 
   List<dynamic>? _contentListCodes;
 
