@@ -40,14 +40,14 @@ class TrianglePainter extends CustomPainter {
         path.lineTo(0, size.height);
         path.lineTo(size.width, size.height);
       }
-      else if (horzDir == TriangleHorzDirection.rightToLeft) {
+      else if (horzDir == TriangleHorzDirection.leftToRight) {
         path.moveTo(0, size.height);
         path.lineTo(size.width, 0);
         path.lineTo(size.width, size.height);
       }
     }
     else if (vertDir == TriangleVertDirection.bottomToTop) {
-      if (horzDir == TriangleHorzDirection.rightToLeft) {
+      if (horzDir == TriangleHorzDirection.leftToRight) {
         path.moveTo(size.width, size.height);
         path.lineTo(size.width, 0);
         path.lineTo(0, 0);
