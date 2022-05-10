@@ -800,7 +800,7 @@ class Groups with Service implements NotificationsListener {
         return groupPollLinkRecordsJson?.map((e) => (e is Map<String, dynamic>) ? (JsonUtils.stringValue(e["poll_id"]) ?? "" ) : "").toSet();
       }
     } catch (e) {
-    debugPrint(e.toString());
+      debugPrint(e.toString());
     }
 
     return null;
@@ -841,9 +841,16 @@ class Groups with Service implements NotificationsListener {
   }
 
   //Hook with Polls
-  Future<PollsChunk?>? loadGroupPolls(String groupId ,{PollsCursor? cursor, Set<String>? pollIds}) async {
-    Set<String>? pollIds = await loadGroupPollsIds(groupId: groupId);
-    return Polls().getGroupPolls({groupId}, cursor: cursor, pollIds: pollIds);
+  Future<PollsChunk?>? loadGroupPolls(Set<String>? groupIds ,{PollsCursor? cursor, Set<String>? pollIds}) async {
+    Set<String>? pollIds = {};
+    if(CollectionUtils.isNotEmpty(groupIds)){ //TODO Optimize call with List of groupIds instead of asking the server fo each group one by one. Single API call should be prepared on the backend first
+      for(String groupId in groupIds!){
+        Set<String> groupPollIds = await loadGroupPollsIds(groupId: groupId) ?? {};
+        pollIds.addAll(groupPollIds);
+      }
+    }
+
+    return CollectionUtils.isNotEmpty(pollIds) ? Polls().getGroupPolls(cursor: cursor, pollIds: pollIds) : null;
   }
   // Group Posts and Replies
 
