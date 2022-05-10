@@ -109,7 +109,7 @@ class Polls with Service implements NotificationsListener {
     return getPolls(PollFilter(myPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds ,{PollsCursor? cursor, Set<String>? pollIds}) async {
+  Future<PollsChunk?>? getGroupPolls({Set<String>? groupIds, PollsCursor? cursor, Set<String>? pollIds}) async {
     return getPolls(PollFilter(groupIds: groupIds, pollIds: pollIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
