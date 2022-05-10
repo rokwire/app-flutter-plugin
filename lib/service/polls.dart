@@ -109,8 +109,8 @@ class Polls with Service implements NotificationsListener {
     return getPolls(PollFilter(myPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds, {PollsCursor? cursor}) async {
-    return getPolls(PollFilter(groupIds: groupIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
+  Future<PollsChunk?>? getGroupPolls(Set<String>? groupIds ,{PollsCursor? cursor, Set<String>? pollIds}) async {
+    return getPolls(PollFilter(groupIds: groupIds, pollIds: pollIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
   Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
@@ -149,7 +149,7 @@ class Polls with Service implements NotificationsListener {
 
   // API
 
-  Future<void> create(Poll poll) async {
+  Future<Poll> create(Poll poll) async {
     if (enabled) {
       String? body = JsonUtils.encode(poll.toJson());
       String url = '${Config().quickPollsUrl}/polls';
@@ -182,6 +182,8 @@ class Polls with Service implements NotificationsListener {
               presentWaiting();
             }
           });
+
+          return poll;
         }
         else {
           throw PollsException(PollsError.serverResponseContent);
@@ -194,6 +196,7 @@ class Polls with Service implements NotificationsListener {
     else {
       throw PollsException(PollsError.internal);
     }
+
   }
 
   Future<void> open(String? pollId) async {
