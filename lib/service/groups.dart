@@ -38,6 +38,8 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/events.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
+import 'firebase_messaging.dart';
+
 class Groups with Service implements NotificationsListener {
 
   static const String notifyUserGroupsUpdated       = "edu.illinois.rokwire.groups.user.updated";
@@ -67,6 +69,7 @@ class Groups with Service implements NotificationsListener {
   Set<String>? _userGroupNames;
 
   final List<Completer<void>> _loginCompleters = [];
+  final List<Completer<void>> _userGroupUpdateCompleters = [];
   List<Completer<void>> get loginCompleters => _loginCompleters;
 
 
@@ -97,6 +100,7 @@ class Groups with Service implements NotificationsListener {
       DeepLink.notifyUri,
       Auth2.notifyLoginChanged,
       AppLivecycle.notifyStateChanged,
+      FirebaseMessaging.notifyGroupsNotification
     ]);
     _groupDetailsCache = [];
   }
@@ -117,7 +121,7 @@ class Groups with Service implements NotificationsListener {
       await _initUserGroupsFromNet();
     }
     else {
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
     }
 
     await super.initService();
@@ -145,14 +149,14 @@ class Groups with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param);
+    } else if (name == FirebaseMessaging.notifyGroupsNotification){
+      _onFirebaseMessageForGroupUpdate();
     }
   }
 
   void _onLoginChanged() {
     if (Auth2().isLoggedIn) {
-      waitForLogin().then((_) {
-        _updateUserGroupsFromNet();
-      });
+      _waitForUpdateUserGroupsFromNet();
     }
     else {
       _loggedIn = false;
@@ -168,10 +172,14 @@ class Groups with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
         }
       }
     }
+  }
+
+  void _onFirebaseMessageForGroupUpdate() {
+      _waitForUpdateUserGroupsFromNet();
   }
 
   // Current User Membership
@@ -247,7 +255,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<List<Group>?> loadGroups({bool myGroups = false}) async {
     if (myGroups) {
-      await _updateUserGroupsFromNet();
+      await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
       return await _loadAllGroups();
@@ -346,7 +354,7 @@ class Groups with Service implements NotificationsListener {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
           if (StringUtils.isNotEmpty(groupId)) {
             NotificationService().notify(notifyGroupCreated, group.id);
-            _updateUserGroupsFromNet();
+            _waitForUpdateUserGroupsFromNet();
             return null; // succeeded
           }
         }
@@ -402,7 +410,7 @@ class Groups with Service implements NotificationsListener {
     int responseCode = response?.statusCode ?? -1;
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupDeleted, null);
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
       return true;
     } else {
       Log.i('Failed to delete group. Reason:\n${response?.body}');
@@ -465,7 +473,7 @@ class Groups with Service implements NotificationsListener {
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupMembershipQuit, group);
       NotificationService().notify(notifyGroupUpdated, group.id);
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
       return true;
     } else {
       String? responseString = response?.body;
@@ -485,7 +493,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -511,7 +519,7 @@ class Groups with Service implements NotificationsListener {
             NotificationService().notify(notifyGroupMembershipSwitchToMember, group);
           }
           NotificationService().notify(notifyGroupUpdated, group!.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -530,7 +538,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupMembershipRemoved, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -1097,6 +1105,31 @@ class Groups with Service implements NotificationsListener {
       _userGroupNames = _buildGroupNames(_userGroups);
       await _saveUserGroupsStringToCache(jsonString);
     }
+  }
+
+  Future<void> _waitForUpdateUserGroupsFromNet() async{
+    waitForLogin().then((value){
+      try {
+        if (_userGroupUpdateCompleters.isEmpty) {
+          Completer<void> completer = Completer<void>();
+          _userGroupUpdateCompleters.add(completer);
+          _updateUserGroupsFromNet().whenComplete(() {
+            for (var completer in _userGroupUpdateCompleters) {
+              completer.complete();
+            }
+            _userGroupUpdateCompleters.clear();
+          });
+          return completer.future;
+        } else {
+          Completer<void> completer = Completer<void>();
+          _userGroupUpdateCompleters.add(completer);
+          return completer.future;
+        }
+      } catch(err){
+        Log.e("Failed to invoke Update User Group From Net");
+        debugPrint(err.toString());
+      }
+    });
   }
 
   Future<void> _updateUserGroupsFromNet() async {
