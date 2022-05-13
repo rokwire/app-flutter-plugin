@@ -23,7 +23,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 //////////////////////////////
 /// Event
 
-class Event with Explore implements Favorite {
+class Event with Explore, Favorite {
   String? id;
   String? title;
   String? subTitle;
@@ -551,6 +551,10 @@ class Event with Explore implements Favorite {
     _featuredEvents!.add(event);
   }
 
+  bool get isComposite {
+    return isRecurring || (isSuperEvent == true);
+  }
+
   static List<Map<String, dynamic>>? _constructSubEventsMap(List<dynamic>? subEventsJson) {
     if (subEventsJson == null || subEventsJson.isEmpty) {
       return null;
@@ -565,7 +569,6 @@ class Event with Explore implements Favorite {
   }
 
   // Explore
-  
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
   @override String?   get exploreSubTitle         { return subTitle; }
@@ -579,14 +582,10 @@ class Event with Explore implements Favorite {
   DateTime? get startDateLocal     { return AppDateTime().getUniLocalTimeFromUtcTime(startDateGmt); }
   DateTime? get endDateLocal       { return AppDateTime().getUniLocalTimeFromUtcTime(endDateGmt); }
 
-  static String favoriteKeyName = "eventIds";
-  @override String? get favoriteId => exploreId;
-  @override String? get favoriteTitle => title;
+  // Favorite
+  static const String favoriteKeyName = "eventIds";
   @override String get favoriteKey => favoriteKeyName;
-
-  bool get isComposite {
-    return isRecurring || (isSuperEvent == true);
-  }
+  @override String? get favoriteId => exploreId;
 }
 
 class Contact {

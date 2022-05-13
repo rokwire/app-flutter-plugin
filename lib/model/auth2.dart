@@ -1669,9 +1669,8 @@ class UserRole {
 // Favorite
 
 abstract class Favorite {
-  String? get favoriteId;
-  String? get favoriteTitle;
   String get favoriteKey;
+  String? get favoriteId;
 }
 
 ////////////////////////////////
