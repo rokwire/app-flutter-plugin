@@ -152,17 +152,9 @@ class InboxMessage with Favorite {
   }
 
   // Favorite
-
-  @override
-  String? get favoriteId => messageId;
-
-  @override
-  String? get favoriteTitle => subject;
-
-  @override
-  String get favoriteKey => favoriteKeyName;
-
-  static String favoriteKeyName = "InboxMessageIds";
+  static const String favoriteKeyName = "InboxMessageIds";
+  @override String get favoriteKey => favoriteKeyName;
+  @override String? get favoriteId => messageId;
 }
 
 class InboxRecepient {
