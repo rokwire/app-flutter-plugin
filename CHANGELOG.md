@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Next build on `develop` should refer to version 1.1.0 -->
 ### Changed
 - Added GeoFence location rules in FlexUI [#62](https://github.com/rokwire/app-flutter-plugin/issues/62).
+- GeoFence service updated to load regions from content BB [#91](https://github.com/rokwire/app-flutter-plugin/issues/91).
 - Cleaned up Favorites, prepare for UIUC 4 features [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Preserve the order of Favorite items [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 ### Fixed
