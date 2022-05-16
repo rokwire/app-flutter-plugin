@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -490,6 +491,16 @@ class JsonUtils {
   static Set<String>? setStringsValue(dynamic value) {
     try {
       return (value is List) ? Set<String>.from(value.cast<String>()) : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<String>? linkedHashSetStringsValue(dynamic value) {
+    try {
+      return (value is List) ? LinkedHashSet<String>.from(value.cast<String>()) : null;
     }
     catch(e) {
       debugPrint(e.toString());
