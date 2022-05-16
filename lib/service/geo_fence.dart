@@ -245,20 +245,32 @@ class GeoFence with Service implements NotificationsListener {
     }
     else {
       try {
-        Response? response = await Network().get("${Config().locationsUrl}/regions", auth: Auth2());
-        return ((response != null) && (response.statusCode == 200)) ? response.body : null;
-        } catch (e) {
-          debugPrint(e.toString());
+        List<dynamic> result;
+        Response? response = await Network().get("${Config().contentUrl}/content_items", auth: Auth2(), body: JsonUtils.encode({"categories":["region"]}));
+        List<dynamic>? responseList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body)  : null;
+        if (responseList != null) {
+          result = [];
+          for (dynamic responseEntry in responseList) {
+            Map<String, dynamic>? responseMap = JsonUtils.mapValue(responseEntry);
+            List<dynamic>? responseData = (responseMap != null) ? JsonUtils.listValue(responseMap['data']) : null;
+            if (responseData != null) {
+              result.addAll(responseData);
+            }
+          }
+          return JsonUtils.encode(result);
         }
-        return null;
+      } catch (e) {
+        debugPrint(e.toString());
       }
+      return null;
     }
+  }
 
   @protected
   Future<void> updateRegions() async {
     String? jsonString = await loadRegionsStringFromNet();
     LinkedHashMap<String, GeoFenceRegion>? regions = GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(jsonString));
-    if ((regions != null) && !const DeepCollectionEquality().equals(_regions, regions)) { // DeepCollectionEquality().equals(_regions, regions)
+    if ((regions != null) && !const DeepCollectionEquality().equals(_regions, regions)) {
       _regions = regions;
       monitorRegions();
       saveRegionsStringToCache(jsonString);
