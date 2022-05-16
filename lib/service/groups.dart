@@ -550,7 +550,7 @@ class Groups with Service implements NotificationsListener {
 
 
 // Events
-  Future<List<dynamic>?> loadEventIds(String? groupId) async{
+  Future<List<String>?> loadEventIds(String? groupId) async{
     await waitForLogin();
     if(StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
@@ -561,7 +561,7 @@ class Groups with Service implements NotificationsListener {
           int responseCode = response?.statusCode ?? -1;
           String? responseBody = response?.body;
           List<dynamic>? eventIdsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeList(responseBody) : null;
-          return eventIdsJson;
+          return JsonUtils.listStringsValue(eventIdsJson);
         }
       } catch (e) {
         debugPrint(e.toString());
@@ -582,8 +582,8 @@ class Groups with Service implements NotificationsListener {
   Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
     await waitForLogin();
     if (group != null) {
-      List<dynamic>? eventIds = await loadEventIds(group.id);
-      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(Set<String>.from(eventIds!)) : null;
+      List<String>? eventIds = await loadEventIds(group.id);
+      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(eventIds) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
         List<Event> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;

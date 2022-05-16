@@ -230,14 +230,14 @@ class Events with Service implements NotificationsListener, ExploreJsonHandler {
     return null;
   }
 
-  Future<List<Event>?> loadEventsByIds(Set<String?>? eventIds) async {
+  Future<List<Event>?> loadEventsByIds(Iterable<String>? eventIds) async {
     if(enabled) {
       if (CollectionUtils.isEmpty(eventIds)) {
         Log.i('Missing event ids param');
         return null;
       }
       StringBuffer idsBuffer = StringBuffer();
-      for (String? eventId in eventIds!) {
+      for (String eventId in eventIds!) {
         idsBuffer.write('id=$eventId&');
       }
       String idsQueryParam = idsBuffer.toString().substring(0, (idsBuffer.length - 1)); //Remove & at last position
