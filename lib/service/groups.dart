@@ -420,6 +420,14 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> syncAuthmanGroup({required Group group}) async {
+    if (!group.currentUserIsAdmin) {
+      debugPrint('Current user is not allowed to call this API - one has to be admin.');
+      return false;
+    }
+    if (group.attendanceGroup != true) {
+      debugPrint('It is not allowed to synchronize not-attendance groups.');
+      return false;
+    }
     if (group.authManEnabled != true) {
       debugPrint('It is not allowed to synchronize not-authman groups.');
       return false;
@@ -429,7 +437,6 @@ class Groups with Service implements NotificationsListener {
     Response? response = await Network().post(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      NotificationService().notify(notifyGroupUpdated, group.id);
       _waitForUpdateUserGroupsFromNet();
       return true;
     } else {
