@@ -59,7 +59,8 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMembershipRemoved        = "edu.illinois.rokwire.group.membership.removed";
   static const String notifyGroupMembershipSwitchToAdmin  = "edu.illinois.rokwire.group.membership.switch_to_admin";
   static const String notifyGroupMembershipSwitchToMember = "edu.illinois.rokwire.group.membership.switch_to_member";
-  
+  static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
+
   static const String _userGroupsCacheFileName = "groups.json";
 
   List<Map<String, dynamic>>? _groupDetailsCache;
@@ -418,6 +419,24 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<bool> syncAuthmanGroup({required Group group}) async {
+    if (!group.syncAuthmanAllowed) {
+      debugPrint('Current user is not allowed to sync group "${group.id}" in authman.');
+      return false;
+    }
+    await waitForLogin();
+    String url = '${Config().groupsUrl}/group/${group.id}/authman/synchronize';
+    Response? response = await Network().post(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      _waitForUpdateUserGroupsFromNet();
+      return true;
+    } else {
+      debugPrint('Failed to synchronize authman group. \nReason: $responseCode, ${response?.body}');
+      return false;
+    }
+  }
+
   // Members APIs
 
   Future<bool> requestMembership(Group? group, List<GroupMembershipAnswer>? answers) async{
@@ -546,6 +565,39 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false; // fail
+  }
+
+  Future<bool> memberAttended({required Group group, required Member member}) async {
+    bool isNewMember = (member.id == null);
+    if (isNewMember && (group.authManEnabled == true)) {
+      debugPrint('It is not allowed to import new members to authman groups.');
+      return false;
+    }
+    await waitForLogin();
+    member.dateAttendedUtc = DateTime.now().toUtc();
+    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+    String? memberJsonBody = JsonUtils.encode(member.toJson());
+    try {
+      Response? response;
+      if (isNewMember) {
+        response = await Network().post(url, body: memberJsonBody, auth: Auth2());
+      } else {
+        response = await Network().put(url, body: memberJsonBody, auth: Auth2());
+      }
+      int? responseCode = response?.statusCode;
+      String? responseString = response?.body;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupMemberAttended, null);
+        NotificationService().notify(notifyGroupUpdated, group.id);
+        _waitForUpdateUserGroupsFromNet();
+        return true;
+      } else {
+        debugPrint('Failed to attend a member to group. \nResponse: $responseCode, $responseString');
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return false;
   }
 
 

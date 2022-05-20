@@ -35,10 +35,11 @@ class Group {
   DateTime?           dateUpdatedUtc;
 
   bool?               authManEnabled;
-  bool?               onlyAdminsCanCreatePolls;
   String?             authManGroupName;
+  bool?               onlyAdminsCanCreatePolls;
 
   bool?               hiddenForSearch;
+  bool?               attendanceGroup;
 
   String?             imageURL;
   String?             webURL;
@@ -71,10 +72,11 @@ class Group {
     try { title             = json['title'];      } catch(e) { debugPrint(e.toString()); }
     try { description       = json['description'];  } catch(e) { debugPrint(e.toString()); }
     try { privacy           = groupPrivacyFromString(json['privacy']); } catch(e) { debugPrint(e.toString()); }
-    try { certified          = json['certified']; } catch(e) { debugPrint(e.toString()); }
+    try { certified         = json['certified']; } catch(e) { debugPrint(e.toString()); }
     try { authManEnabled    = json['authman_enabled']; } catch(e) { debugPrint(e.toString()); }
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
     try { hiddenForSearch   = json['hidden_for_search']; } catch(e) { debugPrint(e.toString()); }
+    try { attendanceGroup   = json['attendance_group']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
     try { imageURL          = json['image_url'];     } catch(e) { debugPrint(e.toString()); }
@@ -100,6 +102,7 @@ class Group {
     json['authman_enabled']              = authManEnabled;
     json['authman_group']                = authManGroupName;
     json['hidden_for_search']            = hiddenForSearch;
+    json['attendance_group']             = attendanceGroup;
     json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
     json['image_url']                    = imageURL;
@@ -124,6 +127,7 @@ class Group {
     onlyAdminsCanCreatePolls = other?.onlyAdminsCanCreatePolls;
     authManGroupName  = other?.authManGroupName;
     hiddenForSearch   = other?.hiddenForSearch;
+    attendanceGroup   = other?.attendanceGroup;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
     imageURL          = other?.imageURL;
@@ -152,6 +156,7 @@ class Group {
       (other.authManGroupName == authManGroupName) &&
 
       (other.hiddenForSearch == hiddenForSearch) &&
+      (other.attendanceGroup == attendanceGroup) &&
       
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
@@ -178,6 +183,7 @@ class Group {
     (authManGroupName?.hashCode ?? 0) ^
 
     (hiddenForSearch?.hashCode ?? 0) ^
+    (attendanceGroup?.hashCode ?? 0) ^
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
@@ -275,6 +281,22 @@ class Group {
     return membersCount;
   }
 
+  int get attendedCount {
+    int attendedCount = 0;
+    if (CollectionUtils.isNotEmpty(members)) {
+      for (Member? member in members!) {
+        if ((member!.isAdmin || member.isMember) && (member.dateAttendedUtc != null)) {
+          attendedCount++;
+        }
+      }
+    }
+    return attendedCount;
+  }
+
+  bool get syncAuthmanAllowed {
+    return (currentUserIsAdmin == true) && (attendanceGroup == true) && (authManEnabled == true);
+  }
+
   static List<Group>? listFromJson(List<dynamic>? json) {
     List<Group>? values;
     if (json != null) {
@@ -339,6 +361,7 @@ class Member {
   GroupMemberStatus? status;
   String?            officerTitle;
   
+  DateTime?          dateAttendedUtc;
   DateTime?          dateCreatedUtc;
   DateTime?          dateUpdatedUtc;
 
@@ -368,20 +391,22 @@ class Member {
       debugPrint(e.toString());
     }
 
+    try { dateAttendedUtc   = groupUtcDateTimeFromString(json['date_attended']); } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
   }
 
   void _initFromOther(Member? other) {
-    id             = other?.id;
-    userId         = other?.userId;
-    externalId     = other?.externalId;
-    name           = other?.name;
-    status         = other?.status;
-    officerTitle   = other?.officerTitle;
-    answers        = other?.answers;
-    dateCreatedUtc = other?.dateCreatedUtc;
-    dateUpdatedUtc = other?.dateUpdatedUtc;
+    id              = other?.id;
+    userId          = other?.userId;
+    externalId      = other?.externalId;
+    name            = other?.name;
+    status          = other?.status;
+    officerTitle    = other?.officerTitle;
+    answers         = other?.answers;
+    dateAttendedUtc = other?.dateAttendedUtc;
+    dateCreatedUtc  = other?.dateCreatedUtc;
+    dateUpdatedUtc  = other?.dateUpdatedUtc;
   }
 
   static Member? fromJson(Map<String, dynamic>? json) {
@@ -402,6 +427,7 @@ class Member {
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
     json['answers']             = CollectionUtils.isNotEmpty(answers) ? answers!.map((answer) => answer.toJson()).toList() : null;
+    json['date_attended']       = groupUtcDateTimeToString(dateAttendedUtc);
     json['date_created']        = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']        = groupUtcDateTimeToString(dateUpdatedUtc);
 
@@ -452,6 +478,7 @@ class Member {
       (other.email == email) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
+      (other.dateAttendedUtc == dateAttendedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
       const DeepCollectionEquality().equals(other.answers, answers);
@@ -465,6 +492,7 @@ class Member {
     (email?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
+    (dateAttendedUtc?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(answers));
