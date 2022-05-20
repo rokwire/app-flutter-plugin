@@ -293,6 +293,10 @@ class Group {
     return attendedCount;
   }
 
+  bool get syncAuthmanAllowed {
+    return (currentUserIsAdmin == true) && (attendanceGroup == true) && (authManEnabled == true);
+  }
+
   static List<Group>? listFromJson(List<dynamic>? json) {
     List<Group>? values;
     if (json != null) {

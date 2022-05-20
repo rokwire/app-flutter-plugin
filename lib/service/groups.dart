@@ -420,16 +420,8 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> syncAuthmanGroup({required Group group}) async {
-    if (!group.currentUserIsAdmin) {
-      debugPrint('Current user is not allowed to call this API - one has to be admin.');
-      return false;
-    }
-    if (group.attendanceGroup != true) {
-      debugPrint('It is not allowed to synchronize not-attendance groups.');
-      return false;
-    }
-    if (group.authManEnabled != true) {
-      debugPrint('It is not allowed to synchronize not-authman groups.');
+    if (!group.syncAuthmanAllowed) {
+      debugPrint('Current user is not allowed to sync group "${group.id}" in authman.');
       return false;
     }
     await waitForLogin();
