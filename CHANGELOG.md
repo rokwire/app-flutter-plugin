@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update Group API to hook polls  [#1617](https://github.com/rokwire/illinois-app/issues/1617).
 - Added API call for content items [#1636](https://github.com/rokwire/illinois-app/issues/1636)
 - Group Attendance [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
+- Cache attended group members [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
