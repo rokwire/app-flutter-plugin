@@ -15,6 +15,7 @@
  */
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:core';
 import 'dart:io';
 
@@ -28,6 +29,7 @@ import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
+import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -62,12 +64,15 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
 
   static const String _userGroupsCacheFileName = "groups.json";
+  static const String _attendedMembersCacheFileName = "attended_members.json";
 
   List<Map<String, dynamic>>? _groupDetailsCache;
   List<Map<String, dynamic>>? get groupDetailsCache => _groupDetailsCache;
 
   List<Group>? _userGroups;
   Set<String>? _userGroupNames;
+
+  Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
 
   final List<Completer<void>> _loginCompleters = [];
   final List<Completer<void>> _userGroupUpdateCompleters = [];
@@ -101,7 +106,8 @@ class Groups with Service implements NotificationsListener {
       DeepLink.notifyUri,
       Auth2.notifyLoginChanged,
       AppLivecycle.notifyStateChanged,
-      FirebaseMessaging.notifyGroupsNotification
+      FirebaseMessaging.notifyGroupsNotification,
+      Connectivity.notifyStatusChanged
     ]);
     _groupDetailsCache = [];
   }
@@ -115,8 +121,11 @@ class Groups with Service implements NotificationsListener {
   Future<void> initService() async {
     await waitForLogin();
 
+    _attendedMembers = await _loadAttendedMembersFromCache();
+
     _userGroups = await _loadUserGroupsFromCache();
     _userGroupNames = _buildGroupNames(_userGroups);
+    _initUserGroupsWithCachedAttendedMembers();
 
     if (_userGroups == null) {
       await _initUserGroupsFromNet();
@@ -152,6 +161,11 @@ class Groups with Service implements NotificationsListener {
       _onAppLivecycleStateChanged(param);
     } else if (name == FirebaseMessaging.notifyGroupsNotification){
       _onFirebaseMessageForGroupUpdate();
+    }
+    else if (name == Connectivity.notifyStatusChanged) {
+      if (Connectivity().isOnline) {
+        _submitCachedAttendedMembers();
+      }
     }
   }
 
@@ -574,9 +588,13 @@ class Groups with Service implements NotificationsListener {
       return false;
     }
     await waitForLogin();
-    member.dateAttendedUtc = DateTime.now().toUtc();
-    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+    member.dateAttendedUtc ??= DateTime.now().toUtc();
+    if (Connectivity().isOffline) {
+      _addAttendedMemberToCache(group: group, member: member);
+      return true;
+    }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
+    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
       Response? response;
       if (isNewMember) {
@@ -1216,6 +1234,162 @@ class Groups with Service implements NotificationsListener {
     }
     return groupNames;
   }
+
+  // Attended Members
+
+  static Future<File?> _getAttendedMembersCacheFile() async {
+    try {
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+      String cacheFilePath = join(appDocDir.path, _attendedMembersCacheFileName);
+      return File(cacheFilePath);
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<String?> _loadAttendedMembersStringFromCache() async {
+    try {
+      File? cacheFile = await _getAttendedMembersCacheFile();
+      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<void> _saveAttendedMembersStringToCache(String? value) async {
+    try {
+      File? cacheFile = await _getAttendedMembersCacheFile();
+      if (cacheFile != null) {
+        if (value != null) {
+          await cacheFile.writeAsString(value, flush: true);
+        }
+        else if (await cacheFile.exists()){
+          await cacheFile.delete();
+        }
+      }
+    }
+    catch(e) { 
+      debugPrint(e.toString());
+    }
+  }
+
+  static Future<Map<String, List<Member>?>?> _loadAttendedMembersFromCache() async {
+    String? membersString = await _loadAttendedMembersStringFromCache();
+    Map<String, dynamic>? attendedMembersMap = JsonUtils.decodeMap(membersString);
+    if (attendedMembersMap != null) {
+      Map<String, List<Member>?> resultMap = HashMap<String, List<Member>>();
+      for (String key in attendedMembersMap.keys) {
+        dynamic members = attendedMembersMap[key];
+        resultMap[key] = Member.listFromJson(members);
+      }
+      return resultMap;
+    }
+    return null;
+  }
+
+  void _addAttendedMemberToCache({required Group group, required Member member}) {
+    String groupId = group.id!;
+    _attendedMembers ??= HashMap<String, List<Member>>();
+    group.members ??= <Member>[];
+    group.members!.add(member);
+    List<Member>? attendedGroupMembers = _attendedMembers![groupId];
+    attendedGroupMembers ??= <Member>[];
+    attendedGroupMembers.add(member);
+    _attendedMembers![groupId] = attendedGroupMembers;
+    String? membersString = JsonUtils.encode(_attendedMembers);
+    _saveAttendedMembersStringToCache(membersString);
+  }
+
+  Future<void> _submitCachedAttendedMembers() async {
+    if (Connectivity().isOnline) {
+      if ((_attendedMembers != null) && _attendedMembers!.isNotEmpty) {
+        Iterable<String> groupIdKeys = _attendedMembers!.keys.toList();
+        Iterator groupIdIterator = groupIdKeys.iterator;
+        while (groupIdIterator.moveNext()) {
+          String groupId = groupIdIterator.current;
+          Group? group = _getUserGroup(groupId: groupId);
+          if (group != null) {
+            List<Member>? attendedMembers = _attendedMembers![groupId];
+            if (CollectionUtils.isNotEmpty(attendedMembers)) {
+              List<Member> members = attendedMembers!.toList();
+              Iterator membersIterator = members.iterator;
+              while (membersIterator.moveNext()) {
+                Member member = membersIterator.current;
+                bool memberAttendedSuccessfully = await memberAttended(group: group, member: member);
+                if (memberAttendedSuccessfully) {
+                  attendedMembers.remove(member);
+                }
+              }
+              if (CollectionUtils.isEmpty(attendedMembers)) {
+                _attendedMembers!.remove(groupId);
+              } else {
+                _attendedMembers![groupId] = attendedMembers;
+              }
+            }
+          }
+        }
+        String? membersString;
+        if (_attendedMembers!.isEmpty) {
+          membersString = null;
+        } else {
+          membersString = JsonUtils.encode(_attendedMembers);
+        }
+        _saveAttendedMembersStringToCache(membersString);
+      }
+    }
+  }
+
+  /// 
+  /// Initializes cached user groups with cached attended members if there are differences. 
+  /// So that user groups are in sync if the device is offline.
+  /// This is done only on startup
+  /// 
+  void _initUserGroupsWithCachedAttendedMembers() {
+    if (Connectivity().isOffline && CollectionUtils.isNotEmpty(_attendedMembers?.keys)) {
+      for (String groupId in _attendedMembers!.keys) {
+        Group? userGroup = _getUserGroup(groupId: groupId);
+        if (userGroup != null) {
+          List<Member>? attendedGroupMembers = _attendedMembers![groupId];
+          if (CollectionUtils.isNotEmpty(attendedGroupMembers)) {
+            List<Member>? groupMembers = userGroup.members;
+            if (CollectionUtils.isNotEmpty(groupMembers)) {
+              for (Member attendedMember in attendedGroupMembers!) {
+                Member? groupMember;
+                for (Member grMember in groupMembers!) {
+                  if (grMember.externalId == attendedMember.externalId) {
+                    groupMember = grMember;
+                    break;
+                  }
+                }
+                if (groupMember != null) {
+                  groupMember.dateAttendedUtc = attendedMember.dateAttendedUtc;
+                } else {
+                  userGroup.members ??= <Member>[];
+                  userGroup.members!.add(attendedMember);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  Group? _getUserGroup({required String groupId}) {
+    if (CollectionUtils.isNotEmpty(userGroups) && StringUtils.isNotEmpty(groupId)) {
+      for (Group group in userGroups!) {
+        if (groupId == group.id) {
+          return group;
+        }
+      }
+    }
+    return null;
+  }
+    
 }
 
 enum GroupSortOrder { asc, desc }
