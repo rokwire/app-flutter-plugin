@@ -257,8 +257,8 @@ class FlexUI with Service implements NotificationsListener {
     return _content;
   }
 
-  dynamic operator [](dynamic key) {
-    return (_content != null) ? _content![key] : null;
+  List<dynamic>? operator [](dynamic key) {
+    return (_content != null) ? JsonUtils.listValue(_content![key]) : null;
   }
 
   Set<dynamic>? get features {
@@ -267,6 +267,15 @@ class FlexUI with Service implements NotificationsListener {
 
   bool hasFeature(String feature) {
     return (_features != null) && _features!.contains(feature);
+  }
+
+  Map<String, dynamic>? get contentSource {
+    return (_contentData != null) ? JsonUtils.mapValue(_contentData!['content']) : null;
+  }
+
+  List<dynamic>? contentSourceEntry(dynamic key) {
+    Map<String, dynamic>? contentSrc = contentSource;
+    return (contentSrc != null) ? JsonUtils.listValue(contentSrc[key]) : null;
   }
 
   Future<void> update() async {
@@ -279,15 +288,15 @@ class FlexUI with Service implements NotificationsListener {
   Map<String, dynamic>? buildContent(Map<String, dynamic>? contentData) {
     Map<String, dynamic>? result;
     if (contentData != null) {
-      Map<String, dynamic> contents = contentData['content'];
-      Map<String, dynamic>? rules = contentData['rules'];
+      Map<String, dynamic> contents = JsonUtils.mapValue(contentData['content']) ?? <String, dynamic>{};
+      Map<String, dynamic> rules = JsonUtils.mapValue(contentData['rules']) ?? <String, dynamic>{};
 
       result = {};
       contents.forEach((String key, dynamic list) {
         if (list is List) {
           List<String> resultList = <String>[];
           for (String entry in list) {
-            if (localeIsEntryAvailable(entry, group: key, rules: rules!)) {
+            if (localeIsEntryAvailable(entry, group: key, rules: rules)) {
               resultList.add(entry);
             }
           }
