@@ -103,7 +103,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Config(), Auth2() };
+    return { Config(), Auth2(), Groups(), GeoFence() };
   }
 
   // NotificationsListener
