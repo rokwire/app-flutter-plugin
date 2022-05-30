@@ -15,12 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed auth2AnonymousId storage key [#79](https://github.com/rokwire/app-flutter-plugin/issues/79).
 - Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).
 - Update UserGroups when group firebase message is fired [#1605](https://github.com/rokwire/illinois-app/issues/1605).
+- Fixed FlexUI service dependency [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 ### Added
 - Acknowledge the field for hidden group [#81](https://github.com/rokwire/app-flutter-plugin/issues/81).
 - Update Group API to hook polls  [#1617](https://github.com/rokwire/illinois-app/issues/1617).
 - Added API call for content items [#1636](https://github.com/rokwire/illinois-app/issues/1636)
 - Group Attendance [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
 - Cache attended group members [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
+- Added access to FlexUI content source [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Added methods for updating entire category of favorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
