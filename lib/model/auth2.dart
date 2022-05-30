@@ -964,6 +964,20 @@ class Auth2UserPrefs {
     return (_favorites != null) ? _favorites![favoriteKey] : null;
   }
 
+  void setFavorites(String favoriteKey, LinkedHashSet<String>? favorites) {
+    if (!const DeepCollectionEquality().equals(favorites, getFavorites(favoriteKey))) {
+      if (favorites != null) {
+        _favorites ??= <String, LinkedHashSet<String>>{};
+        _favorites![favoriteKey] = favorites;
+      }
+      else if (_favorites != null) {
+        _favorites!.remove(favoriteKey);
+      }
+      NotificationService().notify(notifyFavoritesChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+
   bool isFavorite(Favorite? favorite) {
     LinkedHashSet<String>? favoriteIdsForKey = ((_favorites != null) && (favorite != null)) ? _favorites![favorite.favoriteKey] : null;
     return (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite?.favoriteId);
