@@ -928,7 +928,7 @@ class Groups with Service implements NotificationsListener {
     //   }
     // }
 
-    return CollectionUtils.isNotEmpty(pollIds) ? Polls().getGroupPolls(groupIds: groupIds, cursor: cursor, pollIds: pollIds) : null;
+    return Polls().getGroupPolls(groupIds: groupIds, cursor: cursor, pollIds: pollIds);
   }
   // Group Posts and Replies
 
