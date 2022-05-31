@@ -796,139 +796,139 @@ class Groups with Service implements NotificationsListener {
   }
 
   //Polls
-  Future<bool> linkPollToGroup({required String groupId, required String pollId, List<Member>? toMembers}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
-      String url = '${Config().groupsUrl}/group/$groupId/polls';
-      try {
-        Map<String, dynamic> bodyMap = {"poll_id":pollId};
-        if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
-        }
-        String? body = JsonUtils.encode(bodyMap);
-        Response? response = await Network().post(url, auth: Auth2(),body: body);
-        if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupUpdated, groupId);
-          return true;
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return false; // fail
-  }
-
-  Future<bool> updateLinkedPollMembers({String? groupId, String? pollId, List<Member>? toMembers}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
-      String url = '${Config().groupsUrl}/group/$groupId/polls/$pollId';
-      try {
-        Map<String, dynamic> bodyMap = {"poll_id":pollId};
-        if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
-        }
-        String? body = JsonUtils.encode(bodyMap);
-        Response? response = await Network().put(url, auth: Auth2(),body: body);
-        if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupUpdated, groupId);
-          return true;
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return false; // fail
-  }
-
-  Future<List<Member>?> loadPollMemberSelection({String? groupId, String? pollId}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
-      try {
-          List<dynamic>? groupPollLinkRecordsJson =  await loadGroupPollRecors(groupId: groupId);
-          if(groupPollLinkRecordsJson?.isNotEmpty ?? false) { //Find settings for this event
-            dynamic pollReccord = groupPollLinkRecordsJson!.firstWhere((element) {
-              if (element is Map<String, dynamic>) {
-                String? id = JsonUtils.stringValue(element["poll_id"]);
-                if( id != null && id == pollId){
-                  return true;
-                }
-              }
-              return false;
-            });
-
-            if(pollReccord != null && pollReccord is Map<String, dynamic>){
-              List<dynamic>? membersData = JsonUtils.listValue(pollReccord["to_members"]);
-              List<Member>? members= Member.listFromJson(membersData);
-              return members;
-            }
-          }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null; // fail
-  }
-
-  Future<Set<String>?> loadGroupPollsIds({String? groupId}) async{
-    await waitForLogin();
-    try {
-      List<dynamic>? groupPollLinkRecordsJson = await loadGroupPollRecors(groupId: groupId);
-      if(groupPollLinkRecordsJson?.isNotEmpty ?? false) {
-
-        return groupPollLinkRecordsJson?.map((e) => (e is Map<String, dynamic>) ? (JsonUtils.stringValue(e["poll_id"]) ?? "" ) : "").toSet();
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-
-    return null;
-  }
-
-  Future<dynamic> loadGroupPollRecors({String? groupId}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId)) {
-      String url = '${Config().groupsUrl}/group/$groupId/polls/';
-      try {
-        Response? response = await Network().get(url, auth: Auth2());
-        int responseCode = response?.statusCode ?? -1;
-        String? responseBody = response?.body;
-        if (responseCode == 200) {
-          return (responseBody != null) ? JsonUtils.decodeList(responseBody) : null;
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-  }
-
-  Future<bool> unlinkPollFromGroup({String? groupId, String? pollId}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
-      String url = '${Config().groupsUrl}/group/$groupId/polls/$pollId';
-      try {
-        Response? response = await Network().delete(url, auth: Auth2());
-        if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupUpdated, groupId);
-          return true;
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return false;
-  }
+  // Future<bool> linkPollToGroup({required String groupId, required String pollId, List<Member>? toMembers}) async {
+  //   await waitForLogin();
+  //   if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
+  //     String url = '${Config().groupsUrl}/group/$groupId/polls';
+  //     try {
+  //       Map<String, dynamic> bodyMap = {"poll_id":pollId};
+  //       if(CollectionUtils.isNotEmpty(toMembers)){
+  //         bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+  //       }
+  //       String? body = JsonUtils.encode(bodyMap);
+  //       Response? response = await Network().post(url, auth: Auth2(),body: body);
+  //       if((response?.statusCode ?? -1) == 200){
+  //         NotificationService().notify(notifyGroupUpdated, groupId);
+  //         return true;
+  //       }
+  //     } catch (e) {
+  //       debugPrint(e.toString());
+  //     }
+  //   }
+  //   return false; // fail
+  // }
+  //
+  // Future<bool> updateLinkedPollMembers({String? groupId, String? pollId, List<Member>? toMembers}) async {
+  //   await waitForLogin();
+  //   if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
+  //     String url = '${Config().groupsUrl}/group/$groupId/polls/$pollId';
+  //     try {
+  //       Map<String, dynamic> bodyMap = {"poll_id":pollId};
+  //       if(CollectionUtils.isNotEmpty(toMembers)){
+  //         bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+  //       }
+  //       String? body = JsonUtils.encode(bodyMap);
+  //       Response? response = await Network().put(url, auth: Auth2(),body: body);
+  //       if((response?.statusCode ?? -1) == 200){
+  //         NotificationService().notify(notifyGroupUpdated, groupId);
+  //         return true;
+  //       }
+  //     } catch (e) {
+  //       debugPrint(e.toString());
+  //     }
+  //   }
+  //   return false; // fail
+  // }
+  //
+  // Future<List<Member>?> loadPollMemberSelection({String? groupId, String? pollId}) async {
+  //   await waitForLogin();
+  //   if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
+  //     try {
+  //         List<dynamic>? groupPollLinkRecordsJson =  await loadGroupPollRecors(groupId: groupId);
+  //         if(groupPollLinkRecordsJson?.isNotEmpty ?? false) { //Find settings for this event
+  //           dynamic pollReccord = groupPollLinkRecordsJson!.firstWhere((element) {
+  //             if (element is Map<String, dynamic>) {
+  //               String? id = JsonUtils.stringValue(element["poll_id"]);
+  //               if( id != null && id == pollId){
+  //                 return true;
+  //               }
+  //             }
+  //             return false;
+  //           });
+  //
+  //           if(pollReccord != null && pollReccord is Map<String, dynamic>){
+  //             List<dynamic>? membersData = JsonUtils.listValue(pollReccord["to_members"]);
+  //             List<Member>? members= Member.listFromJson(membersData);
+  //             return members;
+  //           }
+  //         }
+  //     } catch (e) {
+  //       debugPrint(e.toString());
+  //     }
+  //   }
+  //   return null; // fail
+  // }
+  //
+  // Future<Set<String>?> loadGroupPollsIds({String? groupId}) async{
+  //   await waitForLogin();
+  //   try {
+  //     List<dynamic>? groupPollLinkRecordsJson = await loadGroupPollRecors(groupId: groupId);
+  //     if(groupPollLinkRecordsJson?.isNotEmpty ?? false) {
+  //
+  //       return groupPollLinkRecordsJson?.map((e) => (e is Map<String, dynamic>) ? (JsonUtils.stringValue(e["poll_id"]) ?? "" ) : "").toSet();
+  //     }
+  //   } catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  //
+  //   return null;
+  // }
+  //
+  // Future<dynamic> loadGroupPollRecors({String? groupId}) async {
+  //   await waitForLogin();
+  //   if(StringUtils.isNotEmpty(groupId)) {
+  //     String url = '${Config().groupsUrl}/group/$groupId/polls/';
+  //     try {
+  //       Response? response = await Network().get(url, auth: Auth2());
+  //       int responseCode = response?.statusCode ?? -1;
+  //       String? responseBody = response?.body;
+  //       if (responseCode == 200) {
+  //         return (responseBody != null) ? JsonUtils.decodeList(responseBody) : null;
+  //       }
+  //     } catch (e) {
+  //       debugPrint(e.toString());
+  //     }
+  //   }
+  // }
+  //
+  // Future<bool> unlinkPollFromGroup({String? groupId, String? pollId}) async {
+  //   await waitForLogin();
+  //   if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(pollId)) {
+  //     String url = '${Config().groupsUrl}/group/$groupId/polls/$pollId';
+  //     try {
+  //       Response? response = await Network().delete(url, auth: Auth2());
+  //       if((response?.statusCode ?? -1) == 200){
+  //         NotificationService().notify(notifyGroupUpdated, groupId);
+  //         return true;
+  //       }
+  //     } catch (e) {
+  //       debugPrint(e.toString());
+  //     }
+  //   }
+  //   return false;
+  // }
 
   //Hook with Polls
   Future<PollsChunk?>? loadGroupPolls(Set<String>? groupIds ,{PollsCursor? cursor, Set<String>? pollIds}) async {
-    Set<String>? pollIds = {};
-    if(CollectionUtils.isNotEmpty(groupIds)){ //TODO Optimize call with List of groupIds instead of asking the server fo each group one by one. Single API call should be prepared on the backend first
-      for(String groupId in groupIds!){
-        Set<String> groupPollIds = await loadGroupPollsIds(groupId: groupId) ?? {};
-        pollIds.addAll(groupPollIds);
-      }
-    }
+    // Set<String>? pollIds = {};
+    // if(CollectionUtils.isNotEmpty(groupIds)){ //TODO Optimize call with List of groupIds instead of asking the server fo each group one by one. Single API call should be prepared on the backend first
+    //   for(String groupId in groupIds!){
+    //     Set<String> groupPollIds = await loadGroupPollsIds(groupId: groupId) ?? {};
+    //     pollIds.addAll(groupPollIds);
+    //   }
+    // }
 
-    return CollectionUtils.isNotEmpty(pollIds) ? Polls().getGroupPolls(cursor: cursor, pollIds: pollIds) : null;
+    return CollectionUtils.isNotEmpty(pollIds) ? Polls().getGroupPolls(groupIds: groupIds, cursor: cursor, pollIds: pollIds) : null;
   }
   // Group Posts and Replies
 
