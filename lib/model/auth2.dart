@@ -965,7 +965,7 @@ class Auth2UserPrefs {
   }
 
   void setFavorites(String favoriteKey, LinkedHashSet<String>? favorites) {
-    if (!const DeepCollectionEquality().equals(favorites, getFavorites(favoriteKey))) {
+    if (!const DeepCollectionEquality().equals(favorites?.toList(), getFavorites(favoriteKey)?.toList())) {
       if (favorites != null) {
         _favorites ??= <String, LinkedHashSet<String>>{};
         _favorites![favoriteKey] = favorites;
