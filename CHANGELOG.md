@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).
 - Update UserGroups when group firebase message is fired [#1605](https://github.com/rokwire/illinois-app/issues/1605).
 - Fixed FlexUI service dependency [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Fixed equality check in Auth2UserProfile.setFavorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 ### Added
 - Acknowledge the field for hidden group [#81](https://github.com/rokwire/app-flutter-plugin/issues/81).
 - Update Group API to hook polls  [#1617](https://github.com/rokwire/illinois-app/issues/1617).
