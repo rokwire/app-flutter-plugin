@@ -16,6 +16,8 @@
 
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -41,12 +43,13 @@ class Poll {
 
   String? dateCreatedUtcString; // Date Created in UTC format
   String? dateUpdatedUtcString; // Date Updated in UTC format
+  List<Member>? toMembers; //Group members selection
 
   Poll({
     this.pollId, this.title, this.options, this.settings,
     this.creatorUserUuid, this.creatorUserName, this.regionId, this.pinCode,
     this.status, this.results, this.userVote, this.groupId, this.uniqueVotersCount,
-    this.dateCreatedUtcString, this.dateUpdatedUtcString
+    this.dateCreatedUtcString, this.dateUpdatedUtcString, this.toMembers
   });
 
   static Poll? fromJson(Map<String, dynamic>? json) {
@@ -58,6 +61,8 @@ class Poll {
     if (pollJson == null) {
       return null;
     }
+    List<Member>? toMembers;
+    try { List<Member>? toMembers = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); }
     return Poll(
         pollId: json['id'],
         title: pollJson['question'],
@@ -78,7 +83,9 @@ class Poll {
         groupId: pollJson['group_id'],
         uniqueVotersCount: json['unique_voters_count'],
         dateCreatedUtcString: pollJson['date_created'],
-        dateUpdatedUtcString: pollJson['date_updated']);
+        dateUpdatedUtcString: pollJson['date_updated'],
+        toMembers: toMembers
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -97,13 +104,15 @@ class Poll {
         'geo_fence': settings?.geoFence,
         'status': pollStatusToString(status),
         'date_created': dateCreatedUtcString,
-        'date_updated': dateUpdatedUtcString
+        'date_updated': dateUpdatedUtcString,
+        'to_members': Member.listToJson(toMembers)
       },
       'id': pollId,
       'results': results?.toResultsJson(length: options?.length),
       'voted': userVote?.toVotesJson(),
       'unique_voters_count': uniqueVotersCount,
       'total': results?.total
+
     };
   }
 
