@@ -61,16 +61,28 @@ class StringUtils {
     return maskedPhoneNumber;
   }
 
-  static String capitalize(String value) {
-    if (value.isEmpty) {
-      return '';
-    }
-    else if (value.length == 1) {
-      return value[0].toUpperCase();
+  static String capitalize(String value, {bool allWords = false}) {
+
+    if (allWords) {
+      List<String> words = value.split(' ');
+      List<String> result = <String>[];
+      for (String word in words) {
+        result.add(capitalize(word, allWords : false));
+      }
+      return result.join(' ');
     }
     else {
-      return "${value[0].toUpperCase()}${value.substring(1).toLowerCase()}";
+      if (value.isEmpty) {
+        return '';
+      }
+      else if (value.length == 1) {
+        return value[0].toUpperCase();
+      }
+      else {
+        return "${value[0].toUpperCase()}${value.substring(1).toLowerCase()}";
+      }
     }
+
   }
 
   static String stripHtmlTags(String value) {
