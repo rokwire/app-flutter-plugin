@@ -16,7 +16,6 @@
 
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -62,7 +61,8 @@ class Poll {
       return null;
     }
     List<Member>? toMembers;
-    try { List<Member>? toMembers = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); }
+    /* unused variable toMembers. Remove warning
+    try { List<Member>? toMembers = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); } */
     return Poll(
         pollId: json['id'],
         title: pollJson['question'],
