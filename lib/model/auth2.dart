@@ -1710,6 +1710,9 @@ class UserRole {
 abstract class Favorite {
   String get favoriteKey;
   String? get favoriteId;
+  
+  @override
+  String toString() => "$favoriteKey:$favoriteId";
 }
 
 ////////////////////////////////
