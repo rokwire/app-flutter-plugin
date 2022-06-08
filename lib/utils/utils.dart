@@ -61,15 +61,15 @@ class StringUtils {
     return maskedPhoneNumber;
   }
 
-  static String capitalize(String value, {bool allWords = false}) {
+  static String capitalize(String value, { bool allWords = false, Pattern splitDelimiter = ' ', String joinDelimiter = ' '}) {
 
     if (allWords) {
-      List<String> words = value.split(' ');
+      List<String> words = value.split(splitDelimiter);
       List<String> result = <String>[];
       for (String word in words) {
         result.add(capitalize(word, allWords : false));
       }
-      return result.join(' ');
+      return result.join(joinDelimiter);
     }
     else {
       if (value.isEmpty) {
