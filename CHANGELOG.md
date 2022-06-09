@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preserve the order of Favorite items [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - StringUtils.capitalize extended to process sentences [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Removed Group polls hook methods [#1679](https://github.com/rokwire/app-flutter-plugin/issues/1679).
+- Do not delete automatically empty favorites sections [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 ### Fixed
 - Fixed auth2AnonymousId storage key [#79](https://github.com/rokwire/app-flutter-plugin/issues/79).
 - Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache attended group members [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
 - Added access to FlexUI content source [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Added methods for updating entire category of favorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- StringUtils.capitalize extended with custom delimters [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
