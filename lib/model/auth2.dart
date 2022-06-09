@@ -998,9 +998,6 @@ class Auth2UserPrefs {
       }
       else {
         favoriteIdsForKey.remove(favorite.favoriteId);
-        if (favoriteIdsForKey.isEmpty) {
-          _favorites!.remove(favorite.favoriteKey);
-        }
       }
 
       NotificationService().notify(notifyFavoriteChanged, favorite);
@@ -1030,9 +1027,6 @@ class Auth2UserPrefs {
         bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
         if (isFavorite && !shouldFavorite) {
           favoriteIdsForKey.remove(favorite.favoriteId);
-          if (favoriteIdsForKey.isEmpty) {
-            _favorites!.remove(favorite.favoriteKey);
-          }
         }
         else if (!isFavorite && shouldFavorite) {
           if (favoriteIdsForKey == null) {
@@ -1710,6 +1704,9 @@ class UserRole {
 abstract class Favorite {
   String get favoriteKey;
   String? get favoriteId;
+  
+  @override
+  String toString() => "$favoriteKey:$favoriteId";
 }
 
 ////////////////////////////////
