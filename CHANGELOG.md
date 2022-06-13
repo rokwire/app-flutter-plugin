@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added access to FlexUI content source [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Added methods for updating entire category of favorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - StringUtils.capitalize extended with custom delimters [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Added FavoriteItem class [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
