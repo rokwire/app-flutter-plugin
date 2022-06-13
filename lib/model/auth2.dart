@@ -1709,6 +1709,20 @@ abstract class Favorite {
   String toString() => "$favoriteKey:$favoriteId";
 }
 
+class FavoriteItem implements Favorite {
+  final String key;
+  final String? id;
+  
+  FavoriteItem({required this.key, this.id});
+
+  @override bool operator == (other) => (other is FavoriteItem) && (other.key == key) && (other.id == id);
+  @override int get hashCode => key.hashCode ^ (id?.hashCode ?? 0);
+
+  @override String get favoriteKey => key;
+  @override String? get favoriteId => id;
+}
+
+
 ////////////////////////////////
 // Auth2PhoneVerificationMethod
 
