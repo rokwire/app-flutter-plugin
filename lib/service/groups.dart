@@ -41,6 +41,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'firebase_messaging.dart';
 
+enum GroupsContentType { all, my }
+
 class Groups with Service implements NotificationsListener {
 
   static const String notifyUserGroupsUpdated       = "edu.illinois.rokwire.groups.user.updated";
@@ -267,8 +269,8 @@ class Groups with Service implements NotificationsListener {
       }
   }
 
-  Future<List<Group>?> loadGroups({bool myGroups = false}) async {
-    if (myGroups) {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType}) async {
+    if (contentType == GroupsContentType.my) {
       await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
