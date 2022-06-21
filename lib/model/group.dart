@@ -40,6 +40,7 @@ class Group {
 
   bool?               hiddenForSearch;
   bool?               attendanceGroup;
+  bool?               canJoinAutomatically;
 
   String?             imageURL;
   String?             webURL;
@@ -77,6 +78,7 @@ class Group {
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
     try { hiddenForSearch   = json['hidden_for_search']; } catch(e) { debugPrint(e.toString()); }
     try { attendanceGroup   = json['attendance_group']; } catch(e) { debugPrint(e.toString()); }
+    try { canJoinAutomatically = json['can_join_automatically']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
     try { imageURL          = json['image_url'];     } catch(e) { debugPrint(e.toString()); }
@@ -103,6 +105,7 @@ class Group {
     json['authman_group']                = authManGroupName;
     json['hidden_for_search']            = hiddenForSearch;
     json['attendance_group']             = attendanceGroup;
+    json['can_join_automatically']       = canJoinAutomatically;
     json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
     json['image_url']                    = imageURL;
@@ -128,6 +131,7 @@ class Group {
     authManGroupName  = other?.authManGroupName;
     hiddenForSearch   = other?.hiddenForSearch;
     attendanceGroup   = other?.attendanceGroup;
+    canJoinAutomatically = other?.canJoinAutomatically;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
     imageURL          = other?.imageURL;
@@ -157,7 +161,8 @@ class Group {
 
       (other.hiddenForSearch == hiddenForSearch) &&
       (other.attendanceGroup == attendanceGroup) &&
-      
+      (other.canJoinAutomatically == canJoinAutomatically) &&
+
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
       (const DeepCollectionEquality().equals(other.members, members)) &&
@@ -184,6 +189,7 @@ class Group {
 
     (hiddenForSearch?.hashCode ?? 0) ^
     (attendanceGroup?.hashCode ?? 0) ^
+    (canJoinAutomatically?.hashCode ?? 0) ^
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
