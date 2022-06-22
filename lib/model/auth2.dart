@@ -973,8 +973,38 @@ class Auth2UserPrefs {
       else if (_favorites != null) {
         _favorites!.remove(favoriteKey);
       }
+      //NotificationService().notify(notifyFavoriteChanged, ...);
       NotificationService().notify(notifyFavoritesChanged);
       NotificationService().notify(notifyChanged, this);
+    }
+  }
+
+  void applyFavorites(String favoriteKey, Iterable<String>? favorites, bool value) {
+    if ((favorites != null) && favorites.isNotEmpty) {
+      bool isModified = false;
+      LinkedHashSet<String>? favoritesContent = getFavorites(favoriteKey);
+      for (String favorite in favorites) {
+        if (value && !(favoritesContent?.contains(favorite) ?? false)) {
+          if (favoritesContent == null) {
+            // ignore: prefer_collection_literals
+            favoritesContent = LinkedHashSet<String>();
+            _favorites ??= <String, LinkedHashSet<String>>{};
+            _favorites![favoriteKey] = favoritesContent;
+          }
+          favoritesContent.add(favorite);
+          //NotificationService().notify(notifyFavoriteChanged, FavoriteItem(key: favoriteKey, id: favorite));
+          isModified = true;
+        }
+        else if (!value && (favoritesContent?.contains(favorite) ?? false)) {
+          favoritesContent?.remove(favorite);
+          //NotificationService().notify(notifyFavoriteChanged, FavoriteItem(key: favoriteKey, id: favorite));
+          isModified = true;
+        }
+      }
+      if (isModified) {
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
+      }
     }
   }
 
