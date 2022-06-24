@@ -730,6 +730,28 @@ class HtmlUtils {
   }
 }
 
+enum DayPart { morning, afternoon, evening, night }
+
+String? dayPartToString(DayPart? dayPart) {
+  switch(dayPart) {
+    case DayPart.morning: return "morning";
+    case DayPart.afternoon: return "afternoon";
+    case DayPart.evening: return "evening";
+    case DayPart.night: return "night";
+    default: return null;
+  }
+}
+
+DayPart? dayPartFromString(String? value) {
+  switch(value) {
+    case "morning": return DayPart.morning;
+    case "afternoon": return DayPart.afternoon;
+    case "evening": return DayPart.evening;
+    case "night": return DayPart.night;
+    default: return null;
+  }
+}
+
 class DateTimeUtils {
   
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
@@ -758,6 +780,25 @@ class DateTimeUtils {
       case "saturday" : return 6;
       case "sunday"   : return 7;
       default: return 0;
+    }
+  }
+
+  static DayPart getDayPart({DateTime? dateTime}) {
+    int hour = (dateTime ?? DateTime.now()).hour;
+    if (hour < 6) {
+      return DayPart.night;
+    }
+    else if ((6 <= hour) && (hour < 12)) {
+      return DayPart.morning;
+    }
+    else if ((12 <= hour) && (hour < 17)) {
+      return DayPart.afternoon;
+    }
+    else if ((17 <= hour) && (hour < 20)) {
+      return DayPart.evening;
+    }
+    else /* if (20 <= hour) */ {
+      return DayPart.night;
     }
   }
 

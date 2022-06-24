@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StringUtils.capitalize extended with custom delimters [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Added FavoriteItem class [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Expose getter for user's first name [#102](https://github.com/rokwire/app-flutter-plugin/issues/102).
+- Added DayPart parser utility to DateTimeUtils [#1822](https://github.com/rokwire/illinois-app/issues/1822)
 
 ## [1.0.2] - 2022-04-27
 ### Changed
