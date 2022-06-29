@@ -1255,6 +1255,16 @@ class Groups with Service implements NotificationsListener {
     }
     return null;
   }
+
+  // Report Abuse
+
+  Future<bool> reportAbuse({String? groupId, String? postId}) async {
+    if (Config().groupsUrl != null) {
+      Response? response = await Network().put('${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse', auth: Auth2());
+      return (response?.statusCode == 200);
+    }
+    return false;
+  }
     
 }
 
