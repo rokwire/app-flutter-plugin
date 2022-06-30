@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StringUtils.capitalize extended to process sentences [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Removed Group polls hook methods [#1679](https://github.com/rokwire/app-flutter-plugin/issues/1679).
 - Do not delete automatically empty favorites sections [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Updated Groups.reportAbuse API [1854](https://github.com/rokwire/illinois-app/issues/1854).
 ### Fixed
 - Fixed auth2AnonymousId storage key [#79](https://github.com/rokwire/app-flutter-plugin/issues/79).
 - Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).

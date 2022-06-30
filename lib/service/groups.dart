@@ -1258,9 +1258,10 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  Future<bool> reportAbuse({String? groupId, String? postId}) async {
+  Future<bool> reportAbuse({String? groupId, String? postId, String? comment}) async {
     if (Config().groupsUrl != null) {
-      Response? response = await Network().put('${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse', auth: Auth2());
+      Response? response = await Network().put('${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse',
+        body: JsonUtils.encode({'comment': comment}), auth: Auth2());
       return (response?.statusCode == 200);
     }
     return false;
