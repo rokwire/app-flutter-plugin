@@ -33,8 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added FavoriteItem class [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Expose getter for user's first name [#102](https://github.com/rokwire/app-flutter-plugin/issues/102).
 - Added DayPart parser utility to DateTimeUtils [#1822](https://github.com/rokwire/illinois-app/issues/1822).
-- Added Groups.reportAbuse API [#1847](https://github.com/rokwire/illinois-app/issues/1847)
-- Added DateTimeUtils util methods [#1692](https://github.com/rokwire/illinois-app/issues/1692)
+- Added Groups.reportAbuse API [#1847](https://github.com/rokwire/illinois-app/issues/1847).
+- Added DateTimeUtils util methods [#1692](https://github.com/rokwire/illinois-app/issues/1692).
+- Added debugDisplayName getter in Service interface [#1869](https://github.com/rokwire/illinois-app/issues/1869).
+
 
 ## [1.0.2] - 2022-04-27
 ### Changed
