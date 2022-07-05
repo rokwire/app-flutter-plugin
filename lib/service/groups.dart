@@ -30,6 +30,7 @@ import 'package:rokwire_plugin/service/app_livecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -882,6 +883,31 @@ class Groups with Service implements NotificationsListener {
       Log.e('Failed to retrieve group posts. Response: ${response?.body}');
       return null;
     }
+  }
+
+  Future<List<GroupPostTemplate>?> loadPostTemplates({required String groupName}) async {
+    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies.templates']);
+    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
+    if (templatesContentItem is! Map) {
+      return null;
+    }
+    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
+    dynamic templatesJson = templatesItem['data'];
+    if (templatesJson is! List) {
+      return null;
+    }
+    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
+    List<GroupPostTemplate>? allTemplates = GroupPostTemplate.fromJsonList(templatesArray);
+    List<GroupPostTemplate>? groupTemplates;
+    if (CollectionUtils.isNotEmpty(allTemplates)) {
+      groupTemplates = <GroupPostTemplate>[];
+      for (GroupPostTemplate template in allTemplates!) {
+        if (template.groupName == groupName) {
+          groupTemplates.add(template);
+        }
+      }
+    }
+    return groupTemplates;
   }
 
   //Delete User

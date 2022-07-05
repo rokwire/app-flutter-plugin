@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Groups.reportAbuse API [#1847](https://github.com/rokwire/illinois-app/issues/1847).
 - Added DateTimeUtils util methods [#1692](https://github.com/rokwire/illinois-app/issues/1692).
 - Added debugDisplayName getter in Service interface [#1869](https://github.com/rokwire/illinois-app/issues/1869).
+- Load group post templates from the backend [#108](https://github.com/rokwire/app-flutter-plugin/issues/108).
 
 
 ## [1.0.2] - 2022-04-27
