@@ -899,6 +899,36 @@ class PostDataModel {
 }
 
 //////////////////////////////
+// GroupPostTemplate
+
+class GroupPostTemplate {
+  final String? id;
+  final String? groupName;
+  final String? subject;
+  final String? body;
+
+  GroupPostTemplate({this.id, this.subject, this.body, this.groupName});
+
+  static GroupPostTemplate? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return GroupPostTemplate(id: json['id'], subject: json['subject'], body: json['body'], groupName: json['group_name']);
+  }
+
+  static List<GroupPostTemplate>? fromJsonList(List<dynamic>? jsonList) {
+    List<GroupPostTemplate>? templates;
+    if (jsonList != null) {
+      templates = <GroupPostTemplate>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(templates, GroupPostTemplate.fromJson(jsonEntry));
+      }
+    }
+    return templates;
+  }
+}
+
+//////////////////////////////
 // GroupError
 
 class GroupError {
