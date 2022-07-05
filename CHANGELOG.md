@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update UserGroups when group firebase message is fired [#1605](https://github.com/rokwire/illinois-app/issues/1605).
 - Fixed FlexUI service dependency [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
 - Fixed equality check in Auth2UserProfile.setFavorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Send correct "ids" parameter when loading content items [#106](https://github.com/rokwire/app-flutter-plugin/issues/106).
 ### Added
 - Acknowledge the field for hidden group [#81](https://github.com/rokwire/app-flutter-plugin/issues/81).
 - Update Group API to hook polls  [#1617](https://github.com/rokwire/illinois-app/issues/1617).
