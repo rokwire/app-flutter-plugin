@@ -245,14 +245,13 @@ class Content /* with Service */ {
       return null;
     }
 
-
     Map<String, dynamic> json = {};
     if(CollectionUtils.isNotEmpty(categories)){
       json["categories"] = categories;
     }
 
     if(CollectionUtils.isNotEmpty(ids)){
-      json["ids"] = categories;
+      json["ids"] = ids;
     }
     String? body = JsonUtils.encode(json);
 
