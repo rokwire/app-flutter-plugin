@@ -176,6 +176,10 @@ class ListUtils {
       list.add(entry);
     }
   }
+
+  static T? entry<T>(List<T>? list, int index) {
+    return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
+  }
 }
 
 class SetUtils {
