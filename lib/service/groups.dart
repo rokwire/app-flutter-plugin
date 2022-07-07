@@ -886,7 +886,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostTemplate>?> loadPostTemplates({required String groupName}) async {
-    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies.templates']);
+    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
     dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
     if (templatesContentItem is! Map) {
       return null;
