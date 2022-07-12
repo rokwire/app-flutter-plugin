@@ -104,7 +104,14 @@ class InboxMessage with Favorite {
   }
 
   String? get displayInfo {
-    
+    if (sender?.type == InboxSenderType.user) {
+      return displayUserInfo;
+    } else {
+      return displaySystemInfo;
+    }
+  }
+
+  String? get displayUserInfo {
     DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateSentUtc ?? dateCreatedUtc);
     if (deviceDateTime != null) {
       DateTime now = DateTime.now();
@@ -115,39 +122,86 @@ class InboxMessage with Favorite {
         }
         else if (difference.inMinutes < 60) {
           return sprintf((difference.inMinutes != 1) ?
-            'Sent by %s about %s minutes ago.' :
-            'Sent by %s about a minute ago.',
-            [displaySender, difference.inMinutes]);
+          'Sent by %s about %s minutes ago.' :
+          'Sent by %s about a minute ago.',
+              [displaySender, difference.inMinutes]);
         }
         else if (difference.inHours < 24) {
           return sprintf((difference.inHours != 1) ?
-            'Sent by %s about %s hours ago.' :
-            'Sent by %s about an hour ago.',
-            [displaySender, difference.inHours]);
+          'Sent by %s about %s hours ago.' :
+          'Sent by %s about an hour ago.',
+              [displaySender, difference.inHours]);
         }
         else if (difference.inDays < 30) {
           return sprintf((difference.inDays != 1) ?
-            'Sent by %s about %s days ago.' :
-            'Sent by %s about a day ago.',
-            [displaySender, difference.inDays]);
+          'Sent by %s about %s days ago.' :
+          'Sent by %s about a day ago.',
+              [displaySender, difference.inDays]);
         }
         else {
           int differenceInMonths = difference.inDays ~/ 30;
           if (differenceInMonths < 12) {
             return sprintf((differenceInMonths != 1) ?
-              'Sent by %s about %s months ago.' :
-              'Sent by %s about a month ago.',
-              [displaySender, differenceInMonths]);
+            'Sent by %s about %s months ago.' :
+            'Sent by %s about a month ago.',
+                [displaySender, differenceInMonths]);
           }
         }
       }
       String value = DateFormat("MMM dd, yyyy").format(deviceDateTime);
       return sprintf(
-        'Sent by %s on %s.',
-        [displaySender, value]);
+          'Sent by %s on %s.',
+          [displaySender, value]);
     }
     else {
       return "Sent by $displaySender";
+    }
+  }
+
+  String? get displaySystemInfo {
+    DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateSentUtc ?? dateCreatedUtc);
+    if (deviceDateTime != null) {
+      DateTime now = DateTime.now();
+      if (deviceDateTime.compareTo(now) < 0) {
+        Duration difference = DateTime.now().difference(deviceDateTime);
+        if (difference.inSeconds < 60) {
+          return 'Sent now.';
+        }
+        else if (difference.inMinutes < 60) {
+          return sprintf((difference.inMinutes != 1) ?
+          'Sent about %s minutes ago.' :
+          'Sent about a minute ago.',
+              [difference.inMinutes]);
+        }
+        else if (difference.inHours < 24) {
+          return sprintf((difference.inHours != 1) ?
+          'Sent about %s hours ago.' :
+          'Sent about an hour ago.',
+              [difference.inHours]);
+        }
+        else if (difference.inDays < 30) {
+          return sprintf((difference.inDays != 1) ?
+          'Sent about %s days ago.' :
+          'Sent about a day ago.',
+              [difference.inDays]);
+        }
+        else {
+          int differenceInMonths = difference.inDays ~/ 30;
+          if (differenceInMonths < 12) {
+            return sprintf((differenceInMonths != 1) ?
+            'Sent about %s months ago.' :
+            'Sent about a month ago.',
+                [differenceInMonths]);
+          }
+        }
+      }
+      String value = DateFormat("MMM dd, yyyy").format(deviceDateTime);
+      return sprintf(
+          'Sent on %s.',
+          [value]);
+    }
+    else {
+      return "Sent";
     }
   }
 
