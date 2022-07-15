@@ -66,6 +66,8 @@ class Event with Explore, Favorite {
   bool? isSuperEvent;
   bool? displayOnlyWithSuperEvent;
   bool? isVirtual;
+  String? virtualEventUrl;
+  bool? isInPerson;
   List<Map<String, dynamic>>? subEventsMap;
   String? track;
   List<Event>? _subEvents;
@@ -148,7 +150,9 @@ class Event with Explore, Favorite {
     displayOnlyWithSuperEvent = json['displayOnlyWithSuperEvent'] ?? false;
     this.subEventsMap = subEventsMap;
     track = json['track'];
-    isVirtual = json['isVirtual'] ?? false;
+    isVirtual = json['isVirtual'];
+    virtualEventUrl = json['virtualEventUrl'];
+    isInPerson = json['isInPerson'];
     createdByGroupId = json["createdByGroupId"];
     isGroupPrivate = json["isGroupPrivate"] ?? false;
     isEventFree = json["isEventFree"] ?? false;
@@ -194,6 +198,8 @@ class Event with Explore, Favorite {
     subEventsMap = other?.subEventsMap;
     track = other?.track;
     isVirtual = other?.isVirtual;
+    virtualEventUrl = other?.virtualEventUrl;
+    isInPerson = other?.isInPerson;
     createdByGroupId = other?.createdByGroupId;
     isGroupPrivate = other?.isGroupPrivate;
     isEventFree = other?.isEventFree;
@@ -254,6 +260,8 @@ class Event with Explore, Favorite {
       "subEvents": subEventsMap,
       "track": track,
       'isVirtual': isVirtual,
+      'virtualEventUrl': virtualEventUrl,
+      'isInPerson': isInPerson,
       'createdByGroupId': createdByGroupId,
       'isGroupPrivate': isGroupPrivate,
       'isEventFree': isEventFree,
@@ -420,6 +428,12 @@ class Event with Explore, Favorite {
     }
     if(isVirtual!=null) {
       result['isVirtual']= isVirtual;
+    }
+    if(virtualEventUrl!=null) {
+      result['virtualEventUrl']= virtualEventUrl;
+    }
+    if(isInPerson!=null) {
+      result['isInPerson']= isInPerson;
     }
     if(createdByGroupId!=null) {
       result['createdByGroupId']= createdByGroupId;
