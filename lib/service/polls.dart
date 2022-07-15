@@ -47,6 +47,7 @@ class Polls with Service implements NotificationsListener {
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
   static const String notifyLifecycleClose   = "edu.illinois.rokwire.poll.lifecycle.close";
   static const String notifyLifecycleVote    = "edu.illinois.rokwire.poll.lifecycle.vote";
+  static const String notifyLifecycleDelete  = "edu.illinois.rokwire.poll.lifecycle.delete";
 
   final Map<String, PollChunk> _pollChunks = <String, PollChunk>{};
   
@@ -260,6 +261,28 @@ class Polls with Service implements NotificationsListener {
           NotificationService().notify(notifyLifecycleClose, getPoll(pollId: pollId));
           updatePollStatus(pollId, PollStatus.closed);
           NotificationService().notify(notifyStatusChanged, pollId);
+        }
+        else {
+          throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
+        }
+      }
+      else {
+        throw PollsException(PollsError.internal);
+      }
+    }
+  }
+
+  Future<void> delete(String? pollId) async {
+    if (enabled) {
+      if (pollId != null) {
+        String url = '${Config().quickPollsUrl}/polls/$pollId';
+        Response? response = await Network().delete(url, auth: Auth2());
+        if ((response != null) && (response.statusCode == 200)) {
+          PollChunk? pollChunk = _pollChunks[pollId];
+          if (pollChunk != null) {
+            NotificationService().notify(notifyLifecycleDelete, pollChunk.poll);
+            removePollChunk(pollChunk);
+          }
         }
         else {
           throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');

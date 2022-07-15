@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added debugDisplayName getter in Service interface [#1869](https://github.com/rokwire/illinois-app/issues/1869).
 - Load group post templates from the backend [#108](https://github.com/rokwire/app-flutter-plugin/issues/108).
 - Added ListUtils.entry helper.
+- Added delete API to Polls [#1954](https://github.com/rokwire/illinois-app/issues/1954).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
