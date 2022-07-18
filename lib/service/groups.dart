@@ -885,7 +885,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<GroupPostTemplate>?> loadPostTemplates({required String groupName}) async {
+  Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
     dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
     if (templatesContentItem is! Map) {
@@ -897,17 +897,42 @@ class Groups with Service implements NotificationsListener {
       return null;
     }
     List<dynamic> templatesArray = templatesJson.cast<dynamic>();
-    List<GroupPostTemplate>? allTemplates = GroupPostTemplate.fromJsonList(templatesArray);
-    List<GroupPostTemplate>? groupTemplates;
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
+    List<GroupPostNudge>? groupNudges;
     if (CollectionUtils.isNotEmpty(allTemplates)) {
-      groupTemplates = <GroupPostTemplate>[];
-      for (GroupPostTemplate template in allTemplates!) {
-        if (template.groupName == groupName) {
-          groupTemplates.add(template);
+      groupNudges = <GroupPostNudge>[];
+      for (GroupPostNudge template in allTemplates!) {
+        GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
+        if (nudge != null) {
+          groupNudges.add(nudge);
         }
       }
     }
-    return groupTemplates;
+    return groupNudges;
+  }
+
+  GroupPostNudge? _getNudgeForGroup({required String groupName, required GroupPostNudge template}) {
+    dynamic groupNames = template.groupNames;
+    List<String>? groupNamesList = JsonUtils.stringListValue(groupNames);
+    String? nudgeGroupName = JsonUtils.stringValue(groupNames);
+    if (groupNamesList != null) {
+      for (String name in groupNamesList) {
+        if (name.toLowerCase() == groupName.toLowerCase()) {
+          return template;
+        }
+      }
+    } else if (nudgeGroupName != null) {
+      const String wildCardSymbol = '*';
+      if (nudgeGroupName.toLowerCase() == groupName.toLowerCase()) {
+        return template;
+      } else if (nudgeGroupName.endsWith(wildCardSymbol)) {
+        String namePrefix = nudgeGroupName.substring(0, nudgeGroupName.indexOf(wildCardSymbol));
+        if (groupName.toLowerCase().startsWith(namePrefix.toLowerCase())) {
+          return template;
+        }
+      }
+    }
+    return null;
   }
 
   //Delete User

@@ -899,29 +899,33 @@ class PostDataModel {
 }
 
 //////////////////////////////
-// GroupPostTemplate
+// GroupPostNudge
 
-class GroupPostTemplate {
+class GroupPostNudge {
   final String? id;
-  final String? groupName;
+  final dynamic groupNames;
   final String? subject;
   final String? body;
 
-  GroupPostTemplate({this.id, this.subject, this.body, this.groupName});
+  GroupPostNudge({this.id, this.subject, this.body, this.groupNames});
 
-  static GroupPostTemplate? fromJson(Map<String, dynamic>? json) {
+  static GroupPostNudge? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
-    return GroupPostTemplate(id: json['id'], subject: json['subject'], body: json['body'], groupName: json['group_name']);
+    return GroupPostNudge(
+        id: JsonUtils.stringValue(json['id']),
+        subject: JsonUtils.stringValue(json['subject']),
+        body: JsonUtils.stringValue(json['body']),
+        groupNames: json['group_name']);
   }
 
-  static List<GroupPostTemplate>? fromJsonList(List<dynamic>? jsonList) {
-    List<GroupPostTemplate>? templates;
+  static List<GroupPostNudge>? fromJsonList(List<dynamic>? jsonList) {
+    List<GroupPostNudge>? templates;
     if (jsonList != null) {
-      templates = <GroupPostTemplate>[];
+      templates = <GroupPostNudge>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(templates, GroupPostTemplate.fromJson(jsonEntry));
+        ListUtils.add(templates, GroupPostNudge.fromJson(jsonEntry));
       }
     }
     return templates;
