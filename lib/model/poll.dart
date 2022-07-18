@@ -15,7 +15,7 @@
  */
 
 import 'dart:math';
-
+import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -116,6 +116,56 @@ class Poll {
     };
   }
 
+  @override
+  bool operator ==(other) =>
+      (other is Poll) &&
+      
+      (other.pollId == pollId) &&
+      (other.title == title) &&
+      (const DeepCollectionEquality().equals(other.options, options)) &&
+      
+      (other.settings == settings) &&
+      
+      (other.creatorUserUuid == creatorUserUuid) &&
+      (other.creatorUserName == creatorUserName) &&
+      (other.regionId == regionId) &&
+      (other.pinCode == pinCode) &&
+      
+      (other.status == status) &&
+      (other.results == results) &&
+      (other.userVote == userVote) &&
+     
+      (other.groupId == groupId) &&
+      (other.uniqueVotersCount == uniqueVotersCount) &&
+
+      (other.dateCreatedUtcString == dateCreatedUtcString) &&
+      (other.dateUpdatedUtcString == dateUpdatedUtcString) &&
+      (const DeepCollectionEquality().equals(other.toMembers, toMembers));
+
+  @override
+  int get hashCode =>
+      (pollId?.hashCode ?? 0) ^
+      (title?.hashCode ?? 0) ^
+      (const DeepCollectionEquality().hash(options)) ^
+      
+      (settings?.hashCode ?? 0) ^
+      
+      (creatorUserUuid?.hashCode ?? 0) ^
+      (creatorUserName?.hashCode ?? 0) ^
+      (regionId?.hashCode ?? 0) ^
+      (pinCode?.hashCode ?? 0) ^
+      
+      (status?.hashCode ?? 0) ^
+      (results?.hashCode ?? 0) ^
+      (userVote?.hashCode ?? 0) ^
+      
+      (groupId?.hashCode ?? 0) ^
+      (uniqueVotersCount?.hashCode ?? 0) ^
+
+      (dateCreatedUtcString?.hashCode ?? 0) ^
+      (dateUpdatedUtcString?.hashCode ?? 0) ^
+      (const DeepCollectionEquality().hash(toMembers));
+
   bool get isMine {
     return (creatorUserUuid != null) && (creatorUserUuid == Auth2().accountId);
   }
@@ -209,6 +259,21 @@ class PollSettings {
   bool? geoFence;               // Poll is geo fenced
 
   PollSettings({this.allowMultipleOptions, this.allowRepeatOptions, this.hideResultsUntilClosed, this.geoFence});
+
+  @override
+  bool operator ==(other) =>
+      (other is PollSettings) &&
+      (other.allowMultipleOptions == allowMultipleOptions) &&
+      (other.allowRepeatOptions == allowRepeatOptions) &&
+      (other.hideResultsUntilClosed == hideResultsUntilClosed) &&
+      (other.geoFence == geoFence);
+
+  @override
+  int get hashCode =>
+      (allowMultipleOptions?.hashCode ?? 0) ^
+      (allowRepeatOptions?.hashCode ?? 0) ^
+      (hideResultsUntilClosed?.hashCode ?? 0) ^
+      (geoFence?.hashCode ?? 0);
 }
 
 enum PollStatus { created, opened, closed }
@@ -221,6 +286,17 @@ class PollVote {
     _votes = votes;
     _total = total;
   }
+
+  @override
+  bool operator ==(other) =>
+    (other is PollVote) &&
+      (other._total == _total) &&
+      const DeepCollectionEquality().equals(other._votes, _votes);
+
+  @override
+  int get hashCode =>
+    (_total?.hashCode ?? 0) ^
+    const DeepCollectionEquality().hash(_votes);
 
   static PollVote? fromJson({List<dynamic>? results, List<dynamic>? votes, int? total}) {
     Map<int, int>? votesMap;

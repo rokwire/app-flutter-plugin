@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/explore.dart';
-
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -42,6 +42,7 @@ class Event with Explore, Favorite {
   String? endDateString;
   DateTime? startDateGmt;
   DateTime? endDateGmt;
+  
   String? category;
   String? subCategory;
   String? sponsor;
@@ -83,6 +84,117 @@ class Event with Explore, Favorite {
   static const String dateTimeFormat = 'E, dd MMM yyyy HH:mm:ss v';
   static const String serverRequestDateTimeFormat =  'yyyy/MM/ddTHH:mm:ss';
 
+
+  @override
+  bool operator ==(other) =>
+      (other is Event) &&
+      (other.id == id) &&
+      (other.title == title) &&
+      (other.subTitle == subTitle) &&
+      (other.shortDescription == shortDescription) &&
+      (other.longDescription == longDescription) &&
+      (other.imageURL == imageURL) &&
+      (other.placeID == placeID) &&
+
+      (other.location == location) &&
+
+      (other.convergeScore == convergeScore) &&
+      (other.convergeUrl == convergeUrl) &&
+
+      (other.sourceEventId == sourceEventId) &&
+      (other.startDateString == startDateString) &&
+      (other.endDateString == endDateString) &&
+      (other.startDateGmt == startDateGmt) &&
+      (other.endDateGmt == endDateGmt) &&
+      
+      (other.category == category) &&
+      (other.subCategory == subCategory) &&
+      (other.sponsor == sponsor) &&
+      (other.titleUrl == titleUrl) &&
+      (const DeepCollectionEquality().equals(other.targetAudience, targetAudience)) &&
+      (other.icalUrl == icalUrl) &&
+      (other.outlookUrl == outlookUrl) &&
+      (other.speaker == speaker) &&
+      (other.registrationLabel == registrationLabel) &&
+      (other.registrationUrl == registrationUrl) &&
+      (other.cost == cost) &&
+      (const DeepCollectionEquality().equals(other.contacts, contacts)) &&
+      (const DeepCollectionEquality().equals(other.tags, tags)) &&
+      (other.modifiedDate == modifiedDate) &&
+      (other.submissionResult == submissionResult) &&
+      (other.eventId == eventId) &&
+      (other.allDay == allDay) &&
+      (other.recurringFlag == recurringFlag) &&
+      (other.recurrenceId == recurrenceId) &&
+      (const DeepCollectionEquality().equals(other.recurringEvents, recurringEvents)) &&
+      
+      (other.isSuperEvent == isSuperEvent) &&
+      (other.displayOnlyWithSuperEvent == displayOnlyWithSuperEvent) &&
+      (other.isVirtual == isVirtual) &&
+      (other.virtualEventUrl == virtualEventUrl) &&
+      (other.isInPerson == isInPerson) &&
+      (const DeepCollectionEquality().equals(other.subEventsMap, subEventsMap)) &&
+      (other.track == track) &&
+//    (const DeepCollectionEquality().equals(other._subEvents, _subEvents)) &&
+//    (const DeepCollectionEquality().equals(other._featuredEvents, _featuredEvents)) &&
+      (other.createdByGroupId == createdByGroupId) &&
+      (other.isGroupPrivate == isGroupPrivate) &&
+      (other.isEventFree == isEventFree);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (title?.hashCode ?? 0) ^
+      (subTitle?.hashCode ?? 0) ^
+      (shortDescription?.hashCode ?? 0) ^
+      (longDescription?.hashCode ?? 0) ^
+      (imageURL?.hashCode ?? 0) ^
+      (placeID?.hashCode ?? 0) ^
+
+      (location?.hashCode ?? 0) ^
+
+      (convergeScore?.hashCode ?? 0) ^
+      (convergeUrl?.hashCode ?? 0) ^
+
+      (sourceEventId?.hashCode ?? 0) ^
+      (startDateString?.hashCode ?? 0) ^
+      (endDateString?.hashCode ?? 0) ^
+      (startDateGmt?.hashCode ?? 0) ^
+      (endDateGmt?.hashCode ?? 0) ^
+      
+      (category?.hashCode ?? 0) ^
+      (subCategory?.hashCode ?? 0) ^
+      (sponsor?.hashCode ?? 0) ^
+      (titleUrl?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(targetAudience) ^
+      (icalUrl?.hashCode ?? 0) ^
+      (outlookUrl?.hashCode ?? 0) ^
+      (speaker?.hashCode ?? 0) ^
+      (registrationLabel?.hashCode ?? 0) ^
+      (registrationUrl?.hashCode ?? 0) ^
+      (cost?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(contacts) ^
+      const DeepCollectionEquality().hash(tags) ^
+      (modifiedDate?.hashCode ?? 0) ^
+      (submissionResult?.hashCode ?? 0) ^
+      (eventId?.hashCode ?? 0) ^
+      (allDay?.hashCode ?? 0) ^
+      (recurringFlag?.hashCode ?? 0) ^
+      (recurrenceId?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(recurringEvents) ^
+
+      (isSuperEvent?.hashCode ?? 0) ^
+      (displayOnlyWithSuperEvent?.hashCode ?? 0) ^
+      (isVirtual?.hashCode ?? 0) ^
+      (virtualEventUrl?.hashCode ?? 0) ^
+      (isInPerson?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(subEventsMap) ^
+      (track?.hashCode ?? 0) ^
+//    const DeepCollectionEquality().hash(_subEvents) ^
+//    const DeepCollectionEquality().hash(_featuredEvents) ^
+      (createdByGroupId?.hashCode ?? 0) ^
+      (isGroupPrivate?.hashCode ?? 0) ^
+      (isEventFree?.hashCode ?? 0);
 
   Event({Map<String, dynamic>? json, Event? other}) {
     if (json != null) {
@@ -634,6 +746,23 @@ class Contact {
       "organization": organization
     };
   }
+
+  @override
+  bool operator ==(other) =>
+      (other is Contact) &&
+      (other.firstName == firstName) &&
+      (other.lastName == lastName) &&
+      (other.email == email) &&
+      (other.phone == phone) &&
+      (other.organization == organization);
+
+  @override
+  int get hashCode =>
+      (firstName?.hashCode ?? 0) ^
+      (lastName?.hashCode ?? 0) ^
+      (email?.hashCode ?? 0) ^
+      (phone?.hashCode ?? 0) ^
+      (organization?.hashCode ?? 0);
 
   static List<Contact>? listFromJson(List<dynamic>? jsonList) {
     List<Contact>? result;

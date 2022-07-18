@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load group post templates from the backend [#108](https://github.com/rokwire/app-flutter-plugin/issues/108).
 - Added ListUtils.entry helper.
 - Added delete API to Polls [#1954](https://github.com/rokwire/illinois-app/issues/1954).
+- Defined equality operators to Event and Poll [#2020](https://github.com/rokwire/illinois-app/issues/2020).
 
 ## [1.0.2] - 2022-04-27
 ### Changed
