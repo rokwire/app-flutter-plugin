@@ -300,7 +300,7 @@ class Group {
   }
 
   bool get syncAuthmanAllowed {
-    return (currentUserIsAdmin == true) && (attendanceGroup == true) && (authManEnabled == true);
+    return (currentUserIsAdmin == true) && (authManEnabled == true);
   }
 
   static List<Group>? listFromJson(List<dynamic>? json) {

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update inbox Sent By message [#1958](https://github.com/rokwire/illinois-app/issues/1958).
 - Check Post Nudges for list of group names or group with wild card [#113](https://github.com/rokwire/app-flutter-plugin/issues/113).
 - Updated format of Favorite.toString [#2052](https://github.com/rokwire/illinois-app/issues/2052).
+- Remove check for attendance group for authman sync call [#115](https://github.com/rokwire/app-flutter-plugin/issues/115).
 ### Fixed
 - Fixed auth2AnonymousId storage key [#79](https://github.com/rokwire/app-flutter-plugin/issues/79).
 - Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).
