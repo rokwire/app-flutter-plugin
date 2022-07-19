@@ -1736,7 +1736,7 @@ abstract class Favorite {
   String? get favoriteId;
   
   @override
-  String toString() => "$favoriteKey:$favoriteId";
+  String toString() => "{$favoriteKey:$favoriteId}";
 }
 
 class FavoriteItem implements Favorite {
