@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use simple getter for deep link redirect url [#2065](https://github.com/rokwire/illinois-app/issues/2065).
 ### Changed
 - Allow referring string values from app config in FlexUI service [#118](https://github.com/rokwire/app-flutter-plugin/issues/118).
+### Changed
+- Added Auth2UserPres.setFavorite method; use Iterable inetead of List for muliple favorites paramter [#2065](https://github.com/rokwire/illinois-app/issues/2065).
 
 ## [1.1.0] - 2022-07-19
 ### Changed

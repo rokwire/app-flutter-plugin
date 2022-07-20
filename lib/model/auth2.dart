@@ -1036,7 +1036,34 @@ class Auth2UserPrefs {
     }
   }
 
-  bool isListFavorite(List<Favorite>? favorites) {
+  void setFavorite(Favorite? favorite, bool value) {
+    if ((favorite != null) && (favorite.favoriteId != null)) {
+      LinkedHashSet<String>? favoriteIdsForKey = (_favorites != null) ? _favorites![favorite.favoriteKey] : null;
+      bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
+      bool isModified = false;
+      if (value && !isFavorite) {
+        if (favoriteIdsForKey == null) {
+          _favorites ??= <String, LinkedHashSet<String>>{};
+            // ignore: prefer_collection_literals
+          _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+        }
+        favoriteIdsForKey.add(favorite.favoriteId!);
+        isModified = true;
+      }
+      else if (!value && isFavorite) {
+        favoriteIdsForKey.remove(favorite.favoriteId);
+        isModified = true;
+      }
+
+      if (isModified) {
+        NotificationService().notify(notifyFavoriteChanged, favorite);
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
+      }
+    }
+  }
+
+  bool isListFavorite(Iterable<Favorite>? favorites) {
     if ((favorites != null) && (_favorites != null)) {
       for (Favorite favorite in favorites) {
         if (!isFavorite(favorite)) {
@@ -1048,34 +1075,40 @@ class Auth2UserPrefs {
     return false;
   }
 
-  void setListFavorite(List<Favorite>? favorites, bool shouldFavorite, {Favorite? sourceFavorite}) {
+  void setListFavorite(Iterable<Favorite>? favorites, bool shouldFavorite, {Favorite? sourceFavorite}) {
     if (favorites != null) {
-      _favorites ??= <String, LinkedHashSet<String>>{};
 
+      bool isModified = false;
       for (Favorite favorite in favorites) {
-        LinkedHashSet<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
-        bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
-        if (isFavorite && !shouldFavorite) {
-          favoriteIdsForKey.remove(favorite.favoriteId);
-        }
-        else if (!isFavorite && shouldFavorite) {
-          if (favoriteIdsForKey == null) {
-            // ignore: prefer_collection_literals
-            _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+        if (favorite.favoriteId != null) {
+          LinkedHashSet<String>? favoriteIdsForKey = (_favorites != null) ? _favorites![favorite.favoriteKey] : null;
+          bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
+          if (shouldFavorite && !isFavorite) {
+            if (favoriteIdsForKey == null) {
+              _favorites ??= <String, LinkedHashSet<String>>{};
+              // ignore: prefer_collection_literals
+              _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+            }
+            favoriteIdsForKey.add(favorite.favoriteId!);
           }
-          SetUtils.add(favoriteIdsForKey, favorite.favoriteId);
+          else if (!shouldFavorite && isFavorite) {
+            favoriteIdsForKey.remove(favorite.favoriteId);
+          }
+          NotificationService().notify(notifyFavoriteChanged, favorite);
+          isModified = true;
         }
-        NotificationService().notify(notifyFavoriteChanged, favorite);
       }
-      if (sourceFavorite != null) {
-        NotificationService().notify(notifyFavoriteChanged, sourceFavorite);
+      if (isModified) {
+        if (sourceFavorite != null) {
+          NotificationService().notify(notifyFavoriteChanged, sourceFavorite);
+        }
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
       }
-      NotificationService().notify(notifyFavoritesChanged);
-      NotificationService().notify(notifyChanged, this);
     }
   }
 
-  void toggleListFavorite(List<Favorite>? favorites, {Favorite? sourceFavorite}) {
+  void toggleListFavorite(Iterable<Favorite>? favorites, {Favorite? sourceFavorite}) {
     setListFavorite(favorites, !isListFavorite(favorites), sourceFavorite: sourceFavorite);
   }
 
