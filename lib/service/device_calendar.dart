@@ -271,7 +271,7 @@ class DeviceCalendarEvent {
       calendarEvent.end = timezone.TZDateTime(AppDateTime().universityLocation!, startDate!.year, startDate!.month, startDate!.day, 24);
     }
 
-    String? redirectUrl = Config().deepLinkRedirectUrl(deepLinkUrl);
+    String? redirectUrl = Config().deepLinkRedirectUrl;
     calendarEvent.description = StringUtils.isNotEmpty(redirectUrl) ? "$redirectUrl?target=$deepLinkUrl" : deepLinkUrl;
 
     return calendarEvent;

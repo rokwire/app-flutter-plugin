@@ -488,10 +488,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
   
   // Getters: other
-  String? deepLinkRedirectUrl(String? deepLink) {
+  String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
-    String? redirectUrl = (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
-    return StringUtils.isNotEmpty(redirectUrl) ? "$redirectUrl?target=$deepLink" : deepLink;
+    return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
 }
 
