@@ -499,7 +499,7 @@ class FlexUI with Service implements NotificationsListener {
     if (stringParam != null) {
       if (RegExp("{.+}").hasMatch(stringParam)) {
         String stringsStr = stringParam.substring(1, stringParam.length - 1);
-        return Set<String>.from(stringsStr.split(','));
+        return Set<String>.from(stringsStr.split(',').map((e) => e.trim()));
       }
       else {
         return <String>{ stringParam };
