@@ -73,6 +73,7 @@ class FlexUI with Service implements NotificationsListener {
       AppLivecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
       GeoFence.notifyCurrentRegionsUpdated,
+      Config.notifyConfigChanged,
     ]);
   }
 
@@ -117,7 +118,8 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2.notifyLoginChanged) ||
         (name == Auth2.notifyLinkChanged) ||
         (name == Groups.notifyUserGroupsUpdated) ||
-        (name == GeoFence.notifyCurrentRegionsUpdated))
+        (name == GeoFence.notifyCurrentRegionsUpdated) ||
+        (name == Config.notifyConfigChanged))
     {
       updateContent();
     }
@@ -399,7 +401,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Set<UserRole>? localeEvalRoleParam(String? roleParam) {
     if (roleParam != null) {
-      if (RegExp("{.+}").hasMatch(roleParam)) {
+      if (RegExp(r"\(.+\)").hasMatch(roleParam)) {
         Set<UserRole> roles = <UserRole>{};
         String rolesStr = roleParam.substring(1, roleParam.length - 1);
         List<String> rolesStrList = rolesStr.split(',');
@@ -410,6 +412,11 @@ class FlexUI with Service implements NotificationsListener {
           }
         }
         return roles;
+      }
+      else if (RegExp(r"\${.+}").hasMatch(roleParam)) {
+        String stringRef = roleParam.substring(2, roleParam.length - 1);
+        String? stringRefValue = localeEvalStringReference(stringRef);
+        return localeEvalRoleParam(stringRefValue);
       }
       else {
         UserRole? userRole = UserRole.fromString(roleParam);
@@ -434,7 +441,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetGroups = localeEvalStringParam(argument, rules);
+        Set<String>? targetGroups = localeEvalStringParam(argument);
         Set<String> userGroups = Groups().userGroupNames ?? {};
         if (targetGroups != null) {
           if (not == true) {
@@ -471,7 +478,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetLocations = localeEvalStringParam(argument, rules);
+        Set<String>? targetLocations = localeEvalStringParam(argument);
         Set<String> userLocations = GeoFence().currentRegionIds;
         if (targetLocations != null) {
           if (not == true) {
@@ -495,11 +502,16 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Set<String>? localeEvalStringParam(String? stringParam, Map<String, dynamic> rules) {
+  Set<String>? localeEvalStringParam(String? stringParam) {
     if (stringParam != null) {
-      if (RegExp("{.+}").hasMatch(stringParam)) {
+      if (RegExp(r"\(.+\)").hasMatch(stringParam)) {
         String stringsStr = stringParam.substring(1, stringParam.length - 1);
-        return Set<String>.from(stringsStr.split(','));
+        return Set<String>.from(stringsStr.split(',').map((e) => e.trim()));
+      }
+      else if (RegExp(r"\${.+}").hasMatch(stringParam)) {
+        String stringRef = stringParam.substring(2, stringParam.length - 1);
+        String? stringRefValue = localeEvalStringReference(stringRef);
+        return localeEvalStringParam(stringRefValue);
       }
       else {
         return <String>{ stringParam };
@@ -507,6 +519,20 @@ class FlexUI with Service implements NotificationsListener {
     }
     return null;
   }
+
+  @protected
+  String? localeEvalStringReference(String? stringRef) {
+    if (stringRef != null) {
+      String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
+      if (stringRef.startsWith(configPrefix)) {
+        return JsonUtils.stringValue(MapPathKey.entry(Config().content, stringRef.substring(configPrefix.length)));
+      }
+    }
+    return null;
+  }
+
+  @protected
+  String get configReferenceKey => 'config';
 
   @protected
   bool localeEvalPrivacyRule(dynamic privacyRule) {
