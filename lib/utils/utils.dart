@@ -539,6 +539,9 @@ class AppToast {
 }
 
 class MapPathKey {
+
+  static const String pathDelimiter = '.';
+
   static dynamic entry(Map<String, dynamic>? map, dynamic key) {
     if ((map != null) && (key != null)) {
       if (key is String) {
@@ -557,12 +560,12 @@ class MapPathKey {
     int position, start = 0;
     Map source = map;
 
-    while (0 <= (position = key.indexOf('.', start))) {
+    while (0 <= (position = key.indexOf(pathDelimiter, start))) {
       field = key.substring(start, position);
       entry = source[field];
       if ((entry != null) && (entry is Map)) {
         source = entry;
-        start = position + 1;
+        start = position + pathDelimiter.length;
       }
       else {
         break;
