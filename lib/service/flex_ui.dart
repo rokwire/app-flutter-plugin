@@ -399,7 +399,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Set<UserRole>? localeEvalRoleParam(String? roleParam) {
     if (roleParam != null) {
-      if (RegExp("{.+}").hasMatch(roleParam)) {
+      if (RegExp(r"\(.+\)").hasMatch(roleParam)) {
         Set<UserRole> roles = <UserRole>{};
         String rolesStr = roleParam.substring(1, roleParam.length - 1);
         List<String> rolesStrList = rolesStr.split(',');
@@ -497,7 +497,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Set<String>? localeEvalStringParam(String? stringParam, Map<String, dynamic> rules) {
     if (stringParam != null) {
-      if (RegExp("{.+}").hasMatch(stringParam)) {
+      if (RegExp(r"\(.+\)").hasMatch(stringParam)) {
         String stringsStr = stringParam.substring(1, stringParam.length - 1);
         return Set<String>.from(stringsStr.split(',').map((e) => e.trim()));
       }
