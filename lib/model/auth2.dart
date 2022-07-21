@@ -960,6 +960,8 @@ class Auth2UserPrefs {
 
   // Favorites
 
+  Iterable<String>? get favoritesKeys => _favorites?.keys;
+
   LinkedHashSet<String>? getFavorites(String favoriteKey) {
     return (_favorites != null) ? _favorites![favoriteKey] : null;
   }
