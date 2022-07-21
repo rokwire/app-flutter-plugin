@@ -38,10 +38,11 @@ class FlexUI with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.flexui.changed";
 
   static const String _flexUIName   = "flexUI.json";
+  static const String _defaultContentSourceEntryKey   = "";
 
-  Map<String, dynamic>? _content;
   Map<String, dynamic>? _contentSource;
-  Set<dynamic>?         _features;
+  Map<String, dynamic>? _defaultContent;
+  Set<dynamic>?         _defaultFeatures;
   File?                 _cacheFile;
   DateTime?             _pausedDateTime;
 
@@ -86,9 +87,9 @@ class FlexUI with Service implements NotificationsListener {
   Future<void> initService() async {
     _cacheFile = await getCacheFile();
     _contentSource = await loadContentSource();
-    _content = buildContent(_contentSource);
-    _features = buildFeatures(_content);
-    if (_content != null) {
+    _defaultContent = buildContent(defaultContentSourceEntry);
+    _defaultFeatures = buildFeatures(_defaultContent);
+    if (_defaultContent != null) {
       await super.initService();
       updateContentSourceFromNet();
     }
@@ -203,6 +204,29 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
+  bool isValidContentSource(Map<String, dynamic>? contentSource) {
+    return isValidContentSourceEntry(JsonUtils.mapValue(MapPathKey.entry(contentSource, defaultContentSourceEntryKey)));
+  }
+
+  @protected
+  String get defaultContentSourceEntryKey => _defaultContentSourceEntryKey;
+
+  @protected
+  Map<String, dynamic>? get defaultContentSourceEntry {
+    return contentSourceEntry(defaultContentSourceEntryKey);
+  }
+
+  @protected
+  Map<String, dynamic>? contentSourceEntry(String key) {
+    return JsonUtils.mapValue(MapPathKey.entry(_contentSource, key));
+  }
+
+  @protected
+  bool isValidContentSourceEntry(Map<String, dynamic>? content) {
+    return (content != null) && (content['content'] is Map) && (content['rules'] is Map);
+  }
+
+  @protected
   String get networkAssetName => _flexUIName;
 
   @protected
@@ -234,10 +258,10 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   void updateContent() {
-    Map<String, dynamic>? content = buildContent(_contentSource);
-    if ((content != null) && ((_content == null) || !const DeepCollectionEquality().equals(_content, content))) {
-      _content = content;
-      _features = buildFeatures(_content);
+    Map<String, dynamic>? content = buildContent(defaultContentSourceEntry);
+    if ((content != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, content))) {
+      _defaultContent = content;
+      _defaultFeatures = buildFeatures(_defaultContent);
       NotificationService().notify(notifyChanged, null);
     }
   }
@@ -248,41 +272,45 @@ class FlexUI with Service implements NotificationsListener {
     return (featuresList is Iterable) ? Set.from(featuresList) : null;
   }
 
-  @protected
-  bool isValidContentSource(Map<String, dynamic>? contentSource) {
-    return (contentSource != null) && (contentSource['content'] is Map) && (contentSource['rules'] is Map);
-  }
-
   // Content
 
-  Map<String, dynamic>? get content {
-    return _content;
+  Map<String, dynamic>? content(String key) {
+    if (key == defaultContentSourceEntryKey) {
+      return _defaultContent;
+    }
+    else {
+      return buildContent(contentSourceEntry(key));
+    }
+  }
+
+  Map<String, dynamic>? get defaultContent {
+    return _defaultContent;
   }
 
   List<dynamic>? operator [](dynamic key) {
-    return (_content != null) ? JsonUtils.listValue(_content![key]) : null;
+    return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
   }
 
-  Set<dynamic>? get features {
-    return _features;
+  Set<dynamic>? get defaultFeatures {
+    return _defaultFeatures;
   }
 
   bool hasFeature(String feature) {
-    return (_features != null) && _features!.contains(feature);
+    return (_defaultFeatures != null) && _defaultFeatures!.contains(feature);
   }
 
   Future<void> update() async {
     return updateContent();
   }
 
-// Local Build
+  // Local Build
 
   @protected
-  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource) {
+  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSourceEntry) {
     Map<String, dynamic>? result;
-    if (contentSource != null) {
-      Map<String, dynamic> contents = JsonUtils.mapValue(contentSource['content']) ?? <String, dynamic>{};
-      Map<String, dynamic> rules = JsonUtils.mapValue(contentSource['rules']) ?? <String, dynamic>{};
+    if (contentSourceEntry != null) {
+      Map<String, dynamic> contents = JsonUtils.mapValue(contentSourceEntry['content']) ?? <String, dynamic>{};
+      Map<String, dynamic> rules = JsonUtils.mapValue(contentSourceEntry['rules']) ?? <String, dynamic>{};
 
       result = {};
       contents.forEach((String key, dynamic contentEntry) {
