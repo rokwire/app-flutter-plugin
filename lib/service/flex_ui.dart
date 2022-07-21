@@ -294,18 +294,31 @@ class FlexUI with Service implements NotificationsListener {
       Map<String, dynamic> rules = JsonUtils.mapValue(contentData['rules']) ?? <String, dynamic>{};
 
       result = {};
-      contents.forEach((String key, dynamic list) {
-        if (list is List) {
+      contents.forEach((String key, dynamic contentEntry) {
+        
+        if (contentEntry is Map) {
+          for (String contentEntryKey in contentEntry.keys) {
+            if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules)) {
+              contentEntry = contentEntry[contentEntryKey];
+              break;
+            }
+          }
+        }
+
+        if (contentEntry is List) {
           List<String> resultList = <String>[];
-          for (String entry in list) {
-            if (localeIsEntryAvailable(entry, group: key, rules: rules)) {
-              resultList.add(entry);
+          for (dynamic entry in contentEntry) {
+            String? stringEntry = JsonUtils.stringValue(entry);
+            if (stringEntry != null) {
+              if (localeIsEntryAvailable(stringEntry, group: key, rules: rules)) {
+                resultList.add(entry);
+              }
             }
           }
           result![key] = resultList;
         }
         else {
-          result![key] = list;
+          result![key] = contentEntry;
         }
       });
     }
