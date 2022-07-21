@@ -15,6 +15,7 @@
  */
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:core';
 import 'dart:io';
 
@@ -28,6 +29,8 @@ import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
+import 'package:rokwire_plugin/service/connectivity.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -36,6 +39,10 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/events.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+
+import 'firebase_messaging.dart';
+
+enum GroupsContentType { all, my }
 
 class Groups with Service implements NotificationsListener {
 
@@ -56,8 +63,10 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMembershipRemoved        = "edu.illinois.rokwire.group.membership.removed";
   static const String notifyGroupMembershipSwitchToAdmin  = "edu.illinois.rokwire.group.membership.switch_to_admin";
   static const String notifyGroupMembershipSwitchToMember = "edu.illinois.rokwire.group.membership.switch_to_member";
-  
+  static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
+
   static const String _userGroupsCacheFileName = "groups.json";
+  static const String _attendedMembersCacheFileName = "attended_members.json";
 
   List<Map<String, dynamic>>? _groupDetailsCache;
   List<Map<String, dynamic>>? get groupDetailsCache => _groupDetailsCache;
@@ -65,7 +74,10 @@ class Groups with Service implements NotificationsListener {
   List<Group>? _userGroups;
   Set<String>? _userGroupNames;
 
+  Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
+
   final List<Completer<void>> _loginCompleters = [];
+  final List<Completer<void>> _userGroupUpdateCompleters = [];
   List<Completer<void>> get loginCompleters => _loginCompleters;
 
 
@@ -96,6 +108,8 @@ class Groups with Service implements NotificationsListener {
       DeepLink.notifyUri,
       Auth2.notifyLoginChanged,
       AppLivecycle.notifyStateChanged,
+      FirebaseMessaging.notifyGroupsNotification,
+      Connectivity.notifyStatusChanged
     ]);
     _groupDetailsCache = [];
   }
@@ -109,14 +123,17 @@ class Groups with Service implements NotificationsListener {
   Future<void> initService() async {
     await waitForLogin();
 
+    _attendedMembers = await _loadAttendedMembersFromCache();
+
     _userGroups = await _loadUserGroupsFromCache();
     _userGroupNames = _buildGroupNames(_userGroups);
+    _initUserGroupsWithCachedAttendedMembers();
 
     if (_userGroups == null) {
       await _initUserGroupsFromNet();
     }
     else {
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
     }
 
     await super.initService();
@@ -144,14 +161,19 @@ class Groups with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param);
+    } else if (name == FirebaseMessaging.notifyGroupsNotification){
+      _onFirebaseMessageForGroupUpdate();
+    }
+    else if (name == Connectivity.notifyStatusChanged) {
+      if (Connectivity().isOnline) {
+        _submitCachedAttendedMembers();
+      }
     }
   }
 
   void _onLoginChanged() {
     if (Auth2().isLoggedIn) {
-      waitForLogin().then((_) {
-        _updateUserGroupsFromNet();
-      });
+      _waitForUpdateUserGroupsFromNet();
     }
     else {
       _loggedIn = false;
@@ -167,10 +189,14 @@ class Groups with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
         }
       }
     }
+  }
+
+  void _onFirebaseMessageForGroupUpdate() {
+      _waitForUpdateUserGroupsFromNet();
   }
 
   // Current User Membership
@@ -244,9 +270,9 @@ class Groups with Service implements NotificationsListener {
       }
   }
 
-  Future<List<Group>?> loadGroups({bool myGroups = false}) async {
-    if (myGroups) {
-      await _updateUserGroupsFromNet();
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType}) async {
+    if (contentType == GroupsContentType.my) {
+      await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
       return await _loadAllGroups();
@@ -345,7 +371,7 @@ class Groups with Service implements NotificationsListener {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
           if (StringUtils.isNotEmpty(groupId)) {
             NotificationService().notify(notifyGroupCreated, group.id);
-            _updateUserGroupsFromNet();
+            _waitForUpdateUserGroupsFromNet();
             return null; // succeeded
           }
         }
@@ -401,10 +427,28 @@ class Groups with Service implements NotificationsListener {
     int responseCode = response?.statusCode ?? -1;
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupDeleted, null);
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
       return true;
     } else {
       Log.i('Failed to delete group. Reason:\n${response?.body}');
+      return false;
+    }
+  }
+
+  Future<bool> syncAuthmanGroup({required Group group}) async {
+    if (!group.syncAuthmanAllowed) {
+      debugPrint('Current user is not allowed to sync group "${group.id}" in authman.');
+      return false;
+    }
+    await waitForLogin();
+    String url = '${Config().groupsUrl}/group/${group.id}/authman/synchronize';
+    Response? response = await Network().post(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      _waitForUpdateUserGroupsFromNet();
+      return true;
+    } else {
+      debugPrint('Failed to synchronize authman group. \nReason: $responseCode, ${response?.body}');
       return false;
     }
   }
@@ -464,7 +508,7 @@ class Groups with Service implements NotificationsListener {
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupMembershipQuit, group);
       NotificationService().notify(notifyGroupUpdated, group.id);
-      _updateUserGroupsFromNet();
+      _waitForUpdateUserGroupsFromNet();
       return true;
     } else {
       String? responseString = response?.body;
@@ -484,7 +528,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -510,7 +554,7 @@ class Groups with Service implements NotificationsListener {
             NotificationService().notify(notifyGroupMembershipSwitchToMember, group);
           }
           NotificationService().notify(notifyGroupUpdated, group!.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -529,7 +573,7 @@ class Groups with Service implements NotificationsListener {
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupMembershipRemoved, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _updateUserGroupsFromNet();
+          _waitForUpdateUserGroupsFromNet();
           return true;
         }
       } catch (e) {
@@ -539,9 +583,46 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
+  Future<bool> memberAttended({required Group group, required Member member}) async {
+    bool isNewMember = (member.id == null);
+    if (isNewMember && (group.authManEnabled == true)) {
+      debugPrint('It is not allowed to import new members to authman groups.');
+      return false;
+    }
+    await waitForLogin();
+    member.dateAttendedUtc ??= DateTime.now().toUtc();
+    if (Connectivity().isOffline) {
+      _addAttendedMemberToCache(group: group, member: member);
+      return true;
+    }
+    String? memberJsonBody = JsonUtils.encode(member.toJson());
+    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+    try {
+      Response? response;
+      if (isNewMember) {
+        response = await Network().post(url, body: memberJsonBody, auth: Auth2());
+      } else {
+        response = await Network().put(url, body: memberJsonBody, auth: Auth2());
+      }
+      int? responseCode = response?.statusCode;
+      String? responseString = response?.body;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupMemberAttended, null);
+        NotificationService().notify(notifyGroupUpdated, group.id);
+        _waitForUpdateUserGroupsFromNet();
+        return true;
+      } else {
+        debugPrint('Failed to attend a member to group. \nResponse: $responseCode, $responseString');
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return false;
+  }
+
 
 // Events
-  Future<List<dynamic>?> loadEventIds(String? groupId) async{
+  Future<List<String>?> loadEventIds(String? groupId) async{
     await waitForLogin();
     if(StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
@@ -552,7 +633,7 @@ class Groups with Service implements NotificationsListener {
           int responseCode = response?.statusCode ?? -1;
           String? responseBody = response?.body;
           List<dynamic>? eventIdsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeList(responseBody) : null;
-          return eventIdsJson;
+          return JsonUtils.listStringsValue(eventIdsJson);
         }
       } catch (e) {
         debugPrint(e.toString());
@@ -573,8 +654,8 @@ class Groups with Service implements NotificationsListener {
   Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
     await waitForLogin();
     if (group != null) {
-      List<dynamic>? eventIds = await loadEventIds(group.id);
-      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(Set<String>.from(eventIds!)) : null;
+      List<String>? eventIds = await loadEventIds(group.id);
+      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(eventIds) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
         List<Event> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;
@@ -804,6 +885,56 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
+    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
+    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
+    if (templatesContentItem is! Map) {
+      return null;
+    }
+    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
+    dynamic templatesJson = templatesItem['data'];
+    if (templatesJson is! List) {
+      return null;
+    }
+    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
+    List<GroupPostNudge>? groupNudges;
+    if (CollectionUtils.isNotEmpty(allTemplates)) {
+      groupNudges = <GroupPostNudge>[];
+      for (GroupPostNudge template in allTemplates!) {
+        GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
+        if (nudge != null) {
+          groupNudges.add(nudge);
+        }
+      }
+    }
+    return groupNudges;
+  }
+
+  GroupPostNudge? _getNudgeForGroup({required String groupName, required GroupPostNudge template}) {
+    dynamic groupNames = template.groupNames;
+    List<String>? groupNamesList = JsonUtils.stringListValue(groupNames);
+    String? nudgeGroupName = JsonUtils.stringValue(groupNames);
+    if (groupNamesList != null) {
+      for (String name in groupNamesList) {
+        if (name.toLowerCase() == groupName.toLowerCase()) {
+          return template;
+        }
+      }
+    } else if (nudgeGroupName != null) {
+      const String wildCardSymbol = '*';
+      if (nudgeGroupName.toLowerCase() == groupName.toLowerCase()) {
+        return template;
+      } else if (nudgeGroupName.endsWith(wildCardSymbol)) {
+        String namePrefix = nudgeGroupName.substring(0, nudgeGroupName.indexOf(wildCardSymbol));
+        if (groupName.toLowerCase().startsWith(namePrefix.toLowerCase())) {
+          return template;
+        }
+      }
+    }
+    return null;
+  }
+
   //Delete User
   void deleteUserData() async{
     try {
@@ -963,6 +1094,31 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<void> _waitForUpdateUserGroupsFromNet() async{
+    waitForLogin().then((value){
+      try {
+        if (_userGroupUpdateCompleters.isEmpty) {
+          Completer<void> completer = Completer<void>();
+          _userGroupUpdateCompleters.add(completer);
+          _updateUserGroupsFromNet().whenComplete(() {
+            for (var completer in _userGroupUpdateCompleters) {
+              completer.complete();
+            }
+            _userGroupUpdateCompleters.clear();
+          });
+          return completer.future;
+        } else {
+          Completer<void> completer = Completer<void>();
+          _userGroupUpdateCompleters.add(completer);
+          return completer.future;
+        }
+      } catch(err){
+        Log.e("Failed to invoke Update User Group From Net");
+        debugPrint(err.toString());
+      }
+    });
+  }
+
   Future<void> _updateUserGroupsFromNet() async {
     String? jsonString = await _loadUserGroupsStringFromNet();
     List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
@@ -995,6 +1151,173 @@ class Groups with Service implements NotificationsListener {
     }
     return groupNames;
   }
+
+  // Attended Members
+
+  static Future<File?> _getAttendedMembersCacheFile() async {
+    try {
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+      String cacheFilePath = join(appDocDir.path, _attendedMembersCacheFileName);
+      return File(cacheFilePath);
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<String?> _loadAttendedMembersStringFromCache() async {
+    try {
+      File? cacheFile = await _getAttendedMembersCacheFile();
+      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  static Future<void> _saveAttendedMembersStringToCache(String? value) async {
+    try {
+      File? cacheFile = await _getAttendedMembersCacheFile();
+      if (cacheFile != null) {
+        if (value != null) {
+          await cacheFile.writeAsString(value, flush: true);
+        }
+        else if (await cacheFile.exists()){
+          await cacheFile.delete();
+        }
+      }
+    }
+    catch(e) { 
+      debugPrint(e.toString());
+    }
+  }
+
+  static Future<Map<String, List<Member>?>?> _loadAttendedMembersFromCache() async {
+    String? membersString = await _loadAttendedMembersStringFromCache();
+    Map<String, dynamic>? attendedMembersMap = JsonUtils.decodeMap(membersString);
+    if (attendedMembersMap != null) {
+      Map<String, List<Member>?> resultMap = HashMap<String, List<Member>>();
+      for (String key in attendedMembersMap.keys) {
+        dynamic members = attendedMembersMap[key];
+        resultMap[key] = Member.listFromJson(members);
+      }
+      return resultMap;
+    }
+    return null;
+  }
+
+  void _addAttendedMemberToCache({required Group group, required Member member}) {
+    String groupId = group.id!;
+    _attendedMembers ??= HashMap<String, List<Member>>();
+    group.members ??= <Member>[];
+    group.members!.add(member);
+    List<Member>? attendedGroupMembers = _attendedMembers![groupId];
+    attendedGroupMembers ??= <Member>[];
+    attendedGroupMembers.add(member);
+    _attendedMembers![groupId] = attendedGroupMembers;
+    String? membersString = JsonUtils.encode(_attendedMembers);
+    _saveAttendedMembersStringToCache(membersString);
+  }
+
+  Future<void> _submitCachedAttendedMembers() async {
+    if (Connectivity().isOnline) {
+      if ((_attendedMembers != null) && _attendedMembers!.isNotEmpty) {
+        Iterable<String> groupIdKeys = _attendedMembers!.keys.toList();
+        Iterator groupIdIterator = groupIdKeys.iterator;
+        while (groupIdIterator.moveNext()) {
+          String groupId = groupIdIterator.current;
+          Group? group = _getUserGroup(groupId: groupId);
+          if (group != null) {
+            List<Member>? attendedMembers = _attendedMembers![groupId];
+            if (CollectionUtils.isNotEmpty(attendedMembers)) {
+              List<Member> members = attendedMembers!.toList();
+              Iterator membersIterator = members.iterator;
+              while (membersIterator.moveNext()) {
+                Member member = membersIterator.current;
+                bool memberAttendedSuccessfully = await memberAttended(group: group, member: member);
+                if (memberAttendedSuccessfully) {
+                  attendedMembers.remove(member);
+                }
+              }
+              if (CollectionUtils.isEmpty(attendedMembers)) {
+                _attendedMembers!.remove(groupId);
+              } else {
+                _attendedMembers![groupId] = attendedMembers;
+              }
+            }
+          }
+        }
+        String? membersString;
+        if (_attendedMembers!.isEmpty) {
+          membersString = null;
+        } else {
+          membersString = JsonUtils.encode(_attendedMembers);
+        }
+        _saveAttendedMembersStringToCache(membersString);
+      }
+    }
+  }
+
+  /// 
+  /// Initializes cached user groups with cached attended members if there are differences. 
+  /// So that user groups are in sync if the device is offline.
+  /// This is done only on startup
+  /// 
+  void _initUserGroupsWithCachedAttendedMembers() {
+    if (Connectivity().isOffline && CollectionUtils.isNotEmpty(_attendedMembers?.keys)) {
+      for (String groupId in _attendedMembers!.keys) {
+        Group? userGroup = _getUserGroup(groupId: groupId);
+        if (userGroup != null) {
+          List<Member>? attendedGroupMembers = _attendedMembers![groupId];
+          if (CollectionUtils.isNotEmpty(attendedGroupMembers)) {
+            List<Member>? groupMembers = userGroup.members;
+            if (CollectionUtils.isNotEmpty(groupMembers)) {
+              for (Member attendedMember in attendedGroupMembers!) {
+                Member? groupMember;
+                for (Member grMember in groupMembers!) {
+                  if (grMember.externalId == attendedMember.externalId) {
+                    groupMember = grMember;
+                    break;
+                  }
+                }
+                if (groupMember != null) {
+                  groupMember.dateAttendedUtc = attendedMember.dateAttendedUtc;
+                } else {
+                  userGroup.members ??= <Member>[];
+                  userGroup.members!.add(attendedMember);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  Group? _getUserGroup({required String groupId}) {
+    if (CollectionUtils.isNotEmpty(userGroups) && StringUtils.isNotEmpty(groupId)) {
+      for (Group group in userGroups!) {
+        if (groupId == group.id) {
+          return group;
+        }
+      }
+    }
+    return null;
+  }
+
+  // Report Abuse
+
+  Future<bool> reportAbuse({String? groupId, String? postId, String? comment}) async {
+    if (Config().groupsUrl != null) {
+      Response? response = await Network().put('${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse',
+        body: JsonUtils.encode({'comment': comment}), auth: Auth2());
+      return (response?.statusCode == 200);
+    }
+    return false;
+  }
+    
 }
 
 enum GroupSortOrder { asc, desc }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/explore.dart';
-
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -23,7 +23,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 //////////////////////////////
 /// Event
 
-class Event with Explore implements Favorite {
+class Event with Explore, Favorite {
   String? id;
   String? title;
   String? subTitle;
@@ -42,6 +42,7 @@ class Event with Explore implements Favorite {
   String? endDateString;
   DateTime? startDateGmt;
   DateTime? endDateGmt;
+  
   String? category;
   String? subCategory;
   String? sponsor;
@@ -66,6 +67,8 @@ class Event with Explore implements Favorite {
   bool? isSuperEvent;
   bool? displayOnlyWithSuperEvent;
   bool? isVirtual;
+  String? virtualEventUrl;
+  bool? isInPerson;
   List<Map<String, dynamic>>? subEventsMap;
   String? track;
   List<Event>? _subEvents;
@@ -81,6 +84,117 @@ class Event with Explore implements Favorite {
   static const String dateTimeFormat = 'E, dd MMM yyyy HH:mm:ss v';
   static const String serverRequestDateTimeFormat =  'yyyy/MM/ddTHH:mm:ss';
 
+
+  @override
+  bool operator ==(other) =>
+      (other is Event) &&
+      (other.id == id) &&
+      (other.title == title) &&
+      (other.subTitle == subTitle) &&
+      (other.shortDescription == shortDescription) &&
+      (other.longDescription == longDescription) &&
+      (other.imageURL == imageURL) &&
+      (other.placeID == placeID) &&
+
+      (other.location == location) &&
+
+      (other.convergeScore == convergeScore) &&
+      (other.convergeUrl == convergeUrl) &&
+
+      (other.sourceEventId == sourceEventId) &&
+      (other.startDateString == startDateString) &&
+      (other.endDateString == endDateString) &&
+      (other.startDateGmt == startDateGmt) &&
+      (other.endDateGmt == endDateGmt) &&
+      
+      (other.category == category) &&
+      (other.subCategory == subCategory) &&
+      (other.sponsor == sponsor) &&
+      (other.titleUrl == titleUrl) &&
+      (const DeepCollectionEquality().equals(other.targetAudience, targetAudience)) &&
+      (other.icalUrl == icalUrl) &&
+      (other.outlookUrl == outlookUrl) &&
+      (other.speaker == speaker) &&
+      (other.registrationLabel == registrationLabel) &&
+      (other.registrationUrl == registrationUrl) &&
+      (other.cost == cost) &&
+      (const DeepCollectionEquality().equals(other.contacts, contacts)) &&
+      (const DeepCollectionEquality().equals(other.tags, tags)) &&
+      (other.modifiedDate == modifiedDate) &&
+      (other.submissionResult == submissionResult) &&
+      (other.eventId == eventId) &&
+      (other.allDay == allDay) &&
+      (other.recurringFlag == recurringFlag) &&
+      (other.recurrenceId == recurrenceId) &&
+      (const DeepCollectionEquality().equals(other.recurringEvents, recurringEvents)) &&
+      
+      (other.isSuperEvent == isSuperEvent) &&
+      (other.displayOnlyWithSuperEvent == displayOnlyWithSuperEvent) &&
+      (other.isVirtual == isVirtual) &&
+      (other.virtualEventUrl == virtualEventUrl) &&
+      (other.isInPerson == isInPerson) &&
+      (const DeepCollectionEquality().equals(other.subEventsMap, subEventsMap)) &&
+      (other.track == track) &&
+//    (const DeepCollectionEquality().equals(other._subEvents, _subEvents)) &&
+//    (const DeepCollectionEquality().equals(other._featuredEvents, _featuredEvents)) &&
+      (other.createdByGroupId == createdByGroupId) &&
+      (other.isGroupPrivate == isGroupPrivate) &&
+      (other.isEventFree == isEventFree);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (title?.hashCode ?? 0) ^
+      (subTitle?.hashCode ?? 0) ^
+      (shortDescription?.hashCode ?? 0) ^
+      (longDescription?.hashCode ?? 0) ^
+      (imageURL?.hashCode ?? 0) ^
+      (placeID?.hashCode ?? 0) ^
+
+      (location?.hashCode ?? 0) ^
+
+      (convergeScore?.hashCode ?? 0) ^
+      (convergeUrl?.hashCode ?? 0) ^
+
+      (sourceEventId?.hashCode ?? 0) ^
+      (startDateString?.hashCode ?? 0) ^
+      (endDateString?.hashCode ?? 0) ^
+      (startDateGmt?.hashCode ?? 0) ^
+      (endDateGmt?.hashCode ?? 0) ^
+      
+      (category?.hashCode ?? 0) ^
+      (subCategory?.hashCode ?? 0) ^
+      (sponsor?.hashCode ?? 0) ^
+      (titleUrl?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(targetAudience) ^
+      (icalUrl?.hashCode ?? 0) ^
+      (outlookUrl?.hashCode ?? 0) ^
+      (speaker?.hashCode ?? 0) ^
+      (registrationLabel?.hashCode ?? 0) ^
+      (registrationUrl?.hashCode ?? 0) ^
+      (cost?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(contacts) ^
+      const DeepCollectionEquality().hash(tags) ^
+      (modifiedDate?.hashCode ?? 0) ^
+      (submissionResult?.hashCode ?? 0) ^
+      (eventId?.hashCode ?? 0) ^
+      (allDay?.hashCode ?? 0) ^
+      (recurringFlag?.hashCode ?? 0) ^
+      (recurrenceId?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(recurringEvents) ^
+
+      (isSuperEvent?.hashCode ?? 0) ^
+      (displayOnlyWithSuperEvent?.hashCode ?? 0) ^
+      (isVirtual?.hashCode ?? 0) ^
+      (virtualEventUrl?.hashCode ?? 0) ^
+      (isInPerson?.hashCode ?? 0) ^
+      const DeepCollectionEquality().hash(subEventsMap) ^
+      (track?.hashCode ?? 0) ^
+//    const DeepCollectionEquality().hash(_subEvents) ^
+//    const DeepCollectionEquality().hash(_featuredEvents) ^
+      (createdByGroupId?.hashCode ?? 0) ^
+      (isGroupPrivate?.hashCode ?? 0) ^
+      (isEventFree?.hashCode ?? 0);
 
   Event({Map<String, dynamic>? json, Event? other}) {
     if (json != null) {
@@ -148,7 +262,9 @@ class Event with Explore implements Favorite {
     displayOnlyWithSuperEvent = json['displayOnlyWithSuperEvent'] ?? false;
     this.subEventsMap = subEventsMap;
     track = json['track'];
-    isVirtual = json['isVirtual'] ?? false;
+    isVirtual = json['isVirtual'];
+    virtualEventUrl = json['virtualEventUrl'];
+    isInPerson = json['isInPerson'];
     createdByGroupId = json["createdByGroupId"];
     isGroupPrivate = json["isGroupPrivate"] ?? false;
     isEventFree = json["isEventFree"] ?? false;
@@ -194,6 +310,8 @@ class Event with Explore implements Favorite {
     subEventsMap = other?.subEventsMap;
     track = other?.track;
     isVirtual = other?.isVirtual;
+    virtualEventUrl = other?.virtualEventUrl;
+    isInPerson = other?.isInPerson;
     createdByGroupId = other?.createdByGroupId;
     isGroupPrivate = other?.isGroupPrivate;
     isEventFree = other?.isEventFree;
@@ -254,6 +372,8 @@ class Event with Explore implements Favorite {
       "subEvents": subEventsMap,
       "track": track,
       'isVirtual': isVirtual,
+      'virtualEventUrl': virtualEventUrl,
+      'isInPerson': isInPerson,
       'createdByGroupId': createdByGroupId,
       'isGroupPrivate': isGroupPrivate,
       'isEventFree': isEventFree,
@@ -421,6 +541,12 @@ class Event with Explore implements Favorite {
     if(isVirtual!=null) {
       result['isVirtual']= isVirtual;
     }
+    if(virtualEventUrl!=null) {
+      result['virtualEventUrl']= virtualEventUrl;
+    }
+    if(isInPerson!=null) {
+      result['isInPerson']= isInPerson;
+    }
     if(createdByGroupId!=null) {
       result['createdByGroupId']= createdByGroupId;
     }
@@ -505,7 +631,7 @@ class Event with Explore implements Favorite {
   }
 
   void addRecurrentEvent(Event event) {
-    recurringEvents ??= [];
+    recurringEvents ??= <Event>[];
     recurringEvents!.add(event);
   }
 
@@ -535,7 +661,7 @@ class Event with Explore implements Favorite {
     if (isSuperEvent != true) {
       return;
     }
-    _subEvents ??= [];
+    _subEvents ??= <Event>[];
     _subEvents!.add(event);
   }
 
@@ -547,15 +673,19 @@ class Event with Explore implements Favorite {
     if (isSuperEvent != true) {
       return;
     }
-    _featuredEvents ??= [];
+    _featuredEvents ??= <Event>[];
     _featuredEvents!.add(event);
+  }
+
+  bool get isComposite {
+    return isRecurring || (isSuperEvent == true);
   }
 
   static List<Map<String, dynamic>>? _constructSubEventsMap(List<dynamic>? subEventsJson) {
     if (subEventsJson == null || subEventsJson.isEmpty) {
       return null;
     }
-    List<Map<String, dynamic>> subEvents = [];
+    List<Map<String, dynamic>> subEvents = <Map<String, dynamic>>[];
     for (dynamic eventDynamic in subEventsJson) {
       if (eventDynamic is Map<String, dynamic>) {
         subEvents.add(eventDynamic);
@@ -565,7 +695,6 @@ class Event with Explore implements Favorite {
   }
 
   // Explore
-  
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
   @override String?   get exploreSubTitle         { return subTitle; }
@@ -579,14 +708,10 @@ class Event with Explore implements Favorite {
   DateTime? get startDateLocal     { return AppDateTime().getUniLocalTimeFromUtcTime(startDateGmt); }
   DateTime? get endDateLocal       { return AppDateTime().getUniLocalTimeFromUtcTime(endDateGmt); }
 
-  static String favoriteKeyName = "eventIds";
-  @override String? get favoriteId => exploreId;
-  @override String? get favoriteTitle => title;
+  // Favorite
+  static const String favoriteKeyName = "eventIds";
   @override String get favoriteKey => favoriteKeyName;
-
-  bool get isComposite {
-    return isRecurring || (isSuperEvent == true);
-  }
+  @override String? get favoriteId => exploreId;
 }
 
 class Contact {
@@ -621,6 +746,23 @@ class Contact {
       "organization": organization
     };
   }
+
+  @override
+  bool operator ==(other) =>
+      (other is Contact) &&
+      (other.firstName == firstName) &&
+      (other.lastName == lastName) &&
+      (other.email == email) &&
+      (other.phone == phone) &&
+      (other.organization == organization);
+
+  @override
+  int get hashCode =>
+      (firstName?.hashCode ?? 0) ^
+      (lastName?.hashCode ?? 0) ^
+      (email?.hashCode ?? 0) ^
+      (phone?.hashCode ?? 0) ^
+      (organization?.hashCode ?? 0);
 
   static List<Contact>? listFromJson(List<dynamic>? jsonList) {
     List<Contact>? result;

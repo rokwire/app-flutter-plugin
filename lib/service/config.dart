@@ -264,8 +264,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       _config = (configString != null) ? configFromJsonString(configString) : null;
       if (_config != null) {
         configFile.writeAsStringSync(configString!, flush: true);
-        NotificationService().notify(notifyConfigChanged, null);
-        
         checkUpgrade();
       }
       else {
@@ -472,7 +470,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: platformBuildingBlocks
   String? get coreUrl          => JsonUtils.stringValue(platformBuildingBlocks['core_url']);
   String? get notificationsUrl => JsonUtils.stringValue(platformBuildingBlocks["notifications_url"]);
-  String? get locationsUrl     => JsonUtils.stringValue(platformBuildingBlocks["locations_url"]);
   String? get loggingUrl       => JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
   String? get quickPollsUrl    => JsonUtils.stringValue(platformBuildingBlocks["polls_url"]);
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);

@@ -25,6 +25,7 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/geo_fence.dart';
 import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -39,7 +40,7 @@ class FlexUI with Service implements NotificationsListener {
   static const String _flexUIName   = "flexUI.json";
 
   Map<String, dynamic>? _content;
-  Map<String, dynamic>? _contentSource;
+  Map<String, dynamic>? _contentData;
   Set<dynamic>?         _features;
   File?                 _cacheFile;
   DateTime?             _pausedDateTime;
@@ -69,10 +70,9 @@ class FlexUI with Service implements NotificationsListener {
       Auth2UserPrefs.notifyPrivacyLevelChanged,
       Auth2.notifyLoginChanged,
       Auth2.notifyLinkChanged,
-//    Auth2.notifyCardChanged,
-//    IlliniCash.notifyBallanceUpdated,
       AppLivecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
+      GeoFence.notifyCurrentRegionsUpdated,
     ]);
   }
 
@@ -84,12 +84,12 @@ class FlexUI with Service implements NotificationsListener {
   @override
   Future<void> initService() async {
     _cacheFile = await getCacheFile();
-    _contentSource = await loadContentSource();
-    _content = buildContent(_contentSource);
+    _contentData = await loadContentData();
+    _content = buildContent(_contentData);
     _features = buildFeatures(_content);
     if (_content != null) {
       await super.initService();
-      updateContentSourceFromNet();
+      updateContentDataFromNet();
     }
     else {
       throw ServiceError(
@@ -103,7 +103,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Config(), Auth2() };
+    return { Config(), Auth2(), Groups(), GeoFence() };
   }
 
   // NotificationsListener
@@ -116,7 +116,8 @@ class FlexUI with Service implements NotificationsListener {
         (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
         (name == Auth2.notifyLoginChanged) ||
         (name == Auth2.notifyLinkChanged) ||
-        (name == Groups.notifyUserGroupsUpdated))
+        (name == Groups.notifyUserGroupsUpdated) ||
+        (name == GeoFence.notifyCurrentRegionsUpdated))
     {
       updateContent();
     }
@@ -134,7 +135,7 @@ class FlexUI with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          updateContentSourceFromNet();
+          updateContentDataFromNet();
         }
       }
     }
@@ -156,12 +157,12 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Future<String?> loadContentSourceStringFromCache() async {
+  Future<String?> loadContentDataStringFromCache() async {
     return ((_cacheFile != null) && await _cacheFile!.exists()) ? await _cacheFile!.readAsString() : null;
   }
 
   @protected
-  Future<void> saveContentSourceStringToCache(String? contentString) async {
+  Future<void> saveContentDataStringToCache(String? contentString) async {
     if (contentString != null) {
       await _cacheFile?.writeAsString(contentString, flush: true);
     }
@@ -171,27 +172,27 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadContentSourceFromCache() async {
-    return JsonUtils.decodeMap(await loadContentSourceStringFromCache());
+  Future<Map<String, dynamic>?> loadContentDataFromCache() async {
+    return JsonUtils.decodeMap(await loadContentDataStringFromCache());
   }
 
   @protected
   String get resourceAssetsKey => 'assets/$_flexUIName';
 
   @protected
-  Future<Map<String, dynamic>?> loadContentSourceFromAssets() async {
+  Future<Map<String, dynamic>?> loadContentDataFromAssets() async {
     try { return JsonUtils.decodeMap(await rootBundle.loadString(resourceAssetsKey)); }
     catch(e) { debugPrint(e.toString());}
     return null;
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadContentSource() async {
+  Future<Map<String, dynamic>?> loadContentData() async {
     Map<String, dynamic>? conentSource;
-    if (isValidContentSource(conentSource = await loadContentSourceFromCache())) {
+    if (isValidContentData(conentSource = await loadContentDataFromCache())) {
       return conentSource;
     }
-    else if (isValidContentSource(conentSource = await loadContentSourceFromAssets())) {
+    else if (isValidContentData(conentSource = await loadContentDataFromAssets())) {
       return conentSource;
     }
     else {
@@ -203,27 +204,27 @@ class FlexUI with Service implements NotificationsListener {
   String get networkAssetName => _flexUIName;
 
   @protected
-  Future<String?> loadContentSourceStringFromNet() async {
+  Future<String?> loadContentDataStringFromNet() async {
     Response? response = (Config().assetsUrl != null) ? await Network().get("${Config().assetsUrl}/$networkAssetName") : null;
     return ((response != null) && (response.statusCode == 200)) ? response.body : null;
   }
 
   @protected
-  Future<void> updateContentSourceFromNet() async {
-    String? contentSourceString = await loadContentSourceStringFromNet();
-    if (contentSourceString != null) { // request succeeded
+  Future<void> updateContentDataFromNet() async {
+    String? contentDataString = await loadContentDataStringFromNet();
+    if (contentDataString != null) { // request succeeded
       
-      Map<String, dynamic>? contentSource = JsonUtils.decodeMap(contentSourceString);
-      if (!isValidContentSource(contentSource) && (_cacheFile != null) && await _cacheFile!.exists()) { // empty JSON content
+      Map<String, dynamic>? contentData = JsonUtils.decodeMap(contentDataString);
+      if (!isValidContentData(contentData) && (_cacheFile != null) && await _cacheFile!.exists()) { // empty JSON content
         try { _cacheFile!.delete(); }                          // clear cached content source
         catch(e) { debugPrint(e.toString()); }
-        contentSource = await loadContentSourceFromAssets(); // load content source from assets
-        contentSourceString = null;                           // do not store this content source
+        contentData = await loadContentDataFromAssets(); // load content source from assets
+        contentDataString = null;                           // do not store this content source
       }
 
-      if (isValidContentSource(contentSource) && ((_contentSource == null) || !const DeepCollectionEquality().equals(_contentSource, contentSource))) {
-        _contentSource = contentSource;
-        saveContentSourceStringToCache(contentSourceString);
+      if (isValidContentData(contentData) && ((_contentData == null) || !const DeepCollectionEquality().equals(_contentData, contentData))) {
+        _contentData = contentData;
+        saveContentDataStringToCache(contentDataString);
         updateContent();
       }
     }
@@ -231,7 +232,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   void updateContent() {
-    Map<String, dynamic>? content = buildContent(_contentSource);
+    Map<String, dynamic>? content = buildContent(_contentData);
     if ((content != null) && ((_content == null) || !const DeepCollectionEquality().equals(_content, content))) {
       _content = content;
       _features = buildFeatures(_content);
@@ -246,8 +247,8 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool isValidContentSource(Map<String, dynamic>? contentSource) {
-    return (contentSource != null) && (contentSource['content'] is Map) && (contentSource['rules'] is Map);
+  bool isValidContentData(Map<String, dynamic>? contentData) {
+    return (contentData != null) && (contentData['content'] is Map) && (contentData['rules'] is Map);
   }
 
   // Content
@@ -256,8 +257,8 @@ class FlexUI with Service implements NotificationsListener {
     return _content;
   }
 
-  dynamic operator [](dynamic key) {
-    return (_content != null) ? _content![key] : null;
+  List<dynamic>? operator [](dynamic key) {
+    return (_content != null) ? JsonUtils.listValue(_content![key]) : null;
   }
 
   Set<dynamic>? get features {
@@ -265,7 +266,16 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   bool hasFeature(String feature) {
-    return (_features == null) || _features!.contains(feature);
+    return (_features != null) && _features!.contains(feature);
+  }
+
+  Map<String, dynamic>? get contentSource {
+    return (_contentData != null) ? JsonUtils.mapValue(_contentData!['content']) : null;
+  }
+
+  List<dynamic>? contentSourceEntry(dynamic key) {
+    Map<String, dynamic>? contentSrc = contentSource;
+    return (contentSrc != null) ? JsonUtils.listValue(contentSrc[key]) : null;
   }
 
   Future<void> update() async {
@@ -275,18 +285,18 @@ class FlexUI with Service implements NotificationsListener {
 // Local Build
 
   @protected
-  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource) {
+  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentData) {
     Map<String, dynamic>? result;
-    if (contentSource != null) {
-      Map<String, dynamic> contents = contentSource['content'];
-      Map<String, dynamic>? rules = contentSource['rules'];
+    if (contentData != null) {
+      Map<String, dynamic> contents = JsonUtils.mapValue(contentData['content']) ?? <String, dynamic>{};
+      Map<String, dynamic> rules = JsonUtils.mapValue(contentData['rules']) ?? <String, dynamic>{};
 
       result = {};
       contents.forEach((String key, dynamic list) {
         if (list is List) {
           List<String> resultList = <String>[];
           for (String entry in list) {
-            if (localeIsEntryAvailable(entry, group: key, rules: rules!)) {
+            if (localeIsEntryAvailable(entry, group: key, rules: rules)) {
               resultList.add(entry);
             }
           }
@@ -314,6 +324,12 @@ class FlexUI with Service implements NotificationsListener {
     Map<String, dynamic>? groupRules = rules['groups'];
     dynamic groupRule = (groupRules != null) ? (((pathEntry != null) ? groupRules[pathEntry] : null) ?? groupRules[entry]) : null;
     if ((groupRule != null) && !localeEvalGroupRule(groupRule, rules)) {
+      return false;
+    }
+
+    Map<String, dynamic>? locationRules = rules['locations'];
+    dynamic locationRule = (locationRules != null) ? (((pathEntry != null) ? locationRules[pathEntry] : null) ?? locationRules[entry]) : null;
+    if ((locationRule != null) && !localeEvalLocationRule(locationRule, rules)) {
       return false;
     }
 
@@ -418,7 +434,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetGroups = localeEvalGroupParam(argument, rules);
+        Set<String>? targetGroups = localeEvalStringParam(argument, rules);
         Set<String> userGroups = Groups().userGroupNames ?? {};
         if (targetGroups != null) {
           if (not == true) {
@@ -441,19 +457,52 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Set<String>? localeEvalGroupParam(String? groupParam, Map<String, dynamic> rules) {
-    if (groupParam != null) {
-      if (RegExp("{.+}").hasMatch(groupParam)) {
-        Set<String> groups = <String>{};
-        String rolesStr = groupParam.substring(1, groupParam.length - 1);
-        List<String> groupsStrList = rolesStr.split(',');
-        for (String groupNameStr in groupsStrList) {
-          groups.add(groupNameStr.trim());
+  bool localeEvalLocationRule(dynamic locationRule, Map<String, dynamic> rules) {
+    return BoolExpr.eval(locationRule, (String? argument) {
+      if (argument != null) {
+        bool? not, all, any;
+        if (not = argument.startsWith('~')) {
+          argument = argument.substring(1);
         }
-        return groups;
+        if (all = argument.endsWith('!')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        else if (any = argument.endsWith('?')) {
+          argument = argument.substring(0, argument.length - 1);
+        }
+        
+        Set<String>? targetLocations = localeEvalStringParam(argument, rules);
+        Set<String> userLocations = GeoFence().currentRegionIds;
+        if (targetLocations != null) {
+          if (not == true) {
+            targetLocations = userLocations.difference(targetLocations);
+          }
+
+          if (all == true) {
+            return const DeepCollectionEquality().equals(userLocations, targetLocations);
+          }
+          else if (any == true) {
+            return userLocations.intersection(targetLocations).isNotEmpty;
+          }
+          else {
+            bool result = userLocations.containsAll(targetLocations);
+            return result;
+          }
+        }
+      }
+      return null;
+    });
+  }
+
+  @protected
+  Set<String>? localeEvalStringParam(String? stringParam, Map<String, dynamic> rules) {
+    if (stringParam != null) {
+      if (RegExp("{.+}").hasMatch(stringParam)) {
+        String stringsStr = stringParam.substring(1, stringParam.length - 1);
+        return Set<String>.from(stringsStr.split(','));
       }
       else {
-        return { groupParam };
+        return <String>{ stringParam };
       }
     }
     return null;

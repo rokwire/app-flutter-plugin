@@ -80,14 +80,23 @@ class AppNavigation extends NavigatorObserver {
     });
   }
 
-  static Widget? routeRootWidget(Route route, {BuildContext? context}) {
-    WidgetBuilder? builder;
+  static Widget? routeRootWidget(Route route, {required BuildContext context}) {
     if (route is CupertinoPageRoute) {
-      builder = route.builder;
+      return route.builder(context);
     }
     else if (route is MaterialPageRoute) {
-      builder = route.builder;
+      return route.builder(context);
     }
-    return (builder != null) ? builder(context!) : null;
+    else if (route is PageRouteBuilder) {
+      return route.pageBuilder(context, AnimationController(duration: const Duration(), vsync: _SingleTickerProviderState()), AnimationController(duration: const Duration(), vsync: _SingleTickerProviderState()));
+    }
+    return null;
+  }
+}
+
+class _SingleTickerProviderState extends State with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    throw UnimplementedError();
   }
 }

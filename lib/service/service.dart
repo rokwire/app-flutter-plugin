@@ -39,6 +39,8 @@ abstract class Service {
   Set<Service>? get serviceDependsOn {
     return null;
   }
+
+  String get debugDisplayName => runtimeType.toString();
 }
 
 class Services {

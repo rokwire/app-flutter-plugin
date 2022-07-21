@@ -232,6 +232,42 @@ class Content /* with Service */ {
         return 'small';
     }
   }
+
+  //Content items
+  Future<List<dynamic>?> loadContentItems({List<String>? categories, List<String>? ids}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      debugPrint('Missing content service url.');
+      return null;
+    }
+    if (CollectionUtils.isEmpty(categories) && CollectionUtils.isEmpty(ids)) {
+      debugPrint('Missing content item category');
+      return null;
+    }
+
+    Map<String, dynamic> json = {};
+    if(CollectionUtils.isNotEmpty(categories)){
+      json["categories"] = categories;
+    }
+
+    if(CollectionUtils.isNotEmpty(ids)){
+      json["ids"] = ids;
+    }
+    String? body = JsonUtils.encode(json);
+
+    String url = "$serviceUrl/content_items";
+    Response? response = await Network().get(url, body: body, auth: Auth2());
+    int responseCode = response?.statusCode ?? -1;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      String? responseBody = response?.body;
+      return (responseBody != null) ? JsonUtils.decodeList(responseBody) : null;
+    } else {
+      debugPrint('Failed to load content itemReason: ');
+      debugPrint(responseBody);
+      return null;
+    }
+  }
 }
 
 enum ImagesResultType { error, cancelled, succeeded }

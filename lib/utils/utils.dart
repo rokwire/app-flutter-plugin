@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -60,16 +61,28 @@ class StringUtils {
     return maskedPhoneNumber;
   }
 
-  static String capitalize(String value) {
-    if (value.isEmpty) {
-      return '';
-    }
-    else if (value.length == 1) {
-      return value[0].toUpperCase();
+  static String capitalize(String value, { bool allWords = false, Pattern splitDelimiter = ' ', String joinDelimiter = ' '}) {
+
+    if (allWords) {
+      List<String> words = value.split(splitDelimiter);
+      List<String> result = <String>[];
+      for (String word in words) {
+        result.add(capitalize(word, allWords : false));
+      }
+      return result.join(joinDelimiter);
     }
     else {
-      return "${value[0].toUpperCase()}${value.substring(1).toLowerCase()}";
+      if (value.isEmpty) {
+        return '';
+      }
+      else if (value.length == 1) {
+        return value[0].toUpperCase();
+      }
+      else {
+        return "${value[0].toUpperCase()}${value.substring(1).toLowerCase()}";
+      }
     }
+
   }
 
   static String stripHtmlTags(String value) {
@@ -163,6 +176,10 @@ class ListUtils {
       list.add(entry);
     }
   }
+
+  static T? entry<T>(List<T>? list, int index) {
+    return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
+  }
 }
 
 class SetUtils {
@@ -183,8 +200,13 @@ class MapUtils {
   }
 
   static void set<K, T>(Map<K, T>? map, K? key, T? value) {
-    if ((map != null) && (key != null) && (value != null)) {
-      map[key] = value;
+    if ((map != null) && (key != null)) {
+      if (value != null) {
+        map[key] = value;
+      }
+      else {
+        map.remove(key);
+      }
     }
   }
 }
@@ -484,7 +506,17 @@ class JsonUtils {
 
   static Set<String>? setStringsValue(dynamic value) {
     try {
-      return (value is List) ? Set.from(value.cast<String>()) : null;
+      return (value is List) ? Set<String>.from(value.cast<String>()) : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<String>? linkedHashSetStringsValue(dynamic value) {
+    try {
+      return (value is List) ? LinkedHashSet<String>.from(value.cast<String>()) : null;
     }
     catch(e) {
       debugPrint(e.toString());
@@ -702,6 +734,28 @@ class HtmlUtils {
   }
 }
 
+enum DayPart { morning, afternoon, evening, night }
+
+String? dayPartToString(DayPart? dayPart) {
+  switch(dayPart) {
+    case DayPart.morning: return "morning";
+    case DayPart.afternoon: return "afternoon";
+    case DayPart.evening: return "evening";
+    case DayPart.night: return "night";
+    default: return null;
+  }
+}
+
+DayPart? dayPartFromString(String? value) {
+  switch(value) {
+    case "morning": return DayPart.morning;
+    case "afternoon": return DayPart.afternoon;
+    case "evening": return DayPart.evening;
+    case "night": return DayPart.night;
+    default: return null;
+  }
+}
+
 class DateTimeUtils {
   
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
@@ -730,6 +784,25 @@ class DateTimeUtils {
       case "saturday" : return 6;
       case "sunday"   : return 7;
       default: return 0;
+    }
+  }
+
+  static DayPart getDayPart({DateTime? dateTime}) {
+    int hour = (dateTime ?? DateTime.now()).hour;
+    if (hour < 6) {
+      return DayPart.night;
+    }
+    else if ((6 <= hour) && (hour < 12)) {
+      return DayPart.morning;
+    }
+    else if ((12 <= hour) && (hour < 17)) {
+      return DayPart.afternoon;
+    }
+    else if ((17 <= hour) && (hour < 20)) {
+      return DayPart.evening;
+    }
+    else /* if (20 <= hour) */ {
+      return DayPart.night;
     }
   }
 
@@ -769,6 +842,10 @@ class DateTimeUtils {
 
   static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
+  }
+
+  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 }
 

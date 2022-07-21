@@ -35,8 +35,12 @@ class Group {
   DateTime?           dateUpdatedUtc;
 
   bool?               authManEnabled;
-  bool?               onlyAdminsCanCreatePolls;
   String?             authManGroupName;
+  bool?               onlyAdminsCanCreatePolls;
+
+  bool?               hiddenForSearch;
+  bool?               attendanceGroup;
+  bool?               canJoinAutomatically;
 
   String?             imageURL;
   String?             webURL;
@@ -69,9 +73,12 @@ class Group {
     try { title             = json['title'];      } catch(e) { debugPrint(e.toString()); }
     try { description       = json['description'];  } catch(e) { debugPrint(e.toString()); }
     try { privacy           = groupPrivacyFromString(json['privacy']); } catch(e) { debugPrint(e.toString()); }
-    try { certified          = json['certified']; } catch(e) { debugPrint(e.toString()); }
+    try { certified         = json['certified']; } catch(e) { debugPrint(e.toString()); }
     try { authManEnabled    = json['authman_enabled']; } catch(e) { debugPrint(e.toString()); }
     try { authManGroupName  = json['authman_group']; } catch(e) { debugPrint(e.toString()); }
+    try { hiddenForSearch   = json['hidden_for_search']; } catch(e) { debugPrint(e.toString()); }
+    try { attendanceGroup   = json['attendance_group']; } catch(e) { debugPrint(e.toString()); }
+    try { canJoinAutomatically = json['can_join_automatically']; } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
     try { imageURL          = json['image_url'];     } catch(e) { debugPrint(e.toString()); }
@@ -96,6 +103,9 @@ class Group {
     json['certified']                     = certified;
     json['authman_enabled']              = authManEnabled;
     json['authman_group']                = authManGroupName;
+    json['hidden_for_search']            = hiddenForSearch;
+    json['attendance_group']             = attendanceGroup;
+    json['can_join_automatically']       = canJoinAutomatically;
     json['date_created']                 = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']                 = groupUtcDateTimeToString(dateUpdatedUtc);
     json['image_url']                    = imageURL;
@@ -119,6 +129,9 @@ class Group {
     authManEnabled    = other?.authManEnabled;
     onlyAdminsCanCreatePolls = other?.onlyAdminsCanCreatePolls;
     authManGroupName  = other?.authManGroupName;
+    hiddenForSearch   = other?.hiddenForSearch;
+    attendanceGroup   = other?.attendanceGroup;
+    canJoinAutomatically = other?.canJoinAutomatically;
     dateCreatedUtc    = other?.dateCreatedUtc;
     dateUpdatedUtc    = other?.dateUpdatedUtc;
     imageURL          = other?.imageURL;
@@ -145,7 +158,11 @@ class Group {
       (other.authManEnabled == authManEnabled) &&
       (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
       (other.authManGroupName == authManGroupName) &&
-      
+
+      (other.hiddenForSearch == hiddenForSearch) &&
+      (other.attendanceGroup == attendanceGroup) &&
+      (other.canJoinAutomatically == canJoinAutomatically) &&
+
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
       (const DeepCollectionEquality().equals(other.members, members)) &&
@@ -169,6 +186,10 @@ class Group {
     (authManEnabled?.hashCode ?? 0) ^
     (onlyAdminsCanCreatePolls?.hashCode ?? 0) ^
     (authManGroupName?.hashCode ?? 0) ^
+
+    (hiddenForSearch?.hashCode ?? 0) ^
+    (attendanceGroup?.hashCode ?? 0) ^
+    (canJoinAutomatically?.hashCode ?? 0) ^
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
@@ -266,6 +287,22 @@ class Group {
     return membersCount;
   }
 
+  int get attendedCount {
+    int attendedCount = 0;
+    if (CollectionUtils.isNotEmpty(members)) {
+      for (Member? member in members!) {
+        if ((member!.isAdmin || member.isMember) && (member.dateAttendedUtc != null)) {
+          attendedCount++;
+        }
+      }
+    }
+    return attendedCount;
+  }
+
+  bool get syncAuthmanAllowed {
+    return (currentUserIsAdmin == true) && (authManEnabled == true);
+  }
+
   static List<Group>? listFromJson(List<dynamic>? json) {
     List<Group>? values;
     if (json != null) {
@@ -330,6 +367,7 @@ class Member {
   GroupMemberStatus? status;
   String?            officerTitle;
   
+  DateTime?          dateAttendedUtc;
   DateTime?          dateCreatedUtc;
   DateTime?          dateUpdatedUtc;
 
@@ -359,20 +397,22 @@ class Member {
       debugPrint(e.toString());
     }
 
+    try { dateAttendedUtc   = groupUtcDateTimeFromString(json['date_attended']); } catch(e) { debugPrint(e.toString()); }
     try { dateCreatedUtc    = groupUtcDateTimeFromString(json['date_created']); } catch(e) { debugPrint(e.toString()); }
     try { dateUpdatedUtc    = groupUtcDateTimeFromString(json['date_updated']); } catch(e) { debugPrint(e.toString()); }
   }
 
   void _initFromOther(Member? other) {
-    id             = other?.id;
-    userId         = other?.userId;
-    externalId     = other?.externalId;
-    name           = other?.name;
-    status         = other?.status;
-    officerTitle   = other?.officerTitle;
-    answers        = other?.answers;
-    dateCreatedUtc = other?.dateCreatedUtc;
-    dateUpdatedUtc = other?.dateUpdatedUtc;
+    id              = other?.id;
+    userId          = other?.userId;
+    externalId      = other?.externalId;
+    name            = other?.name;
+    status          = other?.status;
+    officerTitle    = other?.officerTitle;
+    answers         = other?.answers;
+    dateAttendedUtc = other?.dateAttendedUtc;
+    dateCreatedUtc  = other?.dateCreatedUtc;
+    dateUpdatedUtc  = other?.dateUpdatedUtc;
   }
 
   static Member? fromJson(Map<String, dynamic>? json) {
@@ -393,6 +433,7 @@ class Member {
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
     json['answers']             = CollectionUtils.isNotEmpty(answers) ? answers!.map((answer) => answer.toJson()).toList() : null;
+    json['date_attended']       = groupUtcDateTimeToString(dateAttendedUtc);
     json['date_created']        = groupUtcDateTimeToString(dateCreatedUtc);
     json['date_updated']        = groupUtcDateTimeToString(dateUpdatedUtc);
 
@@ -443,6 +484,7 @@ class Member {
       (other.email == email) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
+      (other.dateAttendedUtc == dateAttendedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
       const DeepCollectionEquality().equals(other.answers, answers);
@@ -456,6 +498,7 @@ class Member {
     (email?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
+    (dateAttendedUtc?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(answers));
@@ -629,7 +672,7 @@ class GroupMembershipStep {
   static List<GroupMembershipStep>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipStep>? values;
     if (json != null) {
-      values = [];
+      values = <GroupMembershipStep>[];
       for (dynamic entry in json) {
         ListUtils.add(values, GroupMembershipStep.fromJson(JsonUtils.mapValue(entry)));
       }
@@ -651,7 +694,7 @@ class GroupMembershipStep {
   static List<GroupMembershipStep>? listFromOthers(List<GroupMembershipStep>? others) {
     List<GroupMembershipStep>? values;
     if (others != null) {
-      values = [];
+      values = <GroupMembershipStep>[];
       for (GroupMembershipStep? other in others) {
           ListUtils.add(values, GroupMembershipStep.fromOther(other));
       }
@@ -688,7 +731,7 @@ class GroupMembershipQuestion {
   static List<GroupMembershipQuestion>? listFromOthers(List<GroupMembershipQuestion>? others) {
     List<GroupMembershipQuestion>? values;
     if (others != null) {
-      values = [];
+      values = <GroupMembershipQuestion>[];
       for (GroupMembershipQuestion? other in others) {
         ListUtils.add(values, GroupMembershipQuestion.fromString(other!.question));
       }
@@ -753,7 +796,7 @@ class GroupMembershipAnswer {
   static List<GroupMembershipAnswer>? listFromJson(List<dynamic>? json) {
     List<GroupMembershipAnswer>? values;
     if (json != null) {
-      values = [];
+      values = <GroupMembershipAnswer>[];
       for (dynamic entry in json) {
         ListUtils.add(values, GroupMembershipAnswer.fromJson(JsonUtils.mapValue(entry)));
       }
@@ -836,7 +879,7 @@ class GroupPost {
   static List<GroupPost>? fromJsonList(List<dynamic>? jsonList) {
     List<GroupPost>? posts;
     if (jsonList != null) {
-      posts = [];
+      posts = <GroupPost>[];
       for (dynamic jsonEntry in jsonList) {
         ListUtils.add(posts, GroupPost.fromJson(jsonEntry));
       }
@@ -853,6 +896,40 @@ class PostDataModel {
   List<Member>? members;
 
   PostDataModel({this.body, this.subject, this.imageUrl, this.members});
+}
+
+//////////////////////////////
+// GroupPostNudge
+
+class GroupPostNudge {
+  final String? id;
+  final dynamic groupNames;
+  final String? subject;
+  final String? body;
+
+  GroupPostNudge({this.id, this.subject, this.body, this.groupNames});
+
+  static GroupPostNudge? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return GroupPostNudge(
+        id: JsonUtils.stringValue(json['id']),
+        subject: JsonUtils.stringValue(json['subject']),
+        body: JsonUtils.stringValue(json['body']),
+        groupNames: json['group_name']);
+  }
+
+  static List<GroupPostNudge>? fromJsonList(List<dynamic>? jsonList) {
+    List<GroupPostNudge>? templates;
+    if (jsonList != null) {
+      templates = <GroupPostNudge>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(templates, GroupPostNudge.fromJson(jsonEntry));
+      }
+    }
+    return templates;
+  }
 }
 
 //////////////////////////////

@@ -58,7 +58,7 @@ abstract class Explore implements Comparable<Explore> {
   static List<Explore>? listFromJson(List<dynamic>? jsonList) {
     List<Explore>? explores;
     if (jsonList is List) {
-      explores = [];
+      explores = <Explore>[];
       for (dynamic jsonEntry in jsonList) {
         Explore? explore = Explore.fromJson(jsonEntry);
         if (explore != null) {
@@ -119,6 +119,21 @@ class ExploreLocation {
       this.floor,
       this.description});
 
+  static ExploreLocation? fromJSON(Map<String, dynamic>? json) {
+    return (json != null) ? ExploreLocation(
+      locationId: JsonUtils.stringValue(json['locationId']),
+      name: JsonUtils.stringValue(json['name']),
+      building: JsonUtils.stringValue(json['building']),
+      address: JsonUtils.stringValue(json['address']),
+      city: JsonUtils.stringValue(json['city']),
+      state: JsonUtils.stringValue(json['state']),
+      zip: JsonUtils.stringValue(json['zip']),
+      latitude: JsonUtils.doubleValue(json['latitude']),
+      longitude: JsonUtils.doubleValue(json['longitude']),
+      floor: JsonUtils.intValue(json['floor']),
+      description: JsonUtils.stringValue(json['description'])) : null;
+  }
+
   toJson() {
     return {
       "locationId": locationId,
@@ -135,23 +150,33 @@ class ExploreLocation {
     };
   }
 
-  static ExploreLocation? fromJSON(Map<String, dynamic>? json) {
-    if (json == null || json.isEmpty) {
-      return null;
-    }
-    return ExploreLocation(
-        locationId: json['locationId'],
-        name: json['name'],
-        building: json['building'],
-        address: json['address'],
-        city: json['city'],
-        state: json['state'],
-        zip: json['zip'],
-        latitude: json['latitude'],
-        longitude: json['longitude'],
-        floor: json['floor'],
-        description: json['description']);
-  }
+  @override
+  bool operator ==(other) => (other is ExploreLocation) &&
+    (other.locationId == locationId) &&
+    (other.name == name) &&
+    (other.building == building) &&
+    (other.address == address) &&
+    (other.city == city) &&
+    (other.state == state) &&
+    (other.zip == zip) &&
+    (other.latitude == latitude) &&
+    (other.longitude == longitude) &&
+    (other.floor == floor) &&
+    (other.description == description);
+
+  @override
+  int get hashCode =>
+    (locationId?.hashCode ?? 0) ^
+    (name?.hashCode ?? 0) ^
+    (building?.hashCode ?? 0) ^
+    (address?.hashCode ?? 0) ^
+    (city?.hashCode ?? 0) ^
+    (state?.hashCode ?? 0) ^
+    (zip?.hashCode ?? 0) ^
+    (latitude?.hashCode ?? 0) ^
+    (longitude?.hashCode ?? 0) ^
+    (floor?.hashCode ?? 0) ^
+    (description?.hashCode ?? 0);
 
   String getDisplayName() {
     String displayText = "";

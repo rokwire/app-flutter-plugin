@@ -35,6 +35,8 @@ class FirebaseMessaging with Service {
   static const String notifyToken                 = "edu.illinois.rokwire.firebase.messaging.token";
   static const String notifyForegroundMessage     = "edu.illinois.rokwire.firebase.messaging.message.foreground";
 
+  static const String notifyGroupsNotification    = "edu.illinois.rokwire.firebase.messaging.groups.updated";
+
   String?   _token;
   final FlutterLocalNotificationsPlugin _firebaseMessaging = FlutterLocalNotificationsPlugin();
   

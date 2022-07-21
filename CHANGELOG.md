@@ -6,6 +6,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.1.0] - 2022-07-19
+### Changed
+- Added GeoFence location rules in FlexUI [#62](https://github.com/rokwire/app-flutter-plugin/issues/62).
+- GeoFence service updated to load regions from content BB [#91](https://github.com/rokwire/app-flutter-plugin/issues/91).
+- Cleaned up Favorites, prepare for UIUC 4 features [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Preserve the order of Favorite items [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- StringUtils.capitalize extended to process sentences [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Removed Group polls hook methods [#1679](https://github.com/rokwire/app-flutter-plugin/issues/1679).
+- Do not delete automatically empty favorites sections [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Updated Groups.reportAbuse API [1854](https://github.com/rokwire/illinois-app/issues/1854).
+- Update inbox Sent By message [#1958](https://github.com/rokwire/illinois-app/issues/1958).
+- Check Post Nudges for list of group names or group with wild card [#113](https://github.com/rokwire/app-flutter-plugin/issues/113).
+- Updated format of Favorite.toString [#2052](https://github.com/rokwire/illinois-app/issues/2052).
+- Remove check for attendance group for authman sync call [#115](https://github.com/rokwire/app-flutter-plugin/issues/115).
+### Fixed
+- Fixed auth2AnonymousId storage key [#79](https://github.com/rokwire/app-flutter-plugin/issues/79).
+- Handle "leftToRight" horizontal direction in TrianglePainter widget [#83](https://github.com/rokwire/app-flutter-plugin/issues/83).
+- Update UserGroups when group firebase message is fired [#1605](https://github.com/rokwire/illinois-app/issues/1605).
+- Fixed FlexUI service dependency [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Fixed equality check in Auth2UserProfile.setFavorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Send correct "ids" parameter when loading content items [#106](https://github.com/rokwire/app-flutter-plugin/issues/106).
+### Added
+- Acknowledge the field for hidden group [#81](https://github.com/rokwire/app-flutter-plugin/issues/81).
+- Update Group API to hook polls  [#1617](https://github.com/rokwire/illinois-app/issues/1617).
+- Added API call for content items [#1636](https://github.com/rokwire/illinois-app/issues/1636)
+- Group Attendance [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
+- Cache attended group members [#94](https://github.com/rokwire/app-flutter-plugin/issues/94).
+- Added access to FlexUI content source [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Added methods for updating entire category of favorites [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- StringUtils.capitalize extended with custom delimters [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Added FavoriteItem class [#88](https://github.com/rokwire/app-flutter-plugin/issues/88).
+- Expose getter for user's first name [#102](https://github.com/rokwire/app-flutter-plugin/issues/102).
+- Added DayPart parser utility to DateTimeUtils [#1822](https://github.com/rokwire/illinois-app/issues/1822).
+- Added Groups.reportAbuse API [#1847](https://github.com/rokwire/illinois-app/issues/1847).
+- Added DateTimeUtils util methods [#1692](https://github.com/rokwire/illinois-app/issues/1692).
+- Added debugDisplayName getter in Service interface [#1869](https://github.com/rokwire/illinois-app/issues/1869).
+- Load group post templates from the backend [#108](https://github.com/rokwire/app-flutter-plugin/issues/108).
+- Added ListUtils.entry helper.
+- Added delete API to Polls [#1954](https://github.com/rokwire/illinois-app/issues/1954).
+- Defined equality operators to Event and Poll [#2020](https://github.com/rokwire/illinois-app/issues/2020).
+
 ## [1.0.2] - 2022-04-27
 ### Changed
 - Bring back the old Polls BB [#76](https://github.com/rokwire/app-flutter-plugin/issues/76).

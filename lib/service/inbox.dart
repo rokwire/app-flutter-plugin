@@ -108,7 +108,7 @@ class Inbox with Service implements NotificationsListener {
 
   // Inbox APIs
 
-  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable? messageIds, int? offset, int? limit }) async {
+  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, int? offset, int? limit }) async {
     
     String urlParams = "";
     
@@ -144,17 +144,17 @@ class Inbox with Service implements NotificationsListener {
       urlParams = "?$urlParams";
     }
 
-    dynamic body = (messageIds != null) ? JsonUtils.encode({ "ids": List.from(messageIds) }) : null;
+    dynamic body = (messageIds != null) ? JsonUtils.encode({ "ids": List<String>.from(messageIds) }) : null;
 
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages$urlParams" : null;
     Response? response = await Network().get(url, body: body, auth: Auth2());
     return (response?.statusCode == 200) ? (InboxMessage.listFromJson(JsonUtils.decodeList(response?.body)) ?? []) : null;
   }
 
-  Future<bool> deleteMessages(Iterable? messageIds) async {
+  Future<bool> deleteMessages(Iterable<String>? messageIds) async {
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages" : null;
     String? body = JsonUtils.encode({
-      "ids": (messageIds != null) ? List.from(messageIds) : null
+      "ids": (messageIds != null) ? List<String>.from(messageIds) : null
     });
 
     Response? response = await Network().delete(url, body: body, auth: Auth2());

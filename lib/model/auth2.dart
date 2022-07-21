@@ -1,4 +1,6 @@
 
+import 'dart:collection';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -198,7 +200,7 @@ class Auth2Account {
   }
 
   List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
-    List<Auth2Type> linkedTypes = [];
+    List<Auth2Type> linkedTypes = <Auth2Type>[];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
         if (authType.loginType == loginType) {
@@ -749,14 +751,14 @@ class Auth2UserPrefs {
   
   int? _privacyLevel;
   Set<UserRole>? _roles;
-  Map<String, Set<String>>?  _favorites;
+  Map<String, LinkedHashSet<String>>?  _favorites;
   Map<String, Set<String>>?  _interests;
   Map<String, Set<String>>?  _foodFilters;
   Map<String, bool>? _tags;
   Map<String, dynamic>? _settings;
   Auth2VoterPrefs? _voter;
 
-  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, Set<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
+  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
     _privacyLevel = privacyLevel;
     _roles = roles;
     _favorites = favorites;
@@ -771,9 +773,9 @@ class Auth2UserPrefs {
     return (json != null) ? Auth2UserPrefs(
       privacyLevel: JsonUtils.intValue(json['privacy_level']),
       roles: UserRole.setFromJson(JsonUtils.listValue(json['roles'])),
-      favorites: _mapOfStringSetsFromJson(JsonUtils.mapValue(json['favorites'])),
-      interests: _mapOfStringSetsFromJson(JsonUtils.mapValue(json['interests'])),
-      foodFilters: _mapOfStringSetsFromJson(JsonUtils.mapValue(json['food'])),
+      favorites: _mapOfStringToLinkedHashSetOfStringsFromJson(JsonUtils.mapValue(json['favorites'])),
+      interests: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['interests'])),
+      foodFilters: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['food'])),
       tags: _tagsFromJson(JsonUtils.mapValue(json['tags'])),
       settings: JsonUtils.mapValue(json['settings']),
       voter: Auth2VoterPrefs.fromJson(JsonUtils.mapValue(json['voter'])),
@@ -784,7 +786,7 @@ class Auth2UserPrefs {
     return Auth2UserPrefs(
       privacyLevel: null,
       roles: <UserRole>{},
-      favorites: <String, Set<String>>{},
+      favorites: <String, LinkedHashSet<String>>{},
       interests: <String, Set<String>>{},
       foodFilters: {
         _foodIncludedTypes : <String>{},
@@ -800,7 +802,7 @@ class Auth2UserPrefs {
     Map<String, dynamic>? privacy = (profile != null) ? JsonUtils.mapValue(profile['privacySettings']) : null;
     int? privacyLevel = (privacy != null) ? JsonUtils.intValue(privacy['level']) : null;
     Set<UserRole>? roles = (profile != null) ? UserRole.setFromJson(JsonUtils.listValue(profile['roles'])) : null;
-    Map<String, Set<String>>? favorites = (profile != null) ? _mapOfStringSetsFromJson(JsonUtils.mapValue(profile['favorites'])) : null;
+    Map<String, LinkedHashSet<String>>? favorites = (profile != null) ? _mapOfStringToLinkedHashSetOfStringsFromJson(JsonUtils.mapValue(profile['favorites'])) : null;
     Map<String, Set<String>>? interests = (profile != null) ? _interestsFromProfileList(JsonUtils.listValue(profile['interests'])) : null;
     Map<String, bool>? tags = (profile != null) ? _tagsFromProfileLists(positive: JsonUtils.listValue(profile['positiveInterestTags']), negative: JsonUtils.listValue(profile['negativeInterestTags'])) : null;
     Auth2VoterPrefs? voter = (profile != null) ? Auth2VoterPrefs.fromJson(profile) : null;
@@ -808,7 +810,7 @@ class Auth2UserPrefs {
     return Auth2UserPrefs(
       privacyLevel: privacyLevel,
       roles: roles ?? <UserRole>{},
-      favorites: favorites ?? <String, Set<String>>{},
+      favorites: favorites ?? <String, LinkedHashSet<String>>{},
       interests: interests ?? <String, Set<String>>{},
       foodFilters: {
         _foodIncludedTypes : includedFoodTypes ?? <String>{},
@@ -824,9 +826,9 @@ class Auth2UserPrefs {
     return {
       'privacy_level' : privacyLevel,
       'roles': UserRole.setToJson(roles),
-      'favorites': _mapOfStringSetsToJson(_favorites),
-      'interests': _mapOfStringSetsToJson(_interests),
-      'food': _mapOfStringSetsToJson(_foodFilters),
+      'favorites': _mapOfStringToLinkedHashSetOfStringsToJson(_favorites),
+      'interests': _mapOfStringToSetOfStringsToJson(_interests),
+      'food': _mapOfStringToSetOfStringsToJson(_foodFilters),
       'tags': _tags,
       'settings': _settings,
       'voter': _voter
@@ -958,32 +960,74 @@ class Auth2UserPrefs {
 
   // Favorites
 
-  Set<String>? getFavorites(String favoriteKey) {
+  LinkedHashSet<String>? getFavorites(String favoriteKey) {
     return (_favorites != null) ? _favorites![favoriteKey] : null;
   }
 
+  void setFavorites(String favoriteKey, LinkedHashSet<String>? favorites) {
+    if (!const DeepCollectionEquality().equals(favorites?.toList(), getFavorites(favoriteKey)?.toList())) {
+      if (favorites != null) {
+        _favorites ??= <String, LinkedHashSet<String>>{};
+        _favorites![favoriteKey] = favorites;
+      }
+      else if (_favorites != null) {
+        _favorites!.remove(favoriteKey);
+      }
+      //NotificationService().notify(notifyFavoriteChanged, ...);
+      NotificationService().notify(notifyFavoritesChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+
+  void applyFavorites(String favoriteKey, Iterable<String>? favorites, bool value) {
+    if ((favorites != null) && favorites.isNotEmpty) {
+      bool isModified = false;
+      LinkedHashSet<String>? favoritesContent = getFavorites(favoriteKey);
+      for (String favorite in favorites) {
+        if (value && !(favoritesContent?.contains(favorite) ?? false)) {
+          if (favoritesContent == null) {
+            // ignore: prefer_collection_literals
+            favoritesContent = LinkedHashSet<String>();
+            _favorites ??= <String, LinkedHashSet<String>>{};
+            _favorites![favoriteKey] = favoritesContent;
+          }
+          favoritesContent.add(favorite);
+          //NotificationService().notify(notifyFavoriteChanged, FavoriteItem(key: favoriteKey, id: favorite));
+          isModified = true;
+        }
+        else if (!value && (favoritesContent?.contains(favorite) ?? false)) {
+          favoritesContent?.remove(favorite);
+          //NotificationService().notify(notifyFavoriteChanged, FavoriteItem(key: favoriteKey, id: favorite));
+          isModified = true;
+        }
+      }
+      if (isModified) {
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
+      }
+    }
+  }
+
   bool isFavorite(Favorite? favorite) {
-    Set<String>? favoriteIdsForKey = (_favorites != null) ? _favorites![favorite?.favoriteKey] : null;
+    LinkedHashSet<String>? favoriteIdsForKey = ((_favorites != null) && (favorite != null)) ? _favorites![favorite.favoriteKey] : null;
     return (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite?.favoriteId);
   }
 
   void toggleFavorite(Favorite? favorite) {
-    _favorites ??= <String, Set<String>>{};
+    if ((favorite != null) && (favorite.favoriteId != null)) {
+      _favorites ??= <String, LinkedHashSet<String>>{};
 
-    if ((favorite != null) && (_favorites != null)) {
-      Set<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
+      LinkedHashSet<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
       bool shouldFavorite = (favoriteIdsForKey == null) || !favoriteIdsForKey.contains(favorite.favoriteId);
       if (shouldFavorite) {
         if (favoriteIdsForKey == null) {
-          _favorites![favorite.favoriteKey] = favoriteIdsForKey = <String>{};
+          // ignore: prefer_collection_literals
+          _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
         }
         SetUtils.add(favoriteIdsForKey, favorite.favoriteId);
       }
       else {
         favoriteIdsForKey.remove(favorite.favoriteId);
-        if (favoriteIdsForKey.isEmpty) {
-          _favorites!.remove(favorite.favoriteKey);
-        }
       }
 
       NotificationService().notify(notifyFavoriteChanged, favorite);
@@ -1005,25 +1049,22 @@ class Auth2UserPrefs {
   }
 
   void setListFavorite(List<Favorite>? favorites, bool shouldFavorite, {Favorite? sourceFavorite}) {
-    _favorites ??= <String, Set<String>>{};
+    if (favorites != null) {
+      _favorites ??= <String, LinkedHashSet<String>>{};
 
-    if ((favorites != null) && (_favorites != null)) {
       for (Favorite favorite in favorites) {
-        Set<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
+        LinkedHashSet<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
         bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
         if (isFavorite && !shouldFavorite) {
           favoriteIdsForKey.remove(favorite.favoriteId);
-          if (favoriteIdsForKey.isEmpty) {
-            _favorites!.remove(favorite.favoriteKey);
-          }
         }
         else if (!isFavorite && shouldFavorite) {
           if (favoriteIdsForKey == null) {
-            _favorites![favorite.favoriteKey] = favoriteIdsForKey = <String>{};
+            // ignore: prefer_collection_literals
+            _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
           }
           SetUtils.add(favoriteIdsForKey, favorite.favoriteId);
         }
-        //DeviceCalendar().onFavoriteUpdated(favorite, shouldFavorite);
         NotificationService().notify(notifyFavoriteChanged, favorite);
       }
       if (sourceFavorite != null) {
@@ -1040,7 +1081,7 @@ class Auth2UserPrefs {
 
   bool get hasFavorites {
     bool result = false;
-    _favorites?.forEach((String key, Set<String> values) {
+    _favorites?.forEach((String key, LinkedHashSet<String> values) {
       if (values.isNotEmpty) {
         result = true;
       }
@@ -1374,7 +1415,7 @@ class Auth2UserPrefs {
 
   // Helpers
 
-  static Map<String, Set<String>>? _mapOfStringSetsFromJson(Map<String, dynamic>? jsonMap) {
+  static Map<String, Set<String>>? _mapOfStringToSetOfStringsFromJson(Map<String, dynamic>? jsonMap) {
     Map<String, Set<String>>? result;
     if (jsonMap != null) {
       result = <String, Set<String>>{};
@@ -1385,7 +1426,29 @@ class Auth2UserPrefs {
     return result;
   }
 
-  static Map<String, dynamic>? _mapOfStringSetsToJson(Map<String, Set<String>>? contentMap) {
+  static Map<String, dynamic>? _mapOfStringToSetOfStringsToJson(Map<String, Set<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
+  }
+
+  static Map<String, LinkedHashSet<String>>? _mapOfStringToLinkedHashSetOfStringsFromJson(Map<String, dynamic>? jsonMap) {
+    Map<String, LinkedHashSet<String>>? result;
+    if (jsonMap != null) {
+      result = <String, LinkedHashSet<String>>{};
+      for (String key in jsonMap.keys) {
+        MapUtils.set(result, key, JsonUtils.linkedHashSetStringsValue(jsonMap[key]));
+      }
+    }
+    return result;
+  }
+
+  static Map<String, dynamic>? _mapOfStringToLinkedHashSetOfStringsToJson(Map<String, LinkedHashSet<String>>? contentMap) {
     Map<String, dynamic>? jsonMap;
     if (contentMap != null) {
       jsonMap = <String, dynamic>{};
@@ -1669,10 +1732,26 @@ class UserRole {
 // Favorite
 
 abstract class Favorite {
-  String? get favoriteId;
-  String? get favoriteTitle;
   String get favoriteKey;
+  String? get favoriteId;
+  
+  @override
+  String toString() => (favoriteId != null) ? "{$favoriteKey:$favoriteId}" : "{$favoriteKey}";
 }
+
+class FavoriteItem implements Favorite {
+  final String key;
+  final String? id;
+  
+  FavoriteItem({required this.key, this.id});
+
+  @override bool operator == (other) => (other is FavoriteItem) && (other.key == key) && (other.id == id);
+  @override int get hashCode => key.hashCode ^ (id?.hashCode ?? 0);
+
+  @override String get favoriteKey => key;
+  @override String? get favoriteId => id;
+}
+
 
 ////////////////////////////////
 // Auth2PhoneVerificationMethod
