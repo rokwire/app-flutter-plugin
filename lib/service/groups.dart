@@ -1309,10 +1309,16 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  Future<bool> reportAbuse({String? groupId, String? postId, String? comment}) async {
+  Future<bool> reportAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async {
     if (Config().groupsUrl != null) {
-      Response? response = await Network().put('${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse',
-        body: JsonUtils.encode({'comment': comment}), auth: Auth2());
+      String url = '${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse';
+      String? body = JsonUtils.encode({
+        'comment': comment,
+        'send_to_dean_of_students': reportToDeanOfStudents,
+        'send_to_group_admins': reportToGroupAdmins,
+        
+      });
+      Response? response = await Network().put(url, body: body, auth: Auth2());
       return (response?.statusCode == 200);
     }
     return false;
