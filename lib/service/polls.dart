@@ -280,8 +280,8 @@ class Polls with Service implements NotificationsListener {
         if ((response != null) && (response.statusCode == 200)) {
           PollChunk? pollChunk = _pollChunks[pollId];
           if (pollChunk != null) {
-            NotificationService().notify(notifyLifecycleDelete, pollChunk.poll);
             removePollChunk(pollChunk);
+            NotificationService().notify(notifyLifecycleDelete, pollChunk.poll);
           }
         }
         else {
