@@ -226,6 +226,9 @@ class Groups with Service implements NotificationsListener {
 
   // Groups APIs
 
+  // MD: This method is important for user data migration.
+  // This method is supposed to run only once in the app lifecycle with user login due to the  _loggedIn flag
+  // Please keep in mind there may be old legacy users that haven't been migrated yet and this method resolves this scenario. 
   @protected
   Future<void> waitForLogin() async{
     if(!_loggedIn && Auth2().isLoggedIn) {
