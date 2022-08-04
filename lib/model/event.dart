@@ -690,6 +690,12 @@ class Event with Explore, Favorite {
     return (eventDays >= 1);
   }
 
+  bool get isNotTheSameYear {
+    int startYear = startDateGmt?.year ?? 0;
+    int endYear = endDateGmt?.year ?? 0;
+    return (startYear != endYear);
+  }
+
   static List<Map<String, dynamic>>? _constructSubEventsMap(List<dynamic>? subEventsJson) {
     if (subEventsJson == null || subEventsJson.isEmpty) {
       return null;
