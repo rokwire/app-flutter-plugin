@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledged new paramters of 'report/abuse' API of Groups BB [#2083](https://github.com/rokwire/illinois-app/issues/2083).
 ### Added
 - Differ multi events and events that last more than one day [#126](https://github.com/rokwire/app-flutter-plugin/issues/126).
-- Added Config().appStoreId getter [rokwire/illinois-app/#2162].
+- Added Config().appStoreId getter [#2162](https://github.com/rokwire/illinois-app/issues/2162).
+- Added MapUtils.get2 helper [#2169](https://github.com/rokwire/illinois-app/issues/2169).
 - Check if event ends in the same year as it starts [#128](https://github.com/rokwire/app-flutter-plugin/issues/128).
 
 ## [1.1.0] - 2022-07-19

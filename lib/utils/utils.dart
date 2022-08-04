@@ -209,6 +209,20 @@ class MapUtils {
       }
     }
   }
+
+  static T? get2<K, T>(Map<K, T>? map, List<K?>? keys) {
+    if ((map != null) && (keys != null)) {
+      for (K? key in keys) {
+        if (key != null) {
+          T? value = map[key];
+          if (value != null) {
+            return value;
+          }
+        }
+      }
+    }
+    return null;
+  }
 }
 
 class ColorUtils {
