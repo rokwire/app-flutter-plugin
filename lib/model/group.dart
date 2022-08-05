@@ -304,6 +304,10 @@ class GroupStats {
         rejectedCount: JsonUtils.intValue(json['rejected_count']),
         attendedCount: JsonUtils.intValue(json['attendance_count']));
   }
+
+  int get activeMembersCount {
+    return (membersCount ?? 0) + (adminsCount ?? 0);
+  }
 }
 
 //////////////////////////////
