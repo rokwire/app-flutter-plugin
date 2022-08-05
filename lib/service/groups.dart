@@ -127,8 +127,6 @@ class Groups with Service implements NotificationsListener {
 
     _userGroups = await _loadUserGroupsFromCache();
     _userGroupNames = _buildGroupNames(_userGroups);
-    //TBD: DD - delete after tests
-    // _initUserGroupsWithCachedAttendedMembers();
 
     if (_userGroups == null) {
       await _initUserGroupsFromNet();
@@ -1301,9 +1299,6 @@ class Groups with Service implements NotificationsListener {
   void _addAttendedMemberToCache({required Group group, required Member member}) {
     String groupId = group.id!;
     _attendedMembers ??= HashMap<String, List<Member>>();
-    //TBD: DD - delete after tests - The members are no longer part of the group
-    // group.members ??= <Member>[];
-    // group.members!.add(member);
     List<Member>? attendedGroupMembers = _attendedMembers![groupId];
     attendedGroupMembers ??= <Member>[];
     attendedGroupMembers.add(member);
@@ -1350,44 +1345,6 @@ class Groups with Service implements NotificationsListener {
       }
     }
   }
-
-  /// 
-  /// Initializes cached user groups with cached attended members if there are differences. 
-  /// So that user groups are in sync if the device is offline.
-  /// This is done only on startup
-  /// 
-  /// TBD: DD - delete after tests
-  /// DD: Members are not embedded in the group anymore
-  // void _initUserGroupsWithCachedAttendedMembers() {
-  //   if (Connectivity().isOffline && CollectionUtils.isNotEmpty(_attendedMembers?.keys)) {
-  //     for (String groupId in _attendedMembers!.keys) {
-  //       Group? userGroup = _getUserGroup(groupId: groupId);
-  //       if (userGroup != null) {
-  //         List<Member>? attendedGroupMembers = _attendedMembers![groupId];
-  //         if (CollectionUtils.isNotEmpty(attendedGroupMembers)) {
-  //           List<Member>? groupMembers = userGroup.members;
-  //           if (CollectionUtils.isNotEmpty(groupMembers)) {
-  //             for (Member attendedMember in attendedGroupMembers!) {
-  //               Member? groupMember;
-  //               for (Member grMember in groupMembers!) {
-  //                 if (grMember.externalId == attendedMember.externalId) {
-  //                   groupMember = grMember;
-  //                   break;
-  //                 }
-  //               }
-  //               if (groupMember != null) {
-  //                 groupMember.dateAttendedUtc = attendedMember.dateAttendedUtc;
-  //               } else {
-  //                 userGroup.members ??= <Member>[];
-  //                 userGroup.members!.add(attendedMember);
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
 
   Group? _getUserGroup({required String groupId}) {
     if (CollectionUtils.isNotEmpty(userGroups) && StringUtils.isNotEmpty(groupId)) {
