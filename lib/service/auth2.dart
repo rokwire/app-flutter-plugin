@@ -149,7 +149,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (state == AppLifecycleState.resumed) {
       createOidcAuthenticationTimerIfNeeded();
 
-      //Log.d('Core Access Token: ${_token?.accessToken}', lineLength: 512);
+      //TMP: Log.d('Core Access Token: ${_token?.accessToken}', lineLength: 512);
 
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
