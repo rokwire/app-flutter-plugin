@@ -272,12 +272,15 @@ class Groups with Service implements NotificationsListener {
       }
   }
 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType}) async {
+  ///
+  /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
+  ///
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category, int? allOffset, int? allLimit}) async {
     if (contentType == GroupsContentType.my) {
       await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
-      return await _loadAllGroups();
+      return await _loadAllGroups(category: category, offset: allOffset, limit: allLimit);
     }
   }
 
