@@ -283,12 +283,31 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<Group>?> _loadAllGroups() async {
+  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy, int? offset, int? limit}) async {
     await waitForLogin();
     if (Config().groupsUrl != null) {
+      Map<String, String> queryParams = {};
+      if (StringUtils.isNotEmpty(category)) {
+        queryParams.addAll({'category': category!});
+      }
+      if (StringUtils.isNotEmpty(title)) {
+        queryParams.addAll({'title': title!});
+      }
+      if (privacy != null) {
+        queryParams.addAll({'privacy': groupPrivacyToString(privacy)!});
+      }
+      if (offset != null) {
+        queryParams.addAll({'offset': offset.toString()});
+      }
+      if (limit != null) {
+        queryParams.addAll({'limit': limit.toString()});
+      }
+      String url = '${Config().groupsUrl}/v2/groups';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      
       try {
-        //TBD: DD - use the new filters and paging
-        String url = '${Config().groupsUrl}/v2/groups';
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -1143,11 +1162,8 @@ class Groups with Service implements NotificationsListener {
 
   static Future<String?> _loadUserGroupsStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
+      // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
-      //TBD: DD - remove debug and use the new filters
-      String? responseBody = response?.body;
-      debugPrint('GROUPSSSSS: ');
-      debugPrint(responseBody);
       if (response?.statusCode == 200) {
         return response?.body;
       }
