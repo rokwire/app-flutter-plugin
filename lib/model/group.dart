@@ -16,7 +16,6 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 
@@ -44,7 +43,7 @@ class Group {
 
   String?             imageURL;
   String?             webURL;
-  List<Member>?       members;
+  Member?             currentMember;
   List<String>?       tags;
   List<GroupMembershipQuestion>? questions;
   GroupMembershipQuest? membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
@@ -85,7 +84,7 @@ class Group {
     try { webURL            = json['web_url'];       } catch(e) { debugPrint(e.toString()); }
     try { tags              = JsonUtils.listStringsValue(json['tags']); } catch(e) { debugPrint(e.toString()); }
     try { membershipQuest   = GroupMembershipQuest.fromJson(json['membershipQuest']); } catch(e) { debugPrint(e.toString()); }
-    try { members           = Member.listFromJson(json['members']); } catch(e) { debugPrint(e.toString()); }
+    try { currentMember     = Member.fromJson(json['current_member']); } catch(e) { debugPrint(e.toString()); }
     try { questions         = GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])); } catch(e) { debugPrint(e.toString()); }
     try { onlyAdminsCanCreatePolls = json['only_admins_can_create_polls']; } catch(e) { debugPrint(e.toString()); }
   }
@@ -111,7 +110,7 @@ class Group {
     json['image_url']                    = imageURL;
     json['web_url']                      = webURL;
     json['tags']                         = tags;
-    json['members']                      = Member.listToJson(members);
+    json['current_member']               = currentMember?.toJson();
     json['membership_questions']         = GroupMembershipQuestion.listToStringList(questions);
     json['only_admins_can_create_polls'] = onlyAdminsCanCreatePolls;
 
@@ -136,7 +135,7 @@ class Group {
     dateUpdatedUtc    = other?.dateUpdatedUtc;
     imageURL          = other?.imageURL;
     webURL            = other?.webURL;
-    members           = other?.members;
+    currentMember     = other?.currentMember;
     tags              = (other?.tags != null) ? List.from(other!.tags!) : null;
     questions         = GroupMembershipQuestion.listFromOthers(other?.questions);
     membershipQuest   = GroupMembershipQuest.fromOther(other?.membershipQuest);
@@ -154,6 +153,8 @@ class Group {
       (other.certified == certified) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
+
+      (other.currentMember == currentMember) &&
       
       (other.authManEnabled == authManEnabled) &&
       (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
@@ -165,7 +166,6 @@ class Group {
 
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
-      (const DeepCollectionEquality().equals(other.members, members)) &&
       (const DeepCollectionEquality().equals(other.tags, tags)) &&
       (const DeepCollectionEquality().equals(other.questions, questions)) &&
       (other.membershipQuest == membershipQuest);
@@ -183,6 +183,8 @@ class Group {
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
 
+    (currentMember?.hashCode ?? 0) ^
+
     (authManEnabled?.hashCode ?? 0) ^
     (onlyAdminsCanCreatePolls?.hashCode ?? 0) ^
     (authManGroupName?.hashCode ?? 0) ^
@@ -193,110 +195,32 @@ class Group {
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(members)) ^
     (const DeepCollectionEquality().hash(tags)) ^
     (const DeepCollectionEquality().hash(questions)) ^
     (membershipQuest?.hashCode ?? 0);
 
-  List<Member> getMembersByStatus(GroupMemberStatus? status){
-    if(CollectionUtils.isNotEmpty(members) && status != null){
-      return members!.where((member) => member.status == status).toList();
-    }
-    return [];
-  }
-
-  Member? getMembersById(String? id){
-    if(CollectionUtils.isNotEmpty(members) && StringUtils.isNotEmpty(id)){
-      for(Member? member in members!){
-        if(member!.id == id){
-          return member;
-        }
-      }
-    }
-    return null;
-  }
-
-  Member? get currentUserAsMember{
-    if(Auth2().isOidcLoggedIn && CollectionUtils.isNotEmpty(members)) {
-      for (Member? member in members!) {
-        if (member!.userId == Auth2().accountId) {
-          return member;
-        }
-      }
-    }
-    return null;
-  }
-
   bool get currentUserIsAdmin{
-    return (currentUserAsMember?.isAdmin ?? false);
+    return (currentMember?.isAdmin ?? false);
   }
 
   bool get currentUserIsPendingMember{
-    return (currentUserAsMember?.isPendingMember ?? false);
+    return (currentMember?.isPendingMember ?? false);
   }
 
   bool get currentUserIsMember{
-    return (currentUserAsMember?.isMember ?? false);
+    return (currentMember?.isMember ?? false);
   }
 
   bool get currentUserIsMemberOrAdmin{
-    return (currentUserAsMember?.isMemberOrAdmin ?? false);
+    return (currentMember?.isMemberOrAdmin ?? false);
   }
 
   bool get currentUserIsMemberOrAdminOrPending{
-    return (currentUserAsMember?.isMemberOrAdminOrPending ?? false);
+    return (currentMember?.isMemberOrAdminOrPending ?? false);
   }
 
   bool get currentUserCanJoin {
-    return (currentUserAsMember == null) && (authManEnabled != true);
-  }
-
-  int get adminsCount{
-    int adminsCount = 0;
-    if(CollectionUtils.isNotEmpty(members)){
-      for(Member? member in members!){
-        if(member!.isAdmin){
-          adminsCount++;
-        }
-      }
-    }
-    return adminsCount;
-  }
-
-  int get membersCount{
-    int membersCount = 0;
-    if(CollectionUtils.isNotEmpty(members)){
-      for(Member? member in members!){
-        if(member!.isAdmin || member.isMember){
-          membersCount++;
-        }
-      }
-    }
-    return membersCount;
-  }
-
-  int get pendingCount{
-    int membersCount = 0;
-    if(CollectionUtils.isNotEmpty(members)){
-      for(Member? member in members!){
-        if(member!.isPendingMember){
-          membersCount++;
-        }
-      }
-    }
-    return membersCount;
-  }
-
-  int get attendedCount {
-    int attendedCount = 0;
-    if (CollectionUtils.isNotEmpty(members)) {
-      for (Member? member in members!) {
-        if ((member!.isAdmin || member.isMember) && (member.dateAttendedUtc != null)) {
-          attendedCount++;
-        }
-      }
-    }
-    return attendedCount;
+    return (currentMember == null) && (authManEnabled != true);
   }
 
   bool get syncAuthmanAllowed {
@@ -353,6 +277,33 @@ String? groupPrivacyToString(GroupPrivacy? value) {
     }
   }
   return null;
+}
+
+//////////////////////////////
+// GroupStats
+
+class GroupStats {
+  final int? totalCount;
+  final int? membersCount;
+  final int? adminsCount;
+  final int? pendingCount;
+  final int? rejectedCount;
+  final int? attendedCount;
+
+  GroupStats({this.totalCount, this.membersCount, this.adminsCount, this.pendingCount, this.rejectedCount, this.attendedCount});
+
+  static GroupStats? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return GroupStats(
+        totalCount: JsonUtils.intValue(json['total_count']),
+        membersCount: JsonUtils.intValue(json['member_count']),
+        adminsCount: JsonUtils.intValue(json['admins_count']),
+        pendingCount: JsonUtils.intValue(json['pending_count']),
+        rejectedCount: JsonUtils.intValue(json['rejected_count']),
+        attendedCount: JsonUtils.intValue(json['attendance_count']));
+  }
 }
 
 //////////////////////////////

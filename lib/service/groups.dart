@@ -127,7 +127,8 @@ class Groups with Service implements NotificationsListener {
 
     _userGroups = await _loadUserGroupsFromCache();
     _userGroupNames = _buildGroupNames(_userGroups);
-    _initUserGroupsWithCachedAttendedMembers();
+    //TBD: DD - delete after tests
+    // _initUserGroupsWithCachedAttendedMembers();
 
     if (_userGroups == null) {
       await _initUserGroupsFromNet();
@@ -286,7 +287,8 @@ class Groups with Service implements NotificationsListener {
     await waitForLogin();
     if (Config().groupsUrl != null) {
       try {
-        String url = '${Config().groupsUrl}/groups';
+        //TBD: DD - use the new filters and paging
+        String url = '${Config().groupsUrl}/v2/groups';
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -306,7 +308,7 @@ class Groups with Service implements NotificationsListener {
       return null;
     }
     String encodedTExt = Uri.encodeComponent(searchText);
-    String url = '${Config().groupsUrl}/groups?title=$encodedTExt';
+    String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt';
     Response? response = await Network().get(url, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String? responseBody = response?.body;
@@ -322,35 +324,13 @@ class Groups with Service implements NotificationsListener {
   Future<Group?> loadGroup(String? groupId) async {
     await waitForLogin();
     if(StringUtils.isNotEmpty(groupId)) {
-      String url = '${Config().groupsUrl}/groups/$groupId';
+      String url = '${Config().groupsUrl}/v2/groups/$groupId';
       try {
         Response? response = await Network().get(url, auth: Auth2(),);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         Map<String, dynamic>? groupsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeMap(responseBody) : null;
         return groupsJson != null ? Group.fromJson(groupsJson) : null;
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
-  }
-
-  //TBD sync with backend team, update group model and UI
-  Future<Group?> loadGroupByCanvasCourseId(int? courseId) async {
-    await waitForLogin();
-    if (courseId != null) {
-      String url = '${Config().groupsUrl}/groups/canvas_course/$courseId';
-      try {
-        Response? response = await Network().get(url, auth: Auth2());
-        int responseCode = response?.statusCode ?? -1;
-        String? responseBody = response?.body;
-        if (responseCode == 200) {
-          Map<String, dynamic>? groupJson = JsonUtils.decodeMap(responseBody);
-          return Group.fromJson(groupJson);
-        } else {
-          Log.d('Failed to load group by canvas course id. Reason: \n$responseCode: $responseBody');
-        }
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -456,7 +436,94 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  // Group Stats
+
+  Future<GroupStats?> loadGroupStats(String? groupId) async {
+    if (StringUtils.isEmpty(groupId)) {
+      return null;
+    }
+    await waitForLogin();
+    if (StringUtils.isNotEmpty(groupId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/stats';
+      try {
+        Response? response = await Network().get(url, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          Map<String, dynamic>? statsJson = JsonUtils.decodeMap(responseBody);
+          return GroupStats.fromJson(statsJson);
+        } else {
+          debugPrint('Failed to load group {$groupId} stats. Reason: $responseCode, $responseBody');
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
   // Members APIs
+
+  Future<List<Member>?> loadMembers({String? groupId, List<GroupMemberStatus>? statuses, String? memberId, String? userId, 
+    String? externalId, String? netId, String? name, int? offset, int? limit}) async {
+    if (StringUtils.isEmpty(groupId)) {
+      debugPrint('Failed to load group members - missing groupId.');
+      return null;
+    }
+    await waitForLogin();
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/group/$groupId/members';
+      Map<String, dynamic> params = {};
+      if (CollectionUtils.isNotEmpty(statuses)) {
+        List<String> statusList = [];
+        for (GroupMemberStatus status in statuses!) {
+          statusList.add(groupMemberStatusToString(status)!);
+        }
+        params.addAll({'statuses': statusList});
+      }
+      if (StringUtils.isNotEmpty(memberId)) {
+        params.addAll({'id': memberId});
+      }
+      if (StringUtils.isNotEmpty(userId)) {
+        params.addAll({'user_id': userId});
+      }
+      if (StringUtils.isNotEmpty(externalId)) {
+        params.addAll({'external_id': externalId});
+      }
+      if (StringUtils.isNotEmpty(netId)) {
+        params.addAll({'net_id': netId});
+      }
+      if (StringUtils.isNotEmpty(name)) {
+        params.addAll({'name': name});
+      }
+      if (offset != null) {
+        params.addAll({'offset': offset});
+      }
+      if (limit != null) {
+        params.addAll({'limit': limit});
+      }
+      try {
+        String? body = JsonUtils.encode(params);
+        Response? response = await Network().get(url, auth: Auth2(), body: body);
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? membersJson = JsonUtils.decodeList(responseBody);
+          return Member.listFromJson(membersJson);
+        } else {
+          debugPrint('Failed to load members for group $groupId. Reason: $responseCode $responseBody');
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  /// Admins and members are allowed to post.
+  Future<List<Member>?> loadMembersAllowedToPost({String? groupId}) async {
+    return await loadMembers(groupId: groupId, statuses: [GroupMemberStatus.admin, GroupMemberStatus.member]);
+  }
 
   Future<bool> requestMembership(Group? group, List<GroupMembershipAnswer>? answers) async{
     await waitForLogin();
@@ -541,12 +608,12 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> updateMembership(Group? group, Member? member, GroupMemberStatus status) async{
+  Future<bool> updateMembership(Group? group, String? memberId, GroupMemberStatus status) async{
     await waitForLogin();
-    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(member?.id)) {
+    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
       Map<String, dynamic> bodyMap = {"status":groupMemberStatusToString(status)};
       String? body = JsonUtils.encode(bodyMap);
-      String url = '${Config().groupsUrl}/memberships/${member!.id}';
+      String url = '${Config().groupsUrl}/memberships/$memberId';
       try {
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
@@ -567,10 +634,10 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> deleteMembership(Group? group, Member? member) async{
+  Future<bool> deleteMembership(Group? group, String? memberId) async{
     await waitForLogin();
-    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(member?.id)) {
-      String url = '${Config().groupsUrl}/memberships/${member!.id}';
+    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
+      String url = '${Config().groupsUrl}/memberships/$memberId';
       try {
         Response? response = await Network().delete(url, auth: Auth2(),);
         if((response?.statusCode ?? -1) == 200){
@@ -1076,7 +1143,11 @@ class Groups with Service implements NotificationsListener {
 
   static Future<String?> _loadUserGroupsStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
-      Response? response = await Network().get('${Config().groupsUrl}/user/groups', auth: Auth2());
+      Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
+      //TBD: DD - remove debug and use the new filters
+      String? responseBody = response?.body;
+      debugPrint('GROUPSSSSS: ');
+      debugPrint(responseBody);
       if (response?.statusCode == 200) {
         return response?.body;
       }
@@ -1214,8 +1285,9 @@ class Groups with Service implements NotificationsListener {
   void _addAttendedMemberToCache({required Group group, required Member member}) {
     String groupId = group.id!;
     _attendedMembers ??= HashMap<String, List<Member>>();
-    group.members ??= <Member>[];
-    group.members!.add(member);
+    //TBD: DD - delete after tests - The members are no longer part of the group
+    // group.members ??= <Member>[];
+    // group.members!.add(member);
     List<Member>? attendedGroupMembers = _attendedMembers![groupId];
     attendedGroupMembers ??= <Member>[];
     attendedGroupMembers.add(member);
@@ -1268,36 +1340,38 @@ class Groups with Service implements NotificationsListener {
   /// So that user groups are in sync if the device is offline.
   /// This is done only on startup
   /// 
-  void _initUserGroupsWithCachedAttendedMembers() {
-    if (Connectivity().isOffline && CollectionUtils.isNotEmpty(_attendedMembers?.keys)) {
-      for (String groupId in _attendedMembers!.keys) {
-        Group? userGroup = _getUserGroup(groupId: groupId);
-        if (userGroup != null) {
-          List<Member>? attendedGroupMembers = _attendedMembers![groupId];
-          if (CollectionUtils.isNotEmpty(attendedGroupMembers)) {
-            List<Member>? groupMembers = userGroup.members;
-            if (CollectionUtils.isNotEmpty(groupMembers)) {
-              for (Member attendedMember in attendedGroupMembers!) {
-                Member? groupMember;
-                for (Member grMember in groupMembers!) {
-                  if (grMember.externalId == attendedMember.externalId) {
-                    groupMember = grMember;
-                    break;
-                  }
-                }
-                if (groupMember != null) {
-                  groupMember.dateAttendedUtc = attendedMember.dateAttendedUtc;
-                } else {
-                  userGroup.members ??= <Member>[];
-                  userGroup.members!.add(attendedMember);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  /// TBD: DD - delete after tests
+  /// DD: Members are not embedded in the group anymore
+  // void _initUserGroupsWithCachedAttendedMembers() {
+  //   if (Connectivity().isOffline && CollectionUtils.isNotEmpty(_attendedMembers?.keys)) {
+  //     for (String groupId in _attendedMembers!.keys) {
+  //       Group? userGroup = _getUserGroup(groupId: groupId);
+  //       if (userGroup != null) {
+  //         List<Member>? attendedGroupMembers = _attendedMembers![groupId];
+  //         if (CollectionUtils.isNotEmpty(attendedGroupMembers)) {
+  //           List<Member>? groupMembers = userGroup.members;
+  //           if (CollectionUtils.isNotEmpty(groupMembers)) {
+  //             for (Member attendedMember in attendedGroupMembers!) {
+  //               Member? groupMember;
+  //               for (Member grMember in groupMembers!) {
+  //                 if (grMember.externalId == attendedMember.externalId) {
+  //                   groupMember = grMember;
+  //                   break;
+  //                 }
+  //               }
+  //               if (groupMember != null) {
+  //                 groupMember.dateAttendedUtc = attendedMember.dateAttendedUtc;
+  //               } else {
+  //                 userGroup.members ??= <Member>[];
+  //                 userGroup.members!.add(attendedMember);
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   Group? _getUserGroup({required String groupId}) {
     if (CollectionUtils.isNotEmpty(userGroups) && StringUtils.isNotEmpty(groupId)) {
