@@ -119,6 +119,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
     }
 
+    _refreshAccount();
+
     await super.initService();
   }
 
