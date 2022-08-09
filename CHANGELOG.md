@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FlexUI extended with content entry switch and multiple {content, rules} sets in single source  [#121](https://github.com/rokwire/app-flutter-plugin/issues/121).
 - Acknowledged new paramters of 'report/abuse' API of Groups BB [#2083](https://github.com/rokwire/illinois-app/issues/2083).
 - Refresh Auth2 account object instead of profile and prefs separately [#132](https://github.com/rokwire/app-flutter-plugin/issues/132).
+- Updated format of settings APIs in Auth2UserPrefs [#2194](https://github.com/rokwire/illinois-app/issues/2194).
 ### Added
 - Differ multi events and events that last more than one day [#126](https://github.com/rokwire/app-flutter-plugin/issues/126).
 - Added Config().appStoreId getter [#2162](https://github.com/rokwire/illinois-app/issues/2162).

@@ -1425,11 +1425,11 @@ class Auth2UserPrefs {
   }
   // Settings
 
-  bool? getBoolSetting({String? settingName, bool? defaultValue}){
-    return JsonUtils.boolValue(getSetting(settingName: settingName)) ?? defaultValue;
+  bool? getBoolSetting(String? settingName, { bool? defaultValue }) {
+    return JsonUtils.boolValue(getSetting(settingName)) ?? defaultValue;
   }
 
-  dynamic getSetting({String? settingName}){
+  dynamic getSetting(String? settingName) {
     if(_settings?.isNotEmpty ?? false){
       return _settings![settingName];
     }
@@ -1437,10 +1437,14 @@ class Auth2UserPrefs {
     return null;//consider default TBD
   }
 
-  void applySetting(String settingName, dynamic settingValue){
-    _settings ??= <String, dynamic>{};
-    _settings![settingName] = settingValue;
-
+  void applySetting(String settingName, dynamic settingValue) {
+    if (settingValue != null) {
+      _settings ??= <String, dynamic>{};
+      _settings![settingName] = settingValue;
+    }
+    else if (_settings != null) {
+      _settings!.remove(settingName);
+    }
     NotificationService().notify(notifySettingsChanged);
     NotificationService().notify(notifyChanged, this);
   }
