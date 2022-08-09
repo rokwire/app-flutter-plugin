@@ -275,16 +275,17 @@ class Groups with Service implements NotificationsListener {
   ///
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category, int? allOffset, int? allLimit}) async {
+  /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category}) async {
     if (contentType == GroupsContentType.my) {
       await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
-      return await _loadAllGroups(category: category, offset: allOffset, limit: allLimit);
+      return await _loadAllGroups(category: category);
     }
   }
 
-  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
     await waitForLogin();
     if (Config().groupsUrl != null) {
       Map<String, String> queryParams = {};
@@ -297,12 +298,14 @@ class Groups with Service implements NotificationsListener {
       if (privacy != null) {
         queryParams.addAll({'privacy': groupPrivacyToString(privacy)!});
       }
+      /*
+      // TMP disable paging - there is a problem on the backend
       if (offset != null) {
         queryParams.addAll({'offset': offset.toString()});
       }
       if (limit != null) {
         queryParams.addAll({'limit': limit.toString()});
-      }
+      }*/
       String url = '${Config().groupsUrl}/v2/groups';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
@@ -312,8 +315,12 @@ class Groups with Service implements NotificationsListener {
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
-        List<dynamic>? groupsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeList(responseBody) : null;
-        return (groupsJson != null) ? Group.listFromJson(groupsJson) : null;
+        if (responseCode == 200) {
+          List<dynamic>? groupsJson = JsonUtils.decodeList(responseBody);
+          return Group.listFromJson(groupsJson);
+        } else {
+          debugPrint('Failed to load all groups for url {$url}. Response: $responseCode $responseBody');
+        }
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -343,14 +350,18 @@ class Groups with Service implements NotificationsListener {
 
   Future<Group?> loadGroup(String? groupId) async {
     await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId)) {
+    if (StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/v2/groups/$groupId';
       try {
         Response? response = await Network().get(url, auth: Auth2(),);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
-        Map<String, dynamic>? groupsJson = ((responseBody != null) && (responseCode == 200)) ? JsonUtils.decodeMap(responseBody) : null;
-        return groupsJson != null ? Group.fromJson(groupsJson) : null;
+        if (responseCode == 200) {
+          Map<String, dynamic>? groupsJson = JsonUtils.decodeMap(responseBody);
+          return Group.fromJson(groupsJson);
+        } else {
+          debugPrint('Failed to load group with id {$groupId}. Response: $responseCode $responseBody');
+        }
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -473,7 +484,7 @@ class Groups with Service implements NotificationsListener {
           Map<String, dynamic>? statsJson = JsonUtils.decodeMap(responseBody);
           return GroupStats.fromJson(statsJson);
         } else {
-          debugPrint('Failed to load group {$groupId} stats. Reason: $responseCode, $responseBody');
+          debugPrint('Failed to load group stats for group {$groupId}. Reason: $responseCode, $responseBody');
         }
       } catch (e) {
         debugPrint(e.toString());
@@ -531,7 +542,7 @@ class Groups with Service implements NotificationsListener {
           List<dynamic>? membersJson = JsonUtils.decodeList(responseBody);
           return Member.listFromJson(membersJson);
         } else {
-          debugPrint('Failed to load members for group $groupId. Reason: $responseCode $responseBody');
+          debugPrint('Failed to load members for group $groupId with body {$body}. Reason: $responseCode $responseBody');
         }
       } catch (e) {
         debugPrint(e.toString());
