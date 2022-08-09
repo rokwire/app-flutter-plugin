@@ -275,16 +275,17 @@ class Groups with Service implements NotificationsListener {
   ///
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category, int? allOffset, int? allLimit}) async {
+  /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category}) async {
     if (contentType == GroupsContentType.my) {
       await _waitForUpdateUserGroupsFromNet();
       return userGroups;
     } else {
-      return await _loadAllGroups(category: category, offset: allOffset, limit: allLimit);
+      return await _loadAllGroups(category: category);
     }
   }
 
-  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
     await waitForLogin();
     if (Config().groupsUrl != null) {
       Map<String, String> queryParams = {};
@@ -297,12 +298,14 @@ class Groups with Service implements NotificationsListener {
       if (privacy != null) {
         queryParams.addAll({'privacy': groupPrivacyToString(privacy)!});
       }
+      /*
+      // TMP disable paging - there is a problem on the backend
       if (offset != null) {
         queryParams.addAll({'offset': offset.toString()});
       }
       if (limit != null) {
         queryParams.addAll({'limit': limit.toString()});
-      }
+      }*/
       String url = '${Config().groupsUrl}/v2/groups';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
