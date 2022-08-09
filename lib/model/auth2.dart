@@ -121,11 +121,11 @@ class Auth2Account {
   final List<Auth2StringEntry>? roles;
   final List<Auth2StringEntry>? groups;
   final List<Auth2Type>? authTypes;
+  final Map<String, dynamic>? systemConfigs;
   
-  
-  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes});
+  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       profile: profile ?? other?.profile,
@@ -134,6 +134,7 @@ class Auth2Account {
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
       authTypes: authTypes ?? other?.authTypes,
+      systemConfigs: systemConfigs ?? other?.systemConfigs,
     );
   }
 
@@ -146,6 +147,7 @@ class Auth2Account {
       roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
+      systemConfigs: JsonUtils.mapValue(json['system_configs']),
     ) : null;
   }
 
@@ -158,6 +160,7 @@ class Auth2Account {
       'roles': roles,
       'groups': groups,
       'auth_types': authTypes,
+      'system_configs': systemConfigs,
     };
   }
 
@@ -169,7 +172,8 @@ class Auth2Account {
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
-      const DeepCollectionEquality().equals(other.authTypes, authTypes);
+      const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
+      const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
 
   @override
   int get hashCode =>
@@ -178,7 +182,8 @@ class Auth2Account {
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
-    (const DeepCollectionEquality().hash(authTypes));
+    (const DeepCollectionEquality().hash(authTypes)) ^
+    (const DeepCollectionEquality().hash(systemConfigs));
 
   bool get isValid {
     return (id != null) && id!.isNotEmpty /* && (profile != null) && profile.isValid*/;
@@ -214,6 +219,7 @@ class Auth2Account {
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
 ////////////////////////////////

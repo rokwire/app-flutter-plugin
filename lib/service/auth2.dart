@@ -26,6 +26,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginFinished     = "edu.illinois.rokwire.auth2.login.finished";
   static const String notifyLogout            = "edu.illinois.rokwire.auth2.logout";
   static const String notifyLinkChanged       = "edu.illinois.rokwire.auth2.link.changed";
+  static const String notifyAccountChanged    = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged    = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged      = "edu.illinois.rokwire.auth2.prefs.changed";
   static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
@@ -118,6 +119,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
     }
 
+    _refreshAccount();
+
     await super.initService();
   }
 
@@ -149,13 +152,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (state == AppLifecycleState.resumed) {
       createOidcAuthenticationTimerIfNeeded();
 
-      //TMP: Log.d('Core Access Token: ${_token?.accessToken}', lineLength: 512);
+      //TMP: _log('Core Access Token: ${_token?.accessToken}');
 
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _refreshAccountUserPrefs();
-          _refreshAccountUserProfile();
+          _refreshAccount();
         }
       }
     }
@@ -1033,7 +1035,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  Future<Auth2UserPrefs?> _loadAccountUserPrefs() async {
+  /*Future<Auth2UserPrefs?> _loadAccountUserPrefs() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/preferences";
       Response? response = await Network().get(url, auth: Auth2());
@@ -1050,7 +1052,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         NotificationService().notify(notifyPrefsChanged);
       }
     }
-  }
+  }*/
 
   // User Profile
   
@@ -1091,12 +1093,42 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
-  Future<void> _refreshAccountUserProfile() async {
+  /*Future<void> _refreshAccountUserProfile() async {
     Auth2UserProfile? profile = await _loadAccountUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
         NotificationService().notify(notifyProfileChanged);
+      }
+    }
+  }*/
+
+  // Account
+
+  Future<Auth2Account?> _loadAccount() async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+      String url = "${Config().coreUrl}/services/account";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+    }
+    return null;
+  }
+
+  Future<void> _refreshAccount() async {
+    Auth2Account? account = await _loadAccount();
+    if ((account != null) && (account != _account)) {
+      
+      bool profileUpdated = (account.profile != _account?.profile);
+      bool prefsUpdated = (account.prefs != _account?.prefs);
+      
+      Storage().auth2Account = _account = account;
+      NotificationService().notify(notifyAccountChanged);
+
+      if (profileUpdated) {
+        NotificationService().notify(notifyProfileChanged);
+      }
+      if (prefsUpdated) {
+        NotificationService().notify(notifyPrefsChanged);
       }
     }
   }
@@ -1115,7 +1147,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   static void _log(String message) {
-    Log.d(message, lineLength: 996); // max line length of VS Code Debug Console
+    Log.d(message, lineLength: 512); // max line length of VS Code Debug Console
   }
 
 }
