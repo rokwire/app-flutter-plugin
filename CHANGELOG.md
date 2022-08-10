@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check if event ends in the same year as it starts [#128](https://github.com/rokwire/app-flutter-plugin/issues/128).
 - Load groups and members on portions (e.g. paging) [#125](https://github.com/rokwire/app-flutter-plugin/issues/125).
 - Added system configs in Auth2Account [#132](https://github.com/rokwire/app-flutter-plugin/issues/132).
+- Added int settings getter in Auth2UserPrefs [#2207](https://github.com/rokwire/illinois-app/issues/2207).
+
 
 ## [1.1.0] - 2022-07-19
 ### Changed

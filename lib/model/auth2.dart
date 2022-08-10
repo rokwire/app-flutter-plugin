@@ -1425,17 +1425,14 @@ class Auth2UserPrefs {
   }
   // Settings
 
-  bool? getBoolSetting(String? settingName, { bool? defaultValue }) {
-    return JsonUtils.boolValue(getSetting(settingName)) ?? defaultValue;
-  }
+  bool? getBoolSetting(String? settingName, { bool? defaultValue }) =>
+    JsonUtils.boolValue(getSetting(settingName)) ?? defaultValue;
 
-  dynamic getSetting(String? settingName) {
-    if(_settings?.isNotEmpty ?? false){
-      return _settings![settingName];
-    }
+  int? getIntSetting(String? settingName, { int? defaultValue }) =>
+    JsonUtils.intValue(getSetting(settingName)) ?? defaultValue;
 
-    return null;//consider default TBD
-  }
+  dynamic getSetting(String? settingName) =>
+    (_settings != null) ? _settings![settingName] : null;
 
   void applySetting(String settingName, dynamic settingValue) {
     if (settingValue != null) {
