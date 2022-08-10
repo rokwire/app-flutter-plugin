@@ -690,6 +690,12 @@ class BoolExpr {
       bool? argValue = (evalArg != null) ? evalArg(expr) : null;
       return argValue ?? true; // allow everything that is not defined or we do not understand
     }
+
+    else if (expr is bool) {
+      
+      return expr;
+    
+    }
     
     else if (expr is List) {
       

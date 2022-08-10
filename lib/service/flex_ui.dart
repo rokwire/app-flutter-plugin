@@ -357,13 +357,13 @@ class FlexUI with Service implements NotificationsListener {
 
     Map<String, dynamic>? groupRules = rules['groups'];
     dynamic groupRule = (groupRules != null) ? (((pathEntry != null) ? groupRules[pathEntry] : null) ?? groupRules[entry]) : null;
-    if ((groupRule != null) && !localeEvalGroupRule(groupRule, rules)) {
+    if ((groupRule != null) && !localeEvalGroupRule(groupRule)) {
       return false;
     }
 
     Map<String, dynamic>? locationRules = rules['locations'];
     dynamic locationRule = (locationRules != null) ? (((pathEntry != null) ? locationRules[pathEntry] : null) ?? locationRules[entry]) : null;
-    if ((locationRule != null) && !localeEvalLocationRule(locationRule, rules)) {
+    if ((locationRule != null) && !localeEvalLocationRule(locationRule)) {
       return false;
     }
 
@@ -387,7 +387,7 @@ class FlexUI with Service implements NotificationsListener {
 
     Map<String, dynamic>? enableRules = rules['enable'];
     dynamic enableRule = (enableRules != null) ? (((pathEntry != null) ? enableRules[pathEntry] : null) ?? enableRules[entry])  : null;
-    if ((enableRule != null) && !_localeEvalEnableRule(enableRule)) {
+    if ((enableRule != null) && !localeEvalEnableRule(enableRule)) {
       return false;
     }
     
@@ -409,7 +409,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<UserRole>? userRoles = localeEvalRoleParam(argument);
+        Set<UserRole>? userRoles = localeEvalRolesSetParam(argument);
         if (userRoles != null) {
           if (not == true) {
             userRoles = Set.from(UserRole.values).cast<UserRole>().difference(userRoles);
@@ -431,7 +431,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Set<UserRole>? localeEvalRoleParam(String? roleParam) {
+  Set<UserRole>? localeEvalRolesSetParam(String? roleParam) {
     if (roleParam != null) {
       if (RegExp(r"\(.+\)").hasMatch(roleParam)) {
         Set<UserRole> roles = <UserRole>{};
@@ -447,8 +447,8 @@ class FlexUI with Service implements NotificationsListener {
       }
       else if (RegExp(r"\${.+}").hasMatch(roleParam)) {
         String stringRef = roleParam.substring(2, roleParam.length - 1);
-        String? stringRefValue = localeEvalStringReference(stringRef);
-        return localeEvalRoleParam(stringRefValue);
+        String? stringRefValue = JsonUtils.stringValue(localeEvalStringReference(stringRef));
+        return localeEvalRolesSetParam(stringRefValue);
       }
       else {
         UserRole? userRole = UserRole.fromString(roleParam);
@@ -459,7 +459,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool localeEvalGroupRule(dynamic groupRule, Map<String, dynamic> rules) {
+  bool localeEvalGroupRule(dynamic groupRule) {
     return BoolExpr.eval(groupRule, (String? argument) {
       if (argument != null) {
         bool? not, all, any;
@@ -473,7 +473,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetGroups = localeEvalStringParam(argument);
+        Set<String>? targetGroups = localeEvalStringsSetParam(argument);
         Set<String> userGroups = Groups().userGroupNames ?? {};
         if (targetGroups != null) {
           if (not == true) {
@@ -496,7 +496,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool localeEvalLocationRule(dynamic locationRule, Map<String, dynamic> rules) {
+  bool localeEvalLocationRule(dynamic locationRule) {
     return BoolExpr.eval(locationRule, (String? argument) {
       if (argument != null) {
         bool? not, all, any;
@@ -510,7 +510,7 @@ class FlexUI with Service implements NotificationsListener {
           argument = argument.substring(0, argument.length - 1);
         }
         
-        Set<String>? targetLocations = localeEvalStringParam(argument);
+        Set<String>? targetLocations = localeEvalStringsSetParam(argument);
         Set<String> userLocations = GeoFence().currentRegionIds;
         if (targetLocations != null) {
           if (not == true) {
@@ -524,8 +524,7 @@ class FlexUI with Service implements NotificationsListener {
             return userLocations.intersection(targetLocations).isNotEmpty;
           }
           else {
-            bool result = userLocations.containsAll(targetLocations);
-            return result;
+            return userLocations.containsAll(targetLocations);
           }
         }
       }
@@ -534,7 +533,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Set<String>? localeEvalStringParam(String? stringParam) {
+  Set<String>? localeEvalStringsSetParam(String? stringParam) {
     if (stringParam != null) {
       if (RegExp(r"\(.+\)").hasMatch(stringParam)) {
         String stringsStr = stringParam.substring(1, stringParam.length - 1);
@@ -542,8 +541,8 @@ class FlexUI with Service implements NotificationsListener {
       }
       else if (RegExp(r"\${.+}").hasMatch(stringParam)) {
         String stringRef = stringParam.substring(2, stringParam.length - 1);
-        String? stringRefValue = localeEvalStringReference(stringRef);
-        return localeEvalStringParam(stringRefValue);
+        String? stringRefValue = JsonUtils.stringValue(localeEvalStringReference(stringRef));
+        return localeEvalStringsSetParam(stringRefValue);
       }
       else {
         return <String>{ stringParam };
@@ -553,11 +552,11 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  String? localeEvalStringReference(String? stringRef) {
+  dynamic localeEvalStringReference(String? stringRef) {
     if (stringRef != null) {
       String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
       if (stringRef.startsWith(configPrefix)) {
-        return JsonUtils.stringValue(MapPathKey.entry(Config().content, stringRef.substring(configPrefix.length)));
+        return MapPathKey.entry(Config().content, stringRef.substring(configPrefix.length));
       }
     }
     return null;
@@ -620,7 +619,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  static bool localeEvalPlatformRule(dynamic platformRule) {
+  bool localeEvalPlatformRule(dynamic platformRule) {
     bool result = true;  // allow everything that is not defined or we do not understand
     if (platformRule is Map) {
       platformRule.forEach((dynamic key, dynamic value) {
@@ -658,7 +657,21 @@ class FlexUI with Service implements NotificationsListener {
     return result;
   }
 
-  static bool _localeEvalEnableRule(dynamic enableRule) {
-    return (enableRule is bool) ? enableRule : true; // allow everything that is not defined or we do not understand
+  @protected
+  bool localeEvalEnableRule(dynamic enableRule) {
+    return BoolExpr.eval(enableRule, (String? argument) {
+      return localeEvalBoolParam(argument);
+    });
+  }
+
+  @protected
+  bool? localeEvalBoolParam(String? stringParam) {
+    if (stringParam != null) {
+      if (RegExp(r"\${.+}").hasMatch(stringParam)) {
+        String stringRef = stringParam.substring(2, stringParam.length - 1);
+        return JsonUtils.boolValue(localeEvalStringReference(stringRef));
+      }
+    }
+    return null;
   }
 }
