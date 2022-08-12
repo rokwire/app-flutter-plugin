@@ -23,6 +23,7 @@ import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/service/localization.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
 class StringUtils {
@@ -102,6 +103,19 @@ class StringUtils {
       }
     }
     return fullName;
+  }
+
+  static String? getContentString(Map<String, dynamic>? strings, String? key, {String? languageCode}) {
+    if ((strings != null) && (key != null)) {
+      Map<String, dynamic>? mapping =
+        JsonUtils.mapValue(strings[languageCode]) ??
+        JsonUtils.mapValue(strings[Localization().currentLocale?.languageCode]) ??
+        JsonUtils.mapValue(strings[Localization().defaultLocale?.languageCode]);
+      if (mapping != null) {
+        return JsonUtils.stringValue(mapping[key]);
+      }
+    }
+    return null;
   }
 
   /// US Phone validation  https://github.com/rokwire/illinois-app/issues/47
