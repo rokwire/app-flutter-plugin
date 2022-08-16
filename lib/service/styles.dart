@@ -471,10 +471,10 @@ class UiColors {
   static String? toHex(Color? value, {bool leadingHashSign = true}) {
     if (value != null) {
       return (leadingHashSign ? '#' : '') +
-          value.alpha.toRadixString(16) +
-          value.red.toRadixString(16) +
-          value.green.toRadixString(16) +
-          value.blue.toRadixString(16);
+          value.alpha.toRadixString(16).padLeft(2, '0') +
+          value.red.toRadixString(16).padLeft(2, '0') +
+          value.green.toRadixString(16).padLeft(2, '0') +
+          value.blue.toRadixString(16).padLeft(2, '0');
     }
     return null;
   }

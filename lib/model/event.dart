@@ -681,6 +681,21 @@ class Event with Explore, Favorite {
     return isRecurring || (isSuperEvent == true);
   }
 
+  bool get isMultiEvent {
+    return isComposite || isMoreThanOneDay;
+  }
+
+  bool get isMoreThanOneDay {
+    int eventDays = (endDateGmt?.difference(startDateGmt!).inDays ?? 0).abs();
+    return (eventDays >= 1);
+  }
+
+  bool get isNotTheSameYear {
+    int startYear = startDateGmt?.year ?? 0;
+    int endYear = endDateGmt?.year ?? 0;
+    return (startYear != endYear);
+  }
+
   static List<Map<String, dynamic>>? _constructSubEventsMap(List<dynamic>? subEventsJson) {
     if (subEventsJson == null || subEventsJson.isEmpty) {
       return null;

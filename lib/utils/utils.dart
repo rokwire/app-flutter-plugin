@@ -23,6 +23,7 @@ import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/service/localization.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
 class StringUtils {
@@ -102,6 +103,19 @@ class StringUtils {
       }
     }
     return fullName;
+  }
+
+  static String? getContentString(Map<String, dynamic>? strings, String? key, {String? languageCode}) {
+    if ((strings != null) && (key != null)) {
+      Map<String, dynamic>? mapping =
+        JsonUtils.mapValue(strings[languageCode]) ??
+        JsonUtils.mapValue(strings[Localization().currentLocale?.languageCode]) ??
+        JsonUtils.mapValue(strings[Localization().defaultLocale?.languageCode]);
+      if (mapping != null) {
+        return JsonUtils.stringValue(mapping[key]);
+      }
+    }
+    return null;
   }
 
   /// US Phone validation  https://github.com/rokwire/illinois-app/issues/47
@@ -208,6 +222,20 @@ class MapUtils {
         map.remove(key);
       }
     }
+  }
+
+  static T? get2<K, T>(Map<K, T>? map, List<K?>? keys) {
+    if ((map != null) && (keys != null)) {
+      for (K? key in keys) {
+        if (key != null) {
+          T? value = map[key];
+          if (value != null) {
+            return value;
+          }
+        }
+      }
+    }
+    return null;
   }
 }
 
@@ -326,6 +354,17 @@ class UrlUtils {
 
   static bool launchInternal(String? url) {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
+  }
+
+  static String addQueryParameters(String url, Map<String, String> queryParameters) {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri uri = Uri.parse(url);
+      Map<String, String> urlParams = uri.queryParameters;
+      queryParameters.addAll(urlParams);
+      uri = uri.replace(queryParameters: queryParameters);
+      url = uri.toString();
+    }
+    return url;
   }
 }
 
@@ -539,6 +578,9 @@ class AppToast {
 }
 
 class MapPathKey {
+
+  static const String pathDelimiter = '.';
+
   static dynamic entry(Map<String, dynamic>? map, dynamic key) {
     if ((map != null) && (key != null)) {
       if (key is String) {
@@ -557,12 +599,12 @@ class MapPathKey {
     int position, start = 0;
     Map source = map;
 
-    while (0 <= (position = key.indexOf('.', start))) {
+    while (0 <= (position = key.indexOf(pathDelimiter, start))) {
       field = key.substring(start, position);
       entry = source[field];
       if ((entry != null) && (entry is Map)) {
         source = entry;
-        start = position + 1;
+        start = position + pathDelimiter.length;
       }
       else {
         break;
@@ -661,6 +703,12 @@ class BoolExpr {
 
       bool? argValue = (evalArg != null) ? evalArg(expr) : null;
       return argValue ?? true; // allow everything that is not defined or we do not understand
+    }
+
+    else if (expr is bool) {
+      
+      return expr;
+    
     }
     
     else if (expr is List) {

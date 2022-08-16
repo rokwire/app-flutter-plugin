@@ -329,6 +329,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return _packageInfo?.version;
   }
 
+  String? get appStoreId {
+    String? appStoreUrl = MapPathKey.entry(Config().upgradeInfo, 'url.ios');
+    Uri? uri = (appStoreUrl != null) ? Uri.tryParse(appStoreUrl) : null;
+    return ((uri != null) && uri.pathSegments.isNotEmpty) ? uri.pathSegments.last : null;
+  }
+
 
   // Getters: Config Asset Acknowledgement
 
@@ -488,7 +494,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
   
   // Getters: other
-  String? deepLinkRedirectUrl(String? deepLink) {
+  String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }

@@ -6,6 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.0] - 2022-08-15
+### Fixed
+- Use simple getter for deep link redirect url [#2065](https://github.com/rokwire/illinois-app/issues/2065).
+- Properly convert colors that contain adjacent zeros [#122](https://github.com/rokwire/app-flutter-plugin/issues/122).
+### Changed
+- Allow referring string values from app config in FlexUI service [#118](https://github.com/rokwire/app-flutter-plugin/issues/118).
+- Added Auth2UserPres.setFavorite method; use Iterable inetead of List for muliple favorites paramter [#2065](https://github.com/rokwire/illinois-app/issues/2065).
+- FlexUI extended with content entry switch and multiple {content, rules} sets in single source  [#121](https://github.com/rokwire/app-flutter-plugin/issues/121).
+- Acknowledged new paramters of 'report/abuse' API of Groups BB [#2083](https://github.com/rokwire/illinois-app/issues/2083).
+- Refresh Auth2 account object instead of profile and prefs separately [#132](https://github.com/rokwire/app-flutter-plugin/issues/132).
+- Updated format of settings APIs in Auth2UserPrefs [#2194](https://github.com/rokwire/illinois-app/issues/2194).
+- Do not load all groups on portions (paging) [#125](https://github.com/rokwire/app-flutter-plugin/issues/125).
+### Added
+- Differ multi events and events that last more than one day [#126](https://github.com/rokwire/app-flutter-plugin/issues/126).
+- Added Config().appStoreId getter [#2162](https://github.com/rokwire/illinois-app/issues/2162).
+- Added MapUtils.get2 helper [#2169](https://github.com/rokwire/illinois-app/issues/2169).
+- Check if event ends in the same year as it starts [#128](https://github.com/rokwire/app-flutter-plugin/issues/128).
+- Load groups and members on portions (e.g. paging) [#125](https://github.com/rokwire/app-flutter-plugin/issues/125).
+- Added system configs in Auth2Account [#132](https://github.com/rokwire/app-flutter-plugin/issues/132).
+- Added int settings getter in Auth2UserPrefs [#2207](https://github.com/rokwire/illinois-app/issues/2207).
+- Added config settings refs support for FlexUI enabled rules [#2210](https://github.com/rokwire/illinois-app/issues/2210).
+
+
 ## [1.1.0] - 2022-07-19
 ### Changed
 - Added GeoFence location rules in FlexUI [#62](https://github.com/rokwire/app-flutter-plugin/issues/62).

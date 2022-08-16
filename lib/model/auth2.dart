@@ -121,11 +121,11 @@ class Auth2Account {
   final List<Auth2StringEntry>? roles;
   final List<Auth2StringEntry>? groups;
   final List<Auth2Type>? authTypes;
+  final Map<String, dynamic>? systemConfigs;
   
-  
-  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes});
+  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       profile: profile ?? other?.profile,
@@ -134,6 +134,7 @@ class Auth2Account {
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
       authTypes: authTypes ?? other?.authTypes,
+      systemConfigs: systemConfigs ?? other?.systemConfigs,
     );
   }
 
@@ -146,6 +147,7 @@ class Auth2Account {
       roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
+      systemConfigs: JsonUtils.mapValue(json['system_configs']),
     ) : null;
   }
 
@@ -158,6 +160,7 @@ class Auth2Account {
       'roles': roles,
       'groups': groups,
       'auth_types': authTypes,
+      'system_configs': systemConfigs,
     };
   }
 
@@ -169,7 +172,8 @@ class Auth2Account {
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
-      const DeepCollectionEquality().equals(other.authTypes, authTypes);
+      const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
+      const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
 
   @override
   int get hashCode =>
@@ -178,7 +182,8 @@ class Auth2Account {
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
-    (const DeepCollectionEquality().hash(authTypes));
+    (const DeepCollectionEquality().hash(authTypes)) ^
+    (const DeepCollectionEquality().hash(systemConfigs));
 
   bool get isValid {
     return (id != null) && id!.isNotEmpty /* && (profile != null) && profile.isValid*/;
@@ -214,6 +219,7 @@ class Auth2Account {
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
 ////////////////////////////////
@@ -960,6 +966,8 @@ class Auth2UserPrefs {
 
   // Favorites
 
+  Iterable<String>? get favoritesKeys => _favorites?.keys;
+
   LinkedHashSet<String>? getFavorites(String favoriteKey) {
     return (_favorites != null) ? _favorites![favoriteKey] : null;
   }
@@ -1036,7 +1044,34 @@ class Auth2UserPrefs {
     }
   }
 
-  bool isListFavorite(List<Favorite>? favorites) {
+  void setFavorite(Favorite? favorite, bool value) {
+    if ((favorite != null) && (favorite.favoriteId != null)) {
+      LinkedHashSet<String>? favoriteIdsForKey = (_favorites != null) ? _favorites![favorite.favoriteKey] : null;
+      bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
+      bool isModified = false;
+      if (value && !isFavorite) {
+        if (favoriteIdsForKey == null) {
+          _favorites ??= <String, LinkedHashSet<String>>{};
+            // ignore: prefer_collection_literals
+          _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+        }
+        favoriteIdsForKey.add(favorite.favoriteId!);
+        isModified = true;
+      }
+      else if (!value && isFavorite) {
+        favoriteIdsForKey.remove(favorite.favoriteId);
+        isModified = true;
+      }
+
+      if (isModified) {
+        NotificationService().notify(notifyFavoriteChanged, favorite);
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
+      }
+    }
+  }
+
+  bool isListFavorite(Iterable<Favorite>? favorites) {
     if ((favorites != null) && (_favorites != null)) {
       for (Favorite favorite in favorites) {
         if (!isFavorite(favorite)) {
@@ -1048,34 +1083,40 @@ class Auth2UserPrefs {
     return false;
   }
 
-  void setListFavorite(List<Favorite>? favorites, bool shouldFavorite, {Favorite? sourceFavorite}) {
+  void setListFavorite(Iterable<Favorite>? favorites, bool shouldFavorite, {Favorite? sourceFavorite}) {
     if (favorites != null) {
-      _favorites ??= <String, LinkedHashSet<String>>{};
 
+      bool isModified = false;
       for (Favorite favorite in favorites) {
-        LinkedHashSet<String>? favoriteIdsForKey = _favorites![favorite.favoriteKey];
-        bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
-        if (isFavorite && !shouldFavorite) {
-          favoriteIdsForKey.remove(favorite.favoriteId);
-        }
-        else if (!isFavorite && shouldFavorite) {
-          if (favoriteIdsForKey == null) {
-            // ignore: prefer_collection_literals
-            _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+        if (favorite.favoriteId != null) {
+          LinkedHashSet<String>? favoriteIdsForKey = (_favorites != null) ? _favorites![favorite.favoriteKey] : null;
+          bool isFavorite = (favoriteIdsForKey != null) && favoriteIdsForKey.contains(favorite.favoriteId);
+          if (shouldFavorite && !isFavorite) {
+            if (favoriteIdsForKey == null) {
+              _favorites ??= <String, LinkedHashSet<String>>{};
+              // ignore: prefer_collection_literals
+              _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
+            }
+            favoriteIdsForKey.add(favorite.favoriteId!);
           }
-          SetUtils.add(favoriteIdsForKey, favorite.favoriteId);
+          else if (!shouldFavorite && isFavorite) {
+            favoriteIdsForKey.remove(favorite.favoriteId);
+          }
+          NotificationService().notify(notifyFavoriteChanged, favorite);
+          isModified = true;
         }
-        NotificationService().notify(notifyFavoriteChanged, favorite);
       }
-      if (sourceFavorite != null) {
-        NotificationService().notify(notifyFavoriteChanged, sourceFavorite);
+      if (isModified) {
+        if (sourceFavorite != null) {
+          NotificationService().notify(notifyFavoriteChanged, sourceFavorite);
+        }
+        NotificationService().notify(notifyFavoritesChanged);
+        NotificationService().notify(notifyChanged, this);
       }
-      NotificationService().notify(notifyFavoritesChanged);
-      NotificationService().notify(notifyChanged, this);
     }
   }
 
-  void toggleListFavorite(List<Favorite>? favorites, {Favorite? sourceFavorite}) {
+  void toggleListFavorite(Iterable<Favorite>? favorites, {Favorite? sourceFavorite}) {
     setListFavorite(favorites, !isListFavorite(favorites), sourceFavorite: sourceFavorite);
   }
 
@@ -1384,22 +1425,23 @@ class Auth2UserPrefs {
   }
   // Settings
 
-  bool? getBoolSetting({String? settingName, bool? defaultValue}){
-    return JsonUtils.boolValue(getSetting(settingName: settingName)) ?? defaultValue;
-  }
+  bool? getBoolSetting(String? settingName, { bool? defaultValue }) =>
+    JsonUtils.boolValue(getSetting(settingName)) ?? defaultValue;
 
-  dynamic getSetting({String? settingName}){
-    if(_settings?.isNotEmpty ?? false){
-      return _settings![settingName];
+  int? getIntSetting(String? settingName, { int? defaultValue }) =>
+    JsonUtils.intValue(getSetting(settingName)) ?? defaultValue;
+
+  dynamic getSetting(String? settingName) =>
+    (_settings != null) ? _settings![settingName] : null;
+
+  void applySetting(String settingName, dynamic settingValue) {
+    if (settingValue != null) {
+      _settings ??= <String, dynamic>{};
+      _settings![settingName] = settingValue;
     }
-
-    return null;//consider default TBD
-  }
-
-  void applySetting(String settingName, dynamic settingValue){
-    _settings ??= <String, dynamic>{};
-    _settings![settingName] = settingValue;
-
+    else if (_settings != null) {
+      _settings!.remove(settingName);
+    }
     NotificationService().notify(notifySettingsChanged);
     NotificationService().notify(notifyChanged, this);
   }
