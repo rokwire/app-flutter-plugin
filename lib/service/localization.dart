@@ -290,6 +290,19 @@ class Localization with Service implements NotificationsListener {
     return getString(key) ?? defaults;
   }
 
+  String? getContentString(Map<String, dynamic>? strings, String? key, {String? languageCode}) {
+    if ((strings != null) && (key != null)) {
+      Map<String, dynamic>? mapping =
+        JsonUtils.mapValue(strings[languageCode]) ??
+        JsonUtils.mapValue(strings[currentLocale?.languageCode]) ??
+        JsonUtils.mapValue(strings[defaultLocale?.languageCode]);
+      if (mapping != null) {
+        return JsonUtils.stringValue(mapping[key]);
+      }
+    }
+    return null;
+  }
+
   String? getStringFromMapping(String? text, Map<String, dynamic>? stringsMap) {
     if ((text != null) && (stringsMap != null)) {
       String? entry;
