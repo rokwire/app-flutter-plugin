@@ -318,15 +318,14 @@ class Styles extends Service implements NotificationsListener{
       if(stylesData is Map){
         stylesData.forEach((dynamic key, dynamic value){
           if(key is String && value is Map){
-            double? fontSize = value['size'];
-            String? fontFamily = value['font_family'];
-            String? rawColor = value['color'];
-            TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"]));
+            double? fontSize = JsonUtils.doubleValue(value['size']);
+            String? fontFamily = JsonUtils.stringValue(value['font_family']);
+            String? rawColor = JsonUtils.stringValue(value['color']);
             Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
-            double? letterSpacing = value['letter_spacing']; // Not mandatory
-            double? wordSpacing = value['word_spacing']; // Not mandatory
-            //TBD rest style properties: TextAlign,
-            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration, );
+            TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
+            double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
+            double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
+            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration);
           }
         });
       }
