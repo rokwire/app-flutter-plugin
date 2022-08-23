@@ -363,7 +363,7 @@ TextDecoration textDecorationFromString(String? decoration){
     case "lineThrough" : return TextDecoration.lineThrough;
     case "overline" : return TextDecoration.overline;
     case "underline" : return TextDecoration.underline;
-    default : TextDecoration.none;
+    default : return TextDecoration.none;
   }
 }
 
