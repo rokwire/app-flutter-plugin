@@ -321,9 +321,12 @@ class Styles extends Service implements NotificationsListener{
             double? fontSize = value['size'];
             String? fontFamily = value['font_family'];
             String? rawColor = value['color'];
+            TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"]));
             Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
             double? letterSpacing = value['letter_spacing']; // Not mandatory
-            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, );
+            double? wordSpacing = value['word_spacing']; // Not mandatory
+            //TBD rest style properties: TextAlign,
+            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration, );
           }
         });
       }
@@ -352,6 +355,16 @@ class Styles extends Service implements NotificationsListener{
         }
       }
     }
+  }
+}
+
+//Text style properties from string
+TextDecoration textDecorationFromString(String? decoration){
+  switch(decoration){
+    case "lineThrough" : return TextDecoration.lineThrough;
+    case "overline" : return TextDecoration.overline;
+    case "underline" : return TextDecoration.underline;
+    default : TextDecoration.none;
   }
 }
 
