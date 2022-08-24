@@ -1431,6 +1431,9 @@ class Auth2UserPrefs {
   int? getIntSetting(String? settingName, { int? defaultValue }) =>
     JsonUtils.intValue(getSetting(settingName)) ?? defaultValue;
 
+  String? getStringSetting(String? settingName, { String? defaultValue }) =>
+    JsonUtils.stringValue(getSetting(settingName)) ?? defaultValue;
+
   dynamic getSetting(String? settingName) =>
     (_settings != null) ? _settings![settingName] : null;
 
