@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
+### Changed
+- Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 
 ## [1.2.0] - 2022-08-15
 ### Fixed
