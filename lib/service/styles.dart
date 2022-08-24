@@ -15,10 +15,12 @@
  */
 
 import 'dart:io';
-import 'dart:ui';
+// import 'dart:ui';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -330,7 +332,12 @@ class Styles extends Service implements NotificationsListener{
         });
       }
       _textStylesMap = styles;
+      //if we need UiStyles...
+      // if(_textStylesMap!=null)
+      //   _uiStyles = UiStyles(_textStylesMap!);
+      // }
     }
+
   }
 
   // NotificationsListener
