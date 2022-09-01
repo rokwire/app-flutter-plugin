@@ -702,6 +702,25 @@ class Groups with Service implements NotificationsListener {
       _addAttendedMemberToCache(group: group, member: member);
       return true;
     }
+    member.dateAttendedUtc ??= DateTime.now().toUtc();
+    bool succeeded = await addMemberTo(group: group, member: member);
+    if (succeeded) {
+      NotificationService().notify(notifyGroupMemberAttended, null);
+    } else {
+      debugPrint('Failed to attend a member to group.');
+    }
+    return succeeded;
+  }
+
+  Future<bool> addMemberTo({required Group group, required Member member}) async {
+    if (Config().groupsUrl == null) {
+      return false;
+    }
+    bool isNewMember = (member.id == null);
+    if (isNewMember && (group.authManEnabled == true)) {
+      debugPrint('It is not allowed to import new members to authman groups.');
+      return false;
+    }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
     String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
@@ -712,12 +731,11 @@ class Groups with Service implements NotificationsListener {
       int? responseCode = response?.statusCode;
       String? responseString = response?.body;
       if (responseCode == 200) {
-        NotificationService().notify(notifyGroupMemberAttended, null);
         NotificationService().notify(notifyGroupUpdated, group.id);
         _updateUserGroupsFromNetSync();
         return true;
       } else {
-        debugPrint('Failed to attend a member to group. \nResponse: $responseCode, $responseString');
+        debugPrint('Failed to add a member to group. \nResponse: $responseCode, $responseString');
       }
     } catch (e) {
       debugPrint(e.toString());
@@ -1180,6 +1198,8 @@ class Groups with Service implements NotificationsListener {
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
       if (response?.statusCode == 200) {
+        String? responseBody = response?.body;
+        print(responseBody);
         return response?.body;
       }
       else {

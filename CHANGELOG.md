@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 
+<!-- TBD: add date below when releasing version from `support/v1.2` and remove this comment -->
+## [1.2.1] - yyyy-MM-dd
+### Added
+- Add member to a group by uin [#2337](https://github.com/rokwire/illinois-app/issues/2337).
+
 ## [1.2.0] - 2022-08-15
 ### Fixed
 - Use simple getter for deep link redirect url [#2065](https://github.com/rokwire/illinois-app/issues/2065).

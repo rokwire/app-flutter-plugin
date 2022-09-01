@@ -154,6 +154,14 @@ class StringUtils {
   static bool isEmailValid(String email){
     return isNotEmpty(email) && RegExp(_emailPattern).hasMatch(email);
   }
+
+  /// UIN validation - 'XXXXXXXXX' where X is a number
+
+  static const String _uinPattern = '[0-9]{9}';
+
+  static bool isUinValid(String? uin) {
+    return isNotEmpty(uin) && RegExp(_uinPattern).hasMatch(uin!);
+  }
 }
 
 class CollectionUtils {
