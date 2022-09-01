@@ -1195,8 +1195,6 @@ class Groups with Service implements NotificationsListener {
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
       if (response?.statusCode == 200) {
-        String? responseBody = response?.body;
-        print(responseBody);
         return response?.body;
       }
       else {
