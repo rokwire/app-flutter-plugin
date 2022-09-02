@@ -1004,6 +1004,20 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  ///
+  /// Loads single group post
+  /// 
+  /// NB: use a backend call for loading single group post when such API is available
+  ///
+  Future<GroupPost?> loadGroupPost({required groupId, required String postId}) async {
+    List<GroupPost>? allPosts = await loadGroupPosts(groupId);
+    GroupPost? post;
+    if (CollectionUtils.isNotEmpty(allPosts)) {
+      post = allPosts!.firstWhereOrNull((element) => (element.id == postId));
+    }
+    return post;
+  }
+
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
     dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
