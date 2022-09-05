@@ -57,7 +57,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String?               _appPlatformId;
   DateTime?             _pausedDateTime;
   
-  final Set<String>    _reportedUpgradeVersions = <String>{};
+  final Set<String>        _reportedUpgradeVersions = <String>{};
+  final ConfigEnvironment? _defaultConfigEnvironment;
 
   // Singletone Factory
 
@@ -68,10 +69,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @protected
   static set instance(Config? value) => _instance = value;
 
-  factory Config() => _instance ?? (_instance = Config.internal());
+  factory Config({ConfigEnvironment? defaultEnvironment}) => _instance ?? (_instance = Config.internal(defaultEnvironment: defaultEnvironment));
 
   @protected
-  Config.internal();
+  Config.internal({ConfigEnvironment? defaultEnvironment}) :
+    _defaultConfigEnvironment = defaultEnvironment;
 
   // Service
 
@@ -91,7 +93,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @override
   Future<void> initService() async {
 
-    _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? defaultConfigEnvironment;
+    _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
     _appDocumentsDir = await getApplicationDocumentsDirectory();
@@ -434,7 +436,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   ConfigEnvironment get defaultConfigEnvironment {
-    return kReleaseMode ? ConfigEnvironment.production : ConfigEnvironment.dev;
+    return kDebugMode ? ConfigEnvironment.dev : ConfigEnvironment.production;
   }
 
   // Assets cache path
