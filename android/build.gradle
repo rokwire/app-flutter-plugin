@@ -43,7 +43,7 @@ dependencies {
     implementation "androidx.security:security-crypto:1.1.0-alpha03"
     
     //AltBeacon - Android Beacon Library
-    implementation 'org.altbeacon:android-beacon-library:2.16.4'
+    implementation 'org.altbeacon:android-beacon-library:2.19.5-beta7'
 
     //End Common Dependencies
 }
