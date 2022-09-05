@@ -321,13 +321,22 @@ class Styles extends Service implements NotificationsListener{
         stylesData.forEach((dynamic key, dynamic value){
           if(key is String && value is Map){
             double? fontSize = JsonUtils.doubleValue(value['size']);
+            double? fontHeight = JsonUtils.doubleValue(value['height']);
             String? fontFamily = JsonUtils.stringValue(value['font_family']);
             String? rawColor = JsonUtils.stringValue(value['color']);
             Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
+            String? rawDecorationColor = JsonUtils.stringValue(value['decoration_color']);
+            Color? decorationColor = rawDecorationColor != null ? (rawDecorationColor.startsWith("#") ? UiColors.fromHex(rawDecorationColor) : colors!.getColor(rawDecorationColor)) : null;
             TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
+            TextOverflow? textOverflow = textOverflowFromString(JsonUtils.stringValue(value["overflow"])); // Not mandatory
+            TextDecorationStyle? decorationStyle = textDecorationStyleFromString(JsonUtils.stringValue(value["decoration_style"])); // Not mandatory
+            FontWeight? fontWeight = fontWeightFromString(JsonUtils.stringValue(value["weight"])); // Not mandatory
             double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
             double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
-            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration);
+            double? decorationThickness = JsonUtils.doubleValue(value['decoration_thickness']); // Not mandatory
+
+            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+                overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
           }
         });
       }
@@ -372,6 +381,42 @@ TextDecoration textDecorationFromString(String? decoration){
     case "underline" : return TextDecoration.underline;
     default : return TextDecoration.none;
   }
+}
+
+TextOverflow? textOverflowFromString(String? value) {
+    switch (value) {
+      case "clip" : return TextOverflow.clip;
+      case "fade" :return TextOverflow.fade;
+      case "ellipsis" :return TextOverflow.ellipsis;
+      case "visible" :return TextOverflow.visible;
+      default : return null;
+    }
+  }
+
+TextDecorationStyle? textDecorationStyleFromString(String? value) {
+    switch (value) {
+      case "dotted" : return TextDecorationStyle.dotted;
+      case "dashed" : return TextDecorationStyle.dashed;
+      case "double" : return TextDecorationStyle.double;
+      case "solid" : return TextDecorationStyle.solid;
+      case "wavy" : return TextDecorationStyle.wavy;
+      default : return null;
+    }
+  }
+
+  FontWeight? fontWeightFromString(String? value) {
+    switch (value) {
+      case "w100" : return FontWeight.w100;
+      case "w200" : return FontWeight.w200;
+      case "w300" : return FontWeight.w300;
+      case "w400" : return FontWeight.w400;
+      case "w500" : return FontWeight.w500;
+      case "w600" : return FontWeight.w600;
+      case "w700" : return FontWeight.w700;
+      case "w800" : return FontWeight.w800;
+      case "w900" : return FontWeight.w900;
+      default : return null;
+    }
 }
 
 enum StylesContentMode { auto, assets, debug }
