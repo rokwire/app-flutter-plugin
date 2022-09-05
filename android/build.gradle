@@ -22,7 +22,7 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 32
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -43,7 +43,7 @@ dependencies {
     implementation "androidx.security:security-crypto:1.1.0-alpha03"
     
     //AltBeacon - Android Beacon Library
-    implementation 'org.altbeacon:android-beacon-library:2.16.4'
+    implementation 'org.altbeacon:android-beacon-library:2.19.5-beta7'
 
     //End Common Dependencies
 }
