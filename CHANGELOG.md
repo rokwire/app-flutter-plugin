@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
-- Add member to a group by uin [#2337](https://github.com/rokwire/illinois-app/issues/2337).
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
 
 ## [1.2.0] - 2022-08-15
