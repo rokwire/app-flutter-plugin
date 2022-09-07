@@ -685,7 +685,6 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> memberAttended({required Group group, required Member member}) async {
-    await waitForLogin();
     if (Config().groupsUrl == null) {
       return false;
     }
@@ -695,12 +694,8 @@ class Groups with Service implements NotificationsListener {
       return false;
     }
     member.dateAttendedUtc ??= DateTime.now().toUtc();
-    if (Connectivity().isOffline) {
-      _addAttendedMemberToCache(group: group, member: member);
-      return true;
-    }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
-      String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
       Response? response;
       if (isNewMember) {
@@ -1031,7 +1026,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
-      await _ensureLogin();
+      await waitForLogin();
       String? requestBody = JsonUtils.encode({'reaction': reaction});
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${postId}/reactions';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
