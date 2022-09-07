@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
-- Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
@@ -21,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.1] - yyyy-MM-dd
 ### Added
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
+- Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
 
 ## [1.2.0] - 2022-08-15
 ### Fixed
