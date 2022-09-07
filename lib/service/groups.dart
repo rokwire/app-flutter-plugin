@@ -700,7 +700,7 @@ class Groups with Service implements NotificationsListener {
       return true;
     }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
-    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+      String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
       Response? response;
       if (isNewMember) {
@@ -1027,6 +1027,23 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return groupNudges;
+  }
+
+  Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
+      await _ensureLogin();
+      String? requestBody = JsonUtils.encode({'reaction': reaction});
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${postId}/reactions';
+      Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupPostsUpdated);
+        return true;
+      } else {
+        Log.e('Failed to update group post reaction. Response: ${response?.body}');
+      }
+    }
+    return false;
   }
 
   GroupPostNudge? _getNudgeForGroup({required String groupName, required GroupPostNudge template}) {
