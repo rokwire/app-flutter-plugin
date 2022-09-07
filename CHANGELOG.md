@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
 - Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
+- Add reactions to group posts [#151](https://github.com/rokwire/app-flutter-plugin/issues/151)
 ### Changed
 - Acknowledge "can_poll" in nudges data model [#2365](https://github.com/rokwire/illinois-app/issues/2365).
 ### Fixed
