@@ -685,6 +685,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> memberAttended({required Group group, required Member member}) async {
+    await waitForLogin();
     if (Config().groupsUrl == null) {
       return false;
     }
@@ -694,6 +695,10 @@ class Groups with Service implements NotificationsListener {
       return false;
     }
     member.dateAttendedUtc ??= DateTime.now().toUtc();
+    if (Connectivity().isOffline) {
+      _addAttendedMemberToCache(group: group, member: member);
+      return true;
+    }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
     String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
