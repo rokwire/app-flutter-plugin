@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
 - Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
+- Add reactions to group posts [#151](https://github.com/rokwire/app-flutter-plugin/issues/151)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
