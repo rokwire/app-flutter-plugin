@@ -703,7 +703,7 @@ class Groups with Service implements NotificationsListener {
       return true;
     }
     String? memberJsonBody = JsonUtils.encode(member.toJson());
-      String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
+    String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
       await _ensureLogin();
       Response? response = isNewMember ?
