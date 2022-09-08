@@ -72,9 +72,9 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(decoration: widget.decoration, child:
         SafeArea(child:
-            Row(children: 
-              buildTabs(),
-            ),
+          Row(children: 
+            buildTabs(),
+          ),
         ),
       ),
     ],);
@@ -192,9 +192,12 @@ class TabWidget extends StatelessWidget {
   double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
 
   @protected
+  TextOverflow get textOverflow => TextOverflow.ellipsis;
+
+  @protected
   Widget getTabText(BuildContext context) => Row(children: [
     Expanded(child:
-      Text(label ?? '', textScaleFactor: getTextScaleFactor(context), textAlign: tabTextAlign, style: tabTextStyle,),
+      Text(label ?? '', textScaleFactor: getTextScaleFactor(context), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
     )
   ]);
 
