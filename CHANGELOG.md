@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
-- Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
 - Add reactions to group posts [#151](https://github.com/rokwire/app-flutter-plugin/issues/151)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
@@ -21,8 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- TBD: add date below when releasing version from `support/v1.2` and remove this comment -->
 ## [1.2.1] - yyyy-MM-dd
 ### Added
-- Add member to a group by uin [#2337](https://github.com/rokwire/illinois-app/issues/2337).
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
+- Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
+### Changed
+- Acknowledge "can_poll" in nudges data model [#2365](https://github.com/rokwire/illinois-app/issues/2365).
+### Fixed
+- Fixed text overflow in TabWidget [#152](https://github.com/rokwire/app-flutter-plugin/issues/152).
 
 ## [1.2.0] - 2022-08-15
 ### Fixed

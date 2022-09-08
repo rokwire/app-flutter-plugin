@@ -878,8 +878,9 @@ class GroupPostNudge {
   final dynamic groupNames;
   final String? subject;
   final String? body;
+  final bool? canPoll;
 
-  GroupPostNudge({this.id, this.subject, this.body, this.groupNames});
+  GroupPostNudge({this.id, this.groupNames, this.subject, this.body, this.canPoll});
 
   static GroupPostNudge? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -887,9 +888,10 @@ class GroupPostNudge {
     }
     return GroupPostNudge(
         id: JsonUtils.stringValue(json['id']),
+        groupNames: json['group_name'],
         subject: JsonUtils.stringValue(json['subject']),
         body: JsonUtils.stringValue(json['body']),
-        groupNames: json['group_name']);
+        canPoll: JsonUtils.boolValue(json['can_poll']));
   }
 
   static List<GroupPostNudge>? fromJsonList(List<dynamic>? jsonList) {
