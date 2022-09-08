@@ -495,7 +495,7 @@ class Groups with Service implements NotificationsListener {
 
   // Members APIs
 
-  Future<List<Member>?> loadMembers({String? groupId, List<GroupMemberStatus>? statuses, String? memberId, String? userId, 
+  Future<List<Member>?> loadMembers({String? groupId, List<GroupMemberStatus>? statuses, String? memberId, List<String>? userIds,
     String? externalId, String? netId, String? name, int? offset, int? limit}) async {
     if (StringUtils.isEmpty(groupId)) {
       debugPrint('Failed to load group members - missing groupId.');
@@ -515,8 +515,8 @@ class Groups with Service implements NotificationsListener {
       if (StringUtils.isNotEmpty(memberId)) {
         params.addAll({'id': memberId});
       }
-      if (StringUtils.isNotEmpty(userId)) {
-        params.addAll({'user_id': userId});
+      if (CollectionUtils.isNotEmpty(userIds)) {
+        params.addAll({'user_ids': userIds});
       }
       if (StringUtils.isNotEmpty(externalId)) {
         params.addAll({'external_id': externalId});
