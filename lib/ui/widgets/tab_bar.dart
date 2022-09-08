@@ -174,7 +174,7 @@ class TabWidget extends StatelessWidget {
   );
 
   @protected
-  EdgeInsetsGeometry get tabPadding => const EdgeInsets.only(top: 10);
+  EdgeInsetsGeometry get tabPadding => const EdgeInsets.only(top: 8, bottom: 2);
 
   @protected
   EdgeInsetsGeometry get tabIconPadding => const EdgeInsets.only(bottom: 4);
