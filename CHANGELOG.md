@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
 ### Changed
 - Acknowledge "can_poll" in nudges data model [#2365](https://github.com/rokwire/illinois-app/issues/2365).
+### Fixed
+- Fixed text overflow in TabWidget [#152](https://github.com/rokwire/app-flutter-plugin/issues/152).
 
 ## [1.2.0] - 2022-08-15
 ### Fixed
