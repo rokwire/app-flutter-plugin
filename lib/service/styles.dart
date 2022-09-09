@@ -54,6 +54,10 @@ class Styles extends Service implements NotificationsListener{
   UiStyles? _uiStyles;
   UiStyles? get uiStyles => _uiStyles;
 
+  Map<String, Image>? _imagesMap;
+  UiImages? _uiImages;
+  UiImages? get uiImages => _uiImages;
+
   // Singletone Factory
 
   static Styles? _instance;
@@ -275,6 +279,7 @@ class Styles extends Service implements NotificationsListener{
     buildColorsData();
     buildFontFamiliesData();
     buildStylesData();
+    buildImagesData();
   }
 
   @protected
@@ -347,6 +352,43 @@ class Styles extends Service implements NotificationsListener{
       // }
     }
 
+  }
+
+  @protected
+  void buildImagesData(){
+    if(_stylesData != null) {
+      dynamic imagesData = _stylesData!["image"];
+      Map<String, Image> images = <String, Image>{};
+      if(imagesData is Map){
+        imagesData.forEach((dynamic key, dynamic value){
+          if(key is String && value is Map){
+            double? imageHeight = JsonUtils.doubleValue(value['height']);
+            double? imageWidth = JsonUtils.doubleValue(value['width']);
+            String? rawColor = JsonUtils.stringValue(value['color']);
+            Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
+            String? semanticLabel = JsonUtils.stringValue(value['semantic_label']);
+            bool? excludeFromSemantics = JsonUtils.boolValue(value['exclude_from_semantics']);
+
+            // Color? decorationColor = rawDecorationColor != null ? (rawDecorationColor.startsWith("#") ? UiColors.fromHex(rawDecorationColor) : colors!.getColor(rawDecorationColor)) : null;
+            // TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
+            // TextOverflow? textOverflow = textOverflowFromString(JsonUtils.stringValue(value["overflow"])); // Not mandatory
+            // TextDecorationStyle? decorationStyle = textDecorationStyleFromString(JsonUtils.stringValue(value["decoration_style"])); // Not mandatory
+            // FontWeight? fontWeight = fontWeightFromString(JsonUtils.stringValue(value["weight"])); // Not mandatory
+            // double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
+            // double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
+            // double? decorationThickness = JsonUtils.doubleValue(value['decoration_thickness']); // Not mandatory
+
+            // images[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+            //     overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+          }
+        });
+      }
+
+      _imagesMap = images;
+      if(_imagesMap!=null) {
+        _uiImages = UiImages(_imagesMap!);
+      }
+    }
   }
 
   // NotificationsListener
@@ -574,4 +616,11 @@ class UiStyles {
   UiStyles(this._styleMap);
 
   TextStyle? get headerBar          => _styleMap['header_bar'];
+}
+
+class UiImages {
+  final Map<String, Image> _imageMap;
+  UiImages(this._imageMap);
+
+
 }
