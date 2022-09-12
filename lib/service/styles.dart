@@ -15,6 +15,7 @@
  */
 
 import 'dart:io';
+import 'dart:typed_data';
 // import 'dart:ui';
 
 import 'package:collection/collection.dart';
@@ -31,6 +32,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
 class Styles extends Service implements NotificationsListener{
@@ -54,7 +56,6 @@ class Styles extends Service implements NotificationsListener{
   UiStyles? _uiStyles;
   UiStyles? get uiStyles => _uiStyles;
 
-  Map<String, Image>? _imagesMap;
   UiImages? _uiImages;
   UiImages? get uiImages => _uiImages;
 
@@ -358,36 +359,50 @@ class Styles extends Service implements NotificationsListener{
   void buildImagesData(){
     if(_stylesData != null) {
       dynamic imagesData = _stylesData!["image"];
-      Map<String, Image> images = <String, Image>{};
+      Map<String, ImageProvider> imageProviders = <String, ImageProvider>{};
+      Map<String, Map> imageJson = <String, Map>{};
+      Map<String, IconData> faIconData = <String, IconData>{};
       if(imagesData is Map){
         imagesData.forEach((dynamic key, dynamic value){
           if(key is String && value is Map){
-            double? imageHeight = JsonUtils.doubleValue(value['height']);
-            double? imageWidth = JsonUtils.doubleValue(value['width']);
-            String? rawColor = JsonUtils.stringValue(value['color']);
-            Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
-            String? semanticLabel = JsonUtils.stringValue(value['semantic_label']);
-            bool? excludeFromSemantics = JsonUtils.boolValue(value['exclude_from_semantics']);
+            String? imageType = JsonUtils.stringValue(value['type']);
+            String? imageSource = JsonUtils.stringValue(value['src']);
+            double imageScale = JsonUtils.doubleValue(value['scale']) ?? 1.0;
 
-            // Color? decorationColor = rawDecorationColor != null ? (rawDecorationColor.startsWith("#") ? UiColors.fromHex(rawDecorationColor) : colors!.getColor(rawDecorationColor)) : null;
-            // TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
-            // TextOverflow? textOverflow = textOverflowFromString(JsonUtils.stringValue(value["overflow"])); // Not mandatory
-            // TextDecorationStyle? decorationStyle = textDecorationStyleFromString(JsonUtils.stringValue(value["decoration_style"])); // Not mandatory
-            // FontWeight? fontWeight = fontWeightFromString(JsonUtils.stringValue(value["weight"])); // Not mandatory
-            // double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
-            // double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
-            // double? decorationThickness = JsonUtils.doubleValue(value['decoration_thickness']); // Not mandatory
-
-            // images[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-            //     overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+            imageJson[key] = value;
+            if (imageSource != null) {
+              switch (imageType) {
+                case 'flutter.asset': imageProviders[key] = AssetImage(imageSource); break;
+                case 'flutter.file': imageProviders[key] = FileImage(File(imageSource), scale: imageScale); break;
+                case 'flutter.network': imageProviders[key] = NetworkImage(imageSource, scale: imageScale); break;
+                case 'fa.solid': {
+                  int? code = int.tryParse(imageSource, radix: 16);
+                  if (code != null) {
+                    faIconData[key] = IconDataSolid(code);
+                  }
+                  break;
+                }
+                case 'fa.regular': {
+                  int? code = int.tryParse(imageSource, radix: 16);
+                  if (code != null) {
+                    faIconData[key] = IconDataRegular(code);
+                  }
+                  break;
+                }
+                case 'fa.brands': {
+                  int? code = int.tryParse(imageSource, radix: 16);
+                  if (code != null) {
+                    faIconData[key] = IconDataBrands(code);
+                  }
+                  break;
+                }
+              }
+            }
           }
         });
       }
 
-      _imagesMap = images;
-      if(_imagesMap!=null) {
-        _uiImages = UiImages(_imagesMap!);
-      }
+      _uiImages = UiImages(imageProviders, imageJson, faIconData, colors!);
     }
   }
 
@@ -619,8 +634,102 @@ class UiStyles {
 }
 
 class UiImages {
-  final Map<String, Image> _imageMap;
-  UiImages(this._imageMap);
+  final Map<String, ImageProvider> _imageProviders;
+  final Map<String, Map> _imageJson;
+  final Map<String, IconData> _faIconData;
+  final UiColors _colors;
 
+  UiImages(this._imageProviders, this._imageJson, this._faIconData, this._colors);
 
+  Widget? fromString(String str, {Uint8List? imageData, 
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,}
+  ) {
+    Map? json = _imageJson[str];
+    if (json != null) {
+      ImageProvider? provider = _imageProviders[str];
+      IconData? iconData = _faIconData[str];
+      if (iconData != null) {
+        return _faIconFromData(iconData, json);
+      } else {
+        return _imageFromProvider(provider, json, imageData: imageData);
+      }
+    }
+    return null;
+  }
+
+  Image? _imageFromProvider(ImageProvider? provider, Map json, {Uint8List? imageData, 
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,}
+  ) {
+    double? height = JsonUtils.doubleValue(json['height']);
+    double? width = JsonUtils.doubleValue(json['width']);
+
+    String? rawColor = JsonUtils.stringValue(json['color']);
+    Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+    String? colorBlendMode = JsonUtils.stringValue(json['color_blend_mode']) ?? '';
+    BlendMode cbm = BlendMode.values.firstWhere((e) => e.toString() == 'BlendMode.' + colorBlendMode);
+
+    String? semanticLabel = JsonUtils.stringValue(json['semantic_label']);
+    bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
+
+    AlignmentGeometry alignment = _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
+    
+    String? boxFit = JsonUtils.stringValue(json['fit']) ?? '';
+    BoxFit bf = BoxFit.values.firstWhere((e) => e.toString() == 'BoxFit.' + boxFit);
+
+    String? filterQuality = JsonUtils.stringValue(json['filter_quality']) ?? '';
+    FilterQuality fq = FilterQuality.values.firstWhere((e) => e.toString() == 'FilterQuality.' + filterQuality);
+
+    String? imageRepeat = JsonUtils.stringValue(json['repeat']) ?? '';
+    ImageRepeat ir = ImageRepeat.values.firstWhere((e) => e.toString() == 'ImageRepeat.' + imageRepeat);
+
+    bool antiAlias = JsonUtils.boolValue(json['anti_alias']) ?? false;
+    bool matchTextDirection = JsonUtils.boolValue(json['match_text_direction']) ?? false;
+    
+    if (provider != null) {
+      return Image(image: provider, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+        excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+        repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+    } else if (CollectionUtils.isNotEmpty(imageData)) {
+      double scale = JsonUtils.doubleValue(json['scale']) ?? 1.0;
+      return Image.memory(imageData!, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+        excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+        repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+    }
+    return null;
+  }
+
+  Widget _faIconFromData(IconData data, Map json) {
+    double? imageWidth = JsonUtils.doubleValue(json['width']);
+
+    String? rawColor = JsonUtils.stringValue(json['color']);
+    Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+
+    String? semanticLabel = JsonUtils.stringValue(json['semantic_label']);
+    bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
+
+    String? textDirection = JsonUtils.stringValue(json['text_direction']) ?? '';
+    TextDirection td = TextDirection.values.firstWhere((e) => e.toString() == 'TextDirection.' + textDirection);
+
+    FaIcon icon = FaIcon(data, size: imageWidth, color: color, semanticLabel: semanticLabel, textDirection: td,);
+    return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
+  }
+
+  AlignmentGeometry? _alignmentFromString(String? str) {
+    switch (str) {
+      case "topLeft": return Alignment.topLeft;
+      case "topCenter": return Alignment.topCenter;
+      case "topRight": return Alignment.topRight;
+      case "centerLeft": return Alignment.centerLeft;
+      case "center": return Alignment.center;
+      case "centerRight": return Alignment.centerRight;
+      case "bottomLeft": return Alignment.bottomLeft;
+      case "bottomCenter": return Alignment.bottomCenter;
+      case "bottomRight": return Alignment.bottomRight;
+      default: return null;
+    }
+  }
 }
