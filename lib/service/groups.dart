@@ -987,11 +987,11 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<GroupPost?> loadGroupPost({required String? groupId, required String? postId}) async {
-    await waitForLogin();
     if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(postId)) {
       return null;
     }
 
+    await _ensureLogin();
     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId';
     Response? response = await Network().get(requestUrl, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
@@ -1033,7 +1033,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
-      await waitForLogin();
+      await _ensureLogin();
       String? requestBody = JsonUtils.encode({'reaction': reaction});
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${postId}/reactions';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
