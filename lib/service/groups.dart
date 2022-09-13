@@ -1035,7 +1035,7 @@ class Groups with Service implements NotificationsListener {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
       await _ensureLogin();
       String? requestBody = JsonUtils.encode({'reaction': reaction});
-      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${postId}/reactions';
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId/reactions';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
       int responseCode = response?.statusCode ?? -1;
       if (responseCode == 200) {
