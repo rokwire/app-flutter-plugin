@@ -16,8 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 - Android: Upgrade compileSdkVersion to 32 [#147](https://github.com/rokwire/app-flutter-plugin/issues/147).
 
-<!-- TBD: add date below when releasing version from `support/v1.2` and remove this comment -->
-## [1.2.1] - yyyy-MM-dd
+## [1.2.1] - 2022-09-13
 ### Added
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
 - Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
