@@ -337,11 +337,11 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false}) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
       String encodedTExt = Uri.encodeComponent(searchText);
-      String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt';
+      String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt${includeHidden? "&include_hidden=true" :""}';
       Response? response = await Network().get(url, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
