@@ -786,11 +786,27 @@ class GroupPost {
   final List<GroupPost>? replies;
   final List<Member>? members;
   final String? imageUrl;
+  final Map<String, List<String>> reactions;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members,});
+  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? GroupPost(
+    if (json == null) {
+      return null;
+    }
+
+    Map<String, List<String>> reactions = {};
+    Map<String, dynamic>? reactionsRaw = JsonUtils.mapValue(json['reactions']);
+    if (reactionsRaw != null) {
+      for (MapEntry<String, dynamic> reaction in reactionsRaw.entries) {
+        List<String>? ids = JsonUtils.listStringsValue(reaction.value);
+        if (ids != null) {
+          reactions[reaction.key] = ids;
+        }
+      }
+    }
+
+    return GroupPost(
         id: json['id'],
         parentId: json['parent_id'],
         member: Member.fromJson(json['member']),
@@ -801,8 +817,9 @@ class GroupPost {
         private: json['private'],
         imageUrl: JsonUtils.stringValue(json["image_url"]),
         replies: GroupPost.fromJsonList(json['replies']),
-        members: Member.listFromJson(json['to_members'])
-      ) : null;
+        members: Member.listFromJson(json['to_members']),
+        reactions: reactions,
+      );
 
   }
 
