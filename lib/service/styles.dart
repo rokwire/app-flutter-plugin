@@ -374,7 +374,11 @@ class Styles extends Service implements NotificationsListener{
               switch (imageType) {
                 case 'flutter.asset': imageProviders[key] = AssetImage(imageSource); break;
                 case 'flutter.file': imageProviders[key] = FileImage(File(imageSource), scale: imageScale); break;
-                case 'flutter.network': imageProviders[key] = NetworkImage(imageSource, scale: imageScale); break;
+                case 'flutter.network': {
+                  imageSource = _checkImageSource(imageSource);
+                  imageProviders[key] = NetworkImage(imageSource, scale: imageScale);
+                  break;
+                }
                 case 'fa.solid': {
                   int? code = int.tryParse(imageSource, radix: 16);
                   if (code != null) {
@@ -404,6 +408,14 @@ class Styles extends Service implements NotificationsListener{
 
       _uiImages = UiImages(imageProviders, imageJson, faIconData, colors!);
     }
+  }
+
+  String _checkImageSource(String imageSource) {
+    Match? prefixMatch = imageSource.matchAsPrefix("Config()");
+    if (prefixMatch?.end != null) {
+      return MapPathKey.entry(Config().content, imageSource.substring(prefixMatch!.end)).toString();
+    }
+    return imageSource;
   }
 
   // NotificationsListener
@@ -662,15 +674,26 @@ class UiImages {
   Image? _imageFromProvider(ImageProvider? provider, Map json, {Uint8List? imageData, 
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,}
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
+    BuildContext? context}
   ) {
     double? height = JsonUtils.doubleValue(json['height']);
+    if (height == null) {
+      if (JsonUtils.stringValue(json['height']) == 'screen' && context != null) {
+        height = MediaQuery.of(context).size.height;
+      }
+    }
     double? width = JsonUtils.doubleValue(json['width']);
+    if (width == null) {
+      if (JsonUtils.stringValue(json['width']) == 'screen' && context != null) {
+        width = MediaQuery.of(context).size.width;
+      }
+    }
 
     String? rawColor = JsonUtils.stringValue(json['color']);
     Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
     String? colorBlendMode = JsonUtils.stringValue(json['color_blend_mode']) ?? '';
-    BlendMode cbm = BlendMode.values.firstWhere((e) => e.toString() == 'BlendMode.' + colorBlendMode);
+    BlendMode? cbm = BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.' + colorBlendMode);
 
     String? semanticLabel = JsonUtils.stringValue(json['semantic_label']);
     bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
@@ -678,13 +701,13 @@ class UiImages {
     AlignmentGeometry alignment = _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
     
     String? boxFit = JsonUtils.stringValue(json['fit']) ?? '';
-    BoxFit bf = BoxFit.values.firstWhere((e) => e.toString() == 'BoxFit.' + boxFit);
+    BoxFit? bf = BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.' + boxFit);
 
     String? filterQuality = JsonUtils.stringValue(json['filter_quality']) ?? '';
-    FilterQuality fq = FilterQuality.values.firstWhere((e) => e.toString() == 'FilterQuality.' + filterQuality);
+    FilterQuality fq = FilterQuality.values.firstWhereOrNull((e) => e.toString() == 'FilterQuality.' + filterQuality) ?? FilterQuality.low;
 
     String? imageRepeat = JsonUtils.stringValue(json['repeat']) ?? '';
-    ImageRepeat ir = ImageRepeat.values.firstWhere((e) => e.toString() == 'ImageRepeat.' + imageRepeat);
+    ImageRepeat ir = ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.' + imageRepeat) ?? ImageRepeat.noRepeat;
 
     bool antiAlias = JsonUtils.boolValue(json['anti_alias']) ?? false;
     bool matchTextDirection = JsonUtils.boolValue(json['match_text_direction']) ?? false;
@@ -702,8 +725,13 @@ class UiImages {
     return null;
   }
 
-  Widget _faIconFromData(IconData data, Map json) {
-    double? imageWidth = JsonUtils.doubleValue(json['width']);
+  Widget _faIconFromData(IconData data, Map json, {BuildContext? context}) {
+    double? width = JsonUtils.doubleValue(json['width']);
+    if (width == null) {
+      if (JsonUtils.stringValue(json['width']) == 'screen' && context != null) {
+        width = MediaQuery.of(context).size.width;
+      }
+    }
 
     String? rawColor = JsonUtils.stringValue(json['color']);
     Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
@@ -712,9 +740,9 @@ class UiImages {
     bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
 
     String? textDirection = JsonUtils.stringValue(json['text_direction']) ?? '';
-    TextDirection td = TextDirection.values.firstWhere((e) => e.toString() == 'TextDirection.' + textDirection);
+    TextDirection? td = TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.' + textDirection);
 
-    FaIcon icon = FaIcon(data, size: imageWidth, color: color, semanticLabel: semanticLabel, textDirection: td,);
+    FaIcon icon = FaIcon(data, size: width, color: color, semanticLabel: semanticLabel, textDirection: td,);
     return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
   }
 
