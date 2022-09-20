@@ -621,7 +621,7 @@ class UiImages {
 
   UiImages(this._imageJson, this._faIconData, this._colors);
 
-  Widget? fromString(String str, {Uint8List? imageData, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+  Widget? fromString(String str, {dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool antiAlias = false, bool matchTextDirection = false, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
@@ -631,19 +631,19 @@ class UiImages {
       if (iconData != null) {
         return _faIconFromData(iconData, json, width, color, semanticLabel, excludeFromSemantics);
       } else {
-        return _imageFromProvider(json, imageData, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, 
+        return _imageFromProvider(json, source, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, 
           frameBuilder, loadingBuilder, errorBuilder);
       }
     }
     return null;
   }
 
-  Image? _imageFromProvider(Map json, Uint8List? imageData, double? scale, double? width, double? height, Color? color, String? semanticLabel, 
+  Image? _imageFromProvider(Map json, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, 
     bool excludeFromSemantics, bool antiAlias, bool matchTextDirection, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
   ) {
     String type = JsonUtils.stringValue(json['type'])!;
-    String source = JsonUtils.stringValue(json['src'])!;
+    source ??= JsonUtils.stringValue(json['src'])!;
     // headers for network images opacity
 
     scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
@@ -673,9 +673,19 @@ class UiImages {
       case 'flutter.asset': return Image.asset(source, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
           excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
           repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
-      case 'flutter.file': return Image.file(File(source), frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+      case 'flutter.file': {
+        File imageSource;
+        if (source is String) {
+          imageSource = File(source);
+        } else if (source is File) {
+          imageSource = source;
+        } else {
+          return null;
+        }
+        return Image.file(imageSource, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
           excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
           repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+      }
       case 'flutter.network': {
         source = _checkImageSource(source);
         return Image.network(source, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
@@ -683,8 +693,8 @@ class UiImages {
           repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
       }
       case 'flutter.memory': {
-        if (imageData != null) {
-          return Image.memory(imageData, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+        if (source is Uint8List) {
+          return Image.memory(source, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
             excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
             repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
         }
