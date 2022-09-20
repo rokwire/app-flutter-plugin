@@ -10,17 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
+- Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
 - Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 - Android: Upgrade compileSdkVersion to 32 [#147](https://github.com/rokwire/app-flutter-plugin/issues/147).
 
-<!-- TBD: add date below when releasing version from `support/v1.2` and remove this comment -->
-## [1.2.1] - yyyy-MM-dd
+## [1.2.2] - 2022-09-16
+### Added
+- Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403).
+
+## [1.2.1] - 2022-09-13
 ### Added
 - Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
 - Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
+- Add reactions to group posts [#151](https://github.com/rokwire/app-flutter-plugin/issues/151)
 ### Changed
 - Acknowledge "can_poll" in nudges data model [#2365](https://github.com/rokwire/illinois-app/issues/2365).
 ### Fixed
