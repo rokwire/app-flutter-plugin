@@ -73,15 +73,15 @@ class AppLivecycle with Service {
 
   @protected
   void initBinding() {
-    if ((WidgetsBinding.instance != null) && (_bindingObserver == null)) {
+    if (_bindingObserver == null) {
       _bindingObserver = AppLivecycleWidgetsBindingObserver(onAppLivecycleChange:_onAppLivecycleChangeState);
-      WidgetsBinding.instance!.addObserver(_bindingObserver!);
+      WidgetsBinding.instance.addObserver(_bindingObserver!);
     }
   }
 
   void _closeBinding() {
-    if ((WidgetsBinding.instance != null) && (_bindingObserver != null)) {
-      WidgetsBinding.instance!.removeObserver(_bindingObserver!);
+    if (_bindingObserver != null) {
+      WidgetsBinding.instance.removeObserver(_bindingObserver!);
       _bindingObserver = null;
     }
   }

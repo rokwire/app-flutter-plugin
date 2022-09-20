@@ -103,7 +103,7 @@ class _RoundedTabState extends State<RoundedTab> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _evalContentSize();
     });
   }

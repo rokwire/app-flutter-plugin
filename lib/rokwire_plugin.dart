@@ -30,6 +30,8 @@ class RokwirePlugin {
       'importance': channel.importance.value,
     }); }
     catch(e) { debugPrint(e.toString()); }
+
+    return null;
   }
 
   static Future<bool?> showNotification({ String? title, String? subtitle, String? body, bool sound = true }) async {
@@ -40,6 +42,8 @@ class RokwirePlugin {
       'sound': sound,
     }); }
     catch(e) { debugPrint(e.toString()); }
+
+    return null;
   }
 
   static Future<String?> getDeviceId([String? identifier, String? identifier2]) async {
