@@ -359,46 +359,23 @@ class Styles extends Service implements NotificationsListener{
   void buildImagesData(){
     if(_stylesData != null) {
       dynamic imagesData = _stylesData!["image"];
-      Map<String, ImageProvider> imageProviders = <String, ImageProvider>{};
       Map<String, Map> imageJson = <String, Map>{};
       Map<String, IconData> faIconData = <String, IconData>{};
       if(imagesData is Map){
         imagesData.forEach((dynamic key, dynamic value){
           if(key is String && value is Map){
-            String? imageType = JsonUtils.stringValue(value['type']);
-            String? imageSource = JsonUtils.stringValue(value['src']);
-            double imageScale = JsonUtils.doubleValue(value['scale']) ?? 1.0;
-
             imageJson[key] = value;
-            if (imageSource != null) {
-              switch (imageType) {
-                case 'flutter.asset': imageProviders[key] = AssetImage(imageSource); break;
-                case 'flutter.file': imageProviders[key] = FileImage(File(imageSource), scale: imageScale); break;
-                case 'flutter.network': {
-                  imageSource = _checkImageSource(imageSource);
-                  imageProviders[key] = NetworkImage(imageSource, scale: imageScale);
-                  break;
-                }
-                case 'fa.solid': {
-                  int? code = int.tryParse(imageSource, radix: 16);
-                  if (code != null) {
-                    faIconData[key] = IconDataSolid(code);
-                  }
-                  break;
-                }
-                case 'fa.regular': {
-                  int? code = int.tryParse(imageSource, radix: 16);
-                  if (code != null) {
-                    faIconData[key] = IconDataRegular(code);
-                  }
-                  break;
-                }
-                case 'fa.brands': {
-                  int? code = int.tryParse(imageSource, radix: 16);
-                  if (code != null) {
-                    faIconData[key] = IconDataBrands(code);
-                  }
-                  break;
+
+            String? type = JsonUtils.stringValue(value['type']);
+            String? source = JsonUtils.stringValue(value['src']);
+            Match? faMatch = type?.matchAsPrefix("fa.");
+            if (faMatch != null && source != null) {
+              int? code = int.tryParse(source, radix: 16);
+              if (code != null) {
+                switch (type!.substring(faMatch.end)) {
+                  case 'solid': faIconData[key] = IconDataSolid(code); break;
+                  case 'regular': faIconData[key] = IconDataRegular(code); break;
+                  case 'brands': faIconData[key] = IconDataBrands(code); break;
                 }
               }
             }
@@ -406,16 +383,8 @@ class Styles extends Service implements NotificationsListener{
         });
       }
 
-      _uiImages = UiImages(imageProviders, imageJson, faIconData, colors!);
+      _uiImages = UiImages(imageJson, faIconData, colors!);
     }
-  }
-
-  String _checkImageSource(String imageSource) {
-    Match? prefixMatch = imageSource.matchAsPrefix("Config()");
-    if (prefixMatch?.end != null) {
-      return MapPathKey.entry(Config().content, imageSource.substring(prefixMatch!.end)).toString();
-    }
-    return imageSource;
   }
 
   // NotificationsListener
@@ -646,59 +615,50 @@ class UiStyles {
 }
 
 class UiImages {
-  final Map<String, ImageProvider> _imageProviders;
   final Map<String, Map> _imageJson;
   final Map<String, IconData> _faIconData;
   final UiColors _colors;
 
-  UiImages(this._imageProviders, this._imageJson, this._faIconData, this._colors);
+  UiImages(this._imageJson, this._faIconData, this._colors);
 
-  Widget? fromString(String str, {Uint8List? imageData, 
-    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,}
+  Widget? fromString(String str, {Uint8List? imageData, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool antiAlias = false, bool matchTextDirection = false, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
     Map? json = _imageJson[str];
     if (json != null) {
-      ImageProvider? provider = _imageProviders[str];
       IconData? iconData = _faIconData[str];
       if (iconData != null) {
-        return _faIconFromData(iconData, json);
+        return _faIconFromData(iconData, json, width, color, semanticLabel, excludeFromSemantics);
       } else {
-        return _imageFromProvider(provider, json, imageData: imageData);
+        return _imageFromProvider(json, imageData, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, 
+          frameBuilder, loadingBuilder, errorBuilder);
       }
     }
     return null;
   }
 
-  Image? _imageFromProvider(ImageProvider? provider, Map json, {Uint8List? imageData, 
-    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder,
-    BuildContext? context}
+  Image? _imageFromProvider(Map json, Uint8List? imageData, double? scale, double? width, double? height, Color? color, String? semanticLabel, 
+    bool excludeFromSemantics, bool antiAlias, bool matchTextDirection, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
   ) {
-    double? height = JsonUtils.doubleValue(json['height']);
-    if (height == null) {
-      if (JsonUtils.stringValue(json['height']) == 'screen' && context != null) {
-        height = MediaQuery.of(context).size.height;
-      }
-    }
-    double? width = JsonUtils.doubleValue(json['width']);
-    if (width == null) {
-      if (JsonUtils.stringValue(json['width']) == 'screen' && context != null) {
-        width = MediaQuery.of(context).size.width;
-      }
-    }
+    String type = JsonUtils.stringValue(json['type'])!;
+    String source = JsonUtils.stringValue(json['src'])!;
+    // headers for network images opacity
 
-    String? rawColor = JsonUtils.stringValue(json['color']);
-    Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+    scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
+    width ??= JsonUtils.doubleValue(json['width']);
+    height ??= JsonUtils.doubleValue(json['height']);
+    if (color == null) {
+      String? rawColor = JsonUtils.stringValue(json['color']);
+      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+    }
+    
+    AlignmentGeometry alignment = _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
+
+    // Enums
     String? colorBlendMode = JsonUtils.stringValue(json['color_blend_mode']) ?? '';
     BlendMode? cbm = BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.' + colorBlendMode);
-
-    String? semanticLabel = JsonUtils.stringValue(json['semantic_label']);
-    bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
-
-    AlignmentGeometry alignment = _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
     
     String? boxFit = JsonUtils.stringValue(json['fit']) ?? '';
     BoxFit? bf = BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.' + boxFit);
@@ -708,42 +668,52 @@ class UiImages {
 
     String? imageRepeat = JsonUtils.stringValue(json['repeat']) ?? '';
     ImageRepeat ir = ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.' + imageRepeat) ?? ImageRepeat.noRepeat;
-
-    bool antiAlias = JsonUtils.boolValue(json['anti_alias']) ?? false;
-    bool matchTextDirection = JsonUtils.boolValue(json['match_text_direction']) ?? false;
     
-    if (provider != null) {
-      return Image(image: provider, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-        excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-        repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
-    } else if (CollectionUtils.isNotEmpty(imageData)) {
-      double scale = JsonUtils.doubleValue(json['scale']) ?? 1.0;
-      return Image.memory(imageData!, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-        excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-        repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+    switch (type) {
+      case 'flutter.asset': return Image.asset(source, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+      case 'flutter.file': return Image.file(File(source), frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+      case 'flutter.network': {
+        source = _checkImageSource(source);
+        return Image.network(source, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+      }
+      case 'flutter.memory': {
+        if (imageData != null) {
+          return Image.memory(imageData, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+            excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+            repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+        }
+        return null;
+      }
+      default: return null;
     }
-    return null;
   }
 
-  Widget _faIconFromData(IconData data, Map json, {BuildContext? context}) {
-    double? width = JsonUtils.doubleValue(json['width']);
-    if (width == null) {
-      if (JsonUtils.stringValue(json['width']) == 'screen' && context != null) {
-        width = MediaQuery.of(context).size.width;
-      }
+  Widget _faIconFromData(IconData data, Map json, double? size, Color? color, String? semanticLabel, bool excludeFromSemantics) {
+    size ??= JsonUtils.doubleValue(json['width']);
+    if (color == null) {
+      String? rawColor = JsonUtils.stringValue(json['color']);
+      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
     }
-
-    String? rawColor = JsonUtils.stringValue(json['color']);
-    Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
-
-    String? semanticLabel = JsonUtils.stringValue(json['semantic_label']);
-    bool excludeFromSemantics = JsonUtils.boolValue(json['exclude_from_semantics']) ?? false;
 
     String? textDirection = JsonUtils.stringValue(json['text_direction']) ?? '';
     TextDirection? td = TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.' + textDirection);
 
-    FaIcon icon = FaIcon(data, size: width, color: color, semanticLabel: semanticLabel, textDirection: td,);
+    FaIcon icon = FaIcon(data, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
     return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
+  }
+
+  String _checkImageSource(String imageSource) {
+    Match? prefixMatch = imageSource.matchAsPrefix("Config()");
+    if (prefixMatch?.end != null) {
+      return MapPathKey.entry(Config().content, imageSource.substring(prefixMatch!.end)).toString();
+    }
+    return imageSource;
   }
 
   AlignmentGeometry? _alignmentFromString(String? str) {
