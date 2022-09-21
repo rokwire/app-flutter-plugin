@@ -336,7 +336,6 @@ class Styles extends Service implements NotificationsListener{
         overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
   }
 
-  //Custom TextStyle values
   Color? extractTextStyleColor(String? rawColorData,  Map<String, dynamic>? values){
     if(rawColorData != null){
       if(rawColorData.startsWith("#")){
@@ -397,32 +396,32 @@ TextOverflow? textOverflowFromString(String? value) {
   }
 
 TextDecorationStyle? textDecorationStyleFromString(String? value) {
-    switch (value) {
-      case "dotted" : return TextDecorationStyle.dotted;
-      case "dashed" : return TextDecorationStyle.dashed;
-      case "double" : return TextDecorationStyle.double;
-      case "solid" : return TextDecorationStyle.solid;
-      case "wavy" : return TextDecorationStyle.wavy;
-      default : return null;
-    }
+  switch (value) {
+    case "dotted" : return TextDecorationStyle.dotted;
+    case "dashed" : return TextDecorationStyle.dashed;
+    case "double" : return TextDecorationStyle.double;
+    case "solid" : return TextDecorationStyle.solid;
+    case "wavy" : return TextDecorationStyle.wavy;
+    default : return null;
   }
-
-  FontWeight? fontWeightFromString(String? value) {
-    switch (value) {
-      case "w100" : return FontWeight.w100;
-      case "w200" : return FontWeight.w200;
-      case "w300" : return FontWeight.w300;
-      case "w400" : return FontWeight.w400;
-      case "w500" : return FontWeight.w500;
-      case "w600" : return FontWeight.w600;
-      case "w700" : return FontWeight.w700;
-      case "w800" : return FontWeight.w800;
-      case "w900" : return FontWeight.w900;
-      default : return null;
-    }
 }
 
-//Pass Custom values like color or height
+FontWeight? fontWeightFromString(String? value) {
+  switch (value) {
+    case "w100" : return FontWeight.w100;
+    case "w200" : return FontWeight.w200;
+    case "w300" : return FontWeight.w300;
+    case "w400" : return FontWeight.w400;
+    case "w500" : return FontWeight.w500;
+    case "w600" : return FontWeight.w600;
+    case "w700" : return FontWeight.w700;
+    case "w800" : return FontWeight.w800;
+    case "w900" : return FontWeight.w900;
+    default : return null;
+  }
+}
+
+//TextStyle Custom values like color or height
 T? extractCustomValue<T>(String? rawValue, Map<String, dynamic>? values){
   if(rawValue!= null && rawValue.startsWith('\$')){
     String customValueKey = rawValue.replaceFirst("\$", "");
