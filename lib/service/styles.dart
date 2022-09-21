@@ -313,9 +313,8 @@ class Styles extends Service implements NotificationsListener{
     }
 
     Map<String, dynamic>? stylesData = JsonUtils.mapValue(_stylesData!["text_style"]);
-    Map? styleData = stylesData != null ? stylesData[key] : null;
+    Map<String, dynamic>? style = stylesData != null ? JsonUtils.mapValue(stylesData[key]) : null;
 
-    Map<String, dynamic>? style = JsonUtils.mapValue(styleData);
     if(style == null){
       return null;
     }
@@ -422,15 +421,14 @@ FontWeight? fontWeightFromString(String? value) {
 }
 
 //TextStyle Custom values like color or height
-T? extractCustomValue<T>(String? rawValue, Map<String, dynamic>? values){
-  if(rawValue!= null && rawValue.startsWith('\$')){
+T? extractCustomValue<T>(dynamic rawValue, Map<String, dynamic>? values){
+  if(rawValue!= null && rawValue is String && rawValue.startsWith('\$')){
     String customValueKey = rawValue.replaceFirst("\$", "");
     dynamic customValue = values!= null && values.containsKey(customValueKey) ? values[customValueKey] : null;
     if(customValue != null && customValue is T){
       return customValue;
     }
   }
-
   return null;
 }
 
