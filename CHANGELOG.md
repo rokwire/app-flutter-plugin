@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.2] - 2022-09-16
+### Added
+- Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403).
+
+## [1.2.1] - 2022-09-13
+### Added
+- Load single group post by id [#2344](https://github.com/rokwire/illinois-app/issues/2344).
+- Created AppNotification service [#143](https://github.com/rokwire/app-flutter-plugin/issues/143).
+- Add reactions to group posts [#151](https://github.com/rokwire/app-flutter-plugin/issues/151)
+### Changed
+- Acknowledge "can_poll" in nudges data model [#2365](https://github.com/rokwire/illinois-app/issues/2365).
+### Fixed
+- Fixed text overflow in TabWidget [#152](https://github.com/rokwire/app-flutter-plugin/issues/152).
+
 ## [1.2.0] - 2022-08-15
 ### Fixed
 - Use simple getter for deep link redirect url [#2065](https://github.com/rokwire/illinois-app/issues/2065).

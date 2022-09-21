@@ -46,14 +46,15 @@ enum GroupsContentType { all, my }
 
 class Groups with Service implements NotificationsListener {
 
-  static const String notifyUserGroupsUpdated       = "edu.illinois.rokwire.groups.user.updated";
-  static const String notifyUserMembershipUpdated   = "edu.illinois.rokwire.groups.membership.updated";
-  static const String notifyGroupEventsUpdated      = "edu.illinois.rokwire.groups.events.updated";
-  static const String notifyGroupCreated            = "edu.illinois.rokwire.group.created";
-  static const String notifyGroupUpdated            = "edu.illinois.rokwire.group.updated";
-  static const String notifyGroupDeleted            = "edu.illinois.rokwire.group.deleted";
-  static const String notifyGroupPostsUpdated       = "edu.illinois.rokwire.group.posts.updated";
-  static const String notifyGroupDetail             = "edu.illinois.rokwire.group.detail";
+  static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
+  static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
+  static const String notifyGroupEventsUpdated        = "edu.illinois.rokwire.groups.events.updated";
+  static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
+  static const String notifyGroupUpdated              = "edu.illinois.rokwire.group.updated";
+  static const String notifyGroupDeleted              = "edu.illinois.rokwire.group.deleted";
+  static const String notifyGroupPostsUpdated         = "edu.illinois.rokwire.group.posts.updated";
+  static const String notifyGroupPostReactionsUpdated = "edu.illinois.rokwire.group.post.reactions.updated";
+  static const String notifyGroupDetail               = "edu.illinois.rokwire.group.detail";
 
   static const String notifyGroupMembershipRequested      = "edu.illinois.rokwire.group.membership.requested";
   static const String notifyGroupMembershipCanceled       = "edu.illinois.rokwire.group.membership.canceled";
@@ -329,13 +330,13 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false}) async {
     await waitForLogin();
     if (StringUtils.isEmpty(searchText)) {
       return null;
     }
     String encodedTExt = Uri.encodeComponent(searchText);
-    String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt';
+    String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt${includeHidden? "&include_hidden=true" :""}';
     Response? response = await Network().get(url, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String? responseBody = response?.body;
@@ -495,7 +496,7 @@ class Groups with Service implements NotificationsListener {
 
   // Members APIs
 
-  Future<List<Member>?> loadMembers({String? groupId, List<GroupMemberStatus>? statuses, String? memberId, String? userId, 
+  Future<List<Member>?> loadMembers({String? groupId, List<GroupMemberStatus>? statuses, String? memberId, List<String>? userIds,
     String? externalId, String? netId, String? name, int? offset, int? limit}) async {
     if (StringUtils.isEmpty(groupId)) {
       debugPrint('Failed to load group members - missing groupId.');
@@ -515,8 +516,8 @@ class Groups with Service implements NotificationsListener {
       if (StringUtils.isNotEmpty(memberId)) {
         params.addAll({'id': memberId});
       }
-      if (StringUtils.isNotEmpty(userId)) {
-        params.addAll({'user_id': userId});
+      if (CollectionUtils.isNotEmpty(userIds)) {
+        params.addAll({'user_ids': userIds});
       }
       if (StringUtils.isNotEmpty(externalId)) {
         params.addAll({'external_id': externalId});
@@ -685,12 +686,15 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> memberAttended({required Group group, required Member member}) async {
+    await waitForLogin();
+    if (Config().groupsUrl == null) {
+      return false;
+    }
     bool isNewMember = (member.id == null);
     if (isNewMember && (group.authManEnabled == true)) {
       debugPrint('It is not allowed to import new members to authman groups.');
       return false;
     }
-    await waitForLogin();
     member.dateAttendedUtc ??= DateTime.now().toUtc();
     if (Connectivity().isOffline) {
       _addAttendedMemberToCache(group: group, member: member);
@@ -986,6 +990,25 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<GroupPost?> loadGroupPost({required String? groupId, required String? postId}) async {
+    await waitForLogin();
+    if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(postId)) {
+      return null;
+    }
+
+    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId';
+    Response? response = await Network().get(requestUrl, auth: Auth2());
+    int responseCode = response?.statusCode ?? -1;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      GroupPost? post = GroupPost.fromJson(JsonUtils.decodeMap(responseString));
+      return post;
+    } else {
+      Log.e('Failed to retrieve group post for id $postId. Response: ${response?.body}');
+      return null;
+    }
+  }
+
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
     dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
@@ -1010,6 +1033,23 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return groupNudges;
+  }
+
+  Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
+      await waitForLogin();
+      String? requestBody = JsonUtils.encode({'reaction': reaction});
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId/reactions';
+      Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        // NotificationService().notify(notifyGroupPostsUpdated);
+        return true;
+      } else {
+        Log.e('Failed to update group post reaction. Response: ${response?.body}');
+      }
+    }
+    return false;
   }
 
   GroupPostNudge? _getNudgeForGroup({required String groupName, required GroupPostNudge template}) {
