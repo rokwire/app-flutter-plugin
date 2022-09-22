@@ -112,7 +112,7 @@ class SectionSlantHeader extends StatelessWidget {
         Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
-            Image.asset(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+            Styles().uiImages?.fromString(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
           ),
         )]),
       ]);
@@ -133,7 +133,7 @@ class SectionSlantHeader extends StatelessWidget {
     if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+          titleIcon ?? Styles().uiImages?.fromString(titleIconAsset!, excludeFromSemantics: true,),
         )
       );
     }
@@ -151,7 +151,7 @@ class SectionSlantHeader extends StatelessWidget {
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, child:
-              rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+              rightIcon ?? Styles().uiImages?.fromString(rightIconAsset!, excludeFromSemantics: true,),
             )
           )
         ),
@@ -272,7 +272,7 @@ class SectionRibbonHeader extends StatelessWidget {
     
     Widget? titleIconWidget = ((titleIcon != null) || (titleIconAsset != null)) ?
       Padding(padding: titleIconPadding, child:
-        titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+        titleIcon ?? Styles().uiImages?.fromString(titleIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if ((titleIconWidget != null)) {
       titleList.add(titleIconWidget);
@@ -305,7 +305,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
     Widget? rightIconWidget = ((rightIcon != null) || (rightIconAsset != null)) ?
       Padding(padding: rightIconPadding, child:
-        rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+        rightIcon ?? Styles().uiImages?.fromString(rightIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if (rightIconWidget != null) {
       titleList.add(rightIconWidget);
@@ -388,7 +388,7 @@ class ImageSlantHeader extends StatelessWidget {
             Column(children: <Widget>[
               Container(height: slantImageHeadingHeight, color: _slantImageColor,),
               SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-                Image.asset(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+                Styles().uiImages?.fromString(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
               ),
             ],),
             child ?? Container(),

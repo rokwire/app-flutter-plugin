@@ -85,8 +85,8 @@ class RibbonButton extends StatefulWidget {
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
-  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Image.asset(leftIconAsset!, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Image.asset(rightIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Styles().uiImages?.fromString(leftIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Styles().uiImages?.fromString(rightIconAsset!, excludeFromSemantics: true) : null;
 
   @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
@@ -118,7 +118,7 @@ class _RibbonButtonState extends State<RibbonButton> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _evalContentSize();
     });
   }

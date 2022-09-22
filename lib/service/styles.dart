@@ -622,52 +622,45 @@ class UiImages {
   UiImages(this._imageJson, this._faIconData, this._colors);
 
   Widget? fromString(String str, {dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    bool antiAlias = false, bool matchTextDirection = false, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    bool antiAlias = false, bool matchTextDirection = false, AlignmentGeometry? alignment, BlendMode? blendMode, BoxFit? fit, FilterQuality? filterQuality, 
+    ImageRepeat? repeat, TextDirection? td, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
     Map? json = _imageJson[str];
     if (json != null) {
       IconData? iconData = _faIconData[str];
       if (iconData != null) {
-        return _faIconFromData(iconData, json, width, color, semanticLabel, excludeFromSemantics);
+        return _faIconFromData(iconData, json, width, color, td, semanticLabel, excludeFromSemantics);
       } else {
         return _imageFromProvider(json, source, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, 
-          frameBuilder, loadingBuilder, errorBuilder);
+          alignment, blendMode, fit, filterQuality, repeat, networkHeaders, frameBuilder, loadingBuilder, errorBuilder);
       }
     }
     return null;
   }
 
-  Image? _imageFromProvider(Map json, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, 
-    bool excludeFromSemantics, bool antiAlias, bool matchTextDirection, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
+  Image? _imageFromProvider(Map json, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics, 
+    bool antiAlias, bool matchTextDirection, AlignmentGeometry? alignment, BlendMode? cbm, BoxFit? bf, FilterQuality? fq, ImageRepeat? ir, Map<String, String>? headers,
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, 
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
   ) {
     String type = JsonUtils.stringValue(json['type'])!;
     source ??= JsonUtils.stringValue(json['src'])!;
-    // headers for network images opacity
 
     scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
     width ??= JsonUtils.doubleValue(json['width']);
     height ??= JsonUtils.doubleValue(json['height']);
+    alignment ??= _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
     if (color == null) {
       String? rawColor = JsonUtils.stringValue(json['color']);
       color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
     }
-    
-    AlignmentGeometry alignment = _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
 
-    // Enums
-    String? colorBlendMode = JsonUtils.stringValue(json['color_blend_mode']) ?? '';
-    BlendMode? cbm = BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.' + colorBlendMode);
-    
-    String? boxFit = JsonUtils.stringValue(json['fit']) ?? '';
-    BoxFit? bf = BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.' + boxFit);
-
-    String? filterQuality = JsonUtils.stringValue(json['filter_quality']) ?? '';
-    FilterQuality fq = FilterQuality.values.firstWhereOrNull((e) => e.toString() == 'FilterQuality.' + filterQuality) ?? FilterQuality.low;
-
-    String? imageRepeat = JsonUtils.stringValue(json['repeat']) ?? '';
-    ImageRepeat ir = ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.' + imageRepeat) ?? ImageRepeat.noRepeat;
+    // Image Enums
+    cbm ??= BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.${JsonUtils.stringValue(json['color_blend_mode']) ?? ''}');
+    bf ??= BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.${JsonUtils.stringValue(json['fit']) ?? ''}');
+    fq ??= FilterQuality.values.firstWhereOrNull((e) => e.toString() == 'FilterQuality.${JsonUtils.stringValue(json['filter_quality']) ?? ''}') ?? FilterQuality.low;
+    ir ??= ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.${JsonUtils.stringValue(json['repeat']) ?? ''}') ?? ImageRepeat.noRepeat;
     
     switch (type) {
       case 'flutter.asset': return Image.asset(source, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
@@ -687,10 +680,12 @@ class UiImages {
           repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
       }
       case 'flutter.network': {
-        source = _checkImageSource(source);
-        return Image.network(source, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+        if (source is String && Uri.tryParse(source) != null) {
+          return Image.network(source, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+            excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
+            repeat: ir, isAntiAlias: antiAlias, headers: headers, matchTextDirection: matchTextDirection, filterQuality: fq);
+        }
+        break;
       }
       case 'flutter.memory': {
         if (source is Uint8List) {
@@ -698,32 +693,22 @@ class UiImages {
             excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
             repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
         }
-        return null;
       }
-      default: return null;
     }
+    return null;
   }
 
-  Widget _faIconFromData(IconData data, Map json, double? size, Color? color, String? semanticLabel, bool excludeFromSemantics) {
+  Widget _faIconFromData(IconData data, Map json, double? size, Color? color, TextDirection? td, String? semanticLabel, bool excludeFromSemantics) {
     size ??= JsonUtils.doubleValue(json['width']);
     if (color == null) {
       String? rawColor = JsonUtils.stringValue(json['color']);
       color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
     }
 
-    String? textDirection = JsonUtils.stringValue(json['text_direction']) ?? '';
-    TextDirection? td = TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.' + textDirection);
+    td ??= TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.${JsonUtils.stringValue(json['text_direction']) ?? ''}');
 
     FaIcon icon = FaIcon(data, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
     return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
-  }
-
-  String _checkImageSource(String imageSource) {
-    Match? prefixMatch = imageSource.matchAsPrefix("Config()");
-    if (prefixMatch?.end != null) {
-      return MapPathKey.entry(Config().content, imageSource.substring(prefixMatch!.end)).toString();
-    }
-    return imageSource;
   }
 
   AlignmentGeometry? _alignmentFromString(String? str) {
