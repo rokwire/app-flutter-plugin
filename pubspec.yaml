@@ -33,9 +33,9 @@ dependencies:
   url_launcher: ^6.0.10
   sprintf: ^6.0.0
   flutter_local_notifications: ^9.1.4
-  sqflite: ^2.0.0+4
+  sqflite: ^2.1.0
   device_calendar: ^4.0.1
-  image_picker: ^0.8.4+1
+  image_picker: ^0.8.5+3
   mime_type: ^1.0.0
   uuid: ^3.0.5
   flutter_html: ^2.2.0
