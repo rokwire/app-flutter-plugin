@@ -15,8 +15,6 @@
  */
 
 
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
