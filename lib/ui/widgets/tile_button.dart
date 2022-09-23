@@ -193,7 +193,7 @@ class TileWideButton extends StatelessWidget {
     if (iconAsset != null) {
       Widget? icon = Styles().uiImages?.fromString(iconAsset!);
       if (icon != null) {
-        contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon]))); // Image.asset(iconAsset!)
+        contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon])));
       }
     }
 

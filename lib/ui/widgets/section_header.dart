@@ -363,6 +363,11 @@ class ImageSlantHeader extends StatelessWidget {
   final double slantImageHeadingHeight;
   final double slantImageHeight;
 
+  final Widget? progressWidget;
+  final Size progressSize;
+  final double progressWidth;
+  final Color? progressColor;
+
   const ImageSlantHeader({Key? key,
     this.imageUrl,
     this.child,
@@ -371,31 +376,47 @@ class ImageSlantHeader extends StatelessWidget {
     this.slantImageColor,
     this.slantImageHeadingHeight = 72,
     this.slantImageHeight = 112,
+
+    this.progressWidget,
+    this.progressSize = const Size(24, 24),
+    this.progressWidth = 2,
+    this.progressColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    Image networkImage = Image.network(imageUrl!, headers: Config().networkAuthHeaders);
-    Completer<ui.Image> networkImageCompleter = Completer<ui.Image>();
-    networkImage.image.resolve(const ImageConfiguration()).addListener(ImageStreamListener((ImageInfo info, bool syncCall) => networkImageCompleter.complete(info.image)));
+    Widget? image = Styles().uiImages?.fromString('image-slant-header', source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+      networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
 
+    double displayHeight = (image as Image?)?.height ?? 240;
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      Image(image: networkImage.image, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,),
-      FutureBuilder<ui.Image>(future: networkImageCompleter.future, builder: (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
-        double displayHeight = (snapshot.data != null) ? (snapshot.data!.height * MediaQuery.of(context).size.width / snapshot.data!.width) : 240;
-        return Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
-          Stack(alignment: Alignment.topCenter, children: <Widget>[
-            Column(children: <Widget>[
-              Container(height: slantImageHeadingHeight, color: _slantImageColor,),
-              SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-                Styles().uiImages?.fromString(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
-              ),
-            ],),
-            child ?? Container(),
-          ])
-        );
-      }),
+      image ?? Container(),
+      Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
+        Stack(alignment: Alignment.topCenter, children: <Widget>[
+          Column(children: <Widget>[
+            Container(height: slantImageHeadingHeight, color: _slantImageColor,),
+            SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
+              Styles().uiImages?.fromString(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+            ),
+          ],),
+          child ?? Container(),
+        ])
+      ),
     ]);
+  }
+
+  Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    if (loadingProgress == null) {
+      return child;
+    }
+    return Center(child: _buildProgressWidget(context, loadingProgress));
+  }
+
+  Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
+    return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
+    );
   }
 
   Color? get _slantImageColor => slantImageColor ?? Styles().colors?.fillColorSecondary;
