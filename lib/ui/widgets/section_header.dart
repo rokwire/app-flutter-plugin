@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
@@ -112,7 +109,7 @@ class SectionSlantHeader extends StatelessWidget {
         Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
-            Styles().uiImages?.fromString(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+            Styles().uiImages?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
           ),
         )]),
       ]);
@@ -133,7 +130,7 @@ class SectionSlantHeader extends StatelessWidget {
     if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          titleIcon ?? Styles().uiImages?.fromString(titleIconAsset!, excludeFromSemantics: true,),
+          titleIcon ?? Styles().uiImages?.getImage(titleIconAsset!, excludeFromSemantics: true,),
         )
       );
     }
@@ -151,7 +148,7 @@ class SectionSlantHeader extends StatelessWidget {
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, child:
-              rightIcon ?? Styles().uiImages?.fromString(rightIconAsset!, excludeFromSemantics: true,),
+              rightIcon ?? Styles().uiImages?.getImage(rightIconAsset!, excludeFromSemantics: true,),
             )
           )
         ),
@@ -272,7 +269,7 @@ class SectionRibbonHeader extends StatelessWidget {
     
     Widget? titleIconWidget = ((titleIcon != null) || (titleIconAsset != null)) ?
       Padding(padding: titleIconPadding, child:
-        titleIcon ?? Styles().uiImages?.fromString(titleIconAsset!, excludeFromSemantics: true,),
+        titleIcon ?? Styles().uiImages?.getImage(titleIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if ((titleIconWidget != null)) {
       titleList.add(titleIconWidget);
@@ -305,7 +302,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
     Widget? rightIconWidget = ((rightIcon != null) || (rightIconAsset != null)) ?
       Padding(padding: rightIconPadding, child:
-        rightIcon ?? Styles().uiImages?.fromString(rightIconAsset!, excludeFromSemantics: true,),
+        rightIcon ?? Styles().uiImages?.getImage(rightIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if (rightIconWidget != null) {
       titleList.add(rightIconWidget);
@@ -356,6 +353,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
 class ImageSlantHeader extends StatelessWidget {
   final String? imageUrl;
+  final String? imageKey;
   final Widget? child;
 
   final String slantImageAsset;
@@ -370,6 +368,7 @@ class ImageSlantHeader extends StatelessWidget {
 
   const ImageSlantHeader({Key? key,
     this.imageUrl,
+    this.imageKey,
     this.child,
 
     required this.slantImageAsset,
@@ -385,8 +384,14 @@ class ImageSlantHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget? image = Styles().uiImages?.fromString('image-slant-header', source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
-      networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+    Widget? image;
+    if (StringUtils.isNotEmpty(imageKey)) {
+      image = Styles().uiImages?.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+        networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+    } else if (StringUtils.isNotEmpty(imageUrl)) {
+      image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+        headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+    }
 
     double displayHeight = (image as Image?)?.height ?? 240;
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
@@ -396,7 +401,7 @@ class ImageSlantHeader extends StatelessWidget {
           Column(children: <Widget>[
             Container(height: slantImageHeadingHeight, color: _slantImageColor,),
             SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-              Styles().uiImages?.fromString(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+              Styles().uiImages?.getImage(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
             ),
           ],),
           child ?? Container(),

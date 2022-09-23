@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class ModalImagePanel extends StatelessWidget {
   final String imageUrl;
+  final String? imageKey;
   final EdgeInsetsGeometry imagePadding;
 
   final Map<String, String>? networkImageHeaders;
@@ -42,6 +41,7 @@ class ModalImagePanel extends StatelessWidget {
 
   const ModalImagePanel({Key? key,
     required this.imageUrl,
+    this.imageKey,
     this.imagePadding = const EdgeInsets.symmetric(vertical: 64, horizontal: 32),
 
     this.networkImageHeaders,
@@ -63,8 +63,14 @@ class ModalImagePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget? image = Styles().uiImages?.fromString('modal-image', source: imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
-      networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+    Widget? image;
+    if (StringUtils.isNotEmpty(imageKey)) {
+      image = Styles().uiImages?.getImage(imageKey!, source: imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+    } else {
+      image = Image.network(imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+    }
     
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:

@@ -69,10 +69,10 @@ class FilterListItem extends StatelessWidget {
   @protected TextStyle? get defaultSelectedDescriptionTextStyle => defaultSelectedTitleTextStyle;
   TextStyle? get _descriptionTextStyle => selected ? (selectedDescriptionTextStyle ?? defaultSelectedDescriptionTextStyle) : (descriptionTextStyle ?? defaultDescriptionTextStyle);
 
-  Widget? get _iconImage => (iconAsset != null) ? Styles().uiImages?.fromString(iconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconAsset != null) ? Styles().uiImages?.getImage(iconAsset!, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _selectedIconImage => (selectedIconAsset != null) ? Styles().uiImages?.fromString(selectedIconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _selectedIconImage => (selectedIconAsset != null) ? Styles().uiImages?.getImage(selectedIconAsset!, excludeFromSemantics: true) : null;
   Widget? get _selectedIconWidget => selectedIcon ?? _selectedIconImage;
 
   @override
@@ -149,10 +149,10 @@ class FilterSelector extends StatelessWidget {
   @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorSecondary);
   TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
 
-  Widget? get _iconImage => (iconAsset != null) ? Styles().uiImages?.fromString(iconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconAsset != null) ? Styles().uiImages?.getImage(iconAsset!, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _activeIconImage => (activeIconAsset != null) ? Styles().uiImages?.fromString(activeIconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _activeIconImage => (activeIconAsset != null) ? Styles().uiImages?.getImage(activeIconAsset!, excludeFromSemantics: true) : null;
   Widget? get _activeIconWidget => activeIcon ?? _activeIconImage;
 
   @override

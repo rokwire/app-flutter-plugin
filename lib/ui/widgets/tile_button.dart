@@ -67,7 +67,7 @@ class TileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> contentList = <Widget>[];
     if (iconAsset != null) {
-      Widget? icon = Styles().uiImages?.fromString(iconAsset!);
+      Widget? icon = Styles().uiImages?.getImage(iconAsset!);
       if (icon != null) {
         contentList.add(icon);
       }
@@ -191,7 +191,7 @@ class TileWideButton extends StatelessWidget {
       contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle)));
     } 
     if (iconAsset != null) {
-      Widget? icon = Styles().uiImages?.fromString(iconAsset!);
+      Widget? icon = Styles().uiImages?.getImage(iconAsset!);
       if (icon != null) {
         contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon])));
       }
@@ -322,10 +322,10 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get displayTitleWidget => defaultTitleWidget;
 
   @protected String? get displayIconAsset => selected ? selectedIconAsset : iconAsset;
-  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().uiImages?.fromString(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
+  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().uiImages?.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 
-  @protected Widget get defaultSelectionMarkerWidget => Styles().uiImages?.fromString(selectionMarkerAsset ?? '', excludeFromSemantics: true) ?? Container();
+  @protected Widget get defaultSelectionMarkerWidget => Styles().uiImages?.getImage(selectionMarkerAsset ?? '', excludeFromSemantics: true) ?? Container();
   @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override

@@ -15,7 +15,6 @@
  */
 
 import 'dart:io';
-import 'dart:typed_data';
 // import 'dart:ui';
 
 import 'package:collection/collection.dart';
@@ -280,7 +279,7 @@ class Styles extends Service implements NotificationsListener{
     buildColorsData();
     buildFontFamiliesData();
     buildStylesData();
-    buildImagesData();
+    _uiImages = UiImages.fromJson(_stylesData, _colors!);
   }
 
   @protected
@@ -353,38 +352,6 @@ class Styles extends Service implements NotificationsListener{
       // }
     }
 
-  }
-
-  @protected
-  void buildImagesData(){
-    if(_stylesData != null) {
-      dynamic imagesData = _stylesData!["image"];
-      Map<String, Map> imageJson = <String, Map>{};
-      Map<String, IconData> faIconData = <String, IconData>{};
-      if(imagesData is Map){
-        imagesData.forEach((dynamic key, dynamic value){
-          if(key is String && value is Map){
-            imageJson[key] = value;
-
-            String? type = JsonUtils.stringValue(value['type']);
-            String? source = JsonUtils.stringValue(value['src']);
-            Match? faMatch = type?.matchAsPrefix("fa.");
-            if (faMatch != null && source != null) {
-              int? code = int.tryParse(source, radix: 16);
-              if (code != null) {
-                switch (type!.substring(faMatch.end)) {
-                  case 'solid': faIconData[key] = IconDataSolid(code); break;
-                  case 'regular': faIconData[key] = IconDataRegular(code); break;
-                  case 'brands': faIconData[key] = IconDataBrands(code); break;
-                }
-              }
-            }
-          }
-        });
-      }
-
-      _uiImages = UiImages(imageJson, faIconData, colors!);
-    }
   }
 
   // NotificationsListener
@@ -621,28 +588,58 @@ class UiImages {
 
   UiImages(this._imageJson, this._faIconData, this._colors);
 
-  Widget? fromString(String str, {dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    bool antiAlias = false, bool matchTextDirection = false, AlignmentGeometry? alignment, BlendMode? blendMode, BoxFit? fit, FilterQuality? filterQuality, 
-    ImageRepeat? repeat, TextDirection? td, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+  factory UiImages.fromJson(Map<String, dynamic>? json, UiColors colors) {
+    Map<String, Map> imageJson = {};
+    Map<String, IconData> faIconData = {};
+    if(json != null) {
+      dynamic imagesData = json["image"];
+      if(imagesData is Map){
+        imagesData.forEach((dynamic key, dynamic value){
+          if(key is String && value is Map){
+            imageJson[key] = value;
+
+            String? type = JsonUtils.stringValue(value['type']);
+            String? source = JsonUtils.stringValue(value['src']);
+            Match? faMatch = type?.matchAsPrefix("fa.");
+            if (faMatch != null && source != null) {
+              int? code = int.tryParse(source, radix: 16);
+              if (code != null) {
+                switch (type!.substring(faMatch.end)) {
+                  case 'solid': faIconData[key] = IconDataSolid(code); break;
+                  case 'regular': faIconData[key] = IconDataRegular(code); break;
+                  case 'brands': faIconData[key] = IconDataBrands(code); break;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    return UiImages(imageJson, faIconData, colors);
+  }
+
+  Widget? getImage(String key, {Key? imageKey, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool antiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? blendMode, BoxFit? fit, 
+    FilterQuality? filterQuality, ImageRepeat? repeat, Rect? centerSlice, TextDirection? td, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
-    Map? json = _imageJson[str];
+    Map? json = _imageJson[key];
     if (json != null) {
-      IconData? iconData = _faIconData[str];
+      IconData? iconData = _faIconData[key];
       if (iconData != null) {
-        return _faIconFromData(iconData, json, width, color, td, semanticLabel, excludeFromSemantics);
+        return _getFaIcon(iconData, json, imageKey, width, color, td, semanticLabel, excludeFromSemantics);
       } else {
-        return _imageFromProvider(json, source, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, 
-          alignment, blendMode, fit, filterQuality, repeat, networkHeaders, frameBuilder, loadingBuilder, errorBuilder);
+        return _getFlutterImage(json, source, imageKey, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, gaplessPlayback,
+          alignment, opacity, blendMode, fit, filterQuality, repeat, centerSlice, networkHeaders, frameBuilder, loadingBuilder, errorBuilder);
       }
     }
     return null;
   }
 
-  Image? _imageFromProvider(Map json, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics, 
-    bool antiAlias, bool matchTextDirection, AlignmentGeometry? alignment, BlendMode? cbm, BoxFit? bf, FilterQuality? fq, ImageRepeat? ir, Map<String, String>? headers,
-    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, 
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
+  Image? _getFlutterImage(Map json, dynamic source, Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics, 
+    bool antiAlias, bool matchTextDirection, bool gaplessPlayback, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? cbm, BoxFit? bf, FilterQuality? fq, 
+    ImageRepeat? ir, Rect? centerSlice, Map<String, String>? headers, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
   ) {
     String type = JsonUtils.stringValue(json['type'])!;
     source ??= JsonUtils.stringValue(json['src'])!;
@@ -663,9 +660,10 @@ class UiImages {
     ir ??= ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.${JsonUtils.stringValue(json['repeat']) ?? ''}') ?? ImageRepeat.noRepeat;
     
     switch (type) {
-      case 'flutter.asset': return Image.asset(source, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+      case 'flutter.asset': return Image.asset(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
           excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+          opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, filterQuality: fq, 
+          centerSlice: centerSlice);
       case 'flutter.file': {
         File imageSource;
         if (source is String) {
@@ -675,30 +673,33 @@ class UiImages {
         } else {
           return null;
         }
-        return Image.file(imageSource, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+        return Image.file(imageSource, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
           excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-          repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+          opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, filterQuality: fq, 
+          centerSlice: centerSlice);
       }
       case 'flutter.network': {
         if (source is String && Uri.tryParse(source) != null) {
-          return Image.network(source, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+          return Image.network(source, key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
             excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-            repeat: ir, isAntiAlias: antiAlias, headers: headers, matchTextDirection: matchTextDirection, filterQuality: fq);
+            opacity: opacity, repeat: ir, isAntiAlias: antiAlias, headers: headers, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, 
+            filterQuality: fq, centerSlice: centerSlice);
         }
         break;
       }
       case 'flutter.memory': {
         if (source is Uint8List) {
-          return Image.memory(source, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
+          return Image.memory(source, key: key, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
             excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-            repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, filterQuality: fq);
+            opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, 
+            filterQuality: fq, centerSlice: centerSlice);
         }
       }
     }
     return null;
   }
 
-  Widget _faIconFromData(IconData data, Map json, double? size, Color? color, TextDirection? td, String? semanticLabel, bool excludeFromSemantics) {
+  Widget _getFaIcon(IconData data, Map json, Key? key, double? size, Color? color, TextDirection? td, String? semanticLabel, bool excludeFromSemantics) {
     size ??= JsonUtils.doubleValue(json['width']);
     if (color == null) {
       String? rawColor = JsonUtils.stringValue(json['color']);
@@ -707,7 +708,7 @@ class UiImages {
 
     td ??= TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.${JsonUtils.stringValue(json['text_direction']) ?? ''}');
 
-    FaIcon icon = FaIcon(data, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
+    FaIcon icon = FaIcon(data, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
     return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
   }
 
