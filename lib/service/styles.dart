@@ -49,8 +49,7 @@ class Styles extends Service implements NotificationsListener{
 
   UiFontFamilies? _fontFamilies;
   UiFontFamilies? get fontFamilies => _fontFamilies;
-  
-  Map<String, TextStyle>? _textStylesMap;
+
   UiStyles? _uiStyles;
   UiStyles? get uiStyles => _uiStyles;
 
@@ -179,11 +178,8 @@ class Styles extends Service implements NotificationsListener{
   }
 
   // Public
-
-
-  TextStyle? getTextStyle(String key){
-    dynamic style = (_textStylesMap != null) ? _textStylesMap![key] : null;
-    return (style is TextStyle) ? style : null;
+  TextStyle? getTextStyle(String key, {Map<String, dynamic>? data}){
+    return constructTextStyle(key: key, data: data);
   }
 
   // Private
@@ -274,7 +270,6 @@ class Styles extends Service implements NotificationsListener{
   void buildData(){
     buildColorsData();
     buildFontFamiliesData();
-    buildStylesData();
   }
 
   @protected
@@ -312,41 +307,47 @@ class Styles extends Service implements NotificationsListener{
     }
   }
 
-  @protected
-  void buildStylesData(){
-    if(_stylesData != null) {
-      dynamic stylesData = _stylesData!["text_style"];
-      Map<String, TextStyle> styles = <String, TextStyle>{};
-      if(stylesData is Map){
-        stylesData.forEach((dynamic key, dynamic value){
-          if(key is String && value is Map){
-            double? fontSize = JsonUtils.doubleValue(value['size']);
-            double? fontHeight = JsonUtils.doubleValue(value['height']);
-            String? fontFamily = JsonUtils.stringValue(value['font_family']);
-            String? rawColor = JsonUtils.stringValue(value['color']);
-            Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
-            String? rawDecorationColor = JsonUtils.stringValue(value['decoration_color']);
-            Color? decorationColor = rawDecorationColor != null ? (rawDecorationColor.startsWith("#") ? UiColors.fromHex(rawDecorationColor) : colors!.getColor(rawDecorationColor)) : null;
-            TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
-            TextOverflow? textOverflow = textOverflowFromString(JsonUtils.stringValue(value["overflow"])); // Not mandatory
-            TextDecorationStyle? decorationStyle = textDecorationStyleFromString(JsonUtils.stringValue(value["decoration_style"])); // Not mandatory
-            FontWeight? fontWeight = fontWeightFromString(JsonUtils.stringValue(value["weight"])); // Not mandatory
-            double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
-            double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
-            double? decorationThickness = JsonUtils.doubleValue(value['decoration_thickness']); // Not mandatory
-
-            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-                overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
-          }
-        });
-      }
-      _textStylesMap = styles;
-      //if we need UiStyles...
-      // if(_textStylesMap!=null)
-      //   _uiStyles = UiStyles(_textStylesMap!);
-      // }
+  TextStyle? constructTextStyle({String? key, Map<String, dynamic>? data}){
+    if(StringUtils.isEmpty(key)){
+      return null;
     }
 
+    Map<String, dynamic>? stylesData = JsonUtils.mapValue(_stylesData!["text_style"]);
+    Map<String, dynamic>? style = stylesData != null ? JsonUtils.mapValue(stylesData[key]) : null;
+
+    if(style == null){
+      return null;
+    }
+    Color? color = extractTextStyleColor(JsonUtils.stringValue(style['color']), data);
+    Color? decorationColor = extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), data);
+    double? fontSize = extractCustomValue(style['size'], data) ?? JsonUtils.doubleValue(style['size']);
+    double? fontHeight = extractCustomValue(style['height'], data) ?? JsonUtils.doubleValue(style['height']);
+    String? fontFamily = extractCustomValue(style['font_family'], data) ?? JsonUtils.stringValue(style['font_family']);
+    TextDecoration? textDecoration = extractCustomValue(style['decoration'], data) ?? textDecorationFromString(JsonUtils.stringValue(style["decoration"])); // Not mandatory
+    TextOverflow? textOverflow = extractCustomValue(style['overflow'], data) ?? textOverflowFromString(JsonUtils.stringValue(style["overflow"])); // Not mandatory
+    TextDecorationStyle? decorationStyle = extractCustomValue(style['decoration_style'], data) ?? textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"])); // Not mandatory
+    FontWeight? fontWeight = extractCustomValue(style['weight'], data) ?? fontWeightFromString(JsonUtils.stringValue(style["weight"])); // Not mandatory
+    double? letterSpacing = extractCustomValue(style['letter_spacing'], data) ?? JsonUtils.doubleValue(style['letter_spacing']); // Not mandatory
+    double? wordSpacing = extractCustomValue(style['word_spacing'], data) ?? JsonUtils.doubleValue(style['word_spacing']); // Not mandatory
+    double? decorationThickness = extractCustomValue(style['decoration_thickness'], data) ?? JsonUtils.doubleValue(style['decoration_thickness']); // Not mandatory
+
+    return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+  }
+
+  Color? extractTextStyleColor(String? rawColorData,  Map<String, dynamic>? values){
+    if(rawColorData != null){
+      if(rawColorData.startsWith("#")){
+        return UiColors.fromHex(rawColorData);
+      } else if(rawColorData.startsWith('\$')){
+        Color? customColor = extractCustomValue(rawColorData, values);
+        if(customColor != null)
+          return customColor;
+      } else {
+        return colors!.getColor(rawColorData);
+      }
+    }
+    return null;
   }
 
   // NotificationsListener
@@ -374,12 +375,12 @@ class Styles extends Service implements NotificationsListener{
 }
 
 //Text style properties from string
-TextDecoration textDecorationFromString(String? decoration){
+TextDecoration? textDecorationFromString(String? decoration){
   switch(decoration){
     case "lineThrough" : return TextDecoration.lineThrough;
     case "overline" : return TextDecoration.overline;
     case "underline" : return TextDecoration.underline;
-    default : return TextDecoration.none;
+    default : return null;
   }
 }
 
@@ -394,29 +395,41 @@ TextOverflow? textOverflowFromString(String? value) {
   }
 
 TextDecorationStyle? textDecorationStyleFromString(String? value) {
-    switch (value) {
-      case "dotted" : return TextDecorationStyle.dotted;
-      case "dashed" : return TextDecorationStyle.dashed;
-      case "double" : return TextDecorationStyle.double;
-      case "solid" : return TextDecorationStyle.solid;
-      case "wavy" : return TextDecorationStyle.wavy;
-      default : return null;
+  switch (value) {
+    case "dotted" : return TextDecorationStyle.dotted;
+    case "dashed" : return TextDecorationStyle.dashed;
+    case "double" : return TextDecorationStyle.double;
+    case "solid" : return TextDecorationStyle.solid;
+    case "wavy" : return TextDecorationStyle.wavy;
+    default : return null;
+  }
+}
+
+FontWeight? fontWeightFromString(String? value) {
+  switch (value) {
+    case "w100" : return FontWeight.w100;
+    case "w200" : return FontWeight.w200;
+    case "w300" : return FontWeight.w300;
+    case "w400" : return FontWeight.w400;
+    case "w500" : return FontWeight.w500;
+    case "w600" : return FontWeight.w600;
+    case "w700" : return FontWeight.w700;
+    case "w800" : return FontWeight.w800;
+    case "w900" : return FontWeight.w900;
+    default : return null;
+  }
+}
+
+//TextStyle Custom values like color or height
+T? extractCustomValue<T>(dynamic rawValue, Map<String, dynamic>? values){
+  if(rawValue!= null && rawValue is String && rawValue.startsWith('\$')){
+    String customValueKey = rawValue.replaceFirst("\$", "");
+    dynamic customValue = values!= null && values.containsKey(customValueKey) ? values[customValueKey] : null;
+    if(customValue != null && customValue is T){
+      return customValue;
     }
   }
-
-  FontWeight? fontWeightFromString(String? value) {
-    switch (value) {
-      case "w100" : return FontWeight.w100;
-      case "w200" : return FontWeight.w200;
-      case "w300" : return FontWeight.w300;
-      case "w400" : return FontWeight.w400;
-      case "w500" : return FontWeight.w500;
-      case "w600" : return FontWeight.w600;
-      case "w700" : return FontWeight.w700;
-      case "w800" : return FontWeight.w800;
-      case "w900" : return FontWeight.w900;
-      default : return null;
-    }
+  return null;
 }
 
 enum StylesContentMode { auto, assets, debug }
