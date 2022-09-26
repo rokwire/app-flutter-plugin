@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
+- Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
 - Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403)
 ### Deleted
