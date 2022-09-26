@@ -16,7 +16,6 @@
 
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import "package:asn1lib/asn1lib.dart";
