@@ -15,7 +15,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
@@ -1133,10 +1133,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Helpers
 
-  static Future<void> _launchUrl(urlStr) async {
+  static Future<void> _launchUrl(String? urlStr) async {
     try {
-      if (await canLaunch(urlStr)) {
-        await launch(urlStr);
+      if ((urlStr != null) && await canLaunchUrlString(urlStr)) {
+        await launchUrlString(urlStr);
       }
     }
     catch(e) {
