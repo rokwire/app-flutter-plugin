@@ -223,7 +223,16 @@ class Styles extends Service implements NotificationsListener{
   String get resourceAssetsKey => 'assets/$_assetsName';
 
   @protected
-  Future<String?> loadResourceAssetsJsonString() => rootBundle.loadString(resourceAssetsKey);
+  String get resourceAppAssetsKey => 'app/assets/$_assetsName';
+
+  @protected
+  Future<String?> loadResourceAssetsJsonString() async {
+    try { return await rootBundle.loadString(resourceAppAssetsKey); } catch(e) { debugPrint(e.toString()); }
+    try { return await rootBundle.loadString(resourceAssetsKey); } catch(e) { debugPrint(e.toString()); }
+    //TBD: Put all calls of rootBundle.loadString in try/catch statement.
+    return null;
+  }
+    
 
   @protected
   Future<void> loadFromAssets() async {
