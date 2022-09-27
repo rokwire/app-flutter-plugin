@@ -674,10 +674,9 @@ class UiImages {
     ir ??= ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.${JsonUtils.stringValue(json['repeat']) ?? ''}') ?? ImageRepeat.noRepeat;
     
     switch (type) {
-      case 'flutter.asset': return Image.asset(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-          opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, filterQuality: fq, 
-          centerSlice: centerSlice);
+      case 'flutter.asset': return Image.asset(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+        scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+        centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,);
       case 'flutter.file': {
         File imageSource;
         if (source is String) {
@@ -687,26 +686,25 @@ class UiImages {
         } else {
           return null;
         }
-        return Image.file(imageSource, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-          excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-          opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, filterQuality: fq, 
-          centerSlice: centerSlice);
+        return Image.file(imageSource, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq, 
+          );
       }
       case 'flutter.network': {
         if (source is String && Uri.tryParse(source) != null) {
-          return Image.network(source, key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-            excludeFromSemantics: excludeFromSemantics, scale: scale, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-            opacity: opacity, repeat: ir, isAntiAlias: antiAlias, headers: headers, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, 
-            filterQuality: fq, centerSlice: centerSlice);
+          return Image.network(source, key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,
+            headers: headers);
         }
         break;
       }
       case 'flutter.memory': {
         if (source is Uint8List) {
-          return Image.memory(source, key: key, scale: scale, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, 
-            excludeFromSemantics: excludeFromSemantics, width: width, height: height, color: color, colorBlendMode: cbm, fit: bf, alignment: alignment, 
-            opacity: opacity, repeat: ir, isAntiAlias: antiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, 
-            filterQuality: fq, centerSlice: centerSlice);
+          return Image.memory(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq);
         }
       }
     }
