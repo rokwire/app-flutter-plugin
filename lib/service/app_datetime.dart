@@ -76,14 +76,14 @@ class AppDateTime with Service {
 
   Future<Uint8List?> get timezoneDatabase async => null;
 
-  bool get useDeviceLocalTimeZone => false;
-
   String? get universityLocationName  => null;
 
   timezone.Location? get universityLocation {
     String? locationName = universityLocationName;
     return (locationName != null) ? timezone.getLocation(locationName) : null;
   }
+
+  bool get useDeviceLocalTimeZone => false;
 
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
