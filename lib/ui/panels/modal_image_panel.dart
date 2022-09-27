@@ -20,7 +20,7 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class ModalImagePanel extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
   final String? imageKey;
   final EdgeInsetsGeometry imagePadding;
 
@@ -40,7 +40,7 @@ class ModalImagePanel extends StatelessWidget {
   final void Function()? onDismiss;
 
   const ModalImagePanel({Key? key,
-    required this.imageUrl,
+    this.imageUrl,
     this.imageKey,
     this.imagePadding = const EdgeInsets.symmetric(vertical: 64, horizontal: 32),
 
@@ -65,10 +65,11 @@ class ModalImagePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
-      image = Styles().uiImages?.getImage(imageKey!, source: imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+      image = Styles().uiImages?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
         networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
-    } else {
-      image = Image.network(imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+    }
+    else if (StringUtils.isNotEmpty(imageUrl)) {
+      image = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
         headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     }
     
