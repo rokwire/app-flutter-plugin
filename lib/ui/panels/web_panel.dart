@@ -27,6 +27,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -119,8 +120,9 @@ class WebPanel extends StatefulWidget {
 
   @protected
   void onTapStatusLink(String? url) {
-    if (StringUtils.isNotEmpty(url)) {
-      launch(url!);
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    if (uri != null) {
+      launchUrl(uri);
     }
   }
 
@@ -131,7 +133,7 @@ class WebPanel extends StatefulWidget {
       return flutter_webview.NavigationDecision.navigate;
     }
     else {
-      launch(url);
+      launchUrlString(url);
       return flutter_webview.NavigationDecision.prevent;
     }
   }
