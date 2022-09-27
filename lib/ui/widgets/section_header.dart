@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
@@ -112,7 +109,7 @@ class SectionSlantHeader extends StatelessWidget {
         Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
-            Image.asset(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+            Styles().uiImages?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
           ),
         )]),
       ]);
@@ -133,7 +130,7 @@ class SectionSlantHeader extends StatelessWidget {
     if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+          titleIcon ?? Styles().uiImages?.getImage(titleIconAsset!, excludeFromSemantics: true,),
         )
       );
     }
@@ -151,7 +148,7 @@ class SectionSlantHeader extends StatelessWidget {
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, child:
-              rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+              rightIcon ?? Styles().uiImages?.getImage(rightIconAsset!, excludeFromSemantics: true,),
             )
           )
         ),
@@ -272,7 +269,7 @@ class SectionRibbonHeader extends StatelessWidget {
     
     Widget? titleIconWidget = ((titleIcon != null) || (titleIconAsset != null)) ?
       Padding(padding: titleIconPadding, child:
-        titleIcon ?? Image.asset(titleIconAsset!, excludeFromSemantics: true,),
+        titleIcon ?? Styles().uiImages?.getImage(titleIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if ((titleIconWidget != null)) {
       titleList.add(titleIconWidget);
@@ -305,7 +302,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
     Widget? rightIconWidget = ((rightIcon != null) || (rightIconAsset != null)) ?
       Padding(padding: rightIconPadding, child:
-        rightIcon ?? Image.asset(rightIconAsset!, excludeFromSemantics: true,),
+        rightIcon ?? Styles().uiImages?.getImage(rightIconAsset!, excludeFromSemantics: true,),
       ) : null;
     if (rightIconWidget != null) {
       titleList.add(rightIconWidget);
@@ -356,6 +353,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
 class ImageSlantHeader extends StatelessWidget {
   final String? imageUrl;
+  final String? imageKey;
   final Widget? child;
 
   final String slantImageAsset;
@@ -363,39 +361,67 @@ class ImageSlantHeader extends StatelessWidget {
   final double slantImageHeadingHeight;
   final double slantImageHeight;
 
+  final Widget? progressWidget;
+  final Size progressSize;
+  final double progressWidth;
+  final Color? progressColor;
+
   const ImageSlantHeader({Key? key,
     this.imageUrl,
+    this.imageKey,
     this.child,
 
     required this.slantImageAsset,
     this.slantImageColor,
     this.slantImageHeadingHeight = 72,
     this.slantImageHeight = 112,
+
+    this.progressWidget,
+    this.progressSize = const Size(24, 24),
+    this.progressWidth = 2,
+    this.progressColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    Image networkImage = Image.network(imageUrl!, headers: Config().networkAuthHeaders);
-    Completer<ui.Image> networkImageCompleter = Completer<ui.Image>();
-    networkImage.image.resolve(const ImageConfiguration()).addListener(ImageStreamListener((ImageInfo info, bool syncCall) => networkImageCompleter.complete(info.image)));
+    Widget? image;
+    if (StringUtils.isNotEmpty(imageKey)) {
+      image = Styles().uiImages?.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+        networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+    } else if (StringUtils.isNotEmpty(imageUrl)) {
+      image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+        headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+    }
 
+    double displayHeight = (image as Image?)?.height ?? 240;
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      Image(image: networkImage.image, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,),
-      FutureBuilder<ui.Image>(future: networkImageCompleter.future, builder: (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
-        double displayHeight = (snapshot.data != null) ? (snapshot.data!.height * MediaQuery.of(context).size.width / snapshot.data!.width) : 240;
-        return Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
-          Stack(alignment: Alignment.topCenter, children: <Widget>[
-            Column(children: <Widget>[
-              Container(height: slantImageHeadingHeight, color: _slantImageColor,),
-              SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-                Image.asset(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
-              ),
-            ],),
-            child ?? Container(),
-          ])
-        );
-      }),
+      image ?? Container(),
+      Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
+        Stack(alignment: Alignment.topCenter, children: <Widget>[
+          Column(children: <Widget>[
+            Container(height: slantImageHeadingHeight, color: _slantImageColor,),
+            SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
+              Styles().uiImages?.getImage(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+            ),
+          ],),
+          child ?? Container(),
+        ])
+      ),
     ]);
+  }
+
+  Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    if (loadingProgress == null) {
+      return child;
+    }
+    return Center(child: _buildProgressWidget(context, loadingProgress));
+  }
+
+  Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
+    return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
+    );
   }
 
   Color? get _slantImageColor => slantImageColor ?? Styles().colors?.fillColorSecondary;

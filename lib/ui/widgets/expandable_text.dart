@@ -60,7 +60,7 @@ class ExpandableText extends StatefulWidget {
   String? get readMoreHint => null;
   TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
 
-  Widget? get _readMoreIcon => readMoreIcon ?? ((readMoreIconAsset != null) ? Image.asset(readMoreIconAsset!, excludeFromSemantics: true) : null);
+  Widget? get _readMoreIcon => readMoreIcon ?? ((readMoreIconAsset != null) ? Styles().uiImages?.getImage(readMoreIconAsset!, excludeFromSemantics: true) : null);
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();

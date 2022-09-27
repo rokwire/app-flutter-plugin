@@ -31,6 +31,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
 class Styles extends Service implements NotificationsListener{
@@ -49,10 +50,12 @@ class Styles extends Service implements NotificationsListener{
 
   UiFontFamilies? _fontFamilies;
   UiFontFamilies? get fontFamilies => _fontFamilies;
-  
-  Map<String, TextStyle>? _textStylesMap;
+
   UiStyles? _uiStyles;
   UiStyles? get uiStyles => _uiStyles;
+
+  UiImages? _uiImages;
+  UiImages? get uiImages => _uiImages;
 
   // Singletone Factory
 
@@ -179,11 +182,8 @@ class Styles extends Service implements NotificationsListener{
   }
 
   // Public
-
-
-  TextStyle? getTextStyle(String key){
-    dynamic style = (_textStylesMap != null) ? _textStylesMap![key] : null;
-    return (style is TextStyle) ? style : null;
+  TextStyle? getTextStyle(String key, {Map<String, dynamic>? data}){
+    return constructTextStyle(key: key, data: data);
   }
 
   // Private
@@ -274,7 +274,7 @@ class Styles extends Service implements NotificationsListener{
   void buildData(){
     buildColorsData();
     buildFontFamiliesData();
-    buildStylesData();
+    _uiImages = UiImages.fromJson(_stylesData, _colors!);
   }
 
   @protected
@@ -312,41 +312,48 @@ class Styles extends Service implements NotificationsListener{
     }
   }
 
-  @protected
-  void buildStylesData(){
-    if(_stylesData != null) {
-      dynamic stylesData = _stylesData!["text_style"];
-      Map<String, TextStyle> styles = <String, TextStyle>{};
-      if(stylesData is Map){
-        stylesData.forEach((dynamic key, dynamic value){
-          if(key is String && value is Map){
-            double? fontSize = JsonUtils.doubleValue(value['size']);
-            double? fontHeight = JsonUtils.doubleValue(value['height']);
-            String? fontFamily = JsonUtils.stringValue(value['font_family']);
-            String? rawColor = JsonUtils.stringValue(value['color']);
-            Color? color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : colors!.getColor(rawColor)) : null;
-            String? rawDecorationColor = JsonUtils.stringValue(value['decoration_color']);
-            Color? decorationColor = rawDecorationColor != null ? (rawDecorationColor.startsWith("#") ? UiColors.fromHex(rawDecorationColor) : colors!.getColor(rawDecorationColor)) : null;
-            TextDecoration textDecoration = textDecorationFromString(JsonUtils.stringValue(value["decoration"])); // Not mandatory
-            TextOverflow? textOverflow = textOverflowFromString(JsonUtils.stringValue(value["overflow"])); // Not mandatory
-            TextDecorationStyle? decorationStyle = textDecorationStyleFromString(JsonUtils.stringValue(value["decoration_style"])); // Not mandatory
-            FontWeight? fontWeight = fontWeightFromString(JsonUtils.stringValue(value["weight"])); // Not mandatory
-            double? letterSpacing = JsonUtils.doubleValue(value['letter_spacing']); // Not mandatory
-            double? wordSpacing = JsonUtils.doubleValue(value['word_spacing']); // Not mandatory
-            double? decorationThickness = JsonUtils.doubleValue(value['decoration_thickness']); // Not mandatory
-
-            styles[key] = TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-                overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
-          }
-        });
-      }
-      _textStylesMap = styles;
-      //if we need UiStyles...
-      // if(_textStylesMap!=null)
-      //   _uiStyles = UiStyles(_textStylesMap!);
-      // }
+  TextStyle? constructTextStyle({String? key, Map<String, dynamic>? data}){
+    if(StringUtils.isEmpty(key)){
+      return null;
     }
 
+    Map<String, dynamic>? stylesData = JsonUtils.mapValue(_stylesData!["text_style"]);
+    Map<String, dynamic>? style = stylesData != null ? JsonUtils.mapValue(stylesData[key]) : null;
+
+    if(style == null){
+      return null;
+    }
+    Color? color = extractTextStyleColor(JsonUtils.stringValue(style['color']), data);
+    Color? decorationColor = extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), data);
+    double? fontSize = extractCustomValue(style['size'], data) ?? JsonUtils.doubleValue(style['size']);
+    double? fontHeight = extractCustomValue(style['height'], data) ?? JsonUtils.doubleValue(style['height']);
+    String? fontFamily = extractCustomValue(style['font_family'], data) ?? JsonUtils.stringValue(style['font_family']);
+    TextDecoration? textDecoration = extractCustomValue(style['decoration'], data) ?? textDecorationFromString(JsonUtils.stringValue(style["decoration"])); // Not mandatory
+    TextOverflow? textOverflow = extractCustomValue(style['overflow'], data) ?? textOverflowFromString(JsonUtils.stringValue(style["overflow"])); // Not mandatory
+    TextDecorationStyle? decorationStyle = extractCustomValue(style['decoration_style'], data) ?? textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"])); // Not mandatory
+    FontWeight? fontWeight = extractCustomValue(style['weight'], data) ?? fontWeightFromString(JsonUtils.stringValue(style["weight"])); // Not mandatory
+    double? letterSpacing = extractCustomValue(style['letter_spacing'], data) ?? JsonUtils.doubleValue(style['letter_spacing']); // Not mandatory
+    double? wordSpacing = extractCustomValue(style['word_spacing'], data) ?? JsonUtils.doubleValue(style['word_spacing']); // Not mandatory
+    double? decorationThickness = extractCustomValue(style['decoration_thickness'], data) ?? JsonUtils.doubleValue(style['decoration_thickness']); // Not mandatory
+
+    return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+  }
+
+  Color? extractTextStyleColor(String? rawColorData,  Map<String, dynamic>? values){
+    if(rawColorData != null){
+      if(rawColorData.startsWith("#")){
+        return UiColors.fromHex(rawColorData);
+      } else if(rawColorData.startsWith('\$')){
+        Color? customColor = extractCustomValue(rawColorData, values);
+        if(customColor != null) {
+          return customColor;
+        }
+      } else {
+        return colors!.getColor(rawColorData);
+      }
+    }
+    return null;
   }
 
   // NotificationsListener
@@ -374,12 +381,12 @@ class Styles extends Service implements NotificationsListener{
 }
 
 //Text style properties from string
-TextDecoration textDecorationFromString(String? decoration){
+TextDecoration? textDecorationFromString(String? decoration){
   switch(decoration){
     case "lineThrough" : return TextDecoration.lineThrough;
     case "overline" : return TextDecoration.overline;
     case "underline" : return TextDecoration.underline;
-    default : return TextDecoration.none;
+    default : return null;
   }
 }
 
@@ -394,29 +401,41 @@ TextOverflow? textOverflowFromString(String? value) {
   }
 
 TextDecorationStyle? textDecorationStyleFromString(String? value) {
-    switch (value) {
-      case "dotted" : return TextDecorationStyle.dotted;
-      case "dashed" : return TextDecorationStyle.dashed;
-      case "double" : return TextDecorationStyle.double;
-      case "solid" : return TextDecorationStyle.solid;
-      case "wavy" : return TextDecorationStyle.wavy;
-      default : return null;
+  switch (value) {
+    case "dotted" : return TextDecorationStyle.dotted;
+    case "dashed" : return TextDecorationStyle.dashed;
+    case "double" : return TextDecorationStyle.double;
+    case "solid" : return TextDecorationStyle.solid;
+    case "wavy" : return TextDecorationStyle.wavy;
+    default : return null;
+  }
+}
+
+FontWeight? fontWeightFromString(String? value) {
+  switch (value) {
+    case "w100" : return FontWeight.w100;
+    case "w200" : return FontWeight.w200;
+    case "w300" : return FontWeight.w300;
+    case "w400" : return FontWeight.w400;
+    case "w500" : return FontWeight.w500;
+    case "w600" : return FontWeight.w600;
+    case "w700" : return FontWeight.w700;
+    case "w800" : return FontWeight.w800;
+    case "w900" : return FontWeight.w900;
+    default : return null;
+  }
+}
+
+//TextStyle Custom values like color or height
+T? extractCustomValue<T>(dynamic rawValue, Map<String, dynamic>? values){
+  if(rawValue!= null && rawValue is String && rawValue.startsWith('\$')){
+    String customValueKey = rawValue.replaceFirst("\$", "");
+    dynamic customValue = values!= null && values.containsKey(customValueKey) ? values[customValueKey] : null;
+    if(customValue != null && customValue is T){
+      return customValue;
     }
   }
-
-  FontWeight? fontWeightFromString(String? value) {
-    switch (value) {
-      case "w100" : return FontWeight.w100;
-      case "w200" : return FontWeight.w200;
-      case "w300" : return FontWeight.w300;
-      case "w400" : return FontWeight.w400;
-      case "w500" : return FontWeight.w500;
-      case "w600" : return FontWeight.w600;
-      case "w700" : return FontWeight.w700;
-      case "w800" : return FontWeight.w800;
-      case "w900" : return FontWeight.w900;
-      default : return null;
-    }
+  return null;
 }
 
 enum StylesContentMode { auto, assets, debug }
@@ -574,4 +593,149 @@ class UiStyles {
   UiStyles(this._styleMap);
 
   TextStyle? get headerBar          => _styleMap['header_bar'];
+}
+
+class UiImages {
+  final Map<String, Map> _imageJson;
+  final Map<String, IconData> _faIconData;
+  final UiColors _colors;
+
+  UiImages(this._imageJson, this._faIconData, this._colors);
+
+  factory UiImages.fromJson(Map<String, dynamic>? json, UiColors colors) {
+    Map<String, Map> imageJson = {};
+    Map<String, IconData> faIconData = {};
+    if(json != null) {
+      dynamic imagesData = json["image"];
+      if(imagesData is Map){
+        imagesData.forEach((dynamic key, dynamic value){
+          if(key is String && value is Map){
+            imageJson[key] = value;
+
+            String? type = JsonUtils.stringValue(value['type']);
+            String? source = JsonUtils.stringValue(value['src']);
+            Match? faMatch = type?.matchAsPrefix("fa.");
+            if (faMatch != null && source != null) {
+              int? code = int.tryParse(source, radix: 16);
+              if (code != null) {
+                switch (type!.substring(faMatch.end)) {
+                  case 'solid': faIconData[key] = IconDataSolid(code); break;
+                  case 'regular': faIconData[key] = IconDataRegular(code); break;
+                  case 'brands': faIconData[key] = IconDataBrands(code); break;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    return UiImages(imageJson, faIconData, colors);
+  }
+
+  Widget? getImage(String key, {Key? imageKey, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool antiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? blendMode, BoxFit? fit, 
+    FilterQuality? filterQuality, ImageRepeat? repeat, Rect? centerSlice, TextDirection? td, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
+  ) {
+    Map? json = _imageJson[key];
+    if (json != null) {
+      IconData? iconData = _faIconData[key];
+      if (iconData != null) {
+        return _getFaIcon(iconData, json, imageKey, width, color, td, semanticLabel, excludeFromSemantics);
+      } else {
+        return _getFlutterImage(json, source, imageKey, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, gaplessPlayback,
+          alignment, opacity, blendMode, fit, filterQuality, repeat, centerSlice, networkHeaders, frameBuilder, loadingBuilder, errorBuilder);
+      }
+    }
+    return null;
+  }
+
+  Image? _getFlutterImage(Map json, dynamic source, Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics, 
+    bool antiAlias, bool matchTextDirection, bool gaplessPlayback, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? cbm, BoxFit? bf, FilterQuality? fq, 
+    ImageRepeat? ir, Rect? centerSlice, Map<String, String>? headers, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
+  ) {
+    String type = JsonUtils.stringValue(json['type'])!;
+    source ??= JsonUtils.stringValue(json['src'])!;
+
+    scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
+    width ??= JsonUtils.doubleValue(json['width']);
+    height ??= JsonUtils.doubleValue(json['height']);
+    alignment ??= _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
+    if (color == null) {
+      String? rawColor = JsonUtils.stringValue(json['color']);
+      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+    }
+
+    // Image Enums
+    cbm ??= BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.${JsonUtils.stringValue(json['color_blend_mode']) ?? ''}');
+    bf ??= BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.${JsonUtils.stringValue(json['fit']) ?? ''}');
+    fq ??= FilterQuality.values.firstWhereOrNull((e) => e.toString() == 'FilterQuality.${JsonUtils.stringValue(json['filter_quality']) ?? ''}') ?? FilterQuality.low;
+    ir ??= ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.${JsonUtils.stringValue(json['repeat']) ?? ''}') ?? ImageRepeat.noRepeat;
+    
+    switch (type) {
+      case 'flutter.asset': return Image.asset(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+        scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+        centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,);
+      case 'flutter.file': {
+        File imageSource;
+        if (source is String) {
+          imageSource = File(source);
+        } else if (source is File) {
+          imageSource = source;
+        } else {
+          return null;
+        }
+        return Image.file(imageSource, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq, 
+          );
+      }
+      case 'flutter.network': {
+        if (source is String && Uri.tryParse(source) != null) {
+          return Image.network(source, key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,
+            headers: headers);
+        }
+        break;
+      }
+      case 'flutter.memory': {
+        if (source is Uint8List) {
+          return Image.memory(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq);
+        }
+      }
+    }
+    return null;
+  }
+
+  Widget _getFaIcon(IconData data, Map json, Key? key, double? size, Color? color, TextDirection? td, String? semanticLabel, bool excludeFromSemantics) {
+    size ??= JsonUtils.doubleValue(json['width']);
+    if (color == null) {
+      String? rawColor = JsonUtils.stringValue(json['color']);
+      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+    }
+
+    td ??= TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.${JsonUtils.stringValue(json['text_direction']) ?? ''}');
+
+    FaIcon icon = FaIcon(data, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
+    return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
+  }
+
+  AlignmentGeometry? _alignmentFromString(String? str) {
+    switch (str) {
+      case "topLeft": return Alignment.topLeft;
+      case "topCenter": return Alignment.topCenter;
+      case "topRight": return Alignment.topRight;
+      case "centerLeft": return Alignment.centerLeft;
+      case "center": return Alignment.center;
+      case "centerRight": return Alignment.centerRight;
+      case "bottomLeft": return Alignment.bottomLeft;
+      case "bottomCenter": return Alignment.bottomCenter;
+      case "bottomRight": return Alignment.bottomRight;
+      default: return null;
+    }
+  }
 }

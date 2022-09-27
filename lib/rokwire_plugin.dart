@@ -30,7 +30,6 @@ class RokwirePlugin {
       'importance': channel.importance.value,
     }); }
     catch(e) { debugPrint(e.toString()); }
-
     return null;
   }
 
@@ -42,7 +41,6 @@ class RokwirePlugin {
       'sound': sound,
     }); }
     catch(e) { debugPrint(e.toString()); }
-
     return null;
   }
 
