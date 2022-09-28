@@ -318,8 +318,7 @@ class Groups with Service implements NotificationsListener {
         String? responseBody = response?.body;
         if (responseCode == 200) {
           List<dynamic>? groupsJson = JsonUtils.decodeList(responseBody);
-          List<Group>? allGroups = Group.listFromJson(groupsJson);
-          return Group.getVisibleGroups(allGroups);
+          return Group.listFromJson(groupsJson);
         } else {
           debugPrint('Failed to load all groups for url {$url}. Response: $responseCode $responseBody');
         }
@@ -342,8 +341,7 @@ class Groups with Service implements NotificationsListener {
     int responseCode = response?.statusCode ?? -1;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      List<Group>? allGroups = Group.listFromJson(JsonUtils.decodeList(responseBody));
-      return Group.getVisibleGroups(allGroups);
+      return Group.listFromJson(JsonUtils.decodeList(responseBody));
     } else {
       debugPrint('Failed to search for groups. Reason: ');
       debugPrint(responseBody);
@@ -1211,9 +1209,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   static Future<List<Group>?> _loadUserGroupsFromCache() async {
-    String? userGroupsString = await _loadUserGroupsStringFromCache();
-    List<Group>? allUserGroups = Group.listFromJson(JsonUtils.decodeList(userGroupsString));
-    return Group.getVisibleGroups(allUserGroups);
+    return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
   }
 
   static Future<String?> _loadUserGroupsStringFromNet() async {
@@ -1232,8 +1228,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<void> _initUserGroupsFromNet() async {
     String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? allUserGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
-    List<Group>? userGroups = Group.getVisibleGroups(allUserGroups);
+    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
     if (userGroups != null) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);
@@ -1268,8 +1263,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<void> _updateUserGroupsFromNet() async {
     String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? allUserGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
-    List<Group>? userGroups = Group.getVisibleGroups(allUserGroups);
+    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
     if ((userGroups != null) && !const DeepCollectionEquality().equals(_userGroups, userGroups)) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);

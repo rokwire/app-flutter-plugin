@@ -227,6 +227,13 @@ class Group {
     return (currentUserIsAdmin == true) && (authManEnabled == true);
   }
 
+  ///
+  /// Show hidden group only if the user is admin
+  ///
+  bool get isVisible {
+    return !(hiddenForSearch ?? false) || currentUserIsAdmin;
+  }
+
   static List<Group>? listFromJson(List<dynamic>? json) {
     List<Group>? values;
     if (json != null) {
@@ -247,26 +254,6 @@ class Group {
       }
     }
     return json;
-  }
-
-  ///
-  /// Includes hidden group only if the current user is an admin of the group.
-  ///
-  static List<Group>? getVisibleGroups(List<Group>? groupList) {
-    List<Group>? visibleGroups;
-    if (groupList != null) {
-      visibleGroups = <Group>[];
-      for (Group group in groupList) {
-        if (group.hiddenForSearch ?? false) {
-          if (group.currentUserIsAdmin) {
-            ListUtils.add(visibleGroups, group);
-          }
-        } else {
-          ListUtils.add(visibleGroups, group);
-        }
-      }
-    }
-    return visibleGroups;
   }
 }
 
