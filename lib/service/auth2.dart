@@ -1136,7 +1136,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static Future<void> _launchUrl(String? urlStr) async {
     try {
       if ((urlStr != null) && await canLaunchUrlString(urlStr)) {
-        await launchUrlString(urlStr);
+        await launchUrlString(urlStr, mode: LaunchMode.externalApplication);
       }
     }
     catch(e) {
