@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.3.0 -->
 ### Fixed
+- Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167)
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
