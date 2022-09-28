@@ -335,6 +335,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return AppVersion.majorVersion(appVersion, 2);
   }
 
+  String? get appMasterVersion {
+    return AppVersion.majorVersion(appVersion, 1);
+  }
+
   String? get appStoreId {
     String? appStoreUrl = MapPathKey.entry(Config().upgradeInfo, 'url.ios');
     Uri? uri = (appStoreUrl != null) ? Uri.tryParse(appStoreUrl) : null;
