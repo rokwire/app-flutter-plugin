@@ -233,6 +233,21 @@ class MapUtils {
   }
 }
 
+class EnumUtils {
+  static T? enumFromString<T>(Iterable<T> values, String? value) {
+    try {
+      return values.firstWhere((type) => type.toString().split(".").last == value);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static String enumToString<T>(T value) {
+    return T.toString().split('.').last;
+  }
+}
+
 class ColorUtils {
   static Color? fromHex(String? strValue) {
     if (strValue != null) {
@@ -899,4 +914,129 @@ class Pair<L,R> {
 
   @override
   String toString() => 'Pair[$left, $right]';
+}
+
+enum ActionType {
+  addEvent,
+  editEvent,
+  contact,
+  getDevice,
+  showQuiz,
+  dismiss,
+  none
+}
+
+class ActionData {
+  ActionType type;
+  String? label;
+  dynamic data;
+
+  ActionData({this.type = ActionType.none, this.label, this.data});
+
+  factory ActionData.fromJson(dynamic json) {
+    if (json is Map<String, dynamic>) {
+      dynamic data = json['data'];
+      if (data is String) {
+        dynamic decoded = JsonUtils.decode(data);
+        if (decoded != null) {
+          data = decoded;
+        }
+      }
+      return ActionData(
+        type: EnumUtils.enumFromString<ActionType>(ActionType.values, json['type']) ?? ActionType.none,
+        label: JsonUtils.stringValue(json['label']),
+        data: data,
+      );
+    } else if (json is String) {
+      return ActionData(type: EnumUtils.enumFromString<ActionType>(ActionType.values, json) ?? ActionType.none);
+    }
+    return ActionData(type: ActionType.none);
+  }
+
+  static List<ActionData> listFromJson(List<dynamic>? jsonList) {
+    List<ActionData> list = [];
+    for (dynamic json in jsonList ?? []) {
+      list.add(ActionData.fromJson(json));
+    }
+    return list;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': EnumUtils.enumToString(type),
+      'label': label,
+      'data': JsonUtils.encode(data),
+    };
+  }
+}
+
+class ButtonAction {
+  String title;
+  Function? action;
+
+  ButtonAction(this.title, this.action);
+}
+
+class OptionData {
+  final String title;
+  final dynamic _value;
+  bool selected;
+
+  dynamic get value { return _value ?? title; }
+
+  OptionData({required this.title, dynamic value, this.selected = false}) : _value = value;
+
+  factory OptionData.fromJson(Map<String, dynamic> json) {
+    return OptionData(
+      title: json['title'],
+      value: json['value'],
+      selected: json['selected'] ?? false,
+    );
+  }
+
+  static List<OptionData> listFromJson(List<dynamic> jsonList) {
+    List<OptionData> list = [];
+    for (dynamic json in jsonList) {
+      if (json is Map<String, dynamic>) {
+        list.add(OptionData.fromJson(json));
+      }
+    }
+    return list;
+  }
+
+  @override
+  String toString() {
+    return title;
+  }
+
+  static List<String> getTitles(List<OptionData> options, {bool selectedOnly = false}) {
+    List<String> titles = [];
+    for (OptionData option in options) {
+      if (!selectedOnly || option.selected) {
+        titles.add(option.title);
+      }
+    }
+    return titles;
+  }
+
+  static List<T> getValues<T>(List<OptionData> options, {bool selectedOnly = false}) {
+    List<T> values = [];
+    for (OptionData option in options) {
+      if (!selectedOnly || option.selected) {
+        dynamic value = option.value;
+        if (value is T) {
+          values.add(value);
+        }
+      }
+    }
+    return values;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'value': _value,
+      'selected': selected,
+    };
+  }
 }
