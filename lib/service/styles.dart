@@ -501,6 +501,7 @@ class UiColors {
   Color? get textBackground             => _colorMap['textBackground'];
   Color? get backgroundVariant          => _colorMap['backgroundVariant'];
   Color? get textBackgroundVariant      => _colorMap['textBackgroundVariant'];
+  Color? get headlineText               => _colorMap['headlineText'];
 
   Color? get accentColor1               => _colorMap['accentColor1'];
   Color? get accentColor2               => _colorMap['accentColor2'];
@@ -523,8 +524,10 @@ class UiColors {
   Color? get mediumGray1                => _colorMap['mediumGray1'];
   Color? get mediumGray2                => _colorMap['mediumGray2'];
   Color? get lightGray                  => _colorMap['lightGray'];
+  Color? get surfaceGrey                => _colorMap['surfaceGrey'];
   Color? get disabledTextColor          => _colorMap['disabledTextColor'];
   Color? get disabledTextColorTwo       => _colorMap['disabledTextColorTwo'];
+  Color? get dividerLine                => _colorMap['dividerLine'];
 
   Color? get mango                      => _colorMap['mango'];
 
@@ -594,6 +597,31 @@ class UiStyles {
   UiStyles(this._styleMap);
 
   TextStyle? get headerBar          => _styleMap['header_bar'];
+  TextStyle? get headline1          => _styleMap["headline1"];
+  TextStyle? get headline2          => _styleMap["headline2"];
+  TextStyle? get headline3          => _styleMap["headline3"];
+  TextStyle? get headline4          => _styleMap["headline4"];
+  TextStyle? get headline5          => _styleMap["headline5"];
+  TextStyle? get body               => _styleMap["body"];
+
+  TextStyle? get label              => _styleMap["label"];
+  TextStyle? get labelSelected      => _styleMap["labelSelected"];
+  TextStyle? get list               => _styleMap["list"];
+  TextStyle? get link               => _styleMap["link"];
+  TextStyle? get alert              => _styleMap["alert"];
+  TextStyle? get success            => _styleMap["success"];
+
+  TextStyle? get quizzesHeadline1 => _styleMap["quizzesHeadline1"];
+
+  TextStyle? get appBarTitle => _styleMap["appBarTitle"];
+  TextStyle? get sectionTitle => _styleMap["sectionTitle"];
+
+  TextStyle? get readingCard => _styleMap["readingCard"];
+  TextStyle? get readingCard2 => _styleMap["readingCard2"];
+
+  TextStyle? get cardHeadline1 => _styleMap["cardHeadline1"];
+  TextStyle? get cardHeadline2 => _styleMap["cardHeadline2"];
+  TextStyle? get cardHeadline3 => _styleMap["cardHeadline3"];
 }
 
 class UiImages {

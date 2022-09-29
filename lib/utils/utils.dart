@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:rokwire_plugin/service/app_datetime.dart';
 
 class StringUtils {
 
@@ -571,6 +572,13 @@ class JsonUtils {
     }
     return null;
   }
+
+  static T? orNull<T>(T Function(Map<String, dynamic>) construct, dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return construct(json);
+    }
+    return null;
+  }
 }
 
 class AppToast {
@@ -903,6 +911,14 @@ class DateTimeUtils {
 
   static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
+  static DateTime? dateTimeLocalFromJson(dynamic json) {
+    return AppDateTime().getDeviceTimeFromUtcTime(DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json)));
+  }
+
+  static String? dateTimeLocalToJson(DateTime? dateTime) {
+    return DateTimeUtils.utcDateTimeToString(AppDateTime().getUtcTimeFromDeviceTime(dateTime));
   }
 }
 
