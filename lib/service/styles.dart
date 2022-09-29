@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
 import 'dart:io';
 // import 'dart:ui';
 
@@ -274,7 +275,7 @@ class Styles extends Service implements NotificationsListener{
   void buildData(){
     buildColorsData();
     buildFontFamiliesData();
-    _uiImages = UiImages.fromJson(_stylesData, _colors!);
+    _uiImages = UiImages(imageMap: (_stylesData != null) ? JsonUtils.mapValue(_stylesData!['image']) : null, colors: _colors);
   }
 
   @protected
@@ -596,146 +597,246 @@ class UiStyles {
 }
 
 class UiImages {
-  final Map<String, Map> _imageJson;
-  final Map<String, IconData> _faIconData;
-  final UiColors _colors;
+  final Map<String, dynamic>? imageMap;
+  final UiColors? colors;
 
-  UiImages(this._imageJson, this._faIconData, this._colors);
+  UiImages({this.imageMap, this.colors});
 
-  factory UiImages.fromJson(Map<String, dynamic>? json, UiColors colors) {
-    Map<String, Map> imageJson = {};
-    Map<String, IconData> faIconData = {};
-    if(json != null) {
-      dynamic imagesData = json["image"];
-      if(imagesData is Map){
-        imagesData.forEach((dynamic key, dynamic value){
-          if(key is String && value is Map){
-            imageJson[key] = value;
-
-            String? type = JsonUtils.stringValue(value['type']);
-            String? source = JsonUtils.stringValue(value['src']);
-            Match? faMatch = type?.matchAsPrefix("fa.");
-            if (faMatch != null && source != null) {
-              int? code = int.tryParse(source, radix: 16);
-              if (code != null) {
-                switch (type!.substring(faMatch.end)) {
-                  case 'solid': faIconData[key] = IconDataSolid(code); break;
-                  case 'regular': faIconData[key] = IconDataRegular(code); break;
-                  case 'brands': faIconData[key] = IconDataBrands(code); break;
-                }
-              }
-            }
-          }
-        });
-      }
-    }
-    return UiImages(imageJson, faIconData, colors);
-  }
-
-  Widget? getImage(String key, {Key? imageKey, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    bool antiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? blendMode, BoxFit? fit, 
-    FilterQuality? filterQuality, ImageRepeat? repeat, Rect? centerSlice, TextDirection? td, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
+  Widget? getImage(String imageKey, {Key? key, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, 
+    FilterQuality? filterQuality, ImageRepeat? repeat, Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
-    Map? json = _imageJson[key];
-    if (json != null) {
-      IconData? iconData = _faIconData[key];
-      if (iconData != null) {
-        return _getFaIcon(iconData, json, imageKey, width, color, td, semanticLabel, excludeFromSemantics);
-      } else {
-        return _getFlutterImage(json, source, imageKey, scale, width, height, color, semanticLabel, excludeFromSemantics, antiAlias, matchTextDirection, gaplessPlayback,
-          alignment, opacity, blendMode, fit, filterQuality, repeat, centerSlice, networkHeaders, frameBuilder, loadingBuilder, errorBuilder);
+
+    Map<String, dynamic>? imageSpec = (imageMap != null) ? JsonUtils.mapValue(imageMap![imageKey]) : null;
+    String? type = (imageSpec != null) ? JsonUtils.stringValue(imageSpec['type']) : null;
+    if (type != null) {
+      if (type.startsWith('flutter.')) {
+        return _getFlutterImage(imageSpec!, type: type, source: source, key: key,
+          scale: scale, width: width, height: height, color: color,
+          semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
+          repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+      }
+      else if (type.startsWith('fa.')) {
+        return _getFaIcon(imageSpec!, type: type, source: source, key: key, size: height ?? width, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
       }
     }
+
     return null;
   }
 
-  Image? _getFlutterImage(Map json, dynamic source, Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics, 
-    bool antiAlias, bool matchTextDirection, bool gaplessPlayback, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? cbm, BoxFit? bf, FilterQuality? fq, 
-    ImageRepeat? ir, Rect? centerSlice, Map<String, String>? headers, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder
+  /* Example:
+    "flutter-image":{
+      "type":"flutter.asset",
+      "src":"images/example.png",
+      "height":24,
+      "width":24,
+      "scale":1.0,
+      "alignment":"center",
+      "fit":"cover",
+      "color":"#ffffff",
+      "color_blend_mode":"srcIn",
+      "filter_quality":"none",
+      "repeat":"noRepeat"
+    }
+  */
+
+  Image? _getFlutterImage(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel,
+    bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
+    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
+    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
   ) {
-    String type = JsonUtils.stringValue(json['type'])!;
-    source ??= JsonUtils.stringValue(json['src'])!;
+    type ??= JsonUtils.stringValue(json['type']);
+    source ??= json['src'];
 
     scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
     width ??= JsonUtils.doubleValue(json['width']);
     height ??= JsonUtils.doubleValue(json['height']);
-    alignment ??= _alignmentFromString(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
-    if (color == null) {
-      String? rawColor = JsonUtils.stringValue(json['color']);
-      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
-    }
+    alignment ??= _ImageUtils.alignmentGeometryValue(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
+    color ??= _ImageUtils.colorValue(JsonUtils.stringValue(json['color']));
 
     // Image Enums
-    cbm ??= BlendMode.values.firstWhereOrNull((e) => e.toString() == 'BlendMode.${JsonUtils.stringValue(json['color_blend_mode']) ?? ''}');
-    bf ??= BoxFit.values.firstWhereOrNull((e) => e.toString() == 'BoxFit.${JsonUtils.stringValue(json['fit']) ?? ''}');
-    fq ??= FilterQuality.values.firstWhereOrNull((e) => e.toString() == 'FilterQuality.${JsonUtils.stringValue(json['filter_quality']) ?? ''}') ?? FilterQuality.low;
-    ir ??= ImageRepeat.values.firstWhereOrNull((e) => e.toString() == 'ImageRepeat.${JsonUtils.stringValue(json['repeat']) ?? ''}') ?? ImageRepeat.noRepeat;
+    colorBlendMode ??= _ImageUtils.lookup(BlendMode.values, JsonUtils.stringValue(json['color_blend_mode']));
+    fit ??= _ImageUtils.lookup(BoxFit.values, JsonUtils.stringValue(json['fit']));
+    filterQuality ??= _ImageUtils.lookup(FilterQuality.values, JsonUtils.stringValue(json['filter_quality'])) ?? FilterQuality.low;
+    repeat ??= _ImageUtils.lookup(ImageRepeat.values, JsonUtils.stringValue(json['repeat'])) ?? ImageRepeat.noRepeat;
     
-    switch (type) {
-      case 'flutter.asset': return Image.asset(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-        scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
-        centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,);
-      case 'flutter.file': {
-        File imageSource;
-        if (source is String) {
-          imageSource = File(source);
-        } else if (source is File) {
-          imageSource = source;
-        } else {
-          return null;
-        }
-        return Image.file(imageSource, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq, 
-          );
-      }
-      case 'flutter.network': {
-        if (source is String && Uri.tryParse(source) != null) {
-          return Image.network(source, key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
-            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq,
-            headers: headers);
-        }
-        break;
-      }
-      case 'flutter.memory': {
-        if (source is Uint8List) {
-          return Image.memory(source, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
-            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: cbm, fit: bf, alignment: alignment, repeat: ir,
-            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: antiAlias, filterQuality: fq);
-        }
-      }
+    try { switch (type) {
+      
+      case 'flutter.asset':
+        String? assetString = JsonUtils.stringValue(source);
+        return (assetString != null) ? Image.asset(assetString,
+          key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+        ) : null;
+      
+      case 'flutter.file':
+        File? sourceFile = _ImageUtils.fileValue(source);
+        return (sourceFile != null) ? Image.file(sourceFile,
+          key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality, 
+        ) : null;
+      
+      case 'flutter.network':
+        String? urlString = JsonUtils.stringValue(source);
+        return (urlString != null) ? Image.network(urlString,
+          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+          headers: networkHeaders
+        ) : null;
+      
+      case 'flutter.memory':
+        Uint8List? bytes = _ImageUtils.bytesValue(source);
+        return (bytes != null) ? Image.memory(bytes, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
+        ) : null;
+    }}
+    catch(e) {
+      debugPrint(e.toString());
     }
     return null;
   }
 
-  Widget _getFaIcon(IconData data, Map json, Key? key, double? size, Color? color, TextDirection? td, String? semanticLabel, bool excludeFromSemantics) {
-    size ??= JsonUtils.doubleValue(json['width']);
-    if (color == null) {
-      String? rawColor = JsonUtils.stringValue(json['color']);
-      color = rawColor != null ? (rawColor.startsWith("#") ? UiColors.fromHex(rawColor) : _colors.getColor(rawColor)) : null;
+  /* Example:
+    "fa-icon":{
+      "type":"fa.icon",
+      "weight":"regular",
+      "src":"0xf057",
+      "size":28.0,
+      "color":"fillColorPrimary",
+      "text_direction":"ltr"
     }
+  */
 
-    td ??= TextDirection.values.firstWhereOrNull((e) => e.toString() == 'TextDirection.${JsonUtils.stringValue(json['text_direction']) ?? ''}');
+  Widget? _getFaIcon(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? size, Color? color, TextDirection? textDirection, String? semanticLabel, bool excludeFromSemantics = false}) {
 
-    FaIcon icon = FaIcon(data, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: td,);
-    return ExcludeSemantics(excluding: excludeFromSemantics, child: icon);
+    type ??= JsonUtils.stringValue(json['type']);
+    source ??= json['src'];
+
+    size ??= JsonUtils.doubleValue(json['size']);
+    color ??= _ImageUtils.colorValue(JsonUtils.stringValue(json['color']));
+    textDirection ??= _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction']));
+
+    try { switch (type) {
+      case 'fa.icon':
+        IconData? iconData = _ImageUtils.faIconDataValue(JsonUtils.stringValue(json['weight']) ?? 'regular', codePoint: _ImageUtils.faCodePointValue(source));
+        return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
+          FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
+        ) : null;
+    }}
+    catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+}
+
+class _ImageUtils {
+  
+  static File? fileValue(dynamic value) {
+    if (value is File) {
+      return value;
+    }
+    else if (value is String) {
+      return File(value);
+    }
+    else {
+      return null;
+    }
   }
 
-  AlignmentGeometry? _alignmentFromString(String? str) {
-    switch (str) {
-      case "topLeft": return Alignment.topLeft;
-      case "topCenter": return Alignment.topCenter;
-      case "topRight": return Alignment.topRight;
-      case "centerLeft": return Alignment.centerLeft;
-      case "center": return Alignment.center;
-      case "centerRight": return Alignment.centerRight;
-      case "bottomLeft": return Alignment.bottomLeft;
-      case "bottomCenter": return Alignment.bottomCenter;
-      case "bottomRight": return Alignment.bottomRight;
-      default: return null;
+  static Uint8List? bytesValue(dynamic value) {
+    if (value is Uint8List) {
+      return value;
+    }
+    else if (value is String) {
+      return base64Decode(value); // TBD: handle Base64 decoding asynchronically via compute API.
+    }
+    else {
+      return null;
     }
   }
+
+  static AlignmentGeometry? alignmentGeometryValue(dynamic value) {
+    if (value is AlignmentGeometry) {
+      return value;
+    }
+    else if (value is String) {
+      switch (value) {
+        case "topLeft":      return Alignment.topLeft;
+        case "topCenter":    return Alignment.topCenter;
+        case "topRight":     return Alignment.topRight;
+        case "centerLeft":   return Alignment.centerLeft;
+        case "center":       return Alignment.center;
+        case "centerRight":  return Alignment.centerRight;
+        case "bottomLeft":   return Alignment.bottomLeft;
+        case "bottomCenter": return Alignment.bottomCenter;
+        case "bottomRight":  return Alignment.bottomRight;
+        default:             return null;
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
+  static Color? colorValue(dynamic value, {UiColors? colors}) {
+    if (value is Color) {
+      return value;
+    }
+    else if (value is String) {
+      if (value.startsWith('#')) {
+        return UiColors.fromHex(value);
+      }
+      else {
+        return colors?.getColor(value);
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
+  static int? faCodePointValue(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+    else if (value is String) {
+      return int.tryParse(value);
+    }
+    else {
+      return null;
+    }
+  }
+
+  static IconData? faIconDataValue(dynamic value, {int? codePoint}) {
+    if (value is IconData) {
+      return value;
+    }
+    else if ((value is String) && (codePoint != null)) {
+      switch(value) {
+        case 'solid': return IconDataSolid(codePoint);
+        case 'regular': return IconDataRegular(codePoint);
+        case 'brands': return IconDataBrands(codePoint);
+        default: return null;
+      }
+    }
+    else {
+      return null;
+    }
+    
+  }
+
+  static T? lookup<T>(List<T> values, String? value) =>
+    (value != null) ? values.firstWhereOrNull((e) => e.toString() == '${T.toString()}.$value') : null;
 }
