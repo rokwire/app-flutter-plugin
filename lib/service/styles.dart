@@ -625,8 +625,23 @@ class UiImages {
       else if (type.startsWith('fa.')) {
         return _getFaIcon(imageSpec!, type: type, source: source, key: key, size: height ?? width, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
       }
+      else {
+        return null;
+      }
     }
 
+    // If no image definition for that key - try with asset name / network source
+    Uri? uri = Uri.tryParse(imageKey);
+    if (uri != null) {
+      return _getDefaultFlutterImage(uri, key: key,
+        scale: scale, width: width, height: height, color: color,
+        semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+        isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+        alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
+        repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+        frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+    }
+    
     return null;
   }
 
@@ -735,6 +750,43 @@ class UiImages {
         ) : null;
     }}
     catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  Image? _getDefaultFlutterImage(Uri uri, { Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel,
+    bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
+    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
+    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
+  ) {
+    try {
+      scale ??= 1.0;
+      alignment ??= Alignment.center;
+      repeat ??= ImageRepeat.noRepeat;
+      filterQuality ??= FilterQuality.low;
+
+      if (uri.hasScheme) {
+        return Image.network(uri.toString(),
+          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+          headers: networkHeaders
+        );
+      }
+      else if (!uri.hasEmptyPath) {
+        return Image.asset(uri.toString(),
+          key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+        );
+      }
+      else {
+        return null;
+      }
+    }
+    catch(e) {
       debugPrint(e.toString());
     }
     return null;
