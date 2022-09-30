@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade project to build with flutter 3.3.2 [#158](https://github.com/rokwire/app-flutter-plugin/issues/158).
 - Applied intermediate work on multiple brands support [#149](https://github.com/rokwire/app-flutter-plugin/issues/149).
 
+## [1.2.4] - 2022-09-30
+### Added
+- Check if user has 'managed_group_admin' permission [#2429](https://github.com/rokwire/illinois-app/issues/2429).
+
 ## [1.2.3] - 2022-09-28
 ### Changed
 - Show hidden groups only for admins - hide for all others [#163](https://github.com/rokwire/app-flutter-plugin/issues/163).

@@ -216,6 +216,10 @@ class Auth2Account {
     return linkedTypes;
   }
 
+  bool get isManagedGroupAdmin {
+    return hasPermission('managed_group_admin');
+  }
+
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
