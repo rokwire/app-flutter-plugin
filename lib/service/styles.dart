@@ -237,10 +237,10 @@ class Styles extends Service implements NotificationsListener{
 
   Map<String, dynamic> get contentMap {
     Map<String, dynamic> stylesMap = <String, dynamic>{};
-    _StyleUtils.merge(stylesMap, _assetsStyles, level: 1);
-    _StyleUtils.merge(stylesMap, _appAssetsStyles, level: 1);
-    _StyleUtils.merge(stylesMap, _netAssetsStyles, level: 1);
-    _StyleUtils.merge(stylesMap, _debugAssetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _assetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _appAssetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _netAssetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _debugAssetsStyles, level: 1);
     return stylesMap;
   }
 
@@ -703,36 +703,6 @@ class UiImages {
     }
     return null;
   }
-}
-
-class _StyleUtils {
-
-  static void merge(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
-    src?.forEach((String key, dynamic srcV) {
-      dynamic destV = dest[key];
-      Map<String, dynamic>? destMapV = JsonUtils.mapValue(destV);
-      Map<String, dynamic>? srcMapV = JsonUtils.mapValue(srcV);
-      
-      if (((level == null) || (0 < level)) && (destMapV != null) && (srcMapV != null)) {
-        merge(destMapV, srcMapV, level: (level != null) ? (level - 1) : null);
-      }
-      else {
-        dest[key] = clone(srcV, level: level);
-      }
-    });
-  }
-
-  static dynamic clone(dynamic value, { int? level }) {
-    if ((value is Map) && ((level == null) || (0 < level))) {
-      return value.map<String, dynamic>((key, item) =>
-        MapEntry<String, dynamic>(key, clone(item, level: (level != null) ? (level - 1) : null)));
-    }
-    else {
-      return value;
-    }
-
-  }
-
 }
 
 class _ImageUtils {
