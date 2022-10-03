@@ -717,9 +717,20 @@ class _StyleUtils {
         merge(destMapV, srcMapV, level: (level != null) ? (level - 1) : null);
       }
       else {
-        dest[key] = (((level == null) || (0 < level)) && (srcMapV != null)) ? Map<String, dynamic>.from(srcMapV) : srcV;
+        dest[key] = clone(srcV, level: level);
       }
     });
+  }
+
+  static dynamic clone(dynamic value, { int? level }) {
+    if ((value is Map) && ((level == null) || (0 < level))) {
+      return value.map<String, dynamic>((key, item) =>
+        MapEntry<String, dynamic>(key, clone(item, level: (level != null) ? (level - 1) : null)));
+    }
+    else {
+      return value;
+    }
+
   }
 
 }
