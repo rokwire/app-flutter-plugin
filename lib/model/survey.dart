@@ -14,540 +14,8 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:rokwire_plugin/utils/widget_utils.dart';
 import 'package:uuid/uuid.dart';
-
-class Education {
-  final Quiz? quiz;
-  int quizFrequency;
-  int numQuizQuestions;
-  int lastQuizIdx;
-  int? rewardNumQuizzesComplete;
-  int? rewardNumQuizzesPassed;
-  double? rewardMinQuizScore;
-  int numQuizzesComplete;
-  int numQuizzesPassed;
-
-  Education({this.quiz, this.quizFrequency = 48, this.lastQuizIdx = 0, this.rewardNumQuizzesComplete, this.rewardNumQuizzesPassed, this.rewardMinQuizScore, this.numQuizQuestions = 3, this.numQuizzesComplete = 0, this.numQuizzesPassed = 0});
-
-  factory Education.fromJson(Map<String, dynamic> json) {
-    return Education(
-      quiz: JsonUtils.orNull((json) => Quiz.fromJson(json), json['quiz']),
-      quizFrequency: JsonUtils.intValue(json['quiz_frequency']) ?? 48,
-      numQuizQuestions: JsonUtils.intValue(json['num_quiz_questions']) ?? 3,
-      lastQuizIdx: JsonUtils.intValue(json['last_quiz_idx']) ?? 0,
-      rewardNumQuizzesComplete: JsonUtils.intValue(json['reward_num_quizzes_complete']),
-      rewardNumQuizzesPassed: JsonUtils.intValue(json['reward_num_quizzes_passed']),
-      rewardMinQuizScore: JsonUtils.doubleValue(json['reward_min_quiz_score']),
-      numQuizzesComplete: JsonUtils.intValue(json['num_quizzes_complete']) ?? 0,
-      numQuizzesPassed: JsonUtils.intValue(json['num_quizzes_passed']) ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'quiz': quiz?.toJson(),
-      'quiz_frequency': quizFrequency,
-      'num_quiz_questions': numQuizQuestions,
-      'last_quiz_idx': lastQuizIdx,
-      'reward_num_quizzes_complete': rewardNumQuizzesComplete,
-      'reward_num_quizzes_passed': rewardNumQuizzesPassed,
-      'reward_min_quiz_score': rewardMinQuizScore,
-      'num_quizzes_complete': numQuizzesComplete,
-      'num_quizzes_passed': numQuizzesPassed,
-    };
-  }
-
-  QuizEvent? get newQuiz {
-    if (quiz == null || lastQuizIdx >= quiz!.questions.length || numQuizQuestions <= 0) {
-      return null;
-    }
-    List<QuizData> questions = [];
-    for (int i = lastQuizIdx; i < quiz!.questions.length && questions.length < numQuizQuestions; i++) {
-      questions.add(quiz!.questions[i]);
-    }
-    return QuizEvent(quiz: Quiz(questions: questions, scored: true, type: 'education'), date: DateTime.now());
-  }
-
-  int get numQuizzesLeft {
-    if (quiz == null || numQuizQuestions <= 0) {
-      return 0;
-    }
-    int numQuestions = quiz!.questions.length - lastQuizIdx;
-    double numQuizzesLeft = numQuestions / numQuizQuestions;
-    return numQuizzesLeft.ceil();
-  }
-
-  dynamic getProperty(RuleKey? key) {
-    switch (key?.key) {
-      case null:
-        return this;
-      case "new_quiz":
-        return newQuiz;
-      case "quiz_frequency":
-        return quizFrequency;
-      case "num_quiz_questions":
-        return numQuizQuestions;
-      case "last_quiz_idx":
-        return lastQuizIdx;
-      case "quiz_available":
-        return quiz != null && lastQuizIdx < quiz!.questions.length;
-    }
-    return null;
-  }
-}
-
-class UserEducation {
-  final Quiz? educationQuiz;
-  final int? lastEducationQuizIdx;
-  final int? numQuizzesComplete;
-  final int? numQuizzesPassed;
-
-  UserEducation({this.educationQuiz, this.lastEducationQuizIdx, this.numQuizzesComplete, this.numQuizzesPassed});
-
-  factory UserEducation.fromJson(Map<String, dynamic> json) {
-    return UserEducation(
-      educationQuiz: JsonUtils.orNull((json) => Quiz.fromJson(json), json['education_quiz']),
-      lastEducationQuizIdx: JsonUtils.intValue(json['last_education_quiz_idx']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'education_quiz': educationQuiz?.toJson(),
-      'last_education_quiz_idx': lastEducationQuizIdx,
-      'num_quizzes_complete': numQuizzesComplete,
-      'num_quizzes_passed': numQuizzesPassed
-    };
-  }
-}
-
-abstract class RuleCondition {
-
-  RuleCondition();
-
-  factory RuleCondition.fromJson(Map<String, dynamic> json) {
-    dynamic conditions = json["conditions"];
-    if (conditions is List<dynamic>) {
-      List<RuleCondition> parsedConditions = [];
-      for (dynamic condition in conditions) {
-        parsedConditions.add(RuleCondition.fromJson(condition));
-      }
-      return RuleLogic(json["operator"], parsedConditions);
-    }
-    return RuleComparison.fromJson(json);
-  }
-
-  Map<String, dynamic> toJson();
-}
-
-class RuleComparison extends RuleCondition {
-  String operator;
-  String dataKey;
-  dynamic dataParam;
-  dynamic compareTo;
-  dynamic compareToParam;
-  bool defaultResult;
-
-  RuleComparison({required this.dataKey, required this.operator, this.dataParam,
-    required this.compareTo, this.compareToParam, this.defaultResult = false});
-
-  factory RuleComparison.fromJson(Map<String, dynamic> json) {
-    return RuleComparison(
-      operator: json["operator"],
-      dataKey: json["data_key"],
-      dataParam: json["data_param"],
-      compareTo: json["compare_to"],
-      compareToParam: json["compare_to_param"],
-      defaultResult: json["default_result"] ?? false,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'operator': operator,
-      'data_key': dataKey,
-      'data_param': dataParam,
-      'compare_to': compareTo,
-      'compare_to_param': compareToParam,
-      'default_result': defaultResult,
-    };
-  }
-}
-
-class RuleLogic extends RuleCondition {
-  String operator;
-  List<RuleCondition> conditions;
-
-  RuleLogic(this.operator, this.conditions);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'operator': operator,
-      'conditions': conditions.map((e) => e.toJson()),
-    };
-  }
-}
-
-abstract class RuleResult {
-
-  RuleResult();
-
-  factory RuleResult.fromJson(Map<String, dynamic> json) {
-    dynamic ruleKey = json["rule_key"];
-    if (ruleKey is String) {
-      return RuleReference(ruleKey);
-    }
-    dynamic condition = json["condition"];
-    if (condition != null) {
-      return Rule.fromJson(json);
-    }
-    return RuleActionResult.fromJson(json);
-  }
-
-  Map<String, dynamic> toJson();
-}
-
-abstract class RuleActionResult extends RuleResult {
-  abstract int priority;
-
-  RuleActionResult();
-
-  factory RuleActionResult.fromJson(Map<String, dynamic> json) {
-    dynamic actions = json["actions"];
-    if (actions is List<dynamic>) {
-      List<RuleAction> actionList = [];
-      for (dynamic action in actions) {
-        actionList.add(RuleAction.fromJson(action));
-      }
-      return RuleActionList(actions: actionList, priority: json["priority"]);
-    }
-    return RuleAction.fromJson(json);
-  }
-
-  @override
-  Map<String, dynamic> toJson();
-}
-
-class RuleReference extends RuleResult {
-  String ruleKey;
-
-  RuleReference(this.ruleKey);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'rule_key': ruleKey,
-    };
-  }
-}
-
-class RuleAction extends RuleActionResult {
-  String action;
-  dynamic data;
-  String? dataKey;
-  @override int priority;
-
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority = 0});
-
-  factory RuleAction.fromJson(Map<String, dynamic> json) {
-    return RuleAction(
-      action: json["action"],
-      data: json["data"],
-      dataKey: JsonUtils.stringValue(json["data_key"]),
-      priority: json["priority"] ?? 0,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'action': action,
-      'data': data,
-      'data_key': dataKey,
-      'priority': priority,
-    };
-  }
-}
-
-class RuleActionList extends RuleActionResult {
-  List<RuleAction> actions;
-  @override
-  int priority;
-
-  RuleActionList({required this.actions, required this.priority});
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'priority': priority,
-      'actions': actions.map((e) => e.toJson()),
-    };
-  }
-}
-
-class Rule extends RuleResult {
-  final RuleCondition? condition;
-  final RuleResult? trueResult;
-  final RuleResult? falseResult;
-
-  Rule({this.condition, this.trueResult, this.falseResult});
-
-  factory Rule.fromJson(Map<String, dynamic> json) {
-    Map<String, dynamic>? condition = json["condition"];
-    Map<String, dynamic>? trueResult = json["true_result"];
-    Map<String, dynamic>? falseResult = json["false_result"];
-    return Rule(
-      condition: condition != null ? RuleCondition.fromJson(condition) : null,
-      trueResult: trueResult != null ? RuleResult.fromJson(trueResult) : null,
-      falseResult: falseResult != null ? RuleResult.fromJson(falseResult) : null,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {
-      'condition': condition?.toJson(),
-      'true_result': trueResult?.toJson(),
-      'false_result': falseResult?.toJson(),
-    };
-  }
-
-  static List<Rule> listFromJson(List<dynamic>? jsonList) {
-    if (jsonList == null) {
-      return [];
-    }
-    List<Rule> rules = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        rules.add(Rule.fromJson(json));
-      }
-    }
-    return rules;
-  }
-}
-
-class RuleKey {
-  final String key;
-  final String? subKey;
-
-  RuleKey(this.key, this.subKey);
-
-  factory RuleKey.fromKey(String key) {
-    int dotIdx = key.indexOf('.');
-    if (dotIdx >= 0) {
-      return RuleKey(
-        key.substring(0, dotIdx),
-        key.substring(dotIdx + 1),
-      );
-    }
-    return RuleKey(key, null);
-  }
-
-  RuleKey? get subRuleKey {
-    if (subKey != null) {
-      return RuleKey.fromKey(subKey!);
-    }
-    return null;
-  }
-}
-
-class RuleData {
-  dynamic param;
-  dynamic value;
-  String? eventID;
-
-  RuleData({required this.value, this.param, this.eventID});
-
-  bool match(dynamic param, String? eventID) {
-    if (eventID != this.eventID) {
-      return false;
-    }
-    if (param is Map) {
-      if (this.param is Map) {
-        if (!mapEquals(param, this.param)) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    } else if (param is List) {
-      if (this.param is List) {
-        if (!listEquals(param, this.param)) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    } else {
-      if (param != this.param) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-}
-
-abstract class Event {
-  final String? id;
-  final DateTime date;
-  DateTime? dateUpdated;
-  Quiz? quiz;
-
-  Event({this.id, required this.date, this.dateUpdated, this.quiz});
-
-  factory Event.fromJson(Map<String, dynamic> json) {
-    String? quizType = JsonUtils.stringValue(json["type"]);
-    switch (quizType) {
-      case 'quiz': return QuizEvent.fromJson(json);
-      case 'symptoms': return SymptomsEvent.fromJson(json);
-      default: throw Exception("Invalid event type");
-    }
-  }
-
-  factory Event.fromQuiz(Quiz quiz) {
-    switch (quiz.type) {
-      case 'quiz': return QuizEvent(quiz: quiz, date: DateTime.now());
-      case 'symptoms': return SymptomsEvent(quiz: quiz, date: DateTime.now());
-      default: throw Exception("Invalid quiz event type");
-    }
-  }
-
-  static DateTime dateFromJson(dynamic dateJson) {
-    DateTime? date = DateTimeUtils.dateTimeLocalFromJson(dateJson);
-    if (date == null) {
-      throw Exception('Invalid treatment plan event date');
-    }
-    return date;
-  }
-
-  static List<Event> listFromJson(List<dynamic>? jsonList) {
-    if (jsonList == null) {
-      return [];
-    }
-    List<Event> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(Event.fromJson(json));
-      }
-    }
-    return list;
-  }
-
-  Map<String, dynamic> toJson() {
-    Event event = this;
-    if (event is QuizEvent) {
-      return event.toJson();
-    } else if (event is SymptomsEvent) {
-      return event.toJson();
-    }
-    return event.baseJson();
-  }
-
-  Map<String, dynamic> baseJson() {
-    Map<String, dynamic> json = {
-      'date': DateTimeUtils.dateTimeLocalToJson(date),
-      'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
-    };
-    if (id != null) {
-      json['id'] = id;
-    }
-    return json;
-  }
-
-  dynamic getBaseProperty(RuleKey? key) {
-    switch (key?.key) {
-      case null:
-        return this;
-      case "id":
-        return id;
-      case "date":
-        return date;
-      case "date_updated":
-        return dateUpdated;
-    }
-    return null;
-  }
-
-  dynamic getProperty(RuleKey? key) {
-    Event event = this;
-    if (event is QuizEvent) {
-      event.getProperty(key);
-    } else if (event is SymptomsEvent) {
-      event.getProperty(key);
-    }
-  }
-}
-
-class QuizEvent extends Event {
-  QuizEvent({String? id, required Quiz quiz, required DateTime date, DateTime? dateUpdated}) : super(id: id, quiz: quiz, date: date, dateUpdated: dateUpdated);
-
-  factory QuizEvent.fromJson(Map<String, dynamic> json) {
-    return QuizEvent(
-      id: json['id'],
-      quiz: Quiz.fromJson(json['quiz']),
-      date: Event.dateFromJson(json['date']),
-      dateUpdated: json['date_updated'] != null ? Event.dateFromJson(json['date_updated']) : null,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = baseJson();
-    json['quiz'] = quiz?.toJson();
-    json['type'] = 'quiz';
-    return json;
-  }
-
-  @override
-  dynamic getProperty(RuleKey? key) {
-    dynamic data = super.getBaseProperty(key);
-    if (data != null) {
-      return data;
-    }
-    switch (key?.key) {
-      case "quiz":
-        return quiz?.getProperty(key?.subRuleKey);
-    }
-    return null;
-  }
-}
-
-class SymptomsEvent extends Event {
-  SymptomsEvent({String? id, required Quiz quiz, required DateTime date, DateTime? dateUpdated}) : super(id: id, quiz: quiz, date: date, dateUpdated: dateUpdated);
-
-  factory SymptomsEvent.fromJson(Map<String, dynamic> json) {
-    return SymptomsEvent(
-      id: json['id'],
-      quiz: Quiz.fromJson(json['quiz']),
-      date: Event.dateFromJson(json['date']),
-      dateUpdated: json['date_updated'] != null ? Event.dateFromJson(json['date_updated']) : null,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = baseJson();
-    json['quiz'] = quiz?.toJson();
-    json['type'] = 'symptoms';
-    return json;
-  }
-
-  @override
-  dynamic getProperty(RuleKey? key) {
-    dynamic data = super.getBaseProperty(key);
-    if (data != null) {
-      return data;
-    }
-    switch (key?.key) {
-      case "quiz":
-        return quiz?.getProperty(key?.subRuleKey);
-    }
-    return null;
-  }
-}
 
 class Quiz {
   List<QuizData> questions;
@@ -629,31 +97,31 @@ class Quiz {
     return null;
   }
 
-  void evaluate(TreatmentPlan? plan, Event? event) {
+  void evaluate(RuleSet? rules) {
     QuizStats stats = QuizStats();
     for (QuizData data in questions) {
-      stats += data.stats(plan, event);
+      stats += data.stats(rules);
     }
     _stats = stats;
-    _evaluateResult(plan, event);
+    _evaluateResult(rules);
   }
 
-  void _evaluateResult(TreatmentPlan? plan, Event? event) {
-    if (plan == null || resultRule == null) {
+  void _evaluateResult(RuleSet? rules) {
+    if (rules == null || resultRule == null) {
       return;
     }
 
-    plan.rules.clearCache();
-    RuleActionResult? ruleResult = plan.rules.evaluateRule(resultRule!, event: event);
+    rules.clearCache();
+    RuleActionResult? ruleResult = rules.evaluateRule(resultRule!);
     if (ruleResult is RuleAction) {
-      dynamic data = plan.rules.evaluateAction(ruleResult, event: event);
+      dynamic data = rules.evaluateAction(ruleResult);
       resultData = data;
     }
   }
 
-  bool canContinue(TreatmentPlan? plan, Event? event, {bool deep = true}) {
+  bool canContinue(RuleSet? rules, {bool deep = true}) {
     for (QuizData question in questions) {
-      if (!question.canContinue(plan, event, deep: deep)) {
+      if (!question.canContinue(rules, deep: deep)) {
         return false;
       }
     }
@@ -724,16 +192,16 @@ abstract class QuizData {
   final bool allowSkip;
   final String text;
   final String? moreInfo;
-  final QuizData? defaultFollowUp;
-  final QuizData? okFollowUp;
-  final Map<dynamic, QuizData>? responseFollowUps;
+  final Map<dynamic, QuizData>? followUps;
+  final List<ResponseCheck>? responseFollowUps;
+  final List<ResponseCheck>? responseScores;
   final bool scored;
   dynamic response;
 
   final Rule? displayRule;
   final Rule? defaultResponseRule;
 
-  QuizData({String? id, this.key, required this.text, this.defaultFollowUp, this.okFollowUp, this.responseFollowUps,
+  QuizData({String? id, this.key, required this.text, this.followUps, this.responseFollowUps, this.responseScores,
     this.displayRule, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false}) {
     if (id == null) {
       this.id = const Uuid().v4();
@@ -796,9 +264,9 @@ abstract class QuizData {
 
   static Map<dynamic, QuizData>? followUpsFromOther(QuizData other) {
     Map<dynamic, QuizData>? followUps;
-    if (other.responseFollowUps != null) {
+    if (other.followUps != null) {
       followUps = {};
-      for (MapEntry<dynamic, QuizData> entry in other.responseFollowUps!.entries) {
+      for (MapEntry<dynamic, QuizData> entry in other.followUps!.entries) {
         followUps[entry.key] = QuizData.fromOther(entry.value);
       }
     }
@@ -813,9 +281,9 @@ abstract class QuizData {
       'key': key,
       'text': text,
       'more_info': moreInfo,
-      'default_follow_up': defaultFollowUp?.toJson(),
-      'ok_follow_up': okFollowUp?.toJson(),
+      'follow_ups': followUpsToJson(),
       'response_follow_ups': responseFollowUpsToJson(),
+      'response_scores': responseScoresToJson(),
       'scored': scored,
       'response': response,
       'allow_skip': allowSkip,
@@ -824,35 +292,56 @@ abstract class QuizData {
     };
   }
 
-  List<dynamic>? responseFollowUpsToJson() {
-    if (responseFollowUps == null) {
+  Map<String, dynamic>? followUpsToJson() {
+    if (followUps == null) {
       return null;
     }
-    List<Map<String, dynamic>> json = [];
-    for (MapEntry<dynamic, QuizData> entry in responseFollowUps!.entries) {
-      json.add({'key': entry.key, 'value': entry.value.toJson()});
+    Map<String, dynamic> json = {};
+    for (MapEntry<dynamic, QuizData> entry in followUps!.entries) {
+      json[entry.key] = entry.value.toJson();
     }
     return json;
   }
 
-  static Map<dynamic, QuizData>? responseFollowUpsFromJson(dynamic json) {
-    if (json is List<dynamic>) {
-      Map<dynamic, QuizData> followUps = {};
-      for (dynamic followUp in json) {
-        if (followUp is Map<String, dynamic>) {
-          followUps[followUp['key']] = QuizData.fromJson(followUp['value']);
-        }
-      }
-      return followUps;
+  List<Map<String, dynamic>>? responseFollowUpsToJson() {
+    if (responseFollowUps == null) {
+      return null;
     }
-    return null;
+    List<Map<String, dynamic>> json = [];
+    for (ResponseCheck entry in responseFollowUps!) {
+      json.add(entry.toJson());
+    }
+    return json;
   }
 
-  bool get isQuestion;
-  bool? get ok;
+  List<Map<String, dynamic>>? responseScoresToJson() {
+    if (responseFollowUps == null) {
+      return null;
+    }
+    List<Map<String, dynamic>> json = [];
+    for (ResponseCheck entry in responseScores!) {
+      json.add(entry.toJson());
+    }
+    return json;
+  }
 
-  bool shouldDisplay(TreatmentPlan? plan, Event? event) {
-    if (plan == null) {
+  // static Map<dynamic, QuizData>? responseFollowUpsFromJson(dynamic json) {
+  //   if (json is List<dynamic>) {
+  //     Map<dynamic, QuizData> followUps = {};
+  //     for (dynamic followUp in json) {
+  //       if (followUp is Map<String, dynamic>) {
+  //         followUps[followUp['key']] = QuizData.fromJson(followUp['value']);
+  //       }
+  //     }
+  //     return followUps;
+  //   }
+  //   return null;
+  // }
+
+  bool get isQuestion;
+
+  bool shouldDisplay(RuleSet? rules) {
+    if (rules == null) {
       if (displayRule == null) {
         return true;
       } else {
@@ -861,10 +350,10 @@ abstract class QuizData {
     }
 
     if (displayRule != null) {
-      plan.rules.clearCache();
-      RuleActionResult? result = plan.rules.evaluateRule(displayRule!, event: event);
+      rules.clearCache();
+      RuleActionResult? result = rules.evaluateRule(displayRule!);
       if (result is RuleAction) {
-        dynamic data = plan.rules.evaluateAction(result);
+        dynamic data = rules.evaluateAction(result);
         if (data is bool) {
           return data;
         }
@@ -878,18 +367,18 @@ abstract class QuizData {
     if (response == null) {
       return null;
     }
-    QuizData? responseFollowUp = responseFollowUps?[response];
+    QuizData? responseFollowUp = followUps?[response];
     if (responseFollowUp != null) {
       return responseFollowUp;
-    }
-    if (ok == true) {
-      return okFollowUp;
     }
     return defaultFollowUp;
   }
 
-  QuizStats stats(TreatmentPlan? plan, Event? event) {
-    if (!shouldDisplay(plan, event)) {
+  QuizData? get defaultFollowUp => followUps?[''];
+
+  QuizStats stats(RuleSet? rules) {
+    //TODO: incorporate responseScores
+    if (!shouldDisplay(rules)) {
       return QuizStats();
     }
 
@@ -902,20 +391,20 @@ abstract class QuizData {
       total: isQuestion ? 1 : 0,
       complete: response != null ? 1 : 0,
       scored: scored ? 1 : 0,
-      ok: scored && ok == true ? 1 : 0,
+      ok: scored  ? 1 : 0,
       responseData: responseData,
     );
 
     QuizData? follow = followUp;
     if (follow != null) {
-      stats += follow.stats(plan, event);
+      stats += follow.stats(rules);
     }
 
     return stats;
   }
 
-  bool canContinue(TreatmentPlan? plan, Event? event, {bool deep = true}) {
-    if (!shouldDisplay(plan, event)) {
+  bool canContinue(RuleSet? rules, {bool deep = true}) {
+    if (!shouldDisplay(rules)) {
       return true;
     }
 
@@ -926,7 +415,7 @@ abstract class QuizData {
     if (deep) {
       QuizData? follow = followUp;
       if (follow != null) {
-        return follow.canContinue(plan, event);
+        return follow.canContinue(rules);
       }
     }
 
@@ -936,10 +425,9 @@ abstract class QuizData {
 
 class QuizQuestionTrueFalse extends QuizData {
   final bool yesNo;
-  final bool? okAnswer;
   final List<OptionData> options;
 
-  QuizQuestionTrueFalse({required String question, this.yesNo = false, this.okAnswer,
+  QuizQuestionTrueFalse({required String question, this.yesNo = false,
     String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
     Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
@@ -949,7 +437,6 @@ class QuizQuestionTrueFalse extends QuizData {
   factory QuizQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
     return QuizQuestionTrueFalse(
       yesNo: JsonUtils.boolValue(json['yes_no']) ?? false,
-      okAnswer: JsonUtils.boolValue(json['ok_answer']),
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
@@ -983,7 +470,6 @@ class QuizQuestionTrueFalse extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['yes_no'] = yesNo;
@@ -1056,7 +542,6 @@ class QuizQuestionMultipleChoice extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['options'] = JsonUtils.encodeList(options);
@@ -1098,7 +583,6 @@ class QuizQuestionMultipleChoice extends QuizData {
     return listContains(okAnswers, response, checkAll: checkAll);
   }
 
-  @override
   QuizData? get followUp {
     dynamic responseVal = response;
     if (responseVal == null) {
@@ -1179,7 +663,6 @@ class QuizQuestionDateTime extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['start_time'] = DateTimeUtils.dateTimeLocalToJson(startTime);
@@ -1265,7 +748,6 @@ class QuizQuestionNumeric extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['minimum'] = minimum;
@@ -1345,7 +827,6 @@ class QuizQuestionText extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['min_length'] = minLength;
@@ -1383,7 +864,7 @@ class QuizDataEntry extends QuizData {
     Map<String, DataType> dataFormat = {};
     if (dataFormatJson != null) {
       for (MapEntry<String, dynamic> entry in dataFormatJson.entries) {
-        dataFormatJson[entry.key] = EnumUtils.enumFromString<DataType>(DataType.values, entry.value);
+        dataFormatJson[entry.key] = AppEnum.enumFromString<DataType>(DataType.values, entry.value);
       }
     }
 
@@ -1416,7 +897,6 @@ class QuizDataEntry extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> dataFormatJson = {};
     for (MapEntry<String, DataType> entry in dataFormat.entries) {
@@ -1468,7 +948,6 @@ class QuizDataResponse extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['body'] = body;
@@ -1510,7 +989,6 @@ class QuizDataAction extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['action'] = action.toJson();
@@ -1554,7 +1032,6 @@ class QuizDataQuiz extends QuizData {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['quiz'] = quiz.toJson();
@@ -1568,5 +1045,153 @@ class QuizDataQuiz extends QuizData {
   @override
   bool? get ok {
     return null;
+  }
+}
+
+
+class ResponseCheck {
+  final String operation;
+  final dynamic key;
+  final dynamic value;
+
+  ResponseCheck({required this.operation, required this.key, required this.value});
+
+  factory ResponseCheck.fromJson(Map<String, dynamic> json) {
+    return ResponseCheck(
+      operation: JsonUtils.stringValue(json['operation']) ?? '',
+      key: json['key'],
+      value: json['value']
+    );
+  }
+
+  static List<ResponseCheck> listFromJson(List<dynamic>? jsonList) {
+    if (jsonList == null) {
+      return [];
+    }
+    List<ResponseCheck> list = [];
+    for (dynamic json in jsonList) {
+      if (json is Map<String, dynamic>) {
+        list.add(ResponseCheck.fromJson(json));
+      }
+    }
+    return list;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'operation': operation,
+      'key': key,
+      'value': value,
+    };
+  }
+
+  bool evaluate(dynamic result) {
+    try {
+      switch (operation) {
+        case "<":
+          if (key is DateTime && result is DateTime) {
+            return result.isBefore(key);
+          }
+          return result < key;
+        case ">":
+          if (result is DateTime && key is DateTime) {
+            return result.isAfter(key);
+          }
+          return key < result;
+        case "<=":
+          return result <= key;
+        case ">=":
+          return key <= result;
+        case "==":
+          if (result is DateTime && key is DateTime) {
+            return result.isAtSameMomentAs(key);
+          }
+          return result == key;
+        case "!=":
+          if (result is DateTime && key is DateTime) {
+            return !result.isAtSameMomentAs(key);
+          }
+          return result != key;
+        case "in_range":
+          if (key is! Iterable<num> || (key as Iterable<num>).length != 2) {
+            return false;
+          }
+          num min = (key as Iterable<num>).elementAt(0);
+          num max = (key as Iterable<num>).elementAt(1);
+          if (result is num) {
+            return result >= min && result <= max;
+          } else if (result is Iterable<num>) {
+            for (num item in result) {
+              if (item < min || item > max) {
+                return false;
+              }
+            }
+            return true;
+          }
+          return false;
+        case "all":
+          if (key is Iterable) {
+            if (result is Iterable) {
+              for (dynamic item in key) {
+                for (dynamic resultItem in result) {
+                  if (resultItem != item) {
+                    return false;
+                  }
+                }
+              }
+            } else {
+              for (dynamic item in key) {
+                if (result != item) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+          return false;
+        case "any":
+          if (key is Iterable) {
+            if (result is Iterable) {
+              for (dynamic item in key) {
+                for (dynamic resultItem in result) {
+                  if (resultItem == item) {
+                    return true;
+                  }
+                }
+              }
+            } else {
+              for (dynamic item in key) {
+                if (result == item) {
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        case "none":
+          if (key is Iterable) {
+            if (result is Iterable) {
+              for (dynamic item in key) {
+                for (dynamic resultItem in result) {
+                  if (resultItem == item) {
+                    return false;
+                  }
+                }
+              }
+            } else {
+              for (dynamic item in key) {
+                if (result == item) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          }
+          return false;
+      }
+    } catch(e) {
+      debugPrint(e.toString());
+    }
+    return false;
   }
 }
