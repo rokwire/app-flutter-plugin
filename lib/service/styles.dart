@@ -57,8 +57,8 @@ class Styles extends Service implements NotificationsListener{
   UiTextStyles? _textStyles;
   UiTextStyles? get textStyles => _textStyles;
 
-  UiImages? _uiImages;
-  UiImages? get uiImages => _uiImages;
+  UiImages? _images;
+  UiImages? get images => _images;
 
   // Singletone Factory
 
@@ -232,7 +232,7 @@ class Styles extends Service implements NotificationsListener{
     _colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
     _fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
     _textStyles = UiTextStyles(JsonUtils.mapValue(styles['text_style']), colors: _colors);
-    _uiImages = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors);
+    _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors);
   }
 
   Map<String, dynamic> get contentMap {
