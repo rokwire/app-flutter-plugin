@@ -38,10 +38,11 @@ class Styles extends Service implements NotificationsListener{
   
   static const String _assetsName       = "styles.json";
   static const String _debugAssetsName  = "styles.debug.json";
-
   
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
+
+  Map<String, dynamic>? _assetsManifest;
 
   Map<String, dynamic>? _assetsStyles;
   Map<String, dynamic>? _appAssetsStyles;
@@ -90,6 +91,7 @@ class Styles extends Service implements NotificationsListener{
   Future<void> initService() async {
     
     _assetsDir = await getAssetsDir();
+    _assetsManifest = await loadAssetsManifest();
     _assetsStyles = await loadFromAssets(assetsKey);
     _appAssetsStyles = await loadFromAssets(appAssetsKey);
     _netAssetsStyles = await loadFromCache(netCacheFileName);
@@ -232,7 +234,8 @@ class Styles extends Service implements NotificationsListener{
     _colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
     _fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
     _textStyles = UiTextStyles(JsonUtils.mapValue(styles['text_style']), colors: _colors);
-    _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors);
+    _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors,
+      assetPathResolver: resolveImageAssetPath,);
   }
 
   Map<String, dynamic> get contentMap {
@@ -257,6 +260,28 @@ class Styles extends Service implements NotificationsListener{
       }
   }
 
+  @protected
+  List<String> get imageAssetsPaths => ['app/images', 'images'];
+
+  @protected
+  String resolveImageAssetPath(Uri uri) {
+    if ((uri.pathSegments.length == 1) && (_assetsManifest != null)) {
+      for (String assetsPath in imageAssetsPaths) {
+        if (assetsPath.isNotEmpty) {
+          String imagePath = "$assetsPath/${uri.pathSegments.first}";
+          if (_assetsManifest!.containsKey(imagePath)) {
+            return imagePath;
+          }
+        }
+      }
+    }
+    return uri.path;
+  }
+
+  @protected
+  Future<Map<String, dynamic>?> loadAssetsManifest() async {
+    return JsonUtils.decodeMap(await rootBundle.loadString('AssetManifest.json'));
+  }
 }
 
 class UiColors {
@@ -511,8 +536,10 @@ FontWeight? fontWeightFromString(String? value) {
 class UiImages {
   final Map<String, dynamic>? imageMap;
   final UiColors? colors;
+  final String Function(Uri uri)? assetPathResolver;
 
-  UiImages({this.imageMap, this.colors});
+
+  UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
   Widget? getImage(String imageKey, {Key? key, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, 
@@ -679,7 +706,7 @@ class UiImages {
       repeat ??= ImageRepeat.noRepeat;
       filterQuality ??= FilterQuality.low;
 
-      if (uri.hasScheme) {
+      if (uri.scheme.isNotEmpty) {
         return Image.network(uri.toString(),
           key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
@@ -687,8 +714,8 @@ class UiImages {
           headers: networkHeaders
         );
       }
-      else if (!uri.hasEmptyPath) {
-        return Image.asset(uri.toString(),
+      else if (uri.path.isNotEmpty) {
+        return Image.asset((assetPathResolver != null) ? assetPathResolver!(uri) : uri.path,
           key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
