@@ -233,7 +233,7 @@ class Styles extends Service implements NotificationsListener{
     Map<String, dynamic> styles = contentMap;
     _colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
     _fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
-    _textStyles = UiTextStyles(JsonUtils.mapValue(styles['text_style']), colors: _colors);
+    _textStyles = UiTextStyles.fromJson(styleMap: JsonUtils.mapValue(styles['text_style']), colors: _colors);
     _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors,
       assetPathResolver: resolveImageAssetPath,);
   }
@@ -420,117 +420,51 @@ class UiFontFamilies {
 
 class UiTextStyles {
 
-  final Map<String, dynamic> styleMap;
+  final Map<String, TextStyle> styleMap;
   final UiColors? colors;
 
-  UiTextStyles(Map<String, dynamic>? styleMap, { this.colors }) :
-    styleMap = styleMap ?? <String, dynamic> {};
+  UiTextStyles(Map<String, TextStyle>? styleMap, { this.colors }) :
+    styleMap = styleMap ?? <String, TextStyle> {};
 
-  TextStyle? getTextStyle(String key , {Map<String, dynamic>? data}){
-    return constructTextStyle(key: key, data: null);
+  static UiTextStyles fromJson({Map<String, dynamic>? styleMap, UiColors? colors}){
+    Map<String, TextStyle>? styles;
+    if(styleMap != null){
+      styles = <String, TextStyle> {};
+      styleMap.forEach((key, value) {
+        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), colors: colors);
+        if(style!=null){
+          styles![key] = style;
+        }
+      });
+    }
+    return UiTextStyles(styles, colors: colors);
+  }  
+
+  TextStyle? getTextStyle(String key){
+    return styleMap[key];
   }
 
-  TextStyle? constructTextStyle({String? key, Map<String, dynamic>? data}){
-    if(StringUtils.isEmpty(key)){
-      return null;
-    }
-
-    Map<String, dynamic>? style = JsonUtils.mapValue(styleMap[key]);
-
+  static TextStyle? constructTextStyle({Map<String, dynamic>? style, UiColors? colors}){
     if(style == null){
       return null;
     }
-    Color? color = extractTextStyleColor(JsonUtils.stringValue(style['color']), data);
-    Color? decorationColor = extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), data);
-    double? fontSize = extractCustomValue(style['size'], data) ?? JsonUtils.doubleValue(style['size']);
-    double? fontHeight = extractCustomValue(style['height'], data) ?? JsonUtils.doubleValue(style['height']);
-    String? fontFamily = extractCustomValue(style['font_family'], data) ?? JsonUtils.stringValue(style['font_family']);
-    TextDecoration? textDecoration = extractCustomValue(style['decoration'], data) ?? textDecorationFromString(JsonUtils.stringValue(style["decoration"])); // Not mandatory
-    TextOverflow? textOverflow = extractCustomValue(style['overflow'], data) ?? textOverflowFromString(JsonUtils.stringValue(style["overflow"])); // Not mandatory
-    TextDecorationStyle? decorationStyle = extractCustomValue(style['decoration_style'], data) ?? textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"])); // Not mandatory
-    FontWeight? fontWeight = extractCustomValue(style['weight'], data) ?? fontWeightFromString(JsonUtils.stringValue(style["weight"])); // Not mandatory
-    double? letterSpacing = extractCustomValue(style['letter_spacing'], data) ?? JsonUtils.doubleValue(style['letter_spacing']); // Not mandatory
-    double? wordSpacing = extractCustomValue(style['word_spacing'], data) ?? JsonUtils.doubleValue(style['word_spacing']); // Not mandatory
-    double? decorationThickness = extractCustomValue(style['decoration_thickness'], data) ?? JsonUtils.doubleValue(style['decoration_thickness']); // Not mandatory
+
+    Color? color = _TextStyleUtils.extractTextStyleColor(JsonUtils.stringValue(style['color']), colors);
+    Color? decorationColor = _TextStyleUtils.extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), colors);
+    double? fontSize =  JsonUtils.doubleValue(style['size']);
+    double? fontHeight = JsonUtils.doubleValue(style['height']);
+    String? fontFamily = JsonUtils.stringValue(style['font_family']);
+    TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
+    TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
+    TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
+    FontWeight? fontWeight = _TextStyleUtils.fontWeightFromString(JsonUtils.stringValue(style["weight"]));
+    double? letterSpacing = JsonUtils.doubleValue(style['letter_spacing']);
+    double? wordSpacing = JsonUtils.doubleValue(style['word_spacing']);
+    double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
 
     return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
         overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
   }
-
-  Color? extractTextStyleColor(String? rawColorData,  Map<String, dynamic>? values){
-    if(rawColorData != null){
-      if(rawColorData.startsWith("#")){
-        return UiColors.fromHex(rawColorData);
-      } else if(rawColorData.startsWith('\$')){
-        Color? customColor = extractCustomValue(rawColorData, values);
-        if(customColor != null) {
-          return customColor;
-        }
-      } else {
-        return colors!.getColor(rawColorData);
-      }
-    }
-    return null;
-  }
-
-  //TextStyle Custom values like color or height
-  static T? extractCustomValue<T>(dynamic rawValue, Map<String, dynamic>? values){
-    if(rawValue!= null && rawValue is String && rawValue.startsWith('\$')){
-      String customValueKey = rawValue.replaceFirst("\$", "");
-      dynamic customValue = values!= null && values.containsKey(customValueKey) ? values[customValueKey] : null;
-      if(customValue != null && customValue is T){
-        return customValue;
-      }
-    }
-    return null;
-  }
-}
-
-//Text style properties from string
-TextDecoration? textDecorationFromString(String? decoration){
-  switch(decoration){
-    case "lineThrough" : return TextDecoration.lineThrough;
-    case "overline" : return TextDecoration.overline;
-    case "underline" : return TextDecoration.underline;
-    default : return null;
-  }
-}
-
-TextOverflow? textOverflowFromString(String? value) {
-    switch (value) {
-      case "clip" : return TextOverflow.clip;
-      case "fade" :return TextOverflow.fade;
-      case "ellipsis" :return TextOverflow.ellipsis;
-      case "visible" :return TextOverflow.visible;
-      default : return null;
-    }
-  }
-
-TextDecorationStyle? textDecorationStyleFromString(String? value) {
-  switch (value) {
-    case "dotted" : return TextDecorationStyle.dotted;
-    case "dashed" : return TextDecorationStyle.dashed;
-    case "double" : return TextDecorationStyle.double;
-    case "solid" : return TextDecorationStyle.solid;
-    case "wavy" : return TextDecorationStyle.wavy;
-    default : return null;
-  }
-}
-
-FontWeight? fontWeightFromString(String? value) {
-  switch (value) {
-    case "w100" : return FontWeight.w100;
-    case "w200" : return FontWeight.w200;
-    case "w300" : return FontWeight.w300;
-    case "w400" : return FontWeight.w400;
-    case "w500" : return FontWeight.w500;
-    case "w600" : return FontWeight.w600;
-    case "w700" : return FontWeight.w700;
-    case "w800" : return FontWeight.w800;
-    case "w900" : return FontWeight.w900;
-    default : return null;
-  }
-
 }
 
 class UiImages {
@@ -832,3 +766,61 @@ class _ImageUtils {
     (value != null) ? values.firstWhereOrNull((e) => e.toString() == '${T.toString()}.$value') : null;
 }
 
+class _TextStyleUtils {
+
+  static TextDecoration? textDecorationFromString(String? decoration){
+    switch(decoration){
+      case "lineThrough" : return TextDecoration.lineThrough;
+      case "overline" : return TextDecoration.overline;
+      case "underline" : return TextDecoration.underline;
+      default : return null;
+    }
+  }
+
+  static TextOverflow? textOverflowFromString(String? value) {
+    switch (value) {
+      case "clip" : return TextOverflow.clip;
+      case "fade" :return TextOverflow.fade;
+      case "ellipsis" :return TextOverflow.ellipsis;
+      case "visible" :return TextOverflow.visible;
+      default : return null;
+    }
+  }
+
+  static TextDecorationStyle? textDecorationStyleFromString(String? value) {
+    switch (value) {
+      case "dotted" : return TextDecorationStyle.dotted;
+      case "dashed" : return TextDecorationStyle.dashed;
+      case "double" : return TextDecorationStyle.double;
+      case "solid" : return TextDecorationStyle.solid;
+      case "wavy" : return TextDecorationStyle.wavy;
+      default : return null;
+    }
+  }
+
+  static FontWeight? fontWeightFromString(String? value) {
+    switch (value) {
+      case "w100" : return FontWeight.w100;
+      case "w200" : return FontWeight.w200;
+      case "w300" : return FontWeight.w300;
+      case "w400" : return FontWeight.w400;
+      case "w500" : return FontWeight.w500;
+      case "w600" : return FontWeight.w600;
+      case "w700" : return FontWeight.w700;
+      case "w800" : return FontWeight.w800;
+      case "w900" : return FontWeight.w900;
+      default : return null;
+    }
+  }
+
+  static Color? extractTextStyleColor(String? rawColorData, UiColors? colors){
+    if(rawColorData != null){
+      if(rawColorData.startsWith("#")){
+        return UiColors.fromHex(rawColorData);
+      } else {
+        return colors?.getColor(rawColorData);
+      }
+    }
+    return null;
+  }
+}
