@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 - Android: Upgrade compileSdkVersion to 32 [#147](https://github.com/rokwire/app-flutter-plugin/issues/147).
 - Upgrade project to build with flutter 3.3.2 [#158](https://github.com/rokwire/app-flutter-plugin/issues/158).
-- Applied intermediate work on multiple brands support [#149](https://github.com/rokwire/app-flutter-plugin/issues/149).
+- Applied preliminary work on multiple brands support [#149](https://github.com/rokwire/app-flutter-plugin/issues/149).
 
 ## [1.2.4] - 2022-09-30
 ### Added
