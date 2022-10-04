@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -651,7 +652,6 @@ class RuleSet {
   }
 }
 
-
 class Metric {
   final String name;
   final String unit;
@@ -669,9 +669,9 @@ class Metric {
       unit: json['unit'],
       type: json['type'],
       wholeNum: json['whole_num'] ?? false,
-      valueLabels: AppJson.castToStringList(json['value_labels']) ?? [],
+      valueLabels: JsonUtils.stringListValue(json['value_labels']) ?? [],
       explanation: json['explanation'] as String? ?? '',
-      quiz: AppJson.orNull((json) => Quiz.fromJson(json), json['quiz']),
+      quiz: JsonUtils.orNull((json) => Quiz.fromJson(json), json['quiz']),
     );
   }
 
@@ -687,7 +687,7 @@ class Metric {
     };
   }
 
-  dynamic getProperty(RuleKey? key, dynamic param, TreatmentPlan plan) {
+  dynamic getProperty(RuleKey? key, dynamic param) {
     switch (key?.key) {
       case null:
         return this;
@@ -720,21 +720,6 @@ class Metric {
       } else {
         return val.values.first.toString();
       }
-    }
-
-    if (val.type == "blood_pressure") {
-      String out = "";
-      for (double value in val.values) {
-        if (out.isNotEmpty) {
-          out += " | ";
-        }
-        if (wholeNum) {
-          out += value.toInt().toString();
-        } else {
-          out += value.toString();
-        }
-      }
-      return out;
     }
 
     String out = "";
@@ -797,8 +782,8 @@ class MetricRange {
 
   factory MetricRange.fromJson(Map<String, dynamic> json) {
     return MetricRange(
-      maximum: AppJson.orNull((json) => MetricValue.fromJson(json), json['maximum']),
-      minimum: AppJson.orNull((json) => MetricValue.fromJson(json), json['minimum']),
+      maximum: JsonUtils.orNull((json) => MetricValue.fromJson(json), json['maximum']),
+      minimum: JsonUtils.orNull((json) => MetricValue.fromJson(json), json['minimum']),
     );
   }
 
@@ -816,14 +801,14 @@ class MetricRange {
     };
   }
 
-  dynamic getProperty(RuleKey? key, dynamic param, TreatmentPlan plan) {
+  dynamic getProperty(RuleKey? key, dynamic param) {
     switch (key?.key) {
       case null:
         return this;
       case "minimum":
-        return minimum?.getProperty(key?.subRuleKey, param, plan);
+        return minimum?.getProperty(key?.subRuleKey, param);
       case "maximum":
-        return maximum?.getProperty(key?.subRuleKey, param, plan);
+        return maximum?.getProperty(key?.subRuleKey, param);
     }
     return null;
   }
@@ -854,7 +839,7 @@ class MetricValue {
 
   factory MetricValue.fromJson(Map<String, dynamic> json) {
     return MetricValue(
-        values: AppJson.doubleListValue(json['values']) ?? [],
+        values: JsonUtils.doubleListValue(json['values']) ?? [],
         type: json['type']
     );
   }
@@ -868,7 +853,7 @@ class MetricValue {
 
   @override
   bool operator ==(other) {
-    if (!(other is MetricValue) || type != other.type || values.length != other.values.length) {
+    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
       return false;
     }
     for (int i = 0; i < values.length; i++) {
@@ -880,7 +865,7 @@ class MetricValue {
   }
 
   bool operator <(other) {
-    if (!(other is MetricValue) || type != other.type || values.length != other.values.length) {
+    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
       return false;
     }
     for (int i = 0; i < values.length; i++) {
@@ -892,7 +877,7 @@ class MetricValue {
   }
 
   bool operator <=(other) {
-    if (!(other is MetricValue) || type != other.type || values.length != other.values.length) {
+    if (other! is MetricValue || type != other.type || values.length != other.values.length) {
       return false;
     }
     for (int i = 0; i < values.length; i++) {
@@ -904,7 +889,7 @@ class MetricValue {
   }
 
   bool operator >(other) {
-    if (!(other is MetricValue) || type != other.type || values.length != other.values.length) {
+    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
       return false;
     }
     for (int i = 0; i < values.length; i++) {
@@ -916,7 +901,7 @@ class MetricValue {
   }
 
   bool operator >=(other) {
-    if (!(other is MetricValue) || type != other.type || values.length != other.values.length) {
+    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
       return false;
     }
     for (int i = 0; i < values.length; i++) {
@@ -929,7 +914,7 @@ class MetricValue {
 
   MetricValue operator +(MetricValue other) {
     if (type != other.type || values.length != other.values.length) {
-      throw FormatException("Cannot add unrelated metric value types");
+      throw const FormatException("Cannot add unrelated metric value types");
     }
     List<double> result = [];
     for (int i = 0; i < values.length; i++) {
@@ -940,7 +925,7 @@ class MetricValue {
 
   MetricValue operator -(MetricValue other) {
     if (type != other.type || values.length != other.values.length) {
-      throw FormatException("Cannot subtract unrelated metric value types");
+      throw const FormatException("Cannot subtract unrelated metric value types");
     }
     List<double> result = [];
     for (int i = 0; i < values.length; i++) {
@@ -983,7 +968,7 @@ class MetricValue {
     return sum / values.length;
   }
 
-  dynamic getProperty(RuleKey? key, dynamic param, TreatmentPlan plan) {
+  dynamic getProperty(RuleKey? key, dynamic param) {
     switch (key?.key) {
       case null:
         return this;
@@ -991,10 +976,6 @@ class MetricValue {
         return values;
       case "type":
         return type;
-      case "display_string":
-        return plan.metric.valueDisplayString(this);
-      case "value_severity":
-        return plan.targetConfig?.valueSeverity(this);
       case "abs":
         return abs();
     }

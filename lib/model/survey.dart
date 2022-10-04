@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 import 'package:uuid/uuid.dart';
@@ -363,7 +364,7 @@ abstract class QuizData {
     return true;
   }
 
-  void evaluateDefaultResponse(TreatmentPlan? plan, Event? event, {bool deep = true}) {
+  void evaluateDefaultResponse({bool deep = true}) {
     if (plan == null) {
       return;
     }
