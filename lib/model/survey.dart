@@ -363,11 +363,34 @@ abstract class QuizData {
     return true;
   }
 
+  void evaluateDefaultResponse(TreatmentPlan? plan, Event? event, {bool deep = true}) {
+    if (plan == null) {
+      return;
+    }
+
+    if (defaultResponseRule != null) {
+      plan.rules.clearCache();
+      RuleActionResult? result = plan.rules.evaluateRule(defaultResponseRule!, event: event);
+      if (result is RuleAction) {
+        dynamic data = plan.rules.evaluateAction(result);
+        response = data;
+      }
+    }
+    if (deep) {
+      followUp?.evaluateDefaultResponse(plan, event);
+    }
+  }
+
   QuizData? get followUp {
     if (response == null) {
       return null;
     }
-    QuizData? responseFollowUp = followUps?[response];
+    String? followUpKey;
+    for (ResponseCheck responseFollowUp in responseFollowUps ?? []) {
+      if (responseFollowUp.evaluate(response)) {
+        followUpKey = responseFollowUp.value
+      }
+    }
     if (responseFollowUp != null) {
       return responseFollowUp;
     }
