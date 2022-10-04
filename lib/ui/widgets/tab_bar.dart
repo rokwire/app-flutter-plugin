@@ -205,7 +205,7 @@ class TabWidget extends StatelessWidget {
   Widget getTabIcon(BuildContext context)  {
     String? asset = selected ? (selectedIconAsset ?? iconAsset) : iconAsset;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (asset != null) ? Styles().uiImages?.getImage(asset, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
+    return (asset != null) ? Styles().images?.getImage(asset, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
   }
 
   @protected
@@ -247,7 +247,7 @@ class TabCloseWidget extends StatelessWidget {
     return Semantics(label: label, hint: hint, button: true, child:
       GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
         Center(child:
-          Styles().uiImages?.getImage(iconAsset, excludeFromSemantics: true,),
+          Styles().images?.getImage(iconAsset, excludeFromSemantics: true,),
         ),
       )
     );
