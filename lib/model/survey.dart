@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/utils/widget_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class Quiz {
-  List<QuizData> questions;
+  Map<String, QuizData> questions;
   DateTime? lastUpdated;
   bool scored;
   String type;
@@ -29,33 +29,48 @@ class Quiz {
   QuizStats? _stats;
   QuizStats? get stats { return _stats; }
 
-  Quiz({required this.questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type});
+  RuleSet? followUpRules;
+  RuleSet? scoreRules;
+
+  Quiz({required this.questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type, this.followUpRules, this.scoreRules});
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
+    Map<String, QuizData> questionMap = {};
+    Map<String, dynamic> questionData = JsonUtils.mapValue(json) ?? {};
+    questionData.forEach((key, value) {
+      if (value is Map<String, dynamic>) {
+        questionMap[key] = QuizData.fromJson(value);
+      }
+    });
+
     return Quiz(
-      questions: QuizData.listFromJson(json['questions']),
+      questions: questionMap,
       scored: json['scored'] ?? true,
       type: json['type'] ?? false,
       resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
       lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
+      followUpRules: RuleSet.fromJson(json),
+      scoreRules: RuleSet.fromJson(json),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'questions': JsonUtils.encodeList(questions),
+      'questions': JsonUtils.encode(questions),
       'last_updated': DateTimeUtils.dateTimeLocalToJson(lastUpdated),
       'scored': scored,
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
       'type': type,
-      'stats': _stats?.toJson()
+      'stats': _stats?.toJson(),
+      'follow_up_rules': followUpRules.toJson(),
+      'score_rules': scoreRules.toJson(),
     };
   }
 
   factory Quiz.fromOther(Quiz other) {
-    List<QuizData> questions = [];
-    for (QuizData question in other.questions){
-      questions.add(QuizData.fromOther(question));
+    Map<String, QuizData> questions = {};
+    for (MapEntry<String, QuizData> question in other.questions.entries){
+      questions[question.key] = (QuizData.fromOther(question.value));
     }
     return Quiz(
       questions: questions,
@@ -63,10 +78,24 @@ class Quiz {
       scored: other.scored,
       resultRule: other.resultRule,
       type: other.type,
+      followUpRules: other.followUpRules,
+      scoreRules: other.scoreRules,
     );
   }
 
+  // static Map<dynamic, QuizData>? followUpsFromOther(QuizData other) {
+  //   Map<dynamic, QuizData>? followUps;
+  //   if (other.followUps != null) {
+  //     followUps = {};
+  //     for (MapEntry<dynamic, QuizData> entry in other.followUps!.entries) {
+  //       followUps[entry.key] = QuizData.fromOther(entry.value);
+  //     }
+  //   }
+  //   return followUps;
+  // }
+
   dynamic getProperty(RuleKey? key) {
+    //TODO: incorporate scoreRules
     QuizStats? stats = _stats;
     switch (key?.key) {
       case null:
@@ -98,13 +127,13 @@ class Quiz {
     return null;
   }
 
-  void evaluate(RuleSet? rules) {
+  void evaluate() {
     QuizStats stats = QuizStats();
-    for (QuizData data in questions) {
-      stats += data.stats(rules);
+    for (QuizData question in questions.values) {
+      stats += question.stats(scoreRules);
     }
     _stats = stats;
-    _evaluateResult(rules);
+    _evaluateResult(resultRule);
   }
 
   void _evaluateResult(RuleSet? rules) {
@@ -121,7 +150,7 @@ class Quiz {
   }
 
   bool canContinue(RuleSet? rules, {bool deep = true}) {
-    for (QuizData question in questions) {
+    for (QuizData question in questions.values) {
       if (!question.canContinue(rules, deep: deep)) {
         return false;
       }
@@ -189,21 +218,17 @@ class QuizStats {
 
 abstract class QuizData {
   late final String id;
-  final String? key;
+  final String key;
   final bool allowSkip;
   final String text;
   final String? moreInfo;
-  final Map<dynamic, QuizData>? followUps;
-  final List<ResponseCheck>? responseFollowUps;
-  final List<ResponseCheck>? responseScores;
   final bool scored;
   dynamic response;
 
   final Rule? displayRule;
   final Rule? defaultResponseRule;
 
-  QuizData({String? id, this.key, required this.text, this.followUps, this.responseFollowUps, this.responseScores,
-    this.displayRule, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false}) {
+  QuizData({String? id, required this.key, required this.text, this.displayRule, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false}) {
     if (id == null) {
       this.id = const Uuid().v4();
     } else {
@@ -263,17 +288,6 @@ abstract class QuizData {
     throw Exception("Invalid other quiz type");
   }
 
-  static Map<dynamic, QuizData>? followUpsFromOther(QuizData other) {
-    Map<dynamic, QuizData>? followUps;
-    if (other.followUps != null) {
-      followUps = {};
-      for (MapEntry<dynamic, QuizData> entry in other.followUps!.entries) {
-        followUps[entry.key] = QuizData.fromOther(entry.value);
-      }
-    }
-    return followUps;
-  }
-
   Map<String, dynamic> toJson();
 
   Map<String, dynamic> baseJson() {
@@ -282,9 +296,6 @@ abstract class QuizData {
       'key': key,
       'text': text,
       'more_info': moreInfo,
-      'follow_ups': followUpsToJson(),
-      'response_follow_ups': responseFollowUpsToJson(),
-      'response_scores': responseScoresToJson(),
       'scored': scored,
       'response': response,
       'allow_skip': allowSkip,
@@ -292,52 +303,6 @@ abstract class QuizData {
       'default_response_rule': JsonUtils.encode(defaultResponseRule?.toJson()),
     };
   }
-
-  Map<String, dynamic>? followUpsToJson() {
-    if (followUps == null) {
-      return null;
-    }
-    Map<String, dynamic> json = {};
-    for (MapEntry<dynamic, QuizData> entry in followUps!.entries) {
-      json[entry.key] = entry.value.toJson();
-    }
-    return json;
-  }
-
-  List<Map<String, dynamic>>? responseFollowUpsToJson() {
-    if (responseFollowUps == null) {
-      return null;
-    }
-    List<Map<String, dynamic>> json = [];
-    for (ResponseCheck entry in responseFollowUps!) {
-      json.add(entry.toJson());
-    }
-    return json;
-  }
-
-  List<Map<String, dynamic>>? responseScoresToJson() {
-    if (responseFollowUps == null) {
-      return null;
-    }
-    List<Map<String, dynamic>> json = [];
-    for (ResponseCheck entry in responseScores!) {
-      json.add(entry.toJson());
-    }
-    return json;
-  }
-
-  // static Map<dynamic, QuizData>? responseFollowUpsFromJson(dynamic json) {
-  //   if (json is List<dynamic>) {
-  //     Map<dynamic, QuizData> followUps = {};
-  //     for (dynamic followUp in json) {
-  //       if (followUp is Map<String, dynamic>) {
-  //         followUps[followUp['key']] = QuizData.fromJson(followUp['value']);
-  //       }
-  //     }
-  //     return followUps;
-  //   }
-  //   return null;
-  // }
 
   bool get isQuestion;
 
@@ -365,20 +330,16 @@ abstract class QuizData {
   }
 
   void evaluateDefaultResponse({bool deep = true}) {
-    if (plan == null) {
-      return;
-    }
-
     if (defaultResponseRule != null) {
-      plan.rules.clearCache();
-      RuleActionResult? result = plan.rules.evaluateRule(defaultResponseRule!, event: event);
+      rules.clearCache();
+      RuleActionResult? result = rules.evaluateRule(defaultResponseRule!);
       if (result is RuleAction) {
-        dynamic data = plan.rules.evaluateAction(result);
+        dynamic data = rules.evaluateAction(result);
         response = data;
       }
     }
     if (deep) {
-      followUp?.evaluateDefaultResponse(plan, event);
+      followUp?.evaluateDefaultResponse();
     }
   }
 
@@ -407,9 +368,7 @@ abstract class QuizData {
     }
 
     Map<String, dynamic> responseData = {};
-    if (key != null) {
-      responseData[key!] = response;
-    }
+    responseData[key] = response;
 
     QuizStats stats = QuizStats(
       total: isQuestion ? 1 : 0,
@@ -452,11 +411,10 @@ class QuizQuestionTrueFalse extends QuizData {
   final List<OptionData> options;
 
   QuizQuestionTrueFalse({required String question, this.yesNo = false,
-    String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
-        super(id: id, allowSkip: allowSkip, key: key, text: question, defaultFollowUp: defaultFollowUp, okFollowUp: okFollowUp,
-                responseFollowUps: responseFollowUps, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
+        super(id: id, allowSkip: allowSkip, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, 
+          moreInfo: moreInfo, response: response, scored: scored);
 
   factory QuizQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
     return QuizQuestionTrueFalse(
@@ -464,10 +422,7 @@ class QuizQuestionTrueFalse extends QuizData {
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      okFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['ok_follow_up']),
-      responseFollowUps: QuizData.responseFollowUpsFromJson(json['response_follow_ups']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -482,11 +437,7 @@ class QuizQuestionTrueFalse extends QuizData {
       id: other.id,
       key: other.key,
       yesNo: other.yesNo,
-      okAnswer: other.okAnswer,
       question: other.text,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
-      okFollowUp: other.okFollowUp != null ? QuizData.fromOther(other.okFollowUp!) : null,
-      responseFollowUps: QuizData.followUpsFromOther(other),
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
@@ -494,24 +445,16 @@ class QuizQuestionTrueFalse extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['yes_no'] = yesNo;
-    json['ok_answer'] = okAnswer;
     json['type'] = 'true_false';
     return json;
   }
 
   @override
   bool get isQuestion => true;
-
-  @override
-  bool? get ok {
-    if (okAnswer == null) {
-      return null;
-    }
-    return (response == okAnswer);
-  }
 }
 
 class QuizQuestionMultipleChoice extends QuizData {
@@ -521,10 +464,9 @@ class QuizQuestionMultipleChoice extends QuizData {
   final bool allowMultiple;
 
   QuizQuestionMultipleChoice({required String question, required this.options, this.okAnswers, this.allowMultiple = false, this.checkAll = false,
-    String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, allowSkip: allowSkip, text: question, defaultFollowUp: defaultFollowUp, okFollowUp: okFollowUp,
-                responseFollowUps: responseFollowUps, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, allowSkip: allowSkip, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, 
+        response: response, scored: scored);
 
   factory QuizQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
     return QuizQuestionMultipleChoice(
@@ -534,10 +476,7 @@ class QuizQuestionMultipleChoice extends QuizData {
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      okFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['ok_follow_up']),
-      responseFollowUps: QuizData.responseFollowUpsFromJson(json['response_follow_ups']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -556,9 +495,6 @@ class QuizQuestionMultipleChoice extends QuizData {
       okAnswers: other.okAnswers,
       allowMultiple: other.allowMultiple,
       allowSkip: other.allowSkip,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
-      okFollowUp: other.okFollowUp != null ? QuizData.fromOther(other.okFollowUp!) : null,
-      responseFollowUps: QuizData.followUpsFromOther(other),
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
@@ -566,6 +502,7 @@ class QuizQuestionMultipleChoice extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['options'] = JsonUtils.encodeList(options);
@@ -602,11 +539,11 @@ class QuizQuestionMultipleChoice extends QuizData {
     return (list.contains(item));
   }
 
-  @override
   bool? get ok {
     return listContains(okAnswers, response, checkAll: checkAll);
   }
 
+  @override
   QuizData? get followUp {
     dynamic responseVal = response;
     if (responseVal == null) {
@@ -642,10 +579,9 @@ class QuizQuestionDateTime extends QuizData {
   final bool askTime;
 
   QuizQuestionDateTime({required String question, this.startTime, this.endTime, this.askTime = true,
-    String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, defaultFollowUp: defaultFollowUp, okFollowUp: okFollowUp,
-                responseFollowUps: responseFollowUps, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
+        scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionDateTime.fromJson(Map<String, dynamic> json) {
     return QuizQuestionDateTime(
@@ -655,10 +591,7 @@ class QuizQuestionDateTime extends QuizData {
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      okFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['ok_follow_up']),
-      responseFollowUps: QuizData.responseFollowUpsFromJson(json['response_follow_ups']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -676,9 +609,6 @@ class QuizQuestionDateTime extends QuizData {
       startTime: other.startTime,
       endTime: other.endTime,
       askTime: other.askTime,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
-      okFollowUp: other.okFollowUp != null ? QuizData.fromOther(other.okFollowUp!) : null,
-      responseFollowUps: QuizData.followUpsFromOther(other),
       allowSkip: other.allowSkip,
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
@@ -687,6 +617,7 @@ class QuizQuestionDateTime extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['start_time'] = DateTimeUtils.dateTimeLocalToJson(startTime);
@@ -699,7 +630,6 @@ class QuizQuestionDateTime extends QuizData {
   @override
   bool get isQuestion => true;
 
-  @override
   bool? get ok {
     if (startTime == null && endTime == null) {
       return null;
@@ -724,11 +654,9 @@ class QuizQuestionNumeric extends QuizData {
   final bool slider;
 
   QuizQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.slider = false,
-    String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, defaultFollowUp: defaultFollowUp, okFollowUp: okFollowUp,
-                responseFollowUps: responseFollowUps, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
-
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
+        scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionNumeric.fromJson(Map<String, dynamic> json) {
     return QuizQuestionNumeric(
@@ -739,10 +667,7 @@ class QuizQuestionNumeric extends QuizData {
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      okFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['ok_follow_up']),
-      responseFollowUps: QuizData.responseFollowUpsFromJson(json['response_follow_ups']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -761,9 +686,6 @@ class QuizQuestionNumeric extends QuizData {
       maximum: other.maximum,
       wholeNum: other.wholeNum,
       slider: other.slider,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
-      okFollowUp: other.okFollowUp != null ? QuizData.fromOther(other.okFollowUp!) : null,
-      responseFollowUps: QuizData.followUpsFromOther(other),
       allowSkip: other.allowSkip,
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
@@ -772,6 +694,7 @@ class QuizQuestionNumeric extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['minimum'] = minimum;
@@ -785,7 +708,6 @@ class QuizQuestionNumeric extends QuizData {
   @override
   bool get isQuestion => true;
 
-  @override
   bool? get ok {
     if (minimum == null && maximum == null) {
       return null;
@@ -808,10 +730,9 @@ class QuizQuestionText extends QuizData {
   final int? maxLength;
 
   QuizQuestionText({required String question, this.minLength = 0, this.maxLength,
-    String? id, String? key, QuizData? defaultFollowUp, QuizData? okFollowUp, Map<dynamic, QuizData>? responseFollowUps,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, defaultFollowUp: defaultFollowUp, okFollowUp: okFollowUp,
-      responseFollowUps: responseFollowUps, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
+        scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionText.fromJson(Map<String, dynamic> json) {
     return QuizQuestionText(
@@ -820,10 +741,7 @@ class QuizQuestionText extends QuizData {
 
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      okFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['ok_follow_up']),
-      responseFollowUps: QuizData.responseFollowUpsFromJson(json['response_follow_ups']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -840,9 +758,6 @@ class QuizQuestionText extends QuizData {
       question: other.text,
       minLength: other.minLength,
       maxLength: other.maxLength,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
-      okFollowUp: other.okFollowUp != null ? QuizData.fromOther(other.okFollowUp!) : null,
-      responseFollowUps: QuizData.followUpsFromOther(other),
       allowSkip: other.allowSkip,
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
@@ -851,6 +766,7 @@ class QuizQuestionText extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['min_length'] = minLength;
@@ -862,7 +778,6 @@ class QuizQuestionText extends QuizData {
   @override
   bool get isQuestion => true;
 
-  @override
   bool? get ok {
     dynamic responseVal = response;
     if (responseVal is String && responseVal.length > minLength && (maxLength == null || responseVal.length < maxLength!)) {
@@ -878,17 +793,15 @@ class QuizDataEntry extends QuizData {
   final Map<String, DataType> dataFormat;
 
   QuizDataEntry({required String text, required this.dataFormat,
-    String? id, String? key, QuizData? defaultFollowUp,
-    Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, text: text, defaultFollowUp: defaultFollowUp, displayRule: displayRule, defaultResponseRule: defaultResponseRule,
-                moreInfo: moreInfo, response: response, allowSkip: allowSkip);
+    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool allowSkip = false})
+      : super(id: id, key: key, text: text, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
   factory QuizDataEntry.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? dataFormatJson = JsonUtils.mapValue(json['data_format']);
     Map<String, DataType> dataFormat = {};
     if (dataFormatJson != null) {
       for (MapEntry<String, dynamic> entry in dataFormatJson.entries) {
-        dataFormatJson[entry.key] = AppEnum.enumFromString<DataType>(DataType.values, entry.value);
+        dataFormatJson[entry.key] = EnumUtils.enumFromString<DataType>(DataType.values, entry.value);
       }
     }
 
@@ -897,8 +810,7 @@ class QuizDataEntry extends QuizData {
 
       text: json['text'],
       id: JsonUtils.stringValue(json['id']),
-      key: JsonUtils.stringValue(json['key']),
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
@@ -913,7 +825,6 @@ class QuizDataEntry extends QuizData {
       key: other.key,
       text: other.text,
       dataFormat: other.dataFormat,
-      defaultFollowUp: other.defaultFollowUp != null ? QuizData.fromOther(other.defaultFollowUp!) : null,
       allowSkip: other.allowSkip,
       displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
@@ -921,6 +832,7 @@ class QuizDataEntry extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> dataFormatJson = {};
     for (MapEntry<String, DataType> entry in dataFormat.entries) {
@@ -972,6 +884,7 @@ class QuizDataResponse extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['body'] = body;
@@ -1013,6 +926,7 @@ class QuizDataAction extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['action'] = action.toJson();
@@ -1056,6 +970,7 @@ class QuizDataQuiz extends QuizData {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['quiz'] = quiz.toJson();
