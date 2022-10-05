@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.4] - 2022-09-30
+### Added
+- Check if user has 'managed_group_admin' permission [#2429](https://github.com/rokwire/illinois-app/issues/2429).
+
+## [1.2.3] - 2022-09-28
+### Changed
+- Show hidden groups only for admins - hide for all others [#163](https://github.com/rokwire/app-flutter-plugin/issues/163).
+
 ## [1.2.2] - 2022-09-16
 ### Added
 - Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403).
