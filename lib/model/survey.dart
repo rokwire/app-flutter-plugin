@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/utils/widget_utils.dart';
 import 'package:uuid/uuid.dart';
 
 class Quiz {
-  Map<String, QuizData> questions;
+  late Map<String, QuizData> questions;
   DateTime? lastUpdated;
   bool scored;
   String type;
@@ -29,12 +29,23 @@ class Quiz {
   QuizStats? _stats;
   QuizStats? get stats { return _stats; }
 
-  RuleSet? followUpRules;
-  RuleSet? scoreRules;
+  List<Rule>? followUpRules;
+  List<Rule>? scoreRules;
+  RuleEngine ruleEngine;
 
-  Quiz({required this.questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type, this.followUpRules, this.scoreRules});
+  Quiz({Map<String, QuizData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type, this.followUpRules, this.scoreRules, required this.ruleEngine});
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
+    Quiz quiz = Quiz(
+      scored: json['scored'] ?? true,
+      type: json['type'] ?? false,
+      resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
+      lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
+      followUpRules: Rule.listFromJson(json["follow_up_rules"]),
+      scoreRules: Rule.listFromJson(json["score_rules"]),
+      ruleEngine: RuleEngine.fromJson(json),
+    );
+
     Map<String, QuizData> questionMap = {};
     Map<String, dynamic> questionData = JsonUtils.mapValue(json) ?? {};
     questionData.forEach((key, value) {
@@ -43,15 +54,7 @@ class Quiz {
       }
     });
 
-    return Quiz(
-      questions: questionMap,
-      scored: json['scored'] ?? true,
-      type: json['type'] ?? false,
-      resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
-      lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
-      followUpRules: RuleSet.fromJson(json),
-      scoreRules: RuleSet.fromJson(json),
-    );
+    
   }
 
   Map<String, dynamic> toJson() {
@@ -62,8 +65,8 @@ class Quiz {
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
       'type': type,
       'stats': _stats?.toJson(),
-      'follow_up_rules': followUpRules.toJson(),
-      'score_rules': scoreRules.toJson(),
+      'follow_up_rules': JsonUtils.encodeList(followUpRules ?? []),
+      'score_rules': JsonUtils.encodeList(scoreRules ?? []),
     };
   }
 
@@ -80,6 +83,7 @@ class Quiz {
       type: other.type,
       followUpRules: other.followUpRules,
       scoreRules: other.scoreRules,
+      ruleEngine: other.ruleEngine,
     );
   }
 
@@ -133,25 +137,22 @@ class Quiz {
       stats += question.stats(scoreRules);
     }
     _stats = stats;
-    _evaluateResult(resultRule);
-  }
 
-  void _evaluateResult(RuleSet? rules) {
-    if (rules == null || resultRule == null) {
+    if (resultRule == null) {
       return;
     }
 
-    rules.clearCache();
-    RuleActionResult? ruleResult = rules.evaluateRule(resultRule!);
+    ruleEngine.clearCache();
+    RuleActionResult? ruleResult = resultRule!.evaluate(ruleEngine);
     if (ruleResult is RuleAction) {
-      dynamic data = rules.evaluateAction(ruleResult);
+      dynamic data = ruleResult.evaluate(ruleEngine);
       resultData = data;
     }
   }
 
-  bool canContinue(RuleSet? rules, {bool deep = true}) {
+  bool canContinue({bool deep = true}) {
     for (QuizData question in questions.values) {
-      if (!question.canContinue(rules, deep: deep)) {
+      if (!question.canContinue(followUpRules ?? [], deep: deep)) {
         return false;
       }
     }
@@ -225,10 +226,10 @@ abstract class QuizData {
   final bool scored;
   dynamic response;
 
-  final Rule? displayRule;
   final Rule? defaultResponseRule;
+  late final Quiz quiz;
 
-  QuizData({String? id, required this.key, required this.text, this.displayRule, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false}) {
+  QuizData({String? id, required this.key, required this.text, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false, Quiz? quiz}) {
     if (id == null) {
       this.id = const Uuid().v4();
     } else {
@@ -299,7 +300,6 @@ abstract class QuizData {
       'scored': scored,
       'response': response,
       'allow_skip': allowSkip,
-      'display_rule': JsonUtils.encode(displayRule?.toJson()),
       'default_response_rule': JsonUtils.encode(defaultResponseRule?.toJson()),
     };
   }
@@ -329,21 +329,22 @@ abstract class QuizData {
     return true;
   }
 
-  void evaluateDefaultResponse({bool deep = true}) {
+  void evaluateDefaultResponse(RuleEngine ruleEngine, {bool deep = true}) {
     if (defaultResponseRule != null) {
-      rules.clearCache();
-      RuleActionResult? result = rules.evaluateRule(defaultResponseRule!);
+      ruleEngine.clearCache();
+      RuleActionResult? result = defaultResponseRule!.evaluate(ruleEngine);
       if (result is RuleAction) {
-        dynamic data = rules.evaluateAction(result);
+        dynamic data = result.evaluate(ruleEngine);
         response = data;
       }
     }
     if (deep) {
-      followUp?.evaluateDefaultResponse();
+      followUp?.evaluateDefaultResponse(ruleEngine);
     }
   }
 
   QuizData? get followUp {
+    //TODO: evaluate quiz followUpRules
     if (response == null) {
       return null;
     }
@@ -361,7 +362,7 @@ abstract class QuizData {
 
   QuizData? get defaultFollowUp => followUps?[''];
 
-  QuizStats stats(RuleSet? rules) {
+  QuizStats stats(RuleEngine? rules) {
     //TODO: incorporate responseScores
     if (!shouldDisplay(rules)) {
       return QuizStats();
@@ -386,7 +387,7 @@ abstract class QuizData {
     return stats;
   }
 
-  bool canContinue(RuleSet? rules, {bool deep = true}) {
+  bool canContinue(List<Rule> rules, {bool deep = true}) {
     if (!shouldDisplay(rules)) {
       return true;
     }
@@ -411,10 +412,9 @@ class QuizQuestionTrueFalse extends QuizData {
   final List<OptionData> options;
 
   QuizQuestionTrueFalse({required String question, this.yesNo = false,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
-        super(id: id, allowSkip: allowSkip, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, 
-          moreInfo: moreInfo, response: response, scored: scored);
+        super(id: id, allowSkip: allowSkip, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
 
   factory QuizQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
     return QuizQuestionTrueFalse(
@@ -426,7 +426,6 @@ class QuizQuestionTrueFalse extends QuizData {
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -438,7 +437,6 @@ class QuizQuestionTrueFalse extends QuizData {
       key: other.key,
       yesNo: other.yesNo,
       question: other.text,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
       scored: other.scored,
@@ -464,9 +462,8 @@ class QuizQuestionMultipleChoice extends QuizData {
   final bool allowMultiple;
 
   QuizQuestionMultipleChoice({required String question, required this.options, this.okAnswers, this.allowMultiple = false, this.checkAll = false,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, allowSkip: allowSkip, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, 
-        response: response, scored: scored);
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, allowSkip: allowSkip, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
 
   factory QuizQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
     return QuizQuestionMultipleChoice(
@@ -480,7 +477,6 @@ class QuizQuestionMultipleChoice extends QuizData {
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -495,7 +491,6 @@ class QuizQuestionMultipleChoice extends QuizData {
       okAnswers: other.okAnswers,
       allowMultiple: other.allowMultiple,
       allowSkip: other.allowSkip,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
       scored: other.scored,
@@ -579,9 +574,8 @@ class QuizQuestionDateTime extends QuizData {
   final bool askTime;
 
   QuizQuestionDateTime({required String question, this.startTime, this.endTime, this.askTime = true,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
-        scored: scored, allowSkip: allowSkip);
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionDateTime.fromJson(Map<String, dynamic> json) {
     return QuizQuestionDateTime(
@@ -595,7 +589,6 @@ class QuizQuestionDateTime extends QuizData {
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -610,7 +603,6 @@ class QuizQuestionDateTime extends QuizData {
       endTime: other.endTime,
       askTime: other.askTime,
       allowSkip: other.allowSkip,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
       scored: other.scored,
@@ -654,9 +646,8 @@ class QuizQuestionNumeric extends QuizData {
   final bool slider;
 
   QuizQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.slider = false,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
-        scored: scored, allowSkip: allowSkip);
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionNumeric.fromJson(Map<String, dynamic> json) {
     return QuizQuestionNumeric(
@@ -671,7 +662,6 @@ class QuizQuestionNumeric extends QuizData {
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -687,7 +677,6 @@ class QuizQuestionNumeric extends QuizData {
       wholeNum: other.wholeNum,
       slider: other.slider,
       allowSkip: other.allowSkip,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
       scored: other.scored,
@@ -730,9 +719,8 @@ class QuizQuestionText extends QuizData {
   final int? maxLength;
 
   QuizQuestionText({required String question, this.minLength = 0, this.maxLength,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, 
-        scored: scored, allowSkip: allowSkip);
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+      : super(id: id, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
 
   factory QuizQuestionText.fromJson(Map<String, dynamic> json) {
     return QuizQuestionText(
@@ -745,7 +733,6 @@ class QuizQuestionText extends QuizData {
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -759,7 +746,6 @@ class QuizQuestionText extends QuizData {
       minLength: other.minLength,
       maxLength: other.maxLength,
       allowSkip: other.allowSkip,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
       scored: other.scored,
@@ -793,8 +779,8 @@ class QuizDataEntry extends QuizData {
   final Map<String, DataType> dataFormat;
 
   QuizDataEntry({required String text, required this.dataFormat,
-    String? id, required String key, Rule? displayRule, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, text: text, displayRule: displayRule, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
+    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool allowSkip = false})
+      : super(id: id, key: key, text: text, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
   factory QuizDataEntry.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? dataFormatJson = JsonUtils.mapValue(json['data_format']);
@@ -813,7 +799,6 @@ class QuizDataEntry extends QuizData {
       key: JsonUtils.stringValue(json['key']) ?? '',
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
@@ -826,7 +811,6 @@ class QuizDataEntry extends QuizData {
       text: other.text,
       dataFormat: other.dataFormat,
       allowSkip: other.allowSkip,
-      displayRule: other.displayRule,
       defaultResponseRule: other.defaultResponseRule,
       moreInfo: other.moreInfo,
     );
@@ -858,8 +842,8 @@ class QuizDataResponse extends QuizData {
   String? body;
   ActionData? action;
 
-  QuizDataResponse({required String text, this.body, this.action, String? moreInfo, String? id, Rule? displayRule}) :
-        super(id: id, text: text, moreInfo: moreInfo, displayRule: displayRule, allowSkip: true);
+  QuizDataResponse({required String text, this.body, this.action, String? moreInfo, String? id, required String key}) :
+        super(id: id, key: key, text: text, moreInfo: moreInfo, allowSkip: true);
 
   factory QuizDataResponse.fromJson(Map<String, dynamic> json) {
     return QuizDataResponse(
@@ -868,19 +852,19 @@ class QuizDataResponse extends QuizData {
 
       text: json['text'],
       id: JsonUtils.stringValue(json['id']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       moreInfo: JsonUtils.stringValue(json['more_info']),
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
     );
   }
 
   factory QuizDataResponse.fromOther(QuizDataResponse other) {
     return QuizDataResponse(
       id: other.id,
+      key: other.key,
       text: other.text,
       body: other.body,
       action: other.action,
       moreInfo: other.moreInfo,
-      displayRule: other.displayRule,
     );
   }
 
@@ -905,24 +889,24 @@ class QuizDataResponse extends QuizData {
 class QuizDataAction extends QuizData {
   ActionData action;
 
-  QuizDataAction({String? id, required this.action, QuizData? defaultFollowUp, Rule? displayRule}) :
-        super(id: id, text: '', defaultFollowUp: defaultFollowUp, displayRule: displayRule, allowSkip: true);
+  QuizDataAction({String? id, required String key, required this.action, QuizData? defaultFollowUp}) :
+        super(id: id, key: key, text: '', allowSkip: true);
 
   factory QuizDataAction.fromJson(Map<String, dynamic> json) {
     return QuizDataAction(
       action: ActionData.fromJson(json['action']),
 
       id: JsonUtils.stringValue(json['id']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
     );
   }
 
   factory QuizDataAction.fromOther(QuizDataAction other) {
     return QuizDataAction(
       id: other.id,
+      key: other.key,
       action: other.action,
-      displayRule: other.displayRule,
     );
   }
 
@@ -946,27 +930,27 @@ class QuizDataAction extends QuizData {
 class QuizDataQuiz extends QuizData {
   Quiz quiz;
 
-  QuizDataQuiz({required String text, required this.quiz, String? moreInfo, String? id, Rule? displayRule}) :
-        super(id: id, text: text, moreInfo: moreInfo, displayRule: displayRule, allowSkip: true);
+  QuizDataQuiz({required String text, required this.quiz, String? moreInfo, String? id, required String key}) :
+        super(id: id, key: key, text: text, moreInfo: moreInfo, allowSkip: true);
 
   factory QuizDataQuiz.fromJson(Map<String, dynamic> json) {
     return QuizDataQuiz(
       quiz: Quiz.fromJson(json['quiz']),
 
       id: JsonUtils.stringValue(json['id']),
+      key: JsonUtils.stringValue(json['key']) ?? '',
       text: json['text'],
       moreInfo: JsonUtils.stringValue(json['more_info']),
-      displayRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['display_rule'])),
     );
   }
 
   factory QuizDataQuiz.fromOther(QuizDataQuiz other) {
     return QuizDataQuiz(
       id: other.id,
+      key: other.key,
       text: other.text,
       quiz: other.quiz,
       moreInfo: other.moreInfo,
-      displayRule: other.displayRule,
     );
   }
 

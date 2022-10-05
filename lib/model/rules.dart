@@ -34,6 +34,8 @@ abstract class RuleCondition {
   }
 
   Map<String, dynamic> toJson();
+
+  bool evaluate(RuleEngine engine);
 }
 
 class RuleComparison extends RuleCondition {
@@ -69,6 +71,56 @@ class RuleComparison extends RuleCondition {
       'default_result': defaultResult,
     };
   }
+
+  @override
+  bool evaluate(RuleEngine engine) {
+    dynamic dataVal = engine.getVal(dataKey, dataParam);
+
+    if (compareTo is String) {
+      compareTo = engine.getVal(compareTo, compareToParam);
+    }
+    return compare(operator, dataVal, compareTo, defaultResult: defaultResult);
+  }
+
+  bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
+    try {
+      switch (operator) {
+        case "<":
+          if (val is DateTime && ruleVal is DateTime) {
+            return val.isBefore(ruleVal);
+          }
+          return val < ruleVal;
+        case ">":
+          if (val is DateTime && ruleVal is DateTime) {
+            return val.isAfter(ruleVal);
+          }
+          return ruleVal < val;
+        case "<=":
+          return val <= ruleVal;
+        case ">=":
+          return ruleVal <= val;
+        case "==":
+          if (val is DateTime && ruleVal is DateTime) {
+            return val.isAtSameMomentAs(ruleVal);
+          }
+          return val == ruleVal;
+        case "!=":
+          if (val is DateTime && ruleVal is DateTime) {
+            return !val.isAtSameMomentAs(ruleVal);
+          }
+          return val != ruleVal;
+        case "in_range":
+          if (val is MetricValue && ruleVal is MetricRange) {
+            return ruleVal.inRange(val);
+          }
+          return defaultResult;
+        default:
+          return defaultResult;
+      }
+    } catch(e) {
+      return defaultResult;
+    }
+  }
 }
 
 class RuleLogic extends RuleCondition {
@@ -83,6 +135,23 @@ class RuleLogic extends RuleCondition {
       'operator': operator,
       'conditions': conditions.map((e) => e.toJson()),
     };
+  }
+
+  @override
+  bool evaluate(RuleEngine engine) {
+    bool defaultResult = (operator == "and");
+    for (RuleCondition subCondition in conditions) {
+      if (operator == "and") {
+        if (!subCondition.evaluate(engine)) {
+          return false;
+        }
+      } else if (operator == "or") {
+        if (subCondition.evaluate(engine)) {
+          return true;
+        }
+      }
+    }
+    return defaultResult;
   }
 }
 
@@ -165,6 +234,30 @@ class RuleAction extends RuleActionResult {
       'priority': priority,
     };
   }
+
+  dynamic evaluate(RuleEngine engine) {
+    switch (action) {
+      case "return":
+        return engine.getValOrCollection(data);
+      case "sum":
+        dynamic evaluatedData = engine.getValOrCollection(data);
+        if (data is List<dynamic>) {
+          num sum = 0;
+          for (dynamic item in evaluatedData) {
+            if (item is num) {
+              sum += item;
+            }
+          }
+          return sum;
+        } else if (data is num) {
+          return data;
+        }
+        return null;
+      case "notify":
+        //TODO: Send notification to providers/emergency contacts
+    }
+    return null;
+  }
 }
 
 class RuleActionList extends RuleActionResult {
@@ -221,76 +314,45 @@ class Rule extends RuleResult {
     }
     return rules;
   }
-}
 
-class RuleKey {
-  final String key;
-  final String? subKey;
-
-  RuleKey(this.key, this.subKey);
-
-  factory RuleKey.fromKey(String key) {
-    int dotIdx = key.indexOf('.');
-    if (dotIdx >= 0) {
-      return RuleKey(
-        key.substring(0, dotIdx),
-        key.substring(dotIdx + 1),
-      );
+  RuleActionResult? evaluate(RuleEngine engine) {
+    if (condition == null) {
+      return null;
     }
-    return RuleKey(key, null);
-  }
 
-  RuleKey? get subRuleKey {
-    if (subKey != null) {
-      return RuleKey.fromKey(subKey!);
+    RuleResult? result;
+    if (condition!.evaluate(engine)) {
+      result = trueResult;
+    } else {
+      result = falseResult;
     }
+
+    if (result is RuleReference) {
+      Rule? subRule = engine.subRules[result.ruleKey];
+      if (subRule != null) {
+        return subRule.evaluate(engine);
+      }
+    } else if (result is Rule) {
+      return result.evaluate(engine);
+    } else if (result is RuleAction) {
+      return result;
+    } else if (result is RuleActionList) {
+      return result;
+    }
+
     return null;
   }
 }
 
-class RuleData {
-  dynamic param;
-  dynamic value;
-
-  RuleData({required this.value, this.param});
-
-  bool match(dynamic param) {
-    if (param is Map) {
-      if (this.param is Map) {
-        if (!mapEquals(param, this.param)) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    } else if (param is List) {
-      if (this.param is List) {
-        if (!listEquals(param, this.param)) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    } else {
-      if (param != this.param) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-}
-
-class RuleSet {
+class RuleEngine {
   Map<String, dynamic> constants;
   Map<String, Map<String, String>> strings;
-  List<Rule> rules;
   Map<String, Rule> subRules;
   final Map<String, List<RuleData>> _dataCache = {};
 
-  RuleSet({this.constants = const {}, this.strings = const {}, required this.rules, this.subRules = const {}});
+  RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}});
 
-  factory RuleSet.fromJson(Map<String, dynamic> json) {
+  factory RuleEngine.fromJson(Map<String, dynamic> json) {
     Map<String, Rule> subRules = {};
     dynamic subRulesJson = json["sub_rules"];
     if (subRulesJson is Map<String, dynamic>) {
@@ -323,10 +385,9 @@ class RuleSet {
       }
     }
 
-    return RuleSet(
+    return RuleEngine(
       constants: constMap,
       strings: stringsMap,
-      rules: Rule.listFromJson(json["rules"]),
       subRules: subRules,
     );
   }
@@ -354,22 +415,18 @@ class RuleSet {
     return null;
   }
 
-  void update() {
-    evaluateRules();
-  }
-
   void clearCache() {
     _dataCache.clear();
   }
 
-  void evaluateRules({bool clearCache = true}) {
+  void evaluateRules(List<Rule> rules, {bool clearCache = true}) {
     if (clearCache) {
       this.clearCache();
     }
     RuleActionResult? topAction;
     for (Rule rule in rules) {
       try {
-        RuleActionResult? action = evaluateRule(rule);
+        RuleActionResult? action = rule.evaluate(this);
         if (action != null && (topAction == null || topAction.priority < action.priority)) {
           topAction = action;
         }
@@ -379,98 +436,12 @@ class RuleSet {
     }
 
     if (topAction is RuleAction) {
-      evaluateAction(topAction);
+      topAction.evaluate(this);
     } else if (topAction is RuleActionList) {
       for (RuleAction action in topAction.actions) {
-        evaluateAction(action);
+        action.evaluate(this);
       }
     }
-  }
-
-  dynamic evaluateAction(RuleAction? action) {
-    if (action == null) {
-      return;
-    }
-
-    switch (action.action) {
-      case "return":
-        return getValOrCollection(action.data);
-      case "sum":
-        dynamic data = getValOrCollection(action.data);
-        if (data is List<dynamic>) {
-          num sum = 0;
-          for (dynamic item in data) {
-            if (item is num) {
-              sum += item;
-            }
-          }
-          return sum;
-        } else if (data is num) {
-          return data;
-        }
-        return null;
-      case "notify":
-        //TODO: Send notification to providers/emergency contacts
-    }
-    return null;
-  }
-
-  RuleActionResult? evaluateRule(Rule rule) {
-    RuleResult? result;
-    if (evaluateCondition(rule.condition)) {
-      result = rule.trueResult;
-    } else {
-      result = rule.falseResult;
-    }
-
-    if (result is RuleReference) {
-      Rule? subRule = subRules[result.ruleKey];
-      if (subRule != null) {
-        return evaluateRule(subRule);
-      }
-    } else if (result is Rule) {
-      return evaluateRule(result);
-    } else if (result is RuleAction) {
-      return result;
-    } else if (result is RuleActionList) {
-      return result;
-    }
-
-    return null;
-  }
-
-  bool evaluateCondition(RuleCondition? condition) {
-    if (condition == null) {
-      return true;
-    }
-
-    if (condition is RuleLogic) {
-      bool defaultResult = (condition.operator == "and");
-      for (RuleCondition subCondition in condition.conditions) {
-        if (condition.operator == "and") {
-          if (evaluateCondition(subCondition) == false) {
-            return false;
-          }
-        } else if (condition.operator == "or") {
-          if (evaluateCondition(subCondition) == true) {
-            return true;
-          }
-        }
-      }
-      return defaultResult;
-    }
-
-    if (condition is RuleComparison) {
-      dynamic dataVal = getVal(condition.dataKey, condition.dataParam);
-
-      dynamic compareTo = condition.compareTo;
-      if (compareTo is String) {
-        compareTo = getVal(compareTo, condition.compareToParam);
-      }
-      return compare(condition.operator, dataVal, compareTo, defaultResult: condition.defaultResult);
-    }
-
-    return false;
   }
 
   String localeString(String key) {
@@ -610,45 +581,63 @@ class RuleSet {
         return null;
     }
   }
+}
 
-  bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
-    try {
-      switch (operator) {
-        case "<":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isBefore(ruleVal);
-          }
-          return val < ruleVal;
-        case ">":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAfter(ruleVal);
-          }
-          return ruleVal < val;
-        case "<=":
-          return val <= ruleVal;
-        case ">=":
-          return ruleVal <= val;
-        case "==":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAtSameMomentAs(ruleVal);
-          }
-          return val == ruleVal;
-        case "!=":
-          if (val is DateTime && ruleVal is DateTime) {
-            return !val.isAtSameMomentAs(ruleVal);
-          }
-          return val != ruleVal;
-        case "in_range":
-          if (val is MetricValue && ruleVal is MetricRange) {
-            return ruleVal.inRange(val);
-          }
-          return defaultResult;
-        default:
-          return defaultResult;
-      }
-    } catch(e) {
-      return defaultResult;
+class RuleKey {
+  final String key;
+  final String? subKey;
+
+  RuleKey(this.key, this.subKey);
+
+  factory RuleKey.fromKey(String key) {
+    int dotIdx = key.indexOf('.');
+    if (dotIdx >= 0) {
+      return RuleKey(
+        key.substring(0, dotIdx),
+        key.substring(dotIdx + 1),
+      );
     }
+    return RuleKey(key, null);
+  }
+
+  RuleKey? get subRuleKey {
+    if (subKey != null) {
+      return RuleKey.fromKey(subKey!);
+    }
+    return null;
+  }
+}
+
+class RuleData {
+  dynamic param;
+  dynamic value;
+
+  RuleData({required this.value, this.param});
+
+  bool match(dynamic param) {
+    if (param is Map) {
+      if (this.param is Map) {
+        if (!mapEquals(param, this.param)) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else if (param is List) {
+      if (this.param is List) {
+        if (!listEquals(param, this.param)) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    } else {
+      if (param != this.param) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
