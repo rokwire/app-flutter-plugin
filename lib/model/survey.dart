@@ -18,7 +18,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 import 'package:uuid/uuid.dart';
 
-class Quiz {
+class Quiz extends RuleEngine {
   late Map<String, QuizData> questions;
   DateTime? lastUpdated;
   bool scored;
@@ -29,23 +29,11 @@ class Quiz {
   QuizStats? _stats;
   QuizStats? get stats { return _stats; }
 
-  List<Rule>? followUpRules;
-  List<Rule>? scoreRules;
-  RuleEngine ruleEngine;
-
-  Quiz({Map<String, QuizData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type, this.followUpRules, this.scoreRules, required this.ruleEngine});
+  Quiz({Map<String, QuizData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type,
+    Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+      : super(constants: constants, strings: strings, subRules: subRules);
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
-    Quiz quiz = Quiz(
-      scored: json['scored'] ?? true,
-      type: json['type'] ?? false,
-      resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
-      lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
-      followUpRules: Rule.listFromJson(json["follow_up_rules"]),
-      scoreRules: Rule.listFromJson(json["score_rules"]),
-      ruleEngine: RuleEngine.fromJson(json),
-    );
-
     Map<String, QuizData> questionMap = {};
     Map<String, dynamic> questionData = JsonUtils.mapValue(json) ?? {};
     questionData.forEach((key, value) {
@@ -54,7 +42,15 @@ class Quiz {
       }
     });
 
-    
+    return Quiz(
+      scored: json['scored'] ?? true,
+      type: json['type'] ?? false,
+      resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
+      lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
+      constants: RuleEngine.constantsFromJson(json),
+      strings: RuleEngine.stringsFromJson(json),
+      subRules: RuleEngine.subRulesFromJson(json),
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -65,8 +61,9 @@ class Quiz {
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
       'type': type,
       'stats': _stats?.toJson(),
-      'follow_up_rules': JsonUtils.encodeList(followUpRules ?? []),
-      'score_rules': JsonUtils.encodeList(scoreRules ?? []),
+      'constants': RuleEngine.constantsToJson(),
+      'strings': RuleEngine.stringsToJson(),
+      'sub_rules': RuleEngine.subRulesToJson(),
     };
   }
 
@@ -81,25 +78,13 @@ class Quiz {
       scored: other.scored,
       resultRule: other.resultRule,
       type: other.type,
-      followUpRules: other.followUpRules,
-      scoreRules: other.scoreRules,
-      ruleEngine: other.ruleEngine,
+      constants: other.constants,
+      strings: other.strings,
+      subRules: other.subRules,
     );
   }
 
-  // static Map<dynamic, QuizData>? followUpsFromOther(QuizData other) {
-  //   Map<dynamic, QuizData>? followUps;
-  //   if (other.followUps != null) {
-  //     followUps = {};
-  //     for (MapEntry<dynamic, QuizData> entry in other.followUps!.entries) {
-  //       followUps[entry.key] = QuizData.fromOther(entry.value);
-  //     }
-  //   }
-  //   return followUps;
-  // }
-
   dynamic getProperty(RuleKey? key) {
-    //TODO: incorporate scoreRules
     QuizStats? stats = _stats;
     switch (key?.key) {
       case null:
@@ -109,9 +94,9 @@ class Quiz {
           return stats.complete / stats.total;
         }
         return null;
-      case "score":
+      case "scores":
         if (stats != null) {
-          return stats.ok / stats.scored;
+          return stats.scores;
         }
         return null;
       case "last_updated":
@@ -127,6 +112,11 @@ class Quiz {
         return null;
       case "result_data":
         return resultData;
+      case "question":
+        RuleKey? questionKey = key?.subRuleKey;
+        if (questionKey != null) {
+          return questions[questionKey.key].getProperty(questionKey.subRuleKey, param);
+        }
     }
     return null;
   }
@@ -134,7 +124,7 @@ class Quiz {
   void evaluate() {
     QuizStats stats = QuizStats();
     for (QuizData question in questions.values) {
-      stats += question.stats(scoreRules);
+      stats += question.stats();
     }
     _stats = stats;
 
@@ -142,17 +132,17 @@ class Quiz {
       return;
     }
 
-    ruleEngine.clearCache();
-    RuleActionResult? ruleResult = resultRule!.evaluate(ruleEngine);
+    clearCache();
+    RuleActionResult? ruleResult = resultRule!.evaluate(this);
     if (ruleResult is RuleAction) {
-      dynamic data = ruleResult.evaluate(ruleEngine);
+      dynamic data = ruleResult.evaluate(this);
       resultData = data;
     }
   }
 
   bool canContinue({bool deep = true}) {
     for (QuizData question in questions.values) {
-      if (!question.canContinue(followUpRules ?? [], deep: deep)) {
+      if (!question.canContinue(deep: deep)) {
         return false;
       }
     }
@@ -165,22 +155,29 @@ class QuizStats {
   final int complete;
 
   final int scored;
-  final int ok;
+  final Map<String?, num> scores;
 
   final Map<String, dynamic> responseData;
 
-  QuizStats({this.total = 0, this.complete = 0, this.scored = 0, this.ok = 0, this.responseData = const {}});
+  QuizStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.responseData = const {}});
 
   QuizStats operator +(QuizStats other) {
     Map<String, dynamic> newData = {};
     newData.addAll(responseData);
     newData.addAll(other.responseData);
 
+    Map<String?, num> newScores = {};
+    newScores.addAll(scores);
+    other.scores.forEach((key, value) {
+      num currentScore = newScores[key] ?? 0;
+      newScores[key] = currentScore + value;
+    });
+
     return QuizStats(
       total: total + other.total,
       complete: complete + other.complete,
       scored: scored + other.scored,
-      ok: ok + other.ok,
+      scores: newScores,
       responseData: newData,
     );
   }
@@ -190,7 +187,7 @@ class QuizStats {
       'total': total,
       'complete': complete,
       'scored': scored,
-      'ok': ok
+      'scores': scores,
     };
   }
 
@@ -204,8 +201,10 @@ class QuizStats {
         return complete;
       case "scored":
         return scored;
-      case "ok":
-        return ok;
+      case "scores":
+        return scores;
+      case "total_score":
+        return totalScore;
       case "response_data":
         String? subKey = key?.subKey;
         if (subKey != null) {
@@ -215,21 +214,25 @@ class QuizStats {
     }
     return null;
   }
+
+  num get totalScore => scores.values.fold(0, (partialSum, current) => partialSum + current);
 }
 
 abstract class QuizData {
   late final String id;
   final String key;
+  final String? section;
   final bool allowSkip;
   final String text;
   final String? moreInfo;
-  final bool scored;
   dynamic response;
-
+  
+  final String? defaultFollowUpKey;
   final Rule? defaultResponseRule;
-  late final Quiz quiz;
-
-  QuizData({String? id, required this.key, required this.text, this.defaultResponseRule, this.moreInfo, this.response, this.scored = false, this.allowSkip = false, Quiz? quiz}) {
+  final Rule? followUpRule;
+  final Rule? scoreRule;
+  QuizData({String? id, required this.key, this.section, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule, 
+    this.moreInfo, this.response, this.allowSkip = false}) {
     if (id == null) {
       this.id = const Uuid().v4();
     } else {
@@ -290,116 +293,90 @@ abstract class QuizData {
   }
 
   Map<String, dynamic> toJson();
+  // num? get score;
 
   Map<String, dynamic> baseJson() {
     return {
       'id': id,
       'key': key,
+      'section': section,
       'text': text,
       'more_info': moreInfo,
-      'scored': scored,
       'response': response,
       'allow_skip': allowSkip,
+      'default_follow_up_key': defaultFollowUpKey,
       'default_response_rule': JsonUtils.encode(defaultResponseRule?.toJson()),
+      'follow_up_rule': JsonUtils.encode(followUpRule?.toJson()),
+      'score_rule': JsonUtils.encode(scoreRule?.toJson()),
     };
   }
 
   bool get isQuestion;
 
-  bool shouldDisplay(RuleSet? rules) {
-    if (rules == null) {
-      if (displayRule == null) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    if (displayRule != null) {
-      rules.clearCache();
-      RuleActionResult? result = rules.evaluateRule(displayRule!);
-      if (result is RuleAction) {
-        dynamic data = rules.evaluateAction(result);
-        if (data is bool) {
-          return data;
-        }
-      }
-      return false;
-    }
-    return true;
-  }
-
-  void evaluateDefaultResponse(RuleEngine ruleEngine, {bool deep = true}) {
+  void evaluateDefaultResponse(Quiz quiz, {bool deep = true}) {
     if (defaultResponseRule != null) {
-      ruleEngine.clearCache();
-      RuleActionResult? result = defaultResponseRule!.evaluate(ruleEngine);
+      quiz.clearCache();
+      RuleActionResult? result = defaultResponseRule!.evaluate(quiz);
       if (result is RuleAction) {
-        dynamic data = result.evaluate(ruleEngine);
-        response = data;
+        response = result.evaluate(quiz);
       }
     }
     if (deep) {
-      followUp?.evaluateDefaultResponse(ruleEngine);
+      followUp(quiz)?.evaluateDefaultResponse(quiz);
     }
   }
 
-  QuizData? get followUp {
-    //TODO: evaluate quiz followUpRules
-    if (response == null) {
-      return null;
-    }
-    String? followUpKey;
-    for (ResponseCheck responseFollowUp in responseFollowUps ?? []) {
-      if (responseFollowUp.evaluate(response)) {
-        followUpKey = responseFollowUp.value
+  QuizData? followUp(Quiz quiz) {
+    if (response != null) {
+      if (followUpRule != null) {
+        RuleActionResult? result = followUpRule!.evaluate(quiz);
+        if (result is RuleAction) {
+          dynamic data = result.evaluate(quiz);
+          if (data is QuizData) {
+            return data;
+          }
+        }
+      } else {
+        return defaultFollowUp(quiz);
       }
     }
-    if (responseFollowUp != null) {
-      return responseFollowUp;
-    }
-    return defaultFollowUp;
+
+    return null;
   }
 
-  QuizData? get defaultFollowUp => followUps?[''];
+  QuizData? defaultFollowUp(Quiz quiz) => defaultFollowUpKey != null ? quiz.questions[defaultFollowUpKey] : null;
 
-  QuizStats stats(RuleEngine? rules) {
-    //TODO: incorporate responseScores
-    if (!shouldDisplay(rules)) {
-      return QuizStats();
-    }
-
+  QuizStats stats() {
     Map<String, dynamic> responseData = {};
     responseData[key] = response;
+
+    //TODO: evaluate scoreRule here
 
     QuizStats stats = QuizStats(
       total: isQuestion ? 1 : 0,
       complete: response != null ? 1 : 0,
-      scored: scored ? 1 : 0,
-      ok: scored  ? 1 : 0,
+      scored: scoreRule != null ? 1 : 0,
+      ok: scored ? 1 : 0,
       responseData: responseData,
     );
 
-    QuizData? follow = followUp;
-    if (follow != null) {
-      stats += follow.stats(rules);
-    }
+    // QuizData? follow = followUp;
+    // if (follow != null) {
+    //   stats += follow.stats(rules);
+    // }
 
     return stats;
   }
 
-  bool canContinue(List<Rule> rules, {bool deep = true}) {
-    if (!shouldDisplay(rules)) {
-      return true;
-    }
-
+  bool canContinue(Quiz quiz, {bool deep = true}) {
     if (!allowSkip && response == null) {
       return false;
     }
 
     if (deep) {
-      QuizData? follow = followUp;
+      QuizData? follow = followUp(quiz);
       if (follow != null) {
-        return follow.canContinue(rules);
+        return follow.canContinue(quiz);
       }
     }
 
@@ -412,9 +389,9 @@ class QuizQuestionTrueFalse extends QuizData {
   final List<OptionData> options;
 
   QuizQuestionTrueFalse({required String question, this.yesNo = false,
-    String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
+    String? id, required String key, String? section, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
-        super(id: id, allowSkip: allowSkip, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
+        super(id: id, allowSkip: allowSkip, key: key, section: section, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored);
 
   factory QuizQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
     return QuizQuestionTrueFalse(
@@ -423,10 +400,14 @@ class QuizQuestionTrueFalse extends QuizData {
       question: json['text'],
       id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
+      section: JsonUtils.stringValue(json['section']),
       scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
+      // defaultFollowUpKey
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
+      // followUpRule
+      // scoreRule
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -644,10 +625,11 @@ class QuizQuestionNumeric extends QuizData {
   final double? maximum;
   final bool wholeNum;
   final bool slider;
+  final bool selfScore;
 
   QuizQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.slider = false,
     String? id, required String key, Rule? defaultResponseRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, scored: scored, allowSkip: allowSkip);
+      : super(id: id, key: key, text: question, defaultResponseRule: defaultResponseRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
   factory QuizQuestionNumeric.fromJson(Map<String, dynamic> json) {
     return QuizQuestionNumeric(
@@ -697,7 +679,32 @@ class QuizQuestionNumeric extends QuizData {
   @override
   bool get isQuestion => true;
 
-  bool? get ok {
+  @override
+  QuizStats stats() {
+    if (scoreRule == null && !selfScore) {
+      return QuizStats();
+    }
+
+    Map<String, dynamic> responseData = {};
+    responseData[key] = response;
+
+    QuizStats stats = QuizStats(
+      total: isQuestion ? 1 : 0,
+      complete: response != null ? 1 : 0,
+      scored: scored ? 1 : 0,
+      ok: scored  ? 1 : 0,
+      responseData: responseData,
+    );
+
+    QuizData? follow = followUp;
+    if (follow != null) {
+      stats += follow.stats(rules);
+    }
+
+    return stats;
+  }
+
+  num? get score {
     if (minimum == null && maximum == null) {
       return null;
     }
@@ -968,153 +975,5 @@ class QuizDataQuiz extends QuizData {
   @override
   bool? get ok {
     return null;
-  }
-}
-
-
-class ResponseCheck {
-  final String operation;
-  final dynamic key;
-  final dynamic value;
-
-  ResponseCheck({required this.operation, required this.key, required this.value});
-
-  factory ResponseCheck.fromJson(Map<String, dynamic> json) {
-    return ResponseCheck(
-      operation: JsonUtils.stringValue(json['operation']) ?? '',
-      key: json['key'],
-      value: json['value']
-    );
-  }
-
-  static List<ResponseCheck> listFromJson(List<dynamic>? jsonList) {
-    if (jsonList == null) {
-      return [];
-    }
-    List<ResponseCheck> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(ResponseCheck.fromJson(json));
-      }
-    }
-    return list;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'operation': operation,
-      'key': key,
-      'value': value,
-    };
-  }
-
-  bool evaluate(dynamic result) {
-    try {
-      switch (operation) {
-        case "<":
-          if (key is DateTime && result is DateTime) {
-            return result.isBefore(key);
-          }
-          return result < key;
-        case ">":
-          if (result is DateTime && key is DateTime) {
-            return result.isAfter(key);
-          }
-          return key < result;
-        case "<=":
-          return result <= key;
-        case ">=":
-          return key <= result;
-        case "==":
-          if (result is DateTime && key is DateTime) {
-            return result.isAtSameMomentAs(key);
-          }
-          return result == key;
-        case "!=":
-          if (result is DateTime && key is DateTime) {
-            return !result.isAtSameMomentAs(key);
-          }
-          return result != key;
-        case "in_range":
-          if (key is! Iterable<num> || (key as Iterable<num>).length != 2) {
-            return false;
-          }
-          num min = (key as Iterable<num>).elementAt(0);
-          num max = (key as Iterable<num>).elementAt(1);
-          if (result is num) {
-            return result >= min && result <= max;
-          } else if (result is Iterable<num>) {
-            for (num item in result) {
-              if (item < min || item > max) {
-                return false;
-              }
-            }
-            return true;
-          }
-          return false;
-        case "all":
-          if (key is Iterable) {
-            if (result is Iterable) {
-              for (dynamic item in key) {
-                for (dynamic resultItem in result) {
-                  if (resultItem != item) {
-                    return false;
-                  }
-                }
-              }
-            } else {
-              for (dynamic item in key) {
-                if (result != item) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          }
-          return false;
-        case "any":
-          if (key is Iterable) {
-            if (result is Iterable) {
-              for (dynamic item in key) {
-                for (dynamic resultItem in result) {
-                  if (resultItem == item) {
-                    return true;
-                  }
-                }
-              }
-            } else {
-              for (dynamic item in key) {
-                if (result == item) {
-                  return true;
-                }
-              }
-            }
-          }
-          return false;
-        case "none":
-          if (key is Iterable) {
-            if (result is Iterable) {
-              for (dynamic item in key) {
-                for (dynamic resultItem in result) {
-                  if (resultItem == item) {
-                    return false;
-                  }
-                }
-              }
-            } else {
-              for (dynamic item in key) {
-                if (result == item) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          }
-          return false;
-      }
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return false;
   }
 }

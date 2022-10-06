@@ -344,15 +344,16 @@ class Rule extends RuleResult {
   }
 }
 
-class RuleEngine {
+abstract class RuleEngine {
   Map<String, dynamic> constants;
   Map<String, Map<String, String>> strings;
   Map<String, Rule> subRules;
+
   final Map<String, List<RuleData>> _dataCache = {};
 
   RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}});
 
-  factory RuleEngine.fromJson(Map<String, dynamic> json) {
+  static Map<String, Rule> subRulesFromJson(Map<String, dynamic> json) {
     Map<String, Rule> subRules = {};
     dynamic subRulesJson = json["sub_rules"];
     if (subRulesJson is Map<String, dynamic>) {
@@ -360,7 +361,10 @@ class RuleEngine {
         subRules[entry.key] = Rule.fromJson(entry.value);
       }
     }
+    return subRules;
+  }
 
+  static Map<String, Map<String, String>> stringsFromJson(Map<String, dynamic> json) {
     Map<String, Map<String, String>> stringsMap = {};
     dynamic stringsJson = json["strings"];
     if (stringsJson is Map<String, dynamic>) {
@@ -376,7 +380,10 @@ class RuleEngine {
         }
       }
     }
+    return stringsMap;
+  }
 
+  static Map<String, dynamic> constantsFromJson(Map<String, dynamic> json) {
     Map<String, dynamic> constMap = {};
     dynamic constJson = json["constants"];
     if (constJson is Map<String, dynamic>) {
@@ -384,12 +391,7 @@ class RuleEngine {
         constMap[constant.key] = loadConstant(constant.value);
       }
     }
-
-    return RuleEngine(
-      constants: constMap,
-      strings: stringsMap,
-      subRules: subRules,
-    );
+    return constMap;
   }
 
   static dynamic loadConstant(dynamic constant) {
