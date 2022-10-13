@@ -16,10 +16,8 @@
 
 import 'dart:convert';
 import 'dart:io';
-// import 'dart:ui';
 
 import 'package:collection/collection.dart';
-// import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
@@ -28,7 +26,6 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
@@ -36,27 +33,33 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
 class Styles extends Service implements NotificationsListener{
+  
   static const String notifyChanged    = "edu.illinois.rokwire.styles.changed";
-  static const String _assetsName      = "styles.json";
-
-  File?      _cacheFile;
+  
+  static const String _assetsName       = "styles.json";
+  static const String _debugAssetsName  = "styles.debug.json";
+  
+  Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
-  StylesContentMode? _contentMode;
-  Map<String, dynamic>? _stylesData;
-  Map<String, dynamic>? get stylesData => _stylesData;
-  
+  Map<String, dynamic>? _assetsManifest;
+
+  Map<String, dynamic>? _assetsStyles;
+  Map<String, dynamic>? _appAssetsStyles;
+  Map<String, dynamic>? _netAssetsStyles;
+  Map<String, dynamic>? _debugAssetsStyles;
+
   UiColors? _colors;
   UiColors? get colors => _colors;
 
   UiFontFamilies? _fontFamilies;
   UiFontFamilies? get fontFamilies => _fontFamilies;
 
-  UiStyles? _uiStyles;
-  UiStyles? get uiStyles => _uiStyles;
+  UiTextStyles? _textStyles;
+  UiTextStyles? get textStyles => _textStyles;
 
-  UiImages? _uiImages;
-  UiImages? get uiImages => _uiImages;
+  UiImages? _images;
+  UiImages? get images => _images;
 
   // Singletone Factory
 
@@ -86,32 +89,17 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   Future<void> initService() async {
-    await getCacheFile();
     
-    _contentMode = stylesContentModeFromString(Storage().stylesContentMode) ?? StylesContentMode.auto;
-    if (_contentMode == StylesContentMode.auto) {
-      await loadFromCache();
-      if (_stylesData == null) {
-        await loadFromAssets();
-      }
-      if (_stylesData == null) {
-        await loadFromNet();
-      }
-      else {
-        loadFromNet();
-      }
-    }
-    else if (_contentMode == StylesContentMode.assets) {
-      await loadFromAssets();
-    }
-    else if (_contentMode == StylesContentMode.debug) {
-      await loadFromCache();
-      if (_stylesData == null) {
-        await loadFromAssets();
-      }
-    }
-    
-    if (_stylesData != null) {
+    _assetsDir = await getAssetsDir();
+    _assetsManifest = await loadAssetsManifest();
+    _assetsStyles = await loadFromAssets(assetsKey);
+    _appAssetsStyles = await loadFromAssets(appAssetsKey);
+    _netAssetsStyles = await loadFromCache(netCacheFileName);
+    _debugAssetsStyles = await loadFromCache(debugCacheFileName);
+
+    if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
+      build();
+      updateFromNet();
       await super.initService();
     }
     else {
@@ -126,235 +114,7 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Storage(), Config()};
-  }
-
-  // ContentMode
-
-  StylesContentMode? get contentMode {
-    return _contentMode;
-  }
-
-  set contentMode(StylesContentMode? contentMode) {
-    setContentMode(contentMode);
-  }
-
-  Future<void> setContentMode(StylesContentMode? contentMode, [String? stylesContent]) async {
-    if (_contentMode != contentMode) {
-      _contentMode = contentMode;
-      Storage().stylesContentMode = stylesContentModeToString(contentMode);
-
-      _stylesData = null;
-      clearCache();
-
-      if (_contentMode == StylesContentMode.auto) {
-        await loadFromAssets();
-        await loadFromNet(notifyUpdate: false);
-      }
-      else if (_contentMode == StylesContentMode.assets) {
-        await loadFromAssets();
-      }
-      else if (_contentMode == StylesContentMode.debug) {
-        if (stylesContent != null) {
-          applyContent(stylesContent, cacheContent: true);
-        }
-        else {
-          await loadFromAssets();
-        }
-      }
-
-      NotificationService().notify(notifyChanged, null);
-    }
-    else if (contentMode == StylesContentMode.debug) {
-      if (stylesContent != null) {
-        applyContent(stylesContent, cacheContent: true);
-      }
-      else {
-        _stylesData = null;
-        clearCache();
-        await loadFromAssets();
-      }
-      NotificationService().notify(notifyChanged, null);
-    }
-  }
-
-  Map<String, dynamic>? get content {
-    return _stylesData;
-  }
-
-  // Public
-  TextStyle? getTextStyle(String key, {Map<String, dynamic>? data}){
-    return constructTextStyle(key: key, data: data);
-  }
-
-  // Private
-
-  @protected
-  String get cacheFileName => _assetsName;
-
-  @protected
-  Future<void> getCacheFile() async {
-    Directory? assetsDir = Config().assetsCacheDir;
-    if ((assetsDir != null) && !await assetsDir.exists()) {
-      await assetsDir.create(recursive: true);
-    }
-    String? cacheFilePath = (assetsDir != null) ? join(assetsDir.path, cacheFileName) : null;
-    _cacheFile = (cacheFilePath != null) ? File(cacheFilePath) : null;
-  }
-
-  @protected
-  Future<void> loadFromCache() async {
-    try {
-      String? stylesContent = ((_cacheFile != null) && await _cacheFile!.exists()) ? await _cacheFile!.readAsString() : null;
-      await applyContent(stylesContent);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  @protected
-  Future<void> clearCache() async {
-    if ((_cacheFile != null) && await _cacheFile!.exists()) {
-      try { await _cacheFile!.delete(); }
-      catch (e) { debugPrint(e.toString()); }
-    }
-  }
-
-  @protected
-  String get resourceAssetsKey => 'assets/$_assetsName';
-
-  @protected
-  Future<String?> loadResourceAssetsJsonString() => rootBundle.loadString(resourceAssetsKey);
-
-  @protected
-  Future<void> loadFromAssets() async {
-    try {
-      String? stylesContent = await loadResourceAssetsJsonString();
-      await applyContent(stylesContent);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  @protected
-  String get networkAssetName => _assetsName;
-
-  @protected
-  Future<void> loadFromNet({bool cacheContent = true, bool notifyUpdate = true}) async {
-    try {
-      http.Response? response = (Config().assetsUrl != null) ? await Network().get("${Config().assetsUrl}/$networkAssetName") : null;
-      String? stylesContent =  ((response != null) && (response.statusCode == 200)) ? response.body : null;
-      if(stylesContent != null) {
-        await applyContent(stylesContent, cacheContent: cacheContent, notifyUpdate: notifyUpdate);
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  @protected
-  Future<void> applyContent(String? stylesContent, {bool cacheContent = false, bool notifyUpdate = false}) async {
-    try {
-      Map<String, dynamic>? styles = (stylesContent != null) ? JsonUtils.decode(stylesContent) : null;
-      if ((styles != null) && styles.isNotEmpty && ((_stylesData == null) || !const DeepCollectionEquality().equals(_stylesData, styles))) {
-        _stylesData = styles;
-        buildData();
-        if ((_cacheFile != null) && cacheContent) {
-          await _cacheFile!.writeAsString(stylesContent!, flush: true);
-        }
-        if (notifyUpdate) {
-          NotificationService().notify(notifyChanged, null);
-        }
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  @protected
-  void buildData(){
-    buildColorsData();
-    buildFontFamiliesData();
-    _uiImages = UiImages(imageMap: (_stylesData != null) ? JsonUtils.mapValue(_stylesData!['image']) : null, colors: _colors);
-  }
-
-  @protected
-  void buildColorsData(){
-    if(_stylesData != null) {
-      dynamic colorsData = _stylesData!["color"];
-      Map<String, Color> colors = <String, Color>{};
-      if(colorsData is Map){
-        colorsData.forEach((dynamic key, dynamic value){
-          if(key is String && value is String){
-            Color? color;
-            if(value.startsWith("#")){
-              color = UiColors.fromHex(value);
-            } else if(value.contains(".")){
-              color = UiColors.fromHex(MapPathKey.entry(_stylesData, value));
-            }
-            if (color != null) {
-              colors[key] = color;
-            }
-          }
-        });
-      }
-      _colors = UiColors(colors);
-    }
-  }
-
-  @protected
-  void buildFontFamiliesData(){
-    if(_stylesData != null) {
-      dynamic familyData = _stylesData!["font_family"];
-      if(familyData is Map) {
-        Map<String, String> castedData = familyData.cast();
-        _fontFamilies = UiFontFamilies(castedData);
-      }
-    }
-  }
-
-  TextStyle? constructTextStyle({String? key, Map<String, dynamic>? data}){
-    if(StringUtils.isEmpty(key)){
-      return null;
-    }
-
-    Map<String, dynamic>? stylesData = JsonUtils.mapValue(_stylesData!["text_style"]);
-    Map<String, dynamic>? style = stylesData != null ? JsonUtils.mapValue(stylesData[key]) : null;
-
-    if(style == null){
-      return null;
-    }
-    Color? color = extractTextStyleColor(JsonUtils.stringValue(style['color']), data);
-    Color? decorationColor = extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), data);
-    double? fontSize = extractCustomValue(style['size'], data) ?? JsonUtils.doubleValue(style['size']);
-    double? fontHeight = extractCustomValue(style['height'], data) ?? JsonUtils.doubleValue(style['height']);
-    String? fontFamily = extractCustomValue(style['font_family'], data) ?? JsonUtils.stringValue(style['font_family']);
-    TextDecoration? textDecoration = extractCustomValue(style['decoration'], data) ?? textDecorationFromString(JsonUtils.stringValue(style["decoration"])); // Not mandatory
-    TextOverflow? textOverflow = extractCustomValue(style['overflow'], data) ?? textOverflowFromString(JsonUtils.stringValue(style["overflow"])); // Not mandatory
-    TextDecorationStyle? decorationStyle = extractCustomValue(style['decoration_style'], data) ?? textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"])); // Not mandatory
-    FontWeight? fontWeight = extractCustomValue(style['weight'], data) ?? fontWeightFromString(JsonUtils.stringValue(style["weight"])); // Not mandatory
-    double? letterSpacing = extractCustomValue(style['letter_spacing'], data) ?? JsonUtils.doubleValue(style['letter_spacing']); // Not mandatory
-    double? wordSpacing = extractCustomValue(style['word_spacing'], data) ?? JsonUtils.doubleValue(style['word_spacing']); // Not mandatory
-    double? decorationThickness = extractCustomValue(style['decoration_thickness'], data) ?? JsonUtils.doubleValue(style['decoration_thickness']); // Not mandatory
-
-    return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
-  }
-
-  Color? extractTextStyleColor(String? rawColorData,  Map<String, dynamic>? values){
-    if(rawColorData != null){
-      if(rawColorData.startsWith("#")){
-        return UiColors.fromHex(rawColorData);
-      } else if(rawColorData.startsWith('\$')){
-        Color? customColor = extractCustomValue(rawColorData, values);
-        if(customColor != null) {
-          return customColor;
-        }
-      } else {
-        return colors!.getColor(rawColorData);
-      }
-    }
-    return null;
+    return { Config() };
   }
 
   // NotificationsListener
@@ -373,173 +133,233 @@ class Styles extends Service implements NotificationsListener{
     else if (state == AppLifecycleState.resumed) {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
-        if ((Config().refreshTimeout < pausedDuration.inSeconds) && (_contentMode == StylesContentMode.auto)) {
-          loadFromNet();
+        if (Config().refreshTimeout < pausedDuration.inSeconds) {
+          updateFromNet();
         }
       }
     }
   }
-}
 
-//Text style properties from string
-TextDecoration? textDecorationFromString(String? decoration){
-  switch(decoration){
-    case "lineThrough" : return TextDecoration.lineThrough;
-    case "overline" : return TextDecoration.overline;
-    case "underline" : return TextDecoration.underline;
-    default : return null;
+  // Implementation
+
+  @protected
+  Future<Directory?> getAssetsDir() async {
+    Directory? assetsDir = Config().assetsCacheDir;
+    if ((assetsDir != null) && !await assetsDir.exists()) {
+      await assetsDir.create(recursive: true);
+    }
+    return assetsDir;
   }
-}
 
-TextOverflow? textOverflowFromString(String? value) {
-    switch (value) {
-      case "clip" : return TextOverflow.clip;
-      case "fade" :return TextOverflow.fade;
-      case "ellipsis" :return TextOverflow.ellipsis;
-      case "visible" :return TextOverflow.visible;
-      default : return null;
+  @protected
+  String get assetsKey => 'assets/$_assetsName';
+
+  @protected
+  String get appAssetsKey => 'app/assets/$_assetsName';
+
+  @protected
+  Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
+    try { return JsonUtils.decodeMap(await rootBundle.loadString(assetsKey)); }
+    catch(e) { debugPrint(e.toString()); }
+    return null;
+  }
+
+  @protected
+  String get netCacheFileName => _assetsName;
+
+  @protected
+  String get debugCacheFileName => _debugAssetsName;
+
+  @protected
+  Future<Map<String, dynamic>?> loadFromCache(String cacheFileName) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (await cacheFile.exists()) {
+          return JsonUtils.decodeMap(await cacheFile.readAsString());
+        }
+      }
+    }
+    catch(e) { debugPrint(e.toString()); }
+    return null;
+  }
+
+  @protected
+  Future<void> saveToCache(String cacheFileName, String? content) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (content != null) {
+          cacheFile.writeAsString(content, flush: true);
+        }
+        else if (await cacheFile.exists()) {
+          await cacheFile.delete();
+        }
+      }
+    }
+    catch(e) { debugPrint(e.toString()); }
+  }
+
+  @protected
+  String get netAssetFileName => _assetsName;
+
+  @protected
+  Future<String?> loadContentStringFromNet() async {
+    if (Config().assetsUrl != null) {
+      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
+      return (response?.statusCode == 200) ? response?.body : null;
+    }
+    return null;
+  }
+
+  @protected
+  Future<void> updateFromNet() async {
+    String? netAssetsString = await loadContentStringFromNet();
+    Map<String, dynamic>? netAssetsStyles = JsonUtils.decodeMap(netAssetsString);
+    if (((netAssetsStyles != null) && !const DeepCollectionEquality().equals(netAssetsStyles, _netAssetsStyles)) ||
+        ((netAssetsStyles == null) && (_netAssetsStyles != null)))
+    {
+      _netAssetsStyles = netAssetsStyles;
+      await saveToCache(netCacheFileName, netAssetsString);
+      build();
+      NotificationService().notify(notifyChanged, null);
     }
   }
 
-TextDecorationStyle? textDecorationStyleFromString(String? value) {
-  switch (value) {
-    case "dotted" : return TextDecorationStyle.dotted;
-    case "dashed" : return TextDecorationStyle.dashed;
-    case "double" : return TextDecorationStyle.double;
-    case "solid" : return TextDecorationStyle.solid;
-    case "wavy" : return TextDecorationStyle.wavy;
-    default : return null;
+  @protected
+  void build() {
+    Map<String, dynamic> styles = contentMap;
+    _colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
+    _fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
+    _textStyles = UiTextStyles.fromJson(styleMap: JsonUtils.mapValue(styles['text_style']), colors: _colors);
+    _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors,
+      assetPathResolver: resolveImageAssetPath,);
   }
-}
 
-FontWeight? fontWeightFromString(String? value) {
-  switch (value) {
-    case "w100" : return FontWeight.w100;
-    case "w200" : return FontWeight.w200;
-    case "w300" : return FontWeight.w300;
-    case "w400" : return FontWeight.w400;
-    case "w500" : return FontWeight.w500;
-    case "w600" : return FontWeight.w600;
-    case "w700" : return FontWeight.w700;
-    case "w800" : return FontWeight.w800;
-    case "w900" : return FontWeight.w900;
-    default : return null;
+  Map<String, dynamic> get contentMap {
+    Map<String, dynamic> stylesMap = <String, dynamic>{};
+    MapUtils.merge(stylesMap, _assetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _appAssetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _netAssetsStyles, level: 1);
+    MapUtils.merge(stylesMap, _debugAssetsStyles, level: 1);
+    return stylesMap;
   }
-}
 
-//TextStyle Custom values like color or height
-T? extractCustomValue<T>(dynamic rawValue, Map<String, dynamic>? values){
-  if(rawValue!= null && rawValue is String && rawValue.startsWith('\$')){
-    String customValueKey = rawValue.replaceFirst("\$", "");
-    dynamic customValue = values!= null && values.containsKey(customValueKey) ? values[customValueKey] : null;
-    if(customValue != null && customValue is T){
-      return customValue;
+  Map<String, dynamic>? get debugMap => _debugAssetsStyles;
+
+  set debugMap(Map<String, dynamic>? value) {
+    if (((value != null) && !const DeepCollectionEquality().equals(_debugAssetsStyles, value)) ||
+        ((value == null) && (_debugAssetsStyles != null)))
+      {
+        _debugAssetsStyles = value;
+        build();
+        NotificationService().notify(notifyChanged, null);
+        saveToCache(netCacheFileName, JsonUtils.encode(_debugAssetsStyles));
+      }
+  }
+
+  @protected
+  List<String> get imageAssetsPaths => ['app/images', 'images'];
+
+  @protected
+  String resolveImageAssetPath(Uri uri) {
+    if ((uri.pathSegments.length == 1) && (_assetsManifest != null)) {
+      for (String assetsPath in imageAssetsPaths) {
+        if (assetsPath.isNotEmpty) {
+          String imagePath = "$assetsPath/${uri.pathSegments.first}";
+          if (_assetsManifest!.containsKey(imagePath)) {
+            return imagePath;
+          }
+        }
+      }
     }
+    return uri.path;
   }
-  return null;
-}
 
-enum StylesContentMode { auto, assets, debug }
-
-String? stylesContentModeToString(StylesContentMode? contentMode) {
-  if (contentMode == StylesContentMode.auto) {
-    return 'auto';
-  }
-  else if (contentMode == StylesContentMode.assets) {
-    return 'assets';
-  }
-  else if (contentMode == StylesContentMode.debug) {
-    return 'debug';
-  }
-  else {
-    return null;
-  }
-}
-
-StylesContentMode? stylesContentModeFromString(String? value) {
-  if (value == 'auto') {
-    return StylesContentMode.auto;
-  }
-  else if (value == 'assets') {
-    return StylesContentMode.assets;
-  }
-  else if (value == 'debug') {
-    return StylesContentMode.debug;
-  }
-  else {
-    return null;
+  @protected
+  Future<Map<String, dynamic>?> loadAssetsManifest() async {
+    return JsonUtils.decodeMap(await rootBundle.loadString('AssetManifest.json'));
   }
 }
 
 class UiColors {
 
-  final Map<String,Color> _colorMap;
+  final Map<String, Color> colorMap;
 
-  UiColors(this._colorMap);
+  UiColors(this.colorMap);
 
-  Color? get fillColorPrimary                   => _colorMap['fillColorPrimary'];
-  Color? get fillColorPrimaryTransparent03      => _colorMap['fillColorPrimaryTransparent03'];
-  Color? get fillColorPrimaryTransparent05      => _colorMap['fillColorPrimaryTransparent05'];
-  Color? get fillColorPrimaryTransparent09      => _colorMap['fillColorPrimaryTransparent09'];
-  Color? get fillColorPrimaryTransparent015     => _colorMap['fillColorPrimaryTransparent015'];
-  Color? get textColorPrimary                   => _colorMap['textColorPrimary'];
-  Color? get fillColorPrimaryVariant            => _colorMap['fillColorPrimaryVariant'];
-  Color? get textColorPrimaryVariant            => _colorMap['textColorPrimaryVariant'];
-  Color? get fillColorSecondary                 => _colorMap['fillColorSecondary'];
-  Color? get fillColorSecondaryTransparent05    => _colorMap['fillColorSecondaryTransparent05'];
-  Color? get textColorSecondary                 => _colorMap['textColorSecondary'];
-  Color? get fillColorSecondaryVariant          => _colorMap['fillColorSecondaryVariant'];
-  Color? get textColorSecondaryVariant          => _colorMap['textColorSecondaryVariant'];
-
-  Color? get surface                    => _colorMap['surface'];
-  Color? get textSurface                => _colorMap['textSurface'];
-  Color? get textSurfaceTransparent15   => _colorMap['textSurfaceTransparent15'];
-  Color? get surfaceAccent              => _colorMap['surfaceAccent'];
-  Color? get surfaceAccentTransparent15 => _colorMap['surfaceAccentTransparent15'];
-  Color? get textSurfaceAccent          => _colorMap['textSurfaceAccent'];
-  Color? get background                 => _colorMap['background'];
-  Color? get textBackground             => _colorMap['textBackground'];
-  Color? get backgroundVariant          => _colorMap['backgroundVariant'];
-  Color? get textBackgroundVariant      => _colorMap['textBackgroundVariant'];
-  Color? get headlineText               => _colorMap['headlineText'];
-
-  Color? get accentColor1               => _colorMap['accentColor1'];
-  Color? get accentColor2               => _colorMap['accentColor2'];
-  Color? get accentColor3               => _colorMap['accentColor3'];
-  Color? get accentColor4               => _colorMap['accentColor4'];
-
-  Color? get iconColor                  => _colorMap['iconColor'];
-
-  Color? get eventColor                 => _colorMap['eventColor'];
-  Color? get diningColor                => _colorMap['diningColor'];
-  Color? get placeColor                 => _colorMap['placeColor'];
-
-  Color? get white                      => _colorMap['white'];
-  Color? get whiteTransparent01         => _colorMap['whiteTransparent01'];
-  Color? get whiteTransparent06         => _colorMap['whiteTransparent06'];
-  Color? get blackTransparent06         => _colorMap['blackTransparent06'];
-  Color? get blackTransparent018        => _colorMap['blackTransparent018'];
-
-  Color? get mediumGray                 => _colorMap['mediumGray'];
-  Color? get mediumGray1                => _colorMap['mediumGray1'];
-  Color? get mediumGray2                => _colorMap['mediumGray2'];
-  Color? get lightGray                  => _colorMap['lightGray'];
-  Color? get surfaceGrey                => _colorMap['surfaceGrey'];
-  Color? get disabledTextColor          => _colorMap['disabledTextColor'];
-  Color? get disabledTextColorTwo       => _colorMap['disabledTextColorTwo'];
-  Color? get dividerLine                => _colorMap['dividerLine'];
-
-  Color? get mango                      => _colorMap['mango'];
-
-  Color? get saferLocationWaitTimeColorRed        => _colorMap['saferLocationWaitTimeColorRed'];
-  Color? get saferLocationWaitTimeColorYellow     => _colorMap['saferLocationWaitTimeColorYellow'];
-  Color? get saferLocationWaitTimeColorGreen      => _colorMap['saferLocationWaitTimeColorGreen'];
-  Color? get saferLocationWaitTimeColorGrey       => _colorMap['saferLocationWaitTimeColorGrey'];
-
-  Color? getColor(String key){
-    dynamic color = _colorMap[key];
-    return (color is Color) ? color : null;
+  static UiColors? fromJson(Map<String, dynamic>? json) {
+    Map<String, Color> colors = <String, Color>{};
+    json?.forEach((String key, dynamic value) {
+      if ((value is String) && value.startsWith("#")) {
+        Color? color = UiColors.fromHex(value);
+        if (color != null) {
+          colors[key] = color;
+        }
+      }
+    });
+    return UiColors(colors);
   }
+
+  Color? get fillColorPrimary                   => colorMap['fillColorPrimary'];
+  Color? get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'];
+  Color? get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'];
+  Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
+  Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
+  Color? get textColorPrimary                   => colorMap['textColorPrimary'];
+  Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
+  Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
+  Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
+  Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
+  Color? get textColorSecondary                 => colorMap['textColorSecondary'];
+  Color? get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'];
+  Color? get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'];
+
+  Color? get surface                    => colorMap['surface'];
+  Color? get textSurface                => colorMap['textSurface'];
+  Color? get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'];
+  Color? get surfaceAccent              => colorMap['surfaceAccent'];
+  Color? get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'];
+  Color? get textSurfaceAccent          => colorMap['textSurfaceAccent'];
+  Color? get background                 => colorMap['background'];
+  Color? get textBackground             => colorMap['textBackground'];
+  Color? get backgroundVariant          => colorMap['backgroundVariant'];
+  Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
+
+  Color? get accentColor1               => colorMap['accentColor1'];
+  Color? get accentColor2               => colorMap['accentColor2'];
+  Color? get accentColor3               => colorMap['accentColor3'];
+  Color? get accentColor4               => colorMap['accentColor4'];
+
+  Color? get iconColor                  => colorMap['iconColor'];
+
+  Color? get eventColor                 => colorMap['eventColor'];
+  Color? get diningColor                => colorMap['diningColor'];
+  Color? get placeColor                 => colorMap['placeColor'];
+
+  Color? get white                      => colorMap['white'];
+  Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
+  Color? get whiteTransparent06         => colorMap['whiteTransparent06'];
+  Color? get blackTransparent06         => colorMap['blackTransparent06'];
+  Color? get blackTransparent018        => colorMap['blackTransparent018'];
+
+  Color? get mediumGray                 => colorMap['mediumGray'];
+  Color? get mediumGray1                => colorMap['mediumGray1'];
+  Color? get mediumGray2                => colorMap['mediumGray2'];
+  Color? get lightGray                  => colorMap['lightGray'];
+  Color? get disabledTextColor          => colorMap['disabledTextColor'];
+  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
+
+  Color? get mango                      => colorMap['mango'];
+
+  Color? get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'];
+  Color? get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'];
+  Color? get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'];
+  Color? get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'];
+
+  Color? getColor(String key) => colorMap[key];
 
   static Color? fromHex(String? value) {
     if (value != null) {
@@ -567,68 +387,93 @@ class UiColors {
   }
 }
 
-class UiFontFamilies{
-  final Map<String, String> _familyMap;
-  UiFontFamilies(this._familyMap);
+class UiFontFamilies {
+  final Map<String, String> familyMap;
+  UiFontFamilies(this.familyMap);
 
-  String? get black        => _familyMap["black"];
-  String? get blackIt      => _familyMap["black_italic"];
-  String? get bold         => _familyMap["bold"];
-  String? get boldIt       => _familyMap["bold_italic"];
-  String? get extraBold    => _familyMap["extra_bold"];
-  String? get extraBoldIt  => _familyMap["extra_bold_italic"];
-  String? get light        => _familyMap["light"];
-  String? get lightIt      => _familyMap["light_italic"];
-  String? get medium       => _familyMap["medium"];
-  String? get mediumIt     => _familyMap["medium_italic"];
-  String? get regular      => _familyMap["regular"];
-  String? get regularIt    => _familyMap["regular_italic"];
-  String? get semiBold     => _familyMap["semi_bold"];
-  String? get semiBoldIt   => _familyMap["semi_bold_italic"];
-  String? get thin         => _familyMap["thin"];
-  String? get thinIt       => _familyMap["thin_italic"];
+  static UiFontFamilies? fromJson(Map<String, dynamic>? json) {
+    Map<String, String>? familyMap;
+    try { familyMap = (json != null) ? json.cast<String, String>() : null; }
+    catch(e) { debugPrint(e.toString()); }
+    return UiFontFamilies(familyMap ?? <String, String>{});
+  }
 
-  String? fromCode(String? code) => _familyMap[code];
+  String? get black        => familyMap["black"];
+  String? get blackIt      => familyMap["black_italic"];
+  String? get bold         => familyMap["bold"];
+  String? get boldIt       => familyMap["bold_italic"];
+  String? get extraBold    => familyMap["extra_bold"];
+  String? get extraBoldIt  => familyMap["extra_bold_italic"];
+  String? get light        => familyMap["light"];
+  String? get lightIt      => familyMap["light_italic"];
+  String? get medium       => familyMap["medium"];
+  String? get mediumIt     => familyMap["medium_italic"];
+  String? get regular      => familyMap["regular"];
+  String? get regularIt    => familyMap["regular_italic"];
+  String? get semiBold     => familyMap["semi_bold"];
+  String? get semiBoldIt   => familyMap["semi_bold_italic"];
+  String? get thin         => familyMap["thin"];
+  String? get thinIt       => familyMap["thin_italic"];
+
+  String? fromCode(String? code) => familyMap[code];
 }
 
-class UiStyles {
+class UiTextStyles {
 
-  final Map<String, TextStyle> _styleMap;
-  UiStyles(this._styleMap);
+  final Map<String, TextStyle> styleMap;
+  final UiColors? colors;
 
-  TextStyle? get headerBar          => _styleMap['header_bar'];
-  TextStyle? get headline1          => _styleMap["headline1"];
-  TextStyle? get headline2          => _styleMap["headline2"];
-  TextStyle? get headline3          => _styleMap["headline3"];
-  TextStyle? get headline4          => _styleMap["headline4"];
-  TextStyle? get headline5          => _styleMap["headline5"];
-  TextStyle? get body               => _styleMap["body"];
+  UiTextStyles(Map<String, TextStyle>? styleMap, { this.colors }) :
+    styleMap = styleMap ?? <String, TextStyle> {};
 
-  TextStyle? get label              => _styleMap["label"];
-  TextStyle? get labelSelected      => _styleMap["labelSelected"];
-  TextStyle? get list               => _styleMap["list"];
-  TextStyle? get link               => _styleMap["link"];
-  TextStyle? get alert              => _styleMap["alert"];
-  TextStyle? get success            => _styleMap["success"];
+  static UiTextStyles fromJson({Map<String, dynamic>? styleMap, UiColors? colors}){
+    Map<String, TextStyle>? styles;
+    if(styleMap != null){
+      styles = <String, TextStyle> {};
+      styleMap.forEach((key, value) {
+        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), colors: colors);
+        if(style!=null){
+          styles![key] = style;
+        }
+      });
+    }
+    return UiTextStyles(styles, colors: colors);
+  }  
 
-  TextStyle? get quizzesHeadline1 => _styleMap["quizzesHeadline1"];
+  TextStyle? getTextStyle(String key){
+    return styleMap[key];
+  }
 
-  TextStyle? get appBarTitle => _styleMap["appBarTitle"];
-  TextStyle? get sectionTitle => _styleMap["sectionTitle"];
+  static TextStyle? constructTextStyle({Map<String, dynamic>? style, UiColors? colors}){
+    if(style == null){
+      return null;
+    }
 
-  TextStyle? get readingCard => _styleMap["readingCard"];
-  TextStyle? get readingCard2 => _styleMap["readingCard2"];
+    Color? color = _TextStyleUtils.extractTextStyleColor(JsonUtils.stringValue(style['color']), colors);
+    Color? decorationColor = _TextStyleUtils.extractTextStyleColor(JsonUtils.stringValue(style['decoration_color']), colors);
+    double? fontSize =  JsonUtils.doubleValue(style['size']);
+    double? fontHeight = JsonUtils.doubleValue(style['height']);
+    String? fontFamily = JsonUtils.stringValue(style['font_family']);
+    TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
+    TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
+    TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
+    FontWeight? fontWeight = _TextStyleUtils.fontWeightFromString(JsonUtils.stringValue(style["weight"]));
+    double? letterSpacing = JsonUtils.doubleValue(style['letter_spacing']);
+    double? wordSpacing = JsonUtils.doubleValue(style['word_spacing']);
+    double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
 
-  TextStyle? get cardHeadline1 => _styleMap["cardHeadline1"];
-  TextStyle? get cardHeadline2 => _styleMap["cardHeadline2"];
-  TextStyle? get cardHeadline3 => _styleMap["cardHeadline3"];
+    return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+  }
 }
 
 class UiImages {
   final Map<String, dynamic>? imageMap;
   final UiColors? colors;
+  final String Function(Uri uri)? assetPathResolver;
 
-  UiImages({this.imageMap, this.colors});
+
+  UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
   Widget? getImage(String imageKey, {Key? key, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, 
@@ -795,7 +640,7 @@ class UiImages {
       repeat ??= ImageRepeat.noRepeat;
       filterQuality ??= FilterQuality.low;
 
-      if (uri.hasScheme) {
+      if (uri.scheme.isNotEmpty) {
         return Image.network(uri.toString(),
           key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
@@ -803,8 +648,8 @@ class UiImages {
           headers: networkHeaders
         );
       }
-      else if (!uri.hasEmptyPath) {
-        return Image.asset(uri.toString(),
+      else if (uri.path.isNotEmpty) {
+        return Image.asset((assetPathResolver != null) ? assetPathResolver!(uri) : uri.path,
           key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
@@ -919,4 +764,63 @@ class _ImageUtils {
 
   static T? lookup<T>(List<T> values, String? value) =>
     (value != null) ? values.firstWhereOrNull((e) => e.toString() == '${T.toString()}.$value') : null;
+}
+
+class _TextStyleUtils {
+
+  static TextDecoration? textDecorationFromString(String? decoration){
+    switch(decoration){
+      case "lineThrough" : return TextDecoration.lineThrough;
+      case "overline" : return TextDecoration.overline;
+      case "underline" : return TextDecoration.underline;
+      default : return null;
+    }
+  }
+
+  static TextOverflow? textOverflowFromString(String? value) {
+    switch (value) {
+      case "clip" : return TextOverflow.clip;
+      case "fade" :return TextOverflow.fade;
+      case "ellipsis" :return TextOverflow.ellipsis;
+      case "visible" :return TextOverflow.visible;
+      default : return null;
+    }
+  }
+
+  static TextDecorationStyle? textDecorationStyleFromString(String? value) {
+    switch (value) {
+      case "dotted" : return TextDecorationStyle.dotted;
+      case "dashed" : return TextDecorationStyle.dashed;
+      case "double" : return TextDecorationStyle.double;
+      case "solid" : return TextDecorationStyle.solid;
+      case "wavy" : return TextDecorationStyle.wavy;
+      default : return null;
+    }
+  }
+
+  static FontWeight? fontWeightFromString(String? value) {
+    switch (value) {
+      case "w100" : return FontWeight.w100;
+      case "w200" : return FontWeight.w200;
+      case "w300" : return FontWeight.w300;
+      case "w400" : return FontWeight.w400;
+      case "w500" : return FontWeight.w500;
+      case "w600" : return FontWeight.w600;
+      case "w700" : return FontWeight.w700;
+      case "w800" : return FontWeight.w800;
+      case "w900" : return FontWeight.w900;
+      default : return null;
+    }
+  }
+
+  static Color? extractTextStyleColor(String? rawColorData, UiColors? colors){
+    if(rawColorData != null){
+      if(rawColorData.startsWith("#")){
+        return UiColors.fromHex(rawColorData);
+      } else {
+        return colors?.getColor(rawColorData);
+      }
+    }
+    return null;
+  }
 }

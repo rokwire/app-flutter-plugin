@@ -26,17 +26,8 @@ class AppDateTime with Service {
 
   static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
 
-  timezone.Location? _universityLocation;
-  timezone.Location? get universityLocation => _universityLocation;
-
   String? _localTimeZone;
   String? get localTimeZone => _localTimeZone;
-
-  Future<Uint8List?> get timezoneDatabase async => null;
-
-  String? get universityLocationName  => null;
-
-  bool get useDeviceLocalTimeZone => false;
 
   // Singletone Factory
 
@@ -74,20 +65,25 @@ class AppDateTime with Service {
       debugPrint('AppDateTime: Failed to retrieve local timezone.');
     }
 
-    String? locationName = universityLocationName;
-    if (locationName != null) {
-      _universityLocation = timezone.getLocation(locationName);
-      if (_universityLocation == null) {
-        debugPrint('AppDateTime: Failed to retrieve university location.');
-      }
-    }
-
     await super.initService();
   }
+
+  // Implementation
 
   DateTime get now {
     return DateTime.now();
   }
+
+  Future<Uint8List?> get timezoneDatabase async => null;
+
+  String? get universityLocationName  => null;
+
+  timezone.Location? get universityLocation {
+    String? locationName = universityLocationName;
+    return (locationName != null) ? timezone.getLocation(locationName) : null;
+  }
+
+  bool get useDeviceLocalTimeZone => false;
 
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
@@ -106,10 +102,11 @@ class AppDateTime with Service {
   }
 
   DateTime? getUniLocalTimeFromUtcTime(DateTime? dateTimeUtc) {
-    if ((dateTimeUtc == null) || (_universityLocation == null)) {
+    timezone.Location? uniLocation = universityLocation;
+    if ((dateTimeUtc == null) || (uniLocation == null)) {
       return null;
     }
-    timezone.TZDateTime tzDateTimeUni = timezone.TZDateTime.from(dateTimeUtc, _universityLocation!);
+    timezone.TZDateTime tzDateTimeUni = timezone.TZDateTime.from(dateTimeUtc, uniLocation);
     return tzDateTimeUni;
   }
 
@@ -135,7 +132,8 @@ class AppDateTime with Service {
       if (ignoreTimeZone! || useDeviceLocalTimeZone) {
           formattedDateTime = dateFormat.format(dateTime);
       } else {
-          timezone.TZDateTime? tzDateTime = (_universityLocation != null) ? timezone.TZDateTime.from(dateTime, _universityLocation!) : null;
+          timezone.Location? uniLocation = universityLocation;
+          timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
           formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
       }
       if (showTzSuffix && (formattedDateTime != null)) {

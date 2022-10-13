@@ -85,8 +85,8 @@ class RibbonButton extends StatefulWidget {
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
-  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Styles().uiImages?.getImage(leftIconAsset!, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Styles().uiImages?.getImage(rightIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Styles().images?.getImage(leftIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true) : null;
 
   @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;

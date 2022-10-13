@@ -36,11 +36,13 @@ class Assets with Service implements NotificationsListener {
 
   static const String _assetsName      = "assets.json";
 
-  Map<String, dynamic>? _internalContent;
-  Map<String, dynamic>? _externalContent;
-  File?      _cacheFile;
+  Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
+  Map<String, dynamic>? _defAssets;
+  Map<String, dynamic>? _appAssets;
+  Map<String, dynamic>? _netAssets;
+  Map<String, dynamic>? _assets;
 
   // Singletone Factory
 
@@ -70,13 +72,15 @@ class Assets with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _cacheFile = await getCacheFile();
-    _internalContent = await loadFromAssets();
-    _externalContent = await loadFromCache();
+    _assetsDir = await getAssetsDir();
+    _defAssets = await loadFromAssets(assetsKey);
+    _appAssets = await loadFromAssets(appAssetsKey);
+    _netAssets = await loadFromCache(netCacheFileName);
 
-    if (_internalContent != null) {
-      await super.initService();
+    if ((_defAssets != null) || (_appAssets != null) || (_netAssets != null)) {
+      build();
       updateFromNet();
+      await super.initService();
     }
     else {
       throw ServiceError(
@@ -90,7 +94,7 @@ class Assets with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Config()};
+    return { Config() };
   }
 
   // NotificationsListener
@@ -116,99 +120,112 @@ class Assets with Service implements NotificationsListener {
     }
   }
 
-  // data
-
-  @protected Map<String, dynamic>? get internalContent => _internalContent;
-  @protected Map<String, dynamic>? get externalContent => _externalContent;
-  @protected File? get cacheFile => _cacheFile;
-  @protected DateTime? get pausedDateTime => _pausedDateTime;
-
   // Assets
 
   dynamic operator [](dynamic key) {
-    return MapPathKey.entry(_externalContent, key) ?? MapPathKey.entry(_internalContent, key);
+    return MapPathKey.entry(_assets, key);
   }
 
-  String? randomStringFromListWithKey(dynamic key) {
-    dynamic list = this[key];
-    dynamic entry = ((list != null) && (list is List) && list.isNotEmpty) ? list[Random().nextInt(list.length)] : null;
-    return ((entry != null) && (entry is String)) ? entry : null;
+  String? randomStringFromListWithKey(String key) {
+    List<dynamic>? list = JsonUtils.listValue(this[key]);
+    return ((list != null) && list.isNotEmpty) ? JsonUtils.stringValue(list[Random().nextInt(list.length)]) : null;
   }
 
   // Implementation
-  @protected
-  String get cacheFileName => _assetsName;
 
-  @protected
-  Future<File?> getCacheFile() async {
+  Future<Directory?> getAssetsDir() async {
     Directory? assetsDir = Config().assetsCacheDir;
     if ((assetsDir != null) && !await assetsDir.exists()) {
       await assetsDir.create(recursive: true);
     }
-    String? cacheFilePath = (assetsDir != null) ? join(assetsDir.path, cacheFileName) : null;
-    return (cacheFilePath != null) ? File(cacheFilePath) : null;
+    return assetsDir;
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadFromCache() async {
-    try {
-      String? assetsContent = ((_cacheFile != null) && await _cacheFile!.exists()) ? await _cacheFile!.readAsString() : null;
-      return JsonUtils.decodeMap(assetsContent);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+  String get assetsKey => 'assets/$_assetsName';
+
+  @protected
+  String get appAssetsKey => 'app/assets/$_assetsName';
+
+  @protected
+  Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
+    try { return JsonUtils.decodeMap(await rootBundle.loadString(assetsKey)); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   @protected
-  String get resourceAssetsKey => 'assets/$_assetsName';
+  String get netCacheFileName => _assetsName;
 
   @protected
-  Future<String> loadResourceAssetsJsonString() => rootBundle.loadString(resourceAssetsKey);
-
-  @protected
-  Future<Map<String, dynamic>?> loadFromAssets() async {
-    try {
-      String assetsContent = await loadResourceAssetsJsonString();
-      return JsonUtils.decodeMap(assetsContent);
-    } catch (e) {
-      debugPrint(e.toString());
+  Future<Map<String, dynamic>?> loadFromCache(String cacheFileName) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (await cacheFile.exists()) {
+          return JsonUtils.decodeMap(await cacheFile.readAsString());
+        }
+      }
     }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   @protected
-  String get networkAssetName => _assetsName;
+  Future<void> saveToCache(String cacheFileName, String? content) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (content != null) {
+          cacheFile.writeAsString(content, flush: true);
+        }
+        else if (await cacheFile.exists()) {
+          await cacheFile.delete();
+        }
+      }
+    }
+    catch(e) { debugPrint(e.toString()); }
+  }
+
+  @protected
+  String get netAssetFileName => _assetsName;
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    try {
-      http.Response? response = (Config().assetsUrl != null) ? await Network().get("${Config().assetsUrl}/$networkAssetName") : null;
-      return ((response != null) && (response.statusCode == 200)) ? response.body : null;
-    } catch (e) {
-      debugPrint(e.toString());
+    if (Config().assetsUrl != null) {
+      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
+      return (response?.statusCode == 200) ? response?.body : null;
     }
     return null;
   }
 
   @protected
   Future<void> updateFromNet() async {
-    try {
-      String? externalContentString = await loadContentStringFromNet();
-      Map<String, dynamic>? externalContent = JsonUtils.decodeMap(externalContentString);
-      if ((externalContent != null) && !const DeepCollectionEquality().equals(_externalContent, externalContent)) {
-        if (externalContent.isNotEmpty) {
-          _externalContent = externalContent;
-          await _cacheFile?.writeAsString(externalContentString!, flush: true);
-        }
-        else {
-          _externalContent = null;
-          await _cacheFile?.delete();
-        }
-        NotificationService().notify(notifyChanged);
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+    String? netAssetsString = await loadContentStringFromNet();
+    Map<String, dynamic>? netAssets = JsonUtils.decodeMap(netAssetsString);
+    if (((netAssets != null) && !const DeepCollectionEquality().equals(netAssets, _netAssets)) ||
+        ((netAssets == null) && (_netAssets != null)))
+    {
+      _netAssets = netAssets;
+      await saveToCache(netCacheFileName, netAssetsString);
+      build();
+      NotificationService().notify(notifyChanged, null);
+    }
+  }
+
+  @protected
+  void build() {
+    _assets = <String, dynamic>{};
+    if (_defAssets != null) {
+      _assets!.addAll(_defAssets!);
+    }
+    if (_appAssets != null) {
+      _assets!.addAll(_appAssets!);
+    }
+    if (_netAssets != null) {
+      _assets!.addAll(_netAssets!);
     }
   }
 }

@@ -160,7 +160,7 @@ class FlexContent extends StatefulWidget {
       return Semantics(label: closeButtonLabel, hint: closeButtonHint, button: true, excludeSemantics: true, child:
         InkWell(onTap: onTap, child:
           Container(width: closeButtonSize.width, height: closeButtonSize.height, alignment: Alignment.center, child:
-            Styles().uiImages?.getImage(imageAsset, excludeFromSemantics: true)
+            Styles().images?.getImage(imageAsset, excludeFromSemantics: true)
           )
         )
       );
