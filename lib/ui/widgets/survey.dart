@@ -18,36 +18,36 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
-import 'package:rokwire_plugin/ui/panels/quiz_question_panel.dart';
+import 'package:rokwire_plugin/ui/panels/survey_question_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
-class QuizWidgets {
+class SurveyWidgets {
   BuildContext context;
-  Function(bool) onChangeQuizResponse;
+  Function(bool) onChangeSurveyResponse;
 
-  QuizWidgets(this.context, this.onChangeQuizResponse);
+  SurveyWidgets(this.context, this.onChangeSurveyResponse);
 
-  Widget? buildInlineQuizWidget(QuizData quiz, {TextStyle? textStyle, Function(dynamic)? onComplete}) {
+  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, Function(dynamic)? onComplete}) {
     Widget? widget;
 
-    if (quiz is QuizQuestionMultipleChoice) {
-      widget = buildMultipleChoiceQuizSection(quiz);
-    } else if (quiz is QuizQuestionTrueFalse) {
-      widget = buildTrueFalseQuizSection(quiz);
-    } else if (quiz is QuizQuestionDateTime) {
-      widget = buildDateEntryQuizSection(quiz);
-    } else if (quiz is QuizQuestionNumeric) {
-      widget = buildNumericQuizSection(quiz);
-    } else if (quiz is QuizDataResponse) {
-      widget = buildResponseQuizSection(quiz);
-    } else if (quiz is QuizQuestionText) {
-      widget = buildTextQuizSection(quiz);
-    } else if (quiz is QuizDataQuiz) {
-      widget = buildQuizQuizSection(quiz, onComplete: onComplete);
+    if (survey is SurveyQuestionMultipleChoice) {
+      widget = buildMultipleChoiceSurveySection(survey);
+    } else if (survey is SurveyQuestionTrueFalse) {
+      widget = buildTrueFalseSurveySection(survey);
+    } else if (survey is SurveyQuestionDateTime) {
+      widget = buildDateEntrySurveySection(survey);
+    } else if (survey is SurveyQuestionNumeric) {
+      widget = buildNumericSurveySection(survey);
+    } else if (survey is SurveyDataResponse) {
+      widget = buildResponseSurveySection(survey);
+    } else if (survey is SurveyQuestionText) {
+      widget = buildTextSurveySection(survey);
+    } else if (survey is SurveyDataSurvey) {
+      widget = buildSurveySurveySection(survey, onComplete: onComplete);
     }
 
     return widget != null ? Column(
@@ -59,25 +59,25 @@ class QuizWidgets {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Visibility(visible: !quiz.allowSkip, child: Text("* ", style: Styles().uiStyles?.alert)),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", style: Styles().textStyles?.getTextStyle('alert'))),
               Flexible(
                 child: Text(
-                  quiz.text,
+                  survey.text,
                   textAlign: TextAlign.start,
-                  style: textStyle ?? Styles().uiStyles?.headline2,
+                  style: textStyle ?? Styles().textStyles?.getTextStyle('headline2'),
                 ),
               ),
             ],
           ),
         ),
         Visibility(
-          visible: StringUtils.isNotEmpty(quiz.moreInfo),
+          visible: StringUtils.isNotEmpty(survey.moreInfo),
           child: Padding(
             padding: const EdgeInsets.only(left: 32, right: 32, top: 8),
             child: Text(
-              quiz.moreInfo ?? '',
+              survey.moreInfo ?? '',
               textAlign: TextAlign.start,
-              style: Styles().uiStyles?.body,
+              style: Styles().textStyles?.getTextStyle('body'),
             ),
           ),
         ),
@@ -89,14 +89,14 @@ class QuizWidgets {
     // return widget;
   }
 
-  Widget? buildResponseQuizSection(QuizDataResponse? quiz) {
-    if (quiz == null) return null;
-    ButtonAction? buttonAction = AppWidgets.actionTypeButtonAction(context, quiz.action);
+  Widget? buildResponseSurveySection(SurveyDataResponse? survey) {
+    if (survey == null) return null;
+    ButtonAction? buttonAction = actionTypeButtonAction(context, survey.action);
 
     return Column(
       children: <Widget>[
-        Text(quiz.body ?? "", style: Styles().uiStyles?.body),
-        quiz.action != null && buttonAction != null ? Padding(
+        Text(survey.body ?? "", style: Styles().textStyles?.getTextStyle('body')),
+        survey.action != null && buttonAction != null ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
             child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
               backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: () => buttonAction.action)
@@ -105,27 +105,52 @@ class QuizWidgets {
     );
   }
 
-  Widget? buildTextQuizSection(QuizQuestionText? quiz, {bool readOnly = false}) {
-    if (quiz == null) return null;
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        if (action?.data is Survey) {
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
+          );
+        } else if (action?.data is Map<String, dynamic>) {
+          dynamic survey = action?.data['survey'];
+          if (survey is Survey) {
+            return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                    () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+            );
+          }
+        }
+        return null;
+      case ActionType.dismiss:
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
+            () => onTapDismiss(dismissContext: dismissContext, params: params)
+        );
+      default:
+        return null;
+    }
+  }
+
+  Widget? buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
+    if (survey == null) return null;
 
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: _buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: quiz.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
-          quiz.response = value;
-          onChangeQuizResponse(false);
+        child: _buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
+          survey.response = value;
+          onChangeSurveyResponse(false);
         }));
   }
 
-  Widget? buildMultipleChoiceQuizSection(QuizQuestionMultipleChoice? quiz, {bool isSummaryWidget = false}) {
-    if (quiz == null) return null;
+  Widget? buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool isSummaryWidget = false}) {
+    if (survey == null) return null;
 
-    List<OptionData> optionList = quiz.options;
-    if (quiz.allowMultiple) {
-      return buildMultipleAnswerWidget(optionList, quiz, isSummaryWidget: isSummaryWidget);
+    List<OptionData> optionList = survey.options;
+    if (survey.allowMultiple) {
+      return buildMultipleAnswerWidget(optionList, survey, isSummaryWidget: isSummaryWidget);
     }
 
     OptionData? selected;
     for (OptionData data in optionList) {
-      if (data.value == quiz.response) {
+      if (data.value == survey.response) {
         selected = data;
         break;
       }
@@ -136,18 +161,18 @@ class QuizWidgets {
       widget = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
-        okAnswers: quiz.okAnswers,
-        scored: quiz.scored,
+        okAnswers: survey.okAnswers,
+        scored: survey.scored,
       );
     } else {
       widget = OnboardingSingleSelectionList(
         selectionList: optionList,
         onChanged: (int index) {
-          if (quiz.scored && quiz.response != null) {
+          if (survey.scored && survey.response != null) {
             return;
           }
-          quiz.response = optionList[index].value;
-          onChangeQuizResponse(true);
+          survey.response = optionList[index].value;
+          onChangeSurveyResponse(true);
         },
         selectedValue: selected);
     }
@@ -155,13 +180,13 @@ class QuizWidgets {
     return widget;
   }
 
-  Widget buildMultipleAnswerWidget(List<OptionData> options, QuizQuestionMultipleChoice quiz, {bool isSummaryWidget = false}) {
+  Widget buildMultipleAnswerWidget(List<OptionData> options, SurveyQuestionMultipleChoice survey, {bool isSummaryWidget = false}) {
     List<dynamic> selectedOptions = [];
     List<bool> isCheckedList = List<bool>.filled(options.length, false);
 
     for (int i = 0; i < options.length; i++) {
       OptionData data = options[i];
-      dynamic response = quiz.response;
+      dynamic response = survey.response;
       if (response is List<dynamic>) {
         if (response.contains(data.value)) {
           isCheckedList[i] = true;
@@ -175,8 +200,8 @@ class QuizWidgets {
       widget = CustomIconSelectionList(
         optionList: options,
         selectedValues: selectedOptions,
-        okAnswers: quiz.okAnswers,
-        scored: quiz.scored,
+        okAnswers: survey.okAnswers,
+        scored: survey.scored,
       );
     } else {
       widget = OnboardingMultiSelectionList(
@@ -184,7 +209,7 @@ class QuizWidgets {
         isChecked: isCheckedList,
         onChanged: (int index) {
           //TODO: Prevent changing initial response when scored
-          // if (quiz.scored && quiz.response != null) {
+          // if (survey.scored && survey.response != null) {
           //   return;
           // }
 
@@ -195,11 +220,11 @@ class QuizWidgets {
           }
 
           if (selectedOptions.isNotEmpty) {
-            quiz.response = selectedOptions;
+            survey.response = selectedOptions;
           } else {
-            quiz.response = null;
+            survey.response = null;
           }
-          onChangeQuizResponse(false);
+          onChangeSurveyResponse(false);
         },
       );
     }
@@ -207,14 +232,14 @@ class QuizWidgets {
     return widget;
   }
 
-  Widget? buildTrueFalseQuizSection(QuizQuestionTrueFalse? quiz, {bool isSummaryWidget = false}) {
-    if (quiz == null) return null;
+  Widget? buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool isSummaryWidget = false}) {
+    if (survey == null) return null;
 
-    List<OptionData> optionList = quiz.options;
+    List<OptionData> optionList = survey.options;
 
     OptionData? selected;
     for (OptionData data in optionList) {
-      if (data.value == quiz.response) {
+      if (data.value == survey.response) {
         selected = data;
         break;
       }
@@ -225,17 +250,17 @@ class QuizWidgets {
       widget = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
-        okAnswers: quiz.okAnswer != null ? [quiz.okAnswer] : null,
-        scored: quiz.scored,);
+        okAnswers: survey.okAnswer != null ? [survey.okAnswer] : null,
+        scored: survey.scored,);
     } else {
       widget = OnboardingSingleSelectionList(
           selectionList: optionList,
           onChanged: (int index) {
-            if (quiz.scored && quiz.response != null) {
+            if (survey.scored && survey.response != null) {
               return;
             }
-            quiz.response = optionList[index].value;
-            onChangeQuizResponse(true);
+            survey.response = optionList[index].value;
+            onChangeSurveyResponse(true);
           },
           selectedValue: selected
       );
@@ -244,12 +269,12 @@ class QuizWidgets {
     return widget;
   }
 
-  Widget? buildDateEntryQuizSection(QuizQuestionDateTime? quiz, {Widget? calendarIcon, String? defaultIconKey, bool enabled = true}) {
-    if (quiz == null) return null;
+  Widget? buildDateEntrySurveySection(SurveyQuestionDateTime? survey, {Widget? calendarIcon, String? defaultIconKey, bool enabled = true}) {
+    if (survey == null) return null;
 
-    String? title = quiz.text;
+    String? title = survey.text;
 
-    TextEditingController dateTextController = TextEditingController(text: quiz.response);
+    TextEditingController dateTextController = TextEditingController(text: survey.response);
 
     String format = "MM-dd-yyyy";
 
@@ -284,7 +309,7 @@ class QuizWidgets {
               controller: dateTextController,
               // validator: _validationFunctions[field.key],
               onFieldSubmitted: (value) {
-                onChangeQuizResponse(false);
+                onChangeSurveyResponse(false);
               },
               onChanged: (value) {
                 int select = dateTextController.value.selection.start;
@@ -294,24 +319,24 @@ class QuizWidgets {
                     TextPosition(offset: select),
                   ),
                 );
-                quiz.response = value.trim();
+                survey.response = value.trim();
               },
-              onEditingComplete: onChangeQuizResponse(false),
+              onEditingComplete: onChangeSurveyResponse(false),
               // maxLength: 10,
-              onSaved: (value) => onChangeQuizResponse(false),
+              onSaved: (value) => onChangeSurveyResponse(false),
             ),
           ),
           Visibility(
             visible: enabled,
             child: IconButton(
-              icon: calendarIcon ?? Styles().uiImages?.getImage(defaultIconKey ?? '') ?? Container(),
+              icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
               tooltip: "Test hint",
               onPressed: () => _selectDate(context: context, initialDate: _getInitialDate(dateTextController.text, format),
-                  firstDate: quiz.startTime, lastDate: quiz.endTime, callback: (DateTime picked) {
+                  firstDate: survey.startTime, lastDate: survey.endTime, callback: (DateTime picked) {
                     String date = DateFormat(format).format(picked);
                     dateTextController.text = date;
-                    quiz.response = date;
-                    onChangeQuizResponse(false);
+                    survey.response = date;
+                    onChangeSurveyResponse(false);
                     // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
                   }),
             ),
@@ -337,8 +362,8 @@ class QuizWidgets {
     DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
-        firstDate: firstDate ?? DateTime(1900), //_dateTimeQuiz!.startTime ,
-        lastDate: lastDate ?? DateTime(2025) //_dateTimeQuiz!.endTime );
+        firstDate: firstDate ?? DateTime(1900), //_dateTimeSurvey!.startTime ,
+        lastDate: lastDate ?? DateTime(2025) //_dateTimeSurvey!.endTime );
     );
 
     if (picked != null) {
@@ -346,53 +371,53 @@ class QuizWidgets {
     }
   }
 
-  Widget? buildNumericQuizSection(QuizQuestionNumeric? quiz, {bool readOnly = false}) {
-    if (quiz == null) return null;
+  Widget? buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+    if (survey == null) return null;
 
-    if (quiz.slider) {
-      return buildSliderQuizSection(quiz, readOnly: readOnly);
+    if (survey.slider) {
+      return buildSliderSurveySection(survey, readOnly: readOnly);
     }
 
     String? initialValue;
-    if (quiz.response != null) {
-      initialValue = quiz.response.toString();
+    if (survey.response != null) {
+      initialValue = survey.response.toString();
     }
 
-    Widget widget = _buildTextFormFieldWidget(quiz.text, readOnly: readOnly, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
+    Widget widget = _buildTextFormFieldWidget(survey.text, readOnly: readOnly, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
       num val;
-      if (quiz.wholeNum) {
+      if (survey.wholeNum) {
         val = int.parse(value);
       } else {
         val = double.parse(value);
       }
-      quiz.response = val;
-      onChangeQuizResponse(false);
+      survey.response = val;
+      onChangeSurveyResponse(false);
     });
 
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: widget);
   }
 
-  Widget? buildSliderQuizSection(QuizQuestionNumeric? quiz, {bool readOnly = false}) {
-    if (quiz == null) return null;
+  Widget? buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+    if (survey == null) return null;
 
-    double min = quiz.minimum ?? 0.0;
-    double max = quiz.maximum ?? 1.0;
+    double min = survey.minimum ?? 0.0;
+    double max = survey.maximum ?? 1.0;
     String label;
-    if (quiz.wholeNum && min >= 0 && max <= 10) {
-      return buildDiscreteNumsQuizSection(quiz, readOnly: readOnly);
+    if (survey.wholeNum && min >= 0 && max <= 10) {
+      return buildDiscreteNumsSurveySection(survey, readOnly: readOnly);
     }
 
     double value = 0;
-    dynamic response = quiz.response;
+    dynamic response = survey.response;
     if (response is double) {
       value = response;
     } else if (response is int) {
       value = response.toDouble();
     } else if (response == null) {
-      quiz.response = 0;
+      survey.response = 0;
     }
 
-    if (quiz.wholeNum) {
+    if (survey.wholeNum) {
       label = value.toInt().toString();
     } else {
       label = value.toString();
@@ -403,26 +428,26 @@ class QuizWidgets {
       children: [
         Container(decoration: BoxDecoration(color: Styles().colors?.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-          child: Text(label, style: Styles().uiStyles?.headline3),
+          child: Text(label, style: Styles().textStyles?.getTextStyle('headline3')),
         )),
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: !readOnly ? (value) {
-           quiz.response = value;
-           onChangeQuizResponse(false);
+           survey.response = value;
+           onChangeSurveyResponse(false);
           } : null)
         ),
       ],
     );
   }
 
-  Widget? buildDiscreteNumsQuizSection(QuizQuestionNumeric? quiz, {bool readOnly = false}) {
-    if (quiz == null) return null;
+  Widget? buildDiscreteNumsSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+    if (survey == null) return null;
 
-    int min = quiz.minimum?.toInt() ?? 0;
-    int max = quiz.maximum?.toInt() ?? 10;
+    int min = survey.minimum?.toInt() ?? 0;
+    int max = survey.maximum?.toInt() ?? 10;
 
     int? value;
-    dynamic response = quiz.response;
+    dynamic response = survey.response;
     if (response is int) {
       value = response;
     }
@@ -430,11 +455,11 @@ class QuizWidgets {
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Text(i.toString(), style: Styles().uiStyles?.label),
+       Text(i.toString(), style: Styles().textStyles?.getTextStyle('label')),
        Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
          onChanged: readOnly ? null : (Object? value) {
-           quiz.response = value;
-           onChangeQuizResponse(false);
+           survey.response = value;
+           onChangeSurveyResponse(false);
          }
        )
       ]));
@@ -451,21 +476,21 @@ class QuizWidgets {
     );
   }
 
-  Widget? buildQuizQuizSection(QuizDataQuiz? quiz, {Function(dynamic)? onComplete}) {
-    if (quiz == null) return null;
+  Widget? buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {
+    if (survey == null) return null;
 
     return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: RoundedButton(
-          label: Localization().getStringEx("panel.home.button.action.take_quiz.title", "Take Quiz"),
+          label: Localization().getStringEx("panel.home.button.action.take_survey.title", "Take Survey"),
           borderColor: Styles().colors?.fillColorPrimary,
           backgroundColor: Styles().colors?.surface,
           textColor: Styles().colors?.headlineText,
           onTap: () {
-            Navigator.push(context, CupertinoPageRoute(builder: (context) => QuizQuestionPanel(quiz: quiz.quiz, onComplete: () {
+            Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: survey.survey, onComplete: () {
               if (onComplete != null) {
-                quiz.quiz.evaluate(plan, QuizEvent(quiz: quiz.quiz, date: DateTime.now()));
-                onComplete(quiz.quiz.resultData);
+                survey.survey.evaluate();
+                onComplete(survey.survey.resultData);
               }
             })));
           }
@@ -556,7 +581,7 @@ class CustomIconSelectionList extends StatelessWidget {
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
                       child: ListTile(
-                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? Styles().uiStyles?.labelSelected : Styles().uiStyles?.label)),
+                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? Styles().textStyles?.getTextStyle('labelSelected') : Styles().textStyles?.getTextStyle('label'))),
                         leading:
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -579,11 +604,11 @@ class CustomIconSelectionList extends StatelessWidget {
                   Text(
                       "Correct Answer: ",
                       textAlign: TextAlign.start,
-                      style: Styles().uiStyles?.headline2),
+                      style: Styles().textStyles?.getTextStyle('headline2')),
                   Text(
                       correctAnswer ?? "",
                       textAlign: TextAlign.start,
-                      style: Styles().uiStyles?.body)
+                      style: Styles().textStyles?.getTextStyle('body'))
                 ],
               ),
         )),

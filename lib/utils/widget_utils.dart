@@ -16,7 +16,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 enum ActionType {
   contact,
-  showQuiz,
+  showSurvey,
   dismiss,
   none
 }

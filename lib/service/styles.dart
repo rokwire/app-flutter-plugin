@@ -327,6 +327,7 @@ class UiColors {
   Color? get textBackground             => colorMap['textBackground'];
   Color? get backgroundVariant          => colorMap['backgroundVariant'];
   Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
+  Color? get headlineText               => colorMap['headlineText'];
 
   Color? get accentColor1               => colorMap['accentColor1'];
   Color? get accentColor2               => colorMap['accentColor2'];
@@ -351,6 +352,7 @@ class UiColors {
   Color? get lightGray                  => colorMap['lightGray'];
   Color? get disabledTextColor          => colorMap['disabledTextColor'];
   Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
+  Color? get dividerLine                => colorMap['dividerLine'];
 
   Color? get mango                      => colorMap['mango'];
 

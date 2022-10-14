@@ -51,7 +51,7 @@ class _FormFieldTextState extends State<FormFieldText> {
         label: widget.label,
         child: TextFormField(
           readOnly: widget.readOnly,
-          style: Styles().uiStyles?.body,
+          style: Styles().textStyles?.getTextStyle('body'),
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
           keyboardType: widget.inputType,

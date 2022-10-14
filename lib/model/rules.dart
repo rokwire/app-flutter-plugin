@@ -650,9 +650,9 @@ class Metric {
   final List<String> valueLabels;
   final String explanation;
   final bool wholeNum;
-  final Quiz? quiz;
+  final Survey? survey;
 
-  Metric({required this.name, required this.unit, required this.type, required this.valueLabels, this.quiz, this.wholeNum = false, required this.explanation});
+  Metric({required this.name, required this.unit, required this.type, required this.valueLabels, this.survey, this.wholeNum = false, required this.explanation});
 
   factory Metric.fromJson(Map<String, dynamic> json) {
     return Metric(
@@ -662,7 +662,7 @@ class Metric {
       wholeNum: json['whole_num'] ?? false,
       valueLabels: JsonUtils.stringListValue(json['value_labels']) ?? [],
       explanation: json['explanation'] as String? ?? '',
-      quiz: JsonUtils.orNull((json) => Quiz.fromJson(json), json['quiz']),
+      survey: JsonUtils.orNull((json) => Survey.fromJson(json), json['survey']),
     );
   }
 
@@ -674,7 +674,7 @@ class Metric {
       'whole_num': wholeNum,
       'value_labels': valueLabels,
       'explanation': explanation,
-      'quiz': quiz,
+      'survey': survey,
     };
   }
 
@@ -694,8 +694,8 @@ class Metric {
         return wholeNum;
       case "explanation":
         return explanation;
-      case "quiz":
-        return quiz;
+      case "survey":
+        return survey;
     }
     return null;
   }

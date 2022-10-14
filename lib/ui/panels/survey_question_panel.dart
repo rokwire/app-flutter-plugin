@@ -26,59 +26,57 @@ import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class QuizQuestionPanel extends StatefulWidget {
-  final Quiz quiz;
-  final Event? event;
-  final TreatmentPlan? plan;
-  final int currentQuizIndex;
+class SurveyQuestionPanel extends StatefulWidget {
+  final Survey survey;
+  final int currentSurveyIndex;
   final Function? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
 
-  const QuizQuestionPanel({required this.quiz, this.plan, this.event, this.currentQuizIndex = 0, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
+  const SurveyQuestionPanel({required this.survey, this.currentSurveyIndex = 0, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
 
   @override
-  _QuizQuestionPanelState createState() => _QuizQuestionPanelState();
+  _SurveyQuestionPanelState createState() => _SurveyQuestionPanelState();
 }
 
-class _QuizQuestionPanelState extends State<QuizQuestionPanel> {
-  Quiz? _quiz;
-  late List<QuizData> _quizQuestions;
-  late int _quizQuestionIndex;
-  QuizData? _mainQuizQuestion;
+class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
+  Survey? _survey;
+  late Map<String, SurveyData> _surveyQuestions;
+  late int _surveyQuestionIndex;
+  SurveyData? _mainSurveyQuestion;
 
   GlobalKey? dataKey;
 
   final ScrollController _scrollController = ScrollController();
   bool _scrollEnd = false;
 
-  late final QuizWidgets widgets;
+  late final SurveyWidgets widgets;
 
   @override
   void initState() {
     super.initState();
 
-    widgets = QuizWidgets(context, _onChangeQuizResponse);
+    widgets = SurveyWidgets(context, _onChangeSurveyResponse);
 
-    _quiz = widget.quiz;
-    if (_quiz == null || _quiz!.questions.isEmpty || widget.currentQuizIndex >= _quiz!.questions.length) {
-      _popQuizPanels();
+    _survey = widget.survey;
+    if (_survey == null || _survey!.questions.isEmpty || widget.currentSurveyIndex >= _survey!.questions.length) {
+      _popSurveyPanels();
       return;
     }
-    _quizQuestions = _quiz!.questions;
+    _surveyQuestions = _survey!.questions;
 
-    _quizQuestionIndex = widget.currentQuizIndex;
-    while (_quizQuestionIndex < _quizQuestions.length && !_quizQuestions[_quizQuestionIndex].shouldDisplay(widget.plan, widget.event)) {
-      _quizQuestionIndex = _quizQuestionIndex + 1;
+    _surveyQuestionIndex = widget.currentSurveyIndex;
+    while (_surveyQuestionIndex < _surveyQuestions.length) {
+      _surveyQuestionIndex = _surveyQuestionIndex + 1;
     }
-    if (_quizQuestionIndex >= _quizQuestions.length) {
-      _finishQuiz();
+    if (_surveyQuestionIndex >= _surveyQuestions.length) {
+      _finishSurvey();
       return;
     }
 
-    _mainQuizQuestion = _quizQuestions[_quizQuestionIndex];
-    _mainQuizQuestion?.evaluateDefaultResponse(widget.plan, widget.event);
+    _mainSurveyQuestion = _surveyQuestions[_surveyQuestionIndex];
+    _mainSurveyQuestion?.evaluateDefaultResponse(_survey);
   }
 
   @override
@@ -116,58 +114,56 @@ class _QuizQuestionPanelState extends State<QuizQuestionPanel> {
   }
 
   Widget _buildContent() {
-    if (_mainQuizQuestion == null) return Text(Localization().getStringEx("panel.quiz.error.invalid_data.title", "Invalid quiz data"));
+    if (_mainSurveyQuestion == null) return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
 
     Widget? questionWidget;
-    QuizData? quiz = _mainQuizQuestion;
+    SurveyData? survey = _mainSurveyQuestion;
 
-    if (quiz is QuizQuestionMultipleChoice) {
-      questionWidget = widgets.buildMultipleChoiceQuizSection(quiz);
-    } else if (quiz is QuizQuestionTrueFalse) {
-      questionWidget = widgets.buildTrueFalseQuizSection(quiz);
-    } else if (quiz is QuizQuestionDateTime) {
-      questionWidget = widgets.buildDateEntryQuizSection(quiz);
-    } else if (quiz is QuizQuestionNumeric) {
-      questionWidget = widgets.buildNumericQuizSection(quiz);
-    } else if (quiz is QuizDataResponse) {
-      questionWidget = widgets.buildResponseQuizSection(quiz);
-    } else if (quiz is QuizQuestionText) {
-      questionWidget = widgets.buildTextQuizSection(quiz);
-    } else if (quiz == null) {
-      return Text(Localization().getStringEx("panel.quiz.error.invalid_data.title", "Invalid quiz data"));
+    if (survey is SurveyQuestionMultipleChoice) {
+      questionWidget = widgets.buildMultipleChoiceSurveySection(survey);
+    } else if (survey is SurveyQuestionTrueFalse) {
+      questionWidget = widgets.buildTrueFalseSurveySection(survey);
+    } else if (survey is SurveyQuestionDateTime) {
+      questionWidget = widgets.buildDateEntrySurveySection(survey);
+    } else if (survey is SurveyQuestionNumeric) {
+      questionWidget = widgets.buildNumericSurveySection(survey);
+    } else if (survey is SurveyDataResponse) {
+      questionWidget = widgets.buildResponseSurveySection(survey);
+    } else if (survey is SurveyQuestionText) {
+      questionWidget = widgets.buildTextSurveySection(survey);
+    } else if (survey == null) {
+      return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
     }
 
     List<Widget> followUps = [];
-    for (QuizData? data = _mainQuizQuestion?.followUp; data != null; data = data.followUp) {
-      if (data.shouldDisplay(widget.plan, widget.event)) {
-        Widget? followUp;
-        if (data is QuizDataQuiz) {
-          followUp = widgets.buildInlineQuizWidget(data, plan: widget.plan, onComplete: (val) {
-            setState(() {
-              _mainQuizQuestion?.response = val;
-            });
+    for (SurveyData? data = _mainSurveyQuestion?.followUp; data != null; data = data.followUp) {
+      Widget? followUp;
+      if (data is SurveyDataSurvey) {
+        followUp = widgets.buildInlineSurveyWidget(data, onComplete: (val) {
+          setState(() {
+            _mainSurveyQuestion?.response = val;
           });
-        } else {
-          followUp = widgets.buildInlineQuizWidget(data);
+        });
+      } else {
+        followUp = widgets.buildInlineSurveyWidget(data);
+      }
+      if (followUp != null) {
+        GlobalKey? key;
+        if (data.response == null) {
+          key = GlobalKey();
+          dataKey = key;
         }
-        if (followUp != null) {
-          GlobalKey? key;
-          if (data.response == null) {
-            key = GlobalKey();
-            dataKey = key;
-          }
-          followUps.add(Padding(
-            key: key,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Card(
-                color: Styles().colors?.background,
-                margin: EdgeInsets.zero,
-                elevation: 0.0,
-                child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: followUp)),
-          ));
-        }
+        followUps.add(Padding(
+          key: key,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Card(
+              color: Styles().colors?.background,
+              margin: EdgeInsets.zero,
+              elevation: 0.0,
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: followUp)),
+        ));
       }
     }
 
@@ -182,7 +178,7 @@ class _QuizQuestionPanelState extends State<QuizQuestionPanel> {
 
   Widget _buildContinueButton() {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      RoundedButton(label: Localization().getStringEx("panel.quiz.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+      RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
     ]);
   }
 
@@ -193,7 +189,7 @@ class _QuizQuestionPanelState extends State<QuizQuestionPanel> {
     }
   }
 
-  void _onChangeQuizResponse(bool scrollEnd) {
+  void _onChangeSurveyResponse(bool scrollEnd) {
     setState(() { });
   }
 
@@ -223,34 +219,34 @@ class _QuizQuestionPanelState extends State<QuizQuestionPanel> {
       }
     }
 
-    if (_mainQuizQuestion?.canContinue(widget.plan, widget.event) == false) {
+    if (_mainSurveyQuestion?.canContinue(_survey) == false) {
       AppToast.show("Please answer all required questions to continue");
       return;
     }
 
-    // show quiz summary or return to home page on finishing events
-    if (_quizQuestionIndex == _quizQuestions.length - 1) {
-      _quiz?.lastUpdated = DateTime.now();
+    // show survey summary or return to home page on finishing events
+    if (_surveyQuestionIndex == _surveyQuestions.length - 1) {
+      _survey?.lastUpdated = DateTime.now();
 
       // if (widget.showSummaryOnFinish) {
       // } else {
-      _finishQuiz();
+      _finishSurvey();
       // }
 
       return;
     }
 
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => QuizQuestionPanel(quiz: widget.quiz, plan: widget.plan, currentQuizIndex: _quizQuestionIndex + 1, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: widget.survey, plan: widget.plan, currentSurveyIndex: _surveyQuestionIndex + 1, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
-  void _finishQuiz() {
-    _popQuizPanels();
+  void _finishSurvey() {
+    _popSurveyPanels();
     if (widget.onComplete != null) {
       widget.onComplete!();
     }
   }
 
-  void _popQuizPanels() {
+  void _popSurveyPanels() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       int count = 0;
       Navigator.of(context).popUntil((route) => count++ > widget.initPanelDepth);
