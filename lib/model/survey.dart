@@ -12,37 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
-import 'package:uuid/uuid.dart';
 
-class Quiz extends RuleEngine {
-  late Map<String, QuizData> questions;
+class Survey extends RuleEngine {
+  static const String defaultQuestionKey = 'default';
+
+  late Map<String, SurveyData> questions;
   DateTime? lastUpdated;
   bool scored;
   String type;
   Rule? resultRule;
   dynamic resultData;
 
-  QuizStats? _stats;
-  QuizStats? get stats { return _stats; }
+  SurveyStats? _stats;
+  SurveyStats? get stats { return _stats; }
 
-  Quiz({Map<String, QuizData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type,
+  Survey({Map<String, SurveyData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type,
     Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules);
 
-  factory Quiz.fromJson(Map<String, dynamic> json) {
-    Map<String, QuizData> questionMap = {};
+  factory Survey.fromJson(Map<String, dynamic> json) {
+    Map<String, SurveyData> questionMap = {};
     Map<String, dynamic> questionData = JsonUtils.mapValue(json) ?? {};
     questionData.forEach((key, value) {
       if (value is Map<String, dynamic>) {
-        questionMap[key] = QuizData.fromJson(value);
+        questionMap[key] = SurveyData.fromJson(value);
       }
     });
 
-    return Quiz(
+    return Survey(
       scored: json['scored'] ?? true,
       type: json['type'] ?? false,
       resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
@@ -61,18 +61,15 @@ class Quiz extends RuleEngine {
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
       'type': type,
       'stats': _stats?.toJson(),
-      'constants': RuleEngine.constantsToJson(),
-      'strings': RuleEngine.stringsToJson(),
-      'sub_rules': RuleEngine.subRulesToJson(),
     };
   }
 
-  factory Quiz.fromOther(Quiz other) {
-    Map<String, QuizData> questions = {};
-    for (MapEntry<String, QuizData> question in other.questions.entries){
-      questions[question.key] = (QuizData.fromOther(question.value));
+  factory Survey.fromOther(Survey other) {
+    Map<String, SurveyData> questions = {};
+    for (MapEntry<String, SurveyData> question in other.questions.entries){
+      questions[question.key] = (SurveyData.fromOther(question.value));
     }
-    return Quiz(
+    return Survey(
       questions: questions,
       lastUpdated: other.lastUpdated,
       scored: other.scored,
@@ -85,7 +82,7 @@ class Quiz extends RuleEngine {
   }
 
   dynamic getProperty(RuleKey? key) {
-    QuizStats? stats = _stats;
+    SurveyStats? stats = _stats;
     switch (key?.key) {
       case null:
         return this;
@@ -115,17 +112,18 @@ class Quiz extends RuleEngine {
       case "question":
         RuleKey? questionKey = key?.subRuleKey;
         if (questionKey != null) {
-          return questions[questionKey.key].getProperty(questionKey.subRuleKey, param);
+          return questions[questionKey.key]?.getProperty(questionKey.subRuleKey);
         }
     }
     return null;
   }
 
   void evaluate() {
-    //TODO: add params to be passed in on evaluate
-    QuizStats stats = QuizStats();
-    for (QuizData question in questions.values) {
-      stats += question.stats();
+    //TODO: add params to be passed in on evaluate?
+    SurveyStats stats = SurveyStats();
+    //TODO: calculate stats by following question chain (depends on results of rules)
+    for (SurveyData question in questions.values) {
+      stats += question.stats(this);
     }
     _stats = stats;
 
@@ -142,39 +140,41 @@ class Quiz extends RuleEngine {
   }
 
   bool canContinue({bool deep = true}) {
-    for (QuizData question in questions.values) {
-      if (!question.canContinue(deep: deep)) {
+    for (SurveyData question in questions.values) {
+      if (!question.canContinue(this, deep: deep)) {
         return false;
       }
     }
     return true;
   }
+
+  SurveyData? get firstQuestion => questions[defaultQuestionKey];
 }
 
-class QuizStats {
+class SurveyStats {
   final int total;
   final int complete;
 
   final int scored;
-  final Map<String?, num> scores;
+  final Map<String, num> scores;
 
   final Map<String, dynamic> responseData;
 
-  QuizStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.responseData = const {}});
+  SurveyStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.responseData = const {}});
 
-  QuizStats operator +(QuizStats other) {
+  SurveyStats operator +(SurveyStats other) {
     Map<String, dynamic> newData = {};
     newData.addAll(responseData);
     newData.addAll(other.responseData);
 
-    Map<String?, num> newScores = {};
+    Map<String, num> newScores = {};
     newScores.addAll(scores);
     other.scores.forEach((key, value) {
       num currentScore = newScores[key] ?? 0;
       newScores[key] = currentScore + value;
     });
 
-    return QuizStats(
+    return SurveyStats(
       total: total + other.total,
       complete: complete + other.complete,
       scored: scored + other.scored,
@@ -219,8 +219,7 @@ class QuizStats {
   num get totalScore => scores.values.fold(0, (partialSum, current) => partialSum + current);
 }
 
-abstract class QuizData {
-  late final String id;
+abstract class SurveyData {
   final String key;
   final String? section;
   final bool allowSkip;
@@ -232,65 +231,59 @@ abstract class QuizData {
   final Rule? defaultResponseRule;
   final Rule? followUpRule;
   final Rule? scoreRule;
-  QuizData({String? id, required this.key, this.section, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule, 
-    this.moreInfo, this.response, this.allowSkip = false}) {
-    if (id == null) {
-      this.id = const Uuid().v4();
-    } else {
-      this.id = id;
+  SurveyData({required this.key, this.section, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule, 
+    this.moreInfo, this.response, this.allowSkip = false});
+
+  factory SurveyData.fromJson(Map<String, dynamic> json) {
+    String? surveyType = JsonUtils.stringValue(json["type"]);
+    switch (surveyType) {
+      case "true_false": return SurveyQuestionTrueFalse.fromJson(json);
+      case "multiple_choice": return SurveyQuestionMultipleChoice.fromJson(json);
+      case "date_time": return SurveyQuestionDateTime.fromJson(json);
+      case "numeric": return SurveyQuestionNumeric.fromJson(json);
+      case "text": return SurveyQuestionText.fromJson(json);
+      case "entry": return SurveyDataEntry.fromJson(json);
+      case "response": return SurveyDataResponse.fromJson(json);
+      case "action": return SurveyDataAction.fromJson(json);
+      case "survey": return SurveyDataSurvey.fromJson(json);
+      default: throw Exception("Invalid survey data type");
     }
   }
 
-  factory QuizData.fromJson(Map<String, dynamic> json) {
-    String? quizType = JsonUtils.stringValue(json["type"]);
-    switch (quizType) {
-      case "true_false": return QuizQuestionTrueFalse.fromJson(json);
-      case "multiple_choice": return QuizQuestionMultipleChoice.fromJson(json);
-      case "date_time": return QuizQuestionDateTime.fromJson(json);
-      case "numeric": return QuizQuestionNumeric.fromJson(json);
-      case "text": return QuizQuestionText.fromJson(json);
-      case "entry": return QuizDataEntry.fromJson(json);
-      case "response": return QuizDataResponse.fromJson(json);
-      case "action": return QuizDataAction.fromJson(json);
-      case "quiz": return QuizDataQuiz.fromJson(json);
-      default: throw Exception("Invalid quiz data type");
-    }
-  }
-
-  static List<QuizData> listFromJson(List<dynamic>? jsonList) {
+  static List<SurveyData> listFromJson(List<dynamic>? jsonList) {
     if (jsonList == null) {
       return [];
     }
-    List<QuizData> list = [];
+    List<SurveyData> list = [];
     for (dynamic json in jsonList) {
       if (json is Map<String, dynamic>) {
-        list.add(QuizData.fromJson(json));
+        list.add(SurveyData.fromJson(json));
       }
     }
     return list;
   }
 
-  factory QuizData.fromOther(QuizData other) {
-    if (other is QuizQuestionTrueFalse) {
-      return QuizQuestionTrueFalse.fromOther(other);
-    } else if (other is QuizQuestionText) {
-      return QuizQuestionText.fromOther(other);
-    } else if (other is QuizQuestionMultipleChoice) {
-      return QuizQuestionMultipleChoice.fromOther(other);
-    } else if (other is QuizQuestionDateTime) {
-      return QuizQuestionDateTime.fromOther(other);
-    } else if (other is QuizQuestionNumeric) {
-      return QuizQuestionNumeric.fromOther(other);
-    } else if (other is QuizDataEntry) {
-      return QuizDataEntry.fromOther(other);
-    } else if (other is QuizDataResponse) {
-      return QuizDataResponse.fromOther(other);
-    } else if (other is QuizDataAction) {
-      return QuizDataAction.fromOther(other);
-    } else if (other is QuizDataQuiz) {
-      return QuizDataQuiz.fromOther(other);
+  factory SurveyData.fromOther(SurveyData other) {
+    if (other is SurveyQuestionTrueFalse) {
+      return SurveyQuestionTrueFalse.fromOther(other);
+    } else if (other is SurveyQuestionText) {
+      return SurveyQuestionText.fromOther(other);
+    } else if (other is SurveyQuestionMultipleChoice) {
+      return SurveyQuestionMultipleChoice.fromOther(other);
+    } else if (other is SurveyQuestionDateTime) {
+      return SurveyQuestionDateTime.fromOther(other);
+    } else if (other is SurveyQuestionNumeric) {
+      return SurveyQuestionNumeric.fromOther(other);
+    } else if (other is SurveyDataEntry) {
+      return SurveyDataEntry.fromOther(other);
+    } else if (other is SurveyDataResponse) {
+      return SurveyDataResponse.fromOther(other);
+    } else if (other is SurveyDataAction) {
+      return SurveyDataAction.fromOther(other);
+    } else if (other is SurveyDataSurvey) {
+      return SurveyDataSurvey.fromOther(other);
     }
-    throw Exception("Invalid other quiz type");
+    throw Exception("Invalid other survey type");
   }
 
   Map<String, dynamic> toJson();
@@ -298,7 +291,6 @@ abstract class QuizData {
 
   Map<String, dynamic> baseJson() {
     return {
-      'id': id,
       'key': key,
       'section': section,
       'text': text,
@@ -312,95 +304,108 @@ abstract class QuizData {
     };
   }
 
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case null:
+        return this;
+      case "response":
+        return response;
+    }
+    return null;
+  }
+
   bool get isQuestion;
 
-  void evaluateDefaultResponse(Quiz quiz, {bool deep = true}) {
+  void evaluateDefaultResponse(Survey survey, {bool deep = true}) {
     if (defaultResponseRule != null) {
-      quiz.clearCache();
-      RuleActionResult? result = defaultResponseRule!.evaluate(quiz);
+      survey.clearCache();
+      RuleActionResult? result = defaultResponseRule!.evaluate(survey);
       if (result is RuleAction) {
-        response = result.evaluate(quiz);
+        response = result.evaluate(survey);
       }
     }
     if (deep) {
-      followUp(quiz)?.evaluateDefaultResponse(quiz);
+      followUp(survey)?.evaluateDefaultResponse(survey);
     }
   }
 
-  QuizData? followUp(Quiz quiz) {
+  SurveyData? followUp(Survey survey) {
     if (response != null) {
       if (followUpRule != null) {
-        RuleActionResult? result = followUpRule!.evaluate(quiz);
+        RuleActionResult? result = followUpRule!.evaluate(survey);
         if (result is RuleAction) {
-          dynamic data = result.evaluate(quiz);
-          if (data is QuizData) {
+          dynamic data = result.evaluate(survey);
+          if (data is SurveyData) {
             return data;
           }
         }
       } else {
-        return defaultFollowUp(quiz);
+        return defaultFollowUp(survey);
       }
     }
 
     return null;
   }
 
-  QuizData? defaultFollowUp(Quiz quiz) => defaultFollowUpKey != null ? quiz.questions[defaultFollowUpKey] : null;
+  SurveyData? defaultFollowUp(Survey survey) => defaultFollowUpKey != null ? survey.questions[defaultFollowUpKey] : null;
 
-  QuizStats stats() {
+  SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
     responseData[key] = response;
 
-    //TODO: evaluate scoreRule here
+    Map<String, num> scores = {};
+    RuleActionResult? ruleResult = scoreRule?.evaluate(survey);
+    if (ruleResult is RuleAction) {
+      dynamic data = ruleResult.evaluate(survey);
+      if (data is num) {
+        scores[section ?? ''] = data;
+      }
+    }
 
-    QuizStats stats = QuizStats(
+    SurveyStats stats = SurveyStats(
       total: isQuestion ? 1 : 0,
       complete: response != null ? 1 : 0,
       scored: scoreRule != null ? 1 : 0,
-      ok: scored ? 1 : 0,
+      scores: scores,
       responseData: responseData,
     );
-
-    // QuizData? follow = followUp;
-    // if (follow != null) {
-    //   stats += follow.stats(rules);
-    // }
 
     return stats;
   }
 
-  bool canContinue(Quiz quiz, {bool deep = true}) {
+  bool canContinue(Survey survey, {bool deep = true}) {
     if (!allowSkip && response == null) {
       return false;
     }
 
     if (deep) {
-      QuizData? follow = followUp(quiz);
+      SurveyData? follow = followUp(survey);
       if (follow != null) {
-        return follow.canContinue(quiz);
+        return follow.canContinue(survey);
       }
     }
 
     return true;
   }
+
+  bool get scored => scoreRule != null;
 }
 
-class QuizQuestionTrueFalse extends QuizData {
+class SurveyQuestionTrueFalse extends SurveyData {
   final bool yesNo;
   final List<OptionData> options;
 
-  QuizQuestionTrueFalse({required String question, this.yesNo = false, String? id, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
+  SurveyQuestionTrueFalse({required String question, this.yesNo = false, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
     Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
-        super(id: id, allowSkip: allowSkip, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
+        super(allowSkip: allowSkip, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
           followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
 
-  factory QuizQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
-    return QuizQuestionTrueFalse(
+  factory SurveyQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
+    return SurveyQuestionTrueFalse(
       yesNo: JsonUtils.boolValue(json['yes_no']) ?? false,
 
       question: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -413,9 +418,8 @@ class QuizQuestionTrueFalse extends QuizData {
     );
   }
 
-  factory QuizQuestionTrueFalse.fromOther(QuizQuestionTrueFalse other) {
-    return QuizQuestionTrueFalse(
-      id: other.id,
+  factory SurveyQuestionTrueFalse.fromOther(SurveyQuestionTrueFalse other) {
+    return SurveyQuestionTrueFalse(
       key: other.key,
       section: other.section,
       yesNo: other.yesNo,
@@ -440,25 +444,24 @@ class QuizQuestionTrueFalse extends QuizData {
   bool get isQuestion => true;
 }
 
-class QuizQuestionMultipleChoice extends QuizData {
+class SurveyQuestionMultipleChoice extends SurveyData {
   final List<OptionData> options;
   final List<dynamic>? okAnswers;
   final bool checkAll;
   final bool allowMultiple;
 
-  QuizQuestionMultipleChoice({required String question, required this.options, this.okAnswers, this.allowMultiple = false, this.checkAll = false, String? id, required String key, 
+  SurveyQuestionMultipleChoice({required String question, required this.options, this.okAnswers, this.allowMultiple = false, this.checkAll = false, required String key, 
     String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, section: section, allowSkip: allowSkip, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
+      : super(key: key, section: section, allowSkip: allowSkip, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
 
-  factory QuizQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
-    return QuizQuestionMultipleChoice(
+  factory SurveyQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
+    return SurveyQuestionMultipleChoice(
       options: OptionData.listFromJson(json['options']),
       okAnswers: json['ok_answers'],
       allowMultiple: JsonUtils.boolValue(json['allow_multiple']) ?? false,
 
       question: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -471,9 +474,8 @@ class QuizQuestionMultipleChoice extends QuizData {
     );
   }
 
-  factory QuizQuestionMultipleChoice.fromOther(QuizQuestionMultipleChoice other) {
-    return QuizQuestionMultipleChoice(
-      id: other.id,
+  factory SurveyQuestionMultipleChoice.fromOther(SurveyQuestionMultipleChoice other) {
+    return SurveyQuestionMultipleChoice(
       key: other.key,
       section: other.section,
       question: other.text,
@@ -505,24 +507,23 @@ class QuizQuestionMultipleChoice extends QuizData {
   //TODO: add operators to RuleComparison for simpler multi-select rules
 }
 
-class QuizQuestionDateTime extends QuizData {
+class SurveyQuestionDateTime extends SurveyData {
   final DateTime? startTime;
   final DateTime? endTime;
   final bool askTime;
 
-  QuizQuestionDateTime({required String question, this.startTime, this.endTime, this.askTime = true, String? id, required String key, String? section, String? defaultFollowUpKey, 
+  SurveyQuestionDateTime({required String question, this.startTime, this.endTime, this.askTime = true, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
+      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory QuizQuestionDateTime.fromJson(Map<String, dynamic> json) {
-    return QuizQuestionDateTime(
+  factory SurveyQuestionDateTime.fromJson(Map<String, dynamic> json) {
+    return SurveyQuestionDateTime(
       startTime: DateTimeUtils.dateTimeLocalFromJson(json['star_time']),
       endTime: DateTimeUtils.dateTimeLocalFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 
       question: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       section: JsonUtils.stringValue(json['section']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       response: json['response'],
@@ -535,9 +536,8 @@ class QuizQuestionDateTime extends QuizData {
     );
   }
 
-  factory QuizQuestionDateTime.fromOther(QuizQuestionDateTime other) {
-    return QuizQuestionDateTime(
-      id: other.id,
+  factory SurveyQuestionDateTime.fromOther(SurveyQuestionDateTime other) {
+    return SurveyQuestionDateTime(
       key: other.key,
       section: other.section,
       question: other.text,
@@ -567,20 +567,20 @@ class QuizQuestionDateTime extends QuizData {
   bool get isQuestion => true;
 }
 
-class QuizQuestionNumeric extends QuizData {
+class SurveyQuestionNumeric extends SurveyData {
   final double? minimum;
   final double? maximum;
   final bool wholeNum;
   final bool slider;
   final bool selfScore;
 
-  QuizQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.slider = false, , this.selfScore = false, String? id, required String key, 
+  SurveyQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.slider = false, this.selfScore = false, required String key, 
     String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, 
+      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, 
         scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory QuizQuestionNumeric.fromJson(Map<String, dynamic> json) {
-    return QuizQuestionNumeric(
+  factory SurveyQuestionNumeric.fromJson(Map<String, dynamic> json) {
+    return SurveyQuestionNumeric(
       minimum: JsonUtils.doubleValue(json['minimum']),
       maximum: JsonUtils.doubleValue(json['maximum']),
       wholeNum: JsonUtils.boolValue(json['whole_num']) ?? false,
@@ -588,7 +588,6 @@ class QuizQuestionNumeric extends QuizData {
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
       question: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -601,9 +600,8 @@ class QuizQuestionNumeric extends QuizData {
     );
   }
 
-  factory QuizQuestionNumeric.fromOther(QuizQuestionNumeric other) {
-    return QuizQuestionNumeric(
-      id: other.id,
+  factory SurveyQuestionNumeric.fromOther(SurveyQuestionNumeric other) {
+    return SurveyQuestionNumeric(
       key: other.key,
       section: other.section,
       question: other.text,
@@ -637,63 +635,54 @@ class QuizQuestionNumeric extends QuizData {
   bool get isQuestion => true;
 
   @override
-  QuizStats stats() {
-    if (scoreRule == null && !selfScore) {
-      return QuizStats();
-    }
-
+  SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
     responseData[key] = response;
 
-    QuizStats stats = QuizStats(
+    Map<String, num> scores = {};
+    if (scoreRule != null) {
+      RuleActionResult? ruleResult = scoreRule!.evaluate(survey);
+      if (ruleResult is RuleAction) {
+        dynamic data = ruleResult.evaluate(survey);
+        if (data is num) {
+          scores[section ?? ''] = data;
+        }
+      }
+    } else if (selfScore && response is num) {
+      scores[section ?? ''] = response;
+    }
+    
+
+    SurveyStats stats = SurveyStats(
       total: isQuestion ? 1 : 0,
       complete: response != null ? 1 : 0,
-      scored: scored ? 1 : 0,
-      ok: scored  ? 1 : 0,
+      scored: scoreRule != null ? 1 : 0,
+      scores: scores,
       responseData: responseData,
     );
-
-    QuizData? follow = followUp;
-    if (follow != null) {
-      stats += follow.stats(rules);
-    }
 
     return stats;
   }
 
-  num? get score {
-    if (minimum == null && maximum == null) {
-      return null;
-    }
-
-    if (response is double) {
-      if (minimum != null && response < minimum!) {
-        return false;
-      }
-      if (maximum != null && response >= maximum!) {
-        return false;
-      }
-    }
-    return false;
-  }
+  @override
+  bool get scored => scoreRule != null;
 }
 
-class QuizQuestionText extends QuizData {
+class SurveyQuestionText extends SurveyData {
   final int minLength;
   final int? maxLength;
 
-  QuizQuestionText({required String question, this.minLength = 0, this.maxLength, String? id, required String key, String? section, String? defaultFollowUpKey, 
+  SurveyQuestionText({required String question, this.minLength = 0, this.maxLength, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool scored = false, bool allowSkip = false})
-      : super(id: id, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
+      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory QuizQuestionText.fromJson(Map<String, dynamic> json) {
-    return QuizQuestionText(
+  factory SurveyQuestionText.fromJson(Map<String, dynamic> json) {
+    return SurveyQuestionText(
       minLength: JsonUtils.intValue(json['min_length']) ?? 0,
       maxLength: JsonUtils.intValue(json['max_length']),
 
       question: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       section: JsonUtils.stringValue(json['section']),
       scored: json['scored'],
@@ -707,9 +696,8 @@ class QuizQuestionText extends QuizData {
     );
   }
 
-  factory QuizQuestionText.fromOther(QuizQuestionText other) {
-    return QuizQuestionText(
-      id: other.id,
+  factory SurveyQuestionText.fromOther(SurveyQuestionText other) {
+    return SurveyQuestionText(
       key: other.key,
       section: other.section,
       question: other.text,
@@ -747,15 +735,15 @@ class QuizQuestionText extends QuizData {
 
 enum DataType { int, double, bool, string, date }
 
-class QuizDataEntry extends QuizData {
+class SurveyDataEntry extends SurveyData {
   final Map<String, DataType> dataFormat;
 
-  QuizDataEntry({required String text, required this.dataFormat, String? id, required String key, String? section, String? defaultFollowUpKey, 
+  SurveyDataEntry({required String text, required this.dataFormat, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
-      : super(id: id, key: key, section:section, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, 
+      : super(key: key, section:section, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory QuizDataEntry.fromJson(Map<String, dynamic> json) {
+  factory SurveyDataEntry.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? dataFormatJson = JsonUtils.mapValue(json['data_format']);
     Map<String, DataType> dataFormat = {};
     if (dataFormatJson != null) {
@@ -764,11 +752,10 @@ class QuizDataEntry extends QuizData {
       }
     }
 
-    return QuizDataEntry(
+    return SurveyDataEntry(
       dataFormat: dataFormat,
 
       text: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -781,9 +768,8 @@ class QuizDataEntry extends QuizData {
     );
   }
 
-  factory QuizDataEntry.fromOther(QuizDataEntry other) {
-    return QuizDataEntry(
-      id: other.id,
+  factory SurveyDataEntry.fromOther(SurveyDataEntry other) {
+    return SurveyDataEntry(
       key: other.key,
       section: other.section,
       text: other.text,
@@ -812,35 +798,28 @@ class QuizDataEntry extends QuizData {
 
   @override
   bool get isQuestion => false;
-
-  @override
-  bool? get ok {
-    return null;
-  }
 }
 
-class QuizDataResponse extends QuizData {
+class SurveyDataResponse extends SurveyData {
   String? body;
   ActionData? action;
 
-  QuizDataResponse({required String text, this.body, this.action, String? moreInfo, String? id, required String key}) :
-        super(id: id, key: key, text: text, moreInfo: moreInfo, allowSkip: true);
+  SurveyDataResponse({required String text, this.body, this.action, String? moreInfo, required String key}) :
+        super(key: key, text: text, moreInfo: moreInfo, allowSkip: true);
 
-  factory QuizDataResponse.fromJson(Map<String, dynamic> json) {
-    return QuizDataResponse(
+  factory SurveyDataResponse.fromJson(Map<String, dynamic> json) {
+    return SurveyDataResponse(
       body: json['body'],
       action: json['action'] is Map<String, dynamic> ? ActionData.fromJson(json['action']) : null,
 
       text: json['text'],
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
 
-  factory QuizDataResponse.fromOther(QuizDataResponse other) {
-    return QuizDataResponse(
-      id: other.id,
+  factory SurveyDataResponse.fromOther(SurveyDataResponse other) {
+    return SurveyDataResponse(
       key: other.key,
       text: other.text,
       body: other.body,
@@ -860,32 +839,25 @@ class QuizDataResponse extends QuizData {
 
   @override
   bool get isQuestion => false;
-
-  @override
-  bool? get ok {
-    return null;
-  }
 }
 
-class QuizDataAction extends QuizData {
+class SurveyDataAction extends SurveyData {
   ActionData action;
 
-  QuizDataAction({String? id, required String key, required this.action, QuizData? defaultFollowUp}) :
-        super(id: id, key: key, text: '', allowSkip: true);
+  SurveyDataAction({required String key, required this.action, SurveyData? defaultFollowUp}) :
+        super(key: key, text: '', allowSkip: true);
 
-  factory QuizDataAction.fromJson(Map<String, dynamic> json) {
-    return QuizDataAction(
+  factory SurveyDataAction.fromJson(Map<String, dynamic> json) {
+    return SurveyDataAction(
       action: ActionData.fromJson(json['action']),
 
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
-      defaultFollowUp: JsonUtils.orNull((json) => QuizData.fromJson(json), json['default_follow_up']),
+      defaultFollowUp: JsonUtils.orNull((json) => SurveyData.fromJson(json), json['default_follow_up']),
     );
   }
 
-  factory QuizDataAction.fromOther(QuizDataAction other) {
-    return QuizDataAction(
-      id: other.id,
+  factory SurveyDataAction.fromOther(SurveyDataAction other) {
+    return SurveyDataAction(
       key: other.key,
       action: other.action,
     );
@@ -901,36 +873,29 @@ class QuizDataAction extends QuizData {
 
   @override
   bool get isQuestion => false;
-
-  @override
-  bool? get ok {
-    return null;
-  }
 }
 
-class QuizDataQuiz extends QuizData {
-  Quiz quiz;
+class SurveyDataSurvey extends SurveyData {
+  Survey survey;
 
-  QuizDataQuiz({required String text, required this.quiz, String? moreInfo, String? id, required String key, String? section, String? defaultFollowUpKey, Rule? followUpRule, Rule? scoreRule}) :
-        super(id: id, key: key, section: section, text: text, moreInfo: moreInfo, allowSkip: true, defaultFollowUpKey: defaultFollowUpKey, followUpRule: followUpRule, scoreRule: scoreRule);
+  SurveyDataSurvey({required String text, required this.survey, String? moreInfo, required String key, String? section, String? defaultFollowUpKey, Rule? followUpRule, Rule? scoreRule}) :
+        super(key: key, section: section, text: text, moreInfo: moreInfo, allowSkip: true, defaultFollowUpKey: defaultFollowUpKey, followUpRule: followUpRule, scoreRule: scoreRule);
 
-  factory QuizDataQuiz.fromJson(Map<String, dynamic> json) {
-    return QuizDataQuiz(
-      quiz: Quiz.fromJson(json['quiz']),
+  factory SurveyDataSurvey.fromJson(Map<String, dynamic> json) {
+    return SurveyDataSurvey(
+      survey: Survey.fromJson(json['survey']),
 
-      id: JsonUtils.stringValue(json['id']),
       key: JsonUtils.stringValue(json['key']) ?? '',
       text: json['text'],
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
 
-  factory QuizDataQuiz.fromOther(QuizDataQuiz other) {
-    return QuizDataQuiz(
-      id: other.id,
+  factory SurveyDataSurvey.fromOther(SurveyDataSurvey other) {
+    return SurveyDataSurvey(
       key: other.key,
       text: other.text,
-      quiz: other.quiz,
+      survey: other.survey,
       moreInfo: other.moreInfo,
     );
   }
@@ -938,16 +903,11 @@ class QuizDataQuiz extends QuizData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['quiz'] = quiz.toJson();
-    json['type'] = 'quiz';
+    json['survey'] = survey.toJson();
+    json['type'] = 'survey';
     return json;
   }
 
   @override
   bool get isQuestion => false;
-
-  @override
-  bool? get ok {
-    return null;
-  }
 }
