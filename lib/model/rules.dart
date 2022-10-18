@@ -82,6 +82,7 @@ class RuleComparison extends RuleCondition {
     return compare(operator, dataVal, compareTo, defaultResult: defaultResult);
   }
 
+  //TODO: add operators to RuleComparison for simpler multi-select rules
   bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
     try {
       switch (operator) {
@@ -114,6 +115,10 @@ class RuleComparison extends RuleCondition {
             return ruleVal.inRange(val);
           }
           return defaultResult;
+        case "any":
+          //TODO
+        case "all":
+          //TODO
         default:
           return defaultResult;
       }

@@ -41,7 +41,7 @@ class SurveyQuestionPanel extends StatefulWidget {
 }
 
 class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
-  Survey? _survey;
+  late Survey _survey;
   late Map<String, SurveyData> _surveyQuestions;
   late int _surveyQuestionIndex;
   SurveyData? _mainSurveyQuestion;
@@ -60,11 +60,11 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     widgets = SurveyWidgets(context, _onChangeSurveyResponse);
 
     _survey = widget.survey;
-    if (_survey == null || _survey!.questions.isEmpty || widget.currentSurveyIndex >= _survey!.questions.length) {
+    if (_survey.questions.isEmpty || widget.currentSurveyIndex >= _survey.questions.length) {
       _popSurveyPanels();
       return;
     }
-    _surveyQuestions = _survey!.questions;
+    _surveyQuestions = _survey.questions;
 
     _surveyQuestionIndex = widget.currentSurveyIndex;
     while (_surveyQuestionIndex < _surveyQuestions.length) {
@@ -136,7 +136,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     }
 
     List<Widget> followUps = [];
-    for (SurveyData? data = _mainSurveyQuestion?.followUp; data != null; data = data.followUp) {
+    for (SurveyData? data = _mainSurveyQuestion?.followUp(_survey); data != null; data = data.followUp(_survey)) {
       Widget? followUp;
       if (data is SurveyDataSurvey) {
         followUp = widgets.buildInlineSurveyWidget(data, onComplete: (val) {
@@ -226,7 +226,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
 
     // show survey summary or return to home page on finishing events
     if (_surveyQuestionIndex == _surveyQuestions.length - 1) {
-      _survey?.lastUpdated = DateTime.now();
+      _survey.lastUpdated = DateTime.now();
 
       // if (widget.showSummaryOnFinish) {
       // } else {
@@ -236,7 +236,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
       return;
     }
 
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: widget.survey, plan: widget.plan, currentSurveyIndex: _surveyQuestionIndex + 1, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: _survey, currentSurveyIndex: _surveyQuestionIndex + 1, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {

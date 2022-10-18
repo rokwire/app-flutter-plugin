@@ -123,10 +123,24 @@ class SurveyWidgets {
         return null;
       case ActionType.dismiss:
         return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-            () => onTapDismiss(dismissContext: dismissContext, params: params)
+            () => onTapDismiss(dismissContext: dismissContext)
         );
       default:
         return null;
+    }
+  }
+
+  static void onTapShowSurvey(BuildContext context, Survey survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: survey, onComplete: () {
+        survey.evaluate();
+      })));
+    });
+  }
+
+  static void onTapDismiss({BuildContext? dismissContext}) {
+    if (dismissContext != null) {
+      Navigator.pop(dismissContext);
     }
   }
 
@@ -161,11 +175,11 @@ class SurveyWidgets {
       widget = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
-        okAnswers: survey.okAnswers,
+        correctAnswers: survey.correctAnswers,
         scored: survey.scored,
       );
     } else {
-      widget = OnboardingSingleSelectionList(
+      widget = SingleSelectionList(
         selectionList: optionList,
         onChanged: (int index) {
           if (survey.scored && survey.response != null) {
@@ -200,11 +214,11 @@ class SurveyWidgets {
       widget = CustomIconSelectionList(
         optionList: options,
         selectedValues: selectedOptions,
-        okAnswers: survey.okAnswers,
+        correctAnswers: survey.correctAnswers,
         scored: survey.scored,
       );
     } else {
-      widget = OnboardingMultiSelectionList(
+      widget = MultiSelectionList(
         selectionList: options,
         isChecked: isCheckedList,
         onChanged: (int index) {
@@ -250,10 +264,10 @@ class SurveyWidgets {
       widget = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
-        okAnswers: survey.okAnswer != null ? [survey.okAnswer] : null,
+        correctAnswers: survey.correctAnswer != null ? [survey.correctAnswer] : null,
         scored: survey.scored,);
     } else {
-      widget = OnboardingSingleSelectionList(
+      widget = SingleSelectionList(
           selectionList: optionList,
           onChanged: (int index) {
             if (survey.scored && survey.response != null) {
@@ -513,7 +527,7 @@ class CustomIconSelectionList extends StatelessWidget {
   final List<OptionData> optionList;
   final void Function(int)? onChanged;
   final List<dynamic>? selectedValues;
-  final List<dynamic>? okAnswers;
+  final List<dynamic>? correctAnswers;
   final bool scored;
   final double iconSize;
   final Widget? unselectedIcon;
@@ -527,7 +541,7 @@ class CustomIconSelectionList extends StatelessWidget {
     this.onChanged,
     this.selectedValues,
     this.iconSize = 24.0,
-    this.okAnswers,
+    this.correctAnswers,
     this.scored = false,
     this.unselectedIcon,
     this.selectedIcon,
@@ -558,12 +572,12 @@ class CustomIconSelectionList extends StatelessWidget {
               // unchosen, correct => check mark
               // unchosen, incorrect => selected mark
 
-              // no okAnswers: only chosen and unchosen
+              // no correctAnswers: only chosen and unchosen
               bool selected = isOptionSelected(selectedValues, option);
-              if (okAnswers == null || !scored) {
+              if (correctAnswers == null || !scored) {
                 optionIcon = selected ? selectedIcon! : unselectedIcon!;
               } else {
-                if (isOptionCorrect(okAnswers, option)) {
+                if (isOptionCorrect(correctAnswers, option)) {
                   optionIcon = checkIcon!;
                   if (optionIcon == checkIcon) {
                     correctAnswer = option.title;
@@ -616,10 +630,10 @@ class CustomIconSelectionList extends StatelessWidget {
     );
   }
 
-  bool isOptionCorrect(List<dynamic>? okAnswers, OptionData option) {
-    if (okAnswers == null) return true;
+  bool isOptionCorrect(List<dynamic>? correctAnswers, OptionData option) {
+    if (correctAnswers == null) return true;
 
-    return okAnswers.contains(option.value);
+    return correctAnswers.contains(option.value);
   }
 
   bool isOptionSelected(List<dynamic>? selectedValues, OptionData option) {
@@ -631,5 +645,85 @@ class CustomIconSelectionList extends StatelessWidget {
     }
 
     return false;
+  }
+}
+
+class SingleSelectionList extends StatelessWidget {
+  final List<OptionData> selectionList;
+  final void Function(int)? onChanged;
+  final OptionData? selectedValue;
+
+  const SingleSelectionList({
+    Key? key,
+    required this.selectionList,
+    this.onChanged,
+    this.selectedValue
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+
+        itemCount: selectionList.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Card(
+                  child: InkWell(
+                    onTap: onChanged != null ? () => onChanged!(index) : null,
+                    child: ListTile(
+                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                      leading: Radio<String>(
+                        activeColor: Styles().colors?.fillColorSecondary,
+                        value: selectionList[index].title,
+                        groupValue: selectedValue != null ? selectedValue!.title : null,
+                        onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                      ),
+                      contentPadding: const EdgeInsets.all(8),
+                    ),
+                  )
+              ));
+        });
+  }
+}
+
+class MultiSelectionList extends StatelessWidget {
+  final List<OptionData> selectionList;
+  final List<bool>? isChecked;
+  final void Function(int)? onChanged;
+
+  const MultiSelectionList({
+    Key? key,
+    required this.selectionList,
+    this.onChanged,
+    this.isChecked,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+
+        itemCount: selectionList.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Card(
+                  child: InkWell(
+                    onTap: onChanged != null ? () => onChanged!(index) : null,
+                    child: ListTile(
+                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                      leading: Checkbox(
+                        checkColor: Colors.white,
+                        activeColor: Styles().colors?.fillColorSecondary,
+                        value: isChecked?[index],
+                        onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                      ),
+                      contentPadding: const EdgeInsets.all(8),
+                    ),
+                  )
+              ));
+        });
   }
 }

@@ -287,7 +287,6 @@ abstract class SurveyData {
   }
 
   Map<String, dynamic> toJson();
-  // num? get score;
 
   Map<String, dynamic> baseJson() {
     return {
@@ -393,10 +392,11 @@ abstract class SurveyData {
 
 class SurveyQuestionTrueFalse extends SurveyData {
   final bool yesNo;
+  final bool? correctAnswer;
   final List<OptionData> options;
 
-  SurveyQuestionTrueFalse({required String question, this.yesNo = false, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
-    Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
+  SurveyQuestionTrueFalse({required String question, this.yesNo = false, this.correctAnswer, required String key, String? section, String? defaultFollowUpKey, 
+    Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
       : options = [OptionData(title: yesNo ? "Yes" : "True", value: true), OptionData(title: yesNo ? "No" : "False", value: false)],
         super(allowSkip: allowSkip, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
           followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
@@ -404,6 +404,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
   factory SurveyQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
     return SurveyQuestionTrueFalse(
       yesNo: JsonUtils.boolValue(json['yes_no']) ?? false,
+      correctAnswer: JsonUtils.boolValue(json['correct_answer']),
 
       question: json['text'],
       key: JsonUtils.stringValue(json['key']) ?? '',
@@ -423,6 +424,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
       key: other.key,
       section: other.section,
       yesNo: other.yesNo,
+      correctAnswer: other.correctAnswer,
       question: other.text,
       defaultFollowUpKey: other.defaultFollowUpKey,
       defaultResponseRule: other.defaultResponseRule,
@@ -436,8 +438,22 @@ class SurveyQuestionTrueFalse extends SurveyData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['yes_no'] = yesNo;
+    json['correct_answer'] = correctAnswer;
     json['type'] = 'true_false';
     return json;
+  }
+
+  @override
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case null:
+        return this;
+      case "response":
+        return response;
+      case "correct_answer":
+        return correctAnswer;
+    }
+    return null;
   }
 
   @override
@@ -446,11 +462,11 @@ class SurveyQuestionTrueFalse extends SurveyData {
 
 class SurveyQuestionMultipleChoice extends SurveyData {
   final List<OptionData> options;
-  final List<dynamic>? okAnswers;
-  final bool checkAll;
+  final List<dynamic>? correctAnswers;
   final bool allowMultiple;
+  final bool selfScore;
 
-  SurveyQuestionMultipleChoice({required String question, required this.options, this.okAnswers, this.allowMultiple = false, this.checkAll = false, required String key, 
+  SurveyQuestionMultipleChoice({required String question, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, 
     String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false})
       : super(key: key, section: section, allowSkip: allowSkip, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
@@ -458,8 +474,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   factory SurveyQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
     return SurveyQuestionMultipleChoice(
       options: OptionData.listFromJson(json['options']),
-      okAnswers: json['ok_answers'],
+      correctAnswers: json['correct_answers'],
       allowMultiple: JsonUtils.boolValue(json['allow_multiple']) ?? false,
+      selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
       question: json['text'],
       key: JsonUtils.stringValue(json['key']) ?? '',
@@ -480,8 +497,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       section: other.section,
       question: other.text,
       options: other.options,
-      okAnswers: other.okAnswers,
+      correctAnswers: other.correctAnswers,
       allowMultiple: other.allowMultiple,
+      selfScore: other.selfScore,
       allowSkip: other.allowSkip,
       defaultFollowUpKey: other.defaultFollowUpKey,
       defaultResponseRule: other.defaultResponseRule,
@@ -495,16 +513,58 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['options'] = JsonUtils.encodeList(options);
-    json['ok_answers'] = okAnswers;
+    json['correct_answers'] = correctAnswers;
     json['allow_multiple'] = allowMultiple;
+    json['self_score'] = selfScore;
     json['type'] = 'multiple_choice';
     return json;
   }
 
   @override
-  bool get isQuestion => true;
+  SurveyStats stats(Survey survey) {
+    Map<String, dynamic> responseData = {};
+    responseData[key] = response;
 
-  //TODO: add operators to RuleComparison for simpler multi-select rules
+    Map<String, num> scores = {};
+    if (scoreRule != null) {
+      RuleActionResult? ruleResult = scoreRule!.evaluate(survey);
+      if (ruleResult is RuleAction) {
+        dynamic data = ruleResult.evaluate(survey);
+        if (data is num) {
+          scores[section ?? ''] = data;
+        }
+      }
+    } else if (selfScore && response is num) {
+      scores[section ?? ''] = response;
+    }
+    
+
+    SurveyStats stats = SurveyStats(
+      total: isQuestion ? 1 : 0,
+      complete: response != null ? 1 : 0,
+      scored: scoreRule != null ? 1 : 0,
+      scores: scores,
+      responseData: responseData,
+    );
+
+    return stats;
+  }
+
+  @override
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case null:
+        return this;
+      case "response":
+        return response;
+      case "correct_answers":
+        return correctAnswers;
+    }
+    return null;
+  }
+
+  @override
+  bool get isQuestion => true;
 }
 
 class SurveyQuestionDateTime extends SurveyData {
