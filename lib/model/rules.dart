@@ -116,9 +116,21 @@ class RuleComparison extends RuleCondition {
           }
           return defaultResult;
         case "any":
-          //TODO
+          if (ruleVal is Iterable) {
+            return ListUtils.contains(ruleVal.toList(), val) ?? false;
+          }
+          if (val is Iterable) {
+            return ListUtils.contains(val.toList(), ruleVal) ?? false;
+          }
+          return val == ruleVal;
         case "all":
-          //TODO
+          if (ruleVal is Iterable) {
+            return ListUtils.contains(ruleVal.toList(), val, checkAll: true) ?? false;
+          }
+          if (val is Iterable) {
+            return ListUtils.contains(val.toList(), ruleVal, checkAll: true) ?? false;
+          }
+          return val == ruleVal;
         default:
           return defaultResult;
       }
@@ -126,6 +138,8 @@ class RuleComparison extends RuleCondition {
       return defaultResult;
     }
   }
+
+  
 }
 
 class RuleLogic extends RuleCondition {

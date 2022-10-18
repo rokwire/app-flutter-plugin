@@ -190,6 +190,28 @@ class ListUtils {
   static T? entry<T>(List<T>? list, int index) {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
   }
+
+  static bool? contains(List<dynamic>? list, dynamic item, {bool checkAll = false}) {
+    if (list == null) {
+      return null;
+    }
+    if (item is List<dynamic>) {
+      for (dynamic val in item) {
+        if (list.contains(val)) {
+          if (!checkAll) {
+            return true;
+          }
+        } else if (checkAll) {
+          return false;
+        }
+      }
+      if (checkAll) {
+        return true;
+      }
+      return false;
+    }
+    return list.contains(item);
+  }
 }
 
 class SetUtils {
