@@ -752,6 +752,7 @@ class Auth2UserPrefs {
   static const String notifyInterestsChanged     = "edu.illinois.rokwire.user.prefs.interests.changed";
   static const String notifyFoodChanged          = "edu.illinois.rokwire.user.prefs.food.changed";
   static const String notifyTagsChanged          = "edu.illinois.rokwire.user.prefs.tags.changed";
+  static const String notifyAnswersChanged       = "edu.illinois.rokwire.user.prefs.answers.changed";
   static const String notifySettingsChanged      = "edu.illinois.rokwire.user.prefs.settings.changed";
   static const String notifyVoterChanged         = "edu.illinois.rokwire.user.prefs.voter.changed";
   static const String notifyChanged              = "edu.illinois.rokwire.user.prefs.changed";
@@ -765,16 +766,18 @@ class Auth2UserPrefs {
   Map<String, Set<String>>?  _interests;
   Map<String, Set<String>>?  _foodFilters;
   Map<String, bool>? _tags;
+  Map<String, dynamic>? _answers;
   Map<String, dynamic>? _settings;
   Auth2VoterPrefs? _voter;
 
-  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
+  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
     _privacyLevel = privacyLevel;
     _roles = roles;
     _favorites = favorites;
     _interests = interests;
     _foodFilters = foodFilters;
     _tags = tags;
+    _answers = answers;
     _settings = settings;
     _voter = Auth2VoterPrefs.fromOther(voter, onChanged: _onVoterChanged);
   }
@@ -787,6 +790,7 @@ class Auth2UserPrefs {
       interests: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['interests'])),
       foodFilters: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['food'])),
       tags: _tagsFromJson(JsonUtils.mapValue(json['tags'])),
+      answers: JsonUtils.mapValue(json['answers']),
       settings: JsonUtils.mapValue(json['settings']),
       voter: Auth2VoterPrefs.fromJson(JsonUtils.mapValue(json['voter'])),
     ) : null;
@@ -803,12 +807,13 @@ class Auth2UserPrefs {
         _foodExcludedIngredients : <String>{},
       },
       tags: <String, bool>{},
+      answers: <String, dynamic>{},
       settings: <String, dynamic>{},
       voter: Auth2VoterPrefs(),
     );
   }
 
-  factory Auth2UserPrefs.fromStorage({Map<String, dynamic>? profile, Set<String>? includedFoodTypes, Set<String>? excludedFoodIngredients, Map<String, dynamic>? settings}) {
+  factory Auth2UserPrefs.fromStorage({Map<String, dynamic>? profile, Set<String>? includedFoodTypes, Set<String>? excludedFoodIngredients, Map<String, dynamic>? answers, Map<String, dynamic>? settings}) {
     Map<String, dynamic>? privacy = (profile != null) ? JsonUtils.mapValue(profile['privacySettings']) : null;
     int? privacyLevel = (privacy != null) ? JsonUtils.intValue(privacy['level']) : null;
     Set<UserRole>? roles = (profile != null) ? UserRole.setFromJson(JsonUtils.listValue(profile['roles'])) : null;
@@ -827,6 +832,7 @@ class Auth2UserPrefs {
         _foodExcludedIngredients : excludedFoodIngredients ?? <String>{},
       },
       tags: tags ?? <String, bool>{},
+      answers: answers ?? <String, dynamic>{},
       settings: settings ?? <String, dynamic>{},
       voter: voter ?? Auth2VoterPrefs(),
     );
@@ -840,6 +846,7 @@ class Auth2UserPrefs {
       'interests': _mapOfStringToSetOfStringsToJson(_interests),
       'food': _mapOfStringToSetOfStringsToJson(_foodFilters),
       'tags': _tags,
+      'answers': _answers,
       'settings': _settings,
       'voter': _voter
     };
@@ -854,6 +861,7 @@ class Auth2UserPrefs {
       const DeepCollectionEquality().equals(other._interests, _interests) &&
       const DeepCollectionEquality().equals(other._foodFilters, _foodFilters) &&
       const DeepCollectionEquality().equals(other._tags, _tags) &&
+      const DeepCollectionEquality().equals(other._answers, _answers) &&
       const DeepCollectionEquality().equals(other._settings, _settings) &&
       (other._voter == _voter);
 
@@ -865,6 +873,7 @@ class Auth2UserPrefs {
     (const DeepCollectionEquality().hash(_interests)) ^
     (const DeepCollectionEquality().hash(_foodFilters)) ^
     (const DeepCollectionEquality().hash(_tags)) ^
+    (const DeepCollectionEquality().hash(_answers)) ^
     (const DeepCollectionEquality().hash(_settings)) ^
     (_voter?.hashCode ?? 0);
 
@@ -921,6 +930,14 @@ class Auth2UserPrefs {
         modified = true;
       }
       
+      if ((prefs._answers != null) && prefs._answers!.isNotEmpty && !const DeepCollectionEquality().equals(prefs._answers, _answers)) {
+        _answers = prefs._answers;
+        if (notify == true) {
+          NotificationService().notify(notifyAnswersChanged);
+        }
+        modified = true;
+      }
+
       if ((prefs._settings != null) && prefs._settings!.isNotEmpty && !const DeepCollectionEquality().equals(prefs._settings, _settings)) {
         _settings = prefs._settings;
         if (notify == true) {
@@ -1427,6 +1444,24 @@ class Auth2UserPrefs {
       }
     }
   }
+
+  // Answers
+
+  Map<String, LinkedHashSet<String>>? getQuestionnaireAnswers(String? questionnaireId) {
+    return _mapOfStringToLinkedHashSetOfStringsFromJson(JsonUtils.mapValue(MapUtils.get(_answers, questionnaireId)));
+  }
+
+  void setQuestionnaireAnswers(String? questionnaireId, Map<String, LinkedHashSet<String>>? questionnaireAnswers) {
+    Map<String, dynamic>? answersJson = _mapOfStringToLinkedHashSetOfStringsToJson(questionnaireAnswers);
+    Map<String, dynamic>? lastAnswersJson = JsonUtils.mapValue(MapUtils.get(_answers, questionnaireId));
+    if (!const DeepCollectionEquality().equals(answersJson, lastAnswersJson)) {
+      _answers ??= <String, dynamic>{};
+      MapUtils.set(_answers, questionnaireId, answersJson);
+      NotificationService().notify(notifyAnswersChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+  
   // Settings
 
   bool? getBoolSetting(String? settingName, { bool? defaultValue }) =>
