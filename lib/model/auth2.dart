@@ -1461,6 +1461,14 @@ class Auth2UserPrefs {
       NotificationService().notify(notifyChanged, this);
     }
   }
+
+  void clearAllQuestionnaireAnswers() {
+    if (_answers?.isNotEmpty ?? false) {
+      _answers?.clear();
+      NotificationService().notify(notifyAnswersChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
   
   // Settings
 
