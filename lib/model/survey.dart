@@ -19,32 +19,37 @@ import 'package:rokwire_plugin/utils/widget_utils.dart';
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
 
-  late Map<String, SurveyData> questions;
-  DateTime? lastUpdated;
-  bool scored;
+  Map<String, SurveyData> data;
   String type;
+  bool scored;
+  String? defaultDataKey;
+  Rule? defaultDataKeyRule;
   Rule? resultRule;
+  DateTime? lastUpdated;
   dynamic resultData;
 
   SurveyStats? _stats;
   SurveyStats? get stats { return _stats; }
 
-  Survey({Map<String, SurveyData>? questions, this.lastUpdated, this.scored = true, this.resultRule, required this.type,
+  Survey({required this.data, required this.type, this.scored = true, this.defaultDataKey, this.defaultDataKeyRule, this.resultRule, this.lastUpdated,
     Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
-    Map<String, SurveyData> questionMap = {};
-    Map<String, dynamic> questionData = JsonUtils.mapValue(json) ?? {};
-    questionData.forEach((key, value) {
+    Map<String, SurveyData> dataMap = {};
+    Map<String, dynamic> surveyDataMap = JsonUtils.mapValue(json['data']) ?? {};
+    surveyDataMap.forEach((key, value) {
       if (value is Map<String, dynamic>) {
-        questionMap[key] = SurveyData.fromJson(value);
+        dataMap[key] = SurveyData.fromJson(value);
       }
     });
 
     return Survey(
-      scored: json['scored'] ?? true,
+      data: dataMap,
       type: json['type'] ?? false,
+      scored: json['scored'] ?? true,
+      defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
+      defaultDataKeyRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_data_key_rule'])),
       resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
       lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -55,7 +60,7 @@ class Survey extends RuleEngine {
 
   Map<String, dynamic> toJson() {
     return {
-      'questions': JsonUtils.encode(questions),
+      'data': JsonUtils.encode(data),
       'last_updated': DateTimeUtils.dateTimeLocalToJson(lastUpdated),
       'scored': scored,
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
@@ -65,12 +70,12 @@ class Survey extends RuleEngine {
   }
 
   factory Survey.fromOther(Survey other) {
-    Map<String, SurveyData> questions = {};
-    for (MapEntry<String, SurveyData> question in other.questions.entries){
-      questions[question.key] = (SurveyData.fromOther(question.value));
+    Map<String, SurveyData> data = {};
+    for (MapEntry<String, SurveyData> surveyData in other.data.entries){
+      data[surveyData.key] = (SurveyData.fromOther(surveyData.value));
     }
     return Survey(
-      questions: questions,
+      data: data,
       lastUpdated: other.lastUpdated,
       scored: other.scored,
       resultRule: other.resultRule,
@@ -109,10 +114,10 @@ class Survey extends RuleEngine {
         return null;
       case "result_data":
         return resultData;
-      case "question":
-        RuleKey? questionKey = key?.subRuleKey;
-        if (questionKey != null) {
-          return questions[questionKey.key]?.getProperty(questionKey.subRuleKey);
+      case "data":
+        RuleKey? dataKey = key?.subRuleKey;
+        if (dataKey != null) {
+          return data[dataKey.key]?.getProperty(dataKey.subRuleKey);
         }
     }
     return null;
@@ -121,9 +126,9 @@ class Survey extends RuleEngine {
   void evaluate() {
     //TODO: add params to be passed in on evaluate?
     SurveyStats stats = SurveyStats();
-    //TODO: calculate stats by following question chain (depends on results of rules)
-    for (SurveyData question in questions.values) {
-      stats += question.stats(this);
+    //TODO: calculate stats by following data chain (depends on results of rules)
+    for (SurveyData surveyData in data.values) {
+      stats += surveyData.stats(this);
     }
     _stats = stats;
 
@@ -140,15 +145,15 @@ class Survey extends RuleEngine {
   }
 
   bool canContinue({bool deep = true}) {
-    for (SurveyData question in questions.values) {
-      if (!question.canContinue(this, deep: deep)) {
+    for (SurveyData surveyData in data.values) {
+      if (!surveyData.canContinue(this, deep: deep)) {
         return false;
       }
     }
     return true;
   }
 
-  SurveyData? get firstQuestion => questions[defaultQuestionKey];
+  SurveyData? get firstQuestion => data[defaultDataKey ?? defaultQuestionKey];
 }
 
 class SurveyStats {
@@ -346,7 +351,7 @@ abstract class SurveyData {
     return null;
   }
 
-  SurveyData? defaultFollowUp(Survey survey) => defaultFollowUpKey != null ? survey.questions[defaultFollowUpKey] : null;
+  SurveyData? defaultFollowUp(Survey survey) => defaultFollowUpKey != null ? survey.data[defaultFollowUpKey] : null;
 
   SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
@@ -413,8 +418,8 @@ class SurveyQuestionTrueFalse extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -485,8 +490,8 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -590,8 +595,8 @@ class SurveyQuestionDateTime extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -654,8 +659,8 @@ class SurveyQuestionNumeric extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -750,8 +755,8 @@ class SurveyQuestionText extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -822,8 +827,8 @@ class SurveyDataEntry extends SurveyData {
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(json['follow_up_rule']),
-      scoreRule: Rule.fromJson(json['score_rule']),
+      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
+      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }

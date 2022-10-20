@@ -82,7 +82,6 @@ class RuleComparison extends RuleCondition {
     return compare(operator, dataVal, compareTo, defaultResult: defaultResult);
   }
 
-  //TODO: add operators to RuleComparison for simpler multi-select rules
   bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
     try {
       switch (operator) {
@@ -272,6 +271,8 @@ class RuleAction extends RuleActionResult {
           return data;
         }
         return null;
+      case "follow_up":
+      case "show_survey":
       case "notify":
         //TODO: Send notification to providers/emergency contacts
     }

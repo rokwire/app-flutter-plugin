@@ -60,11 +60,11 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     widgets = SurveyWidgets(context, _onChangeSurveyResponse);
 
     _survey = widget.survey;
-    if (_survey.questions.isEmpty || widget.currentSurveyIndex >= _survey.questions.length) {
+    if (_survey.data.isEmpty || widget.currentSurveyIndex >= _survey.data.length) {
       _popSurveyPanels();
       return;
     }
-    _surveyQuestions = _survey.questions;
+    _surveyQuestions = _survey.data;
 
     _surveyQuestionIndex = widget.currentSurveyIndex;
     while (_surveyQuestionIndex < _surveyQuestions.length) {
