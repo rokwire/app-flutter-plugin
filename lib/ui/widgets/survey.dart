@@ -182,9 +182,9 @@ class SurveyWidgets {
       widget = SingleSelectionList(
         selectionList: optionList,
         onChanged: (int index) {
-          if (survey.scored && survey.response != null) {
-            return;
-          }
+          // if (survey.scored && survey.response != null) {
+          //   return;
+          // }
           survey.response = optionList[index].value;
           onChangeSurveyResponse(true);
         },

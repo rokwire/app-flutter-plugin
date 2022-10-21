@@ -22,6 +22,7 @@ class Survey extends RuleEngine {
   Map<String, SurveyData> data;
   String type;
   bool scored;
+  String title;
   String? defaultDataKey;
   Rule? defaultDataKeyRule;
   Rule? resultRule;
@@ -31,7 +32,7 @@ class Survey extends RuleEngine {
   SurveyStats? _stats;
   SurveyStats? get stats { return _stats; }
 
-  Survey({required this.data, required this.type, this.scored = true, this.defaultDataKey, this.defaultDataKeyRule, this.resultRule, this.lastUpdated,
+  Survey({required this.data, required this.type, this.scored = true, required this.title, this.defaultDataKey, this.defaultDataKeyRule, this.resultRule, this.lastUpdated,
     Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules);
 
@@ -40,7 +41,7 @@ class Survey extends RuleEngine {
     Map<String, dynamic> surveyDataMap = JsonUtils.mapValue(json['data']) ?? {};
     surveyDataMap.forEach((key, value) {
       if (value is Map<String, dynamic>) {
-        dataMap[key] = SurveyData.fromJson(value);
+        dataMap[key] = SurveyData.fromJson(key, value);
       }
     });
 
@@ -48,6 +49,7 @@ class Survey extends RuleEngine {
       data: dataMap,
       type: json['type'] ?? false,
       scored: json['scored'] ?? true,
+      title: json['title'] ?? 'Survey',
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
       defaultDataKeyRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_data_key_rule'])),
       resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
@@ -61,10 +63,13 @@ class Survey extends RuleEngine {
   Map<String, dynamic> toJson() {
     return {
       'data': JsonUtils.encode(data),
-      'last_updated': DateTimeUtils.dateTimeLocalToJson(lastUpdated),
-      'scored': scored,
-      'result_rule': JsonUtils.encode(resultRule?.toJson()),
       'type': type,
+      'scored': scored,
+      'title': title,
+      'default_data_key': defaultDataKey,
+      'default_data_key_rule': defaultDataKeyRule,
+      'result_rule': JsonUtils.encode(resultRule?.toJson()),
+      'last_updated': DateTimeUtils.dateTimeLocalToJson(lastUpdated),
       'stats': _stats?.toJson(),
     };
   }
@@ -76,10 +81,13 @@ class Survey extends RuleEngine {
     }
     return Survey(
       data: data,
-      lastUpdated: other.lastUpdated,
-      scored: other.scored,
-      resultRule: other.resultRule,
       type: other.type,
+      scored: other.scored,
+      title: other.title,
+      defaultDataKey: other.defaultDataKey,
+      defaultDataKeyRule: other.defaultDataKeyRule,
+      resultRule: other.resultRule,
+      lastUpdated: other.lastUpdated,
       constants: other.constants,
       strings: other.strings,
       subRules: other.subRules,
@@ -153,6 +161,7 @@ class Survey extends RuleEngine {
     return true;
   }
 
+  //TODO: add firstQuestionKey getter -> use here
   SurveyData? get firstQuestion => data[defaultDataKey ?? defaultQuestionKey];
 }
 
@@ -239,33 +248,20 @@ abstract class SurveyData {
   SurveyData({required this.key, this.section, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule, 
     this.moreInfo, this.response, this.allowSkip = false});
 
-  factory SurveyData.fromJson(Map<String, dynamic> json) {
+  factory SurveyData.fromJson(String key, Map<String, dynamic> json) {
     String? surveyType = JsonUtils.stringValue(json["type"]);
     switch (surveyType) {
-      case "true_false": return SurveyQuestionTrueFalse.fromJson(json);
-      case "multiple_choice": return SurveyQuestionMultipleChoice.fromJson(json);
-      case "date_time": return SurveyQuestionDateTime.fromJson(json);
-      case "numeric": return SurveyQuestionNumeric.fromJson(json);
-      case "text": return SurveyQuestionText.fromJson(json);
-      case "entry": return SurveyDataEntry.fromJson(json);
-      case "response": return SurveyDataResponse.fromJson(json);
-      case "action": return SurveyDataAction.fromJson(json);
-      case "survey": return SurveyDataSurvey.fromJson(json);
+      case "true_false": return SurveyQuestionTrueFalse.fromJson(key, json);
+      case "multiple_choice": return SurveyQuestionMultipleChoice.fromJson(key, json);
+      case "date_time": return SurveyQuestionDateTime.fromJson(key, json);
+      case "numeric": return SurveyQuestionNumeric.fromJson(key, json);
+      case "text": return SurveyQuestionText.fromJson(key, json);
+      case "entry": return SurveyDataEntry.fromJson(key, json);
+      case "response": return SurveyDataResponse.fromJson(key, json);
+      case "action": return SurveyDataAction.fromJson(key, json);
+      case "survey": return SurveyDataSurvey.fromJson(key, json);
       default: throw Exception("Invalid survey data type");
     }
-  }
-
-  static List<SurveyData> listFromJson(List<dynamic>? jsonList) {
-    if (jsonList == null) {
-      return [];
-    }
-    List<SurveyData> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(SurveyData.fromJson(json));
-      }
-    }
-    return list;
   }
 
   factory SurveyData.fromOther(SurveyData other) {
@@ -334,18 +330,16 @@ abstract class SurveyData {
   }
 
   SurveyData? followUp(Survey survey) {
-    if (response != null) {
-      if (followUpRule != null) {
-        RuleActionResult? result = followUpRule!.evaluate(survey);
-        if (result is RuleAction) {
-          dynamic data = result.evaluate(survey);
-          if (data is SurveyData) {
-            return data;
-          }
+    if (followUpRule != null) {
+      RuleActionResult? result = followUpRule!.evaluate(survey);
+      if (result is RuleAction) {
+        dynamic data = result.evaluate(survey);
+        if (data is SurveyData) {
+          return data;
         }
-      } else {
-        return defaultFollowUp(survey);
       }
+    } else {
+      return defaultFollowUp(survey);
     }
 
     return null;
@@ -406,13 +400,13 @@ class SurveyQuestionTrueFalse extends SurveyData {
         super(allowSkip: allowSkip, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
           followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
 
-  factory SurveyQuestionTrueFalse.fromJson(Map<String, dynamic> json) {
+  factory SurveyQuestionTrueFalse.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionTrueFalse(
       yesNo: JsonUtils.boolValue(json['yes_no']) ?? false,
       correctAnswer: JsonUtils.boolValue(json['correct_answer']),
 
       question: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -476,7 +470,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       : super(key: key, section: section, allowSkip: allowSkip, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
 
-  factory SurveyQuestionMultipleChoice.fromJson(Map<String, dynamic> json) {
+  factory SurveyQuestionMultipleChoice.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionMultipleChoice(
       options: OptionData.listFromJson(json['options']),
       correctAnswers: json['correct_answers'],
@@ -484,14 +478,14 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
       question: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       defaultResponseRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_response_rule'])),
-      followUpRule: Rule.fromJson(JsonUtils.mapValue(json['follow_up_rule']) ?? {}),
-      scoreRule: Rule.fromJson(JsonUtils.mapValue(json['score_rule']) ?? {}),
+      followUpRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['follow_up_rule'])),
+      scoreRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -582,7 +576,7 @@ class SurveyQuestionDateTime extends SurveyData {
       : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory SurveyQuestionDateTime.fromJson(Map<String, dynamic> json) {
+  factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionDateTime(
       startTime: DateTimeUtils.dateTimeLocalFromJson(json['star_time']),
       endTime: DateTimeUtils.dateTimeLocalFromJson(json['end_time']),
@@ -590,7 +584,7 @@ class SurveyQuestionDateTime extends SurveyData {
 
       question: json['text'],
       section: JsonUtils.stringValue(json['section']),
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
@@ -644,7 +638,7 @@ class SurveyQuestionNumeric extends SurveyData {
       : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, 
         scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory SurveyQuestionNumeric.fromJson(Map<String, dynamic> json) {
+  factory SurveyQuestionNumeric.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionNumeric(
       minimum: JsonUtils.doubleValue(json['minimum']),
       maximum: JsonUtils.doubleValue(json['maximum']),
@@ -653,7 +647,7 @@ class SurveyQuestionNumeric extends SurveyData {
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
       question: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -742,13 +736,13 @@ class SurveyQuestionText extends SurveyData {
       : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory SurveyQuestionText.fromJson(Map<String, dynamic> json) {
+  factory SurveyQuestionText.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionText(
       minLength: JsonUtils.intValue(json['min_length']) ?? 0,
       maxLength: JsonUtils.intValue(json['max_length']),
 
       question: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       section: JsonUtils.stringValue(json['section']),
       scored: json['scored'],
       response: json['response'],
@@ -808,7 +802,7 @@ class SurveyDataEntry extends SurveyData {
       : super(key: key, section:section, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, 
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response, allowSkip: allowSkip);
 
-  factory SurveyDataEntry.fromJson(Map<String, dynamic> json) {
+  factory SurveyDataEntry.fromJson(String key, Map<String, dynamic> json) {
     Map<String, dynamic>? dataFormatJson = JsonUtils.mapValue(json['data_format']);
     Map<String, DataType> dataFormat = {};
     if (dataFormatJson != null) {
@@ -821,7 +815,7 @@ class SurveyDataEntry extends SurveyData {
       dataFormat: dataFormat,
 
       text: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
@@ -872,13 +866,13 @@ class SurveyDataResponse extends SurveyData {
   SurveyDataResponse({required String text, this.body, this.action, String? moreInfo, required String key}) :
         super(key: key, text: text, moreInfo: moreInfo, allowSkip: true);
 
-  factory SurveyDataResponse.fromJson(Map<String, dynamic> json) {
+  factory SurveyDataResponse.fromJson(String key, Map<String, dynamic> json) {
     return SurveyDataResponse(
       body: json['body'],
       action: json['action'] is Map<String, dynamic> ? ActionData.fromJson(json['action']) : null,
 
       text: json['text'],
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );
   }
@@ -912,12 +906,12 @@ class SurveyDataAction extends SurveyData {
   SurveyDataAction({required String key, required this.action, SurveyData? defaultFollowUp}) :
         super(key: key, text: '', allowSkip: true);
 
-  factory SurveyDataAction.fromJson(Map<String, dynamic> json) {
+  factory SurveyDataAction.fromJson(String key, Map<String, dynamic> json) {
     return SurveyDataAction(
       action: ActionData.fromJson(json['action']),
 
-      key: JsonUtils.stringValue(json['key']) ?? '',
-      defaultFollowUp: JsonUtils.orNull((json) => SurveyData.fromJson(json), json['default_follow_up']),
+      key: key,
+      defaultFollowUp: JsonUtils.orNull((json) => SurveyData.fromJson(key, json), json['default_follow_up']),
     );
   }
 
@@ -946,11 +940,11 @@ class SurveyDataSurvey extends SurveyData {
   SurveyDataSurvey({required String text, required this.survey, String? moreInfo, required String key, String? section, String? defaultFollowUpKey, Rule? followUpRule, Rule? scoreRule}) :
         super(key: key, section: section, text: text, moreInfo: moreInfo, allowSkip: true, defaultFollowUpKey: defaultFollowUpKey, followUpRule: followUpRule, scoreRule: scoreRule);
 
-  factory SurveyDataSurvey.fromJson(Map<String, dynamic> json) {
+  factory SurveyDataSurvey.fromJson(String key, Map<String, dynamic> json) {
     return SurveyDataSurvey(
       survey: Survey.fromJson(json['survey']),
 
-      key: JsonUtils.stringValue(json['key']) ?? '',
+      key: key,
       text: json['text'],
       moreInfo: JsonUtils.stringValue(json['more_info']),
     );

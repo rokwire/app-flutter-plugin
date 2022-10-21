@@ -272,7 +272,11 @@ class RuleAction extends RuleActionResult {
         }
         return null;
       case "follow_up":
+        //TODO: return the next survey data
       case "show_survey":
+        //TODO: display another survey
+      case "alert":
+        //TODO: Schedule local notification to take survey
       case "notify":
         //TODO: Send notification to providers/emergency contacts
     }

@@ -28,13 +28,13 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyQuestionPanel extends StatefulWidget {
   final Survey survey;
-  final int currentSurveyIndex;
+  final String? currentSurveyKey;
   final Function? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
 
-  const SurveyQuestionPanel({required this.survey, this.currentSurveyIndex = 0, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
+  const SurveyQuestionPanel({required this.survey, this.currentSurveyKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
 
   @override
   _SurveyQuestionPanelState createState() => _SurveyQuestionPanelState();
@@ -43,7 +43,7 @@ class SurveyQuestionPanel extends StatefulWidget {
 class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
   late Survey _survey;
   late Map<String, SurveyData> _surveyQuestions;
-  late int _surveyQuestionIndex;
+  String? _surveyQuestionKey;
   SurveyData? _mainSurveyQuestion;
 
   GlobalKey? dataKey;
@@ -60,22 +60,14 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     widgets = SurveyWidgets(context, _onChangeSurveyResponse);
 
     _survey = widget.survey;
-    if (_survey.data.isEmpty || widget.currentSurveyIndex >= _survey.data.length) {
+    _surveyQuestionKey = widget.currentSurveyKey ?? _survey.firstQuestion?.key;
+    if (_survey.data.isEmpty || !_survey.data.containsKey(_surveyQuestionKey)) {
       _popSurveyPanels();
       return;
     }
     _surveyQuestions = _survey.data;
 
-    _surveyQuestionIndex = widget.currentSurveyIndex;
-    while (_surveyQuestionIndex < _surveyQuestions.length) {
-      _surveyQuestionIndex = _surveyQuestionIndex + 1;
-    }
-    if (_surveyQuestionIndex >= _surveyQuestions.length) {
-      _finishSurvey();
-      return;
-    }
-
-    _mainSurveyQuestion = _surveyQuestions[_surveyQuestionIndex];
+    _mainSurveyQuestion = _surveyQuestions[_surveyQuestionKey];
     _mainSurveyQuestion?.evaluateDefaultResponse(_survey);
   }
 
@@ -105,6 +97,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
       child: Scrollbar(
         radius: const Radius.circular(2),
         thumbVisibility: true,
+        controller: _scrollController,
         child: SingleChildScrollView(
           controller: _scrollController,
           child: _buildContent(),
@@ -116,24 +109,24 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
   Widget _buildContent() {
     if (_mainSurveyQuestion == null) return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
 
-    Widget? questionWidget;
-    SurveyData? survey = _mainSurveyQuestion;
+    
+    Widget? questionWidget = widgets.buildInlineSurveyWidget(_mainSurveyQuestion!);
 
-    if (survey is SurveyQuestionMultipleChoice) {
-      questionWidget = widgets.buildMultipleChoiceSurveySection(survey);
-    } else if (survey is SurveyQuestionTrueFalse) {
-      questionWidget = widgets.buildTrueFalseSurveySection(survey);
-    } else if (survey is SurveyQuestionDateTime) {
-      questionWidget = widgets.buildDateEntrySurveySection(survey);
-    } else if (survey is SurveyQuestionNumeric) {
-      questionWidget = widgets.buildNumericSurveySection(survey);
-    } else if (survey is SurveyDataResponse) {
-      questionWidget = widgets.buildResponseSurveySection(survey);
-    } else if (survey is SurveyQuestionText) {
-      questionWidget = widgets.buildTextSurveySection(survey);
-    } else if (survey == null) {
-      return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
-    }
+    // if (survey is SurveyQuestionMultipleChoice) {
+    //   questionWidget = widgets.buildMultipleChoiceSurveySection(survey);
+    // } else if (survey is SurveyQuestionTrueFalse) {
+    //   questionWidget = widgets.buildTrueFalseSurveySection(survey);
+    // } else if (survey is SurveyQuestionDateTime) {
+    //   questionWidget = widgets.buildDateEntrySurveySection(survey);
+    // } else if (survey is SurveyQuestionNumeric) {
+    //   questionWidget = widgets.buildNumericSurveySection(survey);
+    // } else if (survey is SurveyDataResponse) {
+    //   questionWidget = widgets.buildResponseSurveySection(survey);
+    // } else if (survey is SurveyQuestionText) {
+    //   questionWidget = widgets.buildTextSurveySection(survey);
+    // } else if (survey == null) {
+    //   return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
+    // }
 
     List<Widget> followUps = [];
     for (SurveyData? data = _mainSurveyQuestion?.followUp(_survey); data != null; data = data.followUp(_survey)) {
@@ -225,18 +218,19 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     }
 
     // show survey summary or return to home page on finishing events
-    if (_surveyQuestionIndex == _surveyQuestions.length - 1) {
-      _survey.lastUpdated = DateTime.now();
+    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
+    // if (followUp == null) {
+    _survey.lastUpdated = DateTime.now();
 
       // if (widget.showSummaryOnFinish) {
       // } else {
-      _finishSurvey();
+    _finishSurvey();
       // }
 
-      return;
-    }
+      // return;
+    // }
 
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: _survey, currentSurveyIndex: _surveyQuestionIndex + 1, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
+    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {
