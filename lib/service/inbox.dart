@@ -108,7 +108,7 @@ class Inbox with Service implements NotificationsListener {
 
   // Inbox APIs
 
-  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, int? offset, int? limit }) async {
+  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, bool? muted, bool? unread, int? offset, int? limit }) async {
     
     String urlParams = "";
     
@@ -140,6 +140,20 @@ class Inbox with Service implements NotificationsListener {
       urlParams += "end_date=${endDate.millisecondsSinceEpoch}";
     }
 
+    if (muted != null) {
+      if (urlParams.isNotEmpty) {
+        urlParams += "&";
+      }
+      urlParams += "muted=$muted";
+    }
+
+    if (unread != null) {
+      if (urlParams.isNotEmpty) {
+        urlParams += "&";
+      }
+      urlParams += "unread=$unread";
+    }
+
     if (urlParams.isNotEmpty) {
       urlParams = "?$urlParams";
     }
@@ -167,6 +181,36 @@ class Inbox with Service implements NotificationsListener {
 
     Response? response = await Network().post(url, body: body, auth: Auth2());
     return (response?.statusCode == 200);
+  }
+
+  Future<bool> readMessage(String? messageId) async {
+    if (StringUtils.isEmpty(messageId)) {
+      debugPrint('Failed to read message - missing message id.');
+      return false;
+    }
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/read/$messageId" : null;
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      debugPrint('Failed to read message. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
+  }
+
+  Future<int?> unreadMessagesCount() async {
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/unread/count" : null;
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
+      return unreadCount;
+    } else {
+      debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
+      return null;
+    }
   }
 
   Future<bool> subscribeToTopic({String? topic, String? token}) async {
