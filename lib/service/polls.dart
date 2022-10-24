@@ -21,6 +21,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -321,6 +322,27 @@ class Polls with Service implements NotificationsListener {
         }
       } else {
         throw PollsException(PollsError.internal);
+      }
+    }
+    return null;
+  }
+
+  Future<Survey?> loadSurvey(String id) async {
+    if (enabled) {
+      String url = '${Config().quickPollsUrl}/surveys/{id}';
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseBody);
+        if (responseMap != null) {
+          Survey? survey = Survey.fromJson(responseMap);
+          return survey;
+        } else {
+          throw PollsException(PollsError.serverResponseContent);
+        }
+      } else {
+        throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
       }
     }
     return null;

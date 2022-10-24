@@ -15,6 +15,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class RuleCondition {
@@ -253,7 +254,7 @@ class RuleAction extends RuleActionResult {
     };
   }
 
-  dynamic evaluate(RuleEngine engine) {
+  dynamic evaluate(RuleEngine engine) async {
     switch (action) {
       case "return":
         return engine.getValOrCollection(data);
@@ -272,13 +273,22 @@ class RuleAction extends RuleActionResult {
         }
         return null;
       case "follow_up":
-        //TODO: return the next survey data
+        if (data is String) {
+          // data = "data.<SurveyData key>"
+          return engine.getProperty(RuleKey.fromKey(data));
+        }
+        return null;
       case "show_survey":
-        //TODO: display another survey
+        if (data is String) {
+        // data = survey id, send request to polls BB to get
+          return await Polls().loadSurvey(data);
+        }
+        return null;
       case "alert":
         //TODO: Schedule local notification to take survey
       case "notify":
         //TODO: Send notification to providers/emergency contacts
+        // send request with survey data to polls BB
     }
     return null;
   }
@@ -440,6 +450,8 @@ abstract class RuleEngine {
     }
     return null;
   }
+
+  dynamic getProperty(RuleKey? key);
 
   void clearCache() {
     _dataCache.clear();
@@ -604,7 +616,7 @@ abstract class RuleEngine {
         Duration offset = JsonUtils.durationValue(param) ?? const Duration();
         return DateTime.now().subtract(offset);
       default:
-        return null;
+        return getProperty(ruleKey);
     }
   }
 }

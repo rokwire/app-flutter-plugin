@@ -31,7 +31,8 @@ class SurveyWidgets {
 
   SurveyWidgets(this.context, this.onChangeSurveyResponse);
 
-  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, Function(dynamic)? onComplete}) {
+  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.symmetric(horizontal: 32), 
+    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete, bool expand = false}) {
     Widget? widget;
 
     if (survey is SurveyQuestionMultipleChoice) {
@@ -54,7 +55,7 @@ class SurveyWidgets {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: textPadding,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -73,7 +74,7 @@ class SurveyWidgets {
         Visibility(
           visible: StringUtils.isNotEmpty(survey.moreInfo),
           child: Padding(
-            padding: const EdgeInsets.only(left: 32, right: 32, top: 8),
+            padding: moreInfoPadding,
             child: Text(
               survey.moreInfo ?? '',
               textAlign: TextAlign.start,

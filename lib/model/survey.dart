@@ -94,6 +94,7 @@ class Survey extends RuleEngine {
     );
   }
 
+  @override
   dynamic getProperty(RuleKey? key) {
     SurveyStats? stats = _stats;
     switch (key?.key) {
