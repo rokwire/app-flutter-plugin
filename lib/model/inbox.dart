@@ -1,11 +1,10 @@
 import 'package:collection/collection.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
-class InboxMessage with Favorite {
+class InboxMessage {
   final String?   messageId;
   final int?      priority;
   final String?   topic;
@@ -214,11 +213,6 @@ class InboxMessage with Favorite {
       return "Sent";
     }
   }
-
-  // Favorite
-  static const String favoriteKeyName = "InboxMessageIds";
-  @override String get favoriteKey => favoriteKeyName;
-  @override String? get favoriteId => messageId;
 }
 
 class InboxRecepient {
