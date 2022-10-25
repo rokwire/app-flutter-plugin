@@ -294,6 +294,39 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, int? offset, int? limit}) async {
+    if (Config().groupsUrl != null) {
+      Map<String, String> queryParams = {};
+      
+      if (StringUtils.isNotEmpty(title)) {
+        queryParams.addAll({'title': title!});
+      }
+      
+      if (offset != null) {
+        queryParams.addAll({'offset': offset.toString()});
+      }
+      
+      if (limit != null) {
+        queryParams.addAll({'limit': limit.toString()});
+      }
+      
+      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+
+      try {
+        await _ensureLogin();
+        Response? response = await Network().get(url, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return Group.listFromJson(JsonUtils.decodeList(responseBody));
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
   Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
     if (Config().groupsUrl != null) {
       Map<String, String> queryParams = {};
