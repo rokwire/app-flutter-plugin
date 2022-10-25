@@ -43,6 +43,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'firebase_messaging.dart';
 
 enum GroupsContentType { all, my }
+enum ResearchProjectsContentType { open, my }
 
 class Groups with Service implements NotificationsListener {
 
