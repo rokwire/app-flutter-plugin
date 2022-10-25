@@ -17,8 +17,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/survey.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
-import 'package:rokwire_plugin/ui/panels/survey_question_panel.dart';
+import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
@@ -31,7 +32,7 @@ class SurveyWidgets {
 
   SurveyWidgets(this.context, this.onChangeSurveyResponse);
 
-  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.symmetric(horizontal: 32), 
+  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
     EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete, bool expand = false}) {
     Widget? widget;
 
@@ -56,19 +57,10 @@ class SurveyWidgets {
       children: [
         Padding(
           padding: textPadding,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Visibility(visible: !survey.allowSkip, child: Text("* ", style: Styles().textStyles?.getTextStyle('alert'))),
-              Flexible(
-                child: Text(
-                  survey.text,
-                  textAlign: TextAlign.start,
-                  style: textStyle ?? Styles().textStyles?.getTextStyle('headline2'),
-                ),
-              ),
-            ],
+          child: Text(
+            survey.text,
+            textAlign: TextAlign.start,
+            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.title.extra_large'),
           ),
         ),
         Visibility(
@@ -82,12 +74,10 @@ class SurveyWidgets {
             ),
           ),
         ),
-        Container(height: 8),
         widget,
         Container(height: 36),
       ],
     ) : null;
-    // return widget;
   }
 
   Widget? buildResponseSurveySection(SurveyDataResponse? survey) {
@@ -115,13 +105,13 @@ class SurveyWidgets {
           );
         } else if (action?.data is Map<String, dynamic>) {
           dynamic survey = action?.data['survey'];
-          if (survey is Survey) {
-            return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                    () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-            );
-          }
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+          );
         }
         return null;
+      case ActionType.contact:
+        //TODO: handle phone, web URIs, etc.
       case ActionType.dismiss:
         return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
             () => onTapDismiss(dismissContext: dismissContext)
@@ -131,11 +121,23 @@ class SurveyWidgets {
     }
   }
 
-  static void onTapShowSurvey(BuildContext context, Survey survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: survey, onComplete: () {
-        survey.evaluate();
-      })));
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Survey? surveyData;
+      if (survey is Survey) {
+        surveyData = survey;
+      } else if (survey is String) {
+        surveyData = await Polls().loadSurvey(survey);
+      }
+
+      if (surveyData != null) {
+        //TODO: will change depending on whether survey should be embedded or not
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
+          surveyData!.evaluate();
+        })));
+      } else {
+        onTapDismiss(dismissContext: context);
+      }
     });
   }
 
@@ -502,7 +504,7 @@ class SurveyWidgets {
           backgroundColor: Styles().colors?.surface,
           textColor: Styles().colors?.headlineText,
           onTap: () {
-            Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: survey.survey, onComplete: () {
+            Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey.survey, onComplete: () {
               if (onComplete != null) {
                 survey.survey.evaluate();
                 onComplete(survey.survey.resultData);

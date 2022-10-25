@@ -254,7 +254,7 @@ class RuleAction extends RuleActionResult {
     };
   }
 
-  dynamic evaluate(RuleEngine engine) async {
+  dynamic evaluate(RuleEngine engine) {
     switch (action) {
       case "return":
         return engine.getValOrCollection(data);
@@ -278,12 +278,12 @@ class RuleAction extends RuleActionResult {
           return engine.getProperty(RuleKey.fromKey(data));
         }
         return null;
-      case "show_survey":
-        if (data is String) {
-        // data = survey id, send request to polls BB to get
-          return await Polls().loadSurvey(data);
-        }
-        return null;
+      // case "show_survey":
+      //   if (data is String) {
+      //   // data = survey id, send request to polls BB to get
+      //     return data;
+      //   }
+      //   return null;
       case "alert":
         //TODO: Schedule local notification to take survey
       case "notify":
@@ -583,12 +583,12 @@ abstract class RuleEngine {
       }
     }
 
-    dynamic val = getValDirect(key, param);
-    if (val != null) {
-      cached.add(RuleData(value: val, param: param));
-      _dataCache[key] = cached;
-    }
-    return val;
+    // dynamic val = getValDirect(key, param);
+    // if (val != null) {
+    //   cached.add(RuleData(value: val, param: param));
+    //   _dataCache[key] = cached;
+    // }
+    return getValDirect(key, param);
   }
 
   dynamic getValDirect(String? key, dynamic param) {
@@ -601,15 +601,20 @@ abstract class RuleEngine {
     RuleKey ruleKey = RuleKey.fromKey(key);
     switch (ruleKey.key) {
       case "literal":
+        _dataCache[key]?.add(RuleData(value: ruleKey.subKey, param: param));
         return ruleKey.subKey;
       case "constants":
         if (ruleKey.subKey != null) {
-          return constants[ruleKey.subKey!];
+          dynamic constVal = constants[ruleKey.subKey!];
+          _dataCache[key]?.add(RuleData(value: constVal, param: param));
+          return constVal;
         }
         return null;
       case "strings":
         if (ruleKey.subKey != null) {
-          return interpolateString(localeString(ruleKey.subKey!));
+          String? stringVal = interpolateString(localeString(ruleKey.subKey!));
+          _dataCache[key]?.add(RuleData(value: stringVal, param: param));
+          return stringVal;
         }
         return null;
       case "current_time":
