@@ -1,11 +1,10 @@
 import 'package:collection/collection.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
 
-class InboxMessage with Favorite {
+class InboxMessage {
   final String?   messageId;
   final int?      priority;
   final String?   topic;
@@ -18,6 +17,9 @@ class InboxMessage with Favorite {
   final String?   subject;
   final String?   body;
   final Map<String, dynamic>? data;
+
+  final bool?     muted;
+  final bool?     unread;
   
   final InboxSender?          sender;
   final List<InboxRecepient>? recepients;
@@ -25,6 +27,7 @@ class InboxMessage with Favorite {
   InboxMessage({this.messageId, this.priority, this.topic, this.category,
     this.dateCreatedUtc, this.dateUpdatedUtc, this.dateSentUtc,
     this.subject, this.body, this.data,
+    this.muted, this.unread,
     this.sender, this.recepients
   });
 
@@ -42,6 +45,9 @@ class InboxMessage with Favorite {
       subject: JsonUtils.stringValue(json['subject']),
       body: JsonUtils.stringValue(json['body']),
       data: JsonUtils.mapValue(json['data']),
+
+      muted: JsonUtils.boolValue(json['muted']),
+      unread: JsonUtils.boolValue(json['unread']),
 
       sender: InboxSender.fromJson(JsonUtils.mapValue(json['sender'])),
       recepients: InboxRecepient.listFromJson(JsonUtils.listValue(json['recipients']))
@@ -61,6 +67,9 @@ class InboxMessage with Favorite {
       'subject': subject,
       'body': body,
       'data': data,
+
+      'muted': muted,
+      'unread': unread,
 
       'sender': sender?.toJson(),
       'recipients': InboxRecepient.listToJson(recepients),
@@ -204,11 +213,6 @@ class InboxMessage with Favorite {
       return "Sent";
     }
   }
-
-  // Favorite
-  static const String favoriteKeyName = "InboxMessageIds";
-  @override String get favoriteKey => favoriteKeyName;
-  @override String? get favoriteId => messageId;
 }
 
 class InboxRecepient {
