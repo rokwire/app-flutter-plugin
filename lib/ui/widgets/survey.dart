@@ -21,35 +21,118 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
+import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
-class SurveyWidgets {
-  BuildContext context;
-  Function(bool) onChangeSurveyResponse;
+class SurveyWidget extends StatefulWidget {
+  final dynamic survey;
+  final String? surveyDataKey;
+  final Function(bool) onChangeSurveyResponse;
 
-  SurveyWidgets(this.context, this.onChangeSurveyResponse);
+  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey});
 
-  Widget? buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
-    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete, bool expand = false}) {
+  @override
+  State<SurveyWidget> createState() => _SurveyWidgetState();
+}
+
+class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsListener{
+
+  Survey? _survey;
+  SurveyData? _mainSurveyData;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.survey is Survey) {
+      _survey = widget.survey;
+      _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+    } else if (widget.survey is String) {
+      Polls().loadSurvey(widget.survey).then((survey) {
+        _survey = survey;
+        _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+        if(mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    NotificationService().unsubscribe(this);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _survey != null && _mainSurveyData != null ? _buildContent() : Container();
+  }
+
+  Widget _buildContent() {
+    Widget? questionWidget = _buildInlineSurveyWidget(_mainSurveyData!);
+    List<Widget> followUps = [];
+    //TODO: use replace flag
+    for (SurveyData? data = _mainSurveyData!.followUp(_survey!); data != null; data = data.followUp(_survey!)) {
+      Widget? followUp;
+      if (data is SurveyDataSurvey) {
+        followUp = _buildInlineSurveyWidget(data, onComplete: (val) {
+          setState(() {
+            _mainSurveyData!.response = val;
+          });
+        });
+      } else {
+        followUp = _buildInlineSurveyWidget(data);
+      }
+      if (followUp != null) {
+        // GlobalKey? key;
+        // if (data.response == null) {
+        //   key = GlobalKey();
+        //   dataKey = key;
+        // }
+        followUps.add(Padding(
+          // key: key,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Card(
+              color: Styles().colors?.background,
+              margin: EdgeInsets.zero,
+              elevation: 0.0,
+              child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: followUp)),
+        ));
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
+      child: Column(children: [
+        questionWidget ?? Container(),
+        Wrap(children: followUps),
+      ]),
+    );
+  }
+
+  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
+    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete}) {
     Widget? widget;
 
     if (survey is SurveyQuestionMultipleChoice) {
-      widget = buildMultipleChoiceSurveySection(survey);
+      widget = _buildMultipleChoiceSurveySection(survey);
     } else if (survey is SurveyQuestionTrueFalse) {
-      widget = buildTrueFalseSurveySection(survey);
+      widget = _buildTrueFalseSurveySection(survey);
     } else if (survey is SurveyQuestionDateTime) {
-      widget = buildDateEntrySurveySection(survey);
+      widget = _buildDateEntrySurveySection(survey);
     } else if (survey is SurveyQuestionNumeric) {
-      widget = buildNumericSurveySection(survey);
+      widget = _buildNumericSurveySection(survey);
     } else if (survey is SurveyDataResponse) {
-      widget = buildResponseSurveySection(survey);
+      widget = _buildResponseSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
-      widget = buildTextSurveySection(survey);
+      widget = _buildTextSurveySection(survey);
     } else if (survey is SurveyDataSurvey) {
-      widget = buildSurveySurveySection(survey, onComplete: onComplete);
+      widget = _buildSurveySurveySection(survey, onComplete: onComplete);
     }
 
     return widget != null ? Column(
@@ -74,15 +157,16 @@ class SurveyWidgets {
             ),
           ),
         ),
+        Container(height: 8),
         widget,
         Container(height: 36),
       ],
     ) : null;
   }
 
-  Widget? buildResponseSurveySection(SurveyDataResponse? survey) {
+  Widget? _buildResponseSurveySection(SurveyDataResponse? survey) {
     if (survey == null) return null;
-    ButtonAction? buttonAction = actionTypeButtonAction(context, survey.action);
+    ButtonAction? buttonAction = _actionTypeButtonAction(context, survey.action);
 
     return Column(
       children: <Widget>[
@@ -96,17 +180,17 @@ class SurveyWidgets {
     );
   }
 
-  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
     switch (action?.type) {
       case ActionType.showSurvey:
         if (action?.data is Survey) {
           return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
+                  () => _onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
           );
         } else if (action?.data is Map<String, dynamic>) {
           dynamic survey = action?.data['survey'];
           return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+                  () => _onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
           );
         }
         return null;
@@ -114,14 +198,14 @@ class SurveyWidgets {
         //TODO: handle phone, web URIs, etc.
       case ActionType.dismiss:
         return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-            () => onTapDismiss(dismissContext: dismissContext)
+            () => _onTapDismiss(dismissContext: dismissContext)
         );
       default:
         return null;
     }
   }
 
-  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Survey? surveyData;
       if (survey is Survey) {
@@ -132,37 +216,37 @@ class SurveyWidgets {
 
       if (surveyData != null) {
         //TODO: will change depending on whether survey should be embedded or not
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
-          surveyData!.evaluate();
-        })));
+        // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
+        //   surveyData!.evaluate();
+        // })));
       } else {
-        onTapDismiss(dismissContext: context);
+        _onTapDismiss(dismissContext: context);
       }
     });
   }
 
-  static void onTapDismiss({BuildContext? dismissContext}) {
+  static void _onTapDismiss({BuildContext? dismissContext}) {
     if (dismissContext != null) {
       Navigator.pop(dismissContext);
     }
   }
 
-  Widget? buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
+  Widget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: _buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
           survey.response = value;
-          onChangeSurveyResponse(false);
+          widget.onChangeSurveyResponse(false);
         }));
   }
 
-  Widget? buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool isSummaryWidget = false}) {
+  Widget? _buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool isSummaryWidget = false}) {
     if (survey == null) return null;
 
     List<OptionData> optionList = survey.options;
     if (survey.allowMultiple) {
-      return buildMultipleAnswerWidget(optionList, survey, isSummaryWidget: isSummaryWidget);
+      return _buildMultipleAnswerWidget(optionList, survey, isSummaryWidget: isSummaryWidget);
     }
 
     OptionData? selected;
@@ -173,31 +257,31 @@ class SurveyWidgets {
       }
     }
 
-    late Widget widget;
+    Widget multipleChoice;
     if (isSummaryWidget) {
-      widget = CustomIconSelectionList(
+      multipleChoice = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
         correctAnswers: survey.correctAnswers,
         scored: survey.scored,
       );
     } else {
-      widget = SingleSelectionList(
+      multipleChoice = SingleSelectionList(
         selectionList: optionList,
         onChanged: (int index) {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
           survey.response = optionList[index].value;
-          onChangeSurveyResponse(true);
+          widget.onChangeSurveyResponse(true);
         },
         selectedValue: selected);
     }
 
-    return widget;
+    return multipleChoice;
   }
 
-  Widget buildMultipleAnswerWidget(List<OptionData> options, SurveyQuestionMultipleChoice survey, {bool isSummaryWidget = false}) {
+  Widget _buildMultipleAnswerWidget(List<OptionData> options, SurveyQuestionMultipleChoice survey, {bool isSummaryWidget = false}) {
     List<dynamic> selectedOptions = [];
     List<bool> isCheckedList = List<bool>.filled(options.length, false);
 
@@ -212,16 +296,16 @@ class SurveyWidgets {
       }
     }
 
-    late Widget widget;
+    Widget multipleChoice;
     if (isSummaryWidget) {
-      widget = CustomIconSelectionList(
+      multipleChoice = CustomIconSelectionList(
         optionList: options,
         selectedValues: selectedOptions,
         correctAnswers: survey.correctAnswers,
         scored: survey.scored,
       );
     } else {
-      widget = MultiSelectionList(
+      multipleChoice = MultiSelectionList(
         selectionList: options,
         isChecked: isCheckedList,
         onChanged: (int index) {
@@ -241,15 +325,15 @@ class SurveyWidgets {
           } else {
             survey.response = null;
           }
-          onChangeSurveyResponse(false);
+          widget.onChangeSurveyResponse(false);
         },
       );
     }
 
-    return widget;
+    return multipleChoice;
   }
 
-  Widget? buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool isSummaryWidget = false}) {
+  Widget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool isSummaryWidget = false}) {
     if (survey == null) return null;
 
     List<OptionData> optionList = survey.options;
@@ -262,31 +346,31 @@ class SurveyWidgets {
       }
     }
 
-    late Widget widget;
+    Widget trueFalse;
     if (isSummaryWidget) {
-      widget = CustomIconSelectionList(
+      trueFalse = CustomIconSelectionList(
         optionList: optionList,
         selectedValues: selected != null ? [selected.value] : [],
         correctAnswers: survey.correctAnswer != null ? [survey.correctAnswer] : null,
         scored: survey.scored,);
     } else {
-      widget = SingleSelectionList(
+      trueFalse = SingleSelectionList(
           selectionList: optionList,
           onChanged: (int index) {
             if (survey.scored && survey.response != null) {
               return;
             }
             survey.response = optionList[index].value;
-            onChangeSurveyResponse(true);
+            widget.onChangeSurveyResponse(true);
           },
           selectedValue: selected
       );
     }
 
-    return widget;
+    return trueFalse;
   }
 
-  Widget? buildDateEntrySurveySection(SurveyQuestionDateTime? survey, {Widget? calendarIcon, String? defaultIconKey, bool enabled = true}) {
+  Widget? _buildDateEntrySurveySection(SurveyQuestionDateTime? survey, {Widget? calendarIcon, String? defaultIconKey, bool enabled = true}) {
     if (survey == null) return null;
 
     String? title = survey.text;
@@ -326,7 +410,7 @@ class SurveyWidgets {
               controller: dateTextController,
               // validator: _validationFunctions[field.key],
               onFieldSubmitted: (value) {
-                onChangeSurveyResponse(false);
+                widget.onChangeSurveyResponse(false);
               },
               onChanged: (value) {
                 int select = dateTextController.value.selection.start;
@@ -338,9 +422,9 @@ class SurveyWidgets {
                 );
                 survey.response = value.trim();
               },
-              onEditingComplete: onChangeSurveyResponse(false),
+              onEditingComplete: widget.onChangeSurveyResponse(false),
               // maxLength: 10,
-              onSaved: (value) => onChangeSurveyResponse(false),
+              onSaved: (value) => widget.onChangeSurveyResponse(false),
             ),
           ),
           Visibility(
@@ -353,7 +437,7 @@ class SurveyWidgets {
                     String date = DateFormat(format).format(picked);
                     dateTextController.text = date;
                     survey.response = date;
-                    onChangeSurveyResponse(false);
+                    widget.onChangeSurveyResponse(false);
                     // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
                   }),
             ),
@@ -388,11 +472,11 @@ class SurveyWidgets {
     }
   }
 
-  Widget? buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
     if (survey.slider) {
-      return buildSliderSurveySection(survey, readOnly: readOnly);
+      return _buildSliderSurveySection(survey, readOnly: readOnly);
     }
 
     String? initialValue;
@@ -400,7 +484,7 @@ class SurveyWidgets {
       initialValue = survey.response.toString();
     }
 
-    Widget widget = _buildTextFormFieldWidget(survey.text, readOnly: readOnly, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
+    Widget numericText = _buildTextFormFieldWidget(survey.text, readOnly: readOnly, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
       num val;
       if (survey.wholeNum) {
         val = int.parse(value);
@@ -408,20 +492,20 @@ class SurveyWidgets {
         val = double.parse(value);
       }
       survey.response = val;
-      onChangeSurveyResponse(false);
+      widget.onChangeSurveyResponse(false);
     });
 
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: widget);
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: numericText);
   }
 
-  Widget? buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
     double min = survey.minimum ?? 0.0;
     double max = survey.maximum ?? 1.0;
     String label;
     if (survey.wholeNum && min >= 0 && max <= 10) {
-      return buildDiscreteNumsSurveySection(survey, readOnly: readOnly);
+      return _buildDiscreteNumsSurveySection(survey, readOnly: readOnly);
     }
 
     double value = 0;
@@ -450,14 +534,14 @@ class SurveyWidgets {
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: !readOnly ? (value) {
            survey.response = value;
-           onChangeSurveyResponse(false);
+           widget.onChangeSurveyResponse(false);
           } : null)
         ),
       ],
     );
   }
 
-  Widget? buildDiscreteNumsSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildDiscreteNumsSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
     int min = survey.minimum?.toInt() ?? 0;
@@ -476,7 +560,7 @@ class SurveyWidgets {
        Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
          onChanged: readOnly ? null : (Object? value) {
            survey.response = value;
-           onChangeSurveyResponse(false);
+           widget.onChangeSurveyResponse(false);
          }
        )
       ]));
@@ -493,7 +577,7 @@ class SurveyWidgets {
     );
   }
 
-  Widget? buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {
+  Widget? _buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {
     if (survey == null) return null;
 
     return Padding(
@@ -504,12 +588,12 @@ class SurveyWidgets {
           backgroundColor: Styles().colors?.surface,
           textColor: Styles().colors?.headlineText,
           onTap: () {
-            Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey.survey, onComplete: () {
-              if (onComplete != null) {
-                survey.survey.evaluate();
-                onComplete(survey.survey.resultData);
-              }
-            })));
+            // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey.survey, onComplete: () {
+            //   if (onComplete != null) {
+            //     survey.survey.evaluate();
+            //     onComplete(survey.survey.resultData);
+            //   }
+            // })));
           }
         ),
     );
@@ -523,6 +607,15 @@ class SurveyWidgets {
           child: FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue, textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters)
       ),
     );
+  }
+
+  @override
+  void onNotification(String name, param) {
+    if(name == Polls.notifySurveyLoaded) {
+      if(mounted) {
+        setState(() {});
+      }
+    }
   }
 }
 

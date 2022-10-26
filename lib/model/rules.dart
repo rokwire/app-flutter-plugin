@@ -15,7 +15,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class RuleCondition {

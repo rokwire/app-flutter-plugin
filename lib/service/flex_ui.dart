@@ -95,7 +95,7 @@ class FlexUI with Service implements NotificationsListener {
     _appContentSource = await loadFromAssets(appAssetsKey);
     _netContentSource = await loadFromCache(netCacheFileName);
     build();
-    if (_defaultContent == null) {
+    if (_defaultContent != null) {
       updateFromNet();
       await super.initService();
     }
