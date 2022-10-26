@@ -96,10 +96,10 @@ class FlexUI with Service implements NotificationsListener {
     _netContentSource = await loadFromCache(netCacheFileName);
     build();
     if (_defaultContent == null) {
-    //   updateFromNet();
-    //   await super.initService();
-    // }
-    // else {
+      updateFromNet();
+      await super.initService();
+    }
+    else {
       throw ServiceError(
         source: this,
         severity: ServiceErrorSeverity.fatal,
