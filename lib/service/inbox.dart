@@ -17,7 +17,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class Inbox with Service implements NotificationsListener {
 
-  static const String notifyInboxUserInfoChanged   = "edu.illinois.rokwire.inbox.user.info.changed";
+  static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
+  static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
 
   String?   _fcmToken;
   String?   _fcmUserId;
@@ -25,6 +26,7 @@ class Inbox with Service implements NotificationsListener {
   DateTime? _pausedDateTime;
   
   InboxUserInfo? _userInfo;
+  int? _unreadMessagesCount;
 
   // Singletone Factory
 
@@ -62,9 +64,11 @@ class Inbox with Service implements NotificationsListener {
     _fcmToken = Storage().inboxFirebaseMessagingToken;
     _fcmUserId = Storage().inboxFirebaseMessagingUserId;
     _userInfo = Storage().inboxUserInfo;
+    _unreadMessagesCount = Storage().inboxUnreadMessagesCount;
     _isServiceInitialized = true;
     _processFcmToken();
     _loadUserInfo();
+    _loadUnreadMessagesCount();
     await super.initService();
   }
 
@@ -83,6 +87,7 @@ class Inbox with Service implements NotificationsListener {
     else if (name == Auth2.notifyLoginChanged) {
       _processFcmToken();
       _loadUserInfo();
+      _loadUnreadMessagesCount();
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param); 
@@ -101,6 +106,7 @@ class Inbox with Service implements NotificationsListener {
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
           _processFcmToken();
           _loadUserInfo();
+          _loadUnreadMessagesCount();
         }
       }
     }
@@ -192,24 +198,11 @@ class Inbox with Service implements NotificationsListener {
     Response? response = await Network().get(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
+      _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
       return true;
     } else {
       debugPrint('Failed to read message. Reason: $responseCode, ${response?.body}.');
       return false;
-    }
-  }
-
-  Future<int?> unreadMessagesCount() async {
-    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/unread/count" : null;
-    Response? response = await Network().get(url, auth: Auth2());
-    int? responseCode = response?.statusCode;
-    String? responseBody = response?.body;
-    if (responseCode == 200) {
-      int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
-      return unreadCount;
-    } else {
-      debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
-      return null;
     }
   }
 
@@ -370,5 +363,30 @@ class Inbox with Service implements NotificationsListener {
 
   InboxUserInfo? get userInfo{
     return _userInfo;
+  }
+
+  // Unread Messages Count
+  Future<void> _loadUnreadMessagesCount() async {
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/unread/count" : null;
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
+      _applyUnreadMessagesCount(unreadCount);
+    } else {
+      debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
+    }
+  }
+
+  void _applyUnreadMessagesCount(int? unreadMessagesCount){
+    if (_unreadMessagesCount != unreadMessagesCount){
+      Storage().inboxUnreadMessagesCount = _unreadMessagesCount = unreadMessagesCount;
+      NotificationService().notify(notifyInboxUnreadMessagesCountChanged);
+    }
+  }
+
+  int get unreadMessagesCount {
+    return _unreadMessagesCount ?? 0;
   }
 }
