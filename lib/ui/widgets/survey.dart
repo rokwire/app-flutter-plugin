@@ -68,6 +68,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   @override
   Widget build(BuildContext context) {
+    //TODO: add title, add "moreInfo" to show some context for the questions
     return _survey != null && _mainSurveyData != null ? _buildContent() : Container();
   }
 
@@ -106,6 +107,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       }
     }
 
+    //TODO: "Continue" button as SurveyResponseData?
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0),
       child: Column(children: [
@@ -174,13 +176,13 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
         survey.action != null && buttonAction != null ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
             child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: () => buttonAction.action)
+              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())
         ) : Container(),
       ],
     );
   }
 
-  static ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
     switch (action?.type) {
       case ActionType.showSurvey:
         if (action?.data is Survey) {
@@ -205,17 +207,21 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     }
   }
 
-  static void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Survey? surveyData;
+      Survey? surveyObject;
       if (survey is Survey) {
-        surveyData = survey;
+        surveyObject = survey;
       } else if (survey is String) {
-        surveyData = await Polls().loadSurvey(survey);
+        surveyObject = await Polls().loadSurvey(survey);
       }
 
-      if (surveyData != null) {
+      if (surveyObject != null) {
         //TODO: will change depending on whether survey should be embedded or not
+        setState(() {
+          _survey = surveyObject;
+          _mainSurveyData = _survey?.firstQuestion;
+        });
         // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
         //   surveyData!.evaluate();
         // })));
@@ -225,7 +231,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     });
   }
 
-  static void _onTapDismiss({BuildContext? dismissContext}) {
+  void _onTapDismiss({BuildContext? dismissContext}) {
     if (dismissContext != null) {
       Navigator.pop(dismissContext);
     }
@@ -447,7 +453,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  static DateTime _getInitialDate(String current, String format) {
+  DateTime _getInitialDate(String current, String format) {
     if (StringUtils.isEmpty(current)) {
       return DateTime.now();
     } else {
@@ -459,7 +465,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     }
   }
 
-  static void _selectDate({required BuildContext context, required Function(DateTime) callback, required DateTime initialDate, DateTime? firstDate, DateTime? lastDate}) async {
+  void _selectDate({required BuildContext context, required Function(DateTime) callback, required DateTime initialDate, DateTime? firstDate, DateTime? lastDate}) async {
     DateTime? picked = await showDatePicker(
         context: context,
         initialDate: initialDate,
