@@ -294,7 +294,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, int? offset, int? limit}) async {
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       Map<String, String> queryParams = {};
       
@@ -302,6 +302,14 @@ class Groups with Service implements NotificationsListener {
         queryParams.addAll({'title': title!});
       }
       
+      if (StringUtils.isNotEmpty(category)) {
+        queryParams.addAll({'category': category!});
+      }
+
+      if (CollectionUtils.isNotEmpty(tags)) {
+        queryParams.addAll({'tags': tags!.join(',')});
+      }
+
       if (offset != null) {
         queryParams.addAll({'offset': offset.toString()});
       }
