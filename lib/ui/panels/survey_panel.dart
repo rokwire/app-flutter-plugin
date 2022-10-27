@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/*
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -23,10 +24,11 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
 
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class SurveyQuestionPanel extends StatefulWidget {
+class SurveyPanel extends StatefulWidget {
   final Survey survey;
   final String? currentSurveyKey;
   final Function? onComplete;
@@ -34,13 +36,13 @@ class SurveyQuestionPanel extends StatefulWidget {
   final bool allowBack;
   final int initPanelDepth;
 
-  const SurveyQuestionPanel({required this.survey, this.currentSurveyKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
+  const SurveyPanel({required this.survey, this.currentSurveyKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
 
   @override
-  _SurveyQuestionPanelState createState() => _SurveyQuestionPanelState();
+  _SurveyPanelState createState() => _SurveyPanelState();
 }
 
-class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
+class _SurveyPanelState extends State<SurveyPanel> {
   late Survey _survey;
   late Map<String, SurveyData> _surveyQuestions;
   String? _surveyQuestionKey;
@@ -83,6 +85,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  HeaderBar(title: _survey.title),
                   Expanded(child: _buildScrollView()),
                   _buildContinueButton(),
               ]),
@@ -107,27 +110,11 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
   }
 
   Widget _buildContent() {
-    if (_mainSurveyQuestion == null) return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
+    if (_mainSurveyQuestion == null) {
+      return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
+    }
 
-    
     Widget? questionWidget = widgets.buildInlineSurveyWidget(_mainSurveyQuestion!);
-
-    // if (survey is SurveyQuestionMultipleChoice) {
-    //   questionWidget = widgets.buildMultipleChoiceSurveySection(survey);
-    // } else if (survey is SurveyQuestionTrueFalse) {
-    //   questionWidget = widgets.buildTrueFalseSurveySection(survey);
-    // } else if (survey is SurveyQuestionDateTime) {
-    //   questionWidget = widgets.buildDateEntrySurveySection(survey);
-    // } else if (survey is SurveyQuestionNumeric) {
-    //   questionWidget = widgets.buildNumericSurveySection(survey);
-    // } else if (survey is SurveyDataResponse) {
-    //   questionWidget = widgets.buildResponseSurveySection(survey);
-    // } else if (survey is SurveyQuestionText) {
-    //   questionWidget = widgets.buildTextSurveySection(survey);
-    // } else if (survey == null) {
-    //   return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
-    // }
-
     List<Widget> followUps = [];
     for (SurveyData? data = _mainSurveyQuestion?.followUp(_survey); data != null; data = data.followUp(_survey)) {
       Widget? followUp;
@@ -170,9 +157,12 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
   }
 
   Widget _buildContinueButton() {
-    return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
-    ]);
+    return Padding(
+      padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 16.0),
+      child: Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+      ]),
+    );
   }
 
   void _checkScroll(Duration duration) {
@@ -230,7 +220,7 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
       // return;
     // }
 
-    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyQuestionPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
+    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {
@@ -247,3 +237,4 @@ class _SurveyQuestionPanelState extends State<SurveyQuestionPanel> {
     });
   }
 }
+*/

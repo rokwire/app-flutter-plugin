@@ -44,6 +44,8 @@ class Polls with Service implements NotificationsListener {
   static const String notifyVoteChanged      = "edu.illinois.rokwire.poll.votechanged"; // poll updated
   static const String notifyStatusChanged    = "edu.illinois.rokwire.poll.statuschnaged"; // poll closed, results could be presented
 
+  static const String notifySurveyLoaded     = "edu.illinois.rokwire.survey.loaded";
+
   static const String notifyLifecycleCreate  = "edu.illinois.rokwire.poll.lifecycle.create";
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
   static const String notifyLifecycleClose   = "edu.illinois.rokwire.poll.lifecycle.close";
@@ -329,7 +331,7 @@ class Polls with Service implements NotificationsListener {
 
   Future<Survey?> loadSurvey(String id) async {
     if (enabled) {
-      String url = '${Config().quickPollsUrl}/surveys/{id}';
+      String url = '${Config().quickPollsUrl}/surveys/$id';
       Response? response = await Network().get(url, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
@@ -337,6 +339,7 @@ class Polls with Service implements NotificationsListener {
         Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseBody);
         if (responseMap != null) {
           Survey? survey = Survey.fromJson(responseMap);
+          NotificationService().notify(notifySurveyLoaded);
           return survey;
         } else {
           throw PollsException(PollsError.serverResponseContent);
