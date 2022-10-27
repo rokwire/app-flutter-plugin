@@ -13,8 +13,11 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:rokwire_plugin/utils/widget_utils.dart';
 
 abstract class RuleCondition {
 
@@ -224,6 +227,8 @@ class RuleReference extends RuleResult {
 }
 
 class RuleAction extends RuleActionResult {
+  static const String notifyAlert = "edu.illinois.rokwire.rules.action.alert";
+
   String action;
   dynamic data;
   String? dataKey;
@@ -271,23 +276,25 @@ class RuleAction extends RuleActionResult {
       case "set_result":
         engine.resultData = engine.getValOrCollection(data);
         return null;
-      case "follow_up":
-        if (data is String) {
-          // data = "data.<SurveyData key>"
-          return engine.getProperty(RuleKey.fromKey(data));
-        }
-        return null;
+      case "save":
+        //TODO: implement (save engine data to backend -> write abstract "save" method)
       case "show_survey":
         if (data is String) {
-        // data = survey id, send request to polls BB to get
+        // data = survey id
           return data;
         }
         return null;
       case "alert":
-        //TODO: Schedule local notification to take survey
+        dynamic alertData = engine.getValOrCollection(data);
+        if (alertData is SurveyDataResult) {
+          NotificationService().notify(notifyAlert, alertData);
+        }
+        return null;
       case "notify":
         //TODO: Send notification to providers/emergency contacts
         // send request with survey data to polls BB
+      case "local_notify":
+        //TODO: Schedule local notification to take survey
     }
     return null;
   }

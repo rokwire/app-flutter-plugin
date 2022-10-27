@@ -163,7 +163,6 @@ class Survey extends RuleEngine {
     return true;
   }
 
-  //TODO: add firstQuestionKey getter -> use here
   SurveyData? get firstQuestion => data[defaultDataKey ?? defaultQuestionKey];
 }
 
@@ -254,15 +253,14 @@ abstract class SurveyData {
   factory SurveyData.fromJson(String key, Map<String, dynamic> json) {
     String? surveyType = JsonUtils.stringValue(json["type"]);
     switch (surveyType) {
-      case "true_false": return SurveyQuestionTrueFalse.fromJson(key, json);
-      case "multiple_choice": return SurveyQuestionMultipleChoice.fromJson(key, json);
-      case "date_time": return SurveyQuestionDateTime.fromJson(key, json);
-      case "numeric": return SurveyQuestionNumeric.fromJson(key, json);
-      case "text": return SurveyQuestionText.fromJson(key, json);
-      case "entry": return SurveyDataEntry.fromJson(key, json);
-      case "response": return SurveyDataResponse.fromJson(key, json);
-      case "action": return SurveyDataAction.fromJson(key, json);
-      case "survey": return SurveyDataSurvey.fromJson(key, json);
+      case "survey_data.true_false": return SurveyQuestionTrueFalse.fromJson(key, json);
+      case "survey_data.multiple_choice": return SurveyQuestionMultipleChoice.fromJson(key, json);
+      case "survey_data.date_time": return SurveyQuestionDateTime.fromJson(key, json);
+      case "survey_data.numeric": return SurveyQuestionNumeric.fromJson(key, json);
+      case "survey_data.text": return SurveyQuestionText.fromJson(key, json);
+      case "survey_data.entry": return SurveyDataEntry.fromJson(key, json);
+      case "survey_data.response": return SurveyDataResult.fromJson(key, json);
+      case "survey_data.survey": return SurveyDataSurvey.fromJson(key, json);
       default: throw Exception("Invalid survey data type");
     }
   }
@@ -280,10 +278,8 @@ abstract class SurveyData {
       return SurveyQuestionNumeric.fromOther(other);
     } else if (other is SurveyDataEntry) {
       return SurveyDataEntry.fromOther(other);
-    } else if (other is SurveyDataResponse) {
-      return SurveyDataResponse.fromOther(other);
-    } else if (other is SurveyDataAction) {
-      return SurveyDataAction.fromOther(other);
+    } else if (other is SurveyDataResult) {
+      return SurveyDataResult.fromOther(other);
     } else if (other is SurveyDataSurvey) {
       return SurveyDataSurvey.fromOther(other);
     }
@@ -861,17 +857,15 @@ class SurveyDataEntry extends SurveyData {
   bool get isQuestion => false;
 }
 
-class SurveyDataResponse extends SurveyData {
-  String? body;
-  ActionData? action;
+class SurveyDataResult extends SurveyData {
+  List<ActionData>? actions;
 
-  SurveyDataResponse({required String text, this.body, this.action, String? moreInfo, required String key, bool replace = false}) :
+  SurveyDataResult({required String text, this.actions, String? moreInfo, required String key, bool replace = false}) :
         super(key: key, text: text, moreInfo: moreInfo, allowSkip: true, replace: replace);
 
-  factory SurveyDataResponse.fromJson(String key, Map<String, dynamic> json) {
-    return SurveyDataResponse(
-      body: json['body'],
-      action: json['action'] is Map<String, dynamic> ? ActionData.fromJson(json['action']) : null,
+  factory SurveyDataResult.fromJson(String key, Map<String, dynamic> json) {
+    return SurveyDataResult(
+      actions: ActionData.listFromJson(json['actions']),
 
       text: json['text'],
       key: key,
@@ -880,12 +874,11 @@ class SurveyDataResponse extends SurveyData {
     );
   }
 
-  factory SurveyDataResponse.fromOther(SurveyDataResponse other) {
-    return SurveyDataResponse(
+  factory SurveyDataResult.fromOther(SurveyDataResult other) {
+    return SurveyDataResult(
       key: other.key,
       text: other.text,
-      body: other.body,
-      action: other.action,
+      actions: other.actions,
       moreInfo: other.moreInfo,
       replace: other.replace,
     );
@@ -894,45 +887,8 @@ class SurveyDataResponse extends SurveyData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['body'] = body;
-    json['action'] = action?.toJson();
+    json['actions'] = ActionData.listToJson(actions);
     json['type'] = 'response';
-    return json;
-  }
-
-  @override
-  bool get isQuestion => false;
-}
-
-class SurveyDataAction extends SurveyData {
-  ActionData action;
-
-  SurveyDataAction({required String key, required this.action, SurveyData? defaultFollowUp, bool replace = false}) :
-        super(key: key, text: '', allowSkip: true, replace: replace);
-
-  factory SurveyDataAction.fromJson(String key, Map<String, dynamic> json) {
-    return SurveyDataAction(
-      action: ActionData.fromJson(json['action']),
-
-      key: key,
-      defaultFollowUp: JsonUtils.mapOrNull((json) => SurveyData.fromJson(key, json), json['default_follow_up']),
-      replace: JsonUtils.boolValue(json['replace']) ?? false,
-    );
-  }
-
-  factory SurveyDataAction.fromOther(SurveyDataAction other) {
-    return SurveyDataAction(
-      key: other.key,
-      action: other.action,
-      replace: other.replace,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = baseJson();
-    json['action'] = action.toJson();
-    json['type'] = 'action';
     return json;
   }
 

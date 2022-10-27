@@ -16,10 +16,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
+import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
@@ -99,16 +101,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     List<Widget> followUps = [];
     //TODO: use replace flag
     for (SurveyData? data = _mainSurveyData!.followUp(_survey!); data != null; data = data.followUp(_survey!)) {
-      Widget? followUp;
-      if (data is SurveyDataSurvey) {
-        followUp = _buildInlineSurveyWidget(data, onComplete: (val) {
-          setState(() {
-            _mainSurveyData!.response = val;
-          });
-        });
-      } else {
-        followUp = _buildInlineSurveyWidget(data);
-      }
+      Widget? followUp = _buildInlineSurveyWidget(data);
       if (followUp != null) {
         // GlobalKey? key;
         // if (data.response == null) {
@@ -139,7 +132,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   }
 
   Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
-    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete}) {
+    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
     Widget? widget;
 
     if (survey is SurveyQuestionMultipleChoice) {
@@ -150,12 +143,10 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       widget = _buildDateEntrySurveySection(survey);
     } else if (survey is SurveyQuestionNumeric) {
       widget = _buildNumericSurveySection(survey);
-    } else if (survey is SurveyDataResponse) {
-      widget = _buildResponseSurveySection(survey);
+    } else if (survey is SurveyDataResult) {
+      widget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
       widget = _buildTextSurveySection(survey);
-    } else if (survey is SurveyDataSurvey) {
-      widget = _buildSurveySurveySection(survey, onComplete: onComplete);
     }
 
     return widget != null ? Column(
@@ -187,9 +178,16 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     ) : null;
   }
 
-  Widget? _buildResponseSurveySection(SurveyDataResponse? survey) {
+  Widget? _buildResultSurveySection(SurveyDataResult? survey) {
     if (survey == null) return null;
-    ButtonAction? buttonAction = _actionTypeButtonAction(context, survey.action);
+
+    List<ButtonAction> buttonActions = [];
+    for (ActionData action in survey.actions ?? []) {
+      ButtonAction? buttonAction = _actionTypeButtonAction(context, action);
+      if (buttonAction != null) {
+        buttonActions.add(buttonAction);
+      }
+    }
 
     return Column(
       children: <Widget>[
@@ -604,26 +602,17 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  Widget? _buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {
-    if (survey == null) return null;
-
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: RoundedButton(
-          label: Localization().getStringEx("panel.home.button.action.take_survey.title", "Take Survey"),
-          borderColor: Styles().colors?.fillColorPrimary,
-          backgroundColor: Styles().colors?.surface,
-          textColor: Styles().colors?.headlineText,
-          onTap: () {
-            // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey.survey, onComplete: () {
-            //   if (onComplete != null) {
-            //     survey.survey.evaluate();
-            //     onComplete(survey.survey.resultData);
-            //   }
-            // })));
-          }
-        ),
-    );
+  void _onNotifyAlert(SurveyDataResult survey) {
+    List<ButtonAction> buttonActions = [];
+    for (ActionData action in alert.actions) {
+      ButtonAction? buttonAction = _actionTypeButtonAction(context, action, dismissContext: context, params: alert.params);
+      if (buttonAction != null) {
+        buttonActions.add(buttonAction);
+      }
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) =>
+        PopupMessage.show(title: alert.title, message: alert.text));
+        // AppWidgets.showStandardDialog(context, alert.title ?? '', alert.text ?? '', actions: [AppWidgets.buildActionButtons(buttonActions)], showDivider: false));
   }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
@@ -696,10 +685,12 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   @override
   void onNotification(String name, param) {
-    if(name == Polls.notifySurveyLoaded) {
-      if(mounted) {
+    if (name == Polls.notifySurveyLoaded) {
+      if (mounted) {
         setState(() {});
       }
+    } else if (name == RuleAction.notifyAlert) {
+      _onNotifyAlert(param as SurveyDataResult);
     }
   }
 }
