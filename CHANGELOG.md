@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added TextStyle properties to Styles service. Added: decoration and wordSpacing [#2311](https://github.com/rokwire/illinois-app/issues/2311).
 - Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403).
 - Added answers section to Auth2UserProfile [#174](https://github.com/rokwire/app-flutter-plugin/issues/174).
+- Intermediate work on "muted" and "unread" notifications [#177](https://github.com/rokwire/app-flutter-plugin/issues/177).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
@@ -22,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android: Upgrade compileSdkVersion to 32 [#147](https://github.com/rokwire/app-flutter-plugin/issues/147).
 - Upgrade project to build with flutter 3.3.2 [#158](https://github.com/rokwire/app-flutter-plugin/issues/158).
 - Applied preliminary work on multiple brands support [#149](https://github.com/rokwire/app-flutter-plugin/issues/149).
-- Updated version of firebase_messaging plugin [#2446](https://github.com/rokwire/illinois-app/issues/2446)
+- Updated version of firebase_messaging plugin [#2446](https://github.com/rokwire/illinois-app/issues/2446).
+- Store research questionnaire answers in account profile [#181](https://github.com/rokwire/app-flutter-plugin/issues/181).
 
 ## [1.2.4] - 2022-09-30
 ### Added

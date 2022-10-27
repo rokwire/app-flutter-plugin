@@ -302,6 +302,10 @@ class Storage with Service {
   InboxUserInfo? get inboxUserInfo => InboxUserInfo.fromJson(JsonUtils.decode(getStringWithName(inboxUserInfoKey)));
   set inboxUserInfo(InboxUserInfo? value) => setStringWithName(inboxUserInfoKey, JsonUtils.encode(value?.toJson()));
 
+  String get _inboxUnreadMessagesCountKey => 'edu.illinois.rokwire.inbox.messages.unread.count';
+  int? get inboxUnreadMessagesCount => getIntWithName(_inboxUnreadMessagesCountKey);
+  set inboxUnreadMessagesCount(int? value) => setIntWithName(_inboxUnreadMessagesCountKey, value);
+
   // Firebase
   String get inboxFirebaseMessagingSubscriptionTopicsKey => 'edu.illinois.rokwire.inbox.firebase_messaging.subscription_topis';
   Set<String>? get inboxFirebaseMessagingSubscriptionTopics => SetUtils.from(getStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey));

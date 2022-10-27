@@ -281,6 +281,27 @@ class MapUtils {
     }
   }
 
+  static Map<K, T>? combine<K, T>(Map<K, T>? map1, Map<K, T>? map2, {bool copy = false}) {
+    if (map1 != null) {
+      if (map2 != null) {
+        Map<K, T> combined = Map<K, T>.from(map1);
+        combined.addAll(map2);
+        return combined;
+      }
+      else {
+        return copy ? Map<K, T>.from(map1) : map1;
+      }
+    }
+    else {
+      if (map2 != null) {
+        return copy ? Map<K, T>.from(map2) : map2;
+      }
+      else {
+        return null;
+      }
+    }
+  }
+
 }
 
 class EnumUtils {
@@ -620,6 +641,55 @@ class JsonUtils {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) {
+    Map<String, LinkedHashSet<String>>? result;
+    if (value is Map) {
+      result = <String, LinkedHashSet<String>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, linkedHashSetStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Map<String, dynamic>? mapOfStringToLinkedHashSetOfStringsJsonValue(Map<String, LinkedHashSet<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
+  }
+
+  static Map<String, Set<String>>? mapOfStringToSetOfStringsValue(dynamic value) {
+    Map<String, Set<String>>? result;
+    if (value is Map) {
+      result = <String, Set<String>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, JsonUtils.setStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
+
+  static Map<String, dynamic>? mapOfStringToSetOfStringsJsonValue(Map<String, Set<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
   }
 
   static T? orNull<T>(T Function(Map<String, dynamic>) construct, dynamic json) {
