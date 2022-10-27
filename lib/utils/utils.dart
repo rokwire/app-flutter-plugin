@@ -622,8 +622,15 @@ class JsonUtils {
     return null;
   }
 
-  static T? orNull<T>(T Function(Map<String, dynamic>) construct, dynamic json) {
+  static T? mapOrNull<T>(T Function(Map<String, dynamic>) construct, dynamic json) {
     if (json is Map<String, dynamic>) {
+      return construct(json);
+    }
+    return null;
+  }
+
+  static T? listOrNull<T>(T Function(List<dynamic>) construct, dynamic json) {
+    if (json is List<dynamic>) {
       return construct(json);
     }
     return null;

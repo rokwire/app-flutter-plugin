@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -110,9 +109,7 @@ class RuleComparison extends RuleCondition {
           }
           return val != ruleVal;
         case "in_range":
-          if (val is MetricValue && ruleVal is MetricRange) {
-            return ruleVal.inRange(val);
-          }
+          //TODO: implement
           return defaultResult;
         case "any":
           if (ruleVal is Iterable) {
@@ -271,18 +268,21 @@ class RuleAction extends RuleActionResult {
           return data;
         }
         return null;
+      case "set_result":
+        engine.resultData = engine.getValOrCollection(data);
+        return null;
       case "follow_up":
         if (data is String) {
           // data = "data.<SurveyData key>"
           return engine.getProperty(RuleKey.fromKey(data));
         }
         return null;
-      // case "show_survey":
-      //   if (data is String) {
-      //   // data = survey id, send request to polls BB to get
-      //     return data;
-      //   }
-      //   return null;
+      case "show_survey":
+        if (data is String) {
+        // data = survey id, send request to polls BB to get
+          return data;
+        }
+        return null;
       case "alert":
         //TODO: Schedule local notification to take survey
       case "notify":
@@ -348,13 +348,20 @@ class Rule extends RuleResult {
     return rules;
   }
 
-  RuleActionResult? evaluate(RuleEngine engine) {
-    if (condition == null) {
-      return null;
+  static List<Map<String, dynamic>> listToJson(List<Rule>? rules) {
+    if (rules == null) {
+      return [];
     }
+    List<Map<String, dynamic>> rulesJson = [];
+    for (Rule rule in rules) {
+      rulesJson.add(rule.toJson());
+    }
+    return rulesJson;
+  }
 
+  dynamic evaluate(RuleEngine engine) {
     RuleResult? result;
-    if (condition!.evaluate(engine)) {
+    if (condition == null || condition!.evaluate(engine)) {
       result = trueResult;
     } else {
       result = falseResult;
@@ -368,9 +375,13 @@ class Rule extends RuleResult {
     } else if (result is Rule) {
       return result.evaluate(engine);
     } else if (result is RuleAction) {
-      return result;
+      return result.evaluate(engine);
     } else if (result is RuleActionList) {
-      return result;
+      List<dynamic> actionResults = [];
+      for (RuleAction action in result.actions) {
+        actionResults.add(action.evaluate(engine));
+      }
+      return actionResults;
     }
 
     return null;
@@ -381,6 +392,7 @@ abstract class RuleEngine {
   Map<String, dynamic> constants;
   Map<String, Map<String, String>> strings;
   Map<String, Rule> subRules;
+  dynamic resultData;
 
   final Map<String, List<RuleData>> _dataCache = {};
 
@@ -421,33 +433,10 @@ abstract class RuleEngine {
     dynamic constJson = json["constants"];
     if (constJson is Map<String, dynamic>) {
       for (MapEntry<String, dynamic> constant in constJson.entries) {
-        constMap[constant.key] = loadConstant(constant.value);
+        constMap[constant.key] = constant.value;
       }
     }
     return constMap;
-  }
-
-  static dynamic loadConstant(dynamic constant) {
-    if (constant is Map<String, dynamic>) {
-      dynamic type = constant["type"];
-      dynamic data = constant["data"];
-      if (type is String && data is Map<String, dynamic>) {
-        return objectFromJson(type, data);
-      }
-    }
-    return constant;
-  }
-
-  static dynamic objectFromJson(String type, Map<String, dynamic> json) {
-    try {
-      switch (type) {
-        case "MetricValue":
-          return MetricValue.fromJson(json);
-      }
-    } catch(e) {
-      return null;
-    }
-    return null;
   }
 
   dynamic getProperty(RuleKey? key);
@@ -680,347 +669,5 @@ class RuleData {
     }
 
     return true;
-  }
-}
-
-class Metric {
-  final String name;
-  final String unit;
-  final String type;
-  final List<String> valueLabels;
-  final String explanation;
-  final bool wholeNum;
-  final Survey? survey;
-
-  Metric({required this.name, required this.unit, required this.type, required this.valueLabels, this.survey, this.wholeNum = false, required this.explanation});
-
-  factory Metric.fromJson(Map<String, dynamic> json) {
-    return Metric(
-      name: json['name'],
-      unit: json['unit'],
-      type: json['type'],
-      wholeNum: json['whole_num'] ?? false,
-      valueLabels: JsonUtils.stringListValue(json['value_labels']) ?? [],
-      explanation: json['explanation'] as String? ?? '',
-      survey: JsonUtils.orNull((json) => Survey.fromJson(json), json['survey']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'unit': unit,
-      'type': type,
-      'whole_num': wholeNum,
-      'value_labels': valueLabels,
-      'explanation': explanation,
-      'survey': survey,
-    };
-  }
-
-  dynamic getProperty(RuleKey? key, dynamic param) {
-    switch (key?.key) {
-      case null:
-        return this;
-      case "name":
-        return name;
-      case "unit":
-        return unit;
-      case "type":
-        return type;
-      case "value_labels":
-        return valueLabels;
-      case "whole_num":
-        return wholeNum;
-      case "explanation":
-        return explanation;
-      case "survey":
-        return survey;
-    }
-    return null;
-  }
-
-  String? valueDisplayString(MetricValue? val) {
-    if (val == null || val.values.isEmpty || val.type != type) {
-      return null;
-    }
-
-    if (val.values.length == 1) {
-      if (wholeNum) {
-        return val.values.first.toInt().toString();
-      } else {
-        return val.values.first.toString();
-      }
-    }
-
-    String out = "";
-    for (int i = 0; i < valueLabels.length; i++) {
-      if (out.isNotEmpty) {
-        out += ", ";
-      }
-      out += valueLabels[i] + ": ";
-      if (i < val.values.length) {
-        if (wholeNum) {
-          out += val.values[i].toInt().toString();
-        } else {
-          out += val.values[i].toString();
-        }
-      }
-    }
-    return out;
-  }
-}
-
-class MetricBoundary {
-  final MetricValue value;
-  final int severity;
-
-  MetricBoundary({required this.value, required this.severity});
-
-  factory MetricBoundary.fromJson(Map<String, dynamic> json) {
-    return MetricBoundary(
-      value: MetricValue.fromJson(json['value']),
-      severity: json['severity'],
-    );
-  }
-
-  static List<MetricBoundary> listFromJson(List<dynamic>? jsonList) {
-    if (jsonList == null) {
-      return [];
-    }
-    List<MetricBoundary> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(MetricBoundary.fromJson(json));
-      }
-    }
-    return list;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'value': value.toJson(),
-      'severity': severity,
-    };
-  }
-}
-
-class MetricRange {
-  final MetricValue? maximum; //Exclusive maximum target value
-  final MetricValue? minimum; //Inclusive minimum target value
-
-  MetricRange({this.maximum, this.minimum});
-
-  factory MetricRange.fromJson(Map<String, dynamic> json) {
-    return MetricRange(
-      maximum: JsonUtils.orNull((json) => MetricValue.fromJson(json), json['maximum']),
-      minimum: JsonUtils.orNull((json) => MetricValue.fromJson(json), json['minimum']),
-    );
-  }
-
-  factory MetricRange.fromOther(MetricRange other) {
-    return MetricRange(
-      minimum: other.minimum,
-      maximum: other.maximum,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'maximum': maximum?.toJson(),
-      'minimum': minimum?.toJson(),
-    };
-  }
-
-  dynamic getProperty(RuleKey? key, dynamic param) {
-    switch (key?.key) {
-      case null:
-        return this;
-      case "minimum":
-        return minimum?.getProperty(key?.subRuleKey, param);
-      case "maximum":
-        return maximum?.getProperty(key?.subRuleKey, param);
-    }
-    return null;
-  }
-
-  bool inRange(MetricValue value) {
-    return compare(value) == 0;
-  }
-
-  int? compare(MetricValue value) {
-    if ((maximum == null && minimum == null)) {
-      return null;
-    }
-    if (maximum != null && value > maximum) {
-      return 1;
-    }
-    if (minimum != null && value < minimum) {
-      return -1;
-    }
-    return 0;
-  }
-}
-
-class MetricValue {
-  List<double> values;
-  String type;
-
-  MetricValue({required this.values, required this.type});
-
-  factory MetricValue.fromJson(Map<String, dynamic> json) {
-    return MetricValue(
-        values: JsonUtils.doubleListValue(json['values']) ?? [],
-        type: json['type']
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'values': values,
-      'type': type
-    };
-  }
-
-  @override
-  bool operator ==(other) {
-    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
-      return false;
-    }
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] != other.values[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  bool operator <(other) {
-    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
-      return false;
-    }
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] < other.values[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool operator <=(other) {
-    if (other! is MetricValue || type != other.type || values.length != other.values.length) {
-      return false;
-    }
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] <= other.values[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool operator >(other) {
-    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
-      return false;
-    }
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] > other.values[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool operator >=(other) {
-    if (other is! MetricValue || type != other.type || values.length != other.values.length) {
-      return false;
-    }
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] >= other.values[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  MetricValue operator +(MetricValue other) {
-    if (type != other.type || values.length != other.values.length) {
-      throw const FormatException("Cannot add unrelated metric value types");
-    }
-    List<double> result = [];
-    for (int i = 0; i < values.length; i++) {
-      result.add(values[i] + other.values[i]);
-    }
-    return MetricValue(values: result, type: type);
-  }
-
-  MetricValue operator -(MetricValue other) {
-    if (type != other.type || values.length != other.values.length) {
-      throw const FormatException("Cannot subtract unrelated metric value types");
-    }
-    List<double> result = [];
-    for (int i = 0; i < values.length; i++) {
-      result.add(values[i] - other.values[i]);
-    }
-    return MetricValue(values: result, type: type);
-  }
-
-  MetricValue operator /(double other) {
-    List<double> result = [];
-    for (int i = 0; i < values.length; i++) {
-      result.add(values[i] / other);
-    }
-    return MetricValue(values: result, type: type);
-  }
-
-  MetricValue abs() {
-    return MetricValue(values: values.map((e) => e.abs()).toList(), type: type);
-  }
-
-  @override
-  int get hashCode {
-    int code = 0;
-    for (double val in values) {
-      code ^= val.hashCode;
-    }
-    return code;
-  }
-
-  double percentage(MetricValue start, MetricValue end) {
-    if (type != start.type || values.length != start.values.length
-        || type != end.type || values.length != end.values.length  ) {
-      return 0.0;
-    }
-
-    double sum = 0;
-    for (int i = 0; i < values.length; i++) {
-      sum += MetricValue.percentageHelper(values[i], start.values[i], end.values[i]);
-    }
-    return sum / values.length;
-  }
-
-  dynamic getProperty(RuleKey? key, dynamic param) {
-    switch (key?.key) {
-      case null:
-        return this;
-      case "values":
-        return values;
-      case "type":
-        return type;
-      case "abs":
-        return abs();
-    }
-    return null;
-  }
-
-  static double percentageHelper(double value, double start, double end) {
-    double progress = (value - start) / (end - start);
-    if (progress < 0) {
-      return 0.0;
-    }
-    if (progress > 1.0) {
-      return 1.0;
-    }
-    return progress;
   }
 }
