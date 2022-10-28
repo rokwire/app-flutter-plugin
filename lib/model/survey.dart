@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'package:rokwire_plugin/model/rules.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
@@ -72,11 +73,10 @@ class Survey extends RuleEngine {
   DateTime? dateUpdated;
   dynamic resultData;
 
-  SurveyStats? _stats;
-  SurveyStats? get stats { return _stats; }
+  SurveyStats? stats;
 
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.defaultDataKey, this.defaultDataKeyRule,
-    this.resultRule, this.dateUpdated, required this.dateCreated,
+    this.resultRule, this.dateUpdated, required this.dateCreated, this.stats,
     Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules);
 
@@ -103,6 +103,7 @@ class Survey extends RuleEngine {
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
+      stats: JsonUtils.orNull((json) => SurveyStats.fromJson(json), json['stats']),
     );
   }
 
@@ -116,8 +117,9 @@ class Survey extends RuleEngine {
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
+      'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
       'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
-      'stats': _stats?.toJson(),
+      'stats': stats?.toJson(),
     };
   }
 
@@ -140,6 +142,7 @@ class Survey extends RuleEngine {
       constants: other.constants,
       strings: other.strings,
       subRules: other.subRules,
+      stats: other.stats,
     );
   }
 
@@ -159,7 +162,7 @@ class Survey extends RuleEngine {
 
   @override
   dynamic getProperty(RuleKey? key) {
-    SurveyStats? stats = _stats;
+    SurveyStats? stats = this.stats;
     switch (key?.key) {
       case null:
         return this;
@@ -202,7 +205,7 @@ class Survey extends RuleEngine {
     for (SurveyData surveyData in data.values) {
       stats += surveyData.stats(this);
     }
-    _stats = stats;
+    this.stats = stats;
 
     if (resultRule == null) {
       return;
@@ -214,6 +217,15 @@ class Survey extends RuleEngine {
       dynamic data = ruleResult.evaluate(this);
       resultData = data;
     }
+  }
+
+  @override
+  Future<bool> save() async {
+    SurveyResponse? response = await Polls().createSurveyResponse(this);
+    if (response != null) {
+      return true;
+    }
+    return false;
   }
 
   bool canContinue({bool deep = true}) {
@@ -239,6 +251,25 @@ class SurveyStats {
   final Map<String, dynamic> responseData;
 
   SurveyStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.responseData = const {}});
+
+  factory SurveyStats.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? scoresDynamic = JsonUtils.mapValue(json['scores']);
+    Map<String, num> scores = {};
+    if (scoresDynamic != null) {
+      for (MapEntry<String, dynamic> entry in scoresDynamic.entries) {
+        if (entry.value is num) {
+          scores[entry.key] = entry.value;
+        }
+      }
+    }
+    return SurveyStats(
+      total: JsonUtils.intValue(json['total']) ?? 0,
+      complete: JsonUtils.intValue(json['complete']) ?? 0,
+      scored: JsonUtils.intValue(json['scored']) ?? 0,
+      scores: scores,
+      responseData: JsonUtils.mapValue(json['response_data']) ?? {},
+    );
+  }
 
   SurveyStats operator +(SurveyStats other) {
     Map<String, dynamic> newData = {};
@@ -267,6 +298,7 @@ class SurveyStats {
       'complete': complete,
       'scored': scored,
       'scores': scores,
+      'response_data': responseData,
     };
   }
 

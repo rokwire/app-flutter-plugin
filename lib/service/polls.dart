@@ -370,14 +370,14 @@ class Polls with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<SurveyResponse>?> loadSurveyResponses({List<String>? surveyIDs, List<String>? typeIDs, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+  Future<List<SurveyResponse>?> loadSurveyResponses({List<String>? surveyIDs, List<String>? surveyTypes, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
     if (enabled) {
       Map<String, String> queryParams = {};
       if (CollectionUtils.isNotEmpty(surveyIDs)) {
         queryParams['survey_ids'] = surveyIDs!.join(',');
       }
-      if (CollectionUtils.isNotEmpty(typeIDs)) {
-        queryParams['type_ids'] = typeIDs!.join(',');
+      if (CollectionUtils.isNotEmpty(surveyTypes)) {
+        queryParams['survey_types'] = surveyTypes!.join(',');
       }
       if (startDate != null) {
         String? startDateFormatted = DateTimeUtils.dateTimeLocalToJson(startDate);

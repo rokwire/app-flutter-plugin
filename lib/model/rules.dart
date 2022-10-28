@@ -288,6 +288,8 @@ class RuleAction extends RuleActionResult {
       case "notify":
         //TODO: Send notification to providers/emergency contacts
         // send request with survey data to polls BB
+      case "save":
+        return engine.save();
     }
     return null;
   }
@@ -451,6 +453,8 @@ abstract class RuleEngine {
   }
 
   dynamic getProperty(RuleKey? key);
+
+  Future<bool> save();
 
   void clearCache() {
     _dataCache.clear();
