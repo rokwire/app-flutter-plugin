@@ -381,7 +381,7 @@ class Groups with Service implements NotificationsListener {
       String url = '${Config().groupsUrl}/groups';
       try {
         await _ensureLogin();
-        Map<String, dynamic> json = group.toJson(withId: false);
+        Map<String, dynamic> json = group.toJson(/*withId: false*/);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
         String? body = JsonUtils.encode(json);
