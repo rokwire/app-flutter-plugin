@@ -294,8 +294,8 @@ class Localization with Service implements NotificationsListener {
     return ((value != null) && (value is String)) ? value : defaults;
   }
 
-  String getStringEx(String key, String defaults)  {
-    return getString(key) ?? defaults;
+  String getStringEx(String key, String defaults, {String? language})  {
+    return getString(key, language: language) ?? defaults;
   }
 
   String? getContentString(Map<String, dynamic>? strings, String? key, {String? languageCode}) {
