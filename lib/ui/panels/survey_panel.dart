@@ -14,63 +14,62 @@
  * limitations under the License.
  */
 
-/*
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
-
-import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
-import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyPanel extends StatefulWidget {
-  final Survey survey;
-  final String? currentSurveyKey;
+  final dynamic survey;
+  final String? surveyDataKey;
   final Function? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
 
-  const SurveyPanel({required this.survey, this.currentSurveyKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
+  const SurveyPanel({required this.survey, this.surveyDataKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
 }
 
 class _SurveyPanelState extends State<SurveyPanel> {
-  late Survey _survey;
-  late Map<String, SurveyData> _surveyQuestions;
-  String? _surveyQuestionKey;
-  SurveyData? _mainSurveyQuestion;
+  bool _loading = false;
+  Survey? _survey;
 
   GlobalKey? dataKey;
 
   final ScrollController _scrollController = ScrollController();
   bool _scrollEnd = false;
 
-  late final SurveyWidgets widgets;
-
   @override
   void initState() {
     super.initState();
 
-    widgets = SurveyWidgets(context, _onChangeSurveyResponse);
-
-    _survey = widget.survey;
-    _surveyQuestionKey = widget.currentSurveyKey ?? _survey.firstQuestion?.key;
-    if (_survey.data.isEmpty || !_survey.data.containsKey(_surveyQuestionKey)) {
-      _popSurveyPanels();
-      return;
+    if (widget.survey is Survey) {
+      _survey = widget.survey;
+      if (!_survey!.data.containsKey(widget.surveyDataKey)) {
+        _popSurveyPanels();
+      }
+    } else if (widget.survey is String) {
+      _setLoading(true);
+      Polls().loadSurvey(widget.survey).then((survey) {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+          });
+        }
+        if (survey != null && survey.data.containsKey(widget.surveyDataKey)) {
+          _survey = survey;
+        } else {
+          _popSurveyPanels();
+        }
+      });
     }
-    _surveyQuestions = _survey.data;
-
-    _mainSurveyQuestion = _surveyQuestions[_surveyQuestionKey];
-    _mainSurveyQuestion?.evaluateDefaultResponse(_survey);
   }
 
   @override
@@ -82,12 +81,11 @@ class _SurveyPanelState extends State<SurveyPanel> {
           backgroundColor: Styles().colors?.background,
           body: Stack(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
+              Column(crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  HeaderBar(title: _survey.title),
+                  HeaderBar(title: _survey?.title),
                   Expanded(child: _buildScrollView()),
-                  _buildContinueButton(),
               ]),
             ],
           )),
@@ -103,65 +101,9 @@ class _SurveyPanelState extends State<SurveyPanel> {
         controller: _scrollController,
         child: SingleChildScrollView(
           controller: _scrollController,
-          child: _buildContent(),
+          child: SurveyWidget(survey: _survey, onChangeSurveyResponse: _onChangeSurveyResponse, surveyDataKey: widget.surveyDataKey, onComplete: widget.onComplete),
         ),
       ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_mainSurveyQuestion == null) {
-      return Text(Localization().getStringEx("panel.survey.error.invalid_data.title", "Invalid survey data"));
-    }
-
-    Widget? questionWidget = widgets.buildInlineSurveyWidget(_mainSurveyQuestion!);
-    List<Widget> followUps = [];
-    for (SurveyData? data = _mainSurveyQuestion?.followUp(_survey); data != null; data = data.followUp(_survey)) {
-      Widget? followUp;
-      if (data is SurveyDataSurvey) {
-        followUp = widgets.buildInlineSurveyWidget(data, onComplete: (val) {
-          setState(() {
-            _mainSurveyQuestion?.response = val;
-          });
-        });
-      } else {
-        followUp = widgets.buildInlineSurveyWidget(data);
-      }
-      if (followUp != null) {
-        GlobalKey? key;
-        if (data.response == null) {
-          key = GlobalKey();
-          dataKey = key;
-        }
-        followUps.add(Padding(
-          key: key,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Card(
-              color: Styles().colors?.background,
-              margin: EdgeInsets.zero,
-              elevation: 0.0,
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: followUp)),
-        ));
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-      child: Column(children: [
-        questionWidget ?? Container(),
-        Wrap(children: followUps),
-      ]),
-    );
-  }
-
-  Widget _buildContinueButton() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 16.0),
-      child: Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
-      ]),
     );
   }
 
@@ -176,6 +118,19 @@ class _SurveyPanelState extends State<SurveyPanel> {
     setState(() { });
   }
 
+  void _popSurveyPanels() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      int count = 0;
+      Navigator.of(context).popUntil((route) => count++ > widget.initPanelDepth);
+    });
+  }
+
+  void _setLoading(bool loading) {
+    setState(() {
+      _loading = loading;
+    });
+  }
+
   bool isScrolledToEnd() {
     double maxScroll = _scrollController.position.maxScrollExtent;
     double currentScroll = _scrollController.position.pixels;
@@ -185,56 +140,4 @@ class _SurveyPanelState extends State<SurveyPanel> {
     }
     return false;
   }
-
-  void _onTapContinue() async {
-    final targetContext = dataKey?.currentContext;
-    if (targetContext != null) {
-      double startScroll = _scrollController.position.pixels;
-      await Scrollable.ensureVisible(
-        targetContext,
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-      dataKey = null;
-      double scrollDiff = _scrollController.position.pixels - startScroll;
-      if (scrollDiff.abs() > 20.0) {
-        return;
-      }
-    }
-
-    if (_mainSurveyQuestion?.canContinue(_survey) == false) {
-      AppToast.show("Please answer all required questions to continue");
-      return;
-    }
-
-    // show survey summary or return to home page on finishing events
-    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
-    // if (followUp == null) {
-    _survey.dateUpdated = DateTime.now();
-
-      // if (widget.showSummaryOnFinish) {
-      // } else {
-    _finishSurvey();
-      // }
-
-      // return;
-    // }
-
-    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
-  }
-
-  void _finishSurvey() {
-    _popSurveyPanels();
-    if (widget.onComplete != null) {
-      widget.onComplete!();
-    }
-  }
-
-  void _popSurveyPanels() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      int count = 0;
-      Navigator.of(context).popUntil((route) => count++ > widget.initPanelDepth);
-    });
-  }
 }
-*/

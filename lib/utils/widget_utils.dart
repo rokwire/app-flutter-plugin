@@ -56,6 +56,14 @@ class ActionData {
     return list;
   }
 
+  static List<Map<String, dynamic>> listToJson(List<ActionData>? actions) {
+    List<Map<String, dynamic>> actionsJson = [];
+    for (ActionData action in actions ?? []) {
+      actionsJson.add(action.toJson());
+    }
+    return actionsJson;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'type': EnumUtils.enumToString(type),

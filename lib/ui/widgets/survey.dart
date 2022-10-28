@@ -16,12 +16,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
+import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
-import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -177,30 +178,44 @@ class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
   final Function(bool) onChangeSurveyResponse;
+  final Function? onComplete;
 
-  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey});
+  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey, this.onComplete});
 
   @override
   State<SurveyWidget> createState() => _SurveyWidgetState();
 }
 
 class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsListener{
-
+  bool _loading = false;
   Survey? _survey;
   SurveyData? _mainSurveyData;
 
   @override
   void initState() {
     super.initState();
+    NotificationService().subscribe(this, [
+      Polls.notifySurveyLoaded,
+      RuleAction.notifyAlert,
+    ]);
 
     if (widget.survey is Survey) {
       _survey = widget.survey;
       _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+      _mainSurveyData?.evaluateDefaultResponse(_survey!);
     } else if (widget.survey is String) {
+      _setLoading(true);
       Polls().loadSurvey(widget.survey).then((survey) {
-        _survey = survey;
-        _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
-        if(mounted) setState(() {});
+        if (mounted) {
+          setState(() {
+            _loading = false;
+          });
+        }
+        if (survey != null) {
+          _survey = survey;
+          _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+          _mainSurveyData?.evaluateDefaultResponse(_survey!);
+        }
       });
     }
   }
@@ -213,8 +228,21 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   @override
   Widget build(BuildContext context) {
-    //TODO: add title, add "moreInfo" to show some context for the questions
-    return _survey != null && _mainSurveyData != null ? _buildContent() : Container();
+    return _loading ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary)) :
+      _survey != null && _mainSurveyData != null ? Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Visibility(visible: _survey?.moreInfo != null, child: _buildMoreInfo()),
+          _buildContent(),
+          _buildContinueButton(),
+      ]) : Container();
+  }
+
+  Widget _buildMoreInfo() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),)
+    );
   }
 
   Widget _buildContent() {
@@ -222,16 +250,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     List<Widget> followUps = [];
     //TODO: use replace flag
     for (SurveyData? data = _mainSurveyData!.followUp(_survey!); data != null; data = data.followUp(_survey!)) {
-      Widget? followUp;
-      if (data is SurveyDataSurvey) {
-        followUp = _buildInlineSurveyWidget(data, onComplete: (val) {
-          setState(() {
-            _mainSurveyData!.response = val;
-          });
-        });
-      } else {
-        followUp = _buildInlineSurveyWidget(data);
-      }
+      Widget? followUp = _buildInlineSurveyWidget(data);
       if (followUp != null) {
         // GlobalKey? key;
         // if (data.response == null) {
@@ -252,7 +271,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       }
     }
 
-    //TODO: "Continue" button as SurveyResponseData?
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0),
       child: Column(children: [
@@ -262,8 +280,8 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
-    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8), Function(dynamic)? onComplete}) {
+  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
     Widget? widget;
 
     if (survey is SurveyQuestionMultipleChoice) {
@@ -274,23 +292,22 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       widget = _buildDateEntrySurveySection(survey);
     } else if (survey is SurveyQuestionNumeric) {
       widget = _buildNumericSurveySection(survey);
-    } else if (survey is SurveyDataResponse) {
-      widget = _buildResponseSurveySection(survey);
+    } else if (survey is SurveyDataResult) {
+      widget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
       widget = _buildTextSurveySection(survey);
-    } else if (survey is SurveyDataSurvey) {
-      widget = _buildSurveySurveySection(survey, onComplete: onComplete);
     }
 
     return widget != null ? Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: textPadding,
           child: Text(
             survey.text,
             textAlign: TextAlign.start,
-            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.title.extra_large'),
+            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
           ),
         ),
         Visibility(
@@ -304,11 +321,93 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
             ),
           ),
         ),
-        Container(height: 8),
+        // Container(height: 8),
         widget,
-        Container(height: 36),
+        Container(height: 24),
       ],
     ) : null;
+  }
+
+  Widget? _buildResultSurveySection(SurveyDataResult? survey) {
+    if (survey == null) return null;
+
+    List<Widget> buttonActions = _buildResultSurveyButtons(survey);
+    return Column(
+      children: <Widget>[
+        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('body')),
+        CollectionUtils.isNotEmpty(buttonActions) ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttonActions,)
+        ) : Container(),
+      ],
+    );
+  }
+
+  List<Widget> _buildResultSurveyButtons(SurveyDataResult? survey) {
+    List<Widget> buttonActions = [];
+    for (ActionData action in survey?.actions ?? []) {
+      ButtonAction? buttonAction = _actionTypeButtonAction(context, action);
+      if (buttonAction != null) {
+        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
+              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+      }
+    }
+    return buttonActions;
+  }
+
+  ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        if (action?.data is Survey) {
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => _onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
+          );
+        } else if (action?.data is Map<String, dynamic>) {
+          dynamic survey = action?.data['survey'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => _onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+          );
+        }
+        return null;
+      case ActionType.contact:
+        //TODO: handle phone, web URIs, etc.
+      case ActionType.dismiss:
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
+            () => _onTapDismiss(dismissContext: dismissContext)
+        );
+      default:
+        return null;
+    }
+  }
+
+  void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Survey? surveyObject;
+      if (survey is Survey) {
+        surveyObject = survey;
+      } else if (survey is String) {
+        surveyObject = await Polls().loadSurvey(survey);
+      }
+
+      if (surveyObject != null) {
+        //TODO: will change depending on whether survey should be embedded or not
+        // setState(() {
+        //   _survey = surveyObject;
+        //   _mainSurveyData = _survey?.firstQuestion;
+        // });
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
+          surveyObject!.evaluate();
+        })));
+      } else {
+        _onTapDismiss(dismissContext: context);
+      }
+    });
+  }
+
+  void _onTapDismiss({BuildContext? dismissContext}) {
+    if (dismissContext != null) {
+      Navigator.pop(dismissContext);
+    }
   }
 
   Widget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
@@ -657,30 +756,9 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  Widget? _buildResponseSurveySection(SurveyDataResponse? survey) {
-    return SurveyWidgets.buildSurveyDataResult(context, survey);
-  }
-
-  Widget? _buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {
-    if (survey == null) return null;
-
-    return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: RoundedButton(
-          label: Localization().getStringEx("panel.home.button.action.take_survey.title", "Take Survey"),
-          borderColor: Styles().colors?.fillColorPrimary,
-          backgroundColor: Styles().colors?.surface,
-          textColor: Styles().colors?.headlineText,
-          onTap: () {
-            // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey.survey, onComplete: () {
-            //   if (onComplete != null) {
-            //     survey.survey.evaluate();
-            //     onComplete(survey.survey.resultData);
-            //   }
-            // })));
-          }
-        ),
-    );
+  void _onNotifyAlert(SurveyDataResult survey) {
+    WidgetsBinding.instance.addPostFrameCallback((_) =>
+        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo, buttons: _buildResultSurveyButtons(survey)));
   }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
@@ -693,12 +771,73 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
+  Widget _buildContinueButton() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 16.0),
+      child: Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+      ]),
+    );
+  }
+
+  void _onTapContinue() async {
+    // final targetContext = dataKey?.currentContext;
+    // if (targetContext != null) {
+    //   double startScroll = _scrollController.position.pixels;
+    //   await Scrollable.ensureVisible(
+    //     targetContext,
+    //     duration: const Duration(milliseconds: 400),
+    //     curve: Curves.easeInOut,
+    //   );
+    //   dataKey = null;
+    //   double scrollDiff = _scrollController.position.pixels - startScroll;
+    //   if (scrollDiff.abs() > 20.0) {
+    //     return;
+    //   }
+    // }
+
+    if (_mainSurveyData?.canContinue(_survey!) == false) {
+      AppToast.show("Please answer all required questions to continue");
+      return;
+    }
+
+    // show survey summary or return to home page on finishing events
+    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
+    // if (followUp == null) {
+    _survey!.lastUpdated = DateTime.now();
+
+      // if (widget.showSummaryOnFinish) {
+      // } else {
+    _finishSurvey();
+      // }
+
+      // return;
+    // }
+
+    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
+  }
+
+  void _finishSurvey() {
+    _survey?.evaluate();
+    if (widget.onComplete != null) {
+      widget.onComplete!();
+    }
+  }
+
+  void _setLoading(bool loading) {
+    setState(() {
+      _loading = loading;
+    });
+  }
+
   @override
   void onNotification(String name, param) {
-    if(name == Polls.notifySurveyLoaded) {
-      if(mounted) {
+    if (name == Polls.notifySurveyLoaded) {
+      if (mounted) {
         setState(() {});
       }
+    } else if (name == RuleAction.notifyAlert) {
+      _onNotifyAlert(param as SurveyDataResult);
     }
   }
 }
@@ -845,7 +984,7 @@ class SingleSelectionList extends StatelessWidget {
     return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-
+        padding: EdgeInsets.only(top: 8),
         itemCount: selectionList.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
