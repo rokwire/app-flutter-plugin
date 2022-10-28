@@ -46,6 +46,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Client? _updateUserPrefsClient;
   Timer? _updateUserPrefsTimer;
   
+  Client? _updateUserProfileClient;
+  Timer? _updateUserProfileTimer;
+
   Auth2Token? _token;
   Auth2Account? _account;
 
@@ -79,6 +82,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     NotificationService().subscribe(this, [
       DeepLink.notifyUri,
       AppLivecycle.notifyStateChanged,
+      Auth2UserProfile.notifyChanged,
       Auth2UserPrefs.notifyChanged,
     ]);
   }
@@ -135,6 +139,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   void onNotification(String name, dynamic param) {
     if (name == DeepLink.notifyUri) {
       onDeepLinkUri(param);
+    }
+    else if (name == Auth2UserProfile.notifyChanged) {
+      onUserProfileChanged(param);
     }
     else if (name == Auth2UserPrefs.notifyChanged) {
       onUserPrefsChanged(param);
@@ -423,7 +430,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     if (profileUpdated == true) {
-      _saveAccountUserProfile(account.profile);
+      _saveAccountUserProfile();
     }
 
     NotificationService().notify(notifyProfileChanged);
@@ -874,6 +881,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       _updateUserPrefsClient?.close();
       _updateUserPrefsClient = null;
 
+      _updateUserProfileTimer?.cancel();
+      _updateUserProfileTimer = null;
+
+      _updateUserProfileClient?.close();
+      _updateUserProfileClient = null;
+
       NotificationService().notify(notifyProfileChanged);
       NotificationService().notify(notifyPrefsChanged);
       NotificationService().notify(notifyLoginChanged);
@@ -1003,7 +1016,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   Future<void> _saveAccountUserPrefs() async {
-    if ((Config().coreUrl != null) && (_account?.prefs != null)) {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.prefs != null)) {
       String url = "${Config().coreUrl}/services/account/preferences";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
@@ -1028,8 +1041,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             }
           });
         }
+        _updateUserPrefsClient = null;
       }
-      _updateUserPrefsClient = null;
     }
   }
 
@@ -1054,12 +1067,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // User Profile
   
+  @protected
+  void onUserProfileChanged(Auth2UserProfile? profile) {
+    if (identical(profile, _anonymousProfile)) {
+      Storage().auth2AnonymousProfile = _anonymousProfile;
+      NotificationService().notify(notifyProfileChanged);
+    }
+    else if (identical(profile, _account?.profile)) {
+      Storage().auth2Account = _account;
+      NotificationService().notify(notifyProfileChanged);
+      _saveAccountUserProfile();
+    }
+  }
+
   Future<Auth2UserProfile?> loadUserProfile() async {
     return await _loadAccountUserProfile();
   }
 
   Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
-    if (await _saveAccountUserProfile(profile)) {
+    if (await _saveExternalAccountUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
         NotificationService().notify(notifyProfileChanged);
@@ -1078,7 +1104,38 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool> _saveAccountUserProfile(Auth2UserProfile? profile) async {
+  Future<void> _saveAccountUserProfile() async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.profile != null)) {
+      String url = "${Config().coreUrl}/services/account/profile";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode(profile!.toJson());
+
+      Client client = Client();
+      _updateUserProfileClient?.close();
+      _updateUserProfileClient = client;
+
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+
+      if (identical(client, _updateUserProfileClient)) {
+        if (response?.statusCode == 200) {
+          _updateUserProfileTimer?.cancel();
+          _updateUserProfileTimer = null;
+        }
+        else {
+          _updateUserProfileTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
+            if (_updateUserProfileClient == null) {
+              _saveAccountUserProfile();
+            }
+          });
+        }
+        _updateUserProfileClient = null;
+      }
+    }
+  }
+
+  Future<bool> _saveExternalAccountUserProfile(Auth2UserProfile? profile) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Map<String, String> headers = {

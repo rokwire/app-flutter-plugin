@@ -27,13 +27,170 @@ import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
+class SurveyWidgets {
+  static Widget? buildSurveyDataResult(BuildContext context, SurveyDataResult? survey) {
+    if (survey == null) return null;
+
+    List<Widget> buttonActions = buildResultSurveyButtons(context, survey);
+    return Column(
+      children: <Widget>[
+        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('body')),
+        CollectionUtils.isNotEmpty(buttonActions) ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttonActions,)
+        ) : Container(),
+      ],
+    );
+  }
+
+  static List<Widget> buildResultSurveyButtons(BuildContext context, SurveyDataResult? survey) {
+    List<Widget> buttonActions = [];
+    for (ActionData action in survey?.actions ?? []) {
+      ButtonAction? buttonAction = actionTypeButtonAction(context, action);
+      if (buttonAction != null) {
+        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
+            backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+      }
+    }
+    return buttonActions;
+  }
+
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        if (action?.data is Survey) {
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
+          );
+        } else if (action?.data is Map<String, dynamic>) {
+          dynamic survey = action?.data['survey'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+          );
+        }
+        return null;
+      case ActionType.contact:
+      //TODO: handle phone, web URIs, etc.
+      case ActionType.dismiss:
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
+                () => onTapDismiss(dismissContext: dismissContext)
+        );
+      default:
+        return null;
+    }
+  }
+
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Survey? surveyObject;
+      if (survey is Survey) {
+        surveyObject = survey;
+      } else if (survey is String) {
+        surveyObject = await Polls().loadSurvey(survey);
+      }
+
+      if (surveyObject != null) {
+        //TODO: will change depending on whether survey should be embedded or not
+        // setState(() {
+        //   _survey = surveyObject;
+        //   _mainSurveyData = _survey?.firstQuestion;
+        // });
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
+          surveyObject!.evaluate();
+        })));
+      } else {
+        onTapDismiss(dismissContext: context);
+      }
+    });
+  }
+
+  static void onTapDismiss({BuildContext? dismissContext}) {
+    if (dismissContext != null) {
+      Navigator.pop(dismissContext);
+    }
+  }
+
+  static Widget buildSurveyResponseCard(BuildContext context, SurveyResponse response, {bool showTimeOnly = false}) {
+    List<Widget> widgets = [];
+
+    String? date;
+    if (showTimeOnly) {
+      date = DateTimeUtils.getDisplayTime(dateTimeUtc: response.dateCreated);
+    } else {
+      date = DateTimeUtils.getDisplayDateTime(response.dateCreated);
+    }
+
+    widgets.addAll([
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat')),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
+              Container(width: 8.0),
+              Image.asset('images/chevron-right.png')
+              // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
+            ],
+          ),
+        ],
+      ),
+      Container(height: 8),
+    ]);
+
+    Map<String, dynamic>? responses = response.survey.stats?.responseData;
+    if (responses?.length == 1) {
+      widgets.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.response.title", "Response:"), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
+          SizedBox(width: 8.0),
+          Flexible(child: Text(responses?.values.join(", ") ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
+        ],
+      ));
+    }
+
+    dynamic result = response.survey.resultData;
+    if (result is Map<String, dynamic>) {
+      if (result['type'] == 'survey_data.result') {
+        SurveyDataResult dataResult = SurveyDataResult.fromJson('result', result);
+        widgets.add(Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.result.title", "Results:"), style: Styles().textStyles?.getTextStyle('widget.title.regular.fat')),
+            SurveyWidgets.buildSurveyDataResult(context, dataResult) ?? Container(),
+          ],
+        ));
+      }
+    }
+
+    return Material(
+      borderRadius: BorderRadius.circular(30),
+      color: Styles().colors?.surface,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        // onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyResponseSummaryPanel(response: response))),
+        child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: widgets,
+            )
+        ),
+      ),
+    );
+  }
+}
+
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
   final Function(bool) onChangeSurveyResponse;
   final Function? onComplete;
+  final Function(Survey?)? onLoad;
 
-  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey, this.onComplete});
+  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey, this.onComplete, this.onLoad});
 
   @override
   State<SurveyWidget> createState() => _SurveyWidgetState();
@@ -55,15 +212,18 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     } else if (widget.survey is String) {
       _setLoading(true);
       Polls().loadSurvey(widget.survey).then((survey) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-          });
-        }
         if (survey != null) {
           _survey = survey;
           _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
           _mainSurveyData?.evaluateDefaultResponse(_survey!);
+          if (widget.onLoad != null) {
+            widget.onLoad!(survey);
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _loading = false;
+          });
         }
       });
     }
@@ -77,19 +237,22 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   @override
   Widget build(BuildContext context) {
     return _loading ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary)) :
-      _survey != null && _mainSurveyData != null ? Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Visibility(visible: _survey?.moreInfo != null, child: _buildMoreInfo()),
-          _buildContent(),
-          _buildContinueButton(),
-      ]) : Container();
+      _survey != null && _mainSurveyData != null ? Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Visibility(visible: _survey?.moreInfo != null, child: _buildMoreInfo()),
+            _buildContent(),
+            _buildContinueButton(),
+        ]),
+      ) : Container();
   }
 
   Widget _buildMoreInfo() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),)
+      padding: const EdgeInsets.only(bottom: 32.0),
+      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),),
     );
   }
 
@@ -106,29 +269,18 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         //   dataKey = key;
         // }
         followUps.add(Padding(
-          // key: key,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Card(
-              color: Styles().colors?.background,
-              margin: EdgeInsets.zero,
-              elevation: 0.0,
-              child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: followUp)),
-        ));
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: followUp));
       }
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-      child: Column(children: [
-        questionWidget ?? Container(),
-        Wrap(children: followUps),
-      ]),
-    );
+    return Column(children: [
+      questionWidget ?? Container(),
+      Wrap(children: followUps),
+    ]);
   }
 
-  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, bottom: 8), 
+  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(bottom: 8),
     EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
     Widget? widget;
 
@@ -557,12 +709,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   Widget _buildContinueButton() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 16.0),
-      child: Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null, enabled: _survey!.canContinue()),
-      ]),
-    );
+    return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+      RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+    ]);
   }
 
   void _onTapContinue() {
@@ -589,7 +738,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // show survey summary or return to home page on finishing events
     // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
     // if (followUp == null) {
-    _survey!.lastUpdated = DateTime.now();
+    _survey!.dateUpdated = DateTime.now();
 
       // if (widget.showSummaryOnFinish) {
       // } else {

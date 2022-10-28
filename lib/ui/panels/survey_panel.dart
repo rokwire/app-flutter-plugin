@@ -48,28 +48,10 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    super.initState();
-
     if (widget.survey is Survey) {
       _survey = widget.survey;
-      if (!_survey!.data.containsKey(widget.surveyDataKey) && _survey!.firstQuestion == null) {
-        _popSurveyPanels();
-      }
-    } else if (widget.survey is String) {
-      _setLoading(true);
-      Polls().loadSurvey(widget.survey).then((survey) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-          });
-        }
-        if (survey != null && survey.data.containsKey(widget.surveyDataKey) && survey.firstQuestion == null) {
-          _survey = survey;
-        } else {
-          _popSurveyPanels();
-        }
-      });
     }
+    super.initState();
   }
 
   @override
@@ -86,23 +68,33 @@ class _SurveyPanelState extends State<SurveyPanel> {
               Expanded(child: _buildScrollView()),
           ]),
         ],
-      )
-    );
+    ));
   }
 
   Widget _buildScrollView() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Scrollbar(
-        radius: const Radius.circular(2),
-        thumbVisibility: true,
+    return Scrollbar(
+      radius: const Radius.circular(2),
+      thumbVisibility: true,
+      controller: _scrollController,
+      child: SingleChildScrollView(
         controller: _scrollController,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: SurveyWidget(survey: _survey, onChangeSurveyResponse: _onChangeSurveyResponse, surveyDataKey: widget.surveyDataKey, onComplete: widget.onComplete),
+        child: SurveyWidget(
+          survey: widget.survey,
+          onChangeSurveyResponse: _onChangeSurveyResponse,
+          surveyDataKey: widget.surveyDataKey,
+          onComplete: widget.onComplete,
+          onLoad: _setSurvey,
         ),
       ),
     );
+  }
+
+  void _setSurvey(Survey? survey) {
+    if (survey != null) {
+      setState(() {
+        _survey = survey;
+      });
+    }
   }
 
   void _checkScroll(Duration duration) {
@@ -114,19 +106,6 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   void _onChangeSurveyResponse(bool scrollEnd) {
     setState(() { });
-  }
-
-  void _popSurveyPanels() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      int count = 0;
-      Navigator.of(context).popUntil((route) => count++ > widget.initPanelDepth);
-    });
-  }
-
-  void _setLoading(bool loading) {
-    setState(() {
-      _loading = loading;
-    });
   }
 
   bool isScrolledToEnd() {

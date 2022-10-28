@@ -293,6 +293,8 @@ class RuleAction extends RuleActionResult {
       case "notify":
         //TODO: Send notification to providers/emergency contacts
         // send request with survey data to polls BB
+      case "save":
+        return engine.save();
       case "local_notify":
         //TODO: Schedule local notification to take survey
     }
@@ -403,7 +405,7 @@ abstract class RuleEngine {
 
   final Map<String, List<RuleData>> _dataCache = {};
 
-  RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}});
+  RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}, this.resultData});
 
   static Map<String, Rule> subRulesFromJson(Map<String, dynamic> json) {
     Map<String, Rule> subRules = {};
@@ -447,6 +449,8 @@ abstract class RuleEngine {
   }
 
   dynamic getProperty(RuleKey? key);
+
+  Future<bool> save();
 
   void clearCache() {
     _dataCache.clear();

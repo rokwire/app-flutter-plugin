@@ -13,12 +13,55 @@
 // limitations under the License.
 
 import 'package:rokwire_plugin/model/rules.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
+
+class SurveyResponse {
+  String id;
+  Survey survey;
+  DateTime dateCreated;
+  DateTime? dateUpdated;
+
+  SurveyResponse(this.id, this.survey, this.dateCreated, this.dateUpdated);
+
+  factory SurveyResponse.fromJson(Map<String, dynamic> json) {
+    return SurveyResponse(
+      JsonUtils.stringValue(json["id"]) ?? "",
+      Survey.fromJson(json['survey']),
+      DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
+      DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'survey': survey.toJson(),
+      'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
+      'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
+    };
+  }
+
+  static List<SurveyResponse>? listFromJson(List<dynamic>? jsonList) {
+    List<SurveyResponse>? result;
+    if (jsonList != null) {
+      result = <SurveyResponse>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
+        if (mapVal != null) {
+          ListUtils.add(result, SurveyResponse.fromJson(mapVal));
+        }
+      }
+    }
+    return result;
+  }
+}
 
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
 
+  String id;
   final Map<String, SurveyData> data;
   final String type;
   final bool scored;
@@ -27,14 +70,13 @@ class Survey extends RuleEngine {
   final String? defaultDataKey;
   final Rule? defaultDataKeyRule;
   final List<Rule>? resultRules;
-  DateTime? lastUpdated;
+  DateTime dateCreated;
+  DateTime? dateUpdated;
+  SurveyStats? stats;
 
-  SurveyStats? _stats;
-  SurveyStats? get stats { return _stats; }
-
-  Survey({required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules, 
-    this.lastUpdated, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
-      : super(constants: constants, strings: strings, subRules: subRules);
+  Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
+    this.dateUpdated, required this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+      : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
     Map<String, SurveyData> dataMap = {};
@@ -46,6 +88,7 @@ class Survey extends RuleEngine {
     });
 
     return Survey(
+      id: json['id'],
       data: dataMap,
       type: JsonUtils.stringValue(json['type']) ?? '',
       scored: JsonUtils.boolValue(json['scored']) ?? true,
@@ -54,15 +97,19 @@ class Survey extends RuleEngine {
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
       defaultDataKeyRule: JsonUtils.mapOrNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_data_key_rule'])),
       resultRules: JsonUtils.listOrNull((json) => Rule.listFromJson(json), JsonUtils.decode(json['result_rules'])),
-      lastUpdated: DateTimeUtils.dateTimeLocalFromJson(json['last_updated']),
+      resultData: json['result_data'],
+      dateCreated: DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
+      dateUpdated: DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
+      stats: JsonUtils.mapOrNull((json) => SurveyStats.fromJson(json), json['stats']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'data': JsonUtils.encode(data),
       'type': type,
       'scored': scored,
@@ -71,8 +118,10 @@ class Survey extends RuleEngine {
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
       'result_rules': JsonUtils.encode(Rule.listToJson(resultRules)),
-      'last_updated': DateTimeUtils.dateTimeLocalToJson(lastUpdated),
-      'stats': _stats?.toJson(),
+      'result_data': resultData,
+      'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
+      'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
+      'stats': stats?.toJson(),
     };
   }
 
@@ -82,6 +131,7 @@ class Survey extends RuleEngine {
       data[surveyData.key] = (SurveyData.fromOther(surveyData.value));
     }
     return Survey(
+      id: other.id,
       data: data,
       type: other.type,
       scored: other.scored,
@@ -90,16 +140,33 @@ class Survey extends RuleEngine {
       defaultDataKey: other.defaultDataKey,
       defaultDataKeyRule: other.defaultDataKeyRule,
       resultRules: other.resultRules,
-      lastUpdated: other.lastUpdated,
+      resultData: other.resultData,
+      dateCreated: other.dateCreated,
+      dateUpdated: other.dateUpdated,
       constants: other.constants,
       strings: other.strings,
       subRules: other.subRules,
+      stats: other.stats,
     );
+  }
+
+  static List<Survey>? listFromJson(List<dynamic>? jsonList) {
+    List<Survey>? result;
+    if (jsonList != null) {
+      result = <Survey>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
+        if (mapVal != null) {
+          ListUtils.add(result, Survey.fromJson(mapVal));
+        }
+      }
+    }
+    return result;
   }
 
   @override
   dynamic getProperty(RuleKey? key) {
-    SurveyStats? stats = _stats;
+    SurveyStats? stats = this.stats;
     switch (key?.key) {
       case null:
         return this;
@@ -113,8 +180,8 @@ class Survey extends RuleEngine {
           return stats.scores;
         }
         return null;
-      case "last_updated":
-        return lastUpdated;
+      case "date_updated":
+        return dateUpdated;
       case "scored":
         return scored;
       case "type":
@@ -142,7 +209,7 @@ class Survey extends RuleEngine {
     for (SurveyData surveyData in data.values) {
       stats += surveyData.stats(this);
     }
-    _stats = stats;
+    this.stats = stats;
 
     if (CollectionUtils.isEmpty(resultRules)) {
       return;
@@ -152,6 +219,15 @@ class Survey extends RuleEngine {
     for (Rule rule in resultRules!) {
       rule.evaluate(this);
     }
+  }
+
+  @override
+  Future<bool> save() async {
+    SurveyResponse? response = await Polls().createSurveyResponse(this);
+    if (response != null) {
+      return true;
+    }
+    return false;
   }
 
   bool canContinue({bool deep = true}) {
@@ -176,6 +252,25 @@ class SurveyStats {
   final Map<String, dynamic> responseData;
 
   SurveyStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.responseData = const {}});
+
+  factory SurveyStats.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? scoresDynamic = JsonUtils.mapValue(json['scores']);
+    Map<String, num> scores = {};
+    if (scoresDynamic != null) {
+      for (MapEntry<String, dynamic> entry in scoresDynamic.entries) {
+        if (entry.value is num) {
+          scores[entry.key] = entry.value;
+        }
+      }
+    }
+    return SurveyStats(
+      total: JsonUtils.intValue(json['total']) ?? 0,
+      complete: JsonUtils.intValue(json['complete']) ?? 0,
+      scored: JsonUtils.intValue(json['scored']) ?? 0,
+      scores: scores,
+      responseData: JsonUtils.mapValue(json['response_data']) ?? {},
+    );
+  }
 
   SurveyStats operator +(SurveyStats other) {
     Map<String, dynamic> newData = {};
@@ -204,6 +299,7 @@ class SurveyStats {
       'complete': complete,
       'scored': scored,
       'scores': scores,
+      'response_data': responseData,
     };
   }
 
