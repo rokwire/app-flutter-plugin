@@ -75,7 +75,7 @@ class Survey extends RuleEngine {
   SurveyStats? stats;
 
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
-  , this.dateUpdated, required this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+    this.dateUpdated, required this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
@@ -103,7 +103,7 @@ class Survey extends RuleEngine {
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
-      stats: JsonUtils.orNull((json) => SurveyStats.fromJson(json), json['stats']),
+      stats: JsonUtils.mapOrNull((json) => SurveyStats.fromJson(json), json['stats']),
     );
   }
 

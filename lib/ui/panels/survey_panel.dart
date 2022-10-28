@@ -48,63 +48,53 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    super.initState();
-
     if (widget.survey is Survey) {
       _survey = widget.survey;
-      if (!_survey!.data.containsKey(widget.surveyDataKey)) {
-        _popSurveyPanels();
-      }
-    } else if (widget.survey is String) {
-      _setLoading(true);
-      Polls().loadSurvey(widget.survey).then((survey) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-          });
-        }
-        if (survey != null && survey.data.containsKey(widget.surveyDataKey)) {
-          _survey = survey;
-        } else {
-          _popSurveyPanels();
-        }
-      });
     }
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback(_checkScroll);
-    return WillPopScope(
-      onWillPop: () async => widget.allowBack,
-      child: Scaffold(
-          backgroundColor: Styles().colors?.background,
-          body: Stack(
-            children: [
-              Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  HeaderBar(title: _survey?.title),
-                  Expanded(child: _buildScrollView()),
-              ]),
-            ],
-          )),
-    );
+    return Scaffold(
+        appBar: HeaderBar(title: _survey?.title),
+        backgroundColor: Styles().colors?.background,
+        body: Stack(
+          children: [
+            Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(child: _buildScrollView()),
+            ]),
+          ],
+        ));
   }
 
   Widget _buildScrollView() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Scrollbar(
-        radius: const Radius.circular(2),
-        thumbVisibility: true,
+    return Scrollbar(
+      radius: const Radius.circular(2),
+      thumbVisibility: true,
+      controller: _scrollController,
+      child: SingleChildScrollView(
         controller: _scrollController,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: SurveyWidget(survey: _survey, onChangeSurveyResponse: _onChangeSurveyResponse, surveyDataKey: widget.surveyDataKey, onComplete: widget.onComplete),
+        child: SurveyWidget(
+          survey: widget.survey,
+          onChangeSurveyResponse: _onChangeSurveyResponse,
+          surveyDataKey: widget.surveyDataKey,
+          onComplete: widget.onComplete,
+          onLoad: _setSurvey,
         ),
       ),
     );
+  }
+
+  void _setSurvey(Survey? survey) {
+    if (survey != null) {
+      setState(() {
+        _survey = survey;
+      });
+    }
   }
 
   void _checkScroll(Duration duration) {

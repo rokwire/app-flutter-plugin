@@ -405,7 +405,7 @@ abstract class RuleEngine {
 
   final Map<String, List<RuleData>> _dataCache = {};
 
-  RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}});
+  RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}, this.resultData});
 
   static Map<String, Rule> subRulesFromJson(Map<String, dynamic> json) {
     Map<String, Rule> subRules = {};
