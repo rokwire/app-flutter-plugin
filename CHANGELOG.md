@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applied preliminary work on multiple brands support [#149](https://github.com/rokwire/app-flutter-plugin/issues/149).
 - Updated version of firebase_messaging plugin [#2446](https://github.com/rokwire/illinois-app/issues/2446).
 - Store research questionnaire answers in account profile [#181](https://github.com/rokwire/app-flutter-plugin/issues/181).
+- Cleaned up group model.
 
 ## [1.2.4] - 2022-09-30
 ### Added
