@@ -42,6 +42,11 @@ class Group {
 
   bool?               attendanceGroup;
   
+  bool?               researchGroup;
+  bool?               researchOpen;
+  String?             researchDescription;
+  Map<String, dynamic>? researchProfile; 
+
   String?             imageURL;
   String?             webURL;
   Member?             currentMember;
@@ -53,6 +58,7 @@ class Group {
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
+    this.researchGroup, this.researchOpen, this.researchDescription, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
     });
 
@@ -76,6 +82,11 @@ class Group {
       authManGroupName  : JsonUtils.stringValue(json['authman_group']),
       
       attendanceGroup   : JsonUtils.boolValue(json['attendance_group']),
+
+      researchGroup     : JsonUtils.boolValue(json['research_group']),
+      researchOpen      : JsonUtils.boolValue(json['research_open']),
+      researchDescription: JsonUtils.stringValue(json['research_description']),
+      researchProfile   : JsonUtils.mapValue(json['research_profile']),
       
       imageURL          : JsonUtils.stringValue(json['image_url']),
       webURL            : JsonUtils.stringValue(json['web_url']),
@@ -107,6 +118,11 @@ class Group {
 
       attendanceGroup   : other.attendanceGroup,
 
+      researchGroup     : other.researchGroup,
+      researchOpen      : other.researchOpen,
+      researchDescription: other.researchDescription,
+      researchProfile   : MapUtils.from(other.researchProfile),
+
       imageURL          : other.imageURL,
       webURL            : other.webURL,
       currentMember     : other.currentMember,
@@ -137,12 +153,17 @@ class Group {
 
       'attendance_group'              : attendanceGroup,
 
+      'research_group'                : researchGroup,
+      'research_open'                 : researchOpen,
+      'research_description'          : researchDescription,
+      'research_profile'              : researchProfile,
+
       'image_url'                     : imageURL,
       'web_url'                       : webURL,
       'current_member'                : currentMember?.toJson(),
       'tags'                          : tags,
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
-      'membershipQuest'               : membershipQuest?.toJson(),
+      'membership_quest'              : membershipQuest?.toJson(),
     };
   }
 
@@ -162,12 +183,16 @@ class Group {
       (other.hiddenForSearch == hiddenForSearch) &&
       (other.canJoinAutomatically == canJoinAutomatically) &&
       (other.onlyAdminsCanCreatePolls == onlyAdminsCanCreatePolls) &&
-
       
       (other.authManEnabled == authManEnabled) &&
       (other.authManGroupName == authManGroupName) &&
 
       (other.attendanceGroup == attendanceGroup) &&
+
+      (other.researchGroup == researchGroup) &&
+      (other.researchOpen == researchOpen) &&
+      (other.researchDescription == researchDescription) &&
+      (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
 
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
@@ -197,6 +222,11 @@ class Group {
     (authManGroupName?.hashCode ?? 0) ^
 
     (attendanceGroup?.hashCode ?? 0) ^
+
+    (researchGroup?.hashCode ?? 0) ^
+    (researchOpen?.hashCode ?? 0) ^
+    (researchDescription?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(researchProfile)) ^
 
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
