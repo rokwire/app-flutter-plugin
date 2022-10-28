@@ -21,11 +21,9 @@ import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
-import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
@@ -41,7 +39,7 @@ class SurveyWidget extends StatefulWidget {
   State<SurveyWidget> createState() => _SurveyWidgetState();
 }
 
-class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsListener{
+class _SurveyWidgetState extends State<SurveyWidget> {
   bool _loading = false;
   Survey? _survey;
   SurveyData? _mainSurveyData;
@@ -49,10 +47,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   @override
   void initState() {
     super.initState();
-    NotificationService().subscribe(this, [
-      Polls.notifySurveyLoaded,
-      RuleAction.notifyAlert,
-    ]);
 
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -78,7 +72,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   @override
   void dispose() {
     super.dispose();
-    NotificationService().unsubscribe(this);
   }
 
   @override
@@ -159,10 +152,19 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       children: [
         Padding(
           padding: textPadding,
-          child: Text(
-            survey.text,
-            textAlign: TextAlign.start,
-            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Visibility(visible: !survey.allowSkip, child: Text("* ", style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'))),
+              Flexible(
+                child: Text(
+                  survey.text,
+                  textAlign: TextAlign.start,
+                  style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
+                ),
+              ),
+            ],
           ),
         ),
         Visibility(
@@ -186,7 +188,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   Widget? _buildResultSurveySection(SurveyDataResult? survey) {
     if (survey == null) return null;
 
-    List<Widget> buttonActions = _buildResultSurveyButtons(survey);
+    List<Widget> buttonActions = SurveyUtils.buildResultSurveyButtons(context, survey);
     return Column(
       children: <Widget>[
         Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('body')),
@@ -196,73 +198,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
         ) : Container(),
       ],
     );
-  }
-
-  List<Widget> _buildResultSurveyButtons(SurveyDataResult? survey) {
-    List<Widget> buttonActions = [];
-    for (ActionData action in survey?.actions ?? []) {
-      ButtonAction? buttonAction = _actionTypeButtonAction(context, action);
-      if (buttonAction != null) {
-        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
-      }
-    }
-    return buttonActions;
-  }
-
-  ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    switch (action?.type) {
-      case ActionType.showSurvey:
-        if (action?.data is Survey) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => _onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
-          );
-        } else if (action?.data is Map<String, dynamic>) {
-          dynamic survey = action?.data['survey'];
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => _onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-          );
-        }
-        return null;
-      case ActionType.contact:
-        //TODO: handle phone, web URIs, etc.
-      case ActionType.dismiss:
-        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-            () => _onTapDismiss(dismissContext: dismissContext)
-        );
-      default:
-        return null;
-    }
-  }
-
-  void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Survey? surveyObject;
-      if (survey is Survey) {
-        surveyObject = survey;
-      } else if (survey is String) {
-        surveyObject = await Polls().loadSurvey(survey);
-      }
-
-      if (surveyObject != null) {
-        //TODO: will change depending on whether survey should be embedded or not
-        // setState(() {
-        //   _survey = surveyObject;
-        //   _mainSurveyData = _survey?.firstQuestion;
-        // });
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
-          surveyObject!.evaluate();
-        })));
-      } else {
-        _onTapDismiss(dismissContext: context);
-      }
-    });
-  }
-
-  void _onTapDismiss({BuildContext? dismissContext}) {
-    if (dismissContext != null) {
-      Navigator.pop(dismissContext);
-    }
   }
 
   Widget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
@@ -611,11 +546,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  void _onNotifyAlert(SurveyDataResult survey) {
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo, buttons: _buildResultSurveyButtons(survey)));
-  }
-
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -630,12 +560,12 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     return Padding(
       padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 16.0),
       child: Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+        RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null, enabled: _survey!.canContinue()),
       ]),
     );
   }
 
-  void _onTapContinue() async {
+  void _onTapContinue() {
     // final targetContext = dataKey?.currentContext;
     // if (targetContext != null) {
     //   double startScroll = _scrollController.position.pixels;
@@ -651,7 +581,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     //   }
     // }
 
-    if (_mainSurveyData?.canContinue(_survey!) == false) {
+    if (!_survey!.canContinue()) {
       AppToast.show("Please answer all required questions to continue");
       return;
     }
@@ -683,17 +613,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     setState(() {
       _loading = loading;
     });
-  }
-
-  @override
-  void onNotification(String name, param) {
-    if (name == Polls.notifySurveyLoaded) {
-      if (mounted) {
-        setState(() {});
-      }
-    } else if (name == RuleAction.notifyAlert) {
-      _onNotifyAlert(param as SurveyDataResult);
-    }
   }
 }
 

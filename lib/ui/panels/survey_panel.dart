@@ -52,7 +52,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
     if (widget.survey is Survey) {
       _survey = widget.survey;
-      if (!_survey!.data.containsKey(widget.surveyDataKey)) {
+      if (!_survey!.data.containsKey(widget.surveyDataKey) && _survey!.firstQuestion == null) {
         _popSurveyPanels();
       }
     } else if (widget.survey is String) {
@@ -63,7 +63,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
             _loading = false;
           });
         }
-        if (survey != null && survey.data.containsKey(widget.surveyDataKey)) {
+        if (survey != null && survey.data.containsKey(widget.surveyDataKey) && survey.firstQuestion == null) {
           _survey = survey;
         } else {
           _popSurveyPanels();
@@ -75,20 +75,18 @@ class _SurveyPanelState extends State<SurveyPanel> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback(_checkScroll);
-    return WillPopScope(
-      onWillPop: () async => widget.allowBack,
-      child: Scaffold(
-          backgroundColor: Styles().colors?.background,
-          body: Stack(
-            children: [
-              Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  HeaderBar(title: _survey?.title),
-                  Expanded(child: _buildScrollView()),
-              ]),
-            ],
-          )),
+    return Scaffold(
+      appBar: HeaderBar(title: _survey?.title),
+      backgroundColor: Styles().colors?.background,
+      body: Stack(
+        children: [
+          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
+          Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(child: _buildScrollView()),
+          ]),
+        ],
+      )
     );
   }
 

@@ -12,134 +12,83 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:rokwire_plugin/model/rules.dart';
+import 'package:rokwire_plugin/model/survey.dart';
+import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/polls.dart';
+import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
+import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 
-enum ActionType {
-  contact,
-  showSurvey,
-  dismiss,
-  none
-}
+class SurveyUtils {
+  static List<Widget> buildResultSurveyButtons(BuildContext context, SurveyDataResult? survey) {
+    List<Widget> buttonActions = [];
+    for (ActionData action in survey?.actions ?? []) {
+      ButtonAction? buttonAction = actionTypeButtonAction(context, action);
+      if (buttonAction != null) {
+        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
+              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+      }
+    }
+    return buttonActions;
+  }
 
-class ActionData {
-  ActionType type;
-  String? label;
-  dynamic data;
-
-  ActionData({this.type = ActionType.none, this.label, this.data});
-
-  factory ActionData.fromJson(dynamic json) {
-    if (json is Map<String, dynamic>) {
-      dynamic data = json['data'];
-      if (data is String) {
-        dynamic decoded = JsonUtils.decode(data);
-        if (decoded != null) {
-          data = decoded;
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        if (action?.data is Survey) {
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapShowSurvey(context, action?.data, dismissContext: dismissContext));
+        } else if (action?.data is Map<String, dynamic>) {
+          dynamic survey = action?.data['survey'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapShowSurvey(context, action?.data, dismissContext: dismissContext));
         }
-      }
-      return ActionData(
-        type: EnumUtils.enumFromString<ActionType>(ActionType.values, json['type']) ?? ActionType.none,
-        label: JsonUtils.stringValue(json['label']),
-        data: data,
-      );
-    } else if (json is String) {
-      return ActionData(type: EnumUtils.enumFromString<ActionType>(ActionType.values, json) ?? ActionType.none);
-    }
-    return ActionData(type: ActionType.none);
-  }
-
-  static List<ActionData> listFromJson(List<dynamic>? jsonList) {
-    List<ActionData> list = [];
-    for (dynamic json in jsonList ?? []) {
-      list.add(ActionData.fromJson(json));
-    }
-    return list;
-  }
-
-  static List<Map<String, dynamic>> listToJson(List<ActionData>? actions) {
-    List<Map<String, dynamic>> actionsJson = [];
-    for (ActionData action in actions ?? []) {
-      actionsJson.add(action.toJson());
-    }
-    return actionsJson;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'type': EnumUtils.enumToString(type),
-      'label': label,
-      'data': JsonUtils.encode(data),
-    };
-  }
-}
-
-class ButtonAction {
-  String title;
-  Function? action;
-
-  ButtonAction(this.title, this.action);
-}
-
-class OptionData {
-  final String title;
-  final dynamic _value;
-  bool selected;
-
-  dynamic get value { return _value ?? title; }
-
-  OptionData({required this.title, dynamic value, this.selected = false}) : _value = value;
-
-  factory OptionData.fromJson(Map<String, dynamic> json) {
-    return OptionData(
-      title: json['title'],
-      value: json['value'],
-      selected: json['selected'] ?? false,
-    );
-  }
-
-  static List<OptionData> listFromJson(List<dynamic> jsonList) {
-    List<OptionData> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(OptionData.fromJson(json));
-      }
-    }
-    return list;
-  }
-
-  @override
-  String toString() {
-    return title;
-  }
-
-  static List<String> getTitles(List<OptionData> options, {bool selectedOnly = false}) {
-    List<String> titles = [];
-    for (OptionData option in options) {
-      if (!selectedOnly || option.selected) {
-        titles.add(option.title);
-      }
-    }
-    return titles;
-  }
-
-  static List<T> getValues<T>(List<OptionData> options, {bool selectedOnly = false}) {
-    List<T> values = [];
-    for (OptionData option in options) {
-      if (!selectedOnly || option.selected) {
-        dynamic value = option.value;
-        if (value is T) {
-          values.add(value);
+        return null;
+      case ActionType.contact:
+        //TODO: handle phone, web URIs, etc.
+        if (action?.data is Map<String, dynamic>) {
+          dynamic uri = action?.data['uri'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapContact(uri));
         }
-      }
+        return null;
+      case ActionType.dismiss:
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"), () => onTapDismiss(dismissContext: dismissContext));
+      default:
+        return null;
     }
-    return values;
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'value': _value,
-      'selected': selected,
-    };
+  static void onTapContact(dynamic uri) {
+    //TODO: handle URIs
+  }
+
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Survey? surveyObject;
+      if (survey is Survey) {
+        surveyObject = survey;
+      } else if (survey is String) {
+        surveyObject = await Polls().loadSurvey(survey);
+      }
+
+      if (surveyObject != null) {
+        //TODO: will change depending on whether survey should be embedded or not
+        // setState(() {
+        //   _survey = surveyObject;
+        //   _mainSurveyData = _survey?.firstQuestion;
+        // });
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
+          surveyObject!.evaluate();
+        })));
+      } else {
+        onTapDismiss(dismissContext: context);
+      }
+    });
+  }
+
+  static void onTapDismiss({BuildContext? dismissContext}) {
+    if (dismissContext != null) {
+      Navigator.pop(dismissContext);
+    }
   }
 }
