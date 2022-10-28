@@ -259,7 +259,7 @@ abstract class SurveyData {
       case "survey_data.numeric": return SurveyQuestionNumeric.fromJson(key, json);
       case "survey_data.text": return SurveyQuestionText.fromJson(key, json);
       case "survey_data.entry": return SurveyDataEntry.fromJson(key, json);
-      case "survey_data.response": return SurveyDataResult.fromJson(key, json);
+      case "survey_data.result": return SurveyDataResult.fromJson(key, json);
       case "survey_data.survey": return SurveyDataSurvey.fromJson(key, json);
       default: throw Exception("Invalid survey data type");
     }

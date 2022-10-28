@@ -49,6 +49,10 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   @override
   void initState() {
     super.initState();
+    NotificationService().subscribe(this, [
+      Polls.notifySurveyLoaded,
+      RuleAction.notifyAlert,
+    ]);
 
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -91,8 +95,8 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   Widget _buildMoreInfo() {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.medium'),)
+      padding: const EdgeInsets.all(16.0),
+      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),)
     );
   }
 
@@ -131,7 +135,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, top: 8), 
+  Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(left: 8, right: 8, bottom: 8), 
     EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
     Widget? widget;
 
@@ -151,13 +155,14 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
     return widget != null ? Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: textPadding,
           child: Text(
             survey.text,
             textAlign: TextAlign.start,
-            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.title.large'),
+            style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
           ),
         ),
         Visibility(
@@ -181,24 +186,28 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   Widget? _buildResultSurveySection(SurveyDataResult? survey) {
     if (survey == null) return null;
 
-    List<ButtonAction> buttonActions = [];
-    for (ActionData action in survey.actions ?? []) {
-      ButtonAction? buttonAction = _actionTypeButtonAction(context, action);
-      if (buttonAction != null) {
-        buttonActions.add(buttonAction);
-      }
-    }
-
+    List<Widget> buttonActions = _buildResultSurveyButtons(survey);
     return Column(
       children: <Widget>[
-        Text(survey.body ?? "", style: Styles().textStyles?.getTextStyle('body')),
-        survey.action != null && buttonAction != null ? Padding(
+        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('body')),
+        CollectionUtils.isNotEmpty(buttonActions) ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-            child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttonActions,)
         ) : Container(),
       ],
     );
+  }
+
+  List<Widget> _buildResultSurveyButtons(SurveyDataResult? survey) {
+    List<Widget> buttonActions = [];
+    for (ActionData action in survey?.actions ?? []) {
+      ButtonAction? buttonAction = _actionTypeButtonAction(context, action);
+      if (buttonAction != null) {
+        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
+              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+      }
+    }
+    return buttonActions;
   }
 
   ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
@@ -603,16 +612,8 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   }
 
   void _onNotifyAlert(SurveyDataResult survey) {
-    List<ButtonAction> buttonActions = [];
-    for (ActionData action in alert.actions) {
-      ButtonAction? buttonAction = _actionTypeButtonAction(context, action, dismissContext: context, params: alert.params);
-      if (buttonAction != null) {
-        buttonActions.add(buttonAction);
-      }
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) =>
-        PopupMessage.show(title: alert.title, message: alert.text));
-        // AppWidgets.showStandardDialog(context, alert.title ?? '', alert.text ?? '', actions: [AppWidgets.buildActionButtons(buttonActions)], showDivider: false));
+        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo, buttons: _buildResultSurveyButtons(survey)));
   }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
@@ -672,6 +673,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   }
 
   void _finishSurvey() {
+    _survey?.evaluate();
     if (widget.onComplete != null) {
       widget.onComplete!();
     }
