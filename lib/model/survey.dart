@@ -76,7 +76,7 @@ class Survey extends RuleEngine {
   SurveyStats? stats;
 
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.defaultDataKey, this.defaultDataKeyRule,
-    this.resultRule, this.dateUpdated, required this.dateCreated, this.stats,
+    this.resultRule, this.dateUpdated, required this.dateCreated, this.stats, this.resultData,
     Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules);
 
@@ -98,6 +98,7 @@ class Survey extends RuleEngine {
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
       defaultDataKeyRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_data_key_rule'])),
       resultRule: JsonUtils.orNull((json) => Rule.fromJson(json), JsonUtils.decode(json['result_rule'])),
+      resultData: json['result_data'],
       dateCreated: DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       dateUpdated: DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -117,6 +118,7 @@ class Survey extends RuleEngine {
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
       'result_rule': JsonUtils.encode(resultRule?.toJson()),
+      'result_data': resultData,
       'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
       'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
@@ -137,6 +139,7 @@ class Survey extends RuleEngine {
       defaultDataKey: other.defaultDataKey,
       defaultDataKeyRule: other.defaultDataKeyRule,
       resultRule: other.resultRule,
+      resultData: other.resultData,
       dateCreated: other.dateCreated,
       dateUpdated: other.dateUpdated,
       constants: other.constants,
