@@ -114,7 +114,7 @@ class Inbox with Service implements NotificationsListener {
 
   // Inbox APIs
 
-  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, bool? muted, bool? unread, int? offset, int? limit }) async {
+  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, bool? muted, bool? read, int? offset, int? limit }) async {
     
     String urlParams = "";
     
@@ -153,11 +153,11 @@ class Inbox with Service implements NotificationsListener {
       urlParams += "muted=$muted";
     }
 
-    if (unread != null) {
+    if (read != null) {
       if (urlParams.isNotEmpty) {
         urlParams += "&";
       }
-      urlParams += "unread=$unread";
+      urlParams += "read=$read";
     }
 
     if (urlParams.isNotEmpty) {

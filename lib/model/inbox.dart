@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:sprintf/sprintf.dart';
@@ -17,9 +18,6 @@ class InboxMessage {
   final String?   subject;
   final String?   body;
   final Map<String, dynamic>? data;
-
-  final bool?     muted;
-  final bool?     unread;
   
   final InboxSender?          sender;
   final List<InboxRecepient>? recepients;
@@ -27,7 +25,6 @@ class InboxMessage {
   InboxMessage({this.messageId, this.priority, this.topic, this.category,
     this.dateCreatedUtc, this.dateUpdatedUtc, this.dateSentUtc,
     this.subject, this.body, this.data,
-    this.muted, this.unread,
     this.sender, this.recepients
   });
 
@@ -46,12 +43,31 @@ class InboxMessage {
       body: JsonUtils.stringValue(json['body']),
       data: JsonUtils.mapValue(json['data']),
 
-      muted: JsonUtils.boolValue(json['muted']),
-      unread: JsonUtils.boolValue(json['unread']),
-
       sender: InboxSender.fromJson(JsonUtils.mapValue(json['sender'])),
       recepients: InboxRecepient.listFromJson(JsonUtils.listValue(json['recipients']))
     ) : null;
+  }
+
+  bool? get isMuted {
+    return _currentUserAsRecipient?.mute;
+  }
+
+  bool? get isRead {
+    return _currentUserAsRecipient?.read;
+  }
+
+  InboxRecepient? get _currentUserAsRecipient {
+    String? accountId = Auth2().accountId;
+    if (StringUtils.isNotEmpty(accountId)) {
+      if (CollectionUtils.isNotEmpty(recepients)) {
+        for (InboxRecepient recipient in recepients!) {
+          if (recipient.userId == accountId) {
+            return recipient;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -67,9 +83,6 @@ class InboxMessage {
       'subject': subject,
       'body': body,
       'data': data,
-
-      'muted': muted,
-      'unread': unread,
 
       'sender': sender?.toJson(),
       'recipients': InboxRecepient.listToJson(recepients),
@@ -217,18 +230,24 @@ class InboxMessage {
 
 class InboxRecepient {
   final String? userId;
+  final bool?     mute;
+  final bool?     read;
   
-  InboxRecepient({this.userId});
+  InboxRecepient({this.userId, this.mute, this.read});
 
   static InboxRecepient? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? InboxRecepient(
-      userId: JsonUtils.stringValue(json['user_id'])
+      userId: JsonUtils.stringValue(json['user_id']),
+      mute: JsonUtils.boolValue(json['mute']),
+      read: JsonUtils.boolValue(json['read'])
     ) : null;
   }
 
   Map<String, dynamic> toJson() {
     return {
       'user_id': userId,
+      'mute': mute,
+      'read': read
     };
   }
 
