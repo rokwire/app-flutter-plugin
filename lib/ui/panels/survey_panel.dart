@@ -210,7 +210,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     // show survey summary or return to home page on finishing events
     // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
     // if (followUp == null) {
-    _survey.lastUpdated = DateTime.now();
+    _survey.dateUpdated = DateTime.now();
 
       // if (widget.showSummaryOnFinish) {
       // } else {

@@ -28,6 +28,79 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/utils/widget_utils.dart';
 
+class SurveyWidgets {
+  static Widget? buildSurveyDataResult(BuildContext context, SurveyDataResponse? survey) {
+    if (survey == null) return null;
+    ButtonAction? buttonAction = actionTypeButtonAction(context, survey.action);
+
+    return Column(
+      children: <Widget>[
+        Text(survey.body ?? "", style: Styles().textStyles?.getTextStyle('body')),
+        survey.action != null && buttonAction != null ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
+                backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())
+        ) : Container(),
+      ],
+    );
+  }
+
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        if (action?.data is Survey) {
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
+          );
+        } else if (action?.data is Map<String, dynamic>) {
+          dynamic survey = action?.data['survey'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
+                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
+          );
+        }
+        return null;
+      case ActionType.contact:
+      //TODO: handle phone, web URIs, etc.
+      case ActionType.dismiss:
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
+                () => onTapDismiss(dismissContext: dismissContext)
+        );
+      default:
+        return null;
+    }
+  }
+
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Survey? surveyObject;
+      if (survey is Survey) {
+        surveyObject = survey;
+      } else if (survey is String) {
+        surveyObject = await Polls().loadSurvey(survey);
+      }
+
+      if (surveyObject != null) {
+        //TODO: will change depending on whether survey should be embedded or not
+        // setState(() {
+        //   _survey = surveyObject;
+        //   _mainSurveyData = _survey?.firstQuestion;
+        // });
+        // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
+        //   surveyData!.evaluate();
+        // })));
+      } else {
+        onTapDismiss(dismissContext: context);
+      }
+    });
+  }
+
+  static void onTapDismiss({BuildContext? dismissContext}) {
+    if (dismissContext != null) {
+      Navigator.pop(dismissContext);
+    }
+  }
+}
+
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
@@ -164,77 +237,6 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
         Container(height: 36),
       ],
     ) : null;
-  }
-
-  Widget? _buildResponseSurveySection(SurveyDataResponse? survey) {
-    if (survey == null) return null;
-    ButtonAction? buttonAction = _actionTypeButtonAction(context, survey.action);
-
-    return Column(
-      children: <Widget>[
-        Text(survey.body ?? "", style: Styles().textStyles?.getTextStyle('body')),
-        survey.action != null && buttonAction != null ? Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-            child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())
-        ) : Container(),
-      ],
-    );
-  }
-
-  ButtonAction? _actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    switch (action?.type) {
-      case ActionType.showSurvey:
-        if (action?.data is Survey) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => _onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
-          );
-        } else if (action?.data is Map<String, dynamic>) {
-          dynamic survey = action?.data['survey'];
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => _onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-          );
-        }
-        return null;
-      case ActionType.contact:
-        //TODO: handle phone, web URIs, etc.
-      case ActionType.dismiss:
-        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-            () => _onTapDismiss(dismissContext: dismissContext)
-        );
-      default:
-        return null;
-    }
-  }
-
-  void _onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Survey? surveyObject;
-      if (survey is Survey) {
-        surveyObject = survey;
-      } else if (survey is String) {
-        surveyObject = await Polls().loadSurvey(survey);
-      }
-
-      if (surveyObject != null) {
-        //TODO: will change depending on whether survey should be embedded or not
-        setState(() {
-          _survey = surveyObject;
-          _mainSurveyData = _survey?.firstQuestion;
-        });
-        // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyData!, onComplete: () {
-        //   surveyData!.evaluate();
-        // })));
-      } else {
-        _onTapDismiss(dismissContext: context);
-      }
-    });
-  }
-
-  void _onTapDismiss({BuildContext? dismissContext}) {
-    if (dismissContext != null) {
-      Navigator.pop(dismissContext);
-    }
   }
 
   Widget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
@@ -581,6 +583,10 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
         )
       ],
     );
+  }
+
+  Widget? _buildResponseSurveySection(SurveyDataResponse? survey) {
+    return SurveyWidgets.buildSurveyDataResult(context, survey);
   }
 
   Widget? _buildSurveySurveySection(SurveyDataSurvey? survey, {Function(dynamic)? onComplete}) {

@@ -23,6 +23,7 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -346,6 +347,66 @@ class Polls with Service implements NotificationsListener {
         }
       } else {
         throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
+      }
+    }
+    return null;
+  }
+
+  Future<SurveyResponse?> createSurveyResponse(Survey survey) async {
+    if (enabled) {
+      String? body = JsonUtils.encode(survey.toJson());
+      String url = '${Config().quickPollsUrl}/survey-responses';
+      Response? response = await Network().post(url, body: body, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseString = response?.body;
+      if ((response != null) && (responseCode == 200)) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
+        if (responseJson != null) {
+          SurveyResponse? response = SurveyResponse.fromJson(responseJson);
+          return response;
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<List<SurveyResponse>?> loadSurveyResponses({List<String>? surveyIDs, List<String>? typeIDs, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+    if (enabled) {
+      Map<String, String> queryParams = {};
+      if (CollectionUtils.isNotEmpty(surveyIDs)) {
+        queryParams['survey_ids'] = surveyIDs!.join(',');
+      }
+      if (CollectionUtils.isNotEmpty(typeIDs)) {
+        queryParams['type_ids'] = typeIDs!.join(',');
+      }
+      if (startDate != null) {
+        String? startDateFormatted = DateTimeUtils.dateTimeLocalToJson(startDate);
+        queryParams['start_date'] = startDateFormatted!;
+      }
+      if (endDate != null) {
+        String? endDateFormatted = DateTimeUtils.dateTimeLocalToJson(endDate);
+        queryParams['end_date'] = endDateFormatted!;
+      }
+      if (limit != null) {
+        queryParams['limit'] = limit.toString();
+      }
+      if (offset != null) {
+        queryParams['offset'] = offset.toString();
+      }
+
+      String url = '${Config().quickPollsUrl}/survey-responses';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
+        if (responseMap != null) {
+          List<SurveyResponse>? surveys = SurveyResponse.listFromJson(responseMap);
+          return surveys;
+        }
       }
     }
     return null;
