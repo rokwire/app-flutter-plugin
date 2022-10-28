@@ -296,36 +296,42 @@ class Groups with Service implements NotificationsListener {
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
-      Map<String, String> queryParams = {};
+      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
+      String? post;
+      /*post = JsonUtils.encode({
+        'title': title,
+        'category': category,
+        'tags': tags,
+        'offset': offset,
+        'limit': limit,
+        'research_group': true,
+        'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+      });*/
       
+      Map<String, String> queryParams = {};
       if (StringUtils.isNotEmpty(title)) {
         queryParams.addAll({'title': title!});
       }
-      
       if (StringUtils.isNotEmpty(category)) {
         queryParams.addAll({'category': category!});
       }
-
       if (CollectionUtils.isNotEmpty(tags)) {
         queryParams.addAll({'tags': tags!.join(',')});
       }
-
       if (offset != null) {
         queryParams.addAll({'offset': offset.toString()});
       }
-      
       if (limit != null) {
         queryParams.addAll({'limit': limit.toString()});
       }
-      
-      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }
 
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, auth: Auth2());
+        Response? response = await Network().get(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
         return Group.listFromJson(JsonUtils.decodeList(responseBody));
       } catch (e) {
