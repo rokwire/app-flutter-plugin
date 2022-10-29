@@ -15,7 +15,6 @@
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/utils/widget_utils.dart';
 
 class SurveyResponse {
   String id;

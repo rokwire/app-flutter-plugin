@@ -25,9 +25,8 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/utils/widget_utils.dart';
 
-class SurveyWidgets {
+class SurveyUtils {
   static Widget? buildSurveyDataResult(BuildContext context, SurveyDataResult? survey) {
     if (survey == null) return null;
 
@@ -48,39 +47,42 @@ class SurveyWidgets {
     for (ActionData action in survey?.actions ?? []) {
       ButtonAction? buttonAction = actionTypeButtonAction(context, action);
       if (buttonAction != null) {
-        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-            backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorSecondary,
+              backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
       }
     }
     return buttonActions;
   }
 
-  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext}) {
     switch (action?.type) {
       case ActionType.showSurvey:
         if (action?.data is Survey) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
-          );
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapShowSurvey(context, action?.data, dismissContext: dismissContext));
         } else if (action?.data is Map<String, dynamic>) {
           dynamic survey = action?.data['survey'];
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-          );
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapShowSurvey(context, survey, dismissContext: dismissContext));
         }
         return null;
       case ActionType.contact:
-      //TODO: handle phone, web URIs, etc.
+        //TODO: handle phone, web URIs, etc.
+        if (action?.data is Map<String, dynamic>) {
+          dynamic uri = action?.data['uri'];
+          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"), () => onTapContact(uri));
+        }
+        return null;
       case ActionType.dismiss:
-        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-                () => onTapDismiss(dismissContext: dismissContext)
-        );
+        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"), () => onTapDismiss(dismissContext: dismissContext));
       default:
         return null;
     }
   }
 
-  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static void onTapContact(dynamic uri) {
+    //TODO: handle URIs
+  }
+
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Survey? surveyObject;
       if (survey is Survey) {
@@ -89,6 +91,7 @@ class SurveyWidgets {
         surveyObject = await Polls().loadSurvey(survey);
       }
 
+      onTapDismiss(dismissContext: context);
       if (surveyObject != null) {
         //TODO: will change depending on whether survey should be embedded or not
         // setState(() {
@@ -96,10 +99,8 @@ class SurveyWidgets {
         //   _mainSurveyData = _survey?.firstQuestion;
         // });
         Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
-          surveyObject!.evaluate();
+          SurveyUtils.onTapDismiss(dismissContext: context);
         })));
-      } else {
-        onTapDismiss(dismissContext: context);
       }
     });
   }
@@ -159,7 +160,7 @@ class SurveyWidgets {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.result.title", "Results:"), style: Styles().textStyles?.getTextStyle('widget.title.regular.fat')),
-            SurveyWidgets.buildSurveyDataResult(context, dataResult) ?? Container(),
+            SurveyUtils.buildSurveyDataResult(context, dataResult) ?? Container(),
           ],
         ));
       }
@@ -221,9 +222,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           }
         }
         if (mounted) {
-          setState(() {
-            _loading = false;
-          });
+          _setLoading(false);
         }
       });
     }
