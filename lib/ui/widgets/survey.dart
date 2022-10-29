@@ -36,22 +36,25 @@ class SurveyWidgets {
     List<Widget> buttonActions = buildResultSurveyButtons(context, survey);
     return Column(
       children: <Widget>[
-        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('body')),
+        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular')),
         CollectionUtils.isNotEmpty(buttonActions) ? Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttonActions,)
+          padding: const EdgeInsets.only(top: 16.0),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttonActions),
         ) : Container(),
       ],
     );
   }
 
-  static List<Widget> buildResultSurveyButtons(BuildContext context, SurveyDataResult? survey) {
+  static List<Widget> buildResultSurveyButtons(BuildContext context, SurveyDataResult? survey, {EdgeInsets padding = const EdgeInsets.all(0)}) {
     List<Widget> buttonActions = [];
     for (ActionData action in survey?.actions ?? []) {
       ButtonAction? buttonAction = actionTypeButtonAction(context, action);
       if (buttonAction != null) {
-        buttonActions.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16), child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorPrimary,
-            backgroundColor: Styles().colors?.surface, textColor: Styles().colors?.headlineText, onTap: buttonAction.action as void Function())));
+        buttonActions.add(Padding(
+          padding: padding,
+          child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorSecondary,
+              backgroundColor: Styles().colors?.surface, textStyle: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'), onTap: buttonAction.action as void Function()),
+        ));
       }
     }
     return buttonActions;
@@ -160,7 +163,7 @@ class SurveyWidgets {
         widgets.add(Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.result.title", "Results:"), style: Styles().textStyles?.getTextStyle('widget.title.regular.fat')),
+            Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.result.title", "Results:"), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
             SurveyWidgets.buildSurveyDataResult(context, dataResult) ?? Container(),
           ],
         ));
@@ -243,8 +246,16 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   @override
   Widget build(BuildContext context) {
-    return _loading ? CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary)) :
-      _survey != null && _mainSurveyData != null ? Padding(
+    if (_loading) {
+      return Container(
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary)),
+        ),
+      );
+    }
+    return _survey != null && _mainSurveyData != null ? Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -687,7 +698,8 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
 
   void _onNotifyAlert(SurveyDataResult survey) {
     WidgetsBinding.instance.addPostFrameCallback((_) =>
-        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo, buttons: SurveyWidgets.buildResultSurveyButtons(context, survey)));
+        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo,
+            buttons: SurveyWidgets.buildResultSurveyButtons(context, survey, padding: EdgeInsets.all(16.0))));
   }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
