@@ -569,8 +569,15 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   Widget _buildContinueButton() {
+    bool canContinue =  _survey?.canContinue() == true;
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      RoundedButton(label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+      RoundedButton(
+          label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"),
+          textColor: canContinue ? null : Styles().colors?.disabledTextColor,
+          borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
+          enabled: canContinue,
+          onTap: _onTapContinue,
+          progress: null),
     ]);
   }
 

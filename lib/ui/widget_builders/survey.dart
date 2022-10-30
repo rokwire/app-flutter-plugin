@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -83,7 +82,7 @@ class SurveyBuilder {
         onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) =>
             SurveyPanel(survey: response.survey, inputEnabled: false, dateTaken: response.dateTaken, showResult: true))),
         child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: widgets,
