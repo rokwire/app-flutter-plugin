@@ -1,45 +1,37 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
-import 'package:rokwire_plugin/ui/widget_builders/loading.dart';
 import 'package:rokwire_plugin/ui/widget_builders/scroll_pager.dart';
 
 class ScrollPager extends StatelessWidget {
-  Key? key;
-  Widget? child;
-  Axis scrollDirection;
-  bool? reverse;
-  EdgeInsets? padding;
-  bool? primary;
-  ScrollPhysics? physics;
-  ScrollController? controller;
-  ScrollPagerController pagerController;
-  DragStartBehavior dragStartBehavior;
-  Clip clipBehavior;
-  String? restorationId;
-  ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
+  final Widget? child;
+  final Axis scrollDirection;
+  final bool? reverse;
+  final EdgeInsets? padding;
+  final bool? primary;
+  final ScrollPhysics? physics;
+  late final ScrollController controller;
+  late final ScrollPagerController pagerController;
+  final DragStartBehavior dragStartBehavior;
+  final Clip clipBehavior;
+  final String? restorationId;
+  final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
 
-  ScrollPager({
-    this.key,
+  ScrollPager({Key? key,
     this.scrollDirection = Axis.vertical,
     this.reverse = false,
     this.padding,
     this.primary,
     this.physics,
-    this.controller,
+    ScrollController? controller,
     required this.pagerController,
     this.child,
     this.dragStartBehavior = DragStartBehavior.start,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
     this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
-  }) {
-    if (controller == null) {
-      controller = ScrollController();
-    }
+  }) : super(key: key) {
+    this.controller = controller ?? ScrollController();
     pagerController.registerScrollController(controller!);
   }
 
@@ -63,6 +55,7 @@ class ScrollPagerController {
   int _offset = 0;
 
   Future<int> Function({required int offset, required int limit}) onPage;
+  void Function()? onStateChanged;
 
   bool _isLoading = false;
   bool _end = false;
@@ -74,7 +67,7 @@ class ScrollPagerController {
 
   ScrollController? _scrollController;
 
-  ScrollPagerController({required this.limit, required this.onPage});
+  ScrollPagerController({required this.limit, required this.onPage, this.onStateChanged});
 
   void reset() {
     _offset = 0;
@@ -101,8 +94,9 @@ class ScrollPagerController {
   void loadPage({bool retry = false}) {
     if (!_isLoading && !_end && (!_error || retry)) {
       _isLoading = true;
+      onStateChanged?.call();
       onPage(offset: _offset, limit: limit).then((value) {
-        if (value > 0) {
+        if (value >= 0) {
           _error = false;
           _offset += value;
           if (value < limit) {
@@ -112,6 +106,7 @@ class ScrollPagerController {
           _error = true;
         }
         _isLoading = false;
+        onStateChanged?.call();
       });
     }
   }
