@@ -1,0 +1,63 @@
+class OptionData {
+  final String title;
+  final dynamic _value;
+  bool selected;
+
+  dynamic get value { return _value ?? title; }
+
+  OptionData({required this.title, dynamic value, this.selected = false}) : _value = value;
+
+  factory OptionData.fromJson(Map<String, dynamic> json) {
+    return OptionData(
+      title: json['title'],
+      value: json['value'],
+      selected: json['selected'] ?? false,
+    );
+  }
+
+  static List<OptionData> listFromJson(List<dynamic> jsonList) {
+    List<OptionData> list = [];
+    for (dynamic json in jsonList) {
+      if (json is Map<String, dynamic>) {
+        list.add(OptionData.fromJson(json));
+      }
+    }
+    return list;
+  }
+
+  @override
+  String toString() {
+    return title;
+  }
+
+  static List<String> getTitles(List<OptionData> options, {bool selectedOnly = false}) {
+    List<String> titles = [];
+    for (OptionData option in options) {
+      if (!selectedOnly || option.selected) {
+        titles.add(option.title);
+      }
+    }
+    return titles;
+  }
+
+  static List<T> getValues<T>(List<OptionData> options, {bool selectedOnly = false}) {
+    List<T> values = [];
+    for (OptionData option in options) {
+      if (!selectedOnly || option.selected) {
+        dynamic value = option.value;
+        if (value is T) {
+          values.add(value);
+        }
+      }
+    }
+    return values;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'value': _value,
+      'selected': selected,
+    };
+  }
+}

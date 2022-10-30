@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:rokwire_plugin/model/actions.dart';
+import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -96,7 +98,7 @@ class Survey extends RuleEngine {
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
       defaultDataKeyRule: JsonUtils.mapOrNull((json) => Rule.fromJson(json), JsonUtils.decode(json['default_data_key_rule'])),
       resultRules: JsonUtils.listOrNull((json) => Rule.listFromJson(json), JsonUtils.decode(json['result_rules'])),
-      resultData: json['result_data'],
+      resultData: JsonUtils.decode(json['result_json']),
       dateCreated: DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       dateUpdated: DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -117,7 +119,7 @@ class Survey extends RuleEngine {
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
       'result_rules': JsonUtils.encode(Rule.listToJson(resultRules)),
-      'result_data': resultData,
+      'result_json': JsonUtils.encode(resultData),
       'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
       'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),

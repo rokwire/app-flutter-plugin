@@ -13,9 +13,11 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class RuleCondition {
@@ -226,8 +228,6 @@ class RuleReference extends RuleResult {
 }
 
 class RuleAction extends RuleActionResult {
-  static const String notifyAlert = "edu.illinois.rokwire.rules.action.alert";
-
   String action;
   dynamic data;
   String? dataKey;
@@ -257,47 +257,74 @@ class RuleAction extends RuleActionResult {
   dynamic evaluate(RuleEngine engine) {
     switch (action) {
       case "return":
-        return engine.getValOrCollection(data);
+        return _return;
       case "sum":
-        dynamic evaluatedData = engine.getValOrCollection(data);
-        if (data is List<dynamic>) {
-          num sum = 0;
-          for (dynamic item in evaluatedData) {
-            if (item is num) {
-              sum += item;
-            }
-          }
-          return sum;
-        } else if (data is num) {
-          return data;
-        }
-        return null;
+        return _sum(engine);
       case "set_result":
-        engine.resultData = engine.getValOrCollection(data);
+        _setResult(engine);
         return null;
       case "save":
         //TODO: implement (save engine data to backend -> write abstract "save" method)
       case "show_survey":
+        //TODO: fix this (should use notification like alert)
         if (data is String) {
         // data = survey id
           return data;
         }
         return null;
       case "alert":
-        dynamic alertData = engine.getValOrCollection(data);
-        if (alertData is SurveyDataResult) {
-          NotificationService().notify(notifyAlert, alertData);
-        }
+        _alert(engine);
+        return null;
+      case "alert_result":
+        _alert(engine);
+        _setResult(engine);
         return null;
       case "notify":
         //TODO: Send notification to providers/emergency contacts
         // send request with survey data to polls BB
       case "save":
-        return engine.save();
+        return _save(engine);
       case "local_notify":
         //TODO: Schedule local notification to take survey
     }
     return null;
+  }
+
+  dynamic _return(RuleEngine engine) {
+    return engine.getValOrCollection(data);
+  }
+
+  dynamic _sum(RuleEngine engine) {
+    dynamic evaluatedData = engine.getValOrCollection(data);
+    if (data is List<dynamic>) {
+      num sum = 0;
+      for (dynamic item in evaluatedData) {
+        if (item is num) {
+          sum += item;
+        }
+      }
+      return sum;
+    } else if (data is num) {
+      return data;
+    }
+    return null;
+  }
+
+  void _setResult(RuleEngine engine) {
+    engine.resultData = engine.getValOrCollection(data);
+  }
+
+  void _alert(RuleEngine engine) {
+    dynamic alertData = engine.getValOrCollection(data);
+    if (alertData is SurveyDataResult) {
+      NotificationService().notify(Alerts.notifyAlert, Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions));
+    } else if (alertData is Alert) {
+      NotificationService().notify(Alerts.notifyAlert, alertData);
+    }
+  }
+
+  Future<bool> _save(RuleEngine engine) {
+    return engine.save();
   }
 }
 

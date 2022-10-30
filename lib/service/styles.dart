@@ -477,20 +477,62 @@ class UiImages {
 
   UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
-  Widget? getImage(String imageKey, {Key? key, dynamic source, double? scale, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, 
-    FilterQuality? filterQuality, ImageRepeat? repeat, Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
+  Widget? getImageOrDefault(String imageKey, {Key? key, String? type, dynamic source,
+    double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
+    Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
+    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
+    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
+    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
+    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
+  ) {
+    // If image spec exists, getImage ignoring default overrides
+    Map<String, dynamic>? imageSpec = (imageMap != null) ? JsonUtils.mapValue(imageMap![imageKey]) : null;
+    if (imageSpec != null) {
+      return getImage(imageKey);
+    }
+
+    // Otherwise, if a type is defined, get image by defaults
+    if (type != null) {
+      return getImage(null, key: key, type: type, source: source, scale: scale, size: size, width: width,
+          height: height, color: color, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, alignment: alignment,
+          opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality, repeat: repeat,
+          centerSlice: centerSlice, textDirection: textDirection, networkHeaders: networkHeaders,
+          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+    }
+
+    // Otherwise ff no image definition for that key or default type - try with asset name / network source
+    Uri? uri = Uri.tryParse(imageKey);
+    if (uri != null) {
+      return _getDefaultFlutterImage(uri, key: key,
+          scale: scale, width: width ?? size, height: height ?? size, color: color,
+          semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
+          repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+    }
+
+    return null;
+  }
+
+  Widget? getImage(String? imageKey, {Key? key, String? type, dynamic source, double? scale, double? size,
+    double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
+    Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
+    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
 
-    Map<String, dynamic>? imageSpec = (imageMap != null) ? JsonUtils.mapValue(imageMap![imageKey]) : null;
-    String? type = (imageSpec != null) ? JsonUtils.stringValue(imageSpec['type']) : null;
+    Map<String, dynamic> imageSpec = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
+    type ??= JsonUtils.stringValue(imageSpec['type']);
     if (type != null) {
       if (type.startsWith('flutter.')) {
-        return _getFlutterImage(imageSpec!, type: type, source: source, key: key,
-          scale: scale, width: width, height: height, color: color,
+        return _getFlutterImage(imageSpec, type: type, source: source, key: key,
+          scale: scale, size: size, width: width, height: height, color: color,
           semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
           alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
@@ -498,7 +540,7 @@ class UiImages {
           frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
       }
       else if (type.startsWith('fa.')) {
-        return _getFaIcon(imageSpec!, type: type, source: source, key: key, size: height ?? width, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
+        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
       }
       else {
         return null;
@@ -506,15 +548,17 @@ class UiImages {
     }
 
     // If no image definition for that key - try with asset name / network source
-    Uri? uri = Uri.tryParse(imageKey);
-    if (uri != null) {
-      return _getDefaultFlutterImage(uri, key: key,
-        scale: scale, width: width, height: height, color: color,
-        semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-        isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-        alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-        repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-        frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+    if (imageKey != null) {
+      Uri? uri = Uri.tryParse(imageKey);
+      if (uri != null) {
+        return _getDefaultFlutterImage(uri, key: key,
+            scale: scale, width: width ?? size, height: height ?? size, color: color,
+            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
+            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+      }
     }
     
     return null;
@@ -536,7 +580,8 @@ class UiImages {
     }
   */
 
-  Image? _getFlutterImage(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel,
+  Image? _getFlutterImage(Map<String, dynamic> json, { String? type, dynamic source, Key? key,
+    double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel,
     bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
     AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
     ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
@@ -546,8 +591,9 @@ class UiImages {
     source ??= json['src'];
 
     scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
-    width ??= JsonUtils.doubleValue(json['width']);
-    height ??= JsonUtils.doubleValue(json['height']);
+    size ??= JsonUtils.doubleValue(json['size']);
+    width ??= JsonUtils.doubleValue(json['width']) ?? size;
+    height ??= JsonUtils.doubleValue(json['height']) ?? size;
     alignment ??= _ImageUtils.alignmentGeometryValue(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
     color ??= _ImageUtils.colorValue(JsonUtils.stringValue(json['color']));
 

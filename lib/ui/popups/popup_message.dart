@@ -204,6 +204,7 @@ class ActionsMessage extends StatelessWidget {
   final TextAlign? titleTextAlign;
   final EdgeInsetsGeometry titlePadding;
   final Color? titleBarColor;
+  final Widget? closeButtonIcon;
   
   final String? message;
   final TextStyle? messageTextStyle;
@@ -214,6 +215,8 @@ class ActionsMessage extends StatelessWidget {
   final EdgeInsetsGeometry messagePadding;
   
   final List<Widget> buttons;
+  final EdgeInsetsGeometry buttonsPadding;
+  final bool verticalButtons;
 
   final ShapeBorder? border;
   final BorderRadius? borderRadius;
@@ -227,6 +230,7 @@ class ActionsMessage extends StatelessWidget {
     this.titleTextAlign,
     this.titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.titleBarColor,
+    this.closeButtonIcon,
     
     this.message,
     this.messageTextStyle,
@@ -237,6 +241,8 @@ class ActionsMessage extends StatelessWidget {
     this.messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     
     this.buttons = const [],
+    this.buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+    this.verticalButtons = false,
 
     this.border,
     this.borderRadius,
@@ -269,6 +275,9 @@ class ActionsMessage extends StatelessWidget {
   @protected ShapeBorder get defautBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
   @protected ShapeBorder get displayBorder => border ?? defautBorder;
 
+  @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImageOrDefault('circle-xmark', type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors?.surface);
+  @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
+
   static Future<void> show({
     String? title,
     TextStyle? titleTextStyle,
@@ -278,6 +287,7 @@ class ActionsMessage extends StatelessWidget {
     TextAlign? titleTextAlign,
     EdgeInsetsGeometry titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     Color? titleBarColor,
+    Widget? closeButtonIcon,
     
     String? message,
     TextStyle? messageTextStyle,
@@ -288,6 +298,8 @@ class ActionsMessage extends StatelessWidget {
     EdgeInsetsGeometry messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     
     List<Widget> buttons = const [],
+    EdgeInsetsGeometry buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+    bool verticalButtons = false,
 
     ShapeBorder? border,
     BorderRadius? borderRadius,
@@ -306,6 +318,7 @@ class ActionsMessage extends StatelessWidget {
       titleTextAlign: titleTextAlign,
       titlePadding: titlePadding,
       titleBarColor: titleBarColor,
+      closeButtonIcon: closeButtonIcon,
   
       message: message,
       messageTextStyle: messageTextStyle,
@@ -316,6 +329,8 @@ class ActionsMessage extends StatelessWidget {
       messagePadding: messagePadding,
   
       buttons: buttons,
+      verticalButtons: verticalButtons,
+      buttonsPadding: buttonsPadding,
 
       border: border,
       borderRadius: borderRadius,
@@ -328,24 +343,30 @@ class ActionsMessage extends StatelessWidget {
     buttons.forEach((element) {
       flexibleButtons.add(Flexible(flex: 1, child: element));
     },);
-    return ClipRRect(borderRadius: displayBorderRadius, child:
-      Dialog(shape: displayBorder, child:
-        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
-          Row(children: <Widget>[
+
+    Widget? closeButton = displayCloseButtonIcon;
+    return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
+      Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
+        Material(
+          color: displayTitleBarColor,
+          child: Row(children: [
             Expanded(child:
-              Container(color: displayTitleBarColor, child:
-                Padding(padding: titlePadding, child:
-                  Text(title ?? '', style: displayTitleTextStyle, textAlign: titleTextAlign,),
-                ),
-              ),
+              Container(child: Padding(padding: titlePadding, child:
+                Text(title ?? '', style: displayTitleTextStyle, textAlign: titleTextAlign,),
+              )),
             ),
-          ],),
-          Padding(padding: messagePadding, child:
-            Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
-          ),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
-        ],),
-      ),
+            closeButton != null ? IconButton(icon: closeButton, onPressed: () { Navigator.pop(context); }) : Container(),
+          ]),
+        ),
+        Padding(padding: messagePadding, child:
+          Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
+        ),
+        verticalButtons ?
+            Padding(padding: buttonsPadding, child: Column(children: buttons),)
+              : Padding(padding: buttonsPadding,
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
+              ),
+      ],),
     );
   }
 }
