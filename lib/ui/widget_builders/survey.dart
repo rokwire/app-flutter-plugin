@@ -56,17 +56,24 @@ class SurveyBuilder {
       Container(height: 8),
     ]);
 
-    Map<String, dynamic>? responses = response.survey.stats?.responseData;
-    if (responses?.length == 1) {
-      widgets.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(Localization().getStringEx("widget.survey.response_card.response.title", "Response:"),
-              style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
-          SizedBox(width: 8.0),
-          Flexible(child: Text(responses?.values.join(", ") ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
-        ],
-      ));
+    if (CollectionUtils.isNotEmpty(response.survey.responseKeys)) {
+      Map<String, dynamic>? responses = response.survey.stats?.responseData;
+
+      for (String key in response.survey.responseKeys ?? []) {
+        //TODO: Handle string localization
+        dynamic responseData = responses?[key];
+        if (responseData != null) {
+          widgets.add(Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(key.replaceAll('_', ' ').toUpperCase() + ':',
+                  style: Styles().textStyles?.getTextStyle('widget.description.regular.fat')),
+              const SizedBox(width: 8.0),
+              Flexible(child: Text(responseData ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
+            ],
+          ));
+        }
+      }
     }
 
     Widget? resultWidget = surveyResult(context, response.survey);

@@ -85,7 +85,7 @@ class ActionBuilder {
   }
 
   static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    onTapDismiss(dismissContext: dismissContext);
+    // onTapDismiss(dismissContext: dismissContext);
     UrlUtils.launch(context, uri, internal: internal);
   }
 
