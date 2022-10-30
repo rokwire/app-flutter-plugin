@@ -230,6 +230,11 @@ class SetUtils {
 }
 
 class MapUtils {
+
+  static Map<K, T>? from<K, T>(Map<K, T>? other) {
+    return (other != null) ? Map<K, T>.from(other) : null;
+  }
+
   static T? get<K, T>(Map<K, T>? map, K? key) {
     return ((map != null) && (key != null)) ? map[key] : null;
   }

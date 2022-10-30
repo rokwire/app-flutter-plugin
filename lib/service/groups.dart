@@ -43,6 +43,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'firebase_messaging.dart';
 
 enum GroupsContentType { all, my }
+enum ResearchProjectsContentType { open, my }
 
 class Groups with Service implements NotificationsListener {
 
@@ -293,6 +294,53 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
+    if (Config().groupsUrl != null) {
+      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
+      String? post;
+      /*post = JsonUtils.encode({
+        'title': title,
+        'category': category,
+        'tags': tags,
+        'offset': offset,
+        'limit': limit,
+        'research_group': true,
+        'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+      });*/
+      
+      Map<String, String> queryParams = {};
+      if (StringUtils.isNotEmpty(title)) {
+        queryParams.addAll({'title': title!});
+      }
+      if (StringUtils.isNotEmpty(category)) {
+        queryParams.addAll({'category': category!});
+      }
+      if (CollectionUtils.isNotEmpty(tags)) {
+        queryParams.addAll({'tags': tags!.join(',')});
+      }
+      if (offset != null) {
+        queryParams.addAll({'offset': offset.toString()});
+      }
+      if (limit != null) {
+        queryParams.addAll({'limit': limit.toString()});
+      }
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+
+      try {
+        await _ensureLogin();
+        Response? response = await Network().get(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return Group.listFromJson(JsonUtils.decodeList(responseBody));
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
   Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
     if (Config().groupsUrl != null) {
       Map<String, String> queryParams = {};
@@ -381,7 +429,7 @@ class Groups with Service implements NotificationsListener {
       String url = '${Config().groupsUrl}/groups';
       try {
         await _ensureLogin();
-        Map<String, dynamic> json = group.toJson(withId: false);
+        Map<String, dynamic> json = group.toJson(/*withId: false*/);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
         String? body = JsonUtils.encode(json);
