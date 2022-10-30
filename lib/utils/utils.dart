@@ -18,14 +18,17 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
@@ -401,6 +404,19 @@ class AppVersion {
 }
 
 class UrlUtils {
+
+  static void launch(BuildContext context, String? url, {bool? internal}) {
+    if (StringUtils.isNotEmpty(url)) {
+      if (internal == true || (internal != false && UrlUtils.launchInternal(url))) {
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => WebPanel(url: url)));
+      } else {
+        Uri? uri = Uri.tryParse(url!);
+        if (uri != null) {
+          launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      }
+    }
+  }
   
   static String? getScheme(String? url) {
     try {

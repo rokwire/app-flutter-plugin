@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/utils/widget_utils.dart';
 
 abstract class RuleCondition {
 
@@ -227,8 +228,6 @@ class RuleReference extends RuleResult {
 }
 
 class RuleAction extends RuleActionResult {
-  static const String notifyAlert = "edu.illinois.rokwire.rules.action.alert";
-
   String action;
   dynamic data;
   String? dataKey;
@@ -318,7 +317,9 @@ class RuleAction extends RuleActionResult {
   void _alert(RuleEngine engine) {
     dynamic alertData = engine.getValOrCollection(data);
     if (alertData is SurveyDataResult) {
-      NotificationService().notify(notifyAlert, alertData);
+      NotificationService().notify(Alerts.notifyAlert, Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions));
+    } else if (alertData is Alert) {
+      NotificationService().notify(Alerts.notifyAlert, alertData);
     }
   }
 

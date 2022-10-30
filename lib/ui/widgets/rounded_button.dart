@@ -21,7 +21,7 @@ import 'package:rokwire_plugin/service/styles.dart';
 
 class RoundedButton extends StatefulWidget {
   final String label;
-  final void Function() onTap;
+  final void Function()? onTap;
   final Color? backgroundColor;
   final EdgeInsetsGeometry padding;
 
@@ -64,7 +64,7 @@ class RoundedButton extends StatefulWidget {
   const RoundedButton({
     Key? key,
     required this.label,
-    required this.onTap,
+    this.onTap,
     this.backgroundColor,      //= Styles().colors.white
     this.padding                 = const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
     this.contentWeight           = 1.0,
@@ -162,6 +162,7 @@ class _RoundedButtonState extends State<RoundedButton> {
   }
 
   Widget get _outerContent {
+    //TODO: Fix ripple effect from InkWell (currently wrong shape and behind button content)
     return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
       InkWell(onTap: widget.onTap, child:
         _wrapperContent

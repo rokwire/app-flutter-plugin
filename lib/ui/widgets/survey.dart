@@ -12,181 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
-import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
-import 'package:rokwire_plugin/ui/popups/popup_message.dart';
+import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/utils/widget_utils.dart';
-
-class SurveyWidgets {
-  static Widget? buildSurveyDataResult(BuildContext context, SurveyDataResult? survey) {
-    if (survey == null) return null;
-
-    List<Widget> buttonActions = buildResultSurveyButtons(context, survey);
-    return Column(
-      children: <Widget>[
-        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular')),
-        CollectionUtils.isNotEmpty(buttonActions) ? Padding(
-          padding: const EdgeInsets.only(top: 16.0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttonActions),
-        ) : Container(),
-      ],
-    );
-  }
-
-  static List<Widget> buildResultSurveyButtons(BuildContext context, SurveyDataResult? survey, {EdgeInsets padding = const EdgeInsets.all(0)}) {
-    List<Widget> buttonActions = [];
-    for (ActionData action in survey?.actions ?? []) {
-      ButtonAction? buttonAction = actionTypeButtonAction(context, action);
-      if (buttonAction != null) {
-        buttonActions.add(Padding(
-          padding: padding,
-          child: RoundedButton(label: buttonAction.title, borderColor: Styles().colors?.fillColorSecondary,
-              backgroundColor: Styles().colors?.surface, textStyle: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'), onTap: buttonAction.action as void Function()),
-        ));
-      }
-    }
-    return buttonActions;
-  }
-
-  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    switch (action?.type) {
-      case ActionType.showSurvey:
-        if (action?.data is Survey) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
-          );
-        } else if (action?.data is Map<String, dynamic>) {
-          dynamic survey = action?.data['survey'];
-          return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-          );
-        }
-        return null;
-      case ActionType.contact:
-      //TODO: handle phone, web URIs, etc.
-      case ActionType.dismiss:
-        return ButtonAction(action?.label ?? Localization().getStringEx("panel.home.button.action.dismiss.title", "Dismiss"),
-                () => onTapDismiss(dismissContext: dismissContext)
-        );
-      default:
-        return null;
-    }
-  }
-
-  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Survey? surveyObject;
-      if (survey is Survey) {
-        surveyObject = survey;
-      } else if (survey is String) {
-        surveyObject = await Polls().loadSurvey(survey);
-      }
-
-      if (surveyObject != null) {
-        //TODO: will change depending on whether survey should be embedded or not
-        // setState(() {
-        //   _survey = surveyObject;
-        //   _mainSurveyData = _survey?.firstQuestion;
-        // });
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: surveyObject!, surveyDataKey: surveyObject.defaultDataKey, onComplete: () {
-          surveyObject!.evaluate();
-        })));
-      } else {
-        onTapDismiss(dismissContext: context);
-      }
-    });
-  }
-
-  static void onTapDismiss({BuildContext? dismissContext}) {
-    if (dismissContext != null) {
-      Navigator.pop(dismissContext);
-    }
-  }
-
-  static Widget buildSurveyResponseCard(BuildContext context, SurveyResponse response, {bool showTimeOnly = false}) {
-    List<Widget> widgets = [];
-
-    String? date;
-    if (showTimeOnly) {
-      date = DateTimeUtils.getDisplayTime(dateTimeUtc: response.dateCreated);
-    } else {
-      date = DateTimeUtils.getDisplayDateTime(response.dateCreated);
-    }
-
-    widgets.addAll([
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat')),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
-              Container(width: 8.0),
-              Image.asset('images/chevron-right.png')
-              // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
-            ],
-          ),
-        ],
-      ),
-      Container(height: 8),
-    ]);
-
-    Map<String, dynamic>? responses = response.survey.stats?.responseData;
-    if (responses?.length == 1) {
-      widgets.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.response.title", "Response:"), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
-          SizedBox(width: 8.0),
-          Flexible(child: Text(responses?.values.join(", ") ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
-        ],
-      ));
-    }
-
-    dynamic result = response.survey.resultData;
-    if (result is Map<String, dynamic>) {
-      if (result['type'] == 'survey_data.result') {
-        SurveyDataResult dataResult = SurveyDataResult.fromJson('result', result);
-        widgets.add(Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(Localization().getStringEx("panel.wellness.sections.health_screener.label.result.title", "Results:"), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
-            SurveyWidgets.buildSurveyDataResult(context, dataResult) ?? Container(),
-          ],
-        ));
-      }
-    }
-
-    return Material(
-      borderRadius: BorderRadius.circular(30),
-      color: Styles().colors?.surface,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        // onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyResponseSummaryPanel(response: response))),
-        child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: widgets,
-            )
-        ),
-      ),
-    );
-  }
-}
 
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
@@ -211,7 +50,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     super.initState();
     NotificationService().subscribe(this, [
       Polls.notifySurveyLoaded,
-      RuleAction.notifyAlert,
+      // RuleAction.notifyAlert,
     ]);
 
     if (widget.survey is Survey) {
@@ -347,7 +186,7 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
   }
 
   Widget? _buildResultSurveySection(SurveyDataResult? survey) {
-    return SurveyWidgets.buildSurveyDataResult(context, survey);
+    return SurveyBuilder.surveyDataResult(context, survey);
   }
 
   Widget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
@@ -696,11 +535,11 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
     );
   }
 
-  void _onNotifyAlert(SurveyDataResult survey) {
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo,
-            buttons: SurveyWidgets.buildResultSurveyButtons(context, survey, padding: EdgeInsets.all(16.0))));
-  }
+  // void _onNotifyAlert(SurveyDataResult survey) {
+  //   WidgetsBinding.instance.addPostFrameCallback((_) =>
+  //       ActionsMessage.show(context: context, title: survey.text, message: survey.moreInfo,
+  //           buttons: SurveyWidgets.buildResultSurveyButtons(context, survey, padding: EdgeInsets.all(16.0))));
+  // }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
     return Padding(
@@ -774,9 +613,10 @@ class _SurveyWidgetState extends State<SurveyWidget> implements NotificationsLis
       if (mounted) {
         setState(() {});
       }
-    } else if (name == RuleAction.notifyAlert) {
-      _onNotifyAlert(param as SurveyDataResult);
     }
+    // else if (name == RuleAction.notifyAlert) {
+    //   _onNotifyAlert(param as SurveyDataResult);
+    // }
   }
 }
 
