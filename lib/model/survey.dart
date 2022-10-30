@@ -638,8 +638,20 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       if (ruleResult is num) {
         scores[section ?? ''] = ruleResult;
       }
-    } else if (selfScore && response is num) {
-      scores[section ?? ''] = response;
+    } else if (selfScore) {
+      num score = 0;
+      for (OptionData data in options) {
+        if (response is List<dynamic>) {
+          if (response.contains(data.value)) {
+            score += data.score ?? 0;
+          }
+        } else {
+          if (response == data.value) {
+            score += data.score ?? 0;
+          }
+        }
+      }
+      scores[section ?? ''] = score;
     }
     
 
