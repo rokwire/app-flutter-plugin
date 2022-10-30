@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search group by name support hidden groups [#2403](https://github.com/rokwire/illinois-app/issues/2403).
 - Added answers section to Auth2UserProfile [#174](https://github.com/rokwire/app-flutter-plugin/issues/174).
 - Intermediate work on "muted" and "unread" notifications [#177](https://github.com/rokwire/app-flutter-plugin/issues/177).
+- Add survey UI components [#161](https://github.com/rokwire/app-flutter-plugin/issues/161)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
