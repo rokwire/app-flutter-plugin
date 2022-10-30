@@ -45,7 +45,8 @@ class Polls with Service implements NotificationsListener {
   static const String notifyVoteChanged      = "edu.illinois.rokwire.poll.votechanged"; // poll updated
   static const String notifyStatusChanged    = "edu.illinois.rokwire.poll.statuschnaged"; // poll closed, results could be presented
 
-  static const String notifySurveyLoaded     = "edu.illinois.rokwire.survey.loaded";
+  static const String notifySurveyLoaded              = "edu.illinois.rokwire.survey.loaded";
+  static const String notifySurveyResponseCreated     = "edu.illinois.rokwire.survey_response.created";
 
   static const String notifyLifecycleCreate  = "edu.illinois.rokwire.poll.lifecycle.create";
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
@@ -363,6 +364,7 @@ class Polls with Service implements NotificationsListener {
         Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
         if (responseJson != null) {
           SurveyResponse? response = SurveyResponse.fromJson(responseJson);
+          NotificationService().notify(notifySurveyResponseCreated);
           return response;
         }
       }

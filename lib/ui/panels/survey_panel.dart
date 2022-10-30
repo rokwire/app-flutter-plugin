@@ -26,12 +26,17 @@ import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 class SurveyPanel extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
+  final bool inputEnabled;
+  final DateTime? dateTaken;
+  final bool showResult;
   final Function? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
 
-  const SurveyPanel({required this.survey, this.surveyDataKey, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.initPanelDepth = 0});
+  const SurveyPanel({required this.survey, this.surveyDataKey, this.inputEnabled = true,
+    this.showSummaryOnFinish = false, this.dateTaken, this.showResult = false, this.allowBack = true,
+    this.onComplete, this.initPanelDepth = 0});
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -81,12 +86,20 @@ class _SurveyPanelState extends State<SurveyPanel> {
         child: SurveyWidget(
           survey: widget.survey,
           onChangeSurveyResponse: _onChangeSurveyResponse,
+          inputEnabled: widget.inputEnabled,
+          dateTaken: widget.dateTaken,
+          showResult: widget.showResult,
           surveyDataKey: widget.surveyDataKey,
-          onComplete: widget.onComplete,
+          onComplete: _onComplete,
           onLoad: _setSurvey,
         ),
       ),
     );
+  }
+
+  void _onComplete() {
+    widget.onComplete?.call();
+    Navigator.of(context).pop();
   }
 
   void _setSurvey(Survey? survey) {

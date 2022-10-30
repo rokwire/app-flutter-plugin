@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/options.dart';
-import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -29,11 +28,16 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
+  final bool inputEnabled;
+  final DateTime? dateTaken;
+  final bool showResult;
   final Function(bool) onChangeSurveyResponse;
   final Function? onComplete;
   final Function(Survey?)? onLoad;
 
-  SurveyWidget({required this.survey, required this.onChangeSurveyResponse, this.surveyDataKey, this.onComplete, this.onLoad});
+  SurveyWidget({required this.survey, required this.onChangeSurveyResponse,
+    this.inputEnabled = true, this.dateTaken, this.showResult = false, this.surveyDataKey,
+    this.onComplete, this.onLoad});
 
   @override
   State<SurveyWidget> createState() => _SurveyWidgetState();
@@ -91,11 +95,24 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            Visibility(visible: widget.dateTaken != null, child: _buildDateTaken()),
             Visibility(visible: _survey?.moreInfo != null, child: _buildMoreInfo()),
             _buildContent(),
-            _buildContinueButton(),
+            Visibility(visible: widget.showResult, child: _buildResult() ?? Container()),
+            Visibility(visible: widget.inputEnabled, child: _buildContinueButton()),
         ]),
       ) : Container();
+  }
+
+  Widget _buildDateTaken() {
+    DateTime? dateTaken = widget.dateTaken;
+    if (dateTaken == null) {
+      return Container();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Text(DateTimeUtils.getDisplayDateTime(dateTaken), style: Styles().textStyles?.getTextStyle('widget.detail.regular'),),
+    );
   }
 
   Widget _buildMoreInfo() {
@@ -103,6 +120,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       padding: const EdgeInsets.only(bottom: 32.0),
       child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),),
     );
+  }
+
+  Widget? _buildResult() {
+    return SurveyBuilder.surveyResult(context, _survey);
   }
 
   Widget _buildContent() {
@@ -131,23 +152,23 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(bottom: 8),
     EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
-    Widget? widget;
+    Widget? surveyWidget;
 
     if (survey is SurveyQuestionMultipleChoice) {
-      widget = _buildMultipleChoiceSurveySection(survey);
+      surveyWidget = _buildMultipleChoiceSurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyQuestionTrueFalse) {
-      widget = _buildTrueFalseSurveySection(survey);
+      surveyWidget = _buildTrueFalseSurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyQuestionDateTime) {
-      widget = _buildDateEntrySurveySection(survey);
+      surveyWidget = _buildDateEntrySurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyQuestionNumeric) {
-      widget = _buildNumericSurveySection(survey);
+      surveyWidget = _buildNumericSurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyDataResult) {
-      widget = _buildResultSurveySection(survey);
+      surveyWidget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
-      widget = _buildTextSurveySection(survey);
+      surveyWidget = _buildTextSurveySection(survey);
     }
 
-    return widget != null ? Column(
+    return surveyWidget != null ? Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -157,7 +178,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Visibility(visible: !survey.allowSkip, child: Text("* ", style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
               Flexible(
                 child: Text(
                   survey.text,
@@ -180,7 +201,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           ),
         ),
         // Container(height: 8),
-        widget,
+        surveyWidget,
         Container(height: 24),
       ],
     ) : null;
@@ -200,12 +221,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         }));
   }
 
-  Widget? _buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool isSummaryWidget = false}) {
+  Widget? _buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
     List<OptionData> optionList = survey.options;
     if (survey.allowMultiple) {
-      return _buildMultipleAnswerWidget(optionList, survey, isSummaryWidget: isSummaryWidget);
+      return _buildMultipleAnswerWidget(optionList, survey, enabled: enabled);
     }
 
     OptionData? selected;
@@ -217,30 +238,31 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
 
     Widget multipleChoice;
-    if (isSummaryWidget) {
-      multipleChoice = CustomIconSelectionList(
-        optionList: optionList,
-        selectedValues: selected != null ? [selected.value] : [],
-        correctAnswers: survey.correctAnswers,
-        scored: survey.scored,
-      );
-    } else {
-      multipleChoice = SingleSelectionList(
+    // if (enabled) {
+    multipleChoice = SingleSelectionList(
         selectionList: optionList,
-        onChanged: (int index) {
+        onChanged: enabled ? (int index) {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
           survey.response = optionList[index].value;
           widget.onChangeSurveyResponse(true);
-        },
+        } : null,
         selectedValue: selected);
-    }
+    // }
+    // else {
+    //   multipleChoice = CustomIconSelectionList(
+    //     optionList: optionList,
+    //     selectedValues: selected != null ? [selected.value] : [],
+    //     correctAnswers: survey.correctAnswers,
+    //     scored: survey.scored,
+    //   );
+    // }
 
     return multipleChoice;
   }
 
-  Widget _buildMultipleAnswerWidget(List<OptionData> options, SurveyQuestionMultipleChoice survey, {bool isSummaryWidget = false}) {
+  Widget _buildMultipleAnswerWidget(List<OptionData> options, SurveyQuestionMultipleChoice survey, {bool enabled = true}) {
     List<dynamic> selectedOptions = [];
     List<bool> isCheckedList = List<bool>.filled(options.length, false);
 
@@ -256,43 +278,43 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
 
     Widget multipleChoice;
-    if (isSummaryWidget) {
-      multipleChoice = CustomIconSelectionList(
-        optionList: options,
-        selectedValues: selectedOptions,
-        correctAnswers: survey.correctAnswers,
-        scored: survey.scored,
-      );
-    } else {
-      multipleChoice = MultiSelectionList(
-        selectionList: options,
-        isChecked: isCheckedList,
-        onChanged: (int index) {
-          //TODO: Prevent changing initial response when scored
-          // if (survey.scored && survey.response != null) {
-          //   return;
-          // }
+    // if (enabled) {
+    multipleChoice = MultiSelectionList(
+      selectionList: options,
+      isChecked: isCheckedList,
+      onChanged: enabled ? (int index) {
+        //TODO: Prevent changing initial response when scored
+        // if (survey.scored && survey.response != null) {
+        //   return;
+        // }
 
-          if (!isCheckedList[index]) {
-            selectedOptions.add(options[index].value);
-          } else {
-            selectedOptions.remove(options[index].value);
-          }
+        if (!isCheckedList[index]) {
+          selectedOptions.add(options[index].value);
+        } else {
+          selectedOptions.remove(options[index].value);
+        }
 
-          if (selectedOptions.isNotEmpty) {
-            survey.response = selectedOptions;
-          } else {
-            survey.response = null;
-          }
-          widget.onChangeSurveyResponse(false);
-        },
-      );
-    }
+        if (selectedOptions.isNotEmpty) {
+          survey.response = selectedOptions;
+        } else {
+          survey.response = null;
+        }
+        widget.onChangeSurveyResponse(false);
+      } : null,
+    );
+    // } else {
+    //   multipleChoice = CustomIconSelectionList(
+    //     optionList: options,
+    //     selectedValues: selectedOptions,
+    //     correctAnswers: survey.correctAnswers,
+    //     scored: survey.scored,
+    //   );
+    // }
 
     return multipleChoice;
   }
 
-  Widget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool isSummaryWidget = false}) {
+  Widget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
     List<OptionData> optionList = survey.options;
@@ -306,25 +328,25 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
 
     Widget trueFalse;
-    if (isSummaryWidget) {
-      trueFalse = CustomIconSelectionList(
-        optionList: optionList,
-        selectedValues: selected != null ? [selected.value] : [],
-        correctAnswers: survey.correctAnswer != null ? [survey.correctAnswer] : null,
-        scored: survey.scored,);
-    } else {
-      trueFalse = SingleSelectionList(
-          selectionList: optionList,
-          onChanged: (int index) {
-            if (survey.scored && survey.response != null) {
-              return;
-            }
-            survey.response = optionList[index].value;
-            widget.onChangeSurveyResponse(true);
-          },
-          selectedValue: selected
-      );
-    }
+    // if (enabled) {
+    trueFalse = SingleSelectionList(
+        selectionList: optionList,
+        onChanged: enabled ? (int index) {
+          if (survey.scored && survey.response != null) {
+            return;
+          }
+          survey.response = optionList[index].value;
+          widget.onChangeSurveyResponse(true);
+        } : null,
+        selectedValue: selected
+    );
+    // } else {
+    //   trueFalse = CustomIconSelectionList(
+    //     optionList: optionList,
+    //     selectedValues: selected != null ? [selected.value] : [],
+    //     correctAnswers: survey.correctAnswer != null ? [survey.correctAnswer] : null,
+    //     scored: survey.scored,);
+    // }
 
     return trueFalse;
   }
@@ -431,11 +453,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
   }
 
-  Widget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
     if (survey.slider) {
-      return _buildSliderSurveySection(survey, readOnly: readOnly);
+      return _buildSliderSurveySection(survey, enabled: enabled);
     }
 
     String? initialValue;
@@ -443,7 +465,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       initialValue = survey.response.toString();
     }
 
-    Widget numericText = _buildTextFormFieldWidget(survey.text, readOnly: readOnly, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
+    Widget numericText = _buildTextFormFieldWidget(survey.text, readOnly: enabled, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
       num val;
       if (survey.wholeNum) {
         val = int.parse(value);
@@ -457,14 +479,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     return Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: numericText);
   }
 
-  Widget? _buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
     double min = survey.minimum ?? 0.0;
     double max = survey.maximum ?? 1.0;
     String label;
     if (survey.wholeNum && min >= 0 && max <= 10) {
-      return _buildDiscreteNumsSurveySection(survey, readOnly: readOnly);
+      return _buildDiscreteNumsSurveySection(survey, enabled: enabled);
     }
 
     double value = 0;
@@ -491,7 +513,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           child: Text(label, style: Styles().textStyles?.getTextStyle('headline3')),
         )),
         Expanded(
-          child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: !readOnly ? (value) {
+          child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: enabled ? (value) {
            survey.response = value;
            widget.onChangeSurveyResponse(false);
           } : null)
@@ -500,7 +522,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     );
   }
 
-  Widget? _buildDiscreteNumsSurveySection(SurveyQuestionNumeric? survey, {bool readOnly = false}) {
+  Widget? _buildDiscreteNumsSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
     int min = survey.minimum?.toInt() ?? 0;
@@ -517,10 +539,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
        Text(i.toString(), style: Styles().textStyles?.getTextStyle('label')),
        Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
-         onChanged: readOnly ? null : (Object? value) {
+         onChanged: enabled ? (Object? value) {
            survey.response = value;
            widget.onChangeSurveyResponse(false);
-         }
+         } : null
        )
       ]));
     }
@@ -548,7 +570,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   Widget _buildContinueButton() {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      RoundedButton(label: Localization().getStringEx("panel.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
+      RoundedButton(label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"), onTap: _onTapContinue, progress: null),
     ]);
   }
 
@@ -590,7 +612,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   void _finishSurvey() {
-    _survey?.evaluate();
+    _survey?.evaluate(evalResultRules: true);
     if (widget.onComplete != null) {
       widget.onComplete!();
     }
@@ -641,11 +663,10 @@ class CustomIconSelectionList extends StatelessWidget {
             shrinkWrap: true,
             // physics: const NeverScrollableScrollPhysics(),
             physics: const ScrollPhysics(),
-
             itemCount: optionList.length,
             itemBuilder: (BuildContext context, int index) {
               OptionData option = optionList[index];
-              late Widget optionIcon;
+              Widget? optionIcon;
               // IconAsset optionIcon = unselectedIcon!;
               // chosen, correct => check mark
               // chosen, incorrect => cross mark
@@ -655,15 +676,15 @@ class CustomIconSelectionList extends StatelessWidget {
               // no correctAnswers: only chosen and unchosen
               bool selected = isOptionSelected(selectedValues, option);
               if (correctAnswers == null || !scored) {
-                optionIcon = selected ? selectedIcon! : unselectedIcon!;
+                optionIcon = selected ? selectedIcon : unselectedIcon!;
               } else {
                 if (isOptionCorrect(correctAnswers, option)) {
-                  optionIcon = checkIcon!;
+                  optionIcon = checkIcon;
                   if (optionIcon == checkIcon) {
                     correctAnswer = option.title;
                   }
                 } else {
-                  optionIcon = selected ? incorrectIcon! : unselectedIcon!;
+                  optionIcon = selected ? incorrectIcon : unselectedIcon;
                   if (optionIcon == incorrectIcon) {
                     answerIsWrong = true;
                   }

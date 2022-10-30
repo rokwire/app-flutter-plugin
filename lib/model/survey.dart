@@ -24,6 +24,8 @@ class SurveyResponse {
   DateTime dateCreated;
   DateTime? dateUpdated;
 
+  DateTime get dateTaken => dateUpdated ?? dateCreated;
+
   SurveyResponse(this.id, this.survey, this.dateCreated, this.dateUpdated);
 
   factory SurveyResponse.fromJson(Map<String, dynamic> json) {
@@ -51,7 +53,11 @@ class SurveyResponse {
       for (dynamic jsonEntry in jsonList) {
         Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
         if (mapVal != null) {
-          ListUtils.add(result, SurveyResponse.fromJson(mapVal));
+          try {
+            ListUtils.add(result, SurveyResponse.fromJson(mapVal));
+          } catch (e) {
+            print(e);
+          }
         }
       }
     }
@@ -111,7 +117,7 @@ class Survey extends RuleEngine {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'data': JsonUtils.encode(data),
+      'data': JsonUtils.encodeMap(data),
       'type': type,
       'scored': scored,
       'title': title,
@@ -203,7 +209,7 @@ class Survey extends RuleEngine {
     return null;
   }
 
-  void evaluate() {
+  void evaluate({bool evalResultRules = false}) {
     //TODO: add params to be passed in on evaluate?
     SurveyStats stats = SurveyStats();
     //TODO: calculate stats by following data chain (depends on results of rules)
@@ -212,13 +218,11 @@ class Survey extends RuleEngine {
     }
     this.stats = stats;
 
-    if (CollectionUtils.isEmpty(resultRules)) {
-      return;
-    }
-
-    clearCache();
-    for (Rule rule in resultRules!) {
-      rule.evaluate(this);
+    if (evalResultRules && CollectionUtils.isNotEmpty(resultRules)) {
+      clearCache();
+      for (Rule rule in resultRules!) {
+        rule.evaluate(this);
+      }
     }
   }
 
@@ -358,7 +362,8 @@ abstract class SurveyData {
       case "survey_data.entry": return SurveyDataEntry.fromJson(key, json);
       case "survey_data.result": return SurveyDataResult.fromJson(key, json);
       case "survey_data.survey": return SurveyDataSurvey.fromJson(key, json);
-      default: throw Exception("Invalid survey data type");
+      default:
+        throw Exception("Invalid survey data type");
     }
   }
 
@@ -440,7 +445,9 @@ abstract class SurveyData {
 
   SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
-    responseData[key] = response;
+    if (response != null) {
+      responseData[key] = response;
+    }
 
     Map<String, num> scores = {};
     dynamic ruleResult = scoreRule?.evaluate(survey);
@@ -529,7 +536,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
     Map<String, dynamic> json = baseJson();
     json['yes_no'] = yesNo;
     json['correct_answer'] = correctAnswer;
-    json['type'] = 'true_false';
+    json['type'] = 'survey_data.true_false';
     return json;
   }
 
@@ -608,14 +615,16 @@ class SurveyQuestionMultipleChoice extends SurveyData {
     json['correct_answers'] = correctAnswers;
     json['allow_multiple'] = allowMultiple;
     json['self_score'] = selfScore;
-    json['type'] = 'multiple_choice';
+    json['type'] = 'survey_data.multiple_choice';
     return json;
   }
 
   @override
   SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
-    responseData[key] = response;
+    if (response != null) {
+      responseData[key] = response;
+    }
 
     Map<String, num> scores = {};
     if (scoreRule != null) {
@@ -710,7 +719,7 @@ class SurveyQuestionDateTime extends SurveyData {
     json['start_time'] = DateTimeUtils.dateTimeLocalToJson(startTime);
     json['end_time'] = DateTimeUtils.dateTimeLocalToJson(endTime);
     json['ask_time'] = askTime;
-    json['type'] = 'date_time';
+    json['type'] = 'survey_data.date_time';
     return json;
   }
 
@@ -780,7 +789,7 @@ class SurveyQuestionNumeric extends SurveyData {
     json['whole_num'] = wholeNum;
     json['slider'] = slider;
     json['self_score'] = selfScore;
-    json['type'] = 'numeric';
+    json['type'] = 'survey_data.numeric';
     return json;
   }
 
@@ -790,7 +799,9 @@ class SurveyQuestionNumeric extends SurveyData {
   @override
   SurveyStats stats(Survey survey) {
     Map<String, dynamic> responseData = {};
-    responseData[key] = response;
+    if (response != null) {
+      responseData[key] = response;
+    }
 
     Map<String, num> scores = {};
     if (scoreRule != null) {
@@ -869,7 +880,7 @@ class SurveyQuestionText extends SurveyData {
     Map<String, dynamic> json = baseJson();
     json['min_length'] = minLength;
     json['max_length'] = maxLength;
-    json['type'] = 'text';
+    json['type'] = 'survey_data.text';
     return json;
   }
 
@@ -900,7 +911,9 @@ class SurveyDataEntry extends SurveyData {
     Map<String, DataType> dataFormat = {};
     if (dataFormatJson != null) {
       for (MapEntry<String, dynamic> entry in dataFormatJson.entries) {
-        dataFormatJson[entry.key] = EnumUtils.enumFromString<DataType>(DataType.values, entry.value);
+        String? type;
+        try { DataType.values.byName(entry.value); } catch(e) { }
+        dataFormatJson[entry.key] = type;
       }
     }
 
@@ -946,7 +959,7 @@ class SurveyDataEntry extends SurveyData {
 
     Map<String, dynamic> json = baseJson();
     json['data_format'] = dataFormatJson;
-    json['type'] = 'entry';
+    json['type'] = 'survey_data.entry';
     return json;
   }
 
@@ -963,7 +976,6 @@ class SurveyDataResult extends SurveyData {
   factory SurveyDataResult.fromJson(String key, Map<String, dynamic> json) {
     return SurveyDataResult(
       actions: ActionData.listFromJson(json['actions']),
-
       text: json['text'],
       key: key,
       moreInfo: JsonUtils.stringValue(json['more_info']),
@@ -985,7 +997,7 @@ class SurveyDataResult extends SurveyData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['actions'] = ActionData.listToJson(actions);
-    json['type'] = 'response';
+    json['type'] = 'survey_data.result';
     return json;
   }
 
@@ -1022,74 +1034,10 @@ class SurveyDataSurvey extends SurveyData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['survey'] = survey.toJson();
-    json['type'] = 'survey';
+    json['type'] = 'survey_data.survey';
     return json;
   }
 
   @override
   bool get isQuestion => false;
-}
-
-class OptionData {
-  final String title;
-  final dynamic _value;
-  bool selected;
-
-  dynamic get value { return _value ?? title; }
-
-  OptionData({required this.title, dynamic value, this.selected = false}) : _value = value;
-
-  factory OptionData.fromJson(Map<String, dynamic> json) {
-    return OptionData(
-      title: json['title'],
-      value: json['value'],
-      selected: json['selected'] ?? false,
-    );
-  }
-
-  static List<OptionData> listFromJson(List<dynamic> jsonList) {
-    List<OptionData> list = [];
-    for (dynamic json in jsonList) {
-      if (json is Map<String, dynamic>) {
-        list.add(OptionData.fromJson(json));
-      }
-    }
-    return list;
-  }
-
-  @override
-  String toString() {
-    return title;
-  }
-
-  static List<String> getTitles(List<OptionData> options, {bool selectedOnly = false}) {
-    List<String> titles = [];
-    for (OptionData option in options) {
-      if (!selectedOnly || option.selected) {
-        titles.add(option.title);
-      }
-    }
-    return titles;
-  }
-
-  static List<T> getValues<T>(List<OptionData> options, {bool selectedOnly = false}) {
-    List<T> values = [];
-    for (OptionData option in options) {
-      if (!selectedOnly || option.selected) {
-        dynamic value = option.value;
-        if (value is T) {
-          values.add(value);
-        }
-      }
-    }
-    return values;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'title': title,
-      'value': _value,
-      'selected': selected,
-    };
-  }
 }

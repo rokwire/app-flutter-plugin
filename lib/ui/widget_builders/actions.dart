@@ -38,14 +38,14 @@ class ActionBuilder {
         dynamic data = action?.data;
         if (data is String) {
           return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"),
-                  () => UrlUtils.launch(context, data)
+                  () => onTapLaunchUri(context, data, dismissContext: dismissContext, params: params)
           );
         } else if (action?.data is Map<String, dynamic>) {
           dynamic uri = action?.data['uri'];
           dynamic internal = action?.data['internal'];
           if (uri is String && internal is bool?) {
             return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"),
-                    () => UrlUtils.launch(context, uri, internal: internal)
+                    () => onTapLaunchUri(context, uri, internal: internal, dismissContext: dismissContext, params: params)
             );
           }
         }
@@ -72,6 +72,7 @@ class ActionBuilder {
 
   static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      onTapDismiss(dismissContext: dismissContext);
       if (survey is String || survey is Survey) {
         //TODO: will change depending on whether survey should be embedded or not
         // setState(() {
@@ -79,10 +80,13 @@ class ActionBuilder {
         //   _mainSurveyData = _survey?.firstQuestion;
         // });
         Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey)));
-      } else {
-        onTapDismiss(dismissContext: context);
       }
     });
+  }
+
+  static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext, Map<String, dynamic>? params}) {
+    onTapDismiss(dismissContext: dismissContext);
+    UrlUtils.launch(context, uri, internal: internal);
   }
 
   static void onTapDismiss({BuildContext? dismissContext}) {

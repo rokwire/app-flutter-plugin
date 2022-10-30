@@ -307,21 +307,6 @@ class MapUtils {
 
 }
 
-class EnumUtils {
-  static T? enumFromString<T>(Iterable<T> values, String? value) {
-    try {
-      return values.firstWhere((type) => type.toString().split(".").last == value);
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
-
-  static String enumToString<T>(T value) {
-    return T.toString().split('.').last;
-  }
-}
-
 class ColorUtils {
   static Color? fromHex(String? strValue) {
     if (strValue != null) {
@@ -497,7 +482,16 @@ class JsonUtils {
         result.add(item.toJson());
       }
     }
+    return result;
+  }
 
+  static Map<String, dynamic> encodeMap(Map items) {
+    Map<String, dynamic> result =  {};
+    if (items.isNotEmpty) {
+      for (MapEntry entry in items.entries) {
+        result[entry.key] = entry.value.toJson();
+      }
+    }
     return result;
   }
 
@@ -1114,7 +1108,7 @@ class DateTimeUtils {
           displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
         }
       } else if (timeDaysDiff == -1) {
-        displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Yesterday');
+        displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
         }

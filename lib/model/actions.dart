@@ -23,13 +23,24 @@ class ActionData {
           data = decoded;
         }
       }
+
+      ActionType? type;
+      try {
+        type = ActionType.values.byName(json['type']);
+      } catch(e) { }
+
       return ActionData(
-        type: EnumUtils.enumFromString<ActionType>(ActionType.values, json['type']) ?? ActionType.none,
+        type: type ?? ActionType.none,
         label: JsonUtils.stringValue(json['label']),
         data: data,
       );
     } else if (json is String) {
-      return ActionData(type: EnumUtils.enumFromString<ActionType>(ActionType.values, json) ?? ActionType.none);
+      ActionType? type;
+      try {
+        type = ActionType.values.byName(json);
+      } catch(e) { }
+
+      return ActionData(type: type ?? ActionType.none);
     }
     return ActionData(type: ActionType.none);
   }
@@ -52,7 +63,7 @@ class ActionData {
 
   Map<String, dynamic> toJson() {
     return {
-      'type': EnumUtils.enumToString(type),
+      'type': type.name,
       'label': label,
       'data': JsonUtils.encode(data),
     };
