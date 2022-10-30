@@ -478,7 +478,7 @@ class UiImages {
   UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
   Widget? getImageOrDefault(String imageKey, {Key? key, String? type, dynamic source,
-    double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    double? scale, double? size, double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
     Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
@@ -495,7 +495,7 @@ class UiImages {
     // Otherwise, if a type is defined, get image by defaults
     if (type != null) {
       return getImage(null, key: key, type: type, source: source, scale: scale, size: size, width: width,
-          height: height, color: color, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          height: height, weight: weight, color: color, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, alignment: alignment,
           opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality, repeat: repeat,
           centerSlice: centerSlice, textDirection: textDirection, networkHeaders: networkHeaders,
@@ -518,7 +518,7 @@ class UiImages {
   }
 
   Widget? getImage(String? imageKey, {Key? key, String? type, dynamic source, double? scale, double? size,
-    double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
     Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
@@ -540,7 +540,7 @@ class UiImages {
           frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
       }
       else if (type.startsWith('fa.')) {
-        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
+        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
       }
       else {
         return null;
@@ -654,7 +654,7 @@ class UiImages {
     }
   */
 
-  Widget? _getFaIcon(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? size, Color? color, TextDirection? textDirection, String? semanticLabel, bool excludeFromSemantics = false}) {
+  Widget? _getFaIcon(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? size, String? weight, Color? color, TextDirection? textDirection, String? semanticLabel, bool excludeFromSemantics = false}) {
 
     type ??= JsonUtils.stringValue(json['type']);
     source ??= json['src'];
@@ -665,7 +665,7 @@ class UiImages {
 
     try { switch (type) {
       case 'fa.icon':
-        IconData? iconData = _ImageUtils.faIconDataValue(JsonUtils.stringValue(json['weight']) ?? 'regular', codePoint: _ImageUtils.faCodePointValue(source));
+        IconData? iconData = _ImageUtils.faIconDataValue(weight ?? JsonUtils.stringValue(json['weight']) ?? 'regular', codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
           FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
         ) : null;

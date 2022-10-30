@@ -19,7 +19,7 @@ class Alerts {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) =>
         ActionsMessage.show(context: context, title: alert.title, message: alert.text,
-            buttons: ActionBuilder.actionButtons(buttonActions), verticalButtons: true));
+            buttons: ActionBuilder.actionButtons(buttonActions), buttonAxis: Axis.vertical));
   }
 
   static Widget buildDividerLine({double height = 1, EdgeInsetsGeometry? margin}) {

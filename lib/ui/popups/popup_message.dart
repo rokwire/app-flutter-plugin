@@ -216,7 +216,7 @@ class ActionsMessage extends StatelessWidget {
   
   final List<Widget> buttons;
   final EdgeInsetsGeometry buttonsPadding;
-  final bool verticalButtons;
+  final Axis buttonAxis;
 
   final ShapeBorder? border;
   final BorderRadius? borderRadius;
@@ -242,7 +242,7 @@ class ActionsMessage extends StatelessWidget {
     
     this.buttons = const [],
     this.buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-    this.verticalButtons = false,
+    this.buttonAxis = Axis.horizontal,
 
     this.border,
     this.borderRadius,
@@ -299,7 +299,7 @@ class ActionsMessage extends StatelessWidget {
     
     List<Widget> buttons = const [],
     EdgeInsetsGeometry buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-    bool verticalButtons = false,
+    Axis buttonAxis = Axis.horizontal,
 
     ShapeBorder? border,
     BorderRadius? borderRadius,
@@ -329,7 +329,7 @@ class ActionsMessage extends StatelessWidget {
       messagePadding: messagePadding,
   
       buttons: buttons,
-      verticalButtons: verticalButtons,
+      buttonAxis: buttonAxis,
       buttonsPadding: buttonsPadding,
 
       border: border,
@@ -361,7 +361,7 @@ class ActionsMessage extends StatelessWidget {
         Padding(padding: messagePadding, child:
           Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
         ),
-        verticalButtons ?
+        buttonAxis == Axis.vertical ?
             Padding(padding: buttonsPadding, child: Column(children: buttons),)
               : Padding(padding: buttonsPadding,
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
