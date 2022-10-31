@@ -194,3 +194,224 @@ class PopupMessage extends StatelessWidget {
     }
   }
 }
+
+class ActionsMessage extends StatelessWidget {
+  final String? title;
+  final TextStyle? titleTextStyle;
+  final Color? titleTextColor;
+  final String? titleFontFamily;
+  final double titleFontSize;
+  final TextAlign? titleTextAlign;
+  final EdgeInsetsGeometry titlePadding;
+  final Color? titleBarColor;
+  final Widget? closeButtonIcon;
+  
+  final String? message;
+  final TextStyle? messageTextStyle;
+  final Color? messageTextColor;
+  final String? messageFontFamily;
+  final double messageFontSize;
+  final TextAlign? messageTextAlign;
+  final EdgeInsetsGeometry messagePadding;
+  
+  final List<Widget> buttons;
+  final EdgeInsetsGeometry buttonsPadding;
+  final Axis buttonAxis;
+
+  final ShapeBorder? border;
+  final BorderRadius? borderRadius;
+
+  const ActionsMessage({Key? key,
+    this.title,
+    this.titleTextStyle,
+    this.titleTextColor,
+    this.titleFontFamily,
+    this.titleFontSize = 20.0,
+    this.titleTextAlign,
+    this.titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    this.titleBarColor,
+    this.closeButtonIcon,
+    
+    this.message,
+    this.messageTextStyle,
+    this.messageTextColor,
+    this.messageFontFamily,
+    this.messageFontSize = 16.0,
+    this.messageTextAlign,
+    this.messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    
+    this.buttons = const [],
+    this.buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+    this.buttonAxis = Axis.horizontal,
+
+    this.border,
+    this.borderRadius,
+  }) : super(key: key);
+
+  @protected Color? get defautTitleBarColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTitleBarColor => titleBarColor ?? defautTitleBarColor;
+
+  @protected Color? get defautTitleTextColor => Styles().colors?.white;
+  @protected Color? get displayTitleTextColor => titleTextColor ?? defautTitleTextColor;
+  
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
+  
+  @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
+  @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
+
+  @protected Color? get defautMessageTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayMessageTextColor => messageTextColor ?? defautMessageTextColor;
+  
+  @protected String? get defaultMessageFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
+  
+  @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
+  @protected TextStyle get displayMessageTextStyle => messageTextStyle ?? defaultMessageTextStyle;
+
+  @protected BorderRadius get defautBorderRadius => const BorderRadius.all(Radius.circular(8));
+  @protected BorderRadius get displayBorderRadius => borderRadius ?? defautBorderRadius;
+
+  @protected ShapeBorder get defautBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
+  @protected ShapeBorder get displayBorder => border ?? defautBorder;
+
+  @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImageOrDefault('circle-xmark', type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors?.surface);
+  @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
+
+  static Future<void> show({
+    String? title,
+    TextStyle? titleTextStyle,
+    Color? titleTextColor,
+    String? titleFontFamily,
+    double titleFontSize = 20,
+    TextAlign? titleTextAlign,
+    EdgeInsetsGeometry titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    Color? titleBarColor,
+    Widget? closeButtonIcon,
+    
+    String? message,
+    TextStyle? messageTextStyle,
+    Color? messageTextColor,
+    String? messageFontFamily,
+    double messageFontSize = 16.0,
+    TextAlign? messageTextAlign,
+    EdgeInsetsGeometry messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    
+    List<Widget> buttons = const [],
+    EdgeInsetsGeometry buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+    Axis buttonAxis = Axis.horizontal,
+
+    ShapeBorder? border,
+    BorderRadius? borderRadius,
+
+    required BuildContext context,
+    bool barrierDismissible = true,
+  }) => showDialog(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (BuildContext context) => ActionsMessage(
+      title: title,
+      titleTextStyle: titleTextStyle,
+      titleTextColor: titleTextColor,
+      titleFontFamily: titleFontFamily,
+      titleFontSize: titleFontSize,
+      titleTextAlign: titleTextAlign,
+      titlePadding: titlePadding,
+      titleBarColor: titleBarColor,
+      closeButtonIcon: closeButtonIcon,
+  
+      message: message,
+      messageTextStyle: messageTextStyle,
+      messageTextColor: messageTextColor,
+      messageFontFamily: messageFontFamily,
+      messageFontSize: messageFontSize,
+      messageTextAlign: messageTextAlign,
+      messagePadding: messagePadding,
+  
+      buttons: buttons,
+      buttonAxis: buttonAxis,
+      buttonsPadding: buttonsPadding,
+
+      border: border,
+      borderRadius: borderRadius,
+    )
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> flexibleButtons = [];
+    for (Widget button in buttons) {
+      flexibleButtons.add(Flexible(flex: 1, child: button));
+    }
+    Widget? closeButton = displayCloseButtonIcon;
+    return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
+      Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
+        Material(
+          color: displayTitleBarColor,
+          child: Row(children: [
+            Expanded(child:
+              Padding(padding: titlePadding, child:
+                Text(title ?? '', style: displayTitleTextStyle, textAlign: titleTextAlign,),
+              ),
+            ),
+            closeButton != null ? IconButton(icon: closeButton, onPressed: () { Navigator.pop(context); }) : Container(),
+          ]),
+        ),
+        Padding(padding: messagePadding, child:
+          Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
+        ),
+        buttonAxis == Axis.vertical ?
+            Padding(padding: buttonsPadding, child: Column(children: buttons),)
+              : Padding(padding: buttonsPadding,
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
+              ),
+      ],),
+    );
+  }
+}
+
+// static Future<dynamic> showStandardDialog(BuildContext context, String title, String message, {List<Widget> actions = const [], bool showDivider = true}) async {
+//     return AppAlert.showCustomDialog(
+//         context: context,
+//         contentPadding: EdgeInsets.all(0),
+//         contentWidget: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Row(
+//               children: [
+//                 Expanded(
+//                   child: Material(
+//                     color: Styles().colors.fillColorPrimary,
+//                     child: Row(children: [
+//                       Expanded(
+//                         child: Padding(
+//                           padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+//                           child: Text(title, style: Styles().textStyles.sectionTitle,),
+//                         ),
+//                       ),
+//                       IconButton(icon: Styles().uiImages?.fromString('circle-xmark-surface') ?? Container(), onPressed: () { Navigator.pop(context); },)
+//                     ]),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             Padding(
+//               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+//               child: Text(message,
+//                 style: Styles().textStyles.body,
+//               ),
+//             ),
+//             buildDividerLine(height: showDivider && actions.isNotEmpty ? 1: 0),
+//           ],
+//         ),
+//         actions: actions,
+//     );
+//   }
+
+//   static Widget buildDividerLine({double height = 1, EdgeInsetsGeometry? margin}) {
+//     return Container(
+//       margin: margin,
+//       height: height,
+//       color: Styles().colors.dividerLine,
+//     );
+//   }
