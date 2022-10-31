@@ -21,11 +21,9 @@ class ModalImageHolder extends StatelessWidget{
   //Modal Image Dialog
   void _showModalImage(BuildContext context){
     if(StringUtils.isNotEmpty(url)){
-      AppToast.show("New Modal with Url");
       Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (context, _, __) => ModalImagePanel(imageUrl: url)));
     }
     else if ((child is Image) && child != null) {
-      AppToast.show("New Modal with Image");
       Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (context, _, __) => ModalImagePanel(image: (child as Image).image)));    }
   }
 }
