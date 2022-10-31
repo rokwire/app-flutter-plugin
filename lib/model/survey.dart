@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
@@ -56,7 +57,7 @@ class SurveyResponse {
           try {
             ListUtils.add(result, SurveyResponse.fromJson(mapVal));
           } catch (e) {
-            print(e);
+            debugPrint(e.toString());
           }
         }
       }
@@ -930,7 +931,7 @@ class SurveyDataEntry extends SurveyData {
     if (dataFormatJson != null) {
       for (MapEntry<String, dynamic> entry in dataFormatJson.entries) {
         String? type;
-        try { DataType.values.byName(entry.value); } catch(e) { }
+        try { DataType.values.byName(entry.value); } catch(e) { debugPrint(e.toString()); }
         dataFormatJson[entry.key] = type;
       }
     }

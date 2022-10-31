@@ -21,7 +21,6 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
-import 'package:rokwire_plugin/ui/widgets/ribbon_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -36,9 +35,9 @@ class SurveyWidget extends StatefulWidget {
   final Function? onComplete;
   final Function(Survey?)? onLoad;
 
-  SurveyWidget({required this.survey, required this.onChangeSurveyResponse,
+  const SurveyWidget({Key? key, required this.survey, required this.onChangeSurveyResponse,
     this.inputEnabled = true, this.dateTaken, this.showResult = false, this.surveyDataKey,
-    this.onComplete, this.onLoad});
+    this.onComplete, this.onLoad}) : super(key: key);
 
   @override
   State<SurveyWidget> createState() => _SurveyWidgetState();
@@ -317,7 +316,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
-    Widget trueFalse;
+    //Widget trueFalse;
     // if (enabled) {
     if (survey.style == 'checkbox') {
       if (survey.response is! bool?) {
@@ -820,7 +819,7 @@ class SingleSelectionList extends StatelessWidget {
     return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: 8),
         itemCount: selectionList.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),

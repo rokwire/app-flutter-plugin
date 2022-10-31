@@ -23,7 +23,6 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 enum ActionType {
@@ -27,7 +28,7 @@ class ActionData {
       ActionType? type;
       try {
         type = ActionType.values.byName(json['type']);
-      } catch(e) { }
+      } catch(e) { debugPrint(e.toString()); }
 
       return ActionData(
         type: type ?? ActionType.none,
@@ -38,7 +39,7 @@ class ActionData {
       ActionType? type;
       try {
         type = ActionType.values.byName(json);
-      } catch(e) { }
+      } catch(e) { debugPrint(e.toString()); }
 
       return ActionData(type: type ?? ActionType.none);
     }

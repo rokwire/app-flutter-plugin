@@ -17,7 +17,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
@@ -34,16 +33,16 @@ class SurveyPanel extends StatefulWidget {
   final bool allowBack;
   final int initPanelDepth;
 
-  const SurveyPanel({required this.survey, this.surveyDataKey, this.inputEnabled = true,
+  const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.showSummaryOnFinish = false, this.dateTaken, this.showResult = false, this.allowBack = true,
-    this.onComplete, this.initPanelDepth = 0});
+    this.onComplete, this.initPanelDepth = 0}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
 }
 
 class _SurveyPanelState extends State<SurveyPanel> {
-  bool _loading = false;
+  final bool _loading = false;
   Survey? _survey;
 
   GlobalKey? dataKey;

@@ -340,10 +340,9 @@ class ActionsMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> flexibleButtons = [];
-    buttons.forEach((element) {
-      flexibleButtons.add(Flexible(flex: 1, child: element));
-    },);
-
+    for (Widget button in buttons) {
+      flexibleButtons.add(Flexible(flex: 1, child: button));
+    }
     Widget? closeButton = displayCloseButtonIcon;
     return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
@@ -351,9 +350,9 @@ class ActionsMessage extends StatelessWidget {
           color: displayTitleBarColor,
           child: Row(children: [
             Expanded(child:
-              Container(child: Padding(padding: titlePadding, child:
+              Padding(padding: titlePadding, child:
                 Text(title ?? '', style: displayTitleTextStyle, textAlign: titleTextAlign,),
-              )),
+              ),
             ),
             closeButton != null ? IconButton(icon: closeButton, onPressed: () { Navigator.pop(context); }) : Container(),
           ]),

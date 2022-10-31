@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';

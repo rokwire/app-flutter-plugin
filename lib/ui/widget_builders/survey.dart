@@ -111,7 +111,7 @@ class SurveyBuilder {
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
                   style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
-              SizedBox(height: 8.0),
+              const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],
           ),

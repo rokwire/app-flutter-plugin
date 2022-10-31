@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class LoadingBuilder {
   static Widget loading() {
@@ -9,11 +7,10 @@ class LoadingBuilder {
         label: Localization().getStringEx('widget.loading.title', 'Loading'),
         hint: Localization().getStringEx('widget.loading.hint', 'Please wait'),
         excludeSemantics: true,
-        child:Container(
-          child: Align(
-            alignment: Alignment.center,
-            child: CircularProgressIndicator(),
+        child: const Align(
+          alignment: Alignment.center,
+          child: CircularProgressIndicator(),
           ),
-        ));
+        );
   }
 }
