@@ -222,9 +222,6 @@ class Survey extends RuleEngine {
     for (SurveyData? data = firstQuestion?.followUp(this); data != null; data = data.followUp(this)) {
       surveyStats += data.stats(this);
     }
-    // for (SurveyData surveyData in data.values) {
-    //   stats += surveyData.stats(this);
-    // }
     stats = surveyStats;
 
     if (evalResultRules && CollectionUtils.isNotEmpty(resultRules)) {
@@ -475,22 +472,7 @@ abstract class SurveyData {
     return stats;
   }
 
-  // bool canContinue(Survey survey, {bool deep = true}) {
-  //   if (!allowSkip && response == null) {
-  //     return false;
-  //   }
-
-  //   if (deep) {
-  //     SurveyData? follow = followUp(survey);
-  //     if (follow != null) {
-  //       return follow.canContinue(survey);
-  //     }
-  //   }
-
-  //   return true;
-  // }
   bool get canContinue => allowSkip || response != null;
-
   bool get scored => scoreRule != null;
 }
 
