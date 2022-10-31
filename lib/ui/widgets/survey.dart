@@ -327,9 +327,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         activeColor: Styles().colors?.fillColorPrimary,
         value: survey.response,
         onChanged: enabled ? (bool? value) {
-          if (survey.scored && survey.response != null) {
-            return;
-          }
+          // if (survey.scored && survey.response != null) {
+          //   return;
+          // }
           if (survey.response == null) {
             survey.response = true;
           } else {
@@ -348,9 +348,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         value: survey.response,
         activeColor: Styles().colors?.fillColorPrimary,
         onChanged: enabled ? (bool value) {
-          if (survey.scored && survey.response != null) {
-            return;
-          }
+          // if (survey.scored && survey.response != null) {
+          //   return;
+          // }
           survey.response = !survey.response;
           widget.onChangeSurveyResponse(true);
         } : null,
@@ -370,9 +370,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     return SurveyDataWidget(SingleSelectionList(
         selectionList: optionList,
         onChanged: enabled ? (int index) {
-          if (survey.scored && survey.response != null) {
-            return;
-          }
+          // if (survey.scored && survey.response != null) {
+          //   return;
+          // }
           survey.response = optionList[index].value;
           widget.onChangeSurveyResponse(true);
         } : null,
