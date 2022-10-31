@@ -16,6 +16,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -395,7 +396,9 @@ class ImageSlantHeader extends StatelessWidget {
 
     double displayHeight = (image as Image?)?.height ?? 240;
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      image ?? Container(),
+      image!=null ?
+          ModalImageHolder(child: image,)
+        :Container(),
       Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
         Stack(alignment: Alignment.topCenter, children: <Widget>[
           Column(children: <Widget>[

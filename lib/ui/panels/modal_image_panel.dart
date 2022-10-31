@@ -37,11 +37,14 @@ class ModalImagePanel extends StatelessWidget {
   final double progressWidth;
   final Color? progressColor;
 
+  final ImageProvider? image;
+
   final void Function()? onDismiss;
 
   const ModalImagePanel({Key? key,
     this.imageUrl,
     this.imageKey,
+    this.image,
     this.imagePadding = const EdgeInsets.symmetric(vertical: 64, horizontal: 32),
 
     this.networkImageHeaders,
@@ -63,24 +66,25 @@ class ModalImagePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget? image;
-    if (StringUtils.isNotEmpty(imageKey)) {
-      image = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+    Widget? imageWidget;
+    if(image != null){
+      imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget);
+    }
+    else if (StringUtils.isNotEmpty(imageKey)) {
+      imageWidget = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
         networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     }
     else if (StringUtils.isNotEmpty(imageUrl)) {
-      image = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth, 
+      imageWidget = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
         headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     }
-    
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:
         InkWell(onTap: () => _onDismiss(context), child:
           Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
             Expanded(child:
               Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(child: image != null ?
-                  Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: image),) : Container()
+                Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget),) : Container()
                 ),
               ],)
             ),
