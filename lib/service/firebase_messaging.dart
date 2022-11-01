@@ -17,12 +17,11 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
-import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/inbox.dart';
 import 'package:rokwire_plugin/service/firebase_core.dart';
+import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -38,7 +37,6 @@ class FirebaseMessaging with Service {
   static const String notifyGroupsNotification    = "edu.illinois.rokwire.firebase.messaging.groups.updated";
 
   String?   _token;
-  final FlutterLocalNotificationsPlugin _firebaseMessaging = FlutterLocalNotificationsPlugin();
   
   // Singletone Factory
 
@@ -63,11 +61,6 @@ class FirebaseMessaging with Service {
 
   @override
   Future<void> initService() async {
-
-    AndroidNotificationChannel channel = androidNotificationChannel;
-    await RokwirePlugin.createAndroidNotificationChannel(channel);
-    await _firebaseMessaging.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
-
     await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
@@ -100,19 +93,7 @@ class FirebaseMessaging with Service {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { FirebaseCore(), Storage(), };
-  }
-
-  // AndroidNotificationChannel
-
-  @protected
-  AndroidNotificationChannel get androidNotificationChannel {
-    return const AndroidNotificationChannel(
-      "edu.illinois.rokwire.firebase_messaging.notification_channel",
-      "Rokwire", // name
-      description: "Rokwire notifications receiver",
-      importance: Importance.high,
-    );
+    return { FirebaseCore(), LocalNotifications(), Storage(), };
   }
 
   // Token
