@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 // HeaderBar
@@ -200,7 +201,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   @protected
   Widget buildFlexibleInterior(BuildContext context) {
     Widget? image = Styles().images?.getImage(flexImageUrl!, fit: BoxFit.cover, networkHeaders: Config().networkAuthHeaders, excludeFromSemantics: true);
-    return (flexImageUrl != null && image != null) ? Positioned.fill(child: image) : Container();
+    return (flexImageUrl != null && image != null) ? Positioned.fill(child: ModalImageHolder(url: flexImageUrl ,child:image)) : Container();
   }
 
   @protected
