@@ -42,12 +42,12 @@ abstract class RuleCondition {
 }
 
 class RuleComparison extends RuleCondition {
-  String operator;
-  String dataKey;
-  dynamic dataParam;
-  dynamic compareTo;
-  dynamic compareToParam;
-  bool defaultResult;
+  final String operator;
+  final String dataKey;
+  final dynamic dataParam;
+  final dynamic compareTo;
+  final dynamic compareToParam;
+  final bool defaultResult;
 
   RuleComparison({required this.dataKey, required this.operator, this.dataParam,
     required this.compareTo, this.compareToParam, this.defaultResult = false});
@@ -79,10 +79,11 @@ class RuleComparison extends RuleCondition {
   bool evaluate(RuleEngine engine) {
     dynamic dataVal = engine.getVal(dataKey, dataParam);
 
-    if (compareTo is String) {
-      compareTo = engine.getVal(compareTo, compareToParam);
+    dynamic compareToVal = compareTo;
+    if (compareToVal is String) {
+      compareToVal = engine.getVal(compareTo, compareToParam);
     }
-    return compare(operator, dataVal, compareTo, defaultResult: defaultResult);
+    return compare(operator, dataVal, compareToVal, defaultResult: defaultResult);
   }
 
   bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
@@ -143,8 +144,8 @@ class RuleComparison extends RuleCondition {
 }
 
 class RuleLogic extends RuleCondition {
-  String operator;
-  List<RuleCondition> conditions;
+  final String operator;
+  final List<RuleCondition> conditions;
 
   RuleLogic(this.operator, this.conditions);
 
@@ -194,7 +195,7 @@ abstract class RuleResult {
 }
 
 abstract class RuleActionResult extends RuleResult {
-  abstract int priority;
+  abstract final int priority;
 
   RuleActionResult();
 
@@ -215,7 +216,7 @@ abstract class RuleActionResult extends RuleResult {
 }
 
 class RuleReference extends RuleResult {
-  String ruleKey;
+  final String ruleKey;
 
   RuleReference(this.ruleKey);
 
@@ -228,9 +229,9 @@ class RuleReference extends RuleResult {
 }
 
 class RuleAction extends RuleActionResult {
-  String action;
-  dynamic data;
-  String? dataKey;
+  final String action;
+  final dynamic data;
+  final String? dataKey;
   @override int priority;
 
   RuleAction({required this.action, required this.data, this.dataKey, this.priority = 0});
@@ -257,7 +258,7 @@ class RuleAction extends RuleActionResult {
   dynamic evaluate(RuleEngine engine) {
     switch (action) {
       case "return":
-        return _return;
+        return _return(engine);
       case "sum":
         return _sum(engine);
       case "set_result":
@@ -327,7 +328,7 @@ class RuleAction extends RuleActionResult {
 }
 
 class RuleActionList extends RuleActionResult {
-  List<RuleAction> actions;
+  final List<RuleAction> actions;
   @override int priority;
 
   RuleActionList({required this.actions, required this.priority});
@@ -422,9 +423,9 @@ class Rule extends RuleResult {
 }
 
 abstract class RuleEngine {
-  Map<String, dynamic> constants;
-  Map<String, Map<String, String>> strings;
-  Map<String, Rule> subRules;
+  final Map<String, dynamic> constants;
+  final Map<String, Map<String, String>> strings;
+  final Map<String, Rule> subRules;
   dynamic resultData;
 
   final Map<String, List<RuleData>> _dataCache = {};
@@ -675,8 +676,8 @@ class RuleKey {
 }
 
 class RuleData {
-  dynamic param;
-  dynamic value;
+  final dynamic param;
+  final dynamic value;
 
   RuleData({required this.value, this.param});
 
