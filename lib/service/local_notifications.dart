@@ -25,7 +25,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 
 
 class LocalNotifications with Service {
-  static const int pendingNotificationsLimit = 64;
+  static const int pendingNotificationsLimit = 64; // TODO: use growable list instead
 
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   List<String?>? _scheduledIds;
@@ -66,6 +66,7 @@ class LocalNotifications with Service {
     
     bool? initSuccess = await _initPlugin();
     if (initSuccess == true) {
+    // List<PendingNotificationRequest> pending = await _localNotifications.pendingNotificationRequests();
       List<String?>? storedPendingIds = Storage().pendingNotificationIds;
       _scheduledIds = storedPendingIds != null ? List.from(storedPendingIds, growable: false) : List.filled(pendingNotificationsLimit, null);
 
@@ -134,6 +135,7 @@ class LocalNotifications with Service {
     // NotificationService().notify(notifySelected, payload);
   }
 
+  @pragma('vm:entry-point')
   void _onTapNotificationBackground(NotificationResponse? response) {
     _clearNotification(notificationId: response?.id, cancel: false);
     // Log.d('Android: on select local notification: ' + payload!);
@@ -180,6 +182,8 @@ class LocalNotifications with Service {
   }
 
   int _getNotificationId(String id) {
+    // List<PendingNotificationRequest> pending = await _localNotifications.pendingNotificationRequests();
+
     int notificationId = _scheduledIds!.indexOf(id);
     if (notificationId == -1) {
       notificationId = _scheduledIds!.indexOf(null);

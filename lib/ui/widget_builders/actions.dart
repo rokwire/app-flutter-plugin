@@ -19,46 +19,38 @@ class ActionBuilder {
   }
 
   //TODO: Reimplement as service that allows registration of action types
-  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static ButtonAction? actionTypeButtonAction(BuildContext context, ActionData? action, {BuildContext? dismissContext}) {
+    Function()? actionFunc = getAction(action, context: context, dismissContext: dismissContext);
     switch (action?.type) {
       case ActionType.showSurvey:
-        if (action?.data is Survey) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, action!.data, dismissContext: dismissContext, params: params)
-          );
-        } else if (action?.data is Map<String, dynamic>) {
-          dynamic survey = action?.data['survey'];
-          return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.show_survey.title", "Show Survey"),
-                  () => onTapShowSurvey(context, survey, dismissContext: dismissContext, params: params)
-          );
-        }
-        return null;
+        return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.show_survey.title", "Show Survey"), actionFunc);
       case ActionType.launchUri:
-        dynamic data = action?.data;
-        if (data is String) {
-          return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"),
-                  () => onTapLaunchUri(context, data, dismissContext: dismissContext, params: params)
-          );
-        } else if (action?.data is Map<String, dynamic>) {
-          dynamic uri = action?.data['uri'];
-          dynamic internal = action?.data['internal'];
-          if (uri is String && internal is bool?) {
-            return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"),
-                    () => onTapLaunchUri(context, uri, internal: internal, dismissContext: dismissContext, params: params)
-            );
-          }
-        }
-        return null;
+        return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"), actionFunc);
       case ActionType.dismiss:
-        return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.dismiss.title", "Dismiss"),
-                () => onTapDismiss(dismissContext: dismissContext)
-        );
+        return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.dismiss.title", "Dismiss"), actionFunc);
       default:
         return null;
     }
   }
 
-  static List<ButtonAction> actionTypeButtonActions(BuildContext context, List<ActionData>? actions, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static Function()? getAction(ActionData? action, {BuildContext? context, BuildContext? dismissContext}) {
+    switch (action?.type) {
+      case ActionType.showSurvey:
+        return (action?.data is String) ? () => onTapShowSurvey(action!.data) : null;
+      case ActionType.launchUri:
+        if (action?.data is String) {
+          dynamic internal = action?.params['internal'];
+          return (internal is bool?) ? () => onTapLaunchUri(action!.data, internal: internal, context: context, dismissContext: dismissContext) : null;
+        }
+        return null;
+      case ActionType.dismiss:
+        return () => onTapDismiss(dismissContext: dismissContext);
+      default:
+        return null;
+    }
+  }
+
+  static List<ButtonAction> actionTypeButtonActions(BuildContext context, List<ActionData>? actions, {BuildContext? dismissContext}) {
     List<ButtonAction> buttonActions = [];
     for (ActionData action in actions ?? []) {
       ButtonAction? buttonAction = ActionBuilder.actionTypeButtonAction(context, action);
@@ -69,7 +61,7 @@ class ActionBuilder {
     return buttonActions;
   }
 
-  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static void onTapShowSurvey(dynamic survey, {BuildContext? context, BuildContext? dismissContext}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       onTapDismiss(dismissContext: dismissContext);
       if (survey is String || survey is Survey) {
@@ -83,7 +75,7 @@ class ActionBuilder {
     });
   }
 
-  static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext, Map<String, dynamic>? params}) {
+  static void onTapLaunchUri(String? uri, {bool? internal, BuildContext? context, BuildContext? dismissContext}) {
     // onTapDismiss(dismissContext: dismissContext);
     UrlUtils.launch(context, uri, internal: internal);
   }
