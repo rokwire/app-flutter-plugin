@@ -26,8 +26,8 @@ class AppDateTime with Service {
 
   static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
 
-  String? _localTimeZone;
-  String? get localTimeZone => _localTimeZone;
+  late String _localTimeZone;
+  String get localTimeZone => _localTimeZone;
 
   // Singletone Factory
 
@@ -57,13 +57,8 @@ class AppDateTime with Service {
     }
 
     _localTimeZone = await FlutterNativeTimezone.getLocalTimezone();
-    if (_localTimeZone != null) {
-      timezone.Location deviceLocation = timezone.getLocation(_localTimeZone!);
-      timezone.setLocalLocation(deviceLocation);
-    }
-    else {
-      debugPrint('AppDateTime: Failed to retrieve local timezone.');
-    }
+    timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
+    timezone.setLocalLocation(deviceLocation);
 
     await super.initService();
   }

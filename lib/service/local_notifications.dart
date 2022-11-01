@@ -25,14 +25,17 @@ import 'package:rokwire_plugin/service/storage.dart';
 
 
 class LocalNotifications with Service {
+  static const int pendingNotificationsLimit = 64;
+
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  List<String?>? _scheduledIds;
   
   // Singletone Factory
 
   static LocalNotifications? _instance;
 
   static LocalNotifications? get instance => _instance;
-  
+
   @protected
   static set instance(LocalNotifications? value) => _instance = value;
 
@@ -63,6 +66,9 @@ class LocalNotifications with Service {
     
     bool? initSuccess = await _initPlugin();
     if (initSuccess == true) {
+      List<String?>? storedPendingIds = Storage().pendingNotificationIds;
+      _scheduledIds = storedPendingIds != null ? List.from(storedPendingIds, growable: false) : List.filled(pendingNotificationsLimit, null);
+
       await super.initService();
     }
     else {
@@ -123,22 +129,25 @@ class LocalNotifications with Service {
   }
 
   void _onTapNotification(NotificationResponse? response) {
+    _clearNotification(notificationId: response?.id, cancel: false);
     // Log.d('Android: on select local notification: ' + payload!);
     // NotificationService().notify(notifySelected, payload);
   }
 
   void _onTapNotificationBackground(NotificationResponse? response) {
+    _clearNotification(notificationId: response?.id, cancel: false);
     // Log.d('Android: on select local notification: ' + payload!);
     // NotificationService().notify(notifySelected, payload);
   }
 
   Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
+    _clearNotification(notificationId: id, cancel: false);
     // Log.d('iOS: on did receive local notification: ' + payload!);
   }
 
-  Future<void> showNotification({String? title, String? message, String? payload = ''}) async {
-    await _localNotifications.show(
-      0,
+  void showNotification(String id, {String? title, String? message, String? payload}) {
+    _localNotifications.show(
+      _getNotificationId(id),
       title,
       message,
       notificationDetails,
@@ -146,16 +155,54 @@ class LocalNotifications with Service {
     );
   }
 
-  Future<void> zonedSchedule({required int id, required DateTime formattedDate, required String? title, required String? message, String? payload = ''}) async {
-    await _localNotifications.zonedSchedule(
-        id,
-        title,
-        message,
-        tz.TZDateTime.from(formattedDate, tz.getLocation(AppDateTime().localTimeZone ?? 'America/Chicago')),
-        notificationDetails,
-        androidAllowWhileIdle: true,
-        payload: payload,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
+  void showPeriodic(String id, {String? title, String? message, RepeatInterval repeatInterval = RepeatInterval.daily, String? payload = ''}) {
+    _localNotifications.periodicallyShow(
+      _getNotificationId(id),
+      title,
+      message,
+      repeatInterval,
+      notificationDetails,
+      payload: payload,
+    );
+  }
+
+  void zonedSchedule(String id, {required DateTime formattedDate, required String? title, required String? message, String? payload = ''}) {
+    _localNotifications.zonedSchedule(
+      _getNotificationId(id),
+      title,
+      message,
+      tz.TZDateTime.from(formattedDate, tz.getLocation(AppDateTime().localTimeZone)),
+      notificationDetails,
+      androidAllowWhileIdle: true,
+      payload: payload,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
+  }
+
+  int _getNotificationId(String id) {
+    int notificationId = _scheduledIds!.indexOf(id);
+    if (notificationId == -1) {
+      notificationId = _scheduledIds!.indexOf(null);
+      _scheduledIds![notificationId] = id;
+      Storage().pendingNotificationIds = _scheduledIds;
+    }
+    return notificationId;
+  }
+
+  void _clearNotification({String? id, int? notificationId, bool cancel = true}) {
+    notificationId ??= (id != null ? _getNotificationId(id) : null);
+    if (notificationId != null) {
+      _scheduledIds![notificationId] = null;
+      Storage().pendingNotificationIds = _scheduledIds;
+
+      if (cancel) {
+        _localNotifications.cancel(notificationId);
+      }
+    }
+  }
+
+  void _clearPendingNotifications() {
+    _localNotifications.cancelAll();
+    Storage().pendingNotificationIds = _scheduledIds = null;
   }
 }
