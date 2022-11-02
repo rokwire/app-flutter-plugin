@@ -378,7 +378,7 @@ class Member {
 
   static Member? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Member(
-      id          : JsonUtils.stringValue(['id']),
+      id          : JsonUtils.stringValue(json['id']),
       userId      : JsonUtils.stringValue(json['user_id']),
       externalId  : JsonUtils.stringValue(json['external_id']),
       name        : JsonUtils.stringValue(json['name']),
