@@ -1036,7 +1036,7 @@ class DateTimeUtils {
     return null;
   }
 
-  DateTime copyDateTime(DateTime date){
+  static DateTime copyDateTime(DateTime date){
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
@@ -1055,6 +1055,21 @@ class DateTimeUtils {
       }
     }
     return null;
+  }
+
+  static Duration? parseDelimitedDurationString(String durationString, Pattern delimiter) {
+    List<String> durationParts = durationString.split(delimiter);
+    if (CollectionUtils.isEmpty(durationParts)) {
+      return null;
+    }
+
+    int days = int.tryParse(durationParts[0]) ?? 0;
+    int hours = durationParts.length > 1 ? int.tryParse(durationParts[1]) ?? 0 : 0;
+    int minutes = durationParts.length > 2 ? int.tryParse(durationParts[2]) ?? 0 : 0;
+    int seconds = durationParts.length > 3 ? int.tryParse(durationParts[3]) ?? 0 : 0;
+    int milliseconds = durationParts.length > 4 ? int.tryParse(durationParts[4]) ?? 0 : 0;
+    int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
+    return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
 }
 

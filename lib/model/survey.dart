@@ -70,9 +70,9 @@ class SurveyResponse {
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
 
-  String id;
+  @override final String id;
+  @override final String type;
   final Map<String, SurveyData> data;
-  final String type;
   final bool scored;
   final String title;
   final String? moreInfo;

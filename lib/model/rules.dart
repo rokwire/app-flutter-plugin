@@ -17,6 +17,7 @@ import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -285,7 +286,7 @@ class RuleAction extends RuleActionResult {
       case "save":
         return _save(engine);
       case "local_notify":
-        //TODO: Schedule local notification to take survey
+        _localNotify(engine);
     }
     return null;
   }
@@ -325,6 +326,36 @@ class RuleAction extends RuleActionResult {
 
   Future<bool> _save(RuleEngine engine) {
     return engine.save();
+  }
+
+  Future<bool> _localNotify(RuleEngine engine) {
+    dynamic alertData = engine.getValOrCollection(data);
+    if (alertData is Alert) {
+      dynamic scheduleType = alertData.params["type"];
+      dynamic schedule = alertData.params["schedule"];
+      if (scheduleType is String && schedule is String) {
+        switch (scheduleType) {
+          case "relative":
+            //TODO: string interpolation for title and text
+            Duration? notifyWaitTime = DateTimeUtils.parseDelimitedDurationString(schedule, ":");
+            if (notifyWaitTime != null) {
+              return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
+                title: alertData.title,
+                message: alertData.text,
+                payload: JsonUtils.encode(alertData.actions),
+                dateTime: DateTime.now().add(notifyWaitTime)
+              );
+            }
+            break;
+          case "absolute":
+            //TODO: implement
+          case "cron":
+            //TODO: implement
+        }
+      }
+    }
+    
+    return Future<bool>(() => false);
   }
 }
 
@@ -424,6 +455,9 @@ class Rule extends RuleResult {
 }
 
 abstract class RuleEngine {
+  abstract final String id;
+  abstract final String type;
+
   final Map<String, dynamic> constants;
   final Map<String, Map<String, String>> strings;
   final Map<String, Rule> subRules;

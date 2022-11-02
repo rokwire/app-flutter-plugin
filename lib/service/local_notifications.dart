@@ -17,7 +17,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
+import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:timezone/timezone.dart' as timezone;
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -152,7 +153,7 @@ class LocalNotifications with Service {
     return false;
   }
 
-  Future<bool> showPeriodic(String id, {String? title, String? message, RepeatInterval repeatInterval = RepeatInterval.daily, String? payload = '', bool overwrite = true}) async {
+  Future<bool> showPeriodic(String id, {String? title, String? message, String? payload = '', RepeatInterval repeatInterval = RepeatInterval.daily, bool overwrite = true}) async {
     if (await _shouldScheduleNotification(id, overwrite)) {
       _localNotifications.periodicallyShow(
         id.hashCode,
@@ -168,13 +169,13 @@ class LocalNotifications with Service {
     return false;
   }
 
-  Future<bool> zonedSchedule(String id, {required DateTime formattedDate, required String? title, required String? message, String? payload = '', bool overwrite = true}) async {
+  Future<bool> zonedSchedule(String id, {String? title, String? message, String? payload = '', DateTime? dateTime, bool overwrite = true}) async {
     if (await _shouldScheduleNotification(id, overwrite)) {
       _localNotifications.zonedSchedule(
         id.hashCode,
         title,
         message,
-        tz.TZDateTime.from(formattedDate, tz.getLocation(AppDateTime().localTimeZone)),
+        timezone.TZDateTime.from(dateTime ?? DateTime.now(), timezone.getLocation(AppDateTime().localTimeZone)),
         notificationDetails,
         androidAllowWhileIdle: true,
         payload: payload,
