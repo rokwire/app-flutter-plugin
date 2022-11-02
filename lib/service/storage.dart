@@ -361,13 +361,4 @@ class Storage with Service {
   String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
   bool? get calendarCanPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: false);
   set calendarCanPrompt(bool? value) => setBoolWithName(calendarEnablePromptKey, value);
-
-  // Local Notifications
-
-  String get pendingNotificationIdsKey => 'edu.illinois.rokwire.local_notifications.pending_ids';
-  List<String?>? get pendingNotificationIds {
-    try { return JsonUtils.decodeList(getStringWithName(pendingNotificationIdsKey))?.cast<String?>(); }
-    catch(e) { debugPrint(e.toString()); return null; }
-  }
-  set pendingNotificationIds(List<String?>? table) => setStringWithName(pendingNotificationIdsKey, JsonUtils.encode(table));
 }

@@ -25,10 +25,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 
 
 class LocalNotifications with Service {
-  static const int pendingNotificationsLimit = 64; // TODO: use growable list instead
-
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  List<String?>? _scheduledIds;
   
   // Singletone Factory
 
@@ -66,10 +63,6 @@ class LocalNotifications with Service {
     
     bool? initSuccess = await _initPlugin();
     if (initSuccess == true) {
-    // List<PendingNotificationRequest> pending = await _localNotifications.pendingNotificationRequests();
-      List<String?>? storedPendingIds = Storage().pendingNotificationIds;
-      _scheduledIds = storedPendingIds != null ? List.from(storedPendingIds, growable: false) : List.filled(pendingNotificationsLimit, null);
-
       await super.initService();
     }
     else {
@@ -130,83 +123,87 @@ class LocalNotifications with Service {
   }
 
   void _onTapNotification(NotificationResponse? response) {
-    _clearNotification(notificationId: response?.id, cancel: false);
     // Log.d('Android: on select local notification: ' + payload!);
     // NotificationService().notify(notifySelected, payload);
   }
 
   @pragma('vm:entry-point')
   void _onTapNotificationBackground(NotificationResponse? response) {
-    _clearNotification(notificationId: response?.id, cancel: false);
     // Log.d('Android: on select local notification: ' + payload!);
     // NotificationService().notify(notifySelected, payload);
   }
 
   Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
-    _clearNotification(notificationId: id, cancel: false);
     // Log.d('iOS: on did receive local notification: ' + payload!);
   }
 
-  void showNotification(String id, {String? title, String? message, String? payload}) {
-    _localNotifications.show(
-      _getNotificationId(id),
-      title,
-      message,
-      notificationDetails,
-      payload: payload,
-    );
-  }
-
-  void showPeriodic(String id, {String? title, String? message, RepeatInterval repeatInterval = RepeatInterval.daily, String? payload = ''}) {
-    _localNotifications.periodicallyShow(
-      _getNotificationId(id),
-      title,
-      message,
-      repeatInterval,
-      notificationDetails,
-      payload: payload,
-    );
-  }
-
-  void zonedSchedule(String id, {required DateTime formattedDate, required String? title, required String? message, String? payload = ''}) {
-    _localNotifications.zonedSchedule(
-      _getNotificationId(id),
-      title,
-      message,
-      tz.TZDateTime.from(formattedDate, tz.getLocation(AppDateTime().localTimeZone)),
-      notificationDetails,
-      androidAllowWhileIdle: true,
-      payload: payload,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime);
-  }
-
-  int _getNotificationId(String id) {
-    // List<PendingNotificationRequest> pending = await _localNotifications.pendingNotificationRequests();
-
-    int notificationId = _scheduledIds!.indexOf(id);
-    if (notificationId == -1) {
-      notificationId = _scheduledIds!.indexOf(null);
-      _scheduledIds![notificationId] = id;
-      Storage().pendingNotificationIds = _scheduledIds;
+  Future<bool> showNotification(String id, {String? title, String? message, String? payload, bool overwrite = true}) async {
+    if (await _shouldScheduleNotification(id, overwrite)) {
+      _localNotifications.show(
+        id.hashCode,
+        title,
+        message,
+        notificationDetails,
+        payload: payload,
+      );
+      return true;
     }
-    return notificationId;
+
+    return false;
   }
 
-  void _clearNotification({String? id, int? notificationId, bool cancel = true}) {
-    notificationId ??= (id != null ? _getNotificationId(id) : null);
-    if (notificationId != null) {
-      _scheduledIds![notificationId] = null;
-      Storage().pendingNotificationIds = _scheduledIds;
-
-      if (cancel) {
-        _localNotifications.cancel(notificationId);
-      }
+  Future<bool> showPeriodic(String id, {String? title, String? message, RepeatInterval repeatInterval = RepeatInterval.daily, String? payload = '', bool overwrite = true}) async {
+    if (await _shouldScheduleNotification(id, overwrite)) {
+      _localNotifications.periodicallyShow(
+        id.hashCode,
+        title,
+        message,
+        repeatInterval,
+        notificationDetails,
+        payload: payload,
+      );
+      return true;
     }
+
+    return false;
   }
 
-  void _clearPendingNotifications() {
-    _localNotifications.cancelAll();
-    Storage().pendingNotificationIds = _scheduledIds = null;
+  Future<bool> zonedSchedule(String id, {required DateTime formattedDate, required String? title, required String? message, String? payload = '', bool overwrite = true}) async {
+    if (await _shouldScheduleNotification(id, overwrite)) {
+      _localNotifications.zonedSchedule(
+        id.hashCode,
+        title,
+        message,
+        tz.TZDateTime.from(formattedDate, tz.getLocation(AppDateTime().localTimeZone)),
+        notificationDetails,
+        androidAllowWhileIdle: true,
+        payload: payload,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime
+      );
+      return true;
+    }
+
+    return false;
   }
+
+  Future<PendingNotificationRequest?> getPendingNotification(String id) async {
+    List<PendingNotificationRequest> pendingList = await _localNotifications.pendingNotificationRequests();
+    try {
+      return pendingList.firstWhere((element) => element.id == id.hashCode);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  Future<void> clearNotification(String id, {bool cancel = true}) async {
+    await _localNotifications.cancel(id.hashCode);
+  }
+
+  Future<void> clearPendingNotifications() async {
+    await _localNotifications.cancelAll();
+  }
+  
+  Future<bool> _shouldScheduleNotification(String id, bool overwrite) async => overwrite || (await getPendingNotification(id) == null);
 }

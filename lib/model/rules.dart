@@ -15,6 +15,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/survey.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
@@ -563,7 +564,7 @@ abstract class RuleEngine {
   String getDisplayVal(String key, dynamic param) {
     dynamic val = getVal(key, param);
     if (val is DateTime) {
-      return DateTimeUtils.getDisplayDateTime(val);
+      return AppDateTime().getDisplayDateTime(val);
     }
     return val.toString();
   }
