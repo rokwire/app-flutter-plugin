@@ -295,7 +295,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
-    if (Config().groupsUrl != null) {
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
         'title': title,
