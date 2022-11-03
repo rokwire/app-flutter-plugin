@@ -329,10 +329,10 @@ class RuleAction extends RuleActionResult {
   }
 
   Future<bool> _localNotify(RuleEngine engine) {
-    dynamic alertData = engine.getValOrCollection(data);
-    if (alertData is Alert) {
-      dynamic scheduleType = alertData.params["type"];
-      dynamic schedule = alertData.params["schedule"];
+    if (data is Map<String, dynamic>) {
+      Alert alert = Alert.fromJson(data);
+      dynamic scheduleType = alert.params?["type"];
+      dynamic schedule = alert.params?["schedule"];
       if (scheduleType is String && schedule is String) {
         switch (scheduleType) {
           case "relative":
@@ -340,9 +340,9 @@ class RuleAction extends RuleActionResult {
             Duration? notifyWaitTime = DateTimeUtils.parseDelimitedDurationString(schedule, ":");
             if (notifyWaitTime != null) {
               return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-                title: alertData.title,
-                message: alertData.text,
-                payload: JsonUtils.encode(alertData.actions),
+                title: alert.title,
+                message: alert.text,
+                payload: JsonUtils.encode(alert.actions),
                 dateTime: DateTime.now().add(notifyWaitTime)
               );
             }

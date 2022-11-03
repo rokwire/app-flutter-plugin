@@ -55,7 +55,7 @@ class ActionBuilder {
   static List<ButtonAction> actionTypeButtonActions(BuildContext context, List<ActionData>? actions, {BuildContext? dismissContext}) {
     List<ButtonAction> buttonActions = [];
     for (ActionData action in actions ?? []) {
-      ButtonAction? buttonAction = ActionBuilder.actionTypeButtonAction(context, action);
+      ButtonAction? buttonAction = ActionBuilder.actionTypeButtonAction(context, action, dismissContext: dismissContext);
       if (buttonAction != null) {
         buttonActions.add(buttonAction);
       }

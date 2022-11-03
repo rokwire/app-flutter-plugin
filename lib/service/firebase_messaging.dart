@@ -21,7 +21,6 @@ import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messagin
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/inbox.dart';
 import 'package:rokwire_plugin/service/firebase_core.dart';
-import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -93,7 +92,7 @@ class FirebaseMessaging with Service {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { FirebaseCore(), LocalNotifications(), Storage(), };
+    return { FirebaseCore(), Storage(), };
   }
 
   // Token

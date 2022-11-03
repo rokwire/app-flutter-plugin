@@ -15,18 +15,21 @@
  */
  
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/polls.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
-
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class LocalNotifications with Service {
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  static const String notifyLocalNotificationTapped = "edu.illinois.rokwire.local_notifications.notification.tapped";
   
   // Singletone Factory
 
@@ -41,6 +44,8 @@ class LocalNotifications with Service {
 
   @protected
   LocalNotifications.internal();
+
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   // Service
 
@@ -77,10 +82,10 @@ class LocalNotifications with Service {
   }
 
   Future<bool?> _initPlugin() {
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('app_icon');
+    AndroidInitializationSettings androidSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
     DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
     InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings);
-    return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification, onDidReceiveBackgroundNotificationResponse: _onTapNotificationBackground);
+    return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification, onDidReceiveBackgroundNotificationResponse: onTapNotificationBackground);
   }
 
   @override
@@ -124,14 +129,12 @@ class LocalNotifications with Service {
   }
 
   void _onTapNotification(NotificationResponse? response) {
-    // Log.d('Android: on select local notification: ' + payload!);
-    // NotificationService().notify(notifySelected, payload);
+    NotificationService().notify(notifyLocalNotificationTapped, getActionFromNotificationResponse(response));
   }
 
   @pragma('vm:entry-point')
-  void _onTapNotificationBackground(NotificationResponse? response) {
-    // Log.d('Android: on select local notification: ' + payload!);
-    // NotificationService().notify(notifySelected, payload);
+  static void onTapNotificationBackground(NotificationResponse? response) {
+    NotificationService().notify(notifyLocalNotificationTapped, getActionFromNotificationResponse(response));
   }
 
   Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
@@ -204,6 +207,36 @@ class LocalNotifications with Service {
 
   Future<void> clearPendingNotifications() async {
     await _localNotifications.cancelAll();
+  }
+
+  static ActionData? getActionFromNotificationResponse(NotificationResponse? response) {
+    List<ActionData> actions = ActionData.listFromJson(JsonUtils.listValue(JsonUtils.decode(response?.payload)));
+    if (CollectionUtils.isNotEmpty(actions)) {
+      switch (response?.notificationResponseType) {
+        case NotificationResponseType.selectedNotification:
+          if (actions.length > 1) {
+            for (ActionData action in actions) {
+              dynamic primary = action.params["primary"];
+              if (primary is bool && primary) {
+                return action;
+              }
+            }
+          }
+          return actions[0];
+        case NotificationResponseType.selectedNotificationAction:
+          for (ActionData action in actions) {
+            dynamic actionId = action.params["action_id"];
+            if (actionId is String && actionId == response?.actionId) {
+              return action;
+            }
+          }
+          return null;
+        default:
+          return null;
+      }
+    }
+    
+    return null;
   }
   
   Future<bool> _shouldScheduleNotification(String id, bool overwrite) async => overwrite || (await getPendingNotification(id) == null);
