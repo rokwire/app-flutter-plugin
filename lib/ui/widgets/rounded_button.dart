@@ -162,11 +162,9 @@ class _RoundedButtonState extends State<RoundedButton> {
   }
 
   Widget get _outerContent {
-    //TODO: Fix ripple effect from InkWell (currently wrong shape and behind button content)
+    //TODO: Fix ripple effect from InkWell (behind button content)
     return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
-      Material(color: Styles().colors?.background, child: InkWell(onTap: widget.onTap, borderRadius: borderRadius, child:
-        _wrapperContent
-      )),
+      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent),
     );
   }
 
