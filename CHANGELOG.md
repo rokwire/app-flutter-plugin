@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Intermediate work on "muted" and "unread" notifications [#177](https://github.com/rokwire/app-flutter-plugin/issues/177).
 - Add survey UI components [#161](https://github.com/rokwire/app-flutter-plugin/issues/161)
 - Introduce ModalImageHolder widget  [#2474](https://github.com/rokwire/illinois-app/issues/2474)
+- Survey rules local notifications action [#179](https://github.com/rokwire/app-flutter-plugin/issues/179)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
