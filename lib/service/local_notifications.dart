@@ -15,14 +15,12 @@
  */
  
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
@@ -51,10 +49,6 @@ class LocalNotifications with Service {
 
   @override
   Future<void> initService() async {
-    // NotificationAppLaunchDetails? launchDetails = await _localNotifications.getNotificationAppLaunchDetails();
-    // if (launchDetails?.didNotificationLaunchApp == true) {
-    //   //TODO: use launchDetails!.notificationResponse to do some navigation?
-    // }
     try {
       await RokwirePlugin.createAndroidNotificationChannel(androidNotificationChannel);
       await _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(androidNotificationChannel);
@@ -68,7 +62,7 @@ class LocalNotifications with Service {
     }
     
     bool? initSuccess = await _initPlugin();
-    if (initSuccess == true) {
+    if (initSuccess == true) {  
       await super.initService();
     }
     else {
@@ -85,7 +79,7 @@ class LocalNotifications with Service {
     AndroidInitializationSettings androidSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
     DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
     InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings);
-    return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification, onDidReceiveBackgroundNotificationResponse: onTapNotificationBackground);
+    return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification);
   }
 
   @override
@@ -129,16 +123,13 @@ class LocalNotifications with Service {
   }
 
   void _onTapNotification(NotificationResponse? response) {
-    NotificationService().notify(notifyLocalNotificationTapped, getActionFromNotificationResponse(response));
-  }
-
-  @pragma('vm:entry-point')
-  static void onTapNotificationBackground(NotificationResponse? response) {
-    NotificationService().notify(notifyLocalNotificationTapped, getActionFromNotificationResponse(response));
+    NotificationService().notify(notifyLocalNotificationTapped, _getActionFromNotificationResponse(response));
   }
 
   Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
-    // Log.d('iOS: on did receive local notification: ' + payload!);
+    NotificationService().notify(notifyLocalNotificationTapped, NotificationResponse(
+      notificationResponseType: NotificationResponseType.selectedNotification, id: id, payload: payload
+    ));
   }
 
   Future<bool> showNotification(String id, {String? title, String? message, String? payload, bool overwrite = true}) async {
@@ -209,30 +200,37 @@ class LocalNotifications with Service {
     await _localNotifications.cancelAll();
   }
 
-  static ActionData? getActionFromNotificationResponse(NotificationResponse? response) {
-    List<ActionData> actions = ActionData.listFromJson(JsonUtils.listValue(JsonUtils.decode(response?.payload)));
-    if (CollectionUtils.isNotEmpty(actions)) {
-      switch (response?.notificationResponseType) {
-        case NotificationResponseType.selectedNotification:
-          if (actions.length > 1) {
+  Future<ActionData?> getNotificationResponseAction() async {
+    NotificationAppLaunchDetails? launchDetails = await _localNotifications.getNotificationAppLaunchDetails();
+    return (launchDetails?.didNotificationLaunchApp == true) ? _getActionFromNotificationResponse(launchDetails?.notificationResponse) : null;
+  }
+
+  ActionData? _getActionFromNotificationResponse(NotificationResponse? response) {
+    if (response != null) {
+      List<ActionData> actions = ActionData.listFromJson(JsonUtils.listValue(JsonUtils.decode(response.payload)));
+      if (CollectionUtils.isNotEmpty(actions)) {
+        switch (response.notificationResponseType) {
+          case NotificationResponseType.selectedNotification:
+            if (actions.length > 1) {
+              for (ActionData action in actions) {
+                dynamic primary = action.params["primary"];
+                if (primary is bool && primary) {
+                  return action;
+                }
+              }
+            }
+            return actions[0];
+          case NotificationResponseType.selectedNotificationAction:
             for (ActionData action in actions) {
-              dynamic primary = action.params["primary"];
-              if (primary is bool && primary) {
+              dynamic actionId = action.params["action_id"];
+              if (actionId is String && actionId == response.actionId) {
                 return action;
               }
             }
-          }
-          return actions[0];
-        case NotificationResponseType.selectedNotificationAction:
-          for (ActionData action in actions) {
-            dynamic actionId = action.params["action_id"];
-            if (actionId is String && actionId == response?.actionId) {
-              return action;
-            }
-          }
-          return null;
-        default:
-          return null;
+            return null;
+          default:
+            return null;
+        }
       }
     }
     

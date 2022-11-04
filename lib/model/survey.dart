@@ -219,7 +219,7 @@ class Survey extends RuleEngine {
 
   void evaluate({bool evalResultRules = false}) {
     SurveyStats surveyStats = SurveyStats();
-    for (SurveyData? data = firstQuestion?.followUp(this); data != null; data = data.followUp(this)) {
+    for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       surveyStats += data.stats(this);
     }
     stats = surveyStats;
@@ -241,8 +241,8 @@ class Survey extends RuleEngine {
     return false;
   }
 
-  bool canContinue({bool deep = true}) {
-    for (SurveyData? data = firstQuestion?.followUp(this); data != null; data = data.followUp(this)) {
+  bool canContinue() {
+    for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       if (!data.canContinue) {
         return false;
       }
