@@ -20,10 +20,10 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyResponse {
-  String id;
-  Survey survey;
-  DateTime dateCreated;
-  DateTime? dateUpdated;
+  final String id;
+  final Survey survey;
+  final DateTime dateCreated;
+  final DateTime? dateUpdated;
 
   DateTime get dateTaken => dateUpdated ?? dateCreated;
 
@@ -63,6 +63,29 @@ class SurveyResponse {
       }
     }
     return result;
+  }
+}
+
+class SurveyAlert {
+  final String contactKey;
+  final dynamic content;
+  final DateTime? dateCreated;
+  final DateTime? dateUpdated;
+
+  SurveyAlert({required this.contactKey, required this.content, this.dateCreated, this.dateUpdated});
+
+  factory SurveyAlert.fromJson(Map<String, dynamic> json) {
+    return SurveyAlert(
+      contactKey: JsonUtils.stringValue(json['contact_key']) ?? '',
+      content: json['content'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'contact_key': contactKey,
+      'content': content,
+    };
   }
 }
 
