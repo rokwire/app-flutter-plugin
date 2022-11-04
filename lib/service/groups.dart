@@ -295,10 +295,9 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
-    if (Config().groupsUrl != null) {
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
-      String? post;
-      /*post = JsonUtils.encode({
+      String? post = JsonUtils.encode({
         'title': title,
         'category': category,
         'tags': tags,
@@ -307,32 +306,13 @@ class Groups with Service implements NotificationsListener {
         'research_group': true,
         'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });*/
+      });
       
-      Map<String, String> queryParams = {};
-      if (StringUtils.isNotEmpty(title)) {
-        queryParams.addAll({'title': title!});
-      }
-      if (StringUtils.isNotEmpty(category)) {
-        queryParams.addAll({'category': category!});
-      }
-      if (CollectionUtils.isNotEmpty(tags)) {
-        queryParams.addAll({'tags': tags!.join(',')});
-      }
-      if (offset != null) {
-        queryParams.addAll({'offset': offset.toString()});
-      }
-      if (limit != null) {
-        queryParams.addAll({'limit': limit.toString()});
-      }
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
-
       try {
         await _ensureLogin();
         Response? response = await Network().get(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return Group.listFromJson(JsonUtils.decodeList(responseBody));
       } catch (e) {
         debugPrint(e.toString());
@@ -385,12 +365,20 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false}) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchGroups = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
-      String encodedTExt = Uri.encodeComponent(searchText);
-      String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt${includeHidden? "&include_hidden=true" :""}';
-      Response? response = await Network().get(url, auth: Auth2());
+      String? post = JsonUtils.encode({
+        'title': searchText, // Uri.encodeComponent(searchText)
+        'include_hidden': includeHidden,
+        'research_group': researchGroups,
+        'research_open': researchOpen,
+        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+      });
+
+
+      String url = '${Config().groupsUrl}/v2/groups';
+      Response? response = await Network().get(url, auth: Auth2(), body: post);
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
       if (responseCode == 200) {
@@ -435,6 +423,7 @@ class Groups with Service implements NotificationsListener {
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
+        Log.d('POST $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         Map<String, dynamic>? jsonData = JsonUtils.decodeMap(response?.body);
         if (responseCode == 200) {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
@@ -467,6 +456,7 @@ class Groups with Service implements NotificationsListener {
         String? body = JsonUtils.encode(json);
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
+        Log.d('PUT $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         if(responseCode == 200){
           NotificationService().notify(notifyGroupUpdated, group.id);
           return null;

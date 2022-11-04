@@ -367,15 +367,17 @@ class Inbox with Service implements NotificationsListener {
 
   // Unread Messages Count
   Future<void> _loadUnreadMessagesCount() async {
-    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/unread/count" : null;
-    Response? response = await Network().get(url, auth: Auth2());
-    int? responseCode = response?.statusCode;
-    String? responseBody = response?.body;
-    if (responseCode == 200) {
-      int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
-      _applyUnreadMessagesCount(unreadCount);
-    } else {
-      debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
+    if (Auth2().isLoggedIn && (Config().notificationsUrl != null)) {
+      String url = "${Config().notificationsUrl}/api/message/unread/count";
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
+        _applyUnreadMessagesCount(unreadCount);
+      } else {
+        debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
+      }
     }
   }
 

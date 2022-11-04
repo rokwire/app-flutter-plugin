@@ -389,6 +389,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       _oidcLogin = null;
 
       Response? response = await Network().post(url, headers: headers, body: post);
+      Log.d("Login: ${response?.statusCode}, ${response?.body}", lineLength: 512);
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       bool result = await processLoginResponse(responseJson);
       _log(result ? "Auth2: login succeeded: ${response?.statusCode}\n${response?.body}" : "Auth2: login failed: ${response?.statusCode}\n${response?.body}");

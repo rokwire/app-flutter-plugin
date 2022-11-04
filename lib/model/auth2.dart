@@ -217,7 +217,11 @@ class Auth2Account {
   }
 
   bool get isManagedGroupAdmin {
-    return hasPermission('managed_group_admin');
+    return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
+  }
+
+  bool get isResearchGroupAdmin {
+    return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
