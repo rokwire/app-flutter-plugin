@@ -19,6 +19,7 @@ import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -281,12 +282,11 @@ class RuleAction extends RuleActionResult {
         _setResult(engine);
         return null;
       case "notify":
-        //TODO: Send notification to providers/emergency contacts
-        // send request with survey data to polls BB
+        return _notify(engine);
       case "save":
         return _save(engine);
       case "local_notify":
-        _localNotify(engine);
+        return _localNotify(engine);
     }
     return null;
   }
@@ -323,6 +323,15 @@ class RuleAction extends RuleActionResult {
       NotificationService().notify(Alerts.notifyAlert, alertData);
     }
   }
+
+  Future<bool> _notify(RuleEngine engine) {
+    dynamic notificationData = engine.getValOrCollection(data);
+    if (notificationData is Map<String, dynamic>) {
+      SurveyAlert alert = SurveyAlert.fromJson(notificationData);
+      return Polls().createSurveyAlert(alert);
+    }
+    return Future<bool>(() => false);
+  } 
 
   Future<bool> _save(RuleEngine engine) {
     return engine.save();

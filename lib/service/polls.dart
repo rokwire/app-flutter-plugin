@@ -414,23 +414,23 @@ class Polls with Service implements NotificationsListener {
     return null;
   }
 
-  Future<SurveyAlert?> createSurveyAlert(SurveyAlert alert) async {
+  Future<bool> createSurveyAlert(SurveyAlert alert) async {
     if (enabled) {
       String? body = JsonUtils.encode(alert.toJson());
       String url = '${Config().quickPollsUrl}/survey-alerts';
       Response? response = await Network().post(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
-      String? responseString = response?.body;
-      if ((response != null) && (responseCode == 200)) {
-        Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
-        if (responseJson != null) {
-          SurveyAlert? response = SurveyAlert.fromJson(responseJson);
-          // NotificationService().notify(notifySurveyResponseCreated);
-          return response;
-        }
-      }
+      return (response != null) && (responseCode == 200);
+      // String? responseString = response?.body;
+      // if ((response != null) && (responseCode == 200)) {
+      //   Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
+      //   if (responseJson != null) {
+      //     SurveyAlert? response = SurveyAlert.fromJson(responseJson);
+      //     return response;
+      //   }
+      // }
     }
-    return null;
+    return false;
   }
 
   bool presentPollId(String? pollId) {
