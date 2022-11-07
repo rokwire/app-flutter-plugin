@@ -18,17 +18,12 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:timezone/timezone.dart' as timezone;
-import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/localization.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
@@ -393,21 +388,7 @@ class AppVersion {
   }
 }
 
-class UrlUtils {
-
-  static void launch(BuildContext context, String? url, {bool? internal}) {
-    if (StringUtils.isNotEmpty(url)) {
-      if (internal == true || (internal != false && UrlUtils.launchInternal(url))) {
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => WebPanel(url: url)));
-      } else {
-        Uri? uri = Uri.tryParse(url!);
-        if (uri != null) {
-          launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
-      }
-    }
-  }
-  
+class UrlUtils {  
   static String? getScheme(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
@@ -1002,6 +983,14 @@ class DateTimeUtils {
     return dateTime;
   }
 
+  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
+  }
+
+  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
       case "monday"   : return 1;
@@ -1047,7 +1036,7 @@ class DateTimeUtils {
     return null;
   }
 
-  DateTime copyDateTime(DateTime date){
+  static DateTime copyDateTime(DateTime date){
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
@@ -1068,87 +1057,19 @@ class DateTimeUtils {
     return null;
   }
 
-  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
-    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
-  }
-
-  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
-    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
-  }
-
-  static DateTime? dateTimeLocalFromJson(dynamic json) {
-    return AppDateTime().getDeviceTimeFromUtcTime(DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json)));
-  }
-
-  static String? dateTimeLocalToJson(DateTime? dateTime) {
-    return DateTimeUtils.utcDateTimeToString(AppDateTime().getUtcTimeFromDeviceTime(dateTime));
-  }
-
-  static String getDisplayDateTime(DateTime dateTimeUtc, {bool allDay = false, bool considerSettingsDisplayTime = true}) {
-    String? timePrefix = getDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime, includeAtSuffix: true);
-    String? timeSuffix = getDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime);
-    return '$timePrefix $timeSuffix';
-  }
-
-  static String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
-    String? displayDay = '';
-    if (dateTimeUtc != null) {
-      bool useDeviceLocalTime = AppDateTime().useDeviceLocalTimeZone;
-      DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      DateTime nowDevice = DateTime.now();
-      DateTime nowToCompare = useDeviceLocalTime ? nowDevice : AppDateTime().getUniLocalTimeFromUtcTime(nowDevice.toUtc())!;
-      int calendarDaysDiff = dateTimeToCompare.day - nowToCompare.day;
-      int timeDaysDiff = dateTimeToCompare.difference(nowToCompare).inDays;
-      if ((calendarDaysDiff != 0) && (calendarDaysDiff != timeDaysDiff)) {
-        timeDaysDiff += 1;
-      }
-      if (timeDaysDiff == 0) {
-        displayDay = Localization().getStringEx('model.explore.time.today', 'Today');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
-        }
-      } else if (timeDaysDiff == 1) {
-        displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Tomorrow');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
-        }
-      } else if (timeDaysDiff == -1) {
-        displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
-        }
-      } else if (timeDaysDiff < 0 && timeDaysDiff > -7) {
-        displayDay = AppDateTime().formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
-      } else {
-        displayDay = AppDateTime().formatDateTime(dateTimeToCompare, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
-      }
-    }
-    return displayDay;
-  }
-
-  static String? getDisplayTime({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true}) {
-    String? timeToString = '';
-    if (dateTimeUtc != null && !allDay) {
-      bool useDeviceLocalTime = AppDateTime().useDeviceLocalTimeZone;
-      DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      String format = (dateTimeToCompare.minute == 0) ? 'ha' : 'h:mma';
-      timeToString = AppDateTime().formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTime);
-    }
-    return timeToString;
-  }
-
-  static DateTime? _getDateTimeToCompare({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
-    if (dateTimeUtc == null) {
+  static Duration? parseDelimitedDurationString(String durationString, Pattern delimiter) {
+    List<String> durationParts = durationString.split(delimiter);
+    if (CollectionUtils.isEmpty(durationParts)) {
       return null;
     }
-    DateTime? dateTimeToCompare;
-    bool useDeviceLocalTime = AppDateTime().useDeviceLocalTimeZone;
-    if (useDeviceLocalTime && considerSettingsDisplayTime) {
-      dateTimeToCompare = AppDateTime().getDeviceTimeFromUtcTime(dateTimeUtc);
-    } else {
-      dateTimeToCompare = AppDateTime().getUniLocalTimeFromUtcTime(dateTimeUtc);
-    }
-    return dateTimeToCompare;
+
+    int days = int.tryParse(durationParts[0]) ?? 0;
+    int hours = durationParts.length > 1 ? int.tryParse(durationParts[1]) ?? 0 : 0;
+    int minutes = durationParts.length > 2 ? int.tryParse(durationParts[2]) ?? 0 : 0;
+    int seconds = durationParts.length > 3 ? int.tryParse(durationParts[3]) ?? 0 : 0;
+    int milliseconds = durationParts.length > 4 ? int.tryParse(durationParts[4]) ?? 0 : 0;
+    int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
+    return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
 }
 
