@@ -356,7 +356,7 @@ class SurveyStats {
         if (subKey != null) {
           return responseData[subKey];
         }
-        return null;
+        return responseData;
     }
     return null;
   }

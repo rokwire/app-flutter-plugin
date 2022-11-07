@@ -621,7 +621,7 @@ abstract class RuleEngine {
         if (entry.value is String) {
           out[entry.key] = getVal(entry.value, null);
         } else {
-          out[entry.key] = entry.value;
+          out[entry.key] = getValOrCollection(entry.value);
         }
       }
       return out;
@@ -631,7 +631,7 @@ abstract class RuleEngine {
         if (data[i] is String) {
           out.add(getVal(data[i], null));
         } else {
-          out.add(data[i]);
+          out.add(getValOrCollection(data[i]));
         }
       }
       return out;
