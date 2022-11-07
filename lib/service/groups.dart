@@ -285,7 +285,7 @@ class Groups with Service implements NotificationsListener {
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category}) async {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
     if (contentType == GroupsContentType.my) {
       await _updateUserGroupsFromNetSync();
       return userGroups;
@@ -294,13 +294,14 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
         'title': title,
         'category': category,
         'tags': tags,
+        'privacy': groupPrivacyToString(privacy),
         'offset': offset,
         'limit': limit,
         'research_group': true,
@@ -312,7 +313,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Response? response = await Network().get(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
-        Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return Group.listFromJson(JsonUtils.decodeList(responseBody));
       } catch (e) {
         debugPrint(e.toString());
@@ -321,42 +322,25 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
+  Future<List<Group>?> _loadAllGroups({String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
-      Map<String, String> queryParams = {};
-      if (StringUtils.isNotEmpty(category)) {
-        queryParams.addAll({'category': category!});
-      }
-      if (StringUtils.isNotEmpty(title)) {
-        queryParams.addAll({'title': title!});
-      }
-      if (privacy != null) {
-        queryParams.addAll({'privacy': groupPrivacyToString(privacy)!});
-      }
-      /*
-      // TMP disable paging - there is a problem on the backend
-      if (offset != null) {
-        queryParams.addAll({'offset': offset.toString()});
-      }
-      if (limit != null) {
-        queryParams.addAll({'limit': limit.toString()});
-      }*/
       String url = '${Config().groupsUrl}/v2/groups';
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
+      String? post = JsonUtils.encode({
+        'title': title,
+        'category': category,
+        'tags': tags,
+        'privacy': groupPrivacyToString(privacy),
+        'offset': offset,
+        'limit': limit,
+      });
+
 
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, auth: Auth2());
-        int responseCode = response?.statusCode ?? -1;
-        String? responseBody = response?.body;
-        if (responseCode == 200) {
-          List<dynamic>? groupsJson = JsonUtils.decodeList(responseBody);
-          return Group.listFromJson(groupsJson);
-        } else {
-          debugPrint('Failed to load all groups for url {$url}. Response: $responseCode $responseBody');
-        }
+        Response? response = await Network().get(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+        return Group.listFromJson(JsonUtils.decodeList(responseBody));
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -423,7 +407,7 @@ class Groups with Service implements NotificationsListener {
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
-        Log.d('POST $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
+        //Log.d('POST $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         Map<String, dynamic>? jsonData = JsonUtils.decodeMap(response?.body);
         if (responseCode == 200) {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
@@ -456,7 +440,7 @@ class Groups with Service implements NotificationsListener {
         String? body = JsonUtils.encode(json);
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
-        Log.d('PUT $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
+        //Log.d('PUT $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         if(responseCode == 200){
           NotificationService().notify(notifyGroupUpdated, group.id);
           return null;
