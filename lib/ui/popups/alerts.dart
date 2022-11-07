@@ -12,7 +12,7 @@ class Alerts {
   static void handleNotification(BuildContext context, Alert alert) {
     List<ButtonAction> buttonActions = [];
     for (ActionData action in alert.actions ?? []) {
-      ButtonAction? buttonAction = ActionBuilder.actionTypeButtonAction(context, action, dismissContext: context, params: alert.params);
+      ButtonAction? buttonAction = ActionBuilder.actionTypeButtonAction(context, action, dismissContext: context);
       if (buttonAction != null) {
         buttonActions.add(buttonAction);
       }
