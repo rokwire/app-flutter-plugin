@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -33,8 +34,8 @@ class SurveyResponse {
     return SurveyResponse(
       JsonUtils.stringValue(json["id"]) ?? "",
       Survey.fromJson(json['survey']),
-      DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
-      DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
+      AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
+      AppDateTime().dateTimeLocalFromJson(json['date_updated']),
     );
   }
 
@@ -42,8 +43,8 @@ class SurveyResponse {
     return {
       'id': id,
       'survey': survey.toJson(),
-      'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
-      'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
+      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
+      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
     };
   }
 
@@ -69,9 +70,9 @@ class SurveyResponse {
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
 
-  String id;
+  @override final String id;
+  @override final String type;
   final Map<String, SurveyData> data;
-  final String type;
   final bool scored;
   final String title;
   final String? moreInfo;
@@ -108,8 +109,8 @@ class Survey extends RuleEngine {
       resultRules: JsonUtils.listOrNull((json) => Rule.listFromJson(json), JsonUtils.decode(json['result_rules'])),
       resultData: JsonUtils.decode(json['result_json']),
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
-      dateCreated: DateTimeUtils.dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
-      dateUpdated: DateTimeUtils.dateTimeLocalFromJson(json['date_updated']),
+      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
+      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
@@ -130,8 +131,8 @@ class Survey extends RuleEngine {
       'result_rules': JsonUtils.encode(Rule.listToJson(resultRules)),
       'result_json': JsonUtils.encode(resultData),
       'response_keys': responseKeys,
-      'date_created': DateTimeUtils.dateTimeLocalToJson(dateCreated),
-      'date_updated': DateTimeUtils.dateTimeLocalToJson(dateUpdated),
+      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
+      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
     };
   }
@@ -217,9 +218,8 @@ class Survey extends RuleEngine {
   }
 
   void evaluate({bool evalResultRules = false}) {
-    //TODO: add params to be passed in on evaluate?
     SurveyStats surveyStats = SurveyStats();
-    for (SurveyData? data = firstQuestion?.followUp(this); data != null; data = data.followUp(this)) {
+    for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       surveyStats += data.stats(this);
     }
     stats = surveyStats;
@@ -241,8 +241,8 @@ class Survey extends RuleEngine {
     return false;
   }
 
-  bool canContinue({bool deep = true}) {
-    for (SurveyData? data = firstQuestion?.followUp(this); data != null; data = data.followUp(this)) {
+  bool canContinue() {
+    for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       if (!data.canContinue) {
         return false;
       }
@@ -681,8 +681,8 @@ class SurveyQuestionDateTime extends SurveyData {
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionDateTime(
-      startTime: DateTimeUtils.dateTimeLocalFromJson(json['star_time']),
-      endTime: DateTimeUtils.dateTimeLocalFromJson(json['end_time']),
+      startTime: AppDateTime().dateTimeLocalFromJson(json['star_time']),
+      endTime: AppDateTime().dateTimeLocalFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 
       question: json['text'],
@@ -720,8 +720,8 @@ class SurveyQuestionDateTime extends SurveyData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['start_time'] = DateTimeUtils.dateTimeLocalToJson(startTime);
-    json['end_time'] = DateTimeUtils.dateTimeLocalToJson(endTime);
+    json['start_time'] = AppDateTime().dateTimeLocalToJson(startTime);
+    json['end_time'] = AppDateTime().dateTimeLocalToJson(endTime);
     json['ask_time'] = askTime;
     json['type'] = 'survey_data.date_time';
     return json;

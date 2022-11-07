@@ -23,6 +23,7 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -381,11 +382,11 @@ class Polls with Service implements NotificationsListener {
         queryParams['survey_types'] = surveyTypes!.join(',');
       }
       if (startDate != null) {
-        String? startDateFormatted = DateTimeUtils.dateTimeLocalToJson(startDate);
+        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(startDate);
         queryParams['start_date'] = startDateFormatted!;
       }
       if (endDate != null) {
-        String? endDateFormatted = DateTimeUtils.dateTimeLocalToJson(endDate);
+        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
         queryParams['end_date'] = endDateFormatted!;
       }
       if (limit != null) {
