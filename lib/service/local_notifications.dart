@@ -23,7 +23,6 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class LocalNotifications with Service {
@@ -80,11 +79,6 @@ class LocalNotifications with Service {
     DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
     InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings);
     return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification);
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { AppDateTime(), Storage(), };
   }
 
   // AndroidNotificationChannel
