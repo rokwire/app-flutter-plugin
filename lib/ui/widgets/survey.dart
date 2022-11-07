@@ -25,22 +25,51 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
+class SurveyWidgetController {
+  // Controllers
+  void Function()? continueSurvey;
+  Survey? Function()? getSurvey;
+
+  // Callbacks
+  Function(bool)? onChangeSurveyResponse;
+  Function? onComplete;
+  Function(Survey?)? onLoad;
+
+  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad});
+}
+
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
-  final Function(bool) onChangeSurveyResponse;
-  final Function? onComplete;
-  final Function(Survey?)? onLoad;
+  final bool internalContinueButton;
 
-  const SurveyWidget({Key? key, required this.survey, required this.onChangeSurveyResponse,
-    this.inputEnabled = true, this.dateTaken, this.showResult = false, this.surveyDataKey,
-    this.onComplete, this.onLoad}) : super(key: key);
+  late final SurveyWidgetController controller;
+
+  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken,
+    this.showResult = false, this.internalContinueButton = true, this.surveyDataKey, SurveyWidgetController? controller}) :
+        super(key: key) {
+    this.controller = controller ?? SurveyWidgetController();
+  }
 
   @override
   State<SurveyWidget> createState() => _SurveyWidgetState();
+
+  static Widget buildContinueButton(SurveyWidgetController controller) {
+    Survey? survey = controller.getSurvey?.call();
+    bool canContinue =  survey?.canContinue() == true;
+    return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+      RoundedButton(
+          label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"),
+          textColor: canContinue ? null : Styles().colors?.disabledTextColor,
+          borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
+          enabled: canContinue,
+          onTap: controller.continueSurvey,
+          progress: null),
+    ]);
+  }
 }
 
 class _SurveyWidgetState extends State<SurveyWidget> {
@@ -51,6 +80,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   @override
   void initState() {
     super.initState();
+
+    widget.controller.continueSurvey = _onTapContinue;
+    widget.controller.getSurvey = () => _survey;
 
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -63,9 +95,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           _survey = survey;
           _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
           _mainSurveyData?.evaluateDefaultResponse(_survey!);
-          if (widget.onLoad != null) {
-            widget.onLoad!(survey);
-          }
+          widget.controller.onLoad?.call(survey);
         }
         if (mounted) {
           _setLoading(false);
@@ -96,10 +126,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Visibility(visible: widget.dateTaken != null, child: _buildDateTaken()),
-            Visibility(visible: _survey?.moreInfo != null, child: _buildMoreInfo()),
+            Visibility(visible: StringUtils.isNotEmpty(_survey?.moreInfo), child: _buildMoreInfo()),
             _buildContent(),
             Visibility(visible: widget.showResult, child: _buildResult() ?? Container()),
-            Visibility(visible: widget.inputEnabled, child: _buildContinueButton()),
+            Visibility(visible: widget.inputEnabled && widget.internalContinueButton,
+                child: SurveyWidget.buildContinueButton(widget.controller)),
         ]),
       ) : Container();
   }
@@ -127,10 +158,13 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   Widget _buildContent() {
-    Widget? questionWidget = _buildInlineSurveyWidget(_mainSurveyData!);
-    List<Widget> followUps = [];
+    if (_survey == null) {
+      return Container();
+    }
+
+    List<Widget> questions = [];
     //TODO: use replace flag
-    for (SurveyData? data = _mainSurveyData!.followUp(_survey!); data != null; data = data.followUp(_survey!)) {
+    for (SurveyData? data = _mainSurveyData; data != null; data = data.followUp(_survey!)) {
       Widget? followUp = _buildInlineSurveyWidget(data);
       if (followUp != null) {
         // GlobalKey? key;
@@ -138,20 +172,21 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         //   key = GlobalKey();
         //   dataKey = key;
         // }
-        followUps.add(Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: followUp));
+        if (questions.isNotEmpty) {
+          questions.add(const SizedBox(height: 32));
+        }
+        questions.add(followUp);
+      }
+      if (questions.length > 1000) {
+        break;
       }
     }
 
-    return Column(children: [
-      questionWidget ?? Container(),
-      Wrap(children: followUps),
-    ]);
+    return Column(children: questions);
   }
 
   Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(bottom: 8),
-    EdgeInsets moreInfoPadding = const EdgeInsets.only(left: 32, right: 32, top: 8)}) {
+    EdgeInsets moreInfoPadding = const EdgeInsets.only(bottom: 8)}) {
     SurveyDataWidget? surveyWidget;
 
     if (survey is SurveyQuestionMultipleChoice) {
@@ -192,35 +227,33 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           ),
         ),
         Visibility(
-          visible: StringUtils.isNotEmpty(survey.moreInfo),
+          visible: !surveyWidget.containsMoreInfo && StringUtils.isNotEmpty(survey.moreInfo),
           child: Padding(
             padding: moreInfoPadding,
             child: Text(
               survey.moreInfo ?? '',
               textAlign: TextAlign.start,
-              style: Styles().textStyles?.getTextStyle('body'),
+              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
             ),
           ),
         ),
         // Container(height: 8),
         Visibility(visible: surveyWidget.orientation == WidgetOrientation.below, child: surveyWidget.widget!),
-        Container(height: 24),
       ],
     ) : null;
   }
 
   SurveyDataWidget? _buildResultSurveySection(SurveyDataResult? survey) {
-    return SurveyDataWidget(SurveyBuilder.surveyDataResult(context, survey));
+    return SurveyDataWidget(SurveyBuilder.surveyDataResult(context, survey), containsMoreInfo: true);
   }
 
   SurveyDataWidget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
-    return SurveyDataWidget(Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        child: _buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
-          survey.response = value;
-          widget.onChangeSurveyResponse(false);
-        }).widget));
+    return SurveyDataWidget(_buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
+      survey.response = value;
+      widget.controller.onChangeSurveyResponse?.call(false);
+    }).widget);
   }
 
   SurveyDataWidget? _buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
@@ -247,7 +280,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = optionList[index].value;
-          widget.onChangeSurveyResponse(true);
+          widget.controller.onChangeSurveyResponse?.call(true);
         } : null,
         selectedValue: selected));
     // }
@@ -298,7 +331,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         } else {
           survey.response = null;
         }
-        widget.onChangeSurveyResponse(false);
+        widget.controller.onChangeSurveyResponse?.call(false);
       } : null,
     );
     // } else {
@@ -335,7 +368,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           } else {
             survey.response = !survey.response;
           }
-          widget.onChangeSurveyResponse(true);
+          widget.controller.onChangeSurveyResponse?.call(true);
         } : null,
       ), orientation: WidgetOrientation.left);
     }
@@ -352,7 +385,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = !survey.response;
-          widget.onChangeSurveyResponse(true);
+          widget.controller.onChangeSurveyResponse?.call(true);
         } : null,
       ), orientation: WidgetOrientation.right);
     }
@@ -374,7 +407,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = optionList[index].value;
-          widget.onChangeSurveyResponse(true);
+          widget.controller.onChangeSurveyResponse?.call(true);
         } : null,
         selectedValue: selected
     ));
@@ -397,71 +430,68 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     String format = "MM-dd-yyyy";
 
-    return SurveyDataWidget(Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: TextFormField(
-              style: const TextStyle(
-                fontSize: 16.0,
-                height: 1.0,
-              ),
-              maxLines: 1,
-              keyboardType: TextInputType.datetime,
-              autofocus: false,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              enabled: enabled,
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.all(24.0),
-                labelText: title,
-                hintText: "MM-dd-yyyy",
-                filled: true,
-                fillColor: !enabled ? Styles().colors?.disabledTextColor : Colors.white,
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: Colors.white)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)),
-              ),
-              controller: dateTextController,
-              // validator: _validationFunctions[field.key],
-              onFieldSubmitted: (value) {
-                widget.onChangeSurveyResponse(false);
-              },
-              onChanged: (value) {
-                int select = dateTextController.value.selection.start;
-                dateTextController.value = TextEditingValue(
-                  text: value,
-                  selection: TextSelection.fromPosition(
-                    TextPosition(offset: select),
-                  ),
-                );
-                survey.response = value.trim();
-              },
-              onEditingComplete: widget.onChangeSurveyResponse(false),
-              // maxLength: 10,
-              onSaved: (value) => widget.onChangeSurveyResponse(false),
+    return SurveyDataWidget(Row(
+      children: <Widget>[
+        Expanded(
+          child: TextFormField(
+            style: const TextStyle(
+              fontSize: 16.0,
+              height: 1.0,
             ),
-          ),
-          Visibility(
-            visible: enabled,
-            child: IconButton(
-              icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
-              tooltip: "Test hint",
-              onPressed: () => _selectDate(context: context, initialDate: _getInitialDate(dateTextController.text, format),
-                  firstDate: survey.startTime, lastDate: survey.endTime, callback: (DateTime picked) {
-                    String date = DateFormat(format).format(picked);
-                    dateTextController.text = date;
-                    survey.response = date;
-                    widget.onChangeSurveyResponse(false);
-                    // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
-                  }),
+            maxLines: 1,
+            keyboardType: TextInputType.datetime,
+            autofocus: false,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            enabled: enabled,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(24.0),
+              labelText: title,
+              hintText: "MM-dd-yyyy",
+              filled: true,
+              fillColor: !enabled ? Styles().colors?.disabledTextColor : Colors.white,
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: const BorderSide(color: Colors.white)),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)),
             ),
+            controller: dateTextController,
+            // validator: _validationFunctions[field.key],
+            onFieldSubmitted: (value) {
+              widget.controller.onChangeSurveyResponse?.call(false);
+            },
+            onChanged: (value) {
+              int select = dateTextController.value.selection.start;
+              dateTextController.value = TextEditingValue(
+                text: value,
+                selection: TextSelection.fromPosition(
+                  TextPosition(offset: select),
+                ),
+              );
+              survey.response = value.trim();
+            },
+            onEditingComplete: widget.controller.onChangeSurveyResponse?.call(false),
+            // maxLength: 10,
+            onSaved: (value) => widget.controller.onChangeSurveyResponse?.call(false),
           ),
-        ],
-      ),
+        ),
+        Visibility(
+          visible: enabled,
+          child: IconButton(
+            icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
+            tooltip: "Test hint",
+            onPressed: () => _selectDate(context: context, initialDate: _getInitialDate(dateTextController.text, format),
+                firstDate: survey.startTime, lastDate: survey.endTime, callback: (DateTime picked) {
+                  String date = DateFormat(format).format(picked);
+                  dateTextController.text = date;
+                  survey.response = date;
+                  widget.controller.onChangeSurveyResponse?.call(false);
+                  // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
+                }),
+          ),
+        ),
+      ],
     ));
   }
 
@@ -510,10 +540,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         val = double.parse(value);
       }
       survey.response = val;
-      widget.onChangeSurveyResponse(false);
+      widget.controller.onChangeSurveyResponse?.call(false);
     }).widget;
 
-    return SurveyDataWidget(Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), child: numericText));
+    return SurveyDataWidget(numericText);
   }
 
   SurveyDataWidget? _buildSliderSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
@@ -552,7 +582,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: enabled ? (value) {
            survey.response = value;
-           widget.onChangeSurveyResponse(false);
+           widget.controller.onChangeSurveyResponse?.call(false);
           } : null)
         ),
       ],
@@ -578,7 +608,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
        Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
-           widget.onChangeSurveyResponse(false);
+           widget.controller.onChangeSurveyResponse?.call(false);
          } : null
        )
       ]));
@@ -596,26 +626,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
-    return SurveyDataWidget(Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Semantics(
-          label: field,
-          child: FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue, textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters)
-      ),
+    return SurveyDataWidget(Semantics(
+        label: field,
+        child: FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType,
+            onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
+            textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters)
     ));
-  }
-
-  Widget _buildContinueButton() {
-    bool canContinue =  _survey?.canContinue() == true;
-    return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
-      RoundedButton(
-          label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"),
-          textColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          enabled: canContinue,
-          onTap: _onTapContinue,
-          progress: null),
-    ]);
   }
 
   void _onTapContinue() {
@@ -657,9 +673,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   void _finishSurvey() {
     _survey?.evaluate(evalResultRules: true);
-    if (widget.onComplete != null) {
-      widget.onComplete!();
-    }
+    widget.controller.onComplete?.call();
   }
 
   void _setLoading(bool loading) {
@@ -674,8 +688,9 @@ enum WidgetOrientation { below, left, right }
 class SurveyDataWidget {
   Widget? widget;
   WidgetOrientation orientation;
+  bool containsMoreInfo;
 
-  SurveyDataWidget(this.widget, {this.orientation = WidgetOrientation.below});
+  SurveyDataWidget(this.widget, {this.orientation = WidgetOrientation.below, this.containsMoreInfo = false});
 }
 
 class CustomIconSelectionList extends StatelessWidget {
@@ -819,7 +834,6 @@ class SingleSelectionList extends StatelessWidget {
     return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(top: 8),
         itemCount: selectionList.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -859,7 +873,6 @@ class MultiSelectionList extends StatelessWidget {
     return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-
         itemCount: selectionList.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
