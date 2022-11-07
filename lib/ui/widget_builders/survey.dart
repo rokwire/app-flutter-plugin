@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/survey.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
@@ -32,9 +33,9 @@ class SurveyBuilder {
 
     String? date;
     if (showTimeOnly) {
-      date = DateTimeUtils.getDisplayTime(dateTimeUtc: response.dateTaken);
+      date = AppDateTime().getDisplayTime(dateTimeUtc: response.dateTaken);
     } else {
-      date = DateTimeUtils.getDisplayDateTime(response.dateTaken);
+      date = AppDateTime().getDisplayDateTime(response.dateTaken);
     }
 
     widgets.addAll([

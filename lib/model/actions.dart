@@ -9,22 +9,15 @@ enum ActionType {
 }
 
 class ActionData {
-  ActionType type;
-  String? label;
-  dynamic data;
+  final ActionType type;
+  final String? label;
+  final dynamic data;
+  final Map<String, dynamic> params;
 
-  ActionData({this.type = ActionType.none, this.label, this.data});
+  ActionData({this.type = ActionType.none, this.label, this.data, this.params = const {}});
 
   factory ActionData.fromJson(dynamic json) {
     if (json is Map<String, dynamic>) {
-      dynamic data = json['data'];
-      if (data is String) {
-        dynamic decoded = JsonUtils.decode(data);
-        if (decoded != null) {
-          data = decoded;
-        }
-      }
-
       ActionType? type;
       try {
         type = ActionType.values.byName(json['type']);
@@ -33,7 +26,8 @@ class ActionData {
       return ActionData(
         type: type ?? ActionType.none,
         label: JsonUtils.stringValue(json['label']),
-        data: data,
+        data: json['data'],
+        params: JsonUtils.mapValue(json['params']) ?? {},
       );
     } else if (json is String) {
       ActionType? type;
@@ -66,7 +60,8 @@ class ActionData {
     return {
       'type': type.name,
       'label': label,
-      'data': JsonUtils.encode(data),
+      'data': data,
+      'params': params
     };
   }
 }

@@ -162,11 +162,9 @@ class _RoundedButtonState extends State<RoundedButton> {
   }
 
   Widget get _outerContent {
-    //TODO: Fix ripple effect from InkWell (currently wrong shape and behind button content)
+    //TODO: Fix ripple effect from InkWell (behind button content)
     return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
-      InkWell(onTap: widget.onTap, child:
-        _wrapperContent
-      ),
+      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent),
     );
   }
 
@@ -208,12 +206,14 @@ class _RoundedButtonState extends State<RoundedButton> {
   Widget get _borderContent {
 
     Border? secondaryBorder = widget.displaySecondaryBorder;
-    BorderRadiusGeometry? borderRadius = (_contentSize != null) ? BorderRadius.circular((widget.maxBorderRadius != null) ? min(_contentSize!.height / 2, widget.maxBorderRadius!) : (_contentSize!.height / 2)) : null;
+    // BorderRadiusGeometry? borderRadius = 
     return Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
       ? Container(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
       : _innerContent
     );
   }
+
+  BorderRadius? get borderRadius => (_contentSize != null) ? BorderRadius.circular((widget.maxBorderRadius != null) ? min(_contentSize!.height / 2, widget.maxBorderRadius!) : (_contentSize!.height / 2)) : null;
 
   Widget get _innerContent {
     if ((widget.rightIcon != null) || (widget.leftIcon != null)) {
