@@ -55,7 +55,7 @@ class LocalNotifications with Service {
     } catch (e) {
       throw ServiceError(
         source: this,
-        severity: ServiceErrorSeverity.fatal,
+        severity: ServiceErrorSeverity.nonFatal,
         title: 'Local Notifications Initialization Failed',
         description: 'Failed to create Android notification channel: ${e.toString()}.',
       );
@@ -68,7 +68,7 @@ class LocalNotifications with Service {
     else {
       throw ServiceError(
         source: this,
-        severity: ServiceErrorSeverity.fatal,
+        severity: ServiceErrorSeverity.nonFatal,
         title: 'Local Notifications Initialization Failed',
         description: 'Failed to initialize local notifications plugin.',
       );
