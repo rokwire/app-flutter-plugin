@@ -421,14 +421,6 @@ class Polls with Service implements NotificationsListener {
       Response? response = await Network().post(url, body: body, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       return (response != null) && (responseCode == 200);
-      // String? responseString = response?.body;
-      // if ((response != null) && (responseCode == 200)) {
-      //   Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
-      //   if (responseJson != null) {
-      //     SurveyAlert? response = SurveyAlert.fromJson(responseJson);
-      //     return response;
-      //   }
-      // }
     }
     return false;
   }
