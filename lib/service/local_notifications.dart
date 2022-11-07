@@ -76,7 +76,7 @@ class LocalNotifications with Service {
 
   Future<bool?> _initPlugin() {
     AndroidInitializationSettings androidSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
-    DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
+    DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false, onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
     InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings);
     return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification);
   }
