@@ -13,15 +13,18 @@ class SurveyBuilder {
     if (survey == null) return null;
 
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
-    return Column(
-      children: [
-        Text(survey.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular')),
-        CollectionUtils.isNotEmpty(buttonActions) ? Padding(
-          padding: const EdgeInsets.only(top: 16.0),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: buttonActions),
-        ) : Container(),
-      ],
-    );
+    List<Widget> content = [];
+    if (StringUtils.isNotEmpty(survey.moreInfo)) {
+      content.add(Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular')));
+    }
+    if (CollectionUtils.isNotEmpty(buttonActions)) {
+      content.add(Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: buttonActions),
+      ));
+    }
+    return Column(children: content);
   }
 
   static List<Widget> resultSurveyButtons(BuildContext context, SurveyDataResult? survey, {EdgeInsets padding = const EdgeInsets.all(0)}) {
@@ -41,8 +44,9 @@ class SurveyBuilder {
     widgets.addAll([
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat')),
+          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
