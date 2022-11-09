@@ -343,11 +343,7 @@ class Polls with Service implements NotificationsListener {
           Survey? survey = Survey.fromJson(responseMap);
           NotificationService().notify(notifySurveyLoaded);
           return survey;
-        } else {
-          throw PollsException(PollsError.serverResponseContent);
         }
-      } else {
-        throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
       }
     }
     return null;
