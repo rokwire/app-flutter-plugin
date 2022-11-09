@@ -160,29 +160,24 @@ class AppDateTime with Service {
     String? displayDay = '';
     if (dateTimeUtc != null) {
       DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      DateTime nowDevice = DateTime.now();
-      DateTime nowToCompare = useDeviceLocalTimeZone ? nowDevice : getUniLocalTimeFromUtcTime(nowDevice.toUtc())!;
-      int calendarDaysDiff = dateTimeToCompare.day - nowToCompare.day;
-      int timeDaysDiff = dateTimeToCompare.difference(nowToCompare).inDays;
-      if ((calendarDaysDiff != 0) && (calendarDaysDiff != timeDaysDiff)) {
-        timeDaysDiff += 1;
-      }
-      if (timeDaysDiff == 0) {
+      timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
+
+      if (DateTimeUtils.isToday(dateTimeToCompare, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.today', 'Today');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
         }
-      } else if (timeDaysDiff == 1) {
+      } else if (DateTimeUtils.isTomorrow(dateTimeToCompare, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Tomorrow');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
         }
-      } else if (timeDaysDiff == -1) {
+      } else if (DateTimeUtils.isYesterday(dateTimeToCompare, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
         }
-      } else if (timeDaysDiff < 0 && timeDaysDiff > -7) {
+      } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
         displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
       } else {
         displayDay = formatDateTime(dateTimeToCompare, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);

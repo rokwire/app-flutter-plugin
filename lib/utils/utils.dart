@@ -1026,6 +1026,57 @@ class DateTimeUtils {
   static DateTime? midnight(DateTime? date) {
     return (date != null) ? DateTime(date.year, date.month, date.day) : null;
   }
+
+  static DateTime nowTimezone(timezone.Location? location) {
+    DateTime now = DateTime.now();
+    if (location != null) {
+      return timezone.TZDateTime.from(now, location);
+    }
+    return now;
+  }
+
+  static bool isToday(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime now = nowTimezone(location);
+    return now.day == date.day && now.month == date.month && now.year == date.year;
+  }
+
+  static bool isYesterday(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime yesterday = nowTimezone(location).subtract(const Duration(days: 1));
+    return yesterday.day == date.day && yesterday.month == date.month && yesterday.year == date.year;
+  }
+
+  static bool isTomorrow(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime tomorrow = nowTimezone(location).add(const Duration(days: 1));
+    return tomorrow.day == date.day && tomorrow.month == date.month && tomorrow.year == date.year;
+  }
+
+  static bool isThisWeek(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    if (date.isAfter(weekStart(location: location)) && date.isBefore(weekEnd(location: location))) {
+      return true;
+    }
+    return false;
+  }
+
+  static DateTime weekStart({timezone.Location? location}) {
+    DateTime now = nowTimezone(location);
+    return now.subtract(Duration(days: now.weekday - 1));
+  }
+
+  static DateTime weekEnd({timezone.Location? location}) {
+    return weekStart(location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
+  }
   
   static timezone.TZDateTime? changeTimeZoneToDate(DateTime time, timezone.Location location) {
     try{
