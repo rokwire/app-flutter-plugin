@@ -50,8 +50,12 @@ class _SurveyPanelState extends State<SurveyPanel> {
   final ScrollController _scrollController = ScrollController();
   bool _scrollEnd = false;
 
+  late final SurveyWidgetController _surveyController;
+
   @override
   void initState() {
+    _surveyController = SurveyWidgetController(onComplete: _onComplete,
+        onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
     if (widget.survey is Survey) {
       _survey = widget.survey;
     }
@@ -64,36 +68,35 @@ class _SurveyPanelState extends State<SurveyPanel> {
     return Scaffold(
       appBar: HeaderBar(title: _survey?.title),
       backgroundColor: Styles().colors?.background,
-      body: Stack(
+      body: Column(
         children: [
           Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
-          Column(crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(child: _buildScrollView()),
-          ]),
+          Expanded(child: Scrollbar(
+            radius: const Radius.circular(2),
+            thumbVisibility: true,
+            controller: _scrollController,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: SurveyWidget(
+                survey: widget.survey,
+                inputEnabled: widget.inputEnabled,
+                dateTaken: widget.dateTaken,
+                showResult: widget.showResult,
+                surveyDataKey: widget.surveyDataKey,
+                internalContinueButton: false,
+                controller: _surveyController,
+              ),
+            ),
+          )),
+          Visibility(
+            visible: widget.inputEnabled,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
+              child: SurveyWidget.buildContinueButton(_surveyController),
+            ),
+          ),
         ],
     ));
-  }
-
-  Widget _buildScrollView() {
-    return Scrollbar(
-      radius: const Radius.circular(2),
-      thumbVisibility: true,
-      controller: _scrollController,
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        child: SurveyWidget(
-          survey: widget.survey,
-          onChangeSurveyResponse: _onChangeSurveyResponse,
-          inputEnabled: widget.inputEnabled,
-          dateTaken: widget.dateTaken,
-          showResult: widget.showResult,
-          surveyDataKey: widget.surveyDataKey,
-          onComplete: _onComplete,
-          onLoad: _setSurvey,
-        ),
-      ),
-    );
   }
 
   void _onComplete() {

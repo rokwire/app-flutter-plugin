@@ -154,6 +154,9 @@ class Survey extends RuleEngine {
       'result_rules': JsonUtils.encode(Rule.listToJson(resultRules)),
       'result_json': JsonUtils.encode(resultData),
       'response_keys': responseKeys,
+      'constants': constants,
+      'strings': strings,
+      'sub_rules': subRules,
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
@@ -997,8 +1000,10 @@ class SurveyDataEntry extends SurveyData {
 class SurveyDataResult extends SurveyData {
   List<ActionData>? actions;
 
-  SurveyDataResult({required String text, this.actions, String? moreInfo, required String key, bool replace = false}) :
-        super(key: key, text: text, moreInfo: moreInfo, allowSkip: true, replace: replace);
+  SurveyDataResult({required String text, this.actions, String? moreInfo, required String key,
+    bool replace = false, String? defaultFollowUpKey, Rule? followUpRule}) :
+        super(key: key, text: text, moreInfo: moreInfo, allowSkip: true, replace: replace,
+        defaultFollowUpKey: defaultFollowUpKey, followUpRule: followUpRule, );
 
   factory SurveyDataResult.fromJson(String key, Map<String, dynamic> json) {
     return SurveyDataResult(
@@ -1007,6 +1012,8 @@ class SurveyDataResult extends SurveyData {
       key: key,
       moreInfo: JsonUtils.stringValue(json['more_info']),
       replace: JsonUtils.boolValue(json['replace']) ?? false,
+      defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
+      followUpRule: JsonUtils.mapOrNull((json) => Rule.fromJson(json), JsonUtils.decode(json['follow_up_rule'])),
     );
   }
 
@@ -1017,6 +1024,8 @@ class SurveyDataResult extends SurveyData {
       actions: other.actions,
       moreInfo: other.moreInfo,
       replace: other.replace,
+      defaultFollowUpKey: other.defaultFollowUpKey,
+      followUpRule: other.followUpRule,
     );
   }
 
