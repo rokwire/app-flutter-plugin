@@ -32,10 +32,11 @@ class SurveyPanel extends StatefulWidget {
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
+  final Map<String, dynamic>? defaultResponses;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.showSummaryOnFinish = false, this.dateTaken, this.showResult = false, this.allowBack = true,
-    this.onComplete, this.initPanelDepth = 0}) : super(key: key);
+    this.onComplete, this.initPanelDepth = 0, this.defaultResponses}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -85,6 +86,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 surveyDataKey: widget.surveyDataKey,
                 internalContinueButton: false,
                 controller: _surveyController,
+                defaultResponses: widget.defaultResponses,
               ),
             ),
           )),

@@ -452,13 +452,16 @@ abstract class SurveyData {
 
   bool get isQuestion;
 
-  void evaluateDefaultResponse(Survey survey, {bool deep = true}) {
-    if (defaultResponseRule != null) {
+  void evaluateDefaultResponse(Survey survey, {Map<String, dynamic>? defaultResponses, bool deep = true}) {
+    if (defaultResponses?[key] != null){
+      survey.clearCache();
+      response = defaultResponses![key];
+    } else if (defaultResponseRule != null) {
       survey.clearCache();
       response = defaultResponseRule!.evaluate(survey);
     }
     if (deep) {
-      followUp(survey)?.evaluateDefaultResponse(survey);
+      followUp(survey)?.evaluateDefaultResponse(survey, defaultResponses: defaultResponses);
     }
   }
 

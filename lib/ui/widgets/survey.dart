@@ -46,11 +46,12 @@ class SurveyWidget extends StatefulWidget {
   final DateTime? dateTaken;
   final bool showResult;
   final bool internalContinueButton;
+  final Map<String, dynamic>? defaultResponses;
 
   late final SurveyWidgetController controller;
 
   SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken,
-    this.showResult = false, this.internalContinueButton = true, this.surveyDataKey, SurveyWidgetController? controller}) :
+    this.showResult = false, this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -86,16 +87,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.getSurvey = () => _survey;
 
     if (widget.survey is Survey) {
-      _survey = widget.survey;
-      _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
-      _mainSurveyData?.evaluateDefaultResponse(_survey!);
+      _setSurvey(widget.survey);
     } else if (widget.survey is String) {
       _setLoading(true);
       Polls().loadSurvey(widget.survey).then((survey) {
         if (survey != null) {
-          _survey = survey;
-          _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
-          _mainSurveyData?.evaluateDefaultResponse(_survey!);
+          _setSurvey(survey);
           widget.controller.onLoad?.call(survey);
         }
         if (mounted) {
@@ -633,6 +630,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
             textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters)
     ));
+  }
+
+  void _setSurvey(Survey survey) {
+    _survey = survey;
+    _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+
+    dynamic resolvedDefaults = survey.getValOrCollection(widget.defaultResponses);
+    _mainSurveyData?.evaluateDefaultResponse(_survey!, defaultResponses: resolvedDefaults is Map<String, dynamic> ? resolvedDefaults : null);
   }
 
   void _onTapContinue() {

@@ -38,7 +38,7 @@ class ActionBuilder {
   static Function()? getAction(BuildContext context, ActionData? action, {BuildContext? dismissContext}) {
     switch (action?.type) {
       case ActionType.showSurvey:
-        return (action?.data is String) ? () => onTapShowSurvey(context, action!.data) : null;
+        return (action?.data is String) ? () => onTapShowSurvey(context, action!.data, params: action.params, dismissContext: dismissContext) : null;
       case ActionType.launchUri:
         if (action?.data is String) {
           dynamic internal = action?.params['internal'];
@@ -63,7 +63,7 @@ class ActionBuilder {
     return buttonActions;
   }
 
-  static void onTapShowSurvey(BuildContext context, dynamic survey, {BuildContext? dismissContext}) {
+  static void onTapShowSurvey(BuildContext context, dynamic survey, {Map<String, dynamic>? params, BuildContext? dismissContext}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       onTapDismiss(dismissContext: dismissContext);
       if (survey is String || survey is Survey) {
@@ -72,7 +72,8 @@ class ActionBuilder {
         //   _survey = surveyObject;
         //   _mainSurveyData = _survey?.firstQuestion;
         // });
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey)));
+        dynamic defaultResponses = params?['default_responses'];
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey, defaultResponses: (defaultResponses is Map<String, dynamic>) ? defaultResponses : null)));
       }
     });
   }
