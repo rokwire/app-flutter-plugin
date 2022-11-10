@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -513,6 +514,35 @@ class Auth2UserProfile {
     }
   }
 
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "first_name":
+        return _firstName;
+      case "middle_name":
+        return _middleName;
+      case "last_name":
+        return _lastName;
+      case "birth_year":
+        return _birthYear;
+      case "photo_url":
+        return _photoUrl;
+      case "email":
+        return _email;
+      case "phone":
+        return _phone;
+      case "address":
+        return _address;
+      case "state":
+        return _state;
+      case "zip":
+        return _zip;
+      case "country":
+        return _country;
+      case "data":
+        return _data?[key?.subRuleKey];
+    }
+    return null;
+  }
 }
 
 ////////////////////////////////
@@ -1015,6 +1045,27 @@ class Auth2UserPrefs {
       }
     }
     return modified;
+  }
+
+  dynamic getProperty(RuleKey? key) {
+  Map<String, LinkedHashSet<String>>?  _favorites;
+    switch (key?.key) {
+      case "privacy_level":
+        return _privacyLevel;
+      case "roles":
+        return _roles;
+      case "favorites":
+        return _favorites?[key?.subRuleKey];
+      case "interests":
+        return _interests?[key?.subRuleKey];
+      case "food_filters":
+        return _foodFilters?[key?.subRuleKey];
+      case "tags":
+        return _tags?[key?.subRuleKey];
+      case "settings":
+        return _settings?[key?.subRuleKey];
+    }
+    return null;
   }
 
   // Privacy

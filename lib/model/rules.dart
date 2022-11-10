@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -198,7 +199,7 @@ abstract class RuleResult {
 }
 
 abstract class RuleActionResult extends RuleResult {
-  abstract final int priority;
+  abstract final int? priority;
 
   RuleActionResult();
 
@@ -235,16 +236,16 @@ class RuleAction extends RuleActionResult {
   final String action;
   final dynamic data;
   final String? dataKey;
-  @override int priority;
+  @override int? priority;
 
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority = 0});
+  RuleAction({required this.action, required this.data, this.dataKey, this.priority});
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
     return RuleAction(
       action: json["action"],
       data: json["data"],
       dataKey: JsonUtils.stringValue(json["data_key"]),
-      priority: json["priority"] ?? 0,
+      priority: json["priority"],
     );
   }
 
@@ -370,9 +371,9 @@ class RuleAction extends RuleActionResult {
 
 class RuleActionList extends RuleActionResult {
   final List<RuleAction> actions;
-  @override int priority;
+  @override int? priority;
 
-  RuleActionList({required this.actions, required this.priority});
+  RuleActionList({required this.actions, this.priority});
 
   @override
   Map<String, dynamic> toJson() {
@@ -517,7 +518,13 @@ abstract class RuleEngine {
     return constMap;
   }
 
-  dynamic getProperty(RuleKey? key);
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "auth":
+        return Auth2().getProperty(key?.subRuleKey);
+    }
+    return key?.toString();
+  }
 
   Future<bool> save();
 
@@ -533,7 +540,7 @@ abstract class RuleEngine {
     for (Rule rule in rules) {
       try {
         RuleActionResult? action = rule.evaluate(this);
-        if (action != null && (topAction == null || topAction.priority < action.priority)) {
+        if (action != null && (topAction == null || (topAction.priority ?? 0) < (action.priority ?? 0))) {
           topAction = action;
         }
       } catch(e) {
@@ -717,6 +724,9 @@ class RuleKey {
     }
     return null;
   }
+
+  @override
+  String toString() => subKey != null ? '$key.$subKey' : key;
 }
 
 class RuleData {

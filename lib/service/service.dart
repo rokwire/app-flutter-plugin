@@ -16,6 +16,7 @@
 
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 
 abstract class Service {
 
@@ -41,6 +42,10 @@ abstract class Service {
   }
 
   String get debugDisplayName => runtimeType.toString();
+
+  dynamic getProperty(RuleKey? key) {
+    return null;
+  }
 }
 
 class Services {
