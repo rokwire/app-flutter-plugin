@@ -14,6 +14,9 @@ class SurveyBuilder {
 
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
     List<Widget> content = [];
+    if (StringUtils.isNotEmpty(survey.text)) {
+      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.fat')));
+    }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
       content.add(Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular')));
     }
@@ -24,7 +27,7 @@ class SurveyBuilder {
             children: buttonActions),
       ));
     }
-    return Column(children: content);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: content);
   }
 
   static List<Widget> resultSurveyButtons(BuildContext context, SurveyDataResult? survey, {EdgeInsets padding = const EdgeInsets.all(0)}) {
