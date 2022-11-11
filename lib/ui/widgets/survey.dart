@@ -636,8 +636,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     _survey = survey;
     _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
 
-    dynamic resolvedDefaults = survey.getValOrCollection(widget.defaultResponses);
-    _mainSurveyData?.evaluateDefaultResponse(_survey!, defaultResponses: resolvedDefaults is Map<String, dynamic> ? resolvedDefaults : null);
+    _mainSurveyData?.evaluateDefaultResponse(_survey!, defaultResponses: widget.defaultResponses);
   }
 
   void _onTapContinue() {

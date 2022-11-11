@@ -660,10 +660,8 @@ class SurveyQuestionMultipleChoice extends SurveyData {
           if (response.contains(data.value)) {
             score += data.score ?? 0;
           }
-        } else {
-          if (response == data.value) {
-            score += data.score ?? 0;
-          }
+        } else if (response == data.value) {
+          score += data.score ?? 0;
         }
       }
       return score;

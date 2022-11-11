@@ -331,7 +331,7 @@ class RuleAction extends RuleActionResult {
       SurveyAlert alert = SurveyAlert.fromJson(notificationData);
       return Polls().createSurveyAlert(alert);
     }
-    return Future<bool>(() => false);
+    return Future<bool>.value(false);
   } 
 
   Future<bool> _save(RuleEngine engine) {
@@ -339,33 +339,29 @@ class RuleAction extends RuleActionResult {
   }
 
   Future<bool> _localNotify(RuleEngine engine) {
-    if (data is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(data);
-      dynamic scheduleType = alert.params?["type"];
-      dynamic schedule = alert.params?["schedule"];
-      if (scheduleType is String && schedule is String) {
-        switch (scheduleType) {
-          case "relative":
-            //TODO: string interpolation for title and text
-            Duration? notifyWaitTime = DateTimeUtils.parseDelimitedDurationString(schedule, ":");
-            if (notifyWaitTime != null) {
-              return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-                title: alert.title,
-                message: alert.text,
-                payload: JsonUtils.encode(alert.actions),
-                dateTime: DateTime.now().add(notifyWaitTime)
-              );
-            }
-            break;
-          case "absolute":
-            //TODO: implement
-          case "cron":
-            //TODO: implement
-        }
+    dynamic resolvedData = engine.getValOrCollection(data);
+    if (resolvedData is Map<String, dynamic>) {
+      Alert alert = Alert.fromJson(resolvedData);
+      switch (JsonUtils.stringValue(alert.params?["type"])) {
+        case "relative":
+          Duration? notifyWaitTime = JsonUtils.durationValue(alert.params?["schedule"]);
+          if (notifyWaitTime != null) {
+            return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
+              title: alert.title,
+              message: alert.text,
+              payload: JsonUtils.encode(alert.actions),
+              dateTime: DateTime.now().add(notifyWaitTime)
+            );
+          }
+          break;
+        case "absolute":
+          //TODO: implement
+        case "cron":
+          //TODO: implement
       }
     }
     
-    return Future<bool>(() => false);
+    return Future<bool>.value(false);
   }
 }
 

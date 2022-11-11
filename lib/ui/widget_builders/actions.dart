@@ -72,8 +72,7 @@ class ActionBuilder {
         //   _survey = surveyObject;
         //   _mainSurveyData = _survey?.firstQuestion;
         // });
-        dynamic defaultResponses = params?['default_responses'];
-        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey, defaultResponses: (defaultResponses is Map<String, dynamic>) ? defaultResponses : null)));
+        Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey, defaultResponses: JsonUtils.mapValue(params?['default_responses']))));
       }
     });
   }
