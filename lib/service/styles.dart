@@ -339,6 +339,7 @@ class UiColors {
   Color? get eventColor                 => colorMap['eventColor'];
   Color? get diningColor                => colorMap['diningColor'];
   Color? get placeColor                 => colorMap['placeColor'];
+  Color? get mtdColor                   => colorMap['mtdColor'];
 
   Color? get white                      => colorMap['white'];
   Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
