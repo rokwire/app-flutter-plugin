@@ -607,10 +607,10 @@ abstract class RuleEngine {
     return string;
   }
 
-  String getDisplayVal(String key, dynamic param) {
+  String getDisplayVal(String key, String? param) {
     dynamic val = getVal(key, param);
     if (val is DateTime) {
-      return AppDateTime().getDisplayDateTime(val);
+      return AppDateTime().getDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
     }
     return val.toString();
   }
@@ -689,6 +689,8 @@ abstract class RuleEngine {
         }
         return null;
       case "current_time":
+        return DateTime.now();
+      case "current_time_offset":
         Duration offset = JsonUtils.durationValue(param) ?? const Duration();
         return DateTime.now().subtract(offset);
       default:
