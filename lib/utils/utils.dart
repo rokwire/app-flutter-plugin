@@ -172,6 +172,10 @@ class CollectionUtils {
   static bool isEmpty(Iterable<Object?>? collection) {
     return !isNotEmpty(collection);
   }
+
+  static int length(Iterable<dynamic>? collection) {
+    return collection?.length ?? 0;
+  }
 }
 
 class ListUtils {

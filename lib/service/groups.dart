@@ -349,13 +349,13 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchGroups = false, bool researchOpen = false }) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
       String? post = JsonUtils.encode({
         'title': searchText, // Uri.encodeComponent(searchText)
         'include_hidden': includeHidden,
-        'research_group': researchGroups,
+        'research_group': researchProjects,
         'research_open': researchOpen,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
@@ -666,7 +666,7 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> updateMembership(Group? group, String? memberId, GroupMemberStatus status) async{
+  Future<bool> updateMemberStatus(Group? group, String? memberId, GroupMemberStatus status) async{
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
       Map<String, dynamic> bodyMap = {"status":groupMemberStatusToString(status)};
       String? body = JsonUtils.encode(bodyMap);
@@ -748,6 +748,29 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<bool> updateMember(Member? member) async{
+    if ((Config().groupsUrl != null) && (member != null)) {
+      Map<String, dynamic> memberJson = member.toJson();
+      String? body = JsonUtils.encode(memberJson);
+      String url = '${Config().groupsUrl}/memberships/${member.id}';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        String? responseString = response?.body;
+        int? responseCode = response?.statusCode;
+        if (responseCode == 200) {
+          debugPrint('Successfully updated group member {${member.id}}');
+          return true;
+        } else {
+          debugPrint('Failed to update group member {${member.id}}. Reason: $responseCode, $responseString');
+          return false;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false;
+  }
 
 // Events
   Future<List<String>?> loadEventIds(String? groupId) async{
