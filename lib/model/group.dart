@@ -363,8 +363,9 @@ class Member {
 	String?            email;
   GroupMemberStatus? status;
   String?            officerTitle;
-  
-  List<GroupMembershipAnswer>? answers;
+
+  List<GroupMembershipAnswer>?    answers;
+  MemberNotificationsPreferences? notificationsPreferences;
 
   DateTime?          dateAttendedUtc;
   DateTime?          dateCreatedUtc;
@@ -373,7 +374,7 @@ class Member {
   Member({
     this.id, this.userId, this.externalId, this.name, this.email, this.status, this.officerTitle,
     this.dateAttendedUtc, this.dateCreatedUtc, this.dateUpdatedUtc,
-    this.answers,
+    this.answers, this.notificationsPreferences,
   });
 
   static Member? fromJson(Map<String, dynamic>? json) {
@@ -386,7 +387,8 @@ class Member {
       status      : groupMemberStatusFromString(JsonUtils.stringValue(json['status'])),
       officerTitle : JsonUtils.stringValue(json['officerTitle']),
       
-      answers : GroupMembershipAnswer.listFromJson(JsonUtils.listValue(json['member_answers'])),
+      answers                  : GroupMembershipAnswer.listFromJson(JsonUtils.listValue(json['member_answers'])),
+      notificationsPreferences : MemberNotificationsPreferences.fromJson(JsonUtils.mapValue(json['notifications_preferences'])),
 
       dateAttendedUtc : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_attended'])),
       dateCreatedUtc  : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
@@ -403,7 +405,8 @@ class Member {
       status          : other.status,
       officerTitle    : other.officerTitle,
 
-      answers         : GroupMembershipAnswer.listFromOther(other.answers),
+      answers                  : GroupMembershipAnswer.listFromOther(other.answers),
+      notificationsPreferences : other.notificationsPreferences,
 
       dateAttendedUtc : other.dateAttendedUtc,
       dateCreatedUtc  : other.dateCreatedUtc,
@@ -421,7 +424,8 @@ class Member {
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
 
-    json['answers']             = GroupMembershipAnswer.listToJson(answers);
+    json['answers']                   = GroupMembershipAnswer.listToJson(answers);
+    json['notifications_preferences'] = notificationsPreferences?.toJson();
 
     json['date_attended']       = groupUtcDateTimeToString(dateAttendedUtc);
     json['date_created']        = groupUtcDateTimeToString(dateCreatedUtc);
@@ -474,6 +478,7 @@ class Member {
       (other.email == email) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
+      (other.notificationsPreferences == notificationsPreferences) &&
       (other.dateAttendedUtc == dateAttendedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
@@ -488,6 +493,7 @@ class Member {
     (email?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
+    (notificationsPreferences?.hashCode ?? 0) ^
     (dateAttendedUtc?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
@@ -557,6 +563,66 @@ String? groupMemberStatusToString(GroupMemberStatus? value) {
     }
   }
   return null;
+}
+
+
+
+//////////////////////////////
+// MemberNotificationsPreferences
+
+class MemberNotificationsPreferences {
+  bool? overridePreferences;
+  bool? muteAll;
+  bool? muteInvitations;
+  bool? mutePosts;
+  bool? muteEvents;
+  bool? mutePolls;
+
+  MemberNotificationsPreferences({this.overridePreferences, this.muteAll, this.muteInvitations, this.mutePosts, this.muteEvents, 
+    this.mutePolls});
+
+  static MemberNotificationsPreferences? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return MemberNotificationsPreferences(
+        overridePreferences: JsonUtils.boolValue(json['override_preferences']),
+        muteAll: JsonUtils.boolValue(json['all_mute']),
+        muteInvitations: JsonUtils.boolValue(json['invitations_mute']),
+        mutePosts: JsonUtils.boolValue(json['posts_mute']),
+        muteEvents: JsonUtils.boolValue(json['events_mute']),
+        mutePolls: JsonUtils.boolValue(json['polls_mute']));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'override_preferences': overridePreferences,
+      'all_mute': muteAll,
+      'invitations_mute': muteInvitations,
+      'posts_mute': mutePosts,
+      'events_mute': muteEvents,
+      'polls_mute': mutePolls
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberNotificationsPreferences) &&
+      (other.overridePreferences == overridePreferences) &&
+      (other.muteAll == muteAll) &&
+      (other.muteInvitations == muteInvitations) &&
+      (other.mutePosts == mutePosts) &&
+      (other.muteEvents == muteEvents) &&
+      (other.mutePolls == mutePolls);
+
+  @override
+  int get hashCode =>
+      (overridePreferences?.hashCode ?? 0) ^
+      (muteAll?.hashCode ?? 0) ^
+      (muteInvitations?.hashCode ?? 0) ^
+      (mutePosts?.hashCode ?? 0) ^
+      (muteEvents?.hashCode ?? 0) ^
+      (mutePolls?.hashCode ?? 0);
 }
 
 //////////////////////////////
