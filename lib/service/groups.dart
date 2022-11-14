@@ -349,13 +349,13 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchGroups = false, bool researchOpen = false }) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
       String? post = JsonUtils.encode({
         'title': searchText, // Uri.encodeComponent(searchText)
         'include_hidden': includeHidden,
-        'research_group': researchGroups,
+        'research_group': researchProjects,
         'research_open': researchOpen,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
