@@ -220,7 +220,7 @@ class Auth2Account {
     return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
-  bool get isResearchGroupAdmin {
+  bool get isResearchProjectAdmin {
     return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 

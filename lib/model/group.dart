@@ -42,7 +42,7 @@ class Group {
 
   bool?               attendanceGroup;
   
-  bool?               researchGroup;
+  bool?               researchProject;
   bool?               researchOpen;
   String?             researchDescription;
   Map<String, dynamic>? researchProfile; 
@@ -58,7 +58,7 @@ class Group {
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
-    this.researchGroup, this.researchOpen, this.researchDescription, this.researchProfile,
+    this.researchProject, this.researchOpen, this.researchDescription, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
     });
 
@@ -83,7 +83,7 @@ class Group {
       
       attendanceGroup   : JsonUtils.boolValue(json['attendance_group']),
 
-      researchGroup     : JsonUtils.boolValue(json['research_group']),
+      researchProject   : JsonUtils.boolValue(json['research_group']),
       researchOpen      : JsonUtils.boolValue(json['research_open']),
       researchDescription: JsonUtils.stringValue(json['research_description']),
       researchProfile   : JsonUtils.mapValue(json['research_profile']),
@@ -118,7 +118,7 @@ class Group {
 
       attendanceGroup   : other.attendanceGroup,
 
-      researchGroup     : other.researchGroup,
+      researchProject   : other.researchProject,
       researchOpen      : other.researchOpen,
       researchDescription: other.researchDescription,
       researchProfile   : MapUtils.from(other.researchProfile),
@@ -153,7 +153,7 @@ class Group {
 
       'attendance_group'              : attendanceGroup,
 
-      'research_group'                : researchGroup,
+      'research_group'                : researchProject,
       'research_open'                 : researchOpen,
       'research_description'          : researchDescription,
       'research_profile'              : researchProfile,
@@ -189,7 +189,7 @@ class Group {
 
       (other.attendanceGroup == attendanceGroup) &&
 
-      (other.researchGroup == researchGroup) &&
+      (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
       (other.researchDescription == researchDescription) &&
       (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
@@ -223,7 +223,7 @@ class Group {
 
     (attendanceGroup?.hashCode ?? 0) ^
 
-    (researchGroup?.hashCode ?? 0) ^
+    (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
     (researchDescription?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(researchProfile)) ^
