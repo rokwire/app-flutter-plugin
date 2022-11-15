@@ -45,6 +45,7 @@ class Group {
   bool?               researchProject;
   bool?               researchOpen;
   String?             researchDescription;
+  bool?               researchConfirmation;
   Map<String, dynamic>? researchProfile; 
 
   String?             imageURL;
@@ -58,7 +59,7 @@ class Group {
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
-    this.researchProject, this.researchOpen, this.researchDescription, this.researchProfile,
+    this.researchProject, this.researchOpen, this.researchDescription, this.researchConfirmation, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
     });
 
@@ -86,6 +87,7 @@ class Group {
       researchProject   : JsonUtils.boolValue(json['research_group']),
       researchOpen      : JsonUtils.boolValue(json['research_open']),
       researchDescription: JsonUtils.stringValue(json['research_description']),
+      researchConfirmation: JsonUtils.boolValue(json['research_confirmation']),
       researchProfile   : JsonUtils.mapValue(json['research_profile']),
       
       imageURL          : JsonUtils.stringValue(json['image_url']),
@@ -121,6 +123,7 @@ class Group {
       researchProject   : other.researchProject,
       researchOpen      : other.researchOpen,
       researchDescription: other.researchDescription,
+      researchConfirmation: other.researchConfirmation,
       researchProfile   : MapUtils.from(other.researchProfile),
 
       imageURL          : other.imageURL,
@@ -156,6 +159,7 @@ class Group {
       'research_group'                : researchProject,
       'research_open'                 : researchOpen,
       'research_description'          : researchDescription,
+      'research_confirmation'         : researchConfirmation,
       'research_profile'              : researchProfile,
 
       'image_url'                     : imageURL,
@@ -192,6 +196,7 @@ class Group {
       (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
       (other.researchDescription == researchDescription) &&
+      (other.researchConfirmation == researchConfirmation) &&
       (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
 
       (other.imageURL == imageURL) &&
@@ -226,6 +231,7 @@ class Group {
     (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
     (researchDescription?.hashCode ?? 0) ^
+    (researchConfirmation?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(researchProfile)) ^
 
     (imageURL?.hashCode ?? 0) ^

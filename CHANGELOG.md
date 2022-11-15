@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduced research projects [#178](https://github.com/rokwire/app-flutter-plugin/issues/178).
 - Survey rules local notifications action [#179](https://github.com/rokwire/app-flutter-plugin/issues/179)
 - Acknowledge group member's notification preferences [#198](https://github.com/rokwire/app-flutter-plugin/issues/198)
+- Added researchConfirmation flag to Groups [#202](https://github.com/rokwire/app-flutter-plugin/issues/202).
 - Survey rules remote notification action [#188](https://github.com/rokwire/app-flutter-plugin/issues/188)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
