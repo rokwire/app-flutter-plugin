@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 
 import 'package:rokwire_plugin/service/app_livecycle.dart';
@@ -132,31 +131,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @override
   Set<Service> get serviceDependsOn {
     return { Storage(), Config() };
-  }
-
-  @override
-  dynamic getProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "uin":
-        return uin;
-      case "net_id":
-        return netId;
-      case "email":
-        return email;
-      case "phone":
-        return phone;
-      case "login_type":
-        return loginType != null ? auth2LoginTypeToString(loginType!) : null;
-      case "full_name":
-        return fullName;
-      case "first_name":
-        return firstName;
-      case "profile":
-        return profile?.getProperty(key?.subRuleKey);
-      case "preferences":
-        return prefs?.getProperty(key?.subRuleKey);
-    }
-    return super.getProperty(key);
   }
 
   // NotificationsListener

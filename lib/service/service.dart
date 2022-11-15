@@ -42,10 +42,6 @@ abstract class Service {
   }
 
   String get debugDisplayName => runtimeType.toString();
-
-  dynamic getProperty(RuleKey? key) {
-    return null;
-  }
 }
 
 class Services {

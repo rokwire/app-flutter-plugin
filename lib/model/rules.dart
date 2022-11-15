@@ -14,6 +14,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/alert.dart';
+import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -517,7 +518,7 @@ abstract class RuleEngine {
   dynamic getProperty(RuleKey? key) {
     switch (key?.key) {
       case "auth":
-        return Auth2().getProperty(key?.subRuleKey);
+        return _auth2GetProperty(key?.subRuleKey);
     }
     return key?.toString();
   }
@@ -696,6 +697,135 @@ abstract class RuleEngine {
       default:
         return getProperty(ruleKey);
     }
+  }
+
+  // Property getters
+  dynamic _auth2GetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "uin":
+        return Auth2().uin;
+      case "net_id":
+        return Auth2().netId;
+      case "email":
+        return Auth2().email;
+      case "phone":
+        return Auth2().phone;
+      case "login_type":
+        return Auth2().loginType != null ? auth2LoginTypeToString(Auth2().loginType!) : null;
+      case "full_name":
+        return Auth2().fullName;
+      case "first_name":
+        return Auth2().firstName;
+      case "profile":
+        return _auth2UserProfileGetProperty(key?.subRuleKey);
+      case "preferences":
+        return _auth2UserPrefsGetProperty(key?.subRuleKey);
+      case "permissions":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.hasPermission(subKey);
+        }
+        return Auth2().account?.permissions;
+      case "roles":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.hasRole(subKey);
+        }
+        return Auth2().account?.roles;
+      case "groups":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.belongsToGroup(subKey);
+        }
+        return Auth2().account?.groups;
+      case "system_configs":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.systemConfigs?[subKey];
+        }
+        return Auth2().account?.systemConfigs;
+      case "is_logged_in":
+        return Auth2().isLoggedIn;
+      case "is_oidc_logged_in":
+        return Auth2().isOidcLoggedIn;
+      case "is_email_logged_in":
+        return Auth2().isEmailLoggedIn;
+      case "is_phone_logged_in":
+        return Auth2().isPhoneLoggedIn;
+    }
+    return null;
+  }
+
+  dynamic _auth2UserProfileGetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "first_name":
+        return Auth2().profile?.firstName;
+      case "middle_name":
+        return Auth2().profile?.middleName;
+      case "last_name":
+        return Auth2().profile?.lastName;
+      case "birth_year":
+        return Auth2().profile?.birthYear;
+      case "photo_url":
+        return Auth2().profile?.photoUrl;
+      case "email":
+        return Auth2().profile?.email;
+      case "phone":
+        return Auth2().profile?.phone;
+      case "address":
+        return Auth2().profile?.address;
+      case "state":
+        return Auth2().profile?.state;
+      case "zip":
+        return Auth2().profile?.zip;
+      case "country":
+        return Auth2().profile?.country;
+      case "data":
+        return Auth2().profile?.data?[key?.subRuleKey];
+    }
+    return null;
+  }
+
+  dynamic _auth2UserPrefsGetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "privacy_level":
+        return Auth2().prefs?.privacyLevel;
+      case "roles":
+        return Auth2().prefs?.roles;
+      case "favorites":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getFavorites(subKey);
+        }
+        return null;
+      case "interests":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getInterestsFromCategory(subKey);
+        }
+        return null;
+      case "food_filters":
+        switch (key?.subRuleKey?.key) {
+          case "included":
+            return Auth2().prefs?.includedFoodTypes;
+          case "excluded":
+            return Auth2().prefs?.excludedFoodIngredients;
+        }
+        return null;
+      case "tags":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.hasTag(subKey);
+        }
+        return null;
+      case "settings":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getSetting(subKey);
+        }
+        return null;
+    }
+    return null;
   }
 }
 
