@@ -115,7 +115,7 @@ class Inbox with Service implements NotificationsListener {
   // Inbox APIs
 
   Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, bool? muted, bool? unread, int? offset, int? limit }) async {
-    
+
     String urlParams = "";
     
     if (offset != null) {
@@ -150,14 +150,14 @@ class Inbox with Service implements NotificationsListener {
       if (urlParams.isNotEmpty) {
         urlParams += "&";
       }
-      urlParams += "muted=$muted";
+      urlParams += "mute=$muted";
     }
 
     if (unread != null) {
       if (urlParams.isNotEmpty) {
         urlParams += "&";
       }
-      urlParams += "unread=$unread";
+      urlParams += "read=${!unread}";
     }
 
     if (urlParams.isNotEmpty) {
@@ -194,8 +194,8 @@ class Inbox with Service implements NotificationsListener {
       debugPrint('Failed to read message - missing message id.');
       return false;
     }
-    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/read/$messageId" : null;
-    Response? response = await Network().get(url, auth: Auth2());
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/$messageId/read" : null;
+    Response? response = await Network().put(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
@@ -368,12 +368,12 @@ class Inbox with Service implements NotificationsListener {
   // Unread Messages Count
   Future<void> _loadUnreadMessagesCount() async {
     if (Auth2().isLoggedIn && (Config().notificationsUrl != null)) {
-      String url = "${Config().notificationsUrl}/api/message/unread/count";
+      String url = "${Config().notificationsUrl}/api/messages/stats";
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
-      String? responseBody = response?.body;
       if (responseCode == 200) {
-        int? unreadCount = StringUtils.isNotEmpty(responseBody) ? int.tryParse(responseBody!) : 0;
+        Map<String, dynamic>? jsonData = JsonUtils.decode(response?.body);
+        int? unreadCount = jsonData!=null? JsonUtils.intValue(jsonData["not_read_count"]) : null;
         _applyUnreadMessagesCount(unreadCount);
       } else {
         debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
