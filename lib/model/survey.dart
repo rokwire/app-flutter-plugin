@@ -589,8 +589,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   final List<dynamic>? correctAnswers;
   final bool allowMultiple;
   final bool selfScore;
+  final bool horizontal;
 
-  SurveyQuestionMultipleChoice({required String question, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, 
+  SurveyQuestionMultipleChoice({required String question, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, this.horizontal = false, required String key, 
     String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, dynamic response, bool allowSkip = false, bool replace = false})
       : super(key: key, section: section, allowSkip: allowSkip, replace: replace, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, response: response);
@@ -601,6 +602,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       correctAnswers: json['correct_answers'],
       allowMultiple: JsonUtils.boolValue(json['allow_multiple']) ?? false,
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
+      horizontal: JsonUtils.boolValue(json['horizontal']) ?? false,
 
       question: json['text'],
       key: key,
@@ -625,6 +627,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       correctAnswers: other.correctAnswers,
       allowMultiple: other.allowMultiple,
       selfScore: other.selfScore,
+      horizontal: other.horizontal,
       allowSkip: other.allowSkip,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
@@ -642,6 +645,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
     json['correct_answers'] = correctAnswers;
     json['allow_multiple'] = allowMultiple;
     json['self_score'] = selfScore;
+    json['horizontal'] = horizontal;
     json['type'] = 'survey_data.multiple_choice';
     return json;
   }

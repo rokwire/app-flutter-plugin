@@ -279,6 +279,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     if (survey.allowMultiple) {
       return SurveyDataWidget(_buildMultipleAnswerWidget(optionList, survey, enabled: enabled));
     }
+    if (survey.horizontal) {
+      return SurveyDataWidget(_buildHorizontalMultipleChoiceSurveySection(survey, enabled: enabled));
+    }
 
     OptionData? selected;
     for (OptionData data in optionList) {
@@ -360,6 +363,33 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // }
 
     return multipleChoice;
+  }
+
+  Widget? _buildHorizontalMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
+    if (survey == null) return null;
+
+    List<Widget> buttons = [];
+    for (OptionData option in survey.options) {
+      buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+       Transform.scale(scale: 2.0, child: Radio<dynamic>(value: option.value, groupValue: survey.response, activeColor: Styles().colors?.fillColorSecondary,
+         onChanged: enabled ? (Object? value) {
+           survey.response = value;
+           _onChangeResponse(false);
+         } : null
+       )),
+       Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('label')),
+      ]));
+    }
+
+    return Column(
+      children: [
+        Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
+        Padding(
+          padding: const EdgeInsets.only(top: 24.0),
+          child: Container(height: 1, color: Styles().colors?.dividerLine),
+        )
+      ],
+    );
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
