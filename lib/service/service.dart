@@ -16,7 +16,6 @@
 
 
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/model/rules.dart';
 
 abstract class Service {
 
