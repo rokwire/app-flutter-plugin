@@ -316,6 +316,7 @@ class UiColors {
   Color? get textColorSecondary                 => colorMap['textColorSecondary'];
   Color? get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'];
   Color? get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'];
+  Color? get gradientColorPrimary               => colorMap['gradientColorPrimary'];
 
   Color? get surface                    => colorMap['surface'];
   Color? get textSurface                => colorMap['textSurface'];
