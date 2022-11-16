@@ -894,22 +894,14 @@ class BoolExpr {
 class AppBundle {
   
   static Future<String?> loadString(String key, {bool cache = true}) async {
-    try {
-      return rootBundle.loadString(key, cache: cache);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.loadString(key, cache: cache); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   static Future<ByteData?> loadBytes(String key) async {
-    try {
-      return rootBundle.load(key);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.load(key); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 }
