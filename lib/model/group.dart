@@ -44,7 +44,7 @@ class Group {
   
   bool?               researchProject;
   bool?               researchOpen;
-  String?             researchDescription;
+  String?             researchConsentDetails;
   bool?               researchConfirmation;
   Map<String, dynamic>? researchProfile; 
 
@@ -59,79 +59,79 @@ class Group {
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
-    this.researchProject, this.researchOpen, this.researchDescription, this.researchConfirmation, this.researchProfile,
+    this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConfirmation, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
     });
 
   static Group? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Group(
-      id                : JsonUtils.stringValue(json['id']),
-      category          : JsonUtils.stringValue(json['category']),
-      type              : JsonUtils.stringValue(json['type']),
-      title             : JsonUtils.stringValue(json['title']),
-      description       : JsonUtils.stringValue(json['description']),
-      privacy           : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
-      dateCreatedUtc    : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
-      dateUpdatedUtc    : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+      id                             : JsonUtils.stringValue(json['id']),
+      category                       : JsonUtils.stringValue(json['category']),
+      type                           : JsonUtils.stringValue(json['type']),
+      title                          : JsonUtils.stringValue(json['title']),
+      description                    : JsonUtils.stringValue(json['description']),
+      privacy                        : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
+      dateCreatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
+      dateUpdatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
       
-      certified         : JsonUtils.boolValue(json['certified']),
-      hiddenForSearch   : JsonUtils.boolValue(json['hidden_for_search']),
-      canJoinAutomatically : JsonUtils.boolValue(json['can_join_automatically']),
-      onlyAdminsCanCreatePolls : JsonUtils.boolValue(json['only_admins_can_create_polls']),
+      certified                      : JsonUtils.boolValue(json['certified']),
+      hiddenForSearch                : JsonUtils.boolValue(json['hidden_for_search']),
+      canJoinAutomatically           : JsonUtils.boolValue(json['can_join_automatically']),
+      onlyAdminsCanCreatePolls       : JsonUtils.boolValue(json['only_admins_can_create_polls']),
 
-      authManEnabled    : JsonUtils.boolValue(json['authman_enabled']),
-      authManGroupName  : JsonUtils.stringValue(json['authman_group']),
+      authManEnabled                 : JsonUtils.boolValue(json['authman_enabled']),
+      authManGroupName               : JsonUtils.stringValue(json['authman_group']),
       
-      attendanceGroup   : JsonUtils.boolValue(json['attendance_group']),
+      attendanceGroup                : JsonUtils.boolValue(json['attendance_group']),
 
-      researchProject   : JsonUtils.boolValue(json['research_group']),
-      researchOpen      : JsonUtils.boolValue(json['research_open']),
-      researchDescription: JsonUtils.stringValue(json['research_description']),
-      researchConfirmation: JsonUtils.boolValue(json['research_confirmation']),
-      researchProfile   : JsonUtils.mapValue(json['research_profile']),
+      researchProject                : JsonUtils.boolValue(json['research_group']),
+      researchOpen                   : JsonUtils.boolValue(json['research_open']),
+      researchConsentDetails         : JsonUtils.stringValue(json['research_consent_details']), /*TMP: 'research_description' */
+      researchConfirmation           : JsonUtils.boolValue(json['research_confirmation']),
+      researchProfile                : JsonUtils.mapValue(json['research_profile']),
       
-      imageURL          : JsonUtils.stringValue(json['image_url']),
-      webURL            : JsonUtils.stringValue(json['web_url']),
-      currentMember     : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
-      tags              : JsonUtils.listStringsValue(json['tags']),
-      questions         : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
-      membershipQuest   : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
+      imageURL                       : JsonUtils.stringValue(json['image_url']),
+      webURL                         : JsonUtils.stringValue(json['web_url']),
+      currentMember                  : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
+      tags                           : JsonUtils.listStringsValue(json['tags']),
+      questions                      : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
+      membershipQuest                : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
     ) : null;
   }
 
   static Group? fromOther(Group? other) {
     return (other != null) ? Group(
-      id                : other.id,
-      category          : other.category,
-      type              : other.type,
-      title             : other.title,
-      description       : other.description,
-      privacy           : other.privacy,
-      dateCreatedUtc    : other.dateCreatedUtc,
-      dateUpdatedUtc    : other.dateUpdatedUtc,
+      id                             : other.id,
+      category                       : other.category,
+      type                           : other.type,
+      title                          : other.title,
+      description                    : other.description,
+      privacy                        : other.privacy,
+      dateCreatedUtc                 : other.dateCreatedUtc,
+      dateUpdatedUtc                 : other.dateUpdatedUtc,
 
-      certified         : other.certified,
-      hiddenForSearch   : other.hiddenForSearch,
-      canJoinAutomatically : other.canJoinAutomatically,
-      onlyAdminsCanCreatePolls : other.onlyAdminsCanCreatePolls,
+      certified                      : other.certified,
+      hiddenForSearch                : other.hiddenForSearch,
+      canJoinAutomatically           : other.canJoinAutomatically,
+      onlyAdminsCanCreatePolls       : other.onlyAdminsCanCreatePolls,
 
-      authManEnabled    : other.authManEnabled,
-      authManGroupName  : other.authManGroupName,
+      authManEnabled                 : other.authManEnabled,
+      authManGroupName               : other.authManGroupName,
 
-      attendanceGroup   : other.attendanceGroup,
+      attendanceGroup                : other.attendanceGroup,
 
-      researchProject   : other.researchProject,
-      researchOpen      : other.researchOpen,
-      researchDescription: other.researchDescription,
-      researchConfirmation: other.researchConfirmation,
-      researchProfile   : MapUtils.from(other.researchProfile),
+      researchProject                : other.researchProject,
+      researchOpen                   : other.researchOpen,
+      researchConsentDetails         : other.researchConsentDetails,
+      researchConfirmation           : other.researchConfirmation,
+      researchProfile                : MapUtils.from(other.researchProfile),
 
-      imageURL          : other.imageURL,
-      webURL            : other.webURL,
-      currentMember     : other.currentMember,
-      tags              : ListUtils.from(other.tags),
-      questions         : GroupMembershipQuestion.listFromOthers(other.questions),
-      membershipQuest   : GroupMembershipQuest.fromOther(other.membershipQuest),
+      imageURL                       : other.imageURL,
+      webURL                         : other.webURL,
+      currentMember                  : other.currentMember,
+      tags                           : ListUtils.from(other.tags),
+      questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
+      membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
     ) : null;
   }
 
@@ -158,7 +158,7 @@ class Group {
 
       'research_group'                : researchProject,
       'research_open'                 : researchOpen,
-      'research_description'          : researchDescription,
+      'research_consent_details' /*TMP: 'research_description'*/     : researchConsentDetails,
       'research_confirmation'         : researchConfirmation,
       'research_profile'              : researchProfile,
 
@@ -195,7 +195,7 @@ class Group {
 
       (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
-      (other.researchDescription == researchDescription) &&
+      (other.researchConsentDetails == researchConsentDetails) &&
       (other.researchConfirmation == researchConfirmation) &&
       (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
 
@@ -230,7 +230,7 @@ class Group {
 
     (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
-    (researchDescription?.hashCode ?? 0) ^
+    (researchConsentDetails?.hashCode ?? 0) ^
     (researchConfirmation?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(researchProfile)) ^
 
