@@ -23,43 +23,43 @@ import 'package:intl/intl.dart';
 // Group
 
 class Group {
-	String?             id;
-	String?             category;
-	String?             type;
-	String?             title;
-  String?             description;
-  GroupPrivacy?       privacy;
-  DateTime?           dateCreatedUtc;
-  DateTime?           dateUpdatedUtc;
+	String?                       id;
+	String?                       category;
+	String?                       type;
+	String?                       title;
+  String?                       description;
+  GroupPrivacy?                 privacy;
+  DateTime?                     dateCreatedUtc;
+  DateTime?                     dateUpdatedUtc;
 
-  bool?               certified;
-  bool?               hiddenForSearch;
-  bool?               canJoinAutomatically;
-  bool?               onlyAdminsCanCreatePolls;
+  bool?                         certified;
+  bool?                         hiddenForSearch;
+  bool?                         canJoinAutomatically;
+  bool?                         onlyAdminsCanCreatePolls;
 
-  bool?               authManEnabled;
-  String?             authManGroupName;
+  bool?                         authManEnabled;
+  String?                       authManGroupName;
 
-  bool?               attendanceGroup;
+  bool?                         attendanceGroup;
   
-  bool?               researchProject;
-  bool?               researchOpen;
-  String?             researchConsentDetails;
-  bool?               researchConfirmation;
-  Map<String, dynamic>? researchProfile; 
+  bool?                         researchProject;
+  bool?                         researchOpen;
+  String?                       researchConsentDetails;
+  String?                       researchConsentStatement;
+  Map<String, dynamic>?         researchProfile; 
 
-  String?             imageURL;
-  String?             webURL;
-  Member?             currentMember;
-  List<String>?       tags;
+  String?                        imageURL;
+  String?                        webURL;
+  Member?                        currentMember;
+  List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
-  GroupMembershipQuest? membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
+  GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
 
   Group({
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
-    this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConfirmation, this.researchProfile,
+    this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
     });
 
@@ -86,8 +86,8 @@ class Group {
 
       researchProject                : JsonUtils.boolValue(json['research_group']),
       researchOpen                   : JsonUtils.boolValue(json['research_open']),
-      researchConsentDetails         : JsonUtils.stringValue(json['research_consent_details']), /*TMP: 'research_description' */
-      researchConfirmation           : JsonUtils.boolValue(json['research_confirmation']),
+      researchConsentDetails         : JsonUtils.stringValue(json['research_consent_details']),
+      researchConsentStatement       : JsonUtils.stringValue(json['research_consent_statement']),
       researchProfile                : JsonUtils.mapValue(json['research_profile']),
       
       imageURL                       : JsonUtils.stringValue(json['image_url']),
@@ -123,7 +123,7 @@ class Group {
       researchProject                : other.researchProject,
       researchOpen                   : other.researchOpen,
       researchConsentDetails         : other.researchConsentDetails,
-      researchConfirmation           : other.researchConfirmation,
+      researchConsentStatement       : other.researchConsentStatement,
       researchProfile                : MapUtils.from(other.researchProfile),
 
       imageURL                       : other.imageURL,
@@ -158,8 +158,8 @@ class Group {
 
       'research_group'                : researchProject,
       'research_open'                 : researchOpen,
-      'research_consent_details' /*TMP: 'research_description'*/     : researchConsentDetails,
-      'research_confirmation'         : researchConfirmation,
+      'research_consent_details'      : researchConsentDetails,
+      'research_consent_statement'    : researchConsentStatement,
       'research_profile'              : researchProfile,
 
       'image_url'                     : imageURL,
@@ -196,7 +196,7 @@ class Group {
       (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
       (other.researchConsentDetails == researchConsentDetails) &&
-      (other.researchConfirmation == researchConfirmation) &&
+      (other.researchConsentStatement == researchConsentStatement) &&
       (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
 
       (other.imageURL == imageURL) &&
@@ -231,7 +231,7 @@ class Group {
     (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
     (researchConsentDetails?.hashCode ?? 0) ^
-    (researchConfirmation?.hashCode ?? 0) ^
+    (researchConsentStatement?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(researchProfile)) ^
 
     (imageURL?.hashCode ?? 0) ^
