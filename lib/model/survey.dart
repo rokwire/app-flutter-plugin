@@ -21,10 +21,10 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyResponse {
-  String id;
-  Survey survey;
-  DateTime dateCreated;
-  DateTime? dateUpdated;
+  final String id;
+  final Survey survey;
+  final DateTime dateCreated;
+  final DateTime? dateUpdated;
 
   DateTime get dateTaken => dateUpdated ?? dateCreated;
 
@@ -64,6 +64,29 @@ class SurveyResponse {
       }
     }
     return result;
+  }
+}
+
+class SurveyAlert {
+  final String contactKey;
+  final dynamic content;
+  final DateTime? dateCreated;
+  final DateTime? dateUpdated;
+
+  SurveyAlert({required this.contactKey, required this.content, this.dateCreated, this.dateUpdated});
+
+  factory SurveyAlert.fromJson(Map<String, dynamic> json) {
+    return SurveyAlert(
+      contactKey: JsonUtils.stringValue(json['contact_key']) ?? '',
+      content: json['content'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'contact_key': contactKey,
+      'content': content,
+    };
   }
 }
 
@@ -214,10 +237,10 @@ class Survey extends RuleEngine {
       case "data":
         RuleKey? dataKey = key?.subRuleKey;
         if (dataKey != null) {
-          return data[dataKey.key]?.getProperty(dataKey.subRuleKey);
+          return data[dataKey.key]?.getProperty(dataKey.subRuleKey, this);
         }
     }
-    return null;
+    return super.getProperty(key);
   }
 
   void evaluate({bool evalResultRules = false}) {
@@ -336,7 +359,7 @@ class SurveyStats {
         if (subKey != null) {
           return responseData[subKey];
         }
-        return null;
+        return responseData;
     }
     return null;
   }
@@ -415,25 +438,30 @@ abstract class SurveyData {
     };
   }
 
-  dynamic getProperty(RuleKey? key) {
+  dynamic getProperty(RuleKey? key, Survey survey) {
     switch (key?.key) {
       case null:
         return this;
       case "response":
         return response;
+      case "score":
+        return getScore(survey);
     }
     return null;
   }
 
   bool get isQuestion;
 
-  void evaluateDefaultResponse(Survey survey, {bool deep = true}) {
-    if (defaultResponseRule != null) {
+  void evaluateDefaultResponse(Survey survey, {Map<String, dynamic>? defaultResponses, bool deep = true}) {
+    if (defaultResponses?[key] != null){
+      survey.clearCache();
+      response = defaultResponses![key];
+    } else if (defaultResponseRule != null) {
       survey.clearCache();
       response = defaultResponseRule!.evaluate(survey);
     }
     if (deep) {
-      followUp(survey)?.evaluateDefaultResponse(survey);
+      followUp(survey)?.evaluateDefaultResponse(survey, defaultResponses: defaultResponses);
     }
   }
 
@@ -459,20 +487,28 @@ abstract class SurveyData {
     }
 
     Map<String, num> scores = {};
-    dynamic ruleResult = scoreRule?.evaluate(survey);
-    if (ruleResult is num) {
-      scores[section ?? ''] = ruleResult;
+    num? score = getScore(survey);
+    if (score != null) {
+      scores[section ?? ''] = score;
     }
 
     SurveyStats stats = SurveyStats(
       total: isQuestion ? 1 : 0,
       complete: response != null ? 1 : 0,
-      scored: scoreRule != null ? 1 : 0,
+      scored: scored ? 1 : 0,
       scores: scores,
       responseData: responseData,
     );
 
     return stats;
+  }
+
+  num? getScore(Survey survey) {
+    dynamic ruleResult = scoreRule?.evaluate(survey);
+    if (ruleResult is num) {
+      return ruleResult;
+    }
+    return null;
   }
 
   bool get canContinue => allowSkip || response != null;
@@ -536,16 +572,12 @@ class SurveyQuestionTrueFalse extends SurveyData {
   }
 
   @override
-  dynamic getProperty(RuleKey? key) {
+  dynamic getProperty(RuleKey? key, Survey survey) {
     switch (key?.key) {
-      case null:
-        return this;
-      case "response":
-        return response;
       case "correct_answer":
         return correctAnswer;
     }
-    return null;
+    return super.getProperty(key, survey);
   }
 
   @override
@@ -615,17 +647,11 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   }
 
   @override
-  SurveyStats stats(Survey survey) {
-    Map<String, dynamic> responseData = {};
-    if (response != null) {
-      responseData[key] = response;
-    }
-
-    Map<String, num> scores = {};
+  num? getScore(Survey survey) {
     if (scoreRule != null) {
       dynamic ruleResult = scoreRule?.evaluate(survey);
       if (ruleResult is num) {
-        scores[section ?? ''] = ruleResult;
+        return ruleResult;
       }
     } else if (selfScore) {
       num score = 0;
@@ -634,42 +660,29 @@ class SurveyQuestionMultipleChoice extends SurveyData {
           if (response.contains(data.value)) {
             score += data.score ?? 0;
           }
-        } else {
-          if (response == data.value) {
-            score += data.score ?? 0;
-          }
+        } else if (response == data.value) {
+          score += data.score ?? 0;
         }
       }
-      scores[section ?? ''] = score;
+      return score;
     }
-    
-
-    SurveyStats stats = SurveyStats(
-      total: isQuestion ? 1 : 0,
-      complete: response != null ? 1 : 0,
-      scored: scoreRule != null ? 1 : 0,
-      scores: scores,
-      responseData: responseData,
-    );
-
-    return stats;
-  }
+    return null;
+  } 
 
   @override
-  dynamic getProperty(RuleKey? key) {
+  dynamic getProperty(RuleKey? key, Survey survey) {
     switch (key?.key) {
-      case null:
-        return this;
-      case "response":
-        return response;
       case "correct_answers":
         return correctAnswers;
     }
-    return null;
+    return super.getProperty(key, survey);
   }
 
   @override
   bool get isQuestion => true;
+
+  @override
+  bool get scored => scoreRule != null || selfScore;
 }
 
 class SurveyQuestionDateTime extends SurveyData {
@@ -801,39 +814,23 @@ class SurveyQuestionNumeric extends SurveyData {
   }
 
   @override
-  bool get isQuestion => true;
-
-  @override
-  SurveyStats stats(Survey survey) {
-    Map<String, dynamic> responseData = {};
-    if (response != null) {
-      responseData[key] = response;
-    }
-
-    Map<String, num> scores = {};
+  num? getScore(Survey survey) {
     if (scoreRule != null) {
       dynamic ruleResult = scoreRule?.evaluate(survey);
       if (ruleResult is num) {
-        scores[section ?? ''] = ruleResult;
+        return ruleResult;
       }
     } else if (selfScore && response is num) {
-      scores[section ?? ''] = response;
+      return response;
     }
-    
-
-    SurveyStats stats = SurveyStats(
-      total: isQuestion ? 1 : 0,
-      complete: response != null ? 1 : 0,
-      scored: scoreRule != null ? 1 : 0,
-      scores: scores,
-      responseData: responseData,
-    );
-
-    return stats;
-  }
+    return null;
+  } 
 
   @override
-  bool get scored => scoreRule != null;
+  bool get isQuestion => true;
+
+  @override
+  bool get scored => scoreRule != null || selfScore;
 }
 
 class SurveyQuestionText extends SurveyData {

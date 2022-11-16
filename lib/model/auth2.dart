@@ -226,7 +226,7 @@ class Auth2Account {
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
-  bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
@@ -512,7 +512,6 @@ class Auth2UserProfile {
       NotificationService().notify(notifyChanged, this);
     }
   }
-
 }
 
 ////////////////////////////////
