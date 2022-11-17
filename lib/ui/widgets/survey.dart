@@ -22,6 +22,7 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
+import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -370,26 +371,24 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     List<Widget> buttons = [];
     for (OptionData option in survey.options) {
-      buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Transform.scale(scale: 2.0, child: Radio<dynamic>(value: option.value, groupValue: survey.response, activeColor: Styles().colors?.fillColorSecondary,
-         onChanged: enabled ? (Object? value) {
-           survey.response = value;
-           _onChangeResponse(false);
-         } : null
-       )),
-       Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('label')),
-      ]));
+      buttons.add(Flexible(fit: FlexFit.tight, child: RadioButton<dynamic>(
+        value: option.value,
+        groupValue: survey.response,
+        onChanged: (value) {
+          survey.response = value;
+          _onChangeResponse(false);
+        },
+        enabled: enabled,
+        size: 48,
+        textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
+        backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
+        borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
+        selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
+        disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
+      ),));
     }
 
-    return Column(
-      children: [
-        Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
-        Padding(
-          padding: const EdgeInsets.only(top: 24.0),
-          child: Container(height: 1, color: Styles().colors?.dividerLine),
-        )
-      ],
-    );
+    return Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons);
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {

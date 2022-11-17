@@ -14,14 +14,18 @@
 
 import 'package:flutter/material.dart';
 
-class RadioButton extends StatefulWidget {
-  final String label;
-  final void Function()? onTap;
-  final Color? activeColor;
-  final Color? backgroundColor;
-  final EdgeInsetsGeometry padding;
+class RadioButton<T> extends StatefulWidget {
+  final T value;
+  final T? groupValue;
+  final void Function(T value) onChanged;
+
+  final EdgeInsetsGeometry outsidePadding;
+  final EdgeInsetsGeometry insidePadding;
+  final EdgeInsetsGeometry textPadding;
+  final double size;
   
   final Widget? textWidget;
+  final String? text;
   final TextStyle? textStyle;
   final Color? textColor;
   final String? fontFamily;
@@ -30,42 +34,80 @@ class RadioButton extends StatefulWidget {
 
   final bool enabled;
 
-  final Border? border;
-  final Color? borderColor;
-  final double borderWidth;
-  final List<BoxShadow>? borderShadow;
-  final double? maxBorderRadius;
+  final ShapeBorder shape;
+  final Decoration? borderDecoration;
+  final Decoration? backgroundDecoration;
+  final Widget? selectedWidget;
+  final Widget? deselectedWidget;
+  final Widget? disabledWidget;
+  final Color? splashColor;
+  final double? splashRadius;
 
-  RadioButton(
-    this.label,
-    this.onTap,
-    this.activeColor,
-    this.backgroundColor,
-    this.padding,
+  const RadioButton({
+    Key? key,
+    required this.value,
+    this.groupValue,
+    required this.onChanged,
+    this.outsidePadding = const EdgeInsets.all(2),
+    this.insidePadding = const EdgeInsets.all(8),
+    this.textPadding = const EdgeInsets.only(top: 8),
+    required this.size,
 
     this.textWidget,
+    this.text,
     this.textStyle,
     this.textColor,
     this.fontFamily,
-    this.fontSize,
-    this.textAlign,
+    this.fontSize = 12,
+    this.textAlign = TextAlign.center,
 
-    this.enabled,
+    this.enabled = true,
 
-    this.border,
-    this.borderColor,
-    this.borderWidth,
-    this.borderShadow,
-    this.maxBorderRadius,
-  );
+    this.shape = const CircleBorder(),
+    this.borderDecoration,
+    this.backgroundDecoration,
+    this.selectedWidget,
+    this.deselectedWidget,
+    this.disabledWidget,
+    this.splashColor,
+    this.splashRadius,
+  }) : super(key: key);
 
   @override
-  _RadioButtonState createState() => _RadioButtonState();
+  _RadioButtonState<T> createState() => _RadioButtonState<T>();
 }
 
-class _RadioButtonState extends State<RadioButton> {
+class _RadioButtonState<T> extends State<RadioButton<T>> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Column(key: widget.key, children: [
+      Material(key: widget.key, shape: widget.shape, color: Colors.transparent, child: InkWell(key: widget.key,
+        onTap: widget.enabled ? () => widget.onChanged(widget.value) : null,
+        radius: widget.splashRadius,
+        splashColor: widget.splashColor,
+        customBorder: widget.shape,
+        child: Container(
+          key: widget.key,
+          width: widget.size,
+          height: widget.size,
+          decoration: widget.borderDecoration,
+          padding: widget.outsidePadding,
+          child: Container(
+              key: widget.key,
+              padding: widget.insidePadding,
+              decoration: widget.backgroundDecoration,
+              child: widget.value == widget.groupValue ? (widget.enabled ? widget.selectedWidget : widget.disabledWidget) : widget.deselectedWidget,
+            ),
+        )),
+      ),
+      Visibility(visible: widget.textWidget != null || widget.text != null, child:
+        Padding(padding: widget.textPadding, child: 
+          widget.textWidget ?? Text(widget.text ?? '', key: widget.key, 
+            style: widget.textStyle ?? TextStyle(color: widget.textColor, fontFamily: widget.fontFamily, fontSize: widget.fontSize), 
+            textAlign: widget.textAlign,
+          )
+        )
+      ),
+    ]);
   }
 }
