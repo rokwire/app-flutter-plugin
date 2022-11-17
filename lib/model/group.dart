@@ -277,12 +277,15 @@ class Group {
     return !(hiddenForSearch ?? false) || currentUserIsAdmin;
   }
 
-  static List<Group>? listFromJson(List<dynamic>? json) {
+  static List<Group>? listFromJson(List<dynamic>? json, {bool Function(Group element)? filter}) {
     List<Group>? values;
     if (json != null) {
       values = <Group>[];
       for (dynamic entry in json) {
-        ListUtils.add(values, Group.fromJson(JsonUtils.mapValue(entry)));
+        Group? group = Group.fromJson(JsonUtils.mapValue(entry));
+        if ((group != null) && ((filter == null) || filter(group))) {
+          values.add(group);
+        }
       }
     }
     return values;
