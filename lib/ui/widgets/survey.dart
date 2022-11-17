@@ -36,8 +36,9 @@ class SurveyWidgetController {
   Function(bool)? onChangeSurveyResponse;
   Function? onComplete;
   Function(Survey?)? onLoad;
+  bool loading;
 
-  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad});
+  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad, this.loading = false});
 }
 
 class SurveyWidget extends StatefulWidget {
@@ -77,7 +78,7 @@ class SurveyWidget extends StatefulWidget {
           borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
           enabled: canContinue,
           onTap: controller.continueSurvey,
-          progress: null),
+          progress: controller.loading),
     ]);
   }
 }
@@ -93,6 +94,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     widget.controller.continueSurvey = _onTapContinue;
     widget.controller.getSurvey = () => _survey;
+    widget.controller.loading = _loading;
 
     if (widget.survey is Survey) {
       _setSurvey(widget.survey);
@@ -280,7 +282,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     if (survey.allowMultiple) {
       return SurveyDataWidget(_buildMultipleAnswerWidget(optionList, survey, enabled: enabled));
     }
-    if (survey.horizontal) {
+    if (survey.style == 'horizontal') {
       return SurveyDataWidget(_buildHorizontalMultipleChoiceSurveySection(survey, enabled: enabled));
     }
 
@@ -371,24 +373,27 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     List<Widget> buttons = [];
     for (OptionData option in survey.options) {
-      buttons.add(Flexible(fit: FlexFit.tight, child: RadioButton<dynamic>(
-        value: option.value,
-        groupValue: survey.response,
-        onChanged: (value) {
-          survey.response = value;
-          _onChangeResponse(false);
-        },
-        enabled: enabled,
-        size: 48,
-        textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
-        backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-        borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-        selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-        disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-      ),));
+      buttons.add(Flexible(fit: FlexFit.tight, child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: RadioButton<dynamic>(
+          value: option.value,
+          groupValue: survey.response,
+          onChanged: (value) {
+            survey.response = value;
+            _onChangeResponse(false);
+          },
+          enabled: enabled,
+          size: 48,
+          textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
+        ),
+      )));
     }
 
-    return Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons);
+    return Padding(padding: const EdgeInsets.only(bottom: 16), child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons));
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
@@ -568,7 +573,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
-    if (survey.slider) {
+    if (survey.style == 'slider') {
       return _buildSliderSurveySection(survey, enabled: enabled);
     }
 
@@ -708,25 +713,16 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return;
     }
 
-    // show survey summary or return to home page on finishing events
-    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
-    // if (followUp == null) {
     _survey!.dateUpdated = DateTime.now();
-
-      // if (widget.showSummaryOnFinish) {
-      // } else {
     _finishSurvey();
-      // }
-
-      // return;
-    // }
-
-    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {
-    _survey?.evaluate(evalResultRules: true);
-    widget.controller.onComplete?.call();
+    _setLoading(true);
+    _survey?.evaluate(evalResultRules: true).then((_) {
+      widget.controller.onComplete?.call();
+      _setLoading(false);
+    });
   }
 
   void _setLoading(bool loading) {
