@@ -41,7 +41,7 @@ class RadioButton<T> extends StatefulWidget {
   final Widget? deselectedWidget;
   final Widget? disabledWidget;
   final Color? splashColor;
-  final double? splashRadius;
+  final double splashRadius;
 
   const RadioButton({
     Key? key,
@@ -51,7 +51,7 @@ class RadioButton<T> extends StatefulWidget {
     this.outsidePadding = const EdgeInsets.all(2),
     this.insidePadding = const EdgeInsets.all(8),
     this.textPadding = const EdgeInsets.only(top: 8),
-    required this.size,
+    this.size = 48,
 
     this.textWidget,
     this.text,
@@ -70,7 +70,7 @@ class RadioButton<T> extends StatefulWidget {
     this.deselectedWidget,
     this.disabledWidget,
     this.splashColor,
-    this.splashRadius,
+    this.splashRadius = 32,
   }) : super(key: key);
 
   @override
@@ -81,11 +81,10 @@ class _RadioButtonState<T> extends State<RadioButton<T>> {
   @override
   Widget build(BuildContext context) {
     return Column(key: widget.key, children: [
-      Material(key: widget.key, shape: widget.shape, color: Colors.transparent, child: InkWell(key: widget.key,
+      InkResponse(key: widget.key,
         onTap: widget.enabled ? () => widget.onChanged(widget.value) : null,
         radius: widget.splashRadius,
         splashColor: widget.splashColor,
-        customBorder: widget.shape,
         child: Container(
           key: widget.key,
           width: widget.size,
@@ -93,12 +92,12 @@ class _RadioButtonState<T> extends State<RadioButton<T>> {
           decoration: widget.borderDecoration,
           padding: widget.outsidePadding,
           child: Container(
-              key: widget.key,
-              padding: widget.insidePadding,
-              decoration: widget.backgroundDecoration,
-              child: widget.value == widget.groupValue ? (widget.enabled ? widget.selectedWidget : widget.disabledWidget) : widget.deselectedWidget,
-            ),
-        )),
+            key: widget.key,
+            padding: widget.insidePadding,
+            decoration: widget.backgroundDecoration,
+            child: widget.value == widget.groupValue ? (widget.enabled ? widget.selectedWidget : widget.disabledWidget) : widget.deselectedWidget,
+          ),
+        )
       ),
       Visibility(visible: widget.textWidget != null || widget.text != null, child:
         Padding(padding: widget.textPadding, child: 

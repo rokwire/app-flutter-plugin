@@ -36,9 +36,9 @@ class SurveyWidgetController {
   Function(bool)? onChangeSurveyResponse;
   Function? onComplete;
   Function(Survey?)? onLoad;
-  bool loading;
+  bool saving;
 
-  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad, this.loading = false});
+  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad, this.saving = false});
 }
 
 class SurveyWidget extends StatefulWidget {
@@ -76,9 +76,9 @@ class SurveyWidget extends StatefulWidget {
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
           textColor: canContinue ? null : Styles().colors?.disabledTextColor,
           borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          enabled: canContinue,
+          enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
-          progress: controller.loading),
+          progress: controller.saving),
     ]);
   }
 }
@@ -94,7 +94,6 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     widget.controller.continueSurvey = _onTapContinue;
     widget.controller.getSurvey = () => _survey;
-    widget.controller.loading = _loading;
 
     if (widget.survey is Survey) {
       _setSurvey(widget.survey);
@@ -383,7 +382,6 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          size: 48,
           textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
@@ -718,16 +716,22 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   void _finishSurvey() {
-    _setLoading(true);
+    _setSaving(true);
     _survey?.evaluate(evalResultRules: true).then((_) {
       widget.controller.onComplete?.call();
-      _setLoading(false);
+      _setSaving(false);
     });
   }
 
   void _setLoading(bool loading) {
     setState(() {
       _loading = loading;
+    });
+  }
+
+  void _setSaving(bool saving) {
+    setState(() {
+      widget.controller.saving = saving;
     });
   }
 }
