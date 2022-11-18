@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledge group member's notification preferences [#198](https://github.com/rokwire/app-flutter-plugin/issues/198)
 - Added researchConfirmation flag to Groups [#202](https://github.com/rokwire/app-flutter-plugin/issues/202).
 - Survey rules remote notification action [#188](https://github.com/rokwire/app-flutter-plugin/issues/188)
+- Added API for loading target audience count in Groups service [#2544](https://github.com/rokwire/illinois-app/issues/2544).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 ### Changed
@@ -36,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook Notifications BB message model changes [#2530](https://github.com/rokwire/illinois-app/issues/2530).
 - Researh Project updates in group model [#204](https://github.com/rokwire/app-flutter-plugin/issues/204).
 - Filter open resource projects not to include projects where the current user is member, disable paging until this gets resolved on the backend [#2540](https://github.com/rokwire/illinois-app/issues/2540).
+- Acknowledged 'exclude_my_groups' parameter for loading open research projects [#2540](https://github.com/rokwire/illinois-app/issues/2540).
 - Omit null title/value in VerticalTitleValueSection [#2542](https://github.com/rokwire/illinois-app/issues/2542).
 
 ## [1.2.4] - 2022-09-30

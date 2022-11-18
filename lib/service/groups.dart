@@ -294,7 +294,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy/*, int? offset, int? limit*/}) async {
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
@@ -302,10 +302,11 @@ class Groups with Service implements NotificationsListener {
         'category': category,
         'tags': tags,
         'privacy': groupPrivacyToString(privacy),
-        /*'offset': offset,
-        'limit': limit,*/
+        'offset': offset,
+        'limit': limit,
         'research_group': true,
         'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
       
@@ -315,6 +316,23 @@ class Groups with Service implements NotificationsListener {
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/research-profile/user-count';
+      String? post = JsonUtils.encode(researchQuestionnaireAnswers);
+      
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return (responseBody != null) ? int.tryParse(responseBody) : null;
       } catch (e) {
         debugPrint(e.toString());
       }
