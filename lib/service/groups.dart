@@ -322,6 +322,23 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
+  Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/research-profile/user-count';
+      String? post = JsonUtils.encode(researchQuestionnaireAnswers);
+      
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return (responseBody != null) ? int.tryParse(responseBody) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
   Future<List<Group>?> _loadAllGroups({String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
