@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook Notifications BB message model changes [#2530](https://github.com/rokwire/illinois-app/issues/2530).
 - Researh Project updates in group model [#204](https://github.com/rokwire/app-flutter-plugin/issues/204).
 - Filter open resource projects not to include projects where the current user is member, disable paging until this gets resolved on the backend [#2540](https://github.com/rokwire/illinois-app/issues/2540).
+- Acknowledged 'exclude_my_groups' parameter for loading open research projects [#2540](https://github.com/rokwire/illinois-app/issues/2540).
 - Omit null title/value in VerticalTitleValueSection [#2542](https://github.com/rokwire/illinois-app/issues/2542).
 
 ## [1.2.4] - 2022-09-30

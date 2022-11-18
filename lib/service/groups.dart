@@ -294,7 +294,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy/*, int? offset, int? limit*/}) async {
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
@@ -302,10 +302,11 @@ class Groups with Service implements NotificationsListener {
         'category': category,
         'tags': tags,
         'privacy': groupPrivacyToString(privacy),
-        /*'offset': offset,
-        'limit': limit,*/
+        'offset': offset,
+        'limit': limit,
         'research_group': true,
         'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
       
