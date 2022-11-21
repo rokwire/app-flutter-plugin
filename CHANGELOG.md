@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Survey improvements for BESSI [#206](https://github.com/rokwire/app-flutter-plugin/issues/206)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
+- Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
 ### Changed
 - Optimized Groups /user/login API call [#141](https://github.com/rokwire/app-flutter-plugin/issues/141).
 - Android: Upgrade compileSdkVersion to 32 [#147](https://github.com/rokwire/app-flutter-plugin/issues/147).

@@ -1729,11 +1729,10 @@ class UserRole {
   static const employee = UserRole._internal('employee');
   static const alumni = UserRole._internal('alumni');
   static const parent = UserRole._internal('parent');
-  static const resident = UserRole._internal('resident');
   static const gies = UserRole._internal('gies');
 
   static List<UserRole> get values {
-    return [student, visitor, fan, employee, alumni, parent, resident, gies];
+    return [student, visitor, fan, employee, alumni, parent, gies];
   }
 
   final String _value;
