@@ -206,6 +206,20 @@ class Inbox with Service implements NotificationsListener {
     }
   }
 
+  Future<bool> markAllMessagesAsRead() async {
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages/read" : null;
+    String? body = JsonUtils.encode({'read': true});//{"read":true|false}
+    Response? response = await Network().put(url, body: body, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
+      return true;
+    } else {
+      debugPrint('Failed to read messages. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
+  }
+
   Future<bool> subscribeToTopic({String? topic, String? token}) async {
     _storeTopic(topic); // Store first, otherwise we have delay
     bool result = await _manageFCMSubscription(topic: topic, token: token, action: 'subscribe');
