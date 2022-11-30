@@ -59,6 +59,7 @@ class SectionSlantHeader extends StatelessWidget {
   final Widget? header;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
+  final CrossAxisAlignment childrenAlignment;
 
   const SectionSlantHeader({
     Key? key,
@@ -100,6 +101,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.header,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
+    this.childrenAlignment = CrossAxisAlignment.center,
   }) : super(key: key);
 
   @override
@@ -181,7 +183,7 @@ class SectionSlantHeader extends StatelessWidget {
 
     layer2List.add(
       Padding(padding: childrenPadding, child:
-        Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: children ?? [],),
+        Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
       )
     );
 
@@ -189,8 +191,6 @@ class SectionSlantHeader extends StatelessWidget {
       Column(children: layer1List,),
       Column(children: layer2List,),
     ],);
-
-    
   }
 
   Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;

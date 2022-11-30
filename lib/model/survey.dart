@@ -376,7 +376,7 @@ class SurveyStats {
       case "maximum_scores":
         return scores;
       case "percentage":
-        String? subKey = key?.subKey ?? '';
+        String subKey = key?.subKey ?? '';
         if (scores[subKey] != null && maximumScores[subKey] != null) {
           return scores[subKey]! / maximumScores[subKey]!;
         }
