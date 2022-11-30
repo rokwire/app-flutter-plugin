@@ -346,7 +346,6 @@ class Storage with Service {
   set geoFenceRegionOverrides(Map<String, bool>? value) => setStringWithName(geoFenceRegionOverridesKey, JsonUtils.encode(value));
 
   // Calendar
-
   String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
   Map<String, String>? get calendarEventsTable {
     try { return JsonUtils.decodeMap(getStringWithName(calendarEventsTableKey))?.cast<String, String>(); }
@@ -361,4 +360,12 @@ class Storage with Service {
   String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
   bool? get calendarCanPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: false);
   set calendarCanPrompt(bool? value) => setBoolWithName(calendarEnablePromptKey, value);
+
+  // Skills Self-Evaluation
+  String get assessmentsEnableSaveKey => 'edu.illinois.rokwire.assessments.save_enabled';
+  Map<String, bool>? get assessmentsSaveResultsMap {
+    try { return JsonUtils.decodeMap(getStringWithName(assessmentsEnableSaveKey))?.cast<String, bool>(); }
+    catch(e) { debugPrint(e.toString()); return null; }
+  }
+  set assessmentsSaveResultsMap(Map<String, bool>? map) => setStringWithName(assessmentsEnableSaveKey, JsonUtils.encode(map));
 }
