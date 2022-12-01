@@ -336,7 +336,7 @@ class RuleAction extends RuleActionResult {
     return Future<bool>.value(false);
   } 
 
-  Future<bool> _save(RuleEngine engine) {
+  Future<dynamic> _save(RuleEngine engine) {
     return engine.save();
   }
 
@@ -524,7 +524,7 @@ abstract class RuleEngine {
     return key?.toString();
   }
 
-  Future<bool> save();
+  Future<dynamic> save();
 
   void clearCache() {
     _dataCache.clear();

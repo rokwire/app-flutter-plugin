@@ -28,7 +28,7 @@ class SurveyPanel extends StatefulWidget {
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
-  final Function? onComplete;
+  final Function(SurveyResponse?)? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
@@ -103,7 +103,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     ));
   }
 
-  void _onComplete() {
+  void _onComplete(SurveyResponse? response) {
     Navigator.of(context).pop();
   }
 

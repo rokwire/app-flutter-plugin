@@ -34,7 +34,7 @@ class SurveyWidgetController {
 
   // Callbacks
   Function(bool)? onChangeSurveyResponse;
-  Function? onComplete;
+  Function(SurveyResponse?)? onComplete;
   Function(Survey?)? onLoad;
   bool saving;
 
@@ -723,8 +723,13 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   void _finishSurvey() {
     _setSaving(true);
-    _survey?.evaluate(evalResultRules: true).then((_) {
-      widget.controller.onComplete?.call();
+    _survey!.evaluate(evalResultRules: true).then((result) {
+      if (result is! SurveyResponse) {
+        result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
+      }
+      if (widget.controller.onComplete != null) {
+        widget.controller.onComplete!(result);
+      }
       _setSaving(false);
     });
   }

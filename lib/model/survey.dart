@@ -244,33 +244,35 @@ class Survey extends RuleEngine {
     return super.getProperty(key);
   }
 
-  Future<void> evaluate({bool evalResultRules = false}) async {
+  Future<dynamic> evaluate({bool evalResultRules = false}) async {
     SurveyStats surveyStats = SurveyStats();
     for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       surveyStats += data.stats(this);
     }
     stats = surveyStats;
 
+    dynamic result;
     if (evalResultRules && CollectionUtils.isNotEmpty(resultRules)) {
       clearCache();
       for (Rule rule in resultRules!) {
         dynamic ruleResult = rule.evaluate(this);
         if (ruleResult is Future) {
-          await ruleResult;
+          ruleResult = await ruleResult;
+        }
+        if (ruleResult != null) {
+          result = ruleResult;
         }
       }
     }
+    return result;
   }
 
   @override
-  Future<bool> save() async {
-    if (Storage().assessmentsSaveResultsMap?[type] == true) {
-      SurveyResponse? response = await Polls().createSurveyResponse(this);
-      if (response != null) {
-        return true;
-      }
+  Future<dynamic> save() async {
+    if (Storage().assessmentsSaveResultsMap?[type] != false) {
+      return await Polls().createSurveyResponse(this);
     }
-    return false;
+    return null;
   }
 
   bool canContinue() {
