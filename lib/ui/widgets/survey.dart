@@ -22,6 +22,7 @@ import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
+import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -35,8 +36,9 @@ class SurveyWidgetController {
   Function(bool)? onChangeSurveyResponse;
   Function? onComplete;
   Function(Survey?)? onLoad;
+  bool saving;
 
-  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad});
+  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad, this.saving = false});
 }
 
 class SurveyWidget extends StatefulWidget {
@@ -74,9 +76,9 @@ class SurveyWidget extends StatefulWidget {
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
           textColor: canContinue ? null : Styles().colors?.disabledTextColor,
           borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          enabled: canContinue,
+          enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
-          progress: null),
+          progress: controller.saving),
     ]);
   }
 }
@@ -213,6 +215,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       surveyWidget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
       surveyWidget = _buildTextSurveySection(survey);
+    } else if (survey is SurveyDataPage) {
+      surveyWidget = _buildPageWidget(survey);
     }
 
     return surveyWidget?.widget != null ? Column(
@@ -278,6 +282,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<OptionData> optionList = survey.options;
     if (survey.allowMultiple) {
       return SurveyDataWidget(_buildMultipleAnswerWidget(optionList, survey, enabled: enabled));
+    }
+    if (survey.style == 'horizontal') {
+      return SurveyDataWidget(_buildHorizontalMultipleChoiceSurveySection(survey, enabled: enabled));
     }
 
     OptionData? selected;
@@ -360,6 +367,33 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // }
 
     return multipleChoice;
+  }
+
+  Widget? _buildHorizontalMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
+    if (survey == null) return null;
+
+    List<Widget> buttons = [];
+    for (OptionData option in survey.options) {
+      buttons.add(Flexible(fit: FlexFit.tight, child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: RadioButton<dynamic>(
+          value: option.value,
+          groupValue: survey.response,
+          onChanged: (value) {
+            survey.response = value;
+            _onChangeResponse(false);
+          },
+          enabled: enabled,
+          textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
+        ),
+      )));
+    }
+
+    return Padding(padding: const EdgeInsets.only(bottom: 16), child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons));
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
@@ -539,7 +573,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
-    if (survey.slider) {
+    if (survey.style == 'slider') {
       return _buildSliderSurveySection(survey, enabled: enabled);
     }
 
@@ -650,6 +684,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     ));
   }
 
+  SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
+    return SurveyDataWidget(Container());
+  }
+
   void _setSurvey(Survey survey) {
     _survey = survey;
     _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
@@ -679,30 +717,27 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return;
     }
 
-    // show survey summary or return to home page on finishing events
-    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
-    // if (followUp == null) {
     _survey!.dateUpdated = DateTime.now();
-
-      // if (widget.showSummaryOnFinish) {
-      // } else {
     _finishSurvey();
-      // }
-
-      // return;
-    // }
-
-    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {
-    _survey?.evaluate(evalResultRules: true);
-    widget.controller.onComplete?.call();
+    _setSaving(true);
+    _survey?.evaluate(evalResultRules: true).then((_) {
+      widget.controller.onComplete?.call();
+      _setSaving(false);
+    });
   }
 
   void _setLoading(bool loading) {
     setState(() {
       _loading = loading;
+    });
+  }
+
+  void _setSaving(bool saving) {
+    setState(() {
+      widget.controller.saving = saving;
     });
   }
 }

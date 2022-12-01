@@ -271,11 +271,6 @@ class RuleAction extends RuleActionResult {
         return null;
       case "show_survey":
         //TODO: fix this (should use notification like alert)
-        if (data is String) {
-        // data = survey id
-          return data;
-        }
-        return null;
       case "alert":
         _alert(engine);
         return null;
@@ -314,7 +309,13 @@ class RuleAction extends RuleActionResult {
   }
 
   void _setResult(RuleEngine engine) {
-    engine.resultData = engine.getValOrCollection(data);
+    if (engine.resultData is Map && dataKey != null) {
+      engine.resultData[dataKey] = engine.getValOrCollection(data);
+    } else if (dataKey != null) {
+      engine.resultData = <String, dynamic>{dataKey!: engine.getValOrCollection(data)};
+    } else {
+      engine.resultData = engine.getValOrCollection(data);
+    }
   }
 
   void _alert(RuleEngine engine) {

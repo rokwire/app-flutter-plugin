@@ -56,8 +56,10 @@ class SectionSlantHeader extends StatelessWidget {
   final void Function()? rightIconAction;
   final EdgeInsetsGeometry rightIconPadding;
 
+  final Widget? header;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
+  final CrossAxisAlignment childrenAlignment;
 
   const SectionSlantHeader({
     Key? key,
@@ -96,8 +98,10 @@ class SectionSlantHeader extends StatelessWidget {
     this.rightIconAction,
     this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 2),
     
+    this.header,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
+    this.childrenAlignment = CrossAxisAlignment.center,
   }) : super(key: key);
 
   @override
@@ -107,7 +111,7 @@ class SectionSlantHeader extends StatelessWidget {
     List<Widget> layer1List = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageAsset)) {
       layer1List.addAll([
-        Container(color: _slantColor, height: slantImageHeadingHeight,),
+        Container(color: _slantColor, child: header, height: (header != null) ? null : slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
             Styles().images?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
@@ -117,7 +121,7 @@ class SectionSlantHeader extends StatelessWidget {
     }
     else {
       layer1List.addAll([
-        Container(color: _slantColor, height: slantPainterHeadingHeight,),
+        Container(color: _slantColor, child: header, height: (header != null) ? null : slantPainterHeadingHeight,),
         Container(color: _slantColor, child:
           CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors!.background, horzDir: TriangleHorzDirection.rightToLeft), child:
             Container(height: slantPainterHeight,),
@@ -179,7 +183,7 @@ class SectionSlantHeader extends StatelessWidget {
 
     layer2List.add(
       Padding(padding: childrenPadding, child:
-        Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: children ?? [],),
+        Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
       )
     );
 
@@ -187,8 +191,6 @@ class SectionSlantHeader extends StatelessWidget {
       Column(children: layer1List,),
       Column(children: layer2List,),
     ],);
-
-    
   }
 
   Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;
