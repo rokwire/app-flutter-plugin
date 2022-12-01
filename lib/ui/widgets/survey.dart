@@ -684,7 +684,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     ));
   }
 
-  SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, {bool enabled = true}) {
+  SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
     return SurveyDataWidget(Container());
   }
 
