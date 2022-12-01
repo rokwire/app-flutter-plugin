@@ -108,26 +108,26 @@ class SectionSlantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     
     // Build Stack layer 1
-    List<Widget> layer1List = <Widget>[
-      Container(color: _slantColor, child: header, height: header != null ? null : slantImageHeadingHeight,),
-    ];
+    List<Widget> layer1List = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageAsset)) {
-      layer1List.add(
+      layer1List.addAll([
+        Container(color: _slantColor, child: header, height: (header != null) ? null : slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
             Styles().images?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
           ),
         )]),
-      );
+      ]);
     }
     else {
-      layer1List.add(
+      layer1List.addAll([
+        Container(color: _slantColor, child: header, height: (header != null) ? null : slantPainterHeadingHeight,),
         Container(color: _slantColor, child:
           CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors!.background, horzDir: TriangleHorzDirection.rightToLeft), child:
             Container(height: slantPainterHeight,),
           ),
         ),
-      );
+      ]);
     }
 
     // Build Title Row
