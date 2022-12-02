@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Survey improvements for BESSI [#206](https://github.com/rokwire/app-flutter-plugin/issues/206)
 - Store user's choice on if the appointments should be displayed [#2606](https://github.com/rokwire/illinois-app/issues/2606).
 - Add additional group settings [#2619](https://github.com/rokwire/illinois-app/issues/2619).
+- Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213)
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 - Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
