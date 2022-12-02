@@ -384,7 +384,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title.toString(), style: TextStyle(color: Styles().colors?.fillColorPrimaryVariant, fontFamily: "ProximaNovaBold", fontSize: 16), textAlign: TextAlign.center,),
+          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'), textAlign: TextAlign.center,),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
