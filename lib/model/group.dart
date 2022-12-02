@@ -54,13 +54,14 @@ class Group {
   List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
   GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
+  GroupSettings?             settings;
 
   Group({
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
     this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
-    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
+    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest, this.settings
     });
 
   static Group? fromJson(Map<String, dynamic>? json) {
@@ -96,6 +97,7 @@ class Group {
       tags                           : JsonUtils.listStringsValue(json['tags']),
       questions                      : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
       membershipQuest                : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
+      settings                         : GroupSettings.fromJson(JsonUtils.mapValue(json['settings']))
     ) : null;
   }
 
@@ -132,6 +134,7 @@ class Group {
       tags                           : ListUtils.from(other.tags),
       questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
       membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
+      settings                          : GroupSettings.fromOther(other.settings),
     ) : null;
   }
 
@@ -168,6 +171,7 @@ class Group {
       'tags'                          : tags,
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
+      'settings'                                : settings?.toJson()
     };
   }
 
@@ -204,7 +208,8 @@ class Group {
       (other.currentMember == currentMember) &&
       (const DeepCollectionEquality().equals(other.tags, tags)) &&
       (const DeepCollectionEquality().equals(other.questions, questions)) &&
-      (other.membershipQuest == membershipQuest);
+      (other.membershipQuest == membershipQuest) &&
+      (other.settings == settings);
 
 
   @override
@@ -239,7 +244,8 @@ class Group {
     (currentMember?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(tags)) ^
     (const DeepCollectionEquality().hash(questions)) ^
-    (membershipQuest?.hashCode ?? 0);
+    (membershipQuest?.hashCode ?? 0)^
+    (settings?.hashCode ?? 0);
 
   bool get currentUserIsAdmin{
     return (currentMember?.isAdmin ?? false);
@@ -1037,6 +1043,195 @@ class GroupError {
     };
   }
 }
+
+//////////////////////////////
+//Group Settings
+
+class GroupSettings { //TBD move the rest setting in this section
+  final MemberInfoPreferences? memberInfoPreferences;
+  final MemberPostPreferences? memberPostPreferences;
+
+  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences});
+
+  static GroupSettings? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return GroupSettings(
+      memberInfoPreferences: MemberInfoPreferences.fromJson(JsonUtils.mapValue(json['member_info_preferences'])),
+      memberPostPreferences: MemberPostPreferences.fromJson(JsonUtils.mapValue(json['post_preferences'])),
+    );
+  }
+
+  static GroupSettings? fromOther(GroupSettings? other) {
+    return (other != null) ? GroupSettings(
+      memberInfoPreferences: MemberInfoPreferences.fromOther(other.memberInfoPreferences),
+      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences)
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "member_info_preferences": memberInfoPreferences?.toJson(),
+      "post_preferences": memberPostPreferences?.toJson(),
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is GroupSettings) &&
+          (other.memberInfoPreferences == memberInfoPreferences) &&
+          (other.memberPostPreferences == memberPostPreferences);
+
+
+  @override
+  int get hashCode =>
+      (memberInfoPreferences?.hashCode ?? 0) ^
+      (memberPostPreferences?.hashCode ?? 0);
+}
+
+/////////////////////////////
+//Group Settings - Member Info Preferences
+
+class MemberInfoPreferences {
+  final bool? allowMemberInfo;
+  final bool? viewMemberNetId;
+  final bool? viewMemberName;
+  final bool? viewMemberEmail;
+  final bool? viewMemberPhone;
+
+  MemberInfoPreferences({this.allowMemberInfo, this.viewMemberNetId, this.viewMemberName, this.viewMemberEmail, this.viewMemberPhone});
+
+  static MemberInfoPreferences? fromJson(Map<String, dynamic>? json) {
+    if(json == null){
+      return null;
+    }
+
+    return MemberInfoPreferences(
+       allowMemberInfo : JsonUtils.boolValue(json[ 'allow_member_info']),
+       viewMemberNetId : JsonUtils.boolValue(json[ 'can_view_member_net_id']),
+       viewMemberName : JsonUtils.boolValue(json['can_view_member_name']),
+       viewMemberEmail : JsonUtils.boolValue(json[ 'can_view_member_email']),
+       viewMemberPhone : JsonUtils.boolValue(json[ 'can_view_member_phone']),
+    );
+  }
+
+  static MemberInfoPreferences? fromOther(MemberInfoPreferences? other) {
+    if(other == null){
+      return null;
+    }
+
+    return MemberInfoPreferences(
+       allowMemberInfo : other.allowMemberInfo,
+       viewMemberNetId : other.viewMemberNetId,
+       viewMemberName : other.viewMemberName,
+       viewMemberEmail : other.viewMemberEmail,
+       viewMemberPhone : other.viewMemberPhone,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'allow_member_info'             : allowMemberInfo,
+      'can_view_member_net_id'   : viewMemberNetId,
+      'can_view_member_name'    : viewMemberName,
+      'can_view_member_email'     : viewMemberEmail,
+      'can_view_member_phone'    : viewMemberPhone,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberInfoPreferences) &&
+          (other.allowMemberInfo == allowMemberInfo) &&
+          (other.viewMemberNetId == viewMemberNetId) &&
+          (other.viewMemberName == viewMemberName) &&
+          (other.viewMemberEmail == viewMemberEmail) &&
+          (other.viewMemberPhone == viewMemberPhone);
+
+
+  @override
+  int get hashCode =>
+      (allowMemberInfo?.hashCode ?? 0) ^
+      (viewMemberNetId?.hashCode ?? 0) ^
+      (viewMemberName?.hashCode ?? 0) ^
+      (viewMemberEmail?.hashCode ?? 0) ^
+      (viewMemberPhone?.hashCode ?? 0);
+}
+
+/////////////////////////////
+//Group Settings - Member Info Preferences
+
+class MemberPostPreferences {
+  final bool? allowSendPost;
+  final bool? sendPostToSpecificMembers;
+  final bool? sendPostToAdmins;
+  final bool? sendPostToAll;
+  final bool? sendPostReplies;
+  final bool? sendPostReactions;
+
+  MemberPostPreferences({this.allowSendPost, this.sendPostToSpecificMembers, this.sendPostToAdmins, this.sendPostToAll, this.sendPostReplies, this.sendPostReactions});
+
+  static MemberPostPreferences? fromJson(Map<String, dynamic>? json) {
+    if(json == null){
+      return null;
+    }
+
+    return MemberPostPreferences(
+        allowSendPost : JsonUtils.boolValue(json['allow_send_post']),
+        sendPostToSpecificMembers : JsonUtils.boolValue(json['can_send_post_to_specific_members']),
+        sendPostToAdmins : JsonUtils.boolValue(json['can_send_post_to_admins']),
+        sendPostToAll : JsonUtils.boolValue(json['can_send_post_to_all']),
+        sendPostReplies : JsonUtils.boolValue(json['can_send_post_replies']),
+        sendPostReactions : JsonUtils.boolValue(json['can_send_post_reactions']));
+  }
+
+  static MemberPostPreferences? fromOther(MemberPostPreferences? other) {
+    if(other == null){
+      return null;
+    }
+
+    return MemberPostPreferences(
+        allowSendPost : other.allowSendPost,
+        sendPostToSpecificMembers : other.sendPostToSpecificMembers,
+        sendPostToAdmins : other.sendPostToAdmins,
+        sendPostToAll : other.sendPostToAll,
+        sendPostReplies : other.sendPostReplies,
+        sendPostReactions : other.sendPostReactions);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'allow_send_post' : allowSendPost ,
+      'can_send_post_to_specific_members' : sendPostToSpecificMembers,
+      'can_send_post_to_admins' : sendPostToAdmins,
+      'can_send_post_to_all' : sendPostToAll,
+      'can_send_post_replies' : sendPostReplies,
+      'can_send_post_reactions' : sendPostReactions
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberPostPreferences) &&
+          (other.allowSendPost == allowSendPost) &&
+          (other.sendPostToSpecificMembers == sendPostToSpecificMembers) &&
+          (other.sendPostToAdmins == sendPostToAdmins) &&
+          (other.sendPostToAll == sendPostToAll) &&
+          (other.sendPostReplies == sendPostReplies) &&
+          (other.sendPostReactions == sendPostReactions);
+
+
+  @override
+  int get hashCode =>
+      (allowSendPost?.hashCode ?? 0) ^
+      (sendPostToSpecificMembers?.hashCode ?? 0) ^
+      (sendPostToAdmins?.hashCode ?? 0) ^
+      (sendPostToAll?.hashCode ?? 0) ^
+      (sendPostReplies?.hashCode ?? 0) ^
+      (sendPostReactions?.hashCode ?? 0);
+}
+
 
 DateTime? groupUtcDateTimeFromString(String? dateTimeString) {
   return DateTimeUtils.dateTimeFromString(dateTimeString, format: "yyyy-MM-ddTHH:mm:ssZ", isUtc: true);
