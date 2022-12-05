@@ -410,6 +410,35 @@ class Polls with Service implements NotificationsListener {
     return null;
   }
 
+  Future<bool> deleteSurveyResponses({List<String>? surveyIDs, List<String>? surveyTypes, DateTime? startDate, DateTime? endDate}) async {
+    if (enabled) {
+      Map<String, String> queryParams = {};
+      if (CollectionUtils.isNotEmpty(surveyIDs)) {
+        queryParams['survey_ids'] = surveyIDs!.join(',');
+      }
+      if (CollectionUtils.isNotEmpty(surveyTypes)) {
+        queryParams['survey_types'] = surveyTypes!.join(',');
+      }
+      if (startDate != null) {
+        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(startDate);
+        queryParams['start_date'] = startDateFormatted!;
+      }
+      if (endDate != null) {
+        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        queryParams['end_date'] = endDateFormatted!;
+      }
+
+      String url = '${Config().quickPollsUrl}/survey-responses';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().delete(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      return responseCode == 200;
+    }
+    return false;
+  }
+
   Future<bool> createSurveyAlert(SurveyAlert alert) async {
     if (enabled) {
       String? body = JsonUtils.encode(alert.toJson());

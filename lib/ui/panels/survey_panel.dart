@@ -28,7 +28,7 @@ class SurveyPanel extends StatefulWidget {
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
-  final Function? onComplete;
+  final Function(SurveyResponse?)? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
@@ -56,7 +56,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    _surveyController = SurveyWidgetController(onComplete: widget.onComplete ?? _onComplete,
+    _surveyController = SurveyWidgetController(onComplete: _onComplete,
         onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -103,8 +103,11 @@ class _SurveyPanelState extends State<SurveyPanel> {
     ));
   }
 
-  void _onComplete() {
+  void _onComplete(SurveyResponse? response) {
     Navigator.of(context).pop();
+    if (widget.onComplete != null) {
+      widget.onComplete!(response);
+    }
   }
 
   void _setSurvey(Survey? survey) {
