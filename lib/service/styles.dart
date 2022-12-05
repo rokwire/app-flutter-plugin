@@ -458,6 +458,7 @@ class UiTextStyles {
     double? fontSize =  JsonUtils.doubleValue(style['size']);
     double? fontHeight = JsonUtils.doubleValue(style['height']);
     String? fontFamily = JsonUtils.stringValue(style['font_family']);
+    String? fontFamilyRef = Styles().fontFamilies?.fromCode(fontFamily);
     TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
     TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
     TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
@@ -466,7 +467,7 @@ class UiTextStyles {
     double? wordSpacing = JsonUtils.doubleValue(style['word_spacing']);
     double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
 
-    return  TextStyle(fontFamily: fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+    return  TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
         overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
   }
 }
