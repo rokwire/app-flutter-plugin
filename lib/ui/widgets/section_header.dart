@@ -87,7 +87,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.backgroundColor, 
     
     this.slantColor,
-    this.slantPainterHeadingHeight = 85,
+    this.slantPainterHeadingHeight = 47,
     this.slantPainterHeight = 67,
     
     this.slantImageAsset,
@@ -127,9 +127,9 @@ class SectionSlantHeader extends StatelessWidget {
     }
 
     // Slant
-    List<Widget> bodyList = <Widget>[];
+    List<Widget> slantList = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageAsset)) {
-      bodyList.addAll([
+      slantList.addAll([
         Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
@@ -139,7 +139,7 @@ class SectionSlantHeader extends StatelessWidget {
       ]);
     }
     else {
-      bodyList.addAll([
+      slantList.addAll([
         Container(color: _slantColor, height: slantPainterHeadingHeight,),
         Container(color: _slantColor, child:
           CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors!.background, horzDir: TriangleHorzDirection.rightToLeft), child:
@@ -148,11 +148,22 @@ class SectionSlantHeader extends StatelessWidget {
         ),
       ]);
     }
-    bodyList.add(Padding(padding: childrenPadding, child:
-      Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
-    ));
 
-    contentList.add(allowOverlap ? Stack(children: bodyList) : Column(children: bodyList,));
+    contentList.add(allowOverlap ? Stack(
+      children: [
+        Column(children: slantList,),
+        Padding(padding: childrenPadding, child:
+          Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
+        )
+      ]
+    ) : Column(
+      children: [
+        ...slantList,
+        Padding(padding: childrenPadding, child:
+          Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
+        )
+      ]
+    ));
     return Column(children: contentList,);
   }
 
