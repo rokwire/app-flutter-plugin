@@ -61,6 +61,8 @@ class SectionSlantHeader extends StatelessWidget {
   final EdgeInsetsGeometry childrenPadding;
   final CrossAxisAlignment childrenAlignment;
 
+  final bool allowOverlap;
+
   const SectionSlantHeader({
     Key? key,
 
@@ -102,16 +104,33 @@ class SectionSlantHeader extends StatelessWidget {
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
     this.childrenAlignment = CrossAxisAlignment.center,
+
+    this.allowOverlap = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    
-    // Build Stack layer 1
-    List<Widget> layer1List = <Widget>[];
+    // Header
+    List<Widget> contentList = [_header];
+    if (StringUtils.isNotEmpty(subTitle)) {
+      contentList.add(
+        Semantics(label: subTitle, header: true, excludeSemantics: true, child:
+          Padding(padding: subTitlePadding, child:
+            Row(children: <Widget>[
+              Expanded(child:
+                Text(subTitle ?? '', style: _subTitleTextStyle,),
+              ),
+            ],),
+          ),
+        ),
+      );
+    }
+
+    // Slant
+    List<Widget> bodyList = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageAsset)) {
-      layer1List.addAll([
-        Container(color: _slantColor, child: header, height: (header != null) ? null : slantImageHeadingHeight,),
+      bodyList.addAll([
+        Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
             Styles().images?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
@@ -120,8 +139,8 @@ class SectionSlantHeader extends StatelessWidget {
       ]);
     }
     else {
-      layer1List.addAll([
-        Container(color: _slantColor, child: header, height: (header != null) ? null : slantPainterHeadingHeight,),
+      bodyList.addAll([
+        Container(color: _slantColor, height: slantPainterHeadingHeight,),
         Container(color: _slantColor, child:
           CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors!.background, horzDir: TriangleHorzDirection.rightToLeft), child:
             Container(height: slantPainterHeight,),
@@ -129,8 +148,15 @@ class SectionSlantHeader extends StatelessWidget {
         ),
       ]);
     }
+    bodyList.add(Padding(padding: childrenPadding, child:
+      Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
+    ));
 
-    // Build Title Row
+    contentList.add(allowOverlap ? Stack(children: bodyList) : Column(children: bodyList,));
+    return Column(children: contentList,);
+  }
+
+  Widget _buildHeader() {
     List<Widget> titleList = <Widget>[];
     if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
@@ -152,7 +178,7 @@ class SectionSlantHeader extends StatelessWidget {
       titleList.add(
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
-            Container(padding: rightIconPadding, child:
+            Container(padding: rightIconPadding, color: _slantColor, child:
               rightIcon ?? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true,),
             )
           )
@@ -160,38 +186,10 @@ class SectionSlantHeader extends StatelessWidget {
       );
     }
 
-    // Build Stack layer 2
-    List<Widget> layer2List = <Widget>[
-      Padding(padding: titlePadding, child:
-        Row(children: titleList,),
-      ),
-    ];
-
-    if (StringUtils.isNotEmpty(subTitle)) {
-      layer2List.add(
-        Semantics(label: subTitle, header: true, excludeSemantics: true, child:
-          Padding(padding: subTitlePadding, child:
-            Row(children: <Widget>[
-              Expanded(child:
-                Text(subTitle ?? '', style: _subTitleTextStyle,),
-              ),
-            ],),
-          ),
-        ),
-      );
-    }
-
-    layer2List.add(
-      Padding(padding: childrenPadding, child:
-        Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
-      )
-    );
-
-    return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      Column(children: layer1List,),
-      Column(children: layer2List,),
-    ],);
+    return Container(color: _slantColor, child: Padding(padding: titlePadding, child: Row(children: titleList,),));
   }
+
+  Widget get _header => header ?? _buildHeader();
 
   Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;
 

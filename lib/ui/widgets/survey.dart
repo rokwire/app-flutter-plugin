@@ -48,12 +48,13 @@ class SurveyWidget extends StatefulWidget {
   final DateTime? dateTaken;
   final bool showResult;
   final bool internalContinueButton;
+  final bool showQuestionDividers;
   final Map<String, dynamic>? defaultResponses;
 
   late final SurveyWidgetController controller;
 
-  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken,
-    this.showResult = false, this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, SurveyWidgetController? controller}) :
+  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, 
+    this.internalContinueButton = true, this.showQuestionDividers = false, this.surveyDataKey, this.defaultResponses, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -169,27 +170,30 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return Container();
     }
 
-    List<Widget> questions = [];
-    //TODO: use replace flag
+    List<Widget> contentList = [];
     for (SurveyData? data = _mainSurveyData; data != null; data = data.followUp(_survey!)) {
-      Widget? followUp = _buildInlineSurveyWidget(data);
-      if (followUp != null) {
+      Widget? surveyWidget = _buildInlineSurveyWidget(data);
+      if (surveyWidget != null) {
         // GlobalKey? key;
         // if (data.response == null) {
         //   key = GlobalKey();
         //   dataKey = key;
         // }
-        if (questions.isNotEmpty) {
-          questions.add(const SizedBox(height: 32));
-        }
-        questions.add(followUp);
+        // if (data.isQuestion && widget.showQuestionDividers) {
+        //   contentList.add(Container(
+        //     margin: EdgeInsets.zero,
+        //     height: 1,
+        //     color: Styles().colors?.dividerLine,
+        //   ));
+        // }
+        contentList.add(Padding(padding: contentList.isNotEmpty ? const EdgeInsets.only(top: 32) : EdgeInsets.zero, child: surveyWidget));
       }
-      if (questions.length > 1000) {
+      if (contentList.length > 1000) {
         break;
       }
     }
 
-    return Column(children: questions);
+    return Column(children: contentList);
   }
 
   void _onChangeResponse(bool scrollEnd) {
