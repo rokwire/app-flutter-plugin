@@ -129,7 +129,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       );
     }
     return _survey != null && _mainSurveyData != null ? Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -381,7 +381,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'), textAlign: TextAlign.center,),
+          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.description.small.fat'), textAlign: TextAlign.center,),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
@@ -731,15 +731,19 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   void _setLoading(bool loading) {
-    setState(() {
-      _loading = loading;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = loading;
+      });
+    }
   }
 
   void _setSaving(bool saving) {
-    setState(() {
-      widget.controller.saving = saving;
-    });
+    if (mounted) {
+      setState(() {
+        widget.controller.saving = saving;
+      });
+    }
   }
 }
 
