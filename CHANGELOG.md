@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add additional group settings [#2619](https://github.com/rokwire/illinois-app/issues/2619).
 - Delete survey responses request [#210](https://github.com/rokwire/app-flutter-plugin/issues/210).
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
+- Create utility method for launching urls [#217](https://github.com/rokwire/app-flutter-plugin/issues/217).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 - Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
