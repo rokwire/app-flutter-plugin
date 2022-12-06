@@ -30,6 +30,7 @@ abstract class Explore implements Comparable<Explore> {
   String?   get exploreImageURL;
   String?   get explorePlaceId;
   ExploreLocation? get exploreLocation;
+  String? get exploreLocationDescription => exploreLocation?.description;
   Map<String, dynamic> toJson();
 
   @override
