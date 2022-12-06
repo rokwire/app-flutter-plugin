@@ -1048,8 +1048,8 @@ class GroupError {
 //Group Settings
 
 class GroupSettings { //TBD move the rest setting in this section
-  final MemberInfoPreferences? memberInfoPreferences;
-  final MemberPostPreferences? memberPostPreferences;
+  MemberInfoPreferences? memberInfoPreferences;
+  MemberPostPreferences? memberPostPreferences;
 
   GroupSettings({this.memberInfoPreferences, this.memberPostPreferences});
 
@@ -1077,6 +1077,10 @@ class GroupSettings { //TBD move the rest setting in this section
     };
   }
 
+  static GroupSettings? initialDefaultSettings(){
+    return GroupSettings(memberInfoPreferences: MemberInfoPreferences(allowMemberInfo: true), memberPostPreferences: MemberPostPreferences(allowSendPost: true)); //Set Default values to true
+  }
+
   @override
   bool operator ==(other) =>
       (other is GroupSettings) &&
@@ -1094,11 +1098,11 @@ class GroupSettings { //TBD move the rest setting in this section
 //Group Settings - Member Info Preferences
 
 class MemberInfoPreferences {
-  final bool? allowMemberInfo;
-  final bool? viewMemberNetId;
-  final bool? viewMemberName;
-  final bool? viewMemberEmail;
-  final bool? viewMemberPhone;
+  bool? allowMemberInfo;
+  bool? viewMemberNetId;
+  bool? viewMemberName;
+  bool? viewMemberEmail;
+  bool? viewMemberPhone;
 
   MemberInfoPreferences({this.allowMemberInfo, this.viewMemberNetId, this.viewMemberName, this.viewMemberEmail, this.viewMemberPhone});
 
@@ -1163,12 +1167,12 @@ class MemberInfoPreferences {
 //Group Settings - Member Info Preferences
 
 class MemberPostPreferences {
-  final bool? allowSendPost;
-  final bool? sendPostToSpecificMembers;
-  final bool? sendPostToAdmins;
-  final bool? sendPostToAll;
-  final bool? sendPostReplies;
-  final bool? sendPostReactions;
+  bool? allowSendPost;
+  bool? sendPostToSpecificMembers;
+  bool? sendPostToAdmins;
+  bool? sendPostToAll;
+  bool? sendPostReplies;
+  bool? sendPostReactions;
 
   MemberPostPreferences({this.allowSendPost, this.sendPostToSpecificMembers, this.sendPostToAdmins, this.sendPostToAll, this.sendPostReplies, this.sendPostReactions});
 
