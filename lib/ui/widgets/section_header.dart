@@ -56,7 +56,7 @@ class SectionSlantHeader extends StatelessWidget {
   final void Function()? rightIconAction;
   final EdgeInsetsGeometry rightIconPadding;
 
-  final Widget? header;
+  final Widget? headerWidget;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
   final CrossAxisAlignment childrenAlignment;
@@ -100,7 +100,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.rightIconAction,
     this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 2),
     
-    this.header,
+    this.headerWidget,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
     this.childrenAlignment = CrossAxisAlignment.center,
@@ -110,20 +110,14 @@ class SectionSlantHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Header
-    List<Widget> contentList = [_header];
+    
+    // Title
+    List<Widget> contentList = [
+      headerWidget ?? _buildTitle()
+    ];
+
     if (StringUtils.isNotEmpty(subTitle)) {
-      contentList.add(
-        Semantics(label: subTitle, header: true, excludeSemantics: true, child:
-          Padding(padding: subTitlePadding, child:
-            Row(children: <Widget>[
-              Expanded(child:
-                Text(subTitle ?? '', style: _subTitleTextStyle,),
-              ),
-            ],),
-          ),
-        ),
-      );
+      contentList.add(_buildSubTitle());
     }
 
     // Slant
@@ -149,25 +143,25 @@ class SectionSlantHeader extends StatelessWidget {
       ]);
     }
 
-    contentList.add(allowOverlap ? Stack(
-      children: [
+    contentList.add(allowOverlap ?
+      Stack(children: [
         Column(children: slantList,),
         Padding(padding: childrenPadding, child:
           Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
         )
-      ]
-    ) : Column(
-      children: [
+      ]) :
+      Column(children: [
         ...slantList,
         Padding(padding: childrenPadding, child:
           Column(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: childrenAlignment, children: children ?? [],),
         )
-      ]
-    ));
+      ])
+    );
+    
     return Column(children: contentList,);
   }
 
-  Widget _buildHeader() {
+  Widget _buildTitle() { 
     List<Widget> titleList = <Widget>[];
     if ((titleIcon != null) || (titleIconAsset != null)) {
       titleList.add(
@@ -200,7 +194,17 @@ class SectionSlantHeader extends StatelessWidget {
     return Container(color: _slantColor, child: Padding(padding: titlePadding, child: Row(children: titleList,),));
   }
 
-  Widget get _header => header ?? _buildHeader();
+  Widget _buildSubTitle() {
+    return Semantics(label: subTitle, header: true, excludeSemantics: true, child:
+      Padding(padding: subTitlePadding, child:
+        Row(children: <Widget>[
+          Expanded(child:
+            Text(subTitle ?? '', style: _subTitleTextStyle,),
+          ),
+        ],),
+      ),
+    );
+  }
 
   Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;
 
