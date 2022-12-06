@@ -56,7 +56,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    _surveyController = SurveyWidgetController(onComplete: _onComplete,
+    _surveyController = SurveyWidgetController(beforeComplete: _beforeComplete, onComplete: widget.onComplete,
         onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -103,11 +103,8 @@ class _SurveyPanelState extends State<SurveyPanel> {
     ));
   }
 
-  void _onComplete(SurveyResponse? response) {
+  void _beforeComplete() {
     Navigator.of(context).pop();
-    if (widget.onComplete != null) {
-      widget.onComplete!(response);
-    }
   }
 
   void _setSurvey(Survey? survey) {

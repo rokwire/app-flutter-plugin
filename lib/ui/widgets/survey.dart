@@ -34,11 +34,12 @@ class SurveyWidgetController {
 
   // Callbacks
   Function(bool)? onChangeSurveyResponse;
+  Function()? beforeComplete;
   Function(SurveyResponse?)? onComplete;
   Function(Survey?)? onLoad;
   bool saving;
 
-  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad, this.saving = false});
+  SurveyWidgetController({this.onChangeSurveyResponse, this.beforeComplete, this.onComplete, this.onLoad, this.saving = false});
 }
 
 class SurveyWidget extends StatefulWidget {
@@ -719,13 +720,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   void _finishSurvey() {
     _setSaving(true);
+    widget.controller.beforeComplete?.call();
     _survey!.evaluate(evalResultRules: true).then((result) {
       if (result is! SurveyResponse) {
         result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
       }
-      if (widget.controller.onComplete != null) {
-        widget.controller.onComplete!(result);
-      }
+      widget.controller.onComplete?.call(result);
       _setSaving(false);
     });
   }

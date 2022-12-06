@@ -86,7 +86,7 @@ class ActionBuilder {
 
   static void onTapShowPanel(BuildContext context, dynamic panel, {Map<String, dynamic>? params, BuildContext? dismissContext}) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      onTapDismiss(dismissContext: dismissContext);
+      // onTapDismiss(dismissContext: dismissContext);
       switch (panel) {
         case "SurveyPanel":
           if (params?['id'] is String) {
@@ -94,7 +94,7 @@ class ActionBuilder {
           }
           break;
         case "GuideDetailPanel":
-          if (params?['guideEntryId'] is String) {
+          if (params?['guide_id'] is String) {
             params!["panel"] = "GuideDetailPanel";
             NotificationService().notify(notifyShowPanel, params);
           }
