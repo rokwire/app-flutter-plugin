@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
@@ -9,6 +10,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActionBuilder {
+  static const String notifyShowPanel = "edu.illinois.rokwire.action.show_panel";
+
   static List<Widget> actionButtons(List<ButtonAction>? actions) {
     List<Widget> buttons = [];
     for (ButtonAction action in actions ?? []) {
@@ -26,6 +29,8 @@ class ActionBuilder {
     switch (action?.type) {
       case ActionType.showSurvey:
         return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.show_survey.title", "Show Survey"), actionFunc);
+      case ActionType.showPanel:
+        return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.show_panel.title", "Show Panel"), actionFunc);
       case ActionType.launchUri:
         return ButtonAction(action?.label ?? Localization().getStringEx("widget.button.action.launchUri.title", "Open Link"), actionFunc);
       case ActionType.dismiss:
@@ -39,6 +44,8 @@ class ActionBuilder {
     switch (action?.type) {
       case ActionType.showSurvey:
         return (action?.data is String) ? () => onTapShowSurvey(context, action!.data, params: action.params, dismissContext: dismissContext) : null;
+      case ActionType.showPanel:
+        return (action?.data is String) ? () => onTapShowPanel(context, action!.data, params: action.params, dismissContext: dismissContext) : null;
       case ActionType.launchUri:
         if (action?.data is String) {
           dynamic internal = action?.params['internal'];
@@ -73,6 +80,25 @@ class ActionBuilder {
         //   _mainSurveyData = _survey?.firstQuestion;
         // });
         Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: survey, defaultResponses: JsonUtils.mapValue(params?['default_responses']))));
+      }
+    });
+  }
+
+  static void onTapShowPanel(BuildContext context, dynamic panel, {Map<String, dynamic>? params, BuildContext? dismissContext}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // onTapDismiss(dismissContext: dismissContext);
+      switch (panel) {
+        case "SurveyPanel":
+          if (params?['id'] is String) {
+            Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: params!['id'], defaultResponses: JsonUtils.mapValue(params['default_responses']))));
+          }
+          break;
+        case "GuideDetailPanel":
+          if (params?['guide_id'] is String) {
+            params!["panel"] = "GuideDetailPanel";
+            NotificationService().notify(notifyShowPanel, params);
+          }
+          break;
       }
     });
   }

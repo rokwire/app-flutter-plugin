@@ -18,7 +18,7 @@ class SurveyBuilder {
       content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.fat')));
     }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
-      content.add(Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular')));
+      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular'))));
     }
     if (CollectionUtils.isNotEmpty(buttonActions)) {
       content.add(Padding(

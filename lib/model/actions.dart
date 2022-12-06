@@ -4,6 +4,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 enum ActionType {
   launchUri,
   showSurvey,
+  showPanel,
   dismiss,
   none
 }
