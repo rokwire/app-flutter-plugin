@@ -18,6 +18,7 @@ import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
@@ -50,11 +51,12 @@ class SurveyWidget extends StatefulWidget {
   final bool showResult;
   final bool internalContinueButton;
   final Map<String, dynamic>? defaultResponses;
+  final Widget? offlineWidget;
 
   late final SurveyWidgetController controller;
 
   SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, 
-    this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, SurveyWidgetController? controller}) :
+    this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, this.offlineWidget, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -140,7 +142,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             Visibility(visible: widget.inputEnabled && widget.internalContinueButton,
                 child: SurveyWidget.buildContinueButton(widget.controller)),
         ]),
-      ) : Container();
+      ) : (Connectivity().isOffline && widget.offlineWidget != null ? widget.offlineWidget! : Container());
   }
 
   Widget _buildDateTaken() {
@@ -381,7 +383,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.description.small.fat'), textAlign: TextAlign.center,),
+          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.detail.small'), textAlign: TextAlign.center,),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
