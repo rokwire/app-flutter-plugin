@@ -226,7 +226,7 @@ class Event with Explore, Favorite {
     longDescription = json.containsKey("description") ? json["description"] : json['longDescription']; /*Back compatibility keep until we use longDescription */
     imageURL = json['imageURL'];
     placeID = json['placeID'];
-    location = ExploreLocation.fromJSON(json['location']);
+    location = ExploreLocation.fromJson(json['location']);
     eventId = json['eventId'];
     startDateString = json['startDate'];
     endDateString = json['endDate'];
