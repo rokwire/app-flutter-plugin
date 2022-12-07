@@ -52,7 +52,8 @@ abstract class Explore implements Comparable<Explore> {
     return null;
   }
 
-  static Explore? fromJson(Map<String, dynamic>? json) => _getJsonHandler(json)?.exploreFromJson(json);
+  static Explore? fromJson(Map<String, dynamic>? json)  =>
+    _getJsonHandler(json)?.exploreFromJson(json);
 
   // List
   
@@ -120,7 +121,7 @@ class ExploreLocation {
       this.floor,
       this.description});
 
-  static ExploreLocation? fromJSON(Map<String, dynamic>? json) {
+  static ExploreLocation? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ExploreLocation(
       locationId: JsonUtils.stringValue(json['locationId']),
       name: JsonUtils.stringValue(json['name']),
@@ -236,6 +237,13 @@ class ExploreLocation {
     return displayText;
   }
 
+  String? get coordinatesString =>
+    ((latitude != null) && (longitude != null)) ? "[$latitude, $longitude]" : null;
+
+  String? get displayCoordinates =>
+    ((latitude != null) && (longitude != null)) ? "[${latitude?.toStringAsFixed(6)}, ${longitude?.toStringAsFixed(6)}]" : null;
+
+
   String? get analyticsValue {
     if ((name != null) && name!.isNotEmpty) {
       return name;
@@ -247,5 +255,11 @@ class ExploreLocation {
       return null;
     }
   }
-}
 
+  // ExploreJsonHandler
+  static bool canJson(Map<String, dynamic>? json) {
+    return (json != null) &&
+      (JsonUtils.doubleValue(json['latitude']) != null) &&
+      (JsonUtils.doubleValue(json['longitude']) != null);
+  }
+}
