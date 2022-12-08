@@ -1004,7 +1004,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // User Prefs
 
   @protected
-  void onUserPrefsChanged(Auth2UserPrefs? prefs) {
+  Future<void> onUserPrefsChanged(Auth2UserPrefs? prefs) async {
     if (identical(prefs, _anonymousPrefs)) {
       Storage().auth2AnonymousPrefs = _anonymousPrefs;
       NotificationService().notify(notifyPrefsChanged);
@@ -1012,8 +1012,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (identical(prefs, _account?.prefs)) {
       Storage().auth2Account = _account;
       NotificationService().notify(notifyPrefsChanged);
-      _saveAccountUserPrefs();
+      return _saveAccountUserPrefs();
     }
+    return;
   }
 
   Future<void> _saveAccountUserPrefs() async {
