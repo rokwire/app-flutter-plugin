@@ -201,7 +201,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   @protected
   Widget buildFlexibleInterior(BuildContext context) {
     Widget? image = Styles().images?.getImage(flexImageUrl, fit: BoxFit.cover, networkHeaders: Config().networkAuthHeaders, excludeFromSemantics: true);
-    return (flexImageUrl != null && image != null) ? Positioned.fill(child: ModalImageHolder(url: flexImageUrl ,child:image)) : Container();
+    return (flexImageUrl != null && image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
   }
 
   @protected
