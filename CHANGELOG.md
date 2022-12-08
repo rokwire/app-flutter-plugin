@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.3.0 -->
 ### Fixed
-- Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167)
+- Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167).
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
-- Improve SectionSlantHeader [#211](https://github.com/rokwire/app-flutter-plugin/issues/211)
+- Improve SectionSlantHeader [#211](https://github.com/rokwire/app-flutter-plugin/issues/211).
+- Crash in header bar widget [#2654](https://github.com/rokwire/illinois-app/issues/2654).
+- Crash on tapping image in detail panels [#223](https://github.com/rokwire/app-flutter-plugin/issues/223).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
