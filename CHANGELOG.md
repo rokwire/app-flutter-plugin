@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Crash in header bar widget [#2654](https://github.com/rokwire/illinois-app/issues/2654).
 - Crash on tapping image in detail panels [#223](https://github.com/rokwire/app-flutter-plugin/issues/223).
 - Privacy level is not getting saved property [#222](https://github.com/rokwire/app-flutter-plugin/issues/222)
+- Missing close button from ModalImagePanel[#227](https://github.com/rokwire/app-flutter-plugin/issues/227).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
@@ -30,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added API for loading target audience count in Groups service [#2544](https://github.com/rokwire/illinois-app/issues/2544).
 - Implement "Mark all as read" [#2570](https://github.com/rokwire/illinois-app/issues/2570).
 - Survey improvements for BESSI [#206](https://github.com/rokwire/app-flutter-plugin/issues/206)
-- Store user's choice on if the appointments should be displayed [#2606](https://github.com/rokwire/illinois-app/issues/2606).
 - Add additional group settings [#2619](https://github.com/rokwire/illinois-app/issues/2619).
 - Delete survey responses request [#210](https://github.com/rokwire/app-flutter-plugin/issues/210).
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
