@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added API for loading target audience count in Groups service [#2544](https://github.com/rokwire/illinois-app/issues/2544).
 - Implement "Mark all as read" [#2570](https://github.com/rokwire/illinois-app/issues/2570).
 - Survey improvements for BESSI [#206](https://github.com/rokwire/app-flutter-plugin/issues/206)
-- Store user's choice on if the appointments should be displayed [#2606](https://github.com/rokwire/illinois-app/issues/2606).
 - Add additional group settings [#2619](https://github.com/rokwire/illinois-app/issues/2619).
 - Delete survey responses request [#210](https://github.com/rokwire/app-flutter-plugin/issues/210).
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
