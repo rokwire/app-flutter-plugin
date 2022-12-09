@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve SectionSlantHeader [#211](https://github.com/rokwire/app-flutter-plugin/issues/211).
 - Crash in header bar widget [#2654](https://github.com/rokwire/illinois-app/issues/2654).
 - Crash on tapping image in detail panels [#223](https://github.com/rokwire/app-flutter-plugin/issues/223).
+- Missing close button from ModalImagePanel[#227](https://github.com/rokwire/app-flutter-plugin/issues/227).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
