@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.3.0 -->
 ### Fixed
-- Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167)
+- Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167).
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).
-- Improve SectionSlantHeader [#211](https://github.com/rokwire/app-flutter-plugin/issues/211)
+- Improve SectionSlantHeader [#211](https://github.com/rokwire/app-flutter-plugin/issues/211).
+- Crash in header bar widget [#2654](https://github.com/rokwire/illinois-app/issues/2654).
+- Crash on tapping image in detail panels [#223](https://github.com/rokwire/app-flutter-plugin/issues/223).
+- Survey bug fixes [#219](https://github.com/rokwire/app-flutter-plugin/issues/219)
+- Privacy level is not getting saved property [#222](https://github.com/rokwire/app-flutter-plugin/issues/222)
+- Missing close button from ModalImagePanel[#227](https://github.com/rokwire/app-flutter-plugin/issues/227).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
@@ -27,11 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added API for loading target audience count in Groups service [#2544](https://github.com/rokwire/illinois-app/issues/2544).
 - Implement "Mark all as read" [#2570](https://github.com/rokwire/illinois-app/issues/2570).
 - Survey improvements for BESSI [#206](https://github.com/rokwire/app-flutter-plugin/issues/206)
-- Store user's choice on if the appointments should be displayed [#2606](https://github.com/rokwire/illinois-app/issues/2606).
 - Add additional group settings [#2619](https://github.com/rokwire/illinois-app/issues/2619).
 - Delete survey responses request [#210](https://github.com/rokwire/app-flutter-plugin/issues/210).
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
+<<<<<<< HEAD
 - Create utility method for launching urls [#217](https://github.com/rokwire/app-flutter-plugin/issues/217).
+=======
+- Added Explore.exploreLocationDescription interface [#2633](https://github.com/rokwire/illinois-app/issues/2633).
+>>>>>>> develop
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 - Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
@@ -48,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter open resource projects not to include projects where the current user is member, disable paging until this gets resolved on the backend [#2540](https://github.com/rokwire/illinois-app/issues/2540).
 - Acknowledged 'exclude_my_groups' parameter for loading open research projects [#2540](https://github.com/rokwire/illinois-app/issues/2540).
 - Omit null title/value in VerticalTitleValueSection [#2542](https://github.com/rokwire/illinois-app/issues/2542).
+- ExploreLocation updated from ExplorePOI [#220](https://github.com/rokwire/app-flutter-plugin/issues/220).
 
 ## [1.2.4] - 2022-09-30
 ### Added
