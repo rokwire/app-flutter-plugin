@@ -19,8 +19,8 @@ import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
-import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
@@ -102,7 +102,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       _setSurvey(widget.survey);
     } else if (widget.survey is String) {
       _setLoading(true);
-      Polls().loadSurvey(widget.survey).then((survey) {
+      Surveys().loadSurvey(widget.survey).then((survey) {
         if (survey != null) {
           _setSurvey(survey);
           widget.controller.onLoad?.call(survey);

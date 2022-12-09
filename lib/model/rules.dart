@@ -21,7 +21,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
-import 'package:rokwire_plugin/service/polls.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -331,7 +331,7 @@ class RuleAction extends RuleActionResult {
     dynamic notificationData = engine.getValOrCollection(data);
     if (notificationData is Map<String, dynamic>) {
       SurveyAlert alert = SurveyAlert.fromJson(notificationData);
-      return Polls().createSurveyAlert(alert);
+      return Surveys().createSurveyAlert(alert);
     }
     return Future<bool>.value(false);
   } 
