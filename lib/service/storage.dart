@@ -368,9 +368,4 @@ class Storage with Service {
     catch(e) { debugPrint(e.toString()); return null; }
   }
   set assessmentsSaveResultsMap(Map<String, bool>? map) => setStringWithName(assessmentsEnableSaveKey, JsonUtils.encode(map));
-
-  // Appointments
-  String get appointmentsDisplayEnabledKey => 'edu.illinois.rokwire.appointments.display_enabled';
-  bool? get appointmentsCanDisplay => getBoolWithName(appointmentsDisplayEnabledKey, defaultValue: true);
-  set appointmentsCanDisplay(bool? value) => setBoolWithName(appointmentsDisplayEnabledKey, value);
 }
