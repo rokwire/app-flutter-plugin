@@ -21,9 +21,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
-import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -44,9 +42,6 @@ class Polls with Service implements NotificationsListener {
   static const String notifyResultsChanged   = "edu.illinois.rokwire.poll.resultschanged"; // poll updated
   static const String notifyVoteChanged      = "edu.illinois.rokwire.poll.votechanged"; // poll updated
   static const String notifyStatusChanged    = "edu.illinois.rokwire.poll.statuschnaged"; // poll closed, results could be presented
-
-  static const String notifySurveyLoaded              = "edu.illinois.rokwire.survey.loaded";
-  static const String notifySurveyResponseCreated     = "edu.illinois.rokwire.survey_response.created";
 
   static const String notifyLifecycleCreate  = "edu.illinois.rokwire.poll.lifecycle.create";
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
@@ -326,89 +321,6 @@ class Polls with Service implements NotificationsListener {
         }
       } else {
         throw PollsException(PollsError.internal);
-      }
-    }
-    return null;
-  }
-
-  Future<Survey?> loadSurvey(String id) async {
-    if (enabled) {
-      String url = '${Config().quickPollsUrl}/surveys/$id';
-      Response? response = await Network().get(url, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseBody);
-        if (responseMap != null) {
-          Survey? survey = Survey.fromJson(responseMap);
-          NotificationService().notify(notifySurveyLoaded);
-          return survey;
-        } else {
-          throw PollsException(PollsError.serverResponseContent);
-        }
-      } else {
-        throw PollsException(PollsError.serverResponse, '$responseCode $responseBody');
-      }
-    }
-    return null;
-  }
-
-  Future<SurveyResponse?> createSurveyResponse(Survey survey) async {
-    if (enabled) {
-      String? body = JsonUtils.encode(survey.toJson());
-      String url = '${Config().quickPollsUrl}/survey-responses';
-      Response? response = await Network().post(url, body: body, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseString = response?.body;
-      if ((response != null) && (responseCode == 200)) {
-        Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
-        if (responseJson != null) {
-          SurveyResponse? response = SurveyResponse.fromJson(responseJson);
-          NotificationService().notify(notifySurveyResponseCreated);
-          return response;
-        }
-      }
-    }
-    return null;
-  }
-
-  Future<List<SurveyResponse>?> loadSurveyResponses({List<String>? surveyIDs, List<String>? surveyTypes, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
-    if (enabled) {
-      Map<String, String> queryParams = {};
-      if (CollectionUtils.isNotEmpty(surveyIDs)) {
-        queryParams['survey_ids'] = surveyIDs!.join(',');
-      }
-      if (CollectionUtils.isNotEmpty(surveyTypes)) {
-        queryParams['survey_types'] = surveyTypes!.join(',');
-      }
-      if (startDate != null) {
-        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(startDate);
-        queryParams['start_date'] = startDateFormatted!;
-      }
-      if (endDate != null) {
-        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
-        queryParams['end_date'] = endDateFormatted!;
-      }
-      if (limit != null) {
-        queryParams['limit'] = limit.toString();
-      }
-      if (offset != null) {
-        queryParams['offset'] = offset.toString();
-      }
-
-      String url = '${Config().quickPollsUrl}/survey-responses';
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
-      Response? response = await Network().get(url, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
-        if (responseMap != null) {
-          List<SurveyResponse>? surveys = SurveyResponse.listFromJson(responseMap);
-          return surveys;
-        }
       }
     }
     return null;

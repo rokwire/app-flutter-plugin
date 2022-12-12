@@ -23,112 +23,118 @@ import 'package:intl/intl.dart';
 // Group
 
 class Group {
-	String?             id;
-	String?             category;
-	String?             type;
-	String?             title;
-  String?             description;
-  GroupPrivacy?       privacy;
-  DateTime?           dateCreatedUtc;
-  DateTime?           dateUpdatedUtc;
+	String?                       id;
+	String?                       category;
+	String?                       type;
+	String?                       title;
+  String?                       description;
+  GroupPrivacy?                 privacy;
+  DateTime?                     dateCreatedUtc;
+  DateTime?                     dateUpdatedUtc;
 
-  bool?               certified;
-  bool?               hiddenForSearch;
-  bool?               canJoinAutomatically;
-  bool?               onlyAdminsCanCreatePolls;
+  bool?                         certified;
+  bool?                         hiddenForSearch;
+  bool?                         canJoinAutomatically;
+  bool?                         onlyAdminsCanCreatePolls;
 
-  bool?               authManEnabled;
-  String?             authManGroupName;
+  bool?                         authManEnabled;
+  String?                       authManGroupName;
 
-  bool?               attendanceGroup;
+  bool?                         attendanceGroup;
   
-  bool?               researchGroup;
-  bool?               researchOpen;
-  String?             researchDescription;
-  Map<String, dynamic>? researchProfile; 
+  bool?                         researchProject;
+  bool?                         researchOpen;
+  String?                       researchConsentDetails;
+  String?                       researchConsentStatement;
+  Map<String, dynamic>?         researchProfile; 
 
-  String?             imageURL;
-  String?             webURL;
-  Member?             currentMember;
-  List<String>?       tags;
+  String?                        imageURL;
+  String?                        webURL;
+  Member?                        currentMember;
+  List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
-  GroupMembershipQuest? membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
+  GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
+  GroupSettings?             settings;
 
   Group({
 	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
-    this.researchGroup, this.researchOpen, this.researchDescription, this.researchProfile,
-    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest,
+    this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
+    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest, this.settings
     });
 
   static Group? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Group(
-      id                : JsonUtils.stringValue(json['id']),
-      category          : JsonUtils.stringValue(json['category']),
-      type              : JsonUtils.stringValue(json['type']),
-      title             : JsonUtils.stringValue(json['title']),
-      description       : JsonUtils.stringValue(json['description']),
-      privacy           : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
-      dateCreatedUtc    : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
-      dateUpdatedUtc    : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+      id                             : JsonUtils.stringValue(json['id']),
+      category                       : JsonUtils.stringValue(json['category']),
+      type                           : JsonUtils.stringValue(json['type']),
+      title                          : JsonUtils.stringValue(json['title']),
+      description                    : JsonUtils.stringValue(json['description']),
+      privacy                        : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
+      dateCreatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
+      dateUpdatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
       
-      certified         : JsonUtils.boolValue(json['certified']),
-      hiddenForSearch   : JsonUtils.boolValue(json['hidden_for_search']),
-      canJoinAutomatically : JsonUtils.boolValue(json['can_join_automatically']),
-      onlyAdminsCanCreatePolls : JsonUtils.boolValue(json['only_admins_can_create_polls']),
+      certified                      : JsonUtils.boolValue(json['certified']),
+      hiddenForSearch                : JsonUtils.boolValue(json['hidden_for_search']),
+      canJoinAutomatically           : JsonUtils.boolValue(json['can_join_automatically']),
+      onlyAdminsCanCreatePolls       : JsonUtils.boolValue(json['only_admins_can_create_polls']),
 
-      authManEnabled    : JsonUtils.boolValue(json['authman_enabled']),
-      authManGroupName  : JsonUtils.stringValue(json['authman_group']),
+      authManEnabled                 : JsonUtils.boolValue(json['authman_enabled']),
+      authManGroupName               : JsonUtils.stringValue(json['authman_group']),
       
-      attendanceGroup   : JsonUtils.boolValue(json['attendance_group']),
+      attendanceGroup                : JsonUtils.boolValue(json['attendance_group']),
 
-      researchGroup     : JsonUtils.boolValue(json['research_group']),
-      researchOpen      : JsonUtils.boolValue(json['research_open']),
-      researchDescription: JsonUtils.stringValue(json['research_description']),
-      researchProfile   : JsonUtils.mapValue(json['research_profile']),
+      researchProject                : JsonUtils.boolValue(json['research_group']),
+      researchOpen                   : JsonUtils.boolValue(json['research_open']),
+      researchConsentDetails         : JsonUtils.stringValue(json['research_consent_details']),
+      researchConsentStatement       : JsonUtils.stringValue(json['research_consent_statement']),
+      researchProfile                : JsonUtils.mapValue(json['research_profile']),
       
-      imageURL          : JsonUtils.stringValue(json['image_url']),
-      webURL            : JsonUtils.stringValue(json['web_url']),
-      currentMember     : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
-      tags              : JsonUtils.listStringsValue(json['tags']),
-      questions         : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
-      membershipQuest   : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
+      imageURL                       : JsonUtils.stringValue(json['image_url']),
+      webURL                         : JsonUtils.stringValue(json['web_url']),
+      currentMember                  : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
+      tags                           : JsonUtils.listStringsValue(json['tags']),
+      questions                      : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
+      membershipQuest                : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
+      settings                         : GroupSettings.fromJson(JsonUtils.mapValue(json['settings']))
     ) : null;
   }
 
   static Group? fromOther(Group? other) {
     return (other != null) ? Group(
-      id                : other.id,
-      category          : other.category,
-      type              : other.type,
-      title             : other.title,
-      description       : other.description,
-      privacy           : other.privacy,
-      dateCreatedUtc    : other.dateCreatedUtc,
-      dateUpdatedUtc    : other.dateUpdatedUtc,
+      id                             : other.id,
+      category                       : other.category,
+      type                           : other.type,
+      title                          : other.title,
+      description                    : other.description,
+      privacy                        : other.privacy,
+      dateCreatedUtc                 : other.dateCreatedUtc,
+      dateUpdatedUtc                 : other.dateUpdatedUtc,
 
-      certified         : other.certified,
-      hiddenForSearch   : other.hiddenForSearch,
-      canJoinAutomatically : other.canJoinAutomatically,
-      onlyAdminsCanCreatePolls : other.onlyAdminsCanCreatePolls,
+      certified                      : other.certified,
+      hiddenForSearch                : other.hiddenForSearch,
+      canJoinAutomatically           : other.canJoinAutomatically,
+      onlyAdminsCanCreatePolls       : other.onlyAdminsCanCreatePolls,
 
-      authManEnabled    : other.authManEnabled,
-      authManGroupName  : other.authManGroupName,
+      authManEnabled                 : other.authManEnabled,
+      authManGroupName               : other.authManGroupName,
 
-      attendanceGroup   : other.attendanceGroup,
+      attendanceGroup                : other.attendanceGroup,
 
-      researchGroup     : other.researchGroup,
-      researchOpen      : other.researchOpen,
-      researchDescription: other.researchDescription,
-      researchProfile   : MapUtils.from(other.researchProfile),
+      researchProject                : other.researchProject,
+      researchOpen                   : other.researchOpen,
+      researchConsentDetails         : other.researchConsentDetails,
+      researchConsentStatement       : other.researchConsentStatement,
+      researchProfile                : MapUtils.from(other.researchProfile),
 
-      imageURL          : other.imageURL,
-      webURL            : other.webURL,
-      currentMember     : other.currentMember,
-      tags              : ListUtils.from(other.tags),
-      questions         : GroupMembershipQuestion.listFromOthers(other.questions),
-      membershipQuest   : GroupMembershipQuest.fromOther(other.membershipQuest),
+      imageURL                       : other.imageURL,
+      webURL                         : other.webURL,
+      currentMember                  : other.currentMember,
+      tags                           : ListUtils.from(other.tags),
+      questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
+      membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
+      settings                          : GroupSettings.fromOther(other.settings),
     ) : null;
   }
 
@@ -153,9 +159,10 @@ class Group {
 
       'attendance_group'              : attendanceGroup,
 
-      'research_group'                : researchGroup,
+      'research_group'                : researchProject,
       'research_open'                 : researchOpen,
-      'research_description'          : researchDescription,
+      'research_consent_details'      : researchConsentDetails,
+      'research_consent_statement'    : researchConsentStatement,
       'research_profile'              : researchProfile,
 
       'image_url'                     : imageURL,
@@ -164,6 +171,7 @@ class Group {
       'tags'                          : tags,
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
+      'settings'                                : settings?.toJson()
     };
   }
 
@@ -189,9 +197,10 @@ class Group {
 
       (other.attendanceGroup == attendanceGroup) &&
 
-      (other.researchGroup == researchGroup) &&
+      (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
-      (other.researchDescription == researchDescription) &&
+      (other.researchConsentDetails == researchConsentDetails) &&
+      (other.researchConsentStatement == researchConsentStatement) &&
       (const DeepCollectionEquality().equals(other.researchProfile, researchProfile)) &&
 
       (other.imageURL == imageURL) &&
@@ -199,7 +208,8 @@ class Group {
       (other.currentMember == currentMember) &&
       (const DeepCollectionEquality().equals(other.tags, tags)) &&
       (const DeepCollectionEquality().equals(other.questions, questions)) &&
-      (other.membershipQuest == membershipQuest);
+      (other.membershipQuest == membershipQuest) &&
+      (other.settings == settings);
 
 
   @override
@@ -223,9 +233,10 @@ class Group {
 
     (attendanceGroup?.hashCode ?? 0) ^
 
-    (researchGroup?.hashCode ?? 0) ^
+    (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
-    (researchDescription?.hashCode ?? 0) ^
+    (researchConsentDetails?.hashCode ?? 0) ^
+    (researchConsentStatement?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(researchProfile)) ^
 
     (imageURL?.hashCode ?? 0) ^
@@ -233,7 +244,8 @@ class Group {
     (currentMember?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(tags)) ^
     (const DeepCollectionEquality().hash(questions)) ^
-    (membershipQuest?.hashCode ?? 0);
+    (membershipQuest?.hashCode ?? 0)^
+    (settings?.hashCode ?? 0);
 
   bool get currentUserIsAdmin{
     return (currentMember?.isAdmin ?? false);
@@ -271,12 +283,15 @@ class Group {
     return !(hiddenForSearch ?? false) || currentUserIsAdmin;
   }
 
-  static List<Group>? listFromJson(List<dynamic>? json) {
+  static List<Group>? listFromJson(List<dynamic>? json, {bool Function(Group element)? filter}) {
     List<Group>? values;
     if (json != null) {
       values = <Group>[];
       for (dynamic entry in json) {
-        ListUtils.add(values, Group.fromJson(JsonUtils.mapValue(entry)));
+        Group? group = Group.fromJson(JsonUtils.mapValue(entry));
+        if ((group != null) && ((filter == null) || filter(group))) {
+          values.add(group);
+        }
       }
     }
     return values;
@@ -359,12 +374,14 @@ class Member {
 	String?            id;
   String?            userId;
   String?            externalId;
+  String?            netId;
 	String?            name;
 	String?            email;
   GroupMemberStatus? status;
   String?            officerTitle;
-  
-  List<GroupMembershipAnswer>? answers;
+
+  List<GroupMembershipAnswer>?    answers;
+  MemberNotificationsPreferences? notificationsPreferences;
 
   DateTime?          dateAttendedUtc;
   DateTime?          dateCreatedUtc;
@@ -373,7 +390,7 @@ class Member {
   Member({
     this.id, this.userId, this.externalId, this.name, this.email, this.status, this.officerTitle,
     this.dateAttendedUtc, this.dateCreatedUtc, this.dateUpdatedUtc,
-    this.answers,
+    this.answers, this.notificationsPreferences, this.netId
   });
 
   static Member? fromJson(Map<String, dynamic>? json) {
@@ -381,12 +398,14 @@ class Member {
       id          : JsonUtils.stringValue(json['id']),
       userId      : JsonUtils.stringValue(json['user_id']),
       externalId  : JsonUtils.stringValue(json['external_id']),
+      netId  : JsonUtils.stringValue(json['net_id']),
       name        : JsonUtils.stringValue(json['name']),
       email       : JsonUtils.stringValue(json['email']),
       status      : groupMemberStatusFromString(JsonUtils.stringValue(json['status'])),
       officerTitle : JsonUtils.stringValue(json['officerTitle']),
       
-      answers : GroupMembershipAnswer.listFromJson(JsonUtils.listValue(json['member_answers'])),
+      answers                  : GroupMembershipAnswer.listFromJson(JsonUtils.listValue(json['member_answers'])),
+      notificationsPreferences : MemberNotificationsPreferences.fromJson(JsonUtils.mapValue(json['notifications_preferences'])),
 
       dateAttendedUtc : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_attended'])),
       dateCreatedUtc  : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
@@ -399,11 +418,13 @@ class Member {
       id              : other.id,
       userId          : other.userId,
       externalId      : other.externalId,
+      netId             : other.netId,
       name            : other.name,
       status          : other.status,
       officerTitle    : other.officerTitle,
 
-      answers         : GroupMembershipAnswer.listFromOther(other.answers),
+      answers                  : GroupMembershipAnswer.listFromOther(other.answers),
+      notificationsPreferences : other.notificationsPreferences,
 
       dateAttendedUtc : other.dateAttendedUtc,
       dateCreatedUtc  : other.dateCreatedUtc,
@@ -416,12 +437,14 @@ class Member {
     json['id']                  = id;
     json['user_id']             = userId;
     json['external_id']         = externalId;
+    json['net_id']                = netId;
     json['name']                = name;
     json['email']               = email;
     json['status']              = groupMemberStatusToString(status);
     json['officerTitle']        = officerTitle;
 
-    json['answers']             = GroupMembershipAnswer.listToJson(answers);
+    json['answers']                   = GroupMembershipAnswer.listToJson(answers);
+    json['notifications_preferences'] = notificationsPreferences?.toJson();
 
     json['date_attended']       = groupUtcDateTimeToString(dateAttendedUtc);
     json['date_created']        = groupUtcDateTimeToString(dateCreatedUtc);
@@ -470,10 +493,12 @@ class Member {
       (other.id == id) &&
       (other.userId == userId) &&
       (other.externalId == externalId) &&
+      (other.netId == netId) &&
       (other.name == name) &&
       (other.email == email) &&
       (other.status == status) &&
       (other.officerTitle == officerTitle) &&
+      (other.notificationsPreferences == notificationsPreferences) &&
       (other.dateAttendedUtc == dateAttendedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
@@ -484,10 +509,12 @@ class Member {
     (id?.hashCode ?? 0) ^
     (userId?.hashCode ?? 0) ^
     (externalId?.hashCode ?? 0) ^
+    (netId?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
     (email?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
     (officerTitle?.hashCode ?? 0) ^
+    (notificationsPreferences?.hashCode ?? 0) ^
     (dateAttendedUtc?.hashCode ?? 0) ^
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
@@ -557,6 +584,66 @@ String? groupMemberStatusToString(GroupMemberStatus? value) {
     }
   }
   return null;
+}
+
+
+
+//////////////////////////////
+// MemberNotificationsPreferences
+
+class MemberNotificationsPreferences {
+  bool? overridePreferences;
+  bool? muteAll;
+  bool? muteInvitations;
+  bool? mutePosts;
+  bool? muteEvents;
+  bool? mutePolls;
+
+  MemberNotificationsPreferences({this.overridePreferences, this.muteAll, this.muteInvitations, this.mutePosts, this.muteEvents, 
+    this.mutePolls});
+
+  static MemberNotificationsPreferences? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return MemberNotificationsPreferences(
+        overridePreferences: JsonUtils.boolValue(json['override_preferences']),
+        muteAll: JsonUtils.boolValue(json['all_mute']),
+        muteInvitations: JsonUtils.boolValue(json['invitations_mute']),
+        mutePosts: JsonUtils.boolValue(json['posts_mute']),
+        muteEvents: JsonUtils.boolValue(json['events_mute']),
+        mutePolls: JsonUtils.boolValue(json['polls_mute']));
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'override_preferences': overridePreferences,
+      'all_mute': muteAll,
+      'invitations_mute': muteInvitations,
+      'posts_mute': mutePosts,
+      'events_mute': muteEvents,
+      'polls_mute': mutePolls
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberNotificationsPreferences) &&
+      (other.overridePreferences == overridePreferences) &&
+      (other.muteAll == muteAll) &&
+      (other.muteInvitations == muteInvitations) &&
+      (other.mutePosts == mutePosts) &&
+      (other.muteEvents == muteEvents) &&
+      (other.mutePolls == mutePolls);
+
+  @override
+  int get hashCode =>
+      (overridePreferences?.hashCode ?? 0) ^
+      (muteAll?.hashCode ?? 0) ^
+      (muteInvitations?.hashCode ?? 0) ^
+      (mutePosts?.hashCode ?? 0) ^
+      (muteEvents?.hashCode ?? 0) ^
+      (mutePolls?.hashCode ?? 0);
 }
 
 //////////////////////////////
@@ -962,6 +1049,199 @@ class GroupError {
     };
   }
 }
+
+//////////////////////////////
+//Group Settings
+
+class GroupSettings { //TBD move the rest setting in this section
+  MemberInfoPreferences? memberInfoPreferences;
+  MemberPostPreferences? memberPostPreferences;
+
+  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences});
+
+  static GroupSettings? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return GroupSettings(
+      memberInfoPreferences: MemberInfoPreferences.fromJson(JsonUtils.mapValue(json['member_info_preferences'])),
+      memberPostPreferences: MemberPostPreferences.fromJson(JsonUtils.mapValue(json['post_preferences'])),
+    );
+  }
+
+  static GroupSettings? fromOther(GroupSettings? other) {
+    return (other != null) ? GroupSettings(
+      memberInfoPreferences: MemberInfoPreferences.fromOther(other.memberInfoPreferences),
+      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences)
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "member_info_preferences": memberInfoPreferences?.toJson(),
+      "post_preferences": memberPostPreferences?.toJson(),
+    };
+  }
+
+  static GroupSettings? initialDefaultSettings(){
+    return GroupSettings(memberInfoPreferences: MemberInfoPreferences(allowMemberInfo: true), memberPostPreferences: MemberPostPreferences(allowSendPost: true)); //Set Default values to true
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is GroupSettings) &&
+          (other.memberInfoPreferences == memberInfoPreferences) &&
+          (other.memberPostPreferences == memberPostPreferences);
+
+
+  @override
+  int get hashCode =>
+      (memberInfoPreferences?.hashCode ?? 0) ^
+      (memberPostPreferences?.hashCode ?? 0);
+}
+
+/////////////////////////////
+//Group Settings - Member Info Preferences
+
+class MemberInfoPreferences {
+  bool? allowMemberInfo;
+  bool? viewMemberNetId;
+  bool? viewMemberName;
+  bool? viewMemberEmail;
+  bool? viewMemberPhone;
+
+  MemberInfoPreferences({this.allowMemberInfo, this.viewMemberNetId, this.viewMemberName, this.viewMemberEmail, this.viewMemberPhone});
+
+  static MemberInfoPreferences? fromJson(Map<String, dynamic>? json) {
+    if(json == null){
+      return null;
+    }
+
+    return MemberInfoPreferences(
+       allowMemberInfo : JsonUtils.boolValue(json[ 'allow_member_info']),
+       viewMemberNetId : JsonUtils.boolValue(json[ 'can_view_member_net_id']),
+       viewMemberName : JsonUtils.boolValue(json['can_view_member_name']),
+       viewMemberEmail : JsonUtils.boolValue(json[ 'can_view_member_email']),
+       viewMemberPhone : JsonUtils.boolValue(json[ 'can_view_member_phone']),
+    );
+  }
+
+  static MemberInfoPreferences? fromOther(MemberInfoPreferences? other) {
+    if(other == null){
+      return null;
+    }
+
+    return MemberInfoPreferences(
+       allowMemberInfo : other.allowMemberInfo,
+       viewMemberNetId : other.viewMemberNetId,
+       viewMemberName : other.viewMemberName,
+       viewMemberEmail : other.viewMemberEmail,
+       viewMemberPhone : other.viewMemberPhone,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'allow_member_info'             : allowMemberInfo,
+      'can_view_member_net_id'   : viewMemberNetId,
+      'can_view_member_name'    : viewMemberName,
+      'can_view_member_email'     : viewMemberEmail,
+      'can_view_member_phone'    : viewMemberPhone,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberInfoPreferences) &&
+          (other.allowMemberInfo == allowMemberInfo) &&
+          (other.viewMemberNetId == viewMemberNetId) &&
+          (other.viewMemberName == viewMemberName) &&
+          (other.viewMemberEmail == viewMemberEmail) &&
+          (other.viewMemberPhone == viewMemberPhone);
+
+
+  @override
+  int get hashCode =>
+      (allowMemberInfo?.hashCode ?? 0) ^
+      (viewMemberNetId?.hashCode ?? 0) ^
+      (viewMemberName?.hashCode ?? 0) ^
+      (viewMemberEmail?.hashCode ?? 0) ^
+      (viewMemberPhone?.hashCode ?? 0);
+}
+
+/////////////////////////////
+//Group Settings - Member Info Preferences
+
+class MemberPostPreferences {
+  bool? allowSendPost;
+  bool? sendPostToSpecificMembers;
+  bool? sendPostToAdmins;
+  bool? sendPostToAll;
+  bool? sendPostReplies;
+  bool? sendPostReactions;
+
+  MemberPostPreferences({this.allowSendPost, this.sendPostToSpecificMembers, this.sendPostToAdmins, this.sendPostToAll, this.sendPostReplies, this.sendPostReactions});
+
+  static MemberPostPreferences? fromJson(Map<String, dynamic>? json) {
+    if(json == null){
+      return null;
+    }
+
+    return MemberPostPreferences(
+        allowSendPost : JsonUtils.boolValue(json['allow_send_post']),
+        sendPostToSpecificMembers : JsonUtils.boolValue(json['can_send_post_to_specific_members']),
+        sendPostToAdmins : JsonUtils.boolValue(json['can_send_post_to_admins']),
+        sendPostToAll : JsonUtils.boolValue(json['can_send_post_to_all']),
+        sendPostReplies : JsonUtils.boolValue(json['can_send_post_replies']),
+        sendPostReactions : JsonUtils.boolValue(json['can_send_post_reactions']));
+  }
+
+  static MemberPostPreferences? fromOther(MemberPostPreferences? other) {
+    if(other == null){
+      return null;
+    }
+
+    return MemberPostPreferences(
+        allowSendPost : other.allowSendPost,
+        sendPostToSpecificMembers : other.sendPostToSpecificMembers,
+        sendPostToAdmins : other.sendPostToAdmins,
+        sendPostToAll : other.sendPostToAll,
+        sendPostReplies : other.sendPostReplies,
+        sendPostReactions : other.sendPostReactions);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'allow_send_post' : allowSendPost ,
+      'can_send_post_to_specific_members' : sendPostToSpecificMembers,
+      'can_send_post_to_admins' : sendPostToAdmins,
+      'can_send_post_to_all' : sendPostToAll,
+      'can_send_post_replies' : sendPostReplies,
+      'can_send_post_reactions' : sendPostReactions
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is MemberPostPreferences) &&
+          (other.allowSendPost == allowSendPost) &&
+          (other.sendPostToSpecificMembers == sendPostToSpecificMembers) &&
+          (other.sendPostToAdmins == sendPostToAdmins) &&
+          (other.sendPostToAll == sendPostToAll) &&
+          (other.sendPostReplies == sendPostReplies) &&
+          (other.sendPostReactions == sendPostReactions);
+
+
+  @override
+  int get hashCode =>
+      (allowSendPost?.hashCode ?? 0) ^
+      (sendPostToSpecificMembers?.hashCode ?? 0) ^
+      (sendPostToAdmins?.hashCode ?? 0) ^
+      (sendPostToAll?.hashCode ?? 0) ^
+      (sendPostReplies?.hashCode ?? 0) ^
+      (sendPostReactions?.hashCode ?? 0);
+}
+
 
 DateTime? groupUtcDateTimeFromString(String? dateTimeString) {
   return DateTimeUtils.dateTimeFromString(dateTimeString, format: "yyyy-MM-ddTHH:mm:ssZ", isUtc: true);

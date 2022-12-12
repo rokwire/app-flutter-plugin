@@ -220,13 +220,13 @@ class Auth2Account {
     return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
-  bool get isResearchGroupAdmin {
+  bool get isResearchProjectAdmin {
     return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
-  bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
@@ -512,7 +512,6 @@ class Auth2UserProfile {
       NotificationService().notify(notifyChanged, this);
     }
   }
-
 }
 
 ////////////////////////////////
@@ -1730,11 +1729,10 @@ class UserRole {
   static const employee = UserRole._internal('employee');
   static const alumni = UserRole._internal('alumni');
   static const parent = UserRole._internal('parent');
-  static const resident = UserRole._internal('resident');
   static const gies = UserRole._internal('gies');
 
   static List<UserRole> get values {
-    return [student, visitor, fan, employee, alumni, parent, resident, gies];
+    return [student, visitor, fan, employee, alumni, parent, gies];
   }
 
   final String _value;

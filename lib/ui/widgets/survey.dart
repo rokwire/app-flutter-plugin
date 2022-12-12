@@ -18,10 +18,12 @@ import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/polls.dart';
+import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
+import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -33,10 +35,12 @@ class SurveyWidgetController {
 
   // Callbacks
   Function(bool)? onChangeSurveyResponse;
-  Function? onComplete;
+  Function()? beforeComplete;
+  Function(SurveyResponse?)? onComplete;
   Function(Survey?)? onLoad;
+  bool saving;
 
-  SurveyWidgetController({this.onChangeSurveyResponse, this.onComplete, this.onLoad});
+  SurveyWidgetController({this.onChangeSurveyResponse, this.beforeComplete, this.onComplete, this.onLoad, this.saving = false});
 }
 
 class SurveyWidget extends StatefulWidget {
@@ -46,11 +50,13 @@ class SurveyWidget extends StatefulWidget {
   final DateTime? dateTaken;
   final bool showResult;
   final bool internalContinueButton;
+  final Map<String, dynamic>? defaultResponses;
+  final Widget? offlineWidget;
 
   late final SurveyWidgetController controller;
 
-  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken,
-    this.showResult = false, this.internalContinueButton = true, this.surveyDataKey, SurveyWidgetController? controller}) :
+  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, 
+    this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, this.offlineWidget, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -61,14 +67,21 @@ class SurveyWidget extends StatefulWidget {
   static Widget buildContinueButton(SurveyWidgetController controller) {
     Survey? survey = controller.getSurvey?.call();
     bool canContinue =  survey?.canContinue() == true;
+
+    int? totalQuestions = survey?.stats?.total;
+    int? completedQuestions = survey?.stats?.complete;
+    String questionProgress = "";
+    if (totalQuestions != null && completedQuestions != null) {
+      questionProgress = " ($completedQuestions/$totalQuestions)";
+    }
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
       RoundedButton(
-          label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue"),
+          label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
           textColor: canContinue ? null : Styles().colors?.disabledTextColor,
           borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          enabled: canContinue,
+          enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
-          progress: null),
+          progress: controller.saving),
     ]);
   }
 }
@@ -86,16 +99,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.getSurvey = () => _survey;
 
     if (widget.survey is Survey) {
-      _survey = widget.survey;
-      _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
-      _mainSurveyData?.evaluateDefaultResponse(_survey!);
+      _setSurvey(widget.survey);
     } else if (widget.survey is String) {
       _setLoading(true);
-      Polls().loadSurvey(widget.survey).then((survey) {
+      Surveys().loadSurvey(widget.survey).then((survey) {
         if (survey != null) {
-          _survey = survey;
-          _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
-          _mainSurveyData?.evaluateDefaultResponse(_survey!);
+          _setSurvey(survey);
           widget.controller.onLoad?.call(survey);
         }
         if (mounted) {
@@ -122,7 +131,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       );
     }
     return _survey != null && _mainSurveyData != null ? Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 32.0),
+        padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -133,7 +142,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             Visibility(visible: widget.inputEnabled && widget.internalContinueButton,
                 child: SurveyWidget.buildContinueButton(widget.controller)),
         ]),
-      ) : Container();
+      ) : (Connectivity().isOffline && widget.offlineWidget != null ? widget.offlineWidget! : Container());
   }
 
   Widget _buildDateTaken() {
@@ -163,27 +172,30 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return Container();
     }
 
-    List<Widget> questions = [];
-    //TODO: use replace flag
+    List<Widget> contentList = [];
     for (SurveyData? data = _mainSurveyData; data != null; data = data.followUp(_survey!)) {
-      Widget? followUp = _buildInlineSurveyWidget(data);
-      if (followUp != null) {
+      Widget? surveyWidget = _buildInlineSurveyWidget(data);
+      if (surveyWidget != null) {
         // GlobalKey? key;
         // if (data.response == null) {
         //   key = GlobalKey();
         //   dataKey = key;
         // }
-        if (questions.isNotEmpty) {
-          questions.add(const SizedBox(height: 32));
-        }
-        questions.add(followUp);
+        contentList.add(Padding(padding: contentList.isNotEmpty ? const EdgeInsets.only(top: 32) : EdgeInsets.zero, child: surveyWidget));
       }
-      if (questions.length > 1000) {
+      if (contentList.length > 1000) {
         break;
       }
     }
 
-    return Column(children: questions);
+    return Column(children: contentList);
+  }
+
+  void _onChangeResponse(bool scrollEnd) {
+    setState(() {
+      _survey?.evaluate();
+    });
+    widget.controller.onChangeSurveyResponse?.call(scrollEnd);
   }
 
   Widget? _buildInlineSurveyWidget(SurveyData survey, {TextStyle? textStyle, EdgeInsets textPadding = const EdgeInsets.only(bottom: 8),
@@ -202,6 +214,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       surveyWidget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
       surveyWidget = _buildTextSurveySection(survey);
+    } else if (survey is SurveyDataPage) {
+      surveyWidget = _buildPageWidget(survey);
     }
 
     return surveyWidget?.widget != null ? Column(
@@ -216,11 +230,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
               Visibility(visible: !survey.allowSkip, child: Text("* ", style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
-              Flexible(
-                child: Text(
-                  survey.text,
-                  textAlign: TextAlign.start,
-                  style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
+              Visibility(
+                visible: !surveyWidget.containsText,
+                child: Flexible(
+                  child: Text(
+                    survey.text,
+                    textAlign: TextAlign.start,
+                    style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
+                  ),
                 ),
               ),
               Visibility(visible: surveyWidget.orientation == WidgetOrientation.right, child: surveyWidget.widget!),
@@ -245,7 +262,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   SurveyDataWidget? _buildResultSurveySection(SurveyDataResult? survey) {
-    return SurveyDataWidget(SurveyBuilder.surveyDataResult(context, survey), containsMoreInfo: true);
+    return SurveyDataWidget(SurveyBuilder.surveyDataResult(context, survey),
+        containsText: true, containsMoreInfo: true);
   }
 
   SurveyDataWidget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
@@ -253,7 +271,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     return SurveyDataWidget(_buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
       survey.response = value;
-      widget.controller.onChangeSurveyResponse?.call(false);
+      _onChangeResponse(false);
     }).widget);
   }
 
@@ -263,6 +281,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<OptionData> optionList = survey.options;
     if (survey.allowMultiple) {
       return SurveyDataWidget(_buildMultipleAnswerWidget(optionList, survey, enabled: enabled));
+    }
+    if (survey.style == 'horizontal') {
+      return SurveyDataWidget(_buildHorizontalMultipleChoiceSurveySection(survey, enabled: enabled));
     }
 
     OptionData? selected;
@@ -281,7 +302,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = optionList[index].value;
-          widget.controller.onChangeSurveyResponse?.call(true);
+          _onChangeResponse(true);
         } : null,
         selectedValue: selected));
     // }
@@ -332,7 +353,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         } else {
           survey.response = null;
         }
-        widget.controller.onChangeSurveyResponse?.call(false);
+        _onChangeResponse(false);
       } : null,
     );
     // } else {
@@ -345,6 +366,33 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // }
 
     return multipleChoice;
+  }
+
+  Widget? _buildHorizontalMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
+    if (survey == null) return null;
+
+    List<Widget> buttons = [];
+    for (OptionData option in survey.options) {
+      buttons.add(Flexible(fit: FlexFit.tight, child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: RadioButton<dynamic>(
+          value: option.value,
+          groupValue: survey.response,
+          onChanged: (value) {
+            survey.response = value;
+            _onChangeResponse(false);
+          },
+          enabled: enabled,
+          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.detail.small'), textAlign: TextAlign.center,),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
+        ),
+      )));
+    }
+
+    return Padding(padding: const EdgeInsets.only(bottom: 16), child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons));
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
@@ -369,7 +417,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           } else {
             survey.response = !survey.response;
           }
-          widget.controller.onChangeSurveyResponse?.call(true);
+          _onChangeResponse(true);
         } : null,
       ), orientation: WidgetOrientation.left);
     }
@@ -386,7 +434,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = !survey.response;
-          widget.controller.onChangeSurveyResponse?.call(true);
+          _onChangeResponse(true);
         } : null,
       ), orientation: WidgetOrientation.right);
     }
@@ -408,7 +456,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           //   return;
           // }
           survey.response = optionList[index].value;
-          widget.controller.onChangeSurveyResponse?.call(true);
+          _onChangeResponse(true);
         } : null,
         selectedValue: selected
     ));
@@ -460,7 +508,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             controller: dateTextController,
             // validator: _validationFunctions[field.key],
             onFieldSubmitted: (value) {
-              widget.controller.onChangeSurveyResponse?.call(false);
+              _onChangeResponse(false);
             },
             onChanged: (value) {
               int select = dateTextController.value.selection.start;
@@ -472,9 +520,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
               );
               survey.response = value.trim();
             },
-            onEditingComplete: widget.controller.onChangeSurveyResponse?.call(false),
+            onEditingComplete: () => _onChangeResponse(false),
             // maxLength: 10,
-            onSaved: (value) => widget.controller.onChangeSurveyResponse?.call(false),
+            onSaved: (value) => _onChangeResponse(false),
           ),
         ),
         Visibility(
@@ -487,7 +535,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
                   String date = DateFormat(format).format(picked);
                   dateTextController.text = date;
                   survey.response = date;
-                  widget.controller.onChangeSurveyResponse?.call(false);
+                  _onChangeResponse(false);
                   // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
                 }),
           ),
@@ -524,7 +572,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
-    if (survey.slider) {
+    if (survey.style == 'slider') {
       return _buildSliderSurveySection(survey, enabled: enabled);
     }
 
@@ -541,7 +589,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         val = double.parse(value);
       }
       survey.response = val;
-      widget.controller.onChangeSurveyResponse?.call(false);
+      _onChangeResponse(false);
     }).widget;
 
     return SurveyDataWidget(numericText);
@@ -583,7 +631,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: enabled ? (value) {
            survey.response = value;
-           widget.controller.onChangeSurveyResponse?.call(false);
+           _onChangeResponse(false);
           } : null)
         ),
       ],
@@ -609,7 +657,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
        Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
-           widget.controller.onChangeSurveyResponse?.call(false);
+           _onChangeResponse(false);
          } : null
        )
       ]));
@@ -635,6 +683,18 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     ));
   }
 
+  SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
+    return SurveyDataWidget(Container());
+  }
+
+  void _setSurvey(Survey survey) {
+    _survey = survey;
+    _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+
+    _mainSurveyData?.evaluateDefaultResponse(_survey!, defaultResponses: widget.defaultResponses);
+    _survey?.evaluate();
+  }
+
   void _onTapContinue() {
     // final targetContext = dataKey?.currentContext;
     // if (targetContext != null) {
@@ -656,31 +716,36 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return;
     }
 
-    // show survey summary or return to home page on finishing events
-    // SurveyData? followUp = _mainSurveyQuestion?.followUp(_survey);
-    // if (followUp == null) {
     _survey!.dateUpdated = DateTime.now();
-
-      // if (widget.showSummaryOnFinish) {
-      // } else {
     _finishSurvey();
-      // }
-
-      // return;
-    // }
-
-    // Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _survey, currentSurveyKey: followUp.key, showSummaryOnFinish: widget.showSummaryOnFinish, onComplete: widget.onComplete, initPanelDepth: widget.initPanelDepth + 1,)));
   }
 
   void _finishSurvey() {
-    _survey?.evaluate(evalResultRules: true);
-    widget.controller.onComplete?.call();
+    _setSaving(true);
+    widget.controller.beforeComplete?.call();
+    _survey!.evaluate(evalResultRules: true).then((result) {
+      if (result is! SurveyResponse) {
+        result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
+      }
+      widget.controller.onComplete?.call(result);
+      _setSaving(false);
+    });
   }
 
   void _setLoading(bool loading) {
-    setState(() {
-      _loading = loading;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = loading;
+      });
+    }
+  }
+
+  void _setSaving(bool saving) {
+    if (mounted) {
+      setState(() {
+        widget.controller.saving = saving;
+      });
+    }
   }
 }
 
@@ -689,9 +754,11 @@ enum WidgetOrientation { below, left, right }
 class SurveyDataWidget {
   Widget? widget;
   WidgetOrientation orientation;
+  bool containsText;
   bool containsMoreInfo;
 
-  SurveyDataWidget(this.widget, {this.orientation = WidgetOrientation.below, this.containsMoreInfo = false});
+  SurveyDataWidget(this.widget, {this.orientation = WidgetOrientation.below,
+    this.containsText = false, this.containsMoreInfo = false});
 }
 
 class CustomIconSelectionList extends StatelessWidget {

@@ -172,11 +172,19 @@ class CollectionUtils {
   static bool isEmpty(Iterable<Object?>? collection) {
     return !isNotEmpty(collection);
   }
+
+  static int length(Iterable<dynamic>? collection) {
+    return collection?.length ?? 0;
+  }
 }
 
 class ListUtils {
   static List<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? List<T>.from(elements) : null;
+  }
+
+  static List<T>? reversed<T>(List<T>? elements) {
+    return (elements != null) ? List<T>.from(elements.reversed) : null;
   }
 
   static void add<T>(List<T>? list, T? entry) {
@@ -220,6 +228,17 @@ class SetUtils {
   static void add<T>(Set<T>? set, T? entry) {
     if ((set != null) && (entry != null)) {
       set.add(entry);
+    }
+  }
+
+  static void toggle<T>(Set<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
     }
   }
 }
@@ -890,22 +909,14 @@ class BoolExpr {
 class AppBundle {
   
   static Future<String?> loadString(String key, {bool cache = true}) async {
-    try {
-      return rootBundle.loadString(key, cache: cache);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.loadString(key, cache: cache); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   static Future<ByteData?> loadBytes(String key) async {
-    try {
-      return rootBundle.load(key);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.load(key); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 }

@@ -68,15 +68,15 @@ class ModalImagePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget? imageWidget;
     if(image != null){
-      imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget);
+      imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageKey)) {
       imageWidget = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
-        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageUrl)) {
       imageWidget = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
-        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:
@@ -96,14 +96,21 @@ class ModalImagePanel extends StatelessWidget {
 
   Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
     if (loadingProgress == null) {
-      return Stack(children:[
-        child,
-        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          _buildCloseWidget(context),
-        ],)
-      ]);
+      return child;
     }
     return Center(child: _buildProgressWidget(context, loadingProgress));
+  }
+
+  Widget _imageFrameBuilder(BuildContext context, Widget child, int? frame, bool wasSynchronouslyLoaded,){ //Some images do not show X button //Do not call loadingBuilder so fix with frameBuilder
+    return Stack(
+      children:[
+          child,
+          Visibility(
+            visible: frame != null, //It will be null before the first image frame is ready, and zero  for the first image frame. Show Close button when ready to draw - leave the progress indicator till then
+            child:Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              _buildCloseWidget(context),
+            ],))
+        ]);
   }
 
   Widget _buildCloseWidget(BuildContext context) {

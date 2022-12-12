@@ -92,8 +92,8 @@ class VerticalTitleValueSection extends StatelessWidget {
         Container(decoration: displayDecoration, child:
           Padding(padding: padding, child:
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              Row(children: [Expanded(child: Text(title ?? '', style: displayTitleTextStyle,))]),
-              Row(children: [Expanded(child: Text(value ?? '', style: displayValueTextStyle))]),
+              (title != null) ? Row(children: [Expanded(child: Text(title ?? '', style: displayTitleTextStyle,))]) : Container(),
+              (value != null) ? Row(children: [Expanded(child: Text(value ?? '', style: displayValueTextStyle))]) : Container(),
             ],),
           ),
         ),

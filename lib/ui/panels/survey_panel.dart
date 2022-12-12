@@ -28,14 +28,17 @@ class SurveyPanel extends StatefulWidget {
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
-  final Function? onComplete;
+  final Function(SurveyResponse?)? onComplete;
   final bool showSummaryOnFinish;
   final bool allowBack;
   final int initPanelDepth;
+  final Map<String, dynamic>? defaultResponses;
+  final Widget? tabBar;
+  final Widget? offlineWidget;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.showSummaryOnFinish = false, this.dateTaken, this.showResult = false, this.allowBack = true,
-    this.onComplete, this.initPanelDepth = 0}) : super(key: key);
+    this.onComplete, this.initPanelDepth = 0, this.defaultResponses, this.tabBar, this.offlineWidget}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -54,7 +57,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    _surveyController = SurveyWidgetController(onComplete: _onComplete,
+    _surveyController = SurveyWidgetController(beforeComplete: _beforeComplete, onComplete: widget.onComplete,
         onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
     if (widget.survey is Survey) {
       _survey = widget.survey;
@@ -67,6 +70,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     WidgetsBinding.instance.addPostFrameCallback(_checkScroll);
     return Scaffold(
       appBar: HeaderBar(title: _survey?.title),
+      bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: Column(
         children: [
@@ -85,6 +89,8 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 surveyDataKey: widget.surveyDataKey,
                 internalContinueButton: false,
                 controller: _surveyController,
+                defaultResponses: widget.defaultResponses,
+                offlineWidget: widget.offlineWidget,
               ),
             ),
           )),
@@ -99,8 +105,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     ));
   }
 
-  void _onComplete() {
-    widget.onComplete?.call();
+  void _beforeComplete() {
     Navigator.of(context).pop();
   }
 

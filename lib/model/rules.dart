@@ -14,11 +14,14 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/alert.dart';
+import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/local_notifications.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -197,7 +200,7 @@ abstract class RuleResult {
 }
 
 abstract class RuleActionResult extends RuleResult {
-  abstract final int priority;
+  abstract final int? priority;
 
   RuleActionResult();
 
@@ -234,16 +237,16 @@ class RuleAction extends RuleActionResult {
   final String action;
   final dynamic data;
   final String? dataKey;
-  @override int priority;
+  @override int? priority;
 
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority = 0});
+  RuleAction({required this.action, required this.data, this.dataKey, this.priority});
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
     return RuleAction(
       action: json["action"],
       data: json["data"],
       dataKey: JsonUtils.stringValue(json["data_key"]),
-      priority: json["priority"] ?? 0,
+      priority: json["priority"],
     );
   }
 
@@ -268,11 +271,6 @@ class RuleAction extends RuleActionResult {
         return null;
       case "show_survey":
         //TODO: fix this (should use notification like alert)
-        if (data is String) {
-        // data = survey id
-          return data;
-        }
-        return null;
       case "alert":
         _alert(engine);
         return null;
@@ -281,12 +279,11 @@ class RuleAction extends RuleActionResult {
         _setResult(engine);
         return null;
       case "notify":
-        //TODO: Send notification to providers/emergency contacts
-        // send request with survey data to polls BB
+        return _notify(engine);
       case "save":
         return _save(engine);
       case "local_notify":
-        _localNotify(engine);
+        return _localNotify(engine);
     }
     return null;
   }
@@ -312,7 +309,13 @@ class RuleAction extends RuleActionResult {
   }
 
   void _setResult(RuleEngine engine) {
-    engine.resultData = engine.getValOrCollection(data);
+    if (engine.resultData is Map && dataKey != null) {
+      engine.resultData[dataKey] = engine.getValOrCollection(data);
+    } else if (dataKey != null) {
+      engine.resultData = <String, dynamic>{dataKey!: engine.getValOrCollection(data)};
+    } else {
+      engine.resultData = engine.getValOrCollection(data);
+    }
   }
 
   void _alert(RuleEngine engine) {
@@ -324,46 +327,51 @@ class RuleAction extends RuleActionResult {
     }
   }
 
-  Future<bool> _save(RuleEngine engine) {
+  Future<bool> _notify(RuleEngine engine) {
+    dynamic notificationData = engine.getValOrCollection(data);
+    if (notificationData is Map<String, dynamic>) {
+      SurveyAlert alert = SurveyAlert.fromJson(notificationData);
+      return Surveys().createSurveyAlert(alert);
+    }
+    return Future<bool>.value(false);
+  } 
+
+  Future<dynamic> _save(RuleEngine engine) {
     return engine.save();
   }
 
   Future<bool> _localNotify(RuleEngine engine) {
-    if (data is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(data);
-      dynamic scheduleType = alert.params?["type"];
-      dynamic schedule = alert.params?["schedule"];
-      if (scheduleType is String && schedule is String) {
-        switch (scheduleType) {
-          case "relative":
-            //TODO: string interpolation for title and text
-            Duration? notifyWaitTime = DateTimeUtils.parseDelimitedDurationString(schedule, ":");
-            if (notifyWaitTime != null) {
-              return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-                title: alert.title,
-                message: alert.text,
-                payload: JsonUtils.encode(alert.actions),
-                dateTime: DateTime.now().add(notifyWaitTime)
-              );
-            }
-            break;
-          case "absolute":
-            //TODO: implement
-          case "cron":
-            //TODO: implement
-        }
+    dynamic resolvedData = engine.getValOrCollection(data);
+    if (resolvedData is Map<String, dynamic>) {
+      Alert alert = Alert.fromJson(resolvedData);
+      switch (JsonUtils.stringValue(alert.params?["type"])) {
+        case "relative":
+          Duration? notifyWaitTime = JsonUtils.durationValue(alert.params?["schedule"]);
+          if (notifyWaitTime != null) {
+            return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
+              title: alert.title,
+              message: alert.text,
+              payload: JsonUtils.encode(alert.actions),
+              dateTime: DateTime.now().add(notifyWaitTime)
+            );
+          }
+          break;
+        case "absolute":
+          //TODO: implement
+        case "cron":
+          //TODO: implement
       }
     }
     
-    return Future<bool>(() => false);
+    return Future<bool>.value(false);
   }
 }
 
 class RuleActionList extends RuleActionResult {
   final List<RuleAction> actions;
-  @override int priority;
+  @override int? priority;
 
-  RuleActionList({required this.actions, required this.priority});
+  RuleActionList({required this.actions, this.priority});
 
   @override
   Map<String, dynamic> toJson() {
@@ -508,9 +516,15 @@ abstract class RuleEngine {
     return constMap;
   }
 
-  dynamic getProperty(RuleKey? key);
+  dynamic getProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "auth":
+        return _auth2GetProperty(key?.subRuleKey);
+    }
+    return key?.toString();
+  }
 
-  Future<bool> save();
+  Future<dynamic> save();
 
   void clearCache() {
     _dataCache.clear();
@@ -524,7 +538,7 @@ abstract class RuleEngine {
     for (Rule rule in rules) {
       try {
         RuleActionResult? action = rule.evaluate(this);
-        if (action != null && (topAction == null || topAction.priority < action.priority)) {
+        if (action != null && (topAction == null || (topAction.priority ?? 0) < (action.priority ?? 0))) {
           topAction = action;
         }
       } catch(e) {
@@ -595,10 +609,10 @@ abstract class RuleEngine {
     return string;
   }
 
-  String getDisplayVal(String key, dynamic param) {
+  String getDisplayVal(String key, String? param) {
     dynamic val = getVal(key, param);
     if (val is DateTime) {
-      return AppDateTime().getDisplayDateTime(val);
+      return AppDateTime().getDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
     }
     return val.toString();
   }
@@ -612,7 +626,7 @@ abstract class RuleEngine {
         if (entry.value is String) {
           out[entry.key] = getVal(entry.value, null);
         } else {
-          out[entry.key] = entry.value;
+          out[entry.key] = getValOrCollection(entry.value);
         }
       }
       return out;
@@ -622,7 +636,7 @@ abstract class RuleEngine {
         if (data[i] is String) {
           out.add(getVal(data[i], null));
         } else {
-          out.add(data[i]);
+          out.add(getValOrCollection(data[i]));
         }
       }
       return out;
@@ -677,11 +691,142 @@ abstract class RuleEngine {
         }
         return null;
       case "current_time":
+        return DateTime.now();
+      case "current_time_offset":
         Duration offset = JsonUtils.durationValue(param) ?? const Duration();
         return DateTime.now().subtract(offset);
       default:
         return getProperty(ruleKey);
     }
+  }
+
+  // Property getters
+  dynamic _auth2GetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "uin":
+        return Auth2().uin;
+      case "net_id":
+        return Auth2().netId;
+      case "email":
+        return Auth2().email;
+      case "phone":
+        return Auth2().phone;
+      case "login_type":
+        return Auth2().loginType != null ? auth2LoginTypeToString(Auth2().loginType!) : null;
+      case "full_name":
+        return Auth2().fullName;
+      case "first_name":
+        return Auth2().firstName;
+      case "profile":
+        return _auth2UserProfileGetProperty(key?.subRuleKey);
+      case "preferences":
+        return _auth2UserPrefsGetProperty(key?.subRuleKey);
+      case "permissions":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.hasPermission(subKey);
+        }
+        return Auth2().account?.permissions;
+      case "roles":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.hasRole(subKey);
+        }
+        return Auth2().account?.roles;
+      case "groups":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.belongsToGroup(subKey);
+        }
+        return Auth2().account?.groups;
+      case "system_configs":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().account?.systemConfigs?[subKey];
+        }
+        return Auth2().account?.systemConfigs;
+      case "is_logged_in":
+        return Auth2().isLoggedIn;
+      case "is_oidc_logged_in":
+        return Auth2().isOidcLoggedIn;
+      case "is_email_logged_in":
+        return Auth2().isEmailLoggedIn;
+      case "is_phone_logged_in":
+        return Auth2().isPhoneLoggedIn;
+    }
+    return null;
+  }
+
+  dynamic _auth2UserProfileGetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "first_name":
+        return Auth2().profile?.firstName;
+      case "middle_name":
+        return Auth2().profile?.middleName;
+      case "last_name":
+        return Auth2().profile?.lastName;
+      case "birth_year":
+        return Auth2().profile?.birthYear;
+      case "photo_url":
+        return Auth2().profile?.photoUrl;
+      case "email":
+        return Auth2().profile?.email;
+      case "phone":
+        return Auth2().profile?.phone;
+      case "address":
+        return Auth2().profile?.address;
+      case "state":
+        return Auth2().profile?.state;
+      case "zip":
+        return Auth2().profile?.zip;
+      case "country":
+        return Auth2().profile?.country;
+      case "data":
+        return Auth2().profile?.data?[key?.subRuleKey];
+    }
+    return null;
+  }
+
+  dynamic _auth2UserPrefsGetProperty(RuleKey? key) {
+    switch (key?.key) {
+      case "privacy_level":
+        return Auth2().prefs?.privacyLevel;
+      case "roles":
+        return Auth2().prefs?.roles;
+      case "favorites":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getFavorites(subKey);
+        }
+        return null;
+      case "interests":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getInterestsFromCategory(subKey);
+        }
+        return null;
+      case "food_filters":
+        switch (key?.subRuleKey?.key) {
+          case "included":
+            return Auth2().prefs?.includedFoodTypes;
+          case "excluded":
+            return Auth2().prefs?.excludedFoodIngredients;
+        }
+        return null;
+      case "tags":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.hasTag(subKey);
+        }
+        return null;
+      case "settings":
+        String? subKey = key?.subRuleKey?.key;
+        if (subKey != null) {
+          return Auth2().prefs?.getSetting(subKey);
+        }
+        return null;
+    }
+    return null;
   }
 }
 
@@ -708,6 +853,9 @@ class RuleKey {
     }
     return null;
   }
+
+  @override
+  String toString() => subKey != null ? '$key.$subKey' : key;
 }
 
 class RuleData {

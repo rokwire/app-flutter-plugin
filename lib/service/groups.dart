@@ -306,6 +306,7 @@ class Groups with Service implements NotificationsListener {
         'limit': limit,
         'research_group': true,
         'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
       
@@ -314,7 +315,24 @@ class Groups with Service implements NotificationsListener {
         Response? response = await Network().get(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return Group.listFromJson(JsonUtils.decodeList(responseBody));
+        return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/research-profile/user-count';
+      String? post = JsonUtils.encode(researchQuestionnaireAnswers);
+      
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return (responseBody != null) ? int.tryParse(responseBody) : null;
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -349,13 +367,13 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchGroups = false, bool researchOpen = false }) async {
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
       String? post = JsonUtils.encode({
         'title': searchText, // Uri.encodeComponent(searchText)
         'include_hidden': includeHidden,
-        'research_group': researchGroups,
+        'research_group': researchProjects,
         'research_open': researchOpen,
         'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
       });
@@ -666,7 +684,7 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> updateMembership(Group? group, String? memberId, GroupMemberStatus status) async{
+  Future<bool> updateMemberStatus(Group? group, String? memberId, GroupMemberStatus status) async{
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
       Map<String, dynamic> bodyMap = {"status":groupMemberStatusToString(status)};
       String? body = JsonUtils.encode(bodyMap);
@@ -748,6 +766,29 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<bool> updateMember(Member? member) async{
+    if ((Config().groupsUrl != null) && (member != null)) {
+      Map<String, dynamic> memberJson = member.toJson();
+      String? body = JsonUtils.encode(memberJson);
+      String url = '${Config().groupsUrl}/memberships/${member.id}';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        String? responseString = response?.body;
+        int? responseCode = response?.statusCode;
+        if (responseCode == 200) {
+          debugPrint('Successfully updated group member {${member.id}}');
+          return true;
+        } else {
+          debugPrint('Failed to update group member {${member.id}}. Reason: $responseCode, $responseString');
+          return false;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false;
+  }
 
 // Events
   Future<List<String>?> loadEventIds(String? groupId) async{

@@ -527,8 +527,6 @@ class Events with Service implements NotificationsListener, ExploreJsonHandler {
         targetAudiences.add('parents');
       } else if (role == UserRole.visitor) {
         targetAudiences.add('public');
-      } else if (role == UserRole.resident) {
-        targetAudiences.add('public');
       } else if (role == UserRole.gies) {
 
       }
