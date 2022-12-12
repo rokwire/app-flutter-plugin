@@ -424,17 +424,20 @@ class FlexUI with Service implements NotificationsListener {
     if ((locationRule != null) && !localeEvalLocationRule(locationRule)) {
       entryRules['locations'] = locationRule;
     }
-
-    Map<String, dynamic>? privacyRules = rules['privacy'];
-    dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
-    if ((privacyRule != null) && !localeEvalPrivacyRule(privacyRule)) {
-      entryRules['privacy'] = privacyRule;
-    }
     
     Map<String, dynamic>? authRules = rules['auth'];
     dynamic authRule = (authRules != null) ? (((pathEntry != null) ? authRules[pathEntry] : null) ?? authRules[entry])  : null;
     if ((authRule != null) && !localeEvalAuthRule(authRule)) {
       entryRules['auth'] = authRule;
+    }
+
+    Map<String, dynamic>? privacyRules = rules['privacy'];
+    dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
+    if (privacyRule == null && entryRules['auth'] != null) {
+      privacyRule = (privacyRules != null) ?  privacyRules['connect'] : null;
+    }
+    if (!localeEvalPrivacyRule(privacyRule)) {
+      entryRules['privacy'] = privacyRule;
     }
     
     Map<String, dynamic>? platformRules = rules['platform'];
