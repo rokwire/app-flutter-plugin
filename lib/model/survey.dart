@@ -17,8 +17,8 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/polls.dart';
 import 'package:rokwire_plugin/service/storage.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyResponse {
@@ -270,7 +270,7 @@ class Survey extends RuleEngine {
   @override
   Future<dynamic> save() async {
     if (Storage().assessmentsSaveResultsMap?[type] != false) {
-      return await Polls().createSurveyResponse(this);
+      return await Surveys().createSurveyResponse(this);
     }
     return null;
   }
