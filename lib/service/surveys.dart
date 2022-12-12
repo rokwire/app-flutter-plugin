@@ -24,11 +24,10 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
-import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Surveys with Service {
+// Surveys service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
+class Surveys /* with Service */ {
 
   static const String notifySurveyLoaded = "edu.illinois.rokwire.survey.loaded";
   static const String notifySurveyResponseCreated = "edu.illinois.rokwire.survey_response.created";
@@ -46,20 +45,6 @@ class Surveys with Service {
 
   @protected
   Surveys.internal();
-
-  // Service
-
-  @override
-  Future<void> initService() async {
-    if (enabled) {
-      await super.initService();
-    }
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage(), Config(), Auth2()};
-  }
 
   // Accessories
 
