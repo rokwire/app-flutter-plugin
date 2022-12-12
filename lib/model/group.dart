@@ -374,6 +374,7 @@ class Member {
 	String?            id;
   String?            userId;
   String?            externalId;
+  String?            netId;
 	String?            name;
 	String?            email;
   GroupMemberStatus? status;
@@ -389,7 +390,7 @@ class Member {
   Member({
     this.id, this.userId, this.externalId, this.name, this.email, this.status, this.officerTitle,
     this.dateAttendedUtc, this.dateCreatedUtc, this.dateUpdatedUtc,
-    this.answers, this.notificationsPreferences,
+    this.answers, this.notificationsPreferences, this.netId
   });
 
   static Member? fromJson(Map<String, dynamic>? json) {
@@ -397,6 +398,7 @@ class Member {
       id          : JsonUtils.stringValue(json['id']),
       userId      : JsonUtils.stringValue(json['user_id']),
       externalId  : JsonUtils.stringValue(json['external_id']),
+      netId  : JsonUtils.stringValue(json['net_id']),
       name        : JsonUtils.stringValue(json['name']),
       email       : JsonUtils.stringValue(json['email']),
       status      : groupMemberStatusFromString(JsonUtils.stringValue(json['status'])),
@@ -416,6 +418,7 @@ class Member {
       id              : other.id,
       userId          : other.userId,
       externalId      : other.externalId,
+      netId             : other.netId,
       name            : other.name,
       status          : other.status,
       officerTitle    : other.officerTitle,
@@ -434,6 +437,7 @@ class Member {
     json['id']                  = id;
     json['user_id']             = userId;
     json['external_id']         = externalId;
+    json['net_id']                = netId;
     json['name']                = name;
     json['email']               = email;
     json['status']              = groupMemberStatusToString(status);
@@ -489,6 +493,7 @@ class Member {
       (other.id == id) &&
       (other.userId == userId) &&
       (other.externalId == externalId) &&
+      (other.netId == netId) &&
       (other.name == name) &&
       (other.email == email) &&
       (other.status == status) &&
@@ -504,6 +509,7 @@ class Member {
     (id?.hashCode ?? 0) ^
     (userId?.hashCode ?? 0) ^
     (externalId?.hashCode ?? 0) ^
+    (netId?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
     (email?.hashCode ?? 0) ^
     (status?.hashCode ?? 0) ^
