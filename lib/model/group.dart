@@ -1083,10 +1083,6 @@ class GroupSettings { //TBD move the rest setting in this section
     };
   }
 
-  static GroupSettings? initialDefaultSettings(){
-    return GroupSettings(memberInfoPreferences: MemberInfoPreferences(allowMemberInfo: true), memberPostPreferences: MemberPostPreferences(allowSendPost: true)); //Set Default values to true
-  }
-
   @override
   bool operator ==(other) =>
       (other is GroupSettings) &&
