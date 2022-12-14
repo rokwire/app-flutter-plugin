@@ -29,7 +29,7 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leadingWidget;
   final String? leadingLabel;
   final String? leadingHint;
-  final String? leadingAsset;
+  final String? leadingIconKey;
   final void Function()? onLeading;
     
   final Widget? titleWidget;
@@ -51,7 +51,7 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingWidget,
     this.leadingLabel,
     this.leadingHint,
-    this.leadingAsset,
+    this.leadingIconKey,
     this.onLeading,
     
     this.titleWidget,
@@ -87,14 +87,14 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   // Leading
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
-    Image? image = leadingImage;
+    Widget? image = leadingIcon;
     return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
     ) : null;
   }
 
   @protected
-  Image? get leadingImage => (leadingAsset != null) ? Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true) as Image? : null;
+  Widget? get leadingIcon => (leadingIconKey != null) ? Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true) : null;
 
   @protected
   void onTapLeading(BuildContext context) {

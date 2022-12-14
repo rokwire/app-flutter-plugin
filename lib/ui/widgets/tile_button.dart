@@ -222,8 +222,8 @@ class TileToggleButton extends StatelessWidget {
 
   final Widget? icon;
   final Widget? selectedIcon;
-  final String? iconAsset;
-  final String? selectedIconAsset;
+  final String? iconKey;
+  final String? selectedIconKey;
   final double? iconWidth;
   final BoxFit? iconFit;
   
@@ -260,8 +260,8 @@ class TileToggleButton extends StatelessWidget {
     
     this.icon,
     this.selectedIcon,
-    this.iconAsset,
-    this.selectedIconAsset,
+    this.iconKey,
+    this.selectedIconKey,
     this.iconWidth,
     this.iconFit,
     
@@ -321,7 +321,7 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get defaultTitleWidget => Text(title ?? '', textAlign: TextAlign.center, style: displayTitleStyle);
   @protected Widget get displayTitleWidget => defaultTitleWidget;
 
-  @protected String? get displayIconAsset => selected ? selectedIconAsset : iconAsset;
+  @protected String? get displayIconAsset => selected ? selectedIconKey : iconKey;
   @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images?.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 

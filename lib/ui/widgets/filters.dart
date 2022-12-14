@@ -117,14 +117,14 @@ class FilterSelector extends StatelessWidget {
   final GestureTapCallback? onTap;
 
   final Widget? icon;
-  final String? iconAsset;
+  final String? iconKey;
   final EdgeInsetsGeometry iconPadding;
 
   final Widget? activeIcon;
-  final String? activeIconAsset;
+  final String? activeIconKey;
   final EdgeInsetsGeometry activeIconPadding;
 
-  const FilterSelector({ Key? key,
+  const FilterSelector({Key? key,
     this.title,
     this.titleTextStyle,
     this.activeTitleTextStyle,
@@ -136,11 +136,11 @@ class FilterSelector extends StatelessWidget {
     this.onTap,
     
     this.icon,
-    this.iconAsset,
+    this.iconKey,
     this.iconPadding = const EdgeInsets.symmetric(horizontal: 4),
 
     this.activeIcon,
-    this.activeIconAsset,
+    this.activeIconKey,
     this.activeIconPadding = const EdgeInsets.symmetric(horizontal: 4),
 
   }) : super(key: key);
@@ -149,10 +149,10 @@ class FilterSelector extends StatelessWidget {
   @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorSecondary);
   TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
 
-  Widget? get _iconImage => (iconAsset != null) ? Styles().images?.getImage(iconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _activeIconImage => (activeIconAsset != null) ? Styles().images?.getImage(activeIconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _activeIconImage => (activeIconKey != null) ? Styles().images?.getImage(activeIconKey, excludeFromSemantics: true) : null;
   Widget? get _activeIconWidget => activeIcon ?? _activeIconImage;
 
   @override

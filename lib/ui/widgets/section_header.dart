@@ -37,7 +37,7 @@ class SectionSlantHeader extends StatelessWidget {
   final EdgeInsetsGeometry subTitlePadding;
   
   final Widget? titleIcon;
-  final String? titleIconAsset;
+  final String? titleIconKey;
   final EdgeInsetsGeometry titleIconPadding;
 
   final Color? backgroundColor;
@@ -52,7 +52,7 @@ class SectionSlantHeader extends StatelessWidget {
 
   final Widget? rightIcon;
   final String? rightIconLabel;
-  final String? rightIconAsset;
+  final String? rightIconKey;
   final void Function()? rightIconAction;
   final EdgeInsetsGeometry rightIconPadding;
 
@@ -81,7 +81,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.subTitlePadding = const EdgeInsets.only(left: 50, right: 16),
 
     this.titleIcon,
-    this.titleIconAsset,
+    this.titleIconKey,
     this.titleIconPadding = const EdgeInsets.only(right: 16),
 
     this.backgroundColor, 
@@ -96,7 +96,7 @@ class SectionSlantHeader extends StatelessWidget {
     
     this.rightIcon,
     this.rightIconLabel,
-    this.rightIconAsset,
+    this.rightIconKey,
     this.rightIconAction,
     this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 2),
     
@@ -163,10 +163,10 @@ class SectionSlantHeader extends StatelessWidget {
 
   Widget _buildTitle() { 
     List<Widget> titleList = <Widget>[];
-    if ((titleIcon != null) || (titleIconAsset != null)) {
+    if ((titleIcon != null) || (titleIconKey != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          titleIcon ?? Styles().images?.getImage(titleIconAsset!, excludeFromSemantics: true,),
+          titleIcon ?? Styles().images?.getImage(titleIconKey, excludeFromSemantics: true),
         )
       );
     }
@@ -179,12 +179,12 @@ class SectionSlantHeader extends StatelessWidget {
       ),
     );
     
-    if ((rightIcon != null) || (rightIconAsset != null)) {
+    if ((rightIcon != null) || (rightIconKey != null)) {
       titleList.add(
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, color: _slantColor, child:
-              rightIcon ?? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true,),
+              rightIcon ?? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true,),
             )
           )
         ),
