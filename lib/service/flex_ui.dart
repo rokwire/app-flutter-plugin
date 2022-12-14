@@ -49,6 +49,7 @@ class FlexUI with Service implements NotificationsListener {
   Map<String, dynamic>? _contentSource;
 
   Map<String, dynamic>? _defaultContent;
+  Map<String, dynamic>? _defaultRules;
   Set<dynamic>?         _defaultFeatures;
 
   // Singletone Factory
@@ -259,6 +260,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   void build() {
     _contentSource = buildContentSource();
+    _defaultRules = buildRules(defaultContentSourceEntry);
     _defaultContent = buildContent(defaultContentSourceEntry);
     _defaultFeatures = buildFeatures(_defaultContent);
   }
@@ -279,6 +281,11 @@ class FlexUI with Service implements NotificationsListener {
     return (featuresList is Iterable) ? Set.from(featuresList) : null;
   }
 
+  @protected
+  Map<String, dynamic>? buildRules(Map<String, dynamic>? contentSource) {
+    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']);
+  }
+
   // Content
 
   Map<String, dynamic>? content(String key) {
@@ -286,7 +293,8 @@ class FlexUI with Service implements NotificationsListener {
       return _defaultContent;
     }
     else {
-      return buildContent(contentSourceEntry(key));
+      Map<String, dynamic>? contentSource = contentSourceEntry(key);
+      return buildContent(contentSource, rules: buildRules(contentSource));
     }
   }
 
@@ -296,6 +304,10 @@ class FlexUI with Service implements NotificationsListener {
 
   List<dynamic>? operator [](dynamic key) {
     return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
+  }
+
+  Map<String, dynamic> get defaultRules {
+    return _defaultRules ?? <String, dynamic>{};
   }
 
   Set<dynamic>? get defaultFeatures {
@@ -313,18 +325,18 @@ class FlexUI with Service implements NotificationsListener {
   // Local Build
 
   @protected
-  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource) {
+  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource, {Map<String, dynamic>? rules}) {
     Map<String, dynamic>? result;
     if (contentSource != null) {
       Map<String, dynamic> contents = JsonUtils.mapValue(contentSource['content']) ?? <String, dynamic>{};
-      Map<String, dynamic> rules = JsonUtils.mapValue(contentSource['rules']) ?? <String, dynamic>{};
+      rules ??= defaultRules;
 
       result = {};
       contents.forEach((String key, dynamic contentEntry) {
         
         if (contentEntry is Map) {
           for (String contentEntryKey in contentEntry.keys) {
-            if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules)) {
+            if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules!)) {
               contentEntry = contentEntry[contentEntryKey];
               break;
             }
@@ -336,7 +348,7 @@ class FlexUI with Service implements NotificationsListener {
           for (dynamic entry in contentEntry) {
             String? stringEntry = JsonUtils.stringValue(entry);
             if (stringEntry != null) {
-              if (localeIsEntryAvailable(stringEntry, group: key, rules: rules)) {
+              if (localeIsEntryAvailable(stringEntry, group: key, rules: rules!)) {
                 resultList.add(entry);
               }
             }
@@ -399,60 +411,6 @@ class FlexUI with Service implements NotificationsListener {
     }
     
     return true;
-  }
-
-  @protected
-  Map<String, dynamic> unsatisfiedRulesForEntry(String entry, { String? group, Map<String, dynamic>? rules }) {
-    Map<String, dynamic> entryRules = {};
-    rules ??= JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
-    String? pathEntry = (group != null) ? '$group.$entry' : null;
-
-    Map<String, dynamic>? roleRules = rules['roles'];
-    dynamic roleRule = (roleRules != null) ? (((pathEntry != null) ? roleRules[pathEntry] : null) ?? roleRules[entry]) : null;
-    if ((roleRule != null) && !localeEvalRoleRule(roleRule)) {
-      entryRules['roles'] = roleRule;
-    }
-
-    Map<String, dynamic>? groupRules = rules['groups'];
-    dynamic groupRule = (groupRules != null) ? (((pathEntry != null) ? groupRules[pathEntry] : null) ?? groupRules[entry]) : null;
-    if ((groupRule != null) && !localeEvalGroupRule(groupRule)) {
-      entryRules['groups'] = groupRule;
-    }
-
-    Map<String, dynamic>? locationRules = rules['locations'];
-    dynamic locationRule = (locationRules != null) ? (((pathEntry != null) ? locationRules[pathEntry] : null) ?? locationRules[entry]) : null;
-    if ((locationRule != null) && !localeEvalLocationRule(locationRule)) {
-      entryRules['locations'] = locationRule;
-    }
-    
-    Map<String, dynamic>? authRules = rules['auth'];
-    dynamic authRule = (authRules != null) ? (((pathEntry != null) ? authRules[pathEntry] : null) ?? authRules[entry])  : null;
-    if ((authRule != null) && !localeEvalAuthRule(authRule)) {
-      entryRules['auth'] = authRule;
-    }
-
-    Map<String, dynamic>? privacyRules = rules['privacy'];
-    dynamic privacyRule = (privacyRules != null) ? (((pathEntry != null) ? privacyRules[pathEntry] : null) ?? privacyRules[entry]) : null;
-    if (privacyRule == null && entryRules['auth'] != null) {
-      privacyRule = (privacyRules != null) ?  privacyRules['connect'] : null;
-    }
-    if (!localeEvalPrivacyRule(privacyRule)) {
-      entryRules['privacy'] = privacyRule;
-    }
-    
-    Map<String, dynamic>? platformRules = rules['platform'];
-    dynamic platformRule = (platformRules != null) ? (((pathEntry != null) ? platformRules[pathEntry] : null) ?? platformRules[entry])  : null;
-    if ((platformRule != null) && !localeEvalPlatformRule(platformRule)) {
-      entryRules['platform'] = platformRule;
-    }
-
-    Map<String, dynamic>? enableRules = rules['enable'];
-    dynamic enableRule = (enableRules != null) ? (((pathEntry != null) ? enableRules[pathEntry] : null) ?? enableRules[entry])  : null;
-    if ((enableRule != null) && !localeEvalEnableRule(enableRule)) {
-      entryRules['enable'] = enableRule;
-    }
-    
-    return entryRules;
   }
 
   @protected

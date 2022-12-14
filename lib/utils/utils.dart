@@ -211,10 +211,7 @@ class ListUtils {
           return false;
         }
       }
-      if (checkAll) {
-        return true;
-      }
-      return false;
+      return checkAll;
     }
     return list.contains(item);
   }
