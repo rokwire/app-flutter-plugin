@@ -298,6 +298,10 @@ class FlexUI with Service implements NotificationsListener {
     return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
   }
 
+  Map<String, dynamic> get defaultRules {
+    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
+  }
+
   Set<dynamic>? get defaultFeatures {
     return _defaultFeatures;
   }

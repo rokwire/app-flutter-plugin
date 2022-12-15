@@ -218,6 +218,8 @@ class ActionsMessage extends StatelessWidget {
   final EdgeInsetsGeometry buttonsPadding;
   final Axis buttonAxis;
 
+  final Widget? bodyWidget;
+
   final ShapeBorder? border;
   final BorderRadius? borderRadius;
 
@@ -243,6 +245,8 @@ class ActionsMessage extends StatelessWidget {
     this.buttons = const [],
     this.buttonsPadding = const EdgeInsets.only(left: 16, right: 16, bottom: 16),
     this.buttonAxis = Axis.horizontal,
+
+    this.bodyWidget,
 
     this.border,
     this.borderRadius,
@@ -357,14 +361,16 @@ class ActionsMessage extends StatelessWidget {
             closeButton != null ? IconButton(icon: closeButton, onPressed: () { Navigator.pop(context); }) : Container(),
           ]),
         ),
-        Padding(padding: messagePadding, child:
-          Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
-        ),
-        buttonAxis == Axis.vertical ?
-            Padding(padding: buttonsPadding, child: Column(children: buttons),)
-              : Padding(padding: buttonsPadding,
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
-              ),
+        bodyWidget ?? Column(children: <Widget>[
+          Padding(padding: messagePadding, child:
+            Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
+          ),
+          buttonAxis == Axis.vertical ?
+              Padding(padding: buttonsPadding, child: Column(children: buttons),)
+                : Padding(padding: buttonsPadding,
+                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
+                ),
+        ])
       ],),
     );
   }
