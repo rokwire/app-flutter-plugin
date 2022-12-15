@@ -49,7 +49,6 @@ class FlexUI with Service implements NotificationsListener {
   Map<String, dynamic>? _contentSource;
 
   Map<String, dynamic>? _defaultContent;
-  Map<String, dynamic>? _defaultRules;
   Set<dynamic>?         _defaultFeatures;
 
   // Singletone Factory
@@ -260,7 +259,6 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   void build() {
     _contentSource = buildContentSource();
-    _defaultRules = buildRules(defaultContentSourceEntry);
     _defaultContent = buildContent(defaultContentSourceEntry);
     _defaultFeatures = buildFeatures(_defaultContent);
   }
@@ -281,11 +279,6 @@ class FlexUI with Service implements NotificationsListener {
     return (featuresList is Iterable) ? Set.from(featuresList) : null;
   }
 
-  @protected
-  Map<String, dynamic>? buildRules(Map<String, dynamic>? contentSource) {
-    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']);
-  }
-
   // Content
 
   Map<String, dynamic>? content(String key) {
@@ -293,8 +286,7 @@ class FlexUI with Service implements NotificationsListener {
       return _defaultContent;
     }
     else {
-      Map<String, dynamic>? contentSource = contentSourceEntry(key);
-      return buildContent(contentSource, rules: buildRules(contentSource));
+      return buildContent(contentSourceEntry(key));
     }
   }
 
@@ -307,7 +299,7 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   Map<String, dynamic> get defaultRules {
-    return _defaultRules ?? <String, dynamic>{};
+    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
   }
 
   Set<dynamic>? get defaultFeatures {
@@ -325,18 +317,18 @@ class FlexUI with Service implements NotificationsListener {
   // Local Build
 
   @protected
-  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource, {Map<String, dynamic>? rules}) {
+  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource) {
     Map<String, dynamic>? result;
     if (contentSource != null) {
       Map<String, dynamic> contents = JsonUtils.mapValue(contentSource['content']) ?? <String, dynamic>{};
-      rules ??= defaultRules;
+      Map<String, dynamic> rules = JsonUtils.mapValue(contentSource['rules']) ?? <String, dynamic>{};
 
       result = {};
       contents.forEach((String key, dynamic contentEntry) {
         
         if (contentEntry is Map) {
           for (String contentEntryKey in contentEntry.keys) {
-            if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules!)) {
+            if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules)) {
               contentEntry = contentEntry[contentEntryKey];
               break;
             }
@@ -348,7 +340,7 @@ class FlexUI with Service implements NotificationsListener {
           for (dynamic entry in contentEntry) {
             String? stringEntry = JsonUtils.stringValue(entry);
             if (stringEntry != null) {
-              if (localeIsEntryAvailable(stringEntry, group: key, rules: rules!)) {
+              if (localeIsEntryAvailable(stringEntry, group: key, rules: rules)) {
                 resultList.add(entry);
               }
             }
