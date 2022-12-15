@@ -46,7 +46,7 @@ class SectionSlantHeader extends StatelessWidget {
   final double slantPainterHeadingHeight;
   final double slantPainterHeight;
 
-  final String? slantImageAsset;
+  final String? slantImageKey;
   final double slantImageHeadingHeight;
   final double slantImageHeight;
 
@@ -90,7 +90,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.slantPainterHeadingHeight = 47,
     this.slantPainterHeight = 67,
     
-    this.slantImageAsset,
+    this.slantImageKey,
     this.slantImageHeadingHeight = 40,
     this.slantImageHeight = 112,
     
@@ -122,12 +122,12 @@ class SectionSlantHeader extends StatelessWidget {
 
     // Slant
     List<Widget> slantList = <Widget>[];
-    if (StringUtils.isNotEmpty(slantImageAsset)) {
+    if (StringUtils.isNotEmpty(slantImageKey)) {
       slantList.addAll([
         Container(color: _slantColor, height: slantImageHeadingHeight,),
         Row(children:[Expanded(child:
           SizedBox(height: slantImageHeight, child:
-            Styles().images?.getImage(slantImageAsset!, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+            Styles().images?.getImage(slantImageKey, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
           ),
         )]),
       ]);
