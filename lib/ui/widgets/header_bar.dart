@@ -131,6 +131,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   final Color? backgroundColor;
 
   final Widget? flexWidget;
+  final String? flexImageKey;
   final String? flexImageUrl;
   final Color?  flexBackColor;
   final Color?  flexRightToLeftTriangleColor;
@@ -144,7 +145,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   final EdgeInsetsGeometry? leadingPadding;
   final Size? leadingOvalSize;
   final Color? leadingOvalColor;
-  final String? leadingAsset;
+  final String? leadingIconKey;
   final void Function()? onLeading;
 
   const SliverToutHeaderBar({Key? key,
@@ -154,6 +155,7 @@ class SliverToutHeaderBar extends StatelessWidget {
     this.backgroundColor,
 
     this.flexWidget,
+    this.flexImageKey,
     this.flexImageUrl,
     this.flexBackColor,
     this.flexRightToLeftTriangleColor,
@@ -167,7 +169,7 @@ class SliverToutHeaderBar extends StatelessWidget {
     this.leadingPadding,
     this.leadingOvalSize,
     this.leadingOvalColor,
-    this.leadingAsset,
+    this.leadingIconKey,
     this.onLeading,
   }) : super(key: key);
 
@@ -200,8 +202,13 @@ class SliverToutHeaderBar extends StatelessWidget {
 
   @protected
   Widget buildFlexibleInterior(BuildContext context) {
-    Widget? image = Styles().images?.getImage(flexImageUrl, fit: BoxFit.cover, networkHeaders: Config().networkAuthHeaders, excludeFromSemantics: true);
-    return (flexImageUrl != null && image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
+    Widget? image;
+    if (flexImageUrl != null) {
+      image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true);
+    } else if (flexImageKey != null) {
+      image = Styles().images?.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
+    }
+    return (image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
   }
 
   @protected
@@ -218,13 +225,13 @@ class SliverToutHeaderBar extends StatelessWidget {
 
   //Leading
   @protected
-  Widget? buildLeadingWidget(BuildContext context) => (leadingAsset != null) ?
+  Widget? buildLeadingWidget(BuildContext context) => (leadingIconKey != null) ?
     Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
       Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
         GestureDetector(onTap: () => onTapLeading(context), child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
-              Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true)
+              Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true)
             ),
           ),
         ),
@@ -257,7 +264,7 @@ class SliverHeaderBar extends StatelessWidget {
   final Widget? leadingWidget;
   final String? leadingLabel;
   final String? leadingHint;
-  final String? leadingAsset;
+  final String? leadingIconKey;
   final void Function()? onLeading;
     
   final Widget? titleWidget;
@@ -282,7 +289,7 @@ class SliverHeaderBar extends StatelessWidget {
     this.leadingWidget,
     this.leadingLabel,
     this.leadingHint,
-    this.leadingAsset,
+    this.leadingIconKey,
     this.onLeading,
     
     this.titleWidget,
@@ -320,7 +327,7 @@ class SliverHeaderBar extends StatelessWidget {
   // Leading
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
-    Image? image = leadingImage;
+    Widget? image = leadingImage;
     return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
     ) : null;
@@ -328,7 +335,7 @@ class SliverHeaderBar extends StatelessWidget {
 
   
   @protected
-  Image? get leadingImage => (leadingAsset != null) ? Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true) as Image? : null;
+  Widget? get leadingImage => (leadingIconKey != null) ? Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true) : null;
 
   @protected
   void onTapLeading(BuildContext context) {

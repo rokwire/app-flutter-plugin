@@ -235,7 +235,7 @@ class TileToggleButton extends StatelessWidget {
   final double borderWidth;
   final List<BoxShadow>? borderShadow;
 
-  final String? selectionMarkerAsset;
+  final String? selectionMarkerKey;
   final Widget? selectionMarker;
 
   final String? hint;
@@ -273,7 +273,7 @@ class TileToggleButton extends StatelessWidget {
     this.borderWidth = 2.0,
     this.borderShadow,
 
-    this.selectionMarkerAsset,
+    this.selectionMarkerKey,
     this.selectionMarker,
 
     this.hint,
@@ -325,7 +325,7 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images?.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 
-  @protected Widget get defaultSelectionMarkerWidget => Styles().images?.getImage(selectionMarkerAsset ?? '', excludeFromSemantics: true) ?? Container();
+  @protected Widget get defaultSelectionMarkerWidget => Styles().images?.getImage(selectionMarkerKey, excludeFromSemantics: true) ?? Container();
   @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override

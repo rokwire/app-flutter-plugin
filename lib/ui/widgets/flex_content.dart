@@ -155,12 +155,12 @@ class FlexContent extends StatefulWidget {
 
   @protected
   Widget? buildCloseButton(BuildContext context, { void Function()? onTap }) {
-    String? imageAsset = closeButtonAsset;
-    if (imageAsset != null) {
+    String? imageKey = closeButtonKey;
+    if (imageKey != null) {
       return Semantics(label: closeButtonLabel, hint: closeButtonHint, button: true, excludeSemantics: true, child:
         InkWell(onTap: onTap, child:
           Container(width: closeButtonSize.width, height: closeButtonSize.height, alignment: Alignment.center, child:
-            Styles().images?.getImage(imageAsset, excludeFromSemantics: true)
+            Styles().images?.getImage(imageKey, excludeFromSemantics: true)
           )
         )
       );
@@ -181,7 +181,7 @@ class FlexContent extends StatefulWidget {
   Size get closeButtonSize => const Size(48, 48);
 
   @protected
-  String? get closeButtonAsset => null;
+  String? get closeButtonKey => null;
 
   @protected
   void onTapButton(BuildContext context, Map<String, dynamic> button) {

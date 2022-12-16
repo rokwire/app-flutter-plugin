@@ -32,11 +32,11 @@ class FilterListItem extends StatelessWidget {
   final GestureTapCallback? onTap;
   
   final Widget? icon;
-  final String? iconAsset;
+  final String? iconKey;
   final EdgeInsetsGeometry iconPadding;
 
   final Widget? selectedIcon;
-  final String? selectedIconAsset;
+  final String? selectedIconKey;
   final EdgeInsetsGeometry selectedIconPadding;
 
   const FilterListItem({ Key? key,
@@ -53,11 +53,11 @@ class FilterListItem extends StatelessWidget {
     this.onTap,
 
     this.icon,
-    this.iconAsset,
+    this.iconKey,
     this.iconPadding = const EdgeInsets.only(left: 10),
 
     this.selectedIcon,
-    this.selectedIconAsset,
+    this.selectedIconKey,
     this.selectedIconPadding = const EdgeInsets.only(left: 10),
   }) : super(key: key);
 
@@ -69,10 +69,10 @@ class FilterListItem extends StatelessWidget {
   @protected TextStyle? get defaultSelectedDescriptionTextStyle => defaultSelectedTitleTextStyle;
   TextStyle? get _descriptionTextStyle => selected ? (selectedDescriptionTextStyle ?? defaultSelectedDescriptionTextStyle) : (descriptionTextStyle ?? defaultDescriptionTextStyle);
 
-  Widget? get _iconImage => (iconAsset != null) ? Styles().images?.getImage(iconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _selectedIconImage => (selectedIconAsset != null) ? Styles().images?.getImage(selectedIconAsset!, excludeFromSemantics: true) : null;
+  Widget? get _selectedIconImage => (selectedIconKey != null) ? Styles().images?.getImage(selectedIconKey, excludeFromSemantics: true) : null;
   Widget? get _selectedIconWidget => selectedIcon ?? _selectedIconImage;
 
   @override

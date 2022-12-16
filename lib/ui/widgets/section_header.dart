@@ -237,12 +237,12 @@ class SectionRibbonHeader extends StatelessWidget {
   final EdgeInsetsGeometry subTitlePadding;
 
   final Widget? titleIcon;
-  final String? titleIconAsset;
+  final String? titleIconKey;
   final EdgeInsetsGeometry titleIconPadding;
 
   final Widget? rightIcon;
   final String? rightIconLabel;
-  final String? rightIconAsset;
+  final String? rightIconKey;
   final void Function()? rightIconAction;
   final EdgeInsetsGeometry rightIconPadding;
 
@@ -265,12 +265,12 @@ class SectionRibbonHeader extends StatelessWidget {
     this.subTitlePadding = EdgeInsets.zero,
 
     this.titleIcon,
-    this.titleIconAsset,
+    this.titleIconKey,
     this.titleIconPadding = const EdgeInsets.only(right: 12),
 
     this.rightIcon,
     this.rightIconLabel,
-    this.rightIconAsset,
+    this.rightIconKey,
     this.rightIconAction,
     this.rightIconPadding = const EdgeInsets.only(left: 12),
 
@@ -283,9 +283,9 @@ class SectionRibbonHeader extends StatelessWidget {
     List<Widget> titleList = <Widget>[];
     List<Widget>? subTitleList = StringUtils.isNotEmpty(subTitle) ? <Widget>[] : null;
     
-    Widget? titleIconWidget = ((titleIcon != null) || (titleIconAsset != null)) ?
+    Widget? titleIconWidget = ((titleIcon != null) || (titleIconKey != null)) ?
       Padding(padding: titleIconPadding, child:
-        titleIcon ?? Styles().images?.getImage(titleIconAsset!, excludeFromSemantics: true,),
+        titleIcon ?? Styles().images?.getImage(titleIconKey, excludeFromSemantics: true),
       ) : null;
     if ((titleIconWidget != null)) {
       titleList.add(titleIconWidget);
@@ -316,9 +316,9 @@ class SectionRibbonHeader extends StatelessWidget {
       );
     }
 
-    Widget? rightIconWidget = ((rightIcon != null) || (rightIconAsset != null)) ?
+    Widget? rightIconWidget = ((rightIcon != null) || (rightIconKey != null)) ?
       Padding(padding: rightIconPadding, child:
-        rightIcon ?? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true,),
+        rightIcon ?? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true),
       ) : null;
     if (rightIconWidget != null) {
       titleList.add(rightIconWidget);
@@ -372,7 +372,7 @@ class ImageSlantHeader extends StatelessWidget {
   final String? imageKey;
   final Widget? child;
 
-  final String slantImageAsset;
+  final String slantImageKey;
   final Color? slantImageColor;
   final double slantImageHeadingHeight;
   final double slantImageHeight;
@@ -387,7 +387,7 @@ class ImageSlantHeader extends StatelessWidget {
     this.imageKey,
     this.child,
 
-    required this.slantImageAsset,
+    required this.slantImageKey,
     this.slantImageColor,
     this.slantImageHeadingHeight = 72,
     this.slantImageHeight = 112,
@@ -419,7 +419,7 @@ class ImageSlantHeader extends StatelessWidget {
           Column(children: <Widget>[
             Container(height: slantImageHeadingHeight, color: _slantImageColor,),
             SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-              Styles().images?.getImage(slantImageAsset, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+              Styles().images?.getImage(slantImageKey, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
             ),
           ],),
           child ?? Container(),
