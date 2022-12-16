@@ -18,6 +18,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
+import 'package:rokwire_plugin/service/geo_fence.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 
@@ -180,6 +181,17 @@ class Poll {
 
   bool get hasGroup {
     return StringUtils.isNotEmpty(groupId);
+  }
+
+  bool get canVote {
+    bool isPollOpened = (status == PollStatus.opened);
+    bool allowRepeatOptions = (settings?.allowRepeatOptions == true);
+    bool allowMultipleOptions = (settings?.allowMultipleOptions == true);
+    int userTotalVotesCount = userVote?.totalVotes ?? 0;
+    int optionsCount = options?.length ?? 0;
+    bool geoFenceSatisfied = (!isGeoFenced || GeoFence().currentRegionIds.contains(regionId));
+
+    return isPollOpened && (allowRepeatOptions || (allowMultipleOptions && (userTotalVotesCount < optionsCount))) && geoFenceSatisfied;
   }
 
   static int get randomPin {

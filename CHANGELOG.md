@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Privacy level is not getting saved property [#222](https://github.com/rokwire/app-flutter-plugin/issues/222)
 - Missing close button from ModalImagePanel[#227](https://github.com/rokwire/app-flutter-plugin/issues/227).
 - Fixed Groups.notifyGroupCreated notification param [#2683](https://github.com/rokwire/illinois-app/issues/2683).
+- Hide "Vote" button after user selectes all options in a poll [#2776](https://github.com/rokwire/illinois-app/issues/2776).
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
