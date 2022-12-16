@@ -43,6 +43,8 @@ class RadioButton<T> extends StatefulWidget {
   final Color? splashColor;
   final double splashRadius;
 
+  final String? semanticsLabel;
+
   const RadioButton({
     Key? key,
     required this.value,
@@ -71,6 +73,7 @@ class RadioButton<T> extends StatefulWidget {
     this.disabledWidget,
     this.splashColor,
     this.splashRadius = 32,
+    this.semanticsLabel,
   }) : super(key: key);
 
   @override
@@ -80,33 +83,39 @@ class RadioButton<T> extends StatefulWidget {
 class _RadioButtonState<T> extends State<RadioButton<T>> {
   @override
   Widget build(BuildContext context) {
-    return Column(key: widget.key, children: [
-      InkResponse(key: widget.key,
-        onTap: widget.enabled ? () => widget.onChanged(widget.value) : null,
-        radius: widget.splashRadius,
-        splashColor: widget.splashColor,
-        child: Container(
-          key: widget.key,
-          width: widget.size,
-          height: widget.size,
-          decoration: widget.borderDecoration,
-          padding: widget.outsidePadding,
+    bool selected = widget.value == widget.groupValue;
+    return Semantics(
+      label: widget.semanticsLabel ?? widget.text,
+      checked: selected,
+      excludeSemantics: true,
+      child: Column(key: widget.key, children: [
+        InkResponse(key: widget.key,
+          onTap: widget.enabled ? () => widget.onChanged(widget.value) : null,
+          radius: widget.splashRadius,
+          splashColor: widget.splashColor,
           child: Container(
             key: widget.key,
-            padding: widget.insidePadding,
-            decoration: widget.backgroundDecoration,
-            child: widget.value == widget.groupValue ? (widget.enabled ? widget.selectedWidget : widget.disabledWidget) : widget.deselectedWidget,
-          ),
-        )
-      ),
-      Visibility(visible: widget.textWidget != null || widget.text != null, child:
-        Padding(padding: widget.textPadding, child: 
-          widget.textWidget ?? Text(widget.text ?? '', key: widget.key, 
-            style: widget.textStyle ?? TextStyle(color: widget.textColor, fontFamily: widget.fontFamily, fontSize: widget.fontSize), 
-            textAlign: widget.textAlign,
+            width: widget.size,
+            height: widget.size,
+            decoration: widget.borderDecoration,
+            padding: widget.outsidePadding,
+            child: Container(
+              key: widget.key,
+              padding: widget.insidePadding,
+              decoration: widget.backgroundDecoration,
+              child: selected ? (widget.enabled ? widget.selectedWidget : widget.disabledWidget) : widget.deselectedWidget,
+            ),
           )
-        )
-      ),
-    ]);
+        ),
+        Visibility(visible: widget.textWidget != null || widget.text != null, child:
+          Padding(padding: widget.textPadding, child:
+            widget.textWidget ?? Text(widget.text ?? '', key: widget.key,
+              style: widget.textStyle ?? TextStyle(color: widget.textColor, fontFamily: widget.fontFamily, fontSize: widget.fontSize),
+              textAlign: widget.textAlign,
+            )
+          )
+        ),
+      ]),
+    );
   }
 }

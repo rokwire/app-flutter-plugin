@@ -91,6 +91,7 @@ class SurveyAlert {
   }
 }
 
+// TODO: Add localization support
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
 
