@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Omit null title/value in VerticalTitleValueSection [#2542](https://github.com/rokwire/illinois-app/issues/2542).
 - ExploreLocation updated from ExplorePOI [#220](https://github.com/rokwire/app-flutter-plugin/issues/220).
 - Introduce Surveys BB [#230](https://github.com/rokwire/app-flutter-plugin/issues/230)
+- Acknowledge the new fields "mute" and "read" for InboxMessage [#2778](https://github.com/rokwire/illinois-app/issues/2778).
 
 ## [1.2.4] - 2022-09-30
 ### Added
