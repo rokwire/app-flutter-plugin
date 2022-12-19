@@ -191,7 +191,7 @@ class Poll {
     int optionsCount = options?.length ?? 0;
     bool geoFenceSatisfied = (!isGeoFenced || GeoFence().currentRegionIds.contains(regionId));
 
-    return isPollOpened && (allowRepeatOptions || (allowMultipleOptions && (userTotalVotesCount < optionsCount))) && geoFenceSatisfied;
+    return isPollOpened && ((userTotalVotesCount == 0) || allowRepeatOptions || (allowMultipleOptions && (userTotalVotesCount < optionsCount))) && geoFenceSatisfied;
   }
 
   static int get randomPin {
