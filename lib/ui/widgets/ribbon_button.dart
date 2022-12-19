@@ -265,8 +265,7 @@ class ToggleRibbonButton extends RibbonButton {
   String? get _leftIconAsset => (leftIconAssets != null) ? leftIconAssets![toggled] : null;
   Widget? get _rightIcon => (rightIcons != null) ? rightIcons![toggled] : null;
   String? get _rightIconAsset => (rightIconAssets != null) ? rightIconAssets![toggled] : null;
-  String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![toggled] : null;
-  String? get _changedSemanticsValue => (semanticsValues != null) ? semanticsValues![!toggled] : null;
+  String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![!toggled] : null;
 
   @override
   Widget? get leftIcon => _leftIcon ?? super.leftIcon;
@@ -285,11 +284,11 @@ class ToggleRibbonButton extends RibbonButton {
 
   @protected
   String? get semanticStateChangeAnnouncementMessage {
-    if (StringUtils.isNotEmpty(label) && StringUtils.isNotEmpty(_changedSemanticsValue)) {
-      return "$_changedSemanticsValue, $label";
+    if (StringUtils.isNotEmpty(label) && StringUtils.isNotEmpty(semanticsValue)) {
+      return "$semanticsValue, $label";
     }
-    else if (StringUtils.isNotEmpty(_changedSemanticsValue)) {
-      return _changedSemanticsValue;
+    else if (StringUtils.isNotEmpty(semanticsValue)) {
+      return semanticsValue;
     }
     else if (StringUtils.isNotEmpty(label)) {
       return label;
