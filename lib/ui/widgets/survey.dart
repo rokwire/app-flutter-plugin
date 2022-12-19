@@ -229,7 +229,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
-              Visibility(visible: !survey.allowSkip, child: Text("* ", style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
               Visibility(
                 visible: !surveyWidget.containsText,
                 child: Flexible(
@@ -376,6 +376,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       buttons.add(Flexible(fit: FlexFit.tight, child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: RadioButton<dynamic>(
+          semanticsLabel: option.hint ?? option.title,
           value: option.value,
           groupValue: survey.response,
           onChanged: (value) {
@@ -383,7 +384,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title.toString(), style: Styles().textStyles?.getTextStyle('widget.detail.small'), textAlign: TextAlign.center,),
+          textWidget: Text(option.title, style: Styles().textStyles?.getTextStyle('widget.detail.small'), textAlign: TextAlign.center),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
@@ -904,21 +905,18 @@ class SingleSelectionList extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: selectionList.length,
         itemBuilder: (BuildContext context, int index) {
+          String title = selectionList[index].title;
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
-                  child: InkWell(
-                    onTap: onChanged != null ? () => onChanged!(index) : null,
-                    child: ListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
-                      leading: Radio<String>(
-                        activeColor: Styles().colors?.fillColorSecondary,
-                        value: selectionList[index].title,
-                        groupValue: selectedValue != null ? selectedValue!.title : null,
-                        onChanged: onChanged != null ? (_) => onChanged!(index) : null,
-                      ),
-                      contentPadding: const EdgeInsets.all(8),
-                    ),
-                  )
+                clipBehavior: Clip.hardEdge,
+                child: RadioListTile(
+                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                  activeColor: Styles().colors?.fillColorSecondary,
+                  value: title,
+                  groupValue: selectedValue?.title,
+                  onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                  contentPadding: const EdgeInsets.all(8),
+                )
               ));
         });
   }
