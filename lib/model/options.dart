@@ -1,16 +1,18 @@
 class OptionData {
   final String title;
+  final String? hint;
   final dynamic _value;
   final num? score;
   bool selected;
 
   dynamic get value { return _value ?? title; }
 
-  OptionData({required this.title, dynamic value, this.selected = false, this.score}) : _value = value;
+  OptionData({required this.title, this.hint, dynamic value, this.selected = false, this.score}) : _value = value;
 
   factory OptionData.fromJson(Map<String, dynamic> json) {
     return OptionData(
       title: json['title'],
+      hint: json['hint'],
       value: json['value'],
       score: json['score'],
       selected: json['selected'] ?? false,
@@ -58,6 +60,7 @@ class OptionData {
   Map<String, dynamic> toJson() {
     return {
       'title': title,
+      'hint': hint,
       'value': _value,
       'score': score,
       'selected': selected,

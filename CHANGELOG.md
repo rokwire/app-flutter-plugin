@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Survey bug fixes [#219](https://github.com/rokwire/app-flutter-plugin/issues/219)
 - Privacy level is not getting saved property [#222](https://github.com/rokwire/app-flutter-plugin/issues/222)
 - Missing close button from ModalImagePanel[#227](https://github.com/rokwire/app-flutter-plugin/issues/227).
+- Fixed Groups.notifyGroupCreated notification param [#2683](https://github.com/rokwire/illinois-app/issues/2683).
+- Hide "Vote" button after user selectes all options in a poll [#2776](https://github.com/rokwire/illinois-app/issues/2776).
+- Improve accessibility for surveys [#234](https://github.com/rokwire/app-flutter-plugin/issues/234)
 ### Added
 - Image/icon abstraction [#145](https://github.com/rokwire/app-flutter-plugin/issues/145)
 - Added TextStyle capability to pass custom metadata values like color or height [#2311](https://github.com/rokwire/illinois-app/issues/2311).
@@ -36,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Delete survey responses request [#210](https://github.com/rokwire/app-flutter-plugin/issues/210).
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
 - Added Explore.exploreLocationDescription interface [#2633](https://github.com/rokwire/illinois-app/issues/2633).
+- Support for FlexUI-based access widget [#229](https://github.com/rokwire/app-flutter-plugin/issues/229).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 - Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
@@ -54,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Omit null title/value in VerticalTitleValueSection [#2542](https://github.com/rokwire/illinois-app/issues/2542).
 - ExploreLocation updated from ExplorePOI [#220](https://github.com/rokwire/app-flutter-plugin/issues/220).
 - Introduce Surveys BB [#230](https://github.com/rokwire/app-flutter-plugin/issues/230)
+- Acknowledge the new fields "mute" and "read" for InboxMessage [#2778](https://github.com/rokwire/illinois-app/issues/2778).
 
 ## [1.2.4] - 2022-09-30
 ### Added

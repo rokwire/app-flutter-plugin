@@ -430,7 +430,7 @@ class Groups with Service implements NotificationsListener {
         if (responseCode == 200) {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
           if (StringUtils.isNotEmpty(groupId)) {
-            NotificationService().notify(notifyGroupCreated, group.id);
+            NotificationService().notify(notifyGroupCreated, groupId);
             _updateUserGroupsFromNetSync();
             return null; // succeeded
           }
