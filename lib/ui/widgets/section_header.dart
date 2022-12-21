@@ -98,7 +98,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.rightIconLabel,
     this.rightIconKey,
     this.rightIconAction,
-    this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 2),
+    this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16),
     
     this.headerWidget,
     this.children,
