@@ -398,7 +398,7 @@ class Inbox with Service implements NotificationsListener {
       String? responseBody = response?.body;
       if (responseCode == 200) {
         Map<String, dynamic>? jsonData = JsonUtils.decode(responseBody);
-        int? unreadCount = jsonData != null ? JsonUtils.intValue(jsonData["not_read_not_mute_count"]) : null;
+        int? unreadCount = jsonData != null ? JsonUtils.intValue(jsonData["not_read_not_mute"]) : null;
         _applyUnreadMessagesCount(unreadCount);
       } else {
         debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, $responseBody');
