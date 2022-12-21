@@ -19,6 +19,7 @@ class Inbox with Service implements NotificationsListener {
 
   static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
   static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
+  static const String notifyInboxMessageRead                 = "edu.illinois.rokwire.inbox.message.read";
 
   String?   _fcmToken;
   String?   _fcmUserId;
@@ -168,7 +169,14 @@ class Inbox with Service implements NotificationsListener {
 
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages$urlParams" : null;
     Response? response = await Network().get(url, body: body, auth: Auth2());
-    return (response?.statusCode == 200) ? (InboxMessage.listFromJson(JsonUtils.decodeList(response?.body)) ?? []) : null;
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return (InboxMessage.listFromJson(JsonUtils.decodeList(responseString)) ?? []);
+    } else {
+      debugPrint('Failed to load notifications messages. Reason: $responseCode, body: $responseString');
+      return null;
+    }
   }
 
   Future<bool> deleteMessages(Iterable<String>? messageIds) async {
@@ -199,6 +207,7 @@ class Inbox with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
+      NotificationService().notify(notifyInboxMessageRead);
       return true;
     } else {
       debugPrint('Failed to read message. Reason: $responseCode, ${response?.body}.');
@@ -212,7 +221,8 @@ class Inbox with Service implements NotificationsListener {
     Response? response = await Network().put(url, body: body, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
+      _loadUnreadMessagesCount(); // Reload unread messages count when all messages are read.
+      NotificationService().notify(notifyInboxMessageRead);
       return true;
     } else {
       debugPrint('Failed to read messages. Reason: $responseCode, ${response?.body}.');
@@ -385,12 +395,13 @@ class Inbox with Service implements NotificationsListener {
       String url = "${Config().notificationsUrl}/api/messages/stats";
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
+      String? responseBody = response?.body;
       if (responseCode == 200) {
-        Map<String, dynamic>? jsonData = JsonUtils.decode(response?.body);
-        int? unreadCount = jsonData!=null? JsonUtils.intValue(jsonData["not_read_count"]) : null;
+        Map<String, dynamic>? jsonData = JsonUtils.decode(responseBody);
+        int? unreadCount = jsonData != null ? JsonUtils.intValue(jsonData["not_read_not_mute_count"]) : null;
         _applyUnreadMessagesCount(unreadCount);
       } else {
-        debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, ${response?.body}.');
+        debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, $responseBody');
       }
     }
   }

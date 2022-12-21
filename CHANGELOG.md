@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support font family references in text styles [#213](https://github.com/rokwire/app-flutter-plugin/issues/213).
 - Added Explore.exploreLocationDescription interface [#2633](https://github.com/rokwire/illinois-app/issues/2633).
 - Support for FlexUI-based access widget [#229](https://github.com/rokwire/app-flutter-plugin/issues/229).
+- Fire local notification when message is read [#2833](https://github.com/rokwire/illinois-app/issues/2833).
 ### Deleted
 - Removed Auth2.canFavorite [#2325](https://github.com/rokwire/illinois-app/issues/2325).
 - Removed UserRole.resident [#2547](https://github.com/rokwire/illinois-app/issues/2547).
