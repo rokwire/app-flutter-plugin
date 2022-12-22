@@ -23,7 +23,6 @@ import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:rokwire_plugin/service/localization.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
 class StringUtils {
@@ -105,19 +104,6 @@ class StringUtils {
     return fullName;
   }
 
-  static String? getContentString(Map<String, dynamic>? strings, String? key, {String? languageCode}) {
-    if ((strings != null) && (key != null)) {
-      Map<String, dynamic>? mapping =
-        JsonUtils.mapValue(strings[languageCode]) ??
-        JsonUtils.mapValue(strings[Localization().currentLocale?.languageCode]) ??
-        JsonUtils.mapValue(strings[Localization().defaultLocale?.languageCode]);
-      if (mapping != null) {
-        return JsonUtils.stringValue(mapping[key]);
-      }
-    }
-    return null;
-  }
-
   /// US Phone validation  https://github.com/rokwire/illinois-app/issues/47
 
   static const String _usPhonePattern1 = "^[2-9][0-9]{9}\$";          // Valid:   23456789120
@@ -186,11 +172,19 @@ class CollectionUtils {
   static bool isEmpty(Iterable<Object?>? collection) {
     return !isNotEmpty(collection);
   }
+
+  static int length(Iterable<dynamic>? collection) {
+    return collection?.length ?? 0;
+  }
 }
 
 class ListUtils {
   static List<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? List<T>.from(elements) : null;
+  }
+
+  static List<T>? reversed<T>(List<T>? elements) {
+    return (elements != null) ? List<T>.from(elements.reversed) : null;
   }
 
   static void add<T>(List<T>? list, T? entry) {
@@ -201,6 +195,25 @@ class ListUtils {
 
   static T? entry<T>(List<T>? list, int index) {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
+  }
+
+  static bool? contains(List<dynamic>? list, dynamic item, {bool checkAll = false}) {
+    if (list == null) {
+      return null;
+    }
+    if (item is List<dynamic>) {
+      for (dynamic val in item) {
+        if (list.contains(val)) {
+          if (!checkAll) {
+            return true;
+          }
+        } else if (checkAll) {
+          return false;
+        }
+      }
+      return checkAll;
+    }
+    return list.contains(item);
   }
 }
 
@@ -214,9 +227,25 @@ class SetUtils {
       set.add(entry);
     }
   }
+
+  static void toggle<T>(Set<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
+    }
+  }
 }
 
 class MapUtils {
+
+  static Map<K, T>? from<K, T>(Map<K, T>? other) {
+    return (other != null) ? Map<K, T>.from(other) : null;
+  }
+
   static T? get<K, T>(Map<K, T>? map, K? key) {
     return ((map != null) && (key != null)) ? map[key] : null;
   }
@@ -245,6 +274,53 @@ class MapUtils {
     }
     return null;
   }
+
+  static void merge(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
+    src?.forEach((String key, dynamic srcV) {
+      dynamic destV = dest[key];
+      Map<String, dynamic>? destMapV = JsonUtils.mapValue(destV);
+      Map<String, dynamic>? srcMapV = JsonUtils.mapValue(srcV);
+      
+      if (((level == null) || (0 < level)) && (destMapV != null) && (srcMapV != null)) {
+        merge(destMapV, srcMapV, level: (level != null) ? (level - 1) : null);
+      }
+      else {
+        dest[key] = _mergeClone(srcV, level: level);
+      }
+    });
+  }
+
+  static dynamic _mergeClone(dynamic value, { int? level }) {
+    if ((value is Map) && ((level == null) || (0 < level))) {
+      return value.map<String, dynamic>((key, item) =>
+        MapEntry<String, dynamic>(key, _mergeClone(item, level: (level != null) ? (level - 1) : null)));
+    }
+    else {
+      return value;
+    }
+  }
+
+  static Map<K, T>? combine<K, T>(Map<K, T>? map1, Map<K, T>? map2, {bool copy = false}) {
+    if (map1 != null) {
+      if (map2 != null) {
+        Map<K, T> combined = Map<K, T>.from(map1);
+        combined.addAll(map2);
+        return combined;
+      }
+      else {
+        return copy ? Map<K, T>.from(map1) : map1;
+      }
+    }
+    else {
+      if (map2 != null) {
+        return copy ? Map<K, T>.from(map2) : map2;
+      }
+      else {
+        return null;
+      }
+    }
+  }
+
 }
 
 class ColorUtils {
@@ -328,8 +404,7 @@ class AppVersion {
   }
 }
 
-class UrlUtils {
-  
+class UrlUtils {  
   static String? getScheme(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
@@ -376,29 +451,6 @@ class UrlUtils {
   }
 }
 
-class LocationUtils {
-
-  static double distance(double lat1, double lon1, double lat2, double lon2) {
-    double theta = lon1 - lon2;
-    double dist = sin(deg2rad(lat1)) 
-                    * sin(deg2rad(lat2))
-                    + cos(deg2rad(lat1))
-                    * cos(deg2rad(lat2))
-                    * cos(deg2rad(theta));
-    dist = acos(dist);
-    dist = rad2deg(dist);
-    dist = dist * 60 * 1.1515;
-    return (dist);
-  }
-
-  static double deg2rad(double deg) {
-      return (deg * pi / 180.0);
-  }
-
-  static double rad2deg(double rad) {
-      return (rad * 180.0 / pi);
-  }  
-}
 
 class JsonUtils {
 
@@ -409,7 +461,16 @@ class JsonUtils {
         result.add(item.toJson());
       }
     }
+    return result;
+  }
 
+  static Map<String, dynamic> encodeMap(Map items) {
+    Map<String, dynamic> result =  {};
+    if (items.isNotEmpty) {
+      for (MapEntry entry in items.entries) {
+        result[entry.key] = entry.value.toJson();
+      }
+    }
     return result;
   }
 
@@ -567,6 +628,91 @@ class JsonUtils {
     }
     catch(e) {
       debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) {
+    Map<String, LinkedHashSet<String>>? result;
+    if (value is Map) {
+      result = <String, LinkedHashSet<String>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, linkedHashSetStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Map<String, dynamic>? mapOfStringToLinkedHashSetOfStringsJsonValue(Map<String, LinkedHashSet<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
+  }
+
+  static Map<String, Set<String>>? mapOfStringToSetOfStringsValue(dynamic value) {
+    Map<String, Set<String>>? result;
+    if (value is Map) {
+      result = <String, Set<String>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, JsonUtils.setStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
+
+  static Map<String, dynamic>? mapOfStringToSetOfStringsJsonValue(Map<String, Set<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
+  }
+
+  static T? mapOrNull<T>(T Function(Map<String, dynamic>) construct, dynamic json) {
+    if (json is Map<String, dynamic>) {
+      return construct(json);
+    }
+    return null;
+  }
+
+  static T? listOrNull<T>(T Function(List<dynamic>) construct, dynamic json) {
+    if (json is List<dynamic>) {
+      return construct(json);
+    }
+    return null;
+  }
+
+  static List<double>? doubleListValue(dynamic value) {
+    List<double>? result;
+    if (value is List) {
+      result = [];
+      for (dynamic entry in value) {
+        double? val = JsonUtils.doubleValue(entry);
+        if (val == null) {
+          return null;
+        }
+        result.add(val);
+      }
+    }
+    return result;
+  }
+
+  static Duration? durationValue(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return Duration(days: value['days'] ?? 0, hours: value['hours'] ?? 0, minutes: value['minutes'] ?? 0, seconds: value['seconds'] ?? 0, milliseconds: value['milliseconds'] ?? 0, microseconds: value['microseconds'] ?? 0);
     }
     return null;
   }
@@ -760,22 +906,14 @@ class BoolExpr {
 class AppBundle {
   
   static Future<String?> loadString(String key, {bool cache = true}) async {
-    try {
-      return rootBundle.loadString(key, cache: cache);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.loadString(key, cache: cache); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   static Future<ByteData?> loadBytes(String key) async {
-    try {
-      return rootBundle.load(key);
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
+    try { return await rootBundle.load(key); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 }
@@ -830,6 +968,14 @@ class DateTimeUtils {
     return dateTime;
   }
 
+  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
+  }
+
+  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
       case "monday"   : return 1;
@@ -865,6 +1011,57 @@ class DateTimeUtils {
   static DateTime? midnight(DateTime? date) {
     return (date != null) ? DateTime(date.year, date.month, date.day) : null;
   }
+
+  static DateTime nowTimezone(timezone.Location? location) {
+    DateTime now = DateTime.now();
+    if (location != null) {
+      return timezone.TZDateTime.from(now, location);
+    }
+    return now;
+  }
+
+  static bool isToday(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime now = nowTimezone(location);
+    return now.day == date.day && now.month == date.month && now.year == date.year;
+  }
+
+  static bool isYesterday(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime yesterday = nowTimezone(location).subtract(const Duration(days: 1));
+    return yesterday.day == date.day && yesterday.month == date.month && yesterday.year == date.year;
+  }
+
+  static bool isTomorrow(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    DateTime tomorrow = nowTimezone(location).add(const Duration(days: 1));
+    return tomorrow.day == date.day && tomorrow.month == date.month && tomorrow.year == date.year;
+  }
+
+  static bool isThisWeek(DateTime? date, {timezone.Location? location}) {
+    if (date == null) {
+      return false;
+    }
+    if (date.isAfter(weekStart(location: location)) && date.isBefore(weekEnd(location: location))) {
+      return true;
+    }
+    return false;
+  }
+
+  static DateTime weekStart({timezone.Location? location}) {
+    DateTime now = nowTimezone(location);
+    return now.subtract(Duration(days: now.weekday - 1));
+  }
+
+  static DateTime weekEnd({timezone.Location? location}) {
+    return weekStart(location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
+  }
   
   static timezone.TZDateTime? changeTimeZoneToDate(DateTime time, timezone.Location location) {
     try{
@@ -875,7 +1072,7 @@ class DateTimeUtils {
     return null;
   }
 
-  DateTime copyDateTime(DateTime date){
+  static DateTime copyDateTime(DateTime date){
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
@@ -896,12 +1093,19 @@ class DateTimeUtils {
     return null;
   }
 
-  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
-    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
-  }
+  static Duration? parseDelimitedDurationString(String durationString, Pattern delimiter) {
+    List<String> durationParts = durationString.split(delimiter);
+    if (CollectionUtils.isEmpty(durationParts)) {
+      return null;
+    }
 
-  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
-    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+    int days = int.tryParse(durationParts[0]) ?? 0;
+    int hours = durationParts.length > 1 ? int.tryParse(durationParts[1]) ?? 0 : 0;
+    int minutes = durationParts.length > 2 ? int.tryParse(durationParts[2]) ?? 0 : 0;
+    int seconds = durationParts.length > 3 ? int.tryParse(durationParts[3]) ?? 0 : 0;
+    int milliseconds = durationParts.length > 4 ? int.tryParse(durationParts[4]) ?? 0 : 0;
+    int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
+    return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
 }
 

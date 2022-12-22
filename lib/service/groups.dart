@@ -43,6 +43,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'firebase_messaging.dart';
 
 enum GroupsContentType { all, my }
+enum ResearchProjectsContentType { open, my }
 
 class Groups with Service implements NotificationsListener {
 
@@ -66,6 +67,8 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMembershipSwitchToMember = "edu.illinois.rokwire.group.membership.switch_to_member";
   static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
 
+  static const String _userLoginVersionSetting         = "edu.illinois.rokwire.settings.groups.user.login.version";
+
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
 
@@ -77,13 +80,8 @@ class Groups with Service implements NotificationsListener {
 
   Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
 
-  final List<Completer<void>> _loginCompleters = [];
+  Set<Completer<bool?>>? _loginCompleters;
   final List<Completer<void>> _userGroupUpdateCompleters = [];
-  List<Completer<void>> get loginCompleters => _loginCompleters;
-
-
-  bool _loggedIn = false;
-  bool get loggedIn => _loggedIn;
 
   DateTime?  _pausedDateTime;
 
@@ -122,7 +120,8 @@ class Groups with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    await waitForLogin();
+
+    await _ensureLogin();
 
     _attendedMembers = await _loadAttendedMembersFromCache();
 
@@ -133,7 +132,7 @@ class Groups with Service implements NotificationsListener {
       await _initUserGroupsFromNet();
     }
     else {
-      _waitForUpdateUserGroupsFromNet();
+      _updateUserGroupsFromNetSync();
     }
 
     await super.initService();
@@ -173,10 +172,11 @@ class Groups with Service implements NotificationsListener {
 
   void _onLoginChanged() {
     if (Auth2().isLoggedIn) {
-      _waitForUpdateUserGroupsFromNet();
+      _ensureLogin().then((_){
+        _updateUserGroupsFromNetSync();
+      });
     }
     else {
-      _loggedIn = false;
       _clearUserGroups();
     }
   }
@@ -189,14 +189,14 @@ class Groups with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _waitForUpdateUserGroupsFromNet();
+          _updateUserGroupsFromNetSync();
         }
       }
     }
   }
 
   void _onFirebaseMessageForGroupUpdate() {
-      _waitForUpdateUserGroupsFromNet();
+      _updateUserGroupsFromNetSync();
   }
 
   // Current User Membership
@@ -224,104 +224,141 @@ class Groups with Service implements NotificationsListener {
     return Events().loadEventTags();
   }
 
-  // Groups APIs
+  // Login APIs
 
-  // MD: This method is important for user data migration.
-  // This method is supposed to run only once in the app lifecycle with user login due to the  _loggedIn flag
-  // Please keep in mind there may be old legacy users that haven't been migrated yet and this method resolves this scenario. 
-  @protected
-  Future<void> waitForLogin() async{
-    if(!_loggedIn && Auth2().isLoggedIn) {
-      try {
-        if (_loginCompleters.isEmpty) {
-          Completer<void> completer = Completer<void>();
-          _loginCompleters.add(completer);
-          _login().whenComplete(() {
-            _loggedIn = true;
-            for (var completer in _loginCompleters) {
-              completer.complete();
-            }
-            _loginCompleters.clear();
-          });
-          return completer.future;
-        } else {
-          Completer<void> completer = Completer<void>();
-          _loginCompleters.add(completer);
-          return completer.future;
+  Future<bool?> _ensureLogin() async {
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn && _isUserNotLoggedIn) {
+      if (_loginCompleters == null) {
+        _loginCompleters = <Completer<bool?>>{};
+        bool? result = await _login();
+        Set<Completer<bool?>> loginCompleters = _loginCompleters!;
+        _loginCompleters = null;
+        for (Completer<bool?> completer in loginCompleters) {
+          completer.complete(result);
         }
-      } catch(err){
-        Log.e("Failed to invoke groups login API");
-        debugPrint(err.toString());
+        return result;
+      }
+      else {
+        Completer<bool?> completer = Completer<bool?>();
+        _loginCompleters!.add(completer);
+        return completer.future;
       }
     }
+    return null;
   }
 
-  Future<void> _login() async{
+  Future<bool?> _login() async {
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn && _isUserNotLoggedIn) {
       try {
-        if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
-          try {
-            String url = '${Config().groupsUrl}/user/login';
-            await Network().get(url, auth: Auth2(),);
-
-            // we need just to be sure the request is made no matter for the result at this point
-          } catch (e) {
-            debugPrint(e.toString());
+        String url = '${Config().groupsUrl}/user/login';
+        Response? response = await Network().get(url, auth: Auth2(),);
+        if (response != null) {
+          if (response.statusCode == 200) {
+            _userDidLogin();
+            return true;
+          }
+          else {
+            return false;
           }
         }
-      } catch (err) {
-        debugPrint(err.toString());
+      } catch (e) {
+        debugPrint(e.toString());
       }
+    }
+    return null;
   }
+
+  bool get _isUserNotLoggedIn {
+    String? appVersion = Config().appMajorVersion;
+    String? loginVersion = Auth2().prefs?.getStringSetting(_userLoginVersionSetting);
+    return ((loginVersion == null) || (AppVersion.compareVersions(loginVersion, appVersion) < 0));
+  }
+
+  void _userDidLogin() {
+    Auth2().prefs?.applySetting(_userLoginVersionSetting, Config().appMajorVersion);
+  }
+
+  // Groups APIs
+
 
   ///
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? category}) async {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
     if (contentType == GroupsContentType.my) {
-      await _waitForUpdateUserGroupsFromNet();
+      await _updateUserGroupsFromNetSync();
       return userGroups;
     } else {
       return await _loadAllGroups(category: category);
     }
   }
 
-  Future<List<Group>?> _loadAllGroups({String? category, String? title, GroupPrivacy? privacy}) async {
-    await waitForLogin();
-    if (Config().groupsUrl != null) {
-      Map<String, String> queryParams = {};
-      if (StringUtils.isNotEmpty(category)) {
-        queryParams.addAll({'category': category!});
-      }
-      if (StringUtils.isNotEmpty(title)) {
-        queryParams.addAll({'title': title!});
-      }
-      if (privacy != null) {
-        queryParams.addAll({'privacy': groupPrivacyToString(privacy)!});
-      }
-      /*
-      // TMP disable paging - there is a problem on the backend
-      if (offset != null) {
-        queryParams.addAll({'offset': offset.toString()});
-      }
-      if (limit != null) {
-        queryParams.addAll({'limit': limit.toString()});
-      }*/
-      String url = '${Config().groupsUrl}/v2/groups';
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
+  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
+      String? post = JsonUtils.encode({
+        'title': title,
+        'category': category,
+        'tags': tags,
+        'privacy': groupPrivacyToString(privacy),
+        'offset': offset,
+        'limit': limit,
+        'research_group': true,
+        'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
+        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+      });
       
       try {
-        Response? response = await Network().get(url, auth: Auth2());
-        int responseCode = response?.statusCode ?? -1;
-        String? responseBody = response?.body;
-        if (responseCode == 200) {
-          List<dynamic>? groupsJson = JsonUtils.decodeList(responseBody);
-          return Group.listFromJson(groupsJson);
-        } else {
-          debugPrint('Failed to load all groups for url {$url}. Response: $responseCode $responseBody');
-        }
+        await _ensureLogin();
+        Response? response = await Network().get(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+        return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/research-profile/user-count';
+      String? post = JsonUtils.encode(researchQuestionnaireAnswers);
+      
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        return (responseBody != null) ? int.tryParse(responseBody) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<List<Group>?> _loadAllGroups({String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v2/groups';
+      String? post = JsonUtils.encode({
+        'title': title,
+        'category': category,
+        'tags': tags,
+        'privacy': groupPrivacyToString(privacy),
+        'offset': offset,
+        'limit': limit,
+      });
+
+
+      try {
+        await _ensureLogin();
+        Response? response = await Network().get(url, body: post, auth: Auth2());
+        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+        return Group.listFromJson(JsonUtils.decodeList(responseBody));
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -330,30 +367,37 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false}) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(searchText)) {
-      return null;
+  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
+    if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
+      await _ensureLogin();
+      String? post = JsonUtils.encode({
+        'title': searchText, // Uri.encodeComponent(searchText)
+        'include_hidden': includeHidden,
+        'research_group': researchProjects,
+        'research_open': researchOpen,
+        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+      });
+
+
+      String url = '${Config().groupsUrl}/v2/groups';
+      Response? response = await Network().get(url, auth: Auth2(), body: post);
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        return Group.listFromJson(JsonUtils.decodeList(responseBody));
+      } else {
+        debugPrint('Failed to search for groups. Reason: ');
+        debugPrint(responseBody);
+      }
     }
-    String encodedTExt = Uri.encodeComponent(searchText);
-    String url = '${Config().groupsUrl}/v2/groups?title=$encodedTExt${includeHidden? "&include_hidden=true" :""}';
-    Response? response = await Network().get(url, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    String? responseBody = response?.body;
-    if (responseCode == 200) {
-      return Group.listFromJson(JsonUtils.decodeList(responseBody));
-    } else {
-      debugPrint('Failed to search for groups. Reason: ');
-      debugPrint(responseBody);
-      return null;
-    }
+    return null;
   }
 
   Future<Group?> loadGroup(String? groupId) async {
-    await waitForLogin();
-    if (StringUtils.isNotEmpty(groupId)) {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/v2/groups/$groupId';
       try {
+        await _ensureLogin();
         Response? response = await Network().get(url, auth: Auth2(),);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -371,22 +415,23 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<GroupError?> createGroup(Group? group) async {
-    await waitForLogin();
-    if(group != null) {
+    if((Config().groupsUrl != null) && (group != null)) {
       String url = '${Config().groupsUrl}/groups';
       try {
-        Map<String, dynamic> json = group.toJson(withId: false);
+        await _ensureLogin();
+        Map<String, dynamic> json = group.toJson(/*withId: false*/);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
+        //Log.d('POST $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         Map<String, dynamic>? jsonData = JsonUtils.decodeMap(response?.body);
         if (responseCode == 200) {
           String? groupId = (jsonData != null) ? JsonUtils.stringValue(jsonData['inserted_id']) : null;
           if (StringUtils.isNotEmpty(groupId)) {
-            NotificationService().notify(notifyGroupCreated, group.id);
-            _waitForUpdateUserGroupsFromNet();
+            NotificationService().notify(notifyGroupCreated, groupId);
+            _updateUserGroupsFromNetSync();
             return null; // succeeded
           }
         }
@@ -405,15 +450,15 @@ class Groups with Service implements NotificationsListener {
 
   Future<GroupError?> updateGroup(Group? group) async {
 
-    await waitForLogin();
-
-    if(group != null) {
+    if((Config().groupsUrl != null) && (group != null)) {
       String url = '${Config().groupsUrl}/groups/${group.id}';
       try {
+        await _ensureLogin();
         Map<String, dynamic> json = group.toJson();
         String? body = JsonUtils.encode(json);
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
+        //Log.d('PUT $url\n$body\n$responseCode ${response?.body}', lineLength: 512);
         if(responseCode == 200){
           NotificationService().notify(notifyGroupUpdated, group.id);
           return null;
@@ -433,16 +478,16 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> deleteGroup(String? groupId) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(groupId)) {
+    if ((Config().groupsUrl != null) && StringUtils.isEmpty(groupId)) {
       return false;
     }
+    await _ensureLogin();
     String url = '${Config().groupsUrl}/group/$groupId';
     Response? response = await Network().delete(url, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     if (responseCode == 200) {
       NotificationService().notify(notifyGroupDeleted, null);
-      _waitForUpdateUserGroupsFromNet();
+      _updateUserGroupsFromNetSync();
       return true;
     } else {
       Log.i('Failed to delete group. Reason:\n${response?.body}');
@@ -451,33 +496,34 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> syncAuthmanGroup({required Group group}) async {
-    if (!group.syncAuthmanAllowed) {
-      debugPrint('Current user is not allowed to sync group "${group.id}" in authman.');
-      return false;
+
+    if(Config().groupsUrl != null) {
+      if(group.syncAuthmanAllowed) {
+        await _ensureLogin();
+        String url = '${Config().groupsUrl}/group/${group.id}/authman/synchronize';
+        Response? response = await Network().post(url, auth: Auth2());
+        int? responseCode = response?.statusCode;
+        if (responseCode == 200) {
+          _updateUserGroupsFromNetSync();
+          return true;
+        } else {
+          debugPrint('Failed to synchronize authman group. \nReason: $responseCode, ${response?.body}');
+        }
+      }
+      else {
+        debugPrint('Current user is not allowed to sync group "${group.id}" in authman.');
+      }
     }
-    await waitForLogin();
-    String url = '${Config().groupsUrl}/group/${group.id}/authman/synchronize';
-    Response? response = await Network().post(url, auth: Auth2());
-    int? responseCode = response?.statusCode;
-    if (responseCode == 200) {
-      _waitForUpdateUserGroupsFromNet();
-      return true;
-    } else {
-      debugPrint('Failed to synchronize authman group. \nReason: $responseCode, ${response?.body}');
-      return false;
-    }
+    return false;
   }
 
   // Group Stats
 
   Future<GroupStats?> loadGroupStats(String? groupId) async {
-    if (StringUtils.isEmpty(groupId)) {
-      return null;
-    }
-    await waitForLogin();
-    if (StringUtils.isNotEmpty(groupId)) {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/stats';
       try {
+        await _ensureLogin();
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -502,7 +548,6 @@ class Groups with Service implements NotificationsListener {
       debugPrint('Failed to load group members - missing groupId.');
       return null;
     }
-    await waitForLogin();
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/group/$groupId/members';
       Map<String, dynamic> params = {};
@@ -535,6 +580,7 @@ class Groups with Service implements NotificationsListener {
         params.addAll({'limit': limit});
       }
       try {
+        await _ensureLogin();
         String? body = JsonUtils.encode(params);
         Response? response = await Network().get(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
@@ -558,15 +604,14 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> requestMembership(Group? group, List<GroupMembershipAnswer>? answers) async{
-    await waitForLogin();
-    if(group != null) {
+    if((Config().groupsUrl != null) && (group != null)) {
       String url = '${Config().groupsUrl}/group/${group.id}/pending-members';
       try {
+        await _ensureLogin();
         Map<String, dynamic> json = {};
         json["email"] = Auth2().account?.profile?.email ?? "";
         json["name"] = Auth2().account?.profile?.fullName ?? "";
         json["member_answers"] = CollectionUtils.isNotEmpty(answers) ? answers!.map((e) => e.toJson()).toList() : [];
-
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
@@ -582,10 +627,10 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> cancelRequestMembership(Group? group) async{
-    await waitForLogin();
-    if(group?.id != null) {
+    if((Config().groupsUrl != null) && (group?.id != null)) {
       String url = '${Config().groupsUrl}/group/${group!.id}/pending-members';
       try {
+        await _ensureLogin();
         Response? response = await Network().delete(url, auth: Auth2(),);
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupMembershipCanceled, group);
@@ -600,37 +645,36 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> leaveGroup(Group? group) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(group?.id)) {
-      return false;
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id)) {
+      await _ensureLogin();
+      String url = '${Config().groupsUrl}/group/${group!.id}/members';
+      Response? response = await Network().delete(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupMembershipQuit, group);
+        NotificationService().notify(notifyGroupUpdated, group.id);
+        _updateUserGroupsFromNetSync();
+        return true;
+      } else {
+        String? responseString = response?.body;
+        debugPrint(responseString);
+      }
     }
-    String url = '${Config().groupsUrl}/group/${group!.id}/members';
-    Response? response = await Network().delete(url, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    if (responseCode == 200) {
-      NotificationService().notify(notifyGroupMembershipQuit, group);
-      NotificationService().notify(notifyGroupUpdated, group.id);
-      _waitForUpdateUserGroupsFromNet();
-      return true;
-    } else {
-      String? responseString = response?.body;
-      debugPrint(responseString);
-      return false;
-    }
+    return false;
   }
 
   Future<bool> acceptMembership(Group? group, Member? member, bool? decision, String? reason) async{
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(member?.id) && decision != null) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(member?.id) && decision != null) {
       Map<String, dynamic> bodyMap = {"approve": decision, "reject_reason": reason};
       String? body = JsonUtils.encode(bodyMap);
       String url = '${Config().groupsUrl}/memberships/${member!.id}/approval';
       try {
+        await _ensureLogin();
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _waitForUpdateUserGroupsFromNet();
+          _updateUserGroupsFromNetSync();
           return true;
         }
       } catch (e) {
@@ -640,13 +684,13 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> updateMembership(Group? group, String? memberId, GroupMemberStatus status) async{
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
+  Future<bool> updateMemberStatus(Group? group, String? memberId, GroupMemberStatus status) async{
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
       Map<String, dynamic> bodyMap = {"status":groupMemberStatusToString(status)};
       String? body = JsonUtils.encode(bodyMap);
       String url = '${Config().groupsUrl}/memberships/$memberId';
       try {
+        await _ensureLogin();
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
           if (status == GroupMemberStatus.admin) {
@@ -656,7 +700,7 @@ class Groups with Service implements NotificationsListener {
             NotificationService().notify(notifyGroupMembershipSwitchToMember, group);
           }
           NotificationService().notify(notifyGroupUpdated, group!.id);
-          _waitForUpdateUserGroupsFromNet();
+          _updateUserGroupsFromNetSync();
           return true;
         }
       } catch (e) {
@@ -667,15 +711,15 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> deleteMembership(Group? group, String? memberId) async{
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(memberId)) {
       String url = '${Config().groupsUrl}/memberships/$memberId';
       try {
+        await _ensureLogin();
         Response? response = await Network().delete(url, auth: Auth2(),);
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupMembershipRemoved, group);
           NotificationService().notify(notifyGroupUpdated, group?.id);
-          _waitForUpdateUserGroupsFromNet();
+          _updateUserGroupsFromNetSync();
           return true;
         }
       } catch (e) {
@@ -686,7 +730,6 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> memberAttended({required Group group, required Member member}) async {
-    await waitForLogin();
     if (Config().groupsUrl == null) {
       return false;
     }
@@ -703,18 +746,16 @@ class Groups with Service implements NotificationsListener {
     String? memberJsonBody = JsonUtils.encode(member.toJson());
     String url = isNewMember ? '${Config().groupsUrl}/group/${group.id}/members' : '${Config().groupsUrl}/memberships/${member.id}';
     try {
-      Response? response;
-      if (isNewMember) {
-        response = await Network().post(url, body: memberJsonBody, auth: Auth2());
-      } else {
-        response = await Network().put(url, body: memberJsonBody, auth: Auth2());
-      }
+      await _ensureLogin();
+      Response? response = isNewMember ?
+        await Network().post(url, body: memberJsonBody, auth: Auth2()) :
+        await Network().put(url, body: memberJsonBody, auth: Auth2());
       int? responseCode = response?.statusCode;
       String? responseString = response?.body;
       if (responseCode == 200) {
         NotificationService().notify(notifyGroupMemberAttended, null);
         NotificationService().notify(notifyGroupUpdated, group.id);
-        _waitForUpdateUserGroupsFromNet();
+        _updateUserGroupsFromNetSync();
         return true;
       } else {
         debugPrint('Failed to attend a member to group. \nResponse: $responseCode, $responseString');
@@ -725,13 +766,36 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<bool> updateMember(Member? member) async{
+    if ((Config().groupsUrl != null) && (member != null)) {
+      Map<String, dynamic> memberJson = member.toJson();
+      String? body = JsonUtils.encode(memberJson);
+      String url = '${Config().groupsUrl}/memberships/${member.id}';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        String? responseString = response?.body;
+        int? responseCode = response?.statusCode;
+        if (responseCode == 200) {
+          debugPrint('Successfully updated group member {${member.id}}');
+          return true;
+        } else {
+          debugPrint('Failed to update group member {${member.id}}. Reason: $responseCode, $responseString');
+          return false;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false;
+  }
 
 // Events
   Future<List<String>?> loadEventIds(String? groupId) async{
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId)) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
+        await _ensureLogin();
         Response? response = await Network().get(url, auth: Auth2());
         if((response?.statusCode ?? -1) == 200){
           //Successfully loaded ids
@@ -757,7 +821,6 @@ class Groups with Service implements NotificationsListener {
   /// value - events (limited or not)
   ///
   Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
-    await waitForLogin();
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
       List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(eventIds) : null;
@@ -785,10 +848,10 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
+        await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
           bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
@@ -807,10 +870,10 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
+        await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
           bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
@@ -829,10 +892,10 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<bool> removeEventFromGroup({String? groupId, String? eventId}) async {
-    await waitForLogin();
-    if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/event/$eventId';
       try {
+        await _ensureLogin();
         Response? response = await Network().delete(url, auth: Auth2());
         if((response?.statusCode ?? -1) == 200){
           NotificationService().notify(notifyGroupUpdated, groupId);
@@ -849,6 +912,7 @@ class Groups with Service implements NotificationsListener {
     if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events/v2';
       try {
+        await _ensureLogin();
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -880,7 +944,6 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<String?> updateGroupEvents(Event event) async {
-    await waitForLogin();
     String? id = await Events().updateEvent(event);
     if (StringUtils.isNotEmpty(id)) {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
@@ -890,112 +953,108 @@ class Groups with Service implements NotificationsListener {
 
   Future<bool?> deleteEventFromGroup({String? groupId, required Event event}) async {
     bool? deleteResult = false;
-    await removeEventFromGroup(groupId: groupId, eventId: event.id);
-    String? creatorGroupId = event.createdByGroupId;
-    if(creatorGroupId!=null){
-      Group? creatorGroup = await loadGroup(creatorGroupId);
-      if(creatorGroup!=null && creatorGroup.currentUserIsAdmin){
-        deleteResult = await Events().deleteEvent(event.id);
+    if (await removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
+      String? creatorGroupId = event.createdByGroupId;
+      if(creatorGroupId!=null){
+        Group? creatorGroup = await loadGroup(creatorGroupId);
+        if(creatorGroup!=null && creatorGroup.currentUserIsAdmin){
+          deleteResult = await Events().deleteEvent(event.id);
+        }
       }
+      NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
-    NotificationService().notify(Groups.notifyGroupEventsUpdated);
     return deleteResult;
   }
 
   // Group Posts and Replies
 
   Future<bool> createPost(String? groupId, GroupPost? post) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(groupId) || (post == null)) {
-      return false;
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && (post != null)) {
+      await _ensureLogin();
+      String? requestBody = JsonUtils.encode(post.toJson(create: true));
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
+      Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? 1 : null);
+        return true;
+      } else {
+        Log.e('Failed to create group post. Response: ${response?.body}');
+      }
     }
-    String? requestBody = JsonUtils.encode(post.toJson(create: true));
-    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
-    Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
-    int responseCode = response?.statusCode ?? -1;
-    if (responseCode == 200) {
-      NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? 1 : null);
-      return true;
-    } else {
-      Log.e('Failed to create group post. Response: ${response?.body}');
-      return false;
-    }
+    return false;
   }
 
   Future<bool> updatePost(String? groupId, GroupPost? post) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(post?.id)) {
-      return false;
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
+      await _ensureLogin();
+      String? requestBody = JsonUtils.encode(post!.toJson(update: true));
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
+      Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupPostsUpdated);
+        return true;
+      } else {
+        Log.e('Failed to update group post. Response: ${response?.body}');
+      }
     }
-    String? requestBody = JsonUtils.encode(post!.toJson(update: true));
-    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
-    Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
-    int responseCode = response?.statusCode ?? -1;
-    if (responseCode == 200) {
-      NotificationService().notify(notifyGroupPostsUpdated);
-      return true;
-    } else {
-      Log.e('Failed to update group post. Response: ${response?.body}');
-      return false;
-    }
+    return false;
   }
 
   Future<bool> deletePost(String? groupId, GroupPost? post) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(post?.id)) {
-      return false;
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
+      await _ensureLogin();
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
+      Response? response = await Network().delete(requestUrl, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? -1 : null);
+        return true;
+      } else {
+        Log.e('Failed to delete group post. Response: ${response?.body}');
+      }
     }
-    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
-    Response? response = await Network().delete(requestUrl, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    if (responseCode == 200) {
-      NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? -1 : null);
-      return true;
-    } else {
-      Log.e('Failed to delete group post. Response: ${response?.body}');
-      return false;
-    }
+    return false;
   }
 
   Future<List<GroupPost>?> loadGroupPosts(String? groupId, {int? offset, int? limit, GroupSortOrder? order}) async {
-    await waitForLogin();
-    if (StringUtils.isEmpty(groupId)) {
-      return null;
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
+      String urlParams = "";
+      if (offset != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "offset=$offset";
+      }
+      if (limit != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "limit=$limit";
+      }
+      if (order != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "order=${groupSortOrderToString(order)}";
+      }
+      
+      await _ensureLogin();
+      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts$urlParams';
+      Response? response = await Network().get(requestUrl, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseString = response?.body;
+      if (responseCode == 200) {
+        List<GroupPost>? posts = GroupPost.fromJsonList(JsonUtils.decodeList(responseString));
+        return posts;
+      } else {
+        Log.e('Failed to retrieve group posts. Response: ${response?.body}');
+      }
     }
-    
-    String urlParams = "";
-    if (offset != null) {
-      urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-      urlParams += "offset=$offset";
-    }
-    if (limit != null) {
-      urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-      urlParams += "limit=$limit";
-    }
-    if (order != null) {
-      urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-      urlParams += "order=${groupSortOrderToString(order)}";
-    }
-    
-    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts$urlParams';
-    Response? response = await Network().get(requestUrl, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    String? responseString = response?.body;
-    if (responseCode == 200) {
-      List<GroupPost>? posts = GroupPost.fromJsonList(JsonUtils.decodeList(responseString));
-      return posts;
-    } else {
-      Log.e('Failed to retrieve group posts. Response: ${response?.body}');
-      return null;
-    }
+    return null;
   }
 
   Future<GroupPost?> loadGroupPost({required String? groupId, required String? postId}) async {
-    await waitForLogin();
     if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(postId)) {
       return null;
     }
 
+    await _ensureLogin();
     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId';
     Response? response = await Network().get(requestUrl, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
@@ -1037,7 +1096,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(postId)) {
-      await waitForLogin();
+      await _ensureLogin();
       String? requestBody = JsonUtils.encode({'reaction': reaction});
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId/reactions';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
@@ -1077,27 +1136,30 @@ class Groups with Service implements NotificationsListener {
   }
 
   //Delete User
-  void deleteUserData() async{
-    try {
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().delete("${Config().groupsUrl}/user", auth: Auth2()) : null;
-      if(response?.statusCode == 200) {
-        Log.d('Successfully deleted groups user data');
+  Future<bool?> deleteUserData() async{
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+      try {
+        await _ensureLogin();
+        Response? response =  await Network().delete("${Config().groupsUrl}/user", auth: Auth2());
+        return (response?.statusCode == 200);
+      } catch (e) {
+        Log.e(e.toString());
       }
-    } catch (e) {
-      Log.e('Failed to load inbox user info');
-      Log.e(e.toString());
     }
+    return null;
   }
 
   Future<Map<String, dynamic>?> loadUserStats() async {
-    try {
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2()) : null;
-      if(response?.statusCode == 200) {
-        return  JsonUtils.decodeMap(response?.body);
+    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+      try {
+        await _ensureLogin();
+        Response? response = await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
+        if(response?.statusCode == 200) {
+          return  JsonUtils.decodeMap(response?.body);
+        }
+      } catch (e) {
+        Log.e(e.toString());
       }
-    } catch (e) {
-      Log.e('Failed to load user stats');
-      Log.e(e.toString());
     }
 
     return null;
@@ -1168,7 +1230,7 @@ class Groups with Service implements NotificationsListener {
 
   Set<String>? get userGroupNames => _userGroupNames;
 
-  static Future<File?> _getUserGroupsCacheFile() async {
+  Future<File?> _getUserGroupsCacheFile() async {
     try {
       Directory appDocDir = await getApplicationDocumentsDirectory();
       String cacheFilePath = join(appDocDir.path, _userGroupsCacheFileName);
@@ -1180,7 +1242,7 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  static Future<String?> _loadUserGroupsStringFromCache() async {
+  Future<String?> _loadUserGroupsStringFromCache() async {
     try {
       File? cacheFile = await _getUserGroupsCacheFile();
       return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
@@ -1191,7 +1253,7 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  static Future<void> _saveUserGroupsStringToCache(String? value) async {
+  Future<void> _saveUserGroupsStringToCache(String? value) async {
     try {
       File? cacheFile = await _getUserGroupsCacheFile();
       if (cacheFile != null) {
@@ -1208,12 +1270,13 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  static Future<List<Group>?> _loadUserGroupsFromCache() async {
+  Future<List<Group>?> _loadUserGroupsFromCache() async {
     return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
   }
 
-  static Future<String?> _loadUserGroupsStringFromNet() async {
+  Future<String?> _loadUserGroupsStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
+      await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
       if (response?.statusCode == 200) {
@@ -1236,29 +1299,27 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<void> _waitForUpdateUserGroupsFromNet() async{
-    waitForLogin().then((value){
-      try {
-        if (_userGroupUpdateCompleters.isEmpty) {
-          Completer<void> completer = Completer<void>();
-          _userGroupUpdateCompleters.add(completer);
-          _updateUserGroupsFromNet().whenComplete(() {
-            for (var completer in _userGroupUpdateCompleters) {
-              completer.complete();
-            }
-            _userGroupUpdateCompleters.clear();
-          });
-          return completer.future;
-        } else {
-          Completer<void> completer = Completer<void>();
-          _userGroupUpdateCompleters.add(completer);
-          return completer.future;
-        }
-      } catch(err){
-        Log.e("Failed to invoke Update User Group From Net");
-        debugPrint(err.toString());
+  Future<void> _updateUserGroupsFromNetSync() async{
+    try {
+      if (_userGroupUpdateCompleters.isEmpty) {
+        Completer<void> completer = Completer<void>();
+        _userGroupUpdateCompleters.add(completer);
+        _updateUserGroupsFromNet().whenComplete(() {
+          for (var completer in _userGroupUpdateCompleters) {
+            completer.complete();
+          }
+          _userGroupUpdateCompleters.clear();
+        });
+        return completer.future;
+      } else {
+        Completer<void> completer = Completer<void>();
+        _userGroupUpdateCompleters.add(completer);
+        return completer.future;
       }
-    });
+    } catch(err){
+      Log.e("Failed to invoke Update User Group From Net");
+      debugPrint(err.toString());
+    }
   }
 
   Future<void> _updateUserGroupsFromNet() async {
@@ -1422,6 +1483,7 @@ class Groups with Service implements NotificationsListener {
         'send_to_group_admins': reportToGroupAdmins,
         
       });
+      _ensureLogin();
       Response? response = await Network().put(url, body: body, auth: Auth2());
       return (response?.statusCode == 200);
     }

@@ -15,9 +15,8 @@
  */
 
 
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
@@ -28,17 +27,8 @@ class AppDateTime with Service {
 
   static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
 
-  timezone.Location? _universityLocation;
-  timezone.Location? get universityLocation => _universityLocation;
-
-  String? _localTimeZone;
-  String? get localTimeZone => _localTimeZone;
-
-  Future<Uint8List?> get timezoneDatabase async => null;
-
-  String? get universityLocationName  => null;
-
-  bool get useDeviceLocalTimeZone => false;
+  late String _localTimeZone;
+  String get localTimeZone => _localTimeZone;
 
   // Singletone Factory
 
@@ -68,28 +58,28 @@ class AppDateTime with Service {
     }
 
     _localTimeZone = await FlutterNativeTimezone.getLocalTimezone();
-    if (_localTimeZone != null) {
-      timezone.Location deviceLocation = timezone.getLocation(_localTimeZone!);
-      timezone.setLocalLocation(deviceLocation);
-    }
-    else {
-      debugPrint('AppDateTime: Failed to retrieve local timezone.');
-    }
-
-    String? locationName = universityLocationName;
-    if (locationName != null) {
-      _universityLocation = timezone.getLocation(locationName);
-      if (_universityLocation == null) {
-        debugPrint('AppDateTime: Failed to retrieve university location.');
-      }
-    }
+    timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
+    timezone.setLocalLocation(deviceLocation);
 
     await super.initService();
   }
 
+  // Implementation
+
   DateTime get now {
     return DateTime.now();
   }
+
+  Future<Uint8List?> get timezoneDatabase async => null;
+
+  String? get universityLocationName  => null;
+
+  timezone.Location? get universityLocation {
+    String? locationName = universityLocationName;
+    return (locationName != null) ? timezone.getLocation(locationName) : null;
+  }
+
+  bool get useDeviceLocalTimeZone => false;
 
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
@@ -108,10 +98,11 @@ class AppDateTime with Service {
   }
 
   DateTime? getUniLocalTimeFromUtcTime(DateTime? dateTimeUtc) {
-    if ((dateTimeUtc == null) || (_universityLocation == null)) {
+    timezone.Location? uniLocation = universityLocation;
+    if ((dateTimeUtc == null) || (uniLocation == null)) {
       return null;
     }
-    timezone.TZDateTime tzDateTimeUni = timezone.TZDateTime.from(dateTimeUtc, _universityLocation!);
+    timezone.TZDateTime tzDateTimeUni = timezone.TZDateTime.from(dateTimeUtc, uniLocation);
     return tzDateTimeUni;
   }
 
@@ -137,7 +128,8 @@ class AppDateTime with Service {
       if (ignoreTimeZone! || useDeviceLocalTimeZone) {
           formattedDateTime = dateFormat.format(dateTime);
       } else {
-          timezone.TZDateTime? tzDateTime = (_universityLocation != null) ? timezone.TZDateTime.from(dateTime, _universityLocation!) : null;
+          timezone.Location? uniLocation = universityLocation;
+          timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
           formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
       }
       if (showTzSuffix && (formattedDateTime != null)) {
@@ -148,5 +140,77 @@ class AppDateTime with Service {
       debugPrint(e.toString());
     }
     return formattedDateTime;
+  }
+
+  DateTime? dateTimeLocalFromJson(dynamic json) {
+    return getDeviceTimeFromUtcTime(DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json)));
+  }
+
+  String? dateTimeLocalToJson(DateTime? dateTime) {
+    return DateTimeUtils.utcDateTimeToString(getUtcTimeFromDeviceTime(dateTime));
+  }
+
+  String getDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
+    if (format != null) {
+      DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      return formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
+    }
+    
+    String? timePrefix = getDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime, includeAtSuffix: includeAtSuffix);
+    String? timeSuffix = getDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime);
+    return '$timePrefix $timeSuffix';
+  }
+
+  String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
+    String? displayDay = '';
+    if (dateTimeUtc != null) {
+      DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
+
+      if (DateTimeUtils.isToday(dateTimeToCompare, location: location)) {
+        displayDay = Localization().getStringEx('model.explore.time.today', 'Today');
+        if (!allDay && includeAtSuffix) {
+          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+        }
+      } else if (DateTimeUtils.isTomorrow(dateTimeToCompare, location: location)) {
+        displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Tomorrow');
+        if (!allDay && includeAtSuffix) {
+          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+        }
+      } else if (DateTimeUtils.isYesterday(dateTimeToCompare, location: location)) {
+        displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
+        if (!allDay && includeAtSuffix) {
+          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+        }
+      } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
+        displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
+      } else {
+        displayDay = formatDateTime(dateTimeToCompare, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
+      }
+    }
+    return displayDay;
+  }
+
+  String? getDisplayTime({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true}) {
+    String? timeToString = '';
+    if (dateTimeUtc != null && !allDay) {
+      DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      String format = (dateTimeToCompare.minute == 0) ? 'ha' : 'h:mma';
+      timeToString = formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTimeZone);
+    }
+    return timeToString;
+  }
+
+  DateTime? _getDateTimeToCompare({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
+    if (dateTimeUtc == null) {
+      return null;
+    }
+    DateTime? dateTimeToCompare;
+    if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
+      dateTimeToCompare = getDeviceTimeFromUtcTime(dateTimeUtc);
+    } else {
+      dateTimeToCompare = getUniLocalTimeFromUtcTime(dateTimeUtc);
+    }
+    return dateTimeToCompare;
   }
 }

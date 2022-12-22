@@ -217,12 +217,16 @@ class Auth2Account {
   }
 
   bool get isManagedGroupAdmin {
-    return hasPermission('managed_group_admin');
+    return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
+  }
+
+  bool get isResearchProjectAdmin {
+    return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
-  bool bellongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
@@ -230,6 +234,11 @@ class Auth2Account {
 // Auth2UserProfile
 
 class Auth2UserProfile {
+
+  static const String notifyDataChanged          = "edu.illinois.rokwire.user.profile.data.changed";
+  static const String notifyChanged              = "edu.illinois.rokwire.user.profile.changed";
+
+
   String? _id;
   String? _firstName;
   String? _middleName;
@@ -244,25 +253,31 @@ class Auth2UserProfile {
   String? _state;
   String? _zip;
   String? _country;
+
+  Map<String, dynamic>? _data;
   
-  Auth2UserProfile({String? id, String? firstName, String? middleName, String? lastName, int? birthYear, String? photoUrl,
-    String? email, String? phone,
-    String? address, String? state, String? zip, String? country
+  Auth2UserProfile({String? id, String? firstName, String? middleName, String? lastName,
+    int? birthYear, String? photoUrl, String? email, String? phone,
+    String? address, String? state, String? zip, String? country,
+    Map<String, dynamic>? data
   }):
     _id = id,
     _firstName = firstName,
     _middleName = middleName,
     _lastName = lastName,
+
     _birthYear = birthYear,
     _photoUrl = photoUrl,
-    
     _email = email,
     _phone = phone,
     
     _address = address,
     _state  = state,
     _zip  = zip,
-    _country = country;
+    _country = country,
+
+    _data = data;
+
   
 
   static Auth2UserProfile? fromJson(Map<String, dynamic>? json) {
@@ -271,9 +286,9 @@ class Auth2UserProfile {
       firstName: JsonUtils.stringValue(json['first_name']),
       middleName: JsonUtils.stringValue(json['middle_name']),
       lastName: JsonUtils.stringValue(json['last_name']),
+
       birthYear: JsonUtils.intValue(json['birth_year']),
       photoUrl: JsonUtils.stringValue(json['photo_url']),
-
       email: JsonUtils.stringValue(json['email']),
       phone: JsonUtils.stringValue(json['phone']),
   
@@ -281,6 +296,9 @@ class Auth2UserProfile {
       state: JsonUtils.stringValue(json['state']),
       zip: JsonUtils.stringValue(json['zip_code']),
       country: JsonUtils.stringValue(json['country']),
+
+      data: JsonUtils.mapValue(json['unstructured_properties']),
+
     ) : null;
   }
 
@@ -289,9 +307,10 @@ class Auth2UserProfile {
   }
 
   static Auth2UserProfile? fromOther(Auth2UserProfile? other, {
-    String? id, String? firstName, String? middleName, String? lastName, int? birthYear, String? photoUrl,
-    String? email, String? phone,
-    String? address, String? state, String? zip, String? country}) {
+    String? id, String? firstName, String? middleName, String? lastName,
+    int? birthYear, String? photoUrl, String? email, String? phone,
+    String? address, String? state, String? zip, String? country,
+    Map<String, dynamic>? data}) {
 
     return (other != null) ? Auth2UserProfile(
       id: id ?? other._id,
@@ -308,6 +327,8 @@ class Auth2UserProfile {
       state: state ?? other._state,
       zip: zip ?? other._zip,
       country: country ?? other._country,
+
+      data: MapUtils.combine(other._data, data),
     ) : null;
   }
 
@@ -317,9 +338,9 @@ class Auth2UserProfile {
       'first_name': _firstName,
       'middle_name': _middleName,
       'last_name': _lastName,
+
       'birth_year': _birthYear,
       'photo_url': _photoUrl,
-
       'email': _email,
       'phone': _phone,
 
@@ -327,6 +348,8 @@ class Auth2UserProfile {
       'state': _state,
       'zip_code': _zip,
       'country': _country,
+
+      'unstructured_properties': _data,
     };
   }
 
@@ -337,16 +360,18 @@ class Auth2UserProfile {
       (other._firstName == _firstName) &&
       (other._middleName == _middleName) &&
       (other._lastName == _lastName) &&
+
       (other._birthYear == _birthYear) &&
       (other._photoUrl == _photoUrl) &&
-
       (other._email == _email) &&
       (other._phone == _phone) &&
 
       (other._address == _address) &&
       (other._state == _state) &&
       (other._zip == _zip) &&
-      (other._country == _country);
+      (other._country == _country) &&
+
+      const DeepCollectionEquality().equals(other._data, _data);
 
   @override
   int get hashCode =>
@@ -354,16 +379,18 @@ class Auth2UserProfile {
     (_firstName?.hashCode ?? 0) ^
     (_middleName?.hashCode ?? 0) ^
     (_lastName?.hashCode ?? 0) ^
+
     (_birthYear?.hashCode ?? 0) ^
     (_photoUrl?.hashCode ?? 0) ^
-
     (_email?.hashCode ?? 0) ^
     (_phone?.hashCode ?? 0) ^
 
     (_address?.hashCode ?? 0) ^
     (_state?.hashCode ?? 0) ^
     (_zip?.hashCode ?? 0) ^
-    (_country?.hashCode ?? 0);
+    (_country?.hashCode ?? 0) ^
+
+    (const DeepCollectionEquality().hash(_data));
 
   bool apply(Auth2UserProfile? profile) {
     bool modified = false;
@@ -384,6 +411,7 @@ class Auth2UserProfile {
         _lastName = profile._lastName;
         modified = true;
       }
+      
       if ((profile._birthYear != null) && (profile._birthYear != _birthYear)) {
         _birthYear = profile._birthYear;
         modified = true;
@@ -392,7 +420,6 @@ class Auth2UserProfile {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
-
       if ((profile._email != null) && (profile._email != _email)) {
         _email = profile._email;
         modified = true;
@@ -418,6 +445,11 @@ class Auth2UserProfile {
         _country = profile._country;
         modified = true;
       }
+
+      if ((profile._data != null) && (!const DeepCollectionEquality().equals(profile._data, _data))) {
+        _data = MapUtils.combine(_data, profile._data);
+        modified = true;
+      }
     }
     return modified;
   }
@@ -426,9 +458,9 @@ class Auth2UserProfile {
   String? get firstName => _firstName;
   String? get middleName => _middleName;
   String? get lastName => _lastName;
+
   int?    get birthYear => _birthYear;
   String? get photoUrl => _photoUrl;
-
   String? get email => _email;
   String? get phone => _phone;
   
@@ -437,8 +469,49 @@ class Auth2UserProfile {
   String? get zip => _zip;
   String? get country => _country;
 
+  Map<String, dynamic>? get data => _data;
+
   bool   get isValid => StringUtils.isNotEmpty(id);
   String? get fullName => StringUtils.fullName([firstName, lastName]);
+
+  // Research Questionnaire Answers
+
+  static const String researchQuestionnaireAnswersKey = 'research_questionnaire_answers';
+
+  Map<String, dynamic>? get researchQuestionnaireAnswers => JsonUtils.mapValue(MapUtils.get(_data, researchQuestionnaireAnswersKey));
+
+  set researchQuestionnaireAnswers(Map<String, dynamic>? value) {
+    if (value != null) {
+      _data ??= <String, dynamic>{};
+      _data![researchQuestionnaireAnswersKey] = value;
+    }
+    else if (_data != null) {
+      _data?.remove(researchQuestionnaireAnswersKey);
+    }
+  }
+
+  Map<String, LinkedHashSet<String>>? getResearchQuestionnaireAnswers(String? questionnaireId) {
+    return JsonUtils.mapOfStringToLinkedHashSetOfStringsValue(MapUtils.get(researchQuestionnaireAnswers, questionnaireId));
+  }
+
+  void setResearchQuestionnaireAnswers(String? questionnaireId, Map<String, LinkedHashSet<String>>? questionnaireAnswers) {
+    Map<String, dynamic>? answersJson = JsonUtils.mapOfStringToLinkedHashSetOfStringsJsonValue(questionnaireAnswers);
+    Map<String, dynamic>? lastAnswersJson = JsonUtils.mapValue(MapUtils.get(researchQuestionnaireAnswers, questionnaireId));
+    if (!const DeepCollectionEquality().equals(answersJson, lastAnswersJson)) {
+      researchQuestionnaireAnswers ??= <String, dynamic>{};
+      MapUtils.set(researchQuestionnaireAnswers, questionnaireId, answersJson);
+      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersKey);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+
+  void clearAllResearchQuestionnaireAnswers() {
+    if (researchQuestionnaireAnswers?.isNotEmpty ?? false) {
+      researchQuestionnaireAnswers?.clear();
+      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersKey);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
 }
 
 ////////////////////////////////
@@ -768,7 +841,7 @@ class Auth2UserPrefs {
   Map<String, dynamic>? _settings;
   Auth2VoterPrefs? _voter;
 
-  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
+  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
     _privacyLevel = privacyLevel;
     _roles = roles;
     _favorites = favorites;
@@ -783,10 +856,11 @@ class Auth2UserPrefs {
     return (json != null) ? Auth2UserPrefs(
       privacyLevel: JsonUtils.intValue(json['privacy_level']),
       roles: UserRole.setFromJson(JsonUtils.listValue(json['roles'])),
-      favorites: _mapOfStringToLinkedHashSetOfStringsFromJson(JsonUtils.mapValue(json['favorites'])),
-      interests: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['interests'])),
-      foodFilters: _mapOfStringToSetOfStringsFromJson(JsonUtils.mapValue(json['food'])),
+      favorites: JsonUtils.mapOfStringToLinkedHashSetOfStringsValue(json['favorites']),
+      interests: JsonUtils.mapOfStringToSetOfStringsValue(json['interests']),
+      foodFilters: JsonUtils.mapOfStringToSetOfStringsValue(json['food']),
       tags: _tagsFromJson(JsonUtils.mapValue(json['tags'])),
+      answers: JsonUtils.mapValue(json['answers']),
       settings: JsonUtils.mapValue(json['settings']),
       voter: Auth2VoterPrefs.fromJson(JsonUtils.mapValue(json['voter'])),
     ) : null;
@@ -803,16 +877,17 @@ class Auth2UserPrefs {
         _foodExcludedIngredients : <String>{},
       },
       tags: <String, bool>{},
+      answers: <String, dynamic>{},
       settings: <String, dynamic>{},
       voter: Auth2VoterPrefs(),
     );
   }
 
-  factory Auth2UserPrefs.fromStorage({Map<String, dynamic>? profile, Set<String>? includedFoodTypes, Set<String>? excludedFoodIngredients, Map<String, dynamic>? settings}) {
+  factory Auth2UserPrefs.fromStorage({Map<String, dynamic>? profile, Set<String>? includedFoodTypes, Set<String>? excludedFoodIngredients, Map<String, dynamic>? answers, Map<String, dynamic>? settings}) {
     Map<String, dynamic>? privacy = (profile != null) ? JsonUtils.mapValue(profile['privacySettings']) : null;
     int? privacyLevel = (privacy != null) ? JsonUtils.intValue(privacy['level']) : null;
     Set<UserRole>? roles = (profile != null) ? UserRole.setFromJson(JsonUtils.listValue(profile['roles'])) : null;
-    Map<String, LinkedHashSet<String>>? favorites = (profile != null) ? _mapOfStringToLinkedHashSetOfStringsFromJson(JsonUtils.mapValue(profile['favorites'])) : null;
+    Map<String, LinkedHashSet<String>>? favorites = (profile != null) ? JsonUtils.mapOfStringToLinkedHashSetOfStringsValue(profile['favorites']) : null;
     Map<String, Set<String>>? interests = (profile != null) ? _interestsFromProfileList(JsonUtils.listValue(profile['interests'])) : null;
     Map<String, bool>? tags = (profile != null) ? _tagsFromProfileLists(positive: JsonUtils.listValue(profile['positiveInterestTags']), negative: JsonUtils.listValue(profile['negativeInterestTags'])) : null;
     Auth2VoterPrefs? voter = (profile != null) ? Auth2VoterPrefs.fromJson(profile) : null;
@@ -827,6 +902,7 @@ class Auth2UserPrefs {
         _foodExcludedIngredients : excludedFoodIngredients ?? <String>{},
       },
       tags: tags ?? <String, bool>{},
+      answers: answers ?? <String, dynamic>{},
       settings: settings ?? <String, dynamic>{},
       voter: voter ?? Auth2VoterPrefs(),
     );
@@ -836,9 +912,9 @@ class Auth2UserPrefs {
     return {
       'privacy_level' : privacyLevel,
       'roles': UserRole.setToJson(roles),
-      'favorites': _mapOfStringToLinkedHashSetOfStringsToJson(_favorites),
-      'interests': _mapOfStringToSetOfStringsToJson(_interests),
-      'food': _mapOfStringToSetOfStringsToJson(_foodFilters),
+      'favorites': JsonUtils.mapOfStringToLinkedHashSetOfStringsJsonValue(_favorites),
+      'interests': JsonUtils.mapOfStringToSetOfStringsJsonValue(_interests),
+      'food': JsonUtils.mapOfStringToSetOfStringsJsonValue(_foodFilters),
       'tags': _tags,
       'settings': _settings,
       'voter': _voter
@@ -1427,6 +1503,7 @@ class Auth2UserPrefs {
       }
     }
   }
+
   // Settings
 
   bool? getBoolSetting(String? settingName, { bool? defaultValue }) =>
@@ -1434,6 +1511,9 @@ class Auth2UserPrefs {
 
   int? getIntSetting(String? settingName, { int? defaultValue }) =>
     JsonUtils.intValue(getSetting(settingName)) ?? defaultValue;
+
+  String? getStringSetting(String? settingName, { String? defaultValue }) =>
+    JsonUtils.stringValue(getSetting(settingName)) ?? defaultValue;
 
   dynamic getSetting(String? settingName) =>
     (_settings != null) ? _settings![settingName] : null;
@@ -1460,50 +1540,6 @@ class Auth2UserPrefs {
   }
 
   // Helpers
-
-  static Map<String, Set<String>>? _mapOfStringToSetOfStringsFromJson(Map<String, dynamic>? jsonMap) {
-    Map<String, Set<String>>? result;
-    if (jsonMap != null) {
-      result = <String, Set<String>>{};
-      for (String key in jsonMap.keys) {
-        MapUtils.set(result, key, JsonUtils.setStringsValue(jsonMap[key]));
-      }
-    }
-    return result;
-  }
-
-  static Map<String, dynamic>? _mapOfStringToSetOfStringsToJson(Map<String, Set<String>>? contentMap) {
-    Map<String, dynamic>? jsonMap;
-    if (contentMap != null) {
-      jsonMap = <String, dynamic>{};
-      for (String key in contentMap.keys) {
-        jsonMap[key] = List.from(contentMap[key]!);
-      }
-    }
-    return jsonMap;
-  }
-
-  static Map<String, LinkedHashSet<String>>? _mapOfStringToLinkedHashSetOfStringsFromJson(Map<String, dynamic>? jsonMap) {
-    Map<String, LinkedHashSet<String>>? result;
-    if (jsonMap != null) {
-      result = <String, LinkedHashSet<String>>{};
-      for (String key in jsonMap.keys) {
-        MapUtils.set(result, key, JsonUtils.linkedHashSetStringsValue(jsonMap[key]));
-      }
-    }
-    return result;
-  }
-
-  static Map<String, dynamic>? _mapOfStringToLinkedHashSetOfStringsToJson(Map<String, LinkedHashSet<String>>? contentMap) {
-    Map<String, dynamic>? jsonMap;
-    if (contentMap != null) {
-      jsonMap = <String, dynamic>{};
-      for (String key in contentMap.keys) {
-        jsonMap[key] = List.from(contentMap[key]!);
-      }
-    }
-    return jsonMap;
-  }
 
   static Map<String, bool>? _tagsFromJson(Map<String, dynamic>? json) {
     try { return json?.cast<String, bool>(); }
@@ -1693,11 +1729,10 @@ class UserRole {
   static const employee = UserRole._internal('employee');
   static const alumni = UserRole._internal('alumni');
   static const parent = UserRole._internal('parent');
-  static const resident = UserRole._internal('resident');
   static const gies = UserRole._internal('gies');
 
   static List<UserRole> get values {
-    return [student, visitor, fan, employee, alumni, parent, resident, gies];
+    return [student, visitor, fan, employee, alumni, parent, gies];
   }
 
   final String _value;

@@ -85,8 +85,8 @@ class RibbonButton extends StatefulWidget {
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
-  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Image.asset(leftIconAsset!, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Image.asset(rightIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Styles().images?.getImage(leftIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true) : null;
 
   @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
@@ -118,7 +118,7 @@ class _RibbonButtonState extends State<RibbonButton> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _evalContentSize();
     });
   }
@@ -266,6 +266,7 @@ class ToggleRibbonButton extends RibbonButton {
   Widget? get _rightIcon => (rightIcons != null) ? rightIcons![toggled] : null;
   String? get _rightIconAsset => (rightIconAssets != null) ? rightIconAssets![toggled] : null;
   String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![toggled] : null;
+  String? get _changedSemanticsValue => (semanticsValues != null) ? semanticsValues![!toggled] : null;
 
   @override
   Widget? get leftIcon => _leftIcon ?? super.leftIcon;
@@ -284,11 +285,11 @@ class ToggleRibbonButton extends RibbonButton {
 
   @protected
   String? get semanticStateChangeAnnouncementMessage {
-    if (StringUtils.isNotEmpty(label) && StringUtils.isNotEmpty(semanticsValue)) {
-      return "$label, $semanticsValue";
+    if (StringUtils.isNotEmpty(label) && StringUtils.isNotEmpty(_changedSemanticsValue)) {
+      return "$_changedSemanticsValue, $label";
     }
-    else if (StringUtils.isNotEmpty(semanticsValue)) {
-      return semanticsValue;
+    else if (StringUtils.isNotEmpty(_changedSemanticsValue)) {
+      return _changedSemanticsValue;
     }
     else if (StringUtils.isNotEmpty(label)) {
       return label;

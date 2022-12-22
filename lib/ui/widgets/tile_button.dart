@@ -67,7 +67,10 @@ class TileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> contentList = <Widget>[];
     if (iconAsset != null) {
-      contentList.add(Image.asset(iconAsset!));
+      Widget? icon = Styles().images?.getImage(iconAsset!);
+      if (icon != null) {
+        contentList.add(icon);
+      }
     }
     if ((title != null) && (iconAsset != null)) {
       contentList.add(Container(height: contentSpacing));
@@ -188,7 +191,10 @@ class TileWideButton extends StatelessWidget {
       contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle)));
     } 
     if (iconAsset != null) {
-      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [Image.asset(iconAsset!)]))); // Image.asset(iconAsset!)
+      Widget? icon = Styles().images?.getImage(iconAsset!);
+      if (icon != null) {
+        contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon])));
+      }
     }
 
     return GestureDetector(onTap: onTap, child:
@@ -316,10 +322,10 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get displayTitleWidget => defaultTitleWidget;
 
   @protected String? get displayIconAsset => selected ? selectedIconAsset : iconAsset;
-  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Image.asset(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) : Container();
+  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images?.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 
-  @protected Widget get defaultSelectionMarkerWidget => Image.asset(selectionMarkerAsset ?? '', excludeFromSemantics: true);
+  @protected Widget get defaultSelectionMarkerWidget => Styles().images?.getImage(selectionMarkerAsset ?? '', excludeFromSemantics: true) ?? Container();
   @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override

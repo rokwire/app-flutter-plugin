@@ -37,14 +37,19 @@ class FlexUI with Service implements NotificationsListener {
 
   static const String notifyChanged  = "edu.illinois.rokwire.flexui.changed";
 
-  static const String _flexUIName   = "flexUI.json";
-  static const String _defaultContentSourceEntryKey   = "";
+  static const String _assetsName   = "flexUI.json";
+  static const String _defaultContentSourceKey   = "";
 
+  Directory? _assetsDir;
+  DateTime?  _pausedDateTime;
+
+  Map<String, dynamic>? _defContentSource;
+  Map<String, dynamic>? _appContentSource;
+  Map<String, dynamic>? _netContentSource;
   Map<String, dynamic>? _contentSource;
+
   Map<String, dynamic>? _defaultContent;
   Set<dynamic>?         _defaultFeatures;
-  File?                 _cacheFile;
-  DateTime?             _pausedDateTime;
 
   // Singletone Factory
 
@@ -85,13 +90,14 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _cacheFile = await getCacheFile();
-    _contentSource = await loadContentSource();
-    _defaultContent = buildContent(defaultContentSourceEntry);
-    _defaultFeatures = buildFeatures(_defaultContent);
+    _assetsDir = await getAssetsDir();
+    _defContentSource = await loadFromAssets(assetsKey);
+    _appContentSource = await loadFromAssets(appAssetsKey);
+    _netContentSource = await loadFromCache(netCacheFileName);
+    build();
     if (_defaultContent != null) {
+      updateFromNet();
       await super.initService();
-      updateContentSourceFromNet();
     }
     else {
       throw ServiceError(
@@ -138,82 +144,103 @@ class FlexUI with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          updateContentSourceFromNet();
+          updateFromNet();
         }
       }
     }
   }
 
-  // Flex UI
+  // Implementation
 
-  @protected
-  String get cacheFileName => _flexUIName;
-
-  @protected
-  Future<File?> getCacheFile() async {
-    Directory? assetsDir = Config().assetsCacheDir!;
-    if (!await assetsDir.exists()) {
+  Future<Directory?> getAssetsDir() async {
+    Directory? assetsDir = Config().assetsCacheDir;
+    if ((assetsDir != null) && !await assetsDir.exists()) {
       await assetsDir.create(recursive: true);
     }
-    String cacheFilePath = join(assetsDir.path, cacheFileName);
-    return File(cacheFilePath);
+    return assetsDir;
   }
 
   @protected
-  Future<String?> loadContentSourceStringFromCache() async {
-    return ((_cacheFile != null) && await _cacheFile!.exists()) ? await _cacheFile!.readAsString() : null;
-  }
+  String get assetsKey => 'assets/$_assetsName';
 
   @protected
-  Future<void> saveContentSourceStringToCache(String? contentString) async {
-    if (contentString != null) {
-      await _cacheFile?.writeAsString(contentString, flush: true);
-    }
-    else if ((_cacheFile != null) && (await _cacheFile!.exists())) {
-      try { _cacheFile!.delete(); } catch(e) { debugPrint(e.toString()); }
-    }
-  }
+  String get appAssetsKey => 'app/assets/$_assetsName';
 
   @protected
-  Future<Map<String, dynamic>?> loadContentSourceFromCache() async {
-    return JsonUtils.decodeMap(await loadContentSourceStringFromCache());
-  }
-
-  @protected
-  String get resourceAssetsKey => 'assets/$_flexUIName';
-
-  @protected
-  Future<Map<String, dynamic>?> loadContentSourceFromAssets() async {
-    try { return JsonUtils.decodeMap(await rootBundle.loadString(resourceAssetsKey)); }
-    catch(e) { debugPrint(e.toString());}
+  Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
+    try { return JsonUtils.decodeMap(await rootBundle.loadString(assetsKey)); }
+    catch(e) { debugPrint(e.toString()); }
     return null;
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadContentSource() async {
-    Map<String, dynamic>? conentSource;
-    if (isValidContentSource(conentSource = await loadContentSourceFromCache())) {
-      return conentSource;
+  String get netCacheFileName => _assetsName;
+
+  @protected
+  Future<Map<String, dynamic>?> loadFromCache(String cacheFileName) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (await cacheFile.exists()) {
+          return JsonUtils.decodeMap(await cacheFile.readAsString());
+        }
+      }
     }
-    else if (isValidContentSource(conentSource = await loadContentSourceFromAssets())) {
-      return conentSource;
+    catch(e) { debugPrint(e.toString()); }
+    return null;
+  }
+
+  @protected
+  Future<void> saveToCache(String cacheFileName, String? content) async {
+    try { 
+      if (_assetsDir != null) {
+        String cacheFilePath = join(_assetsDir!.path, cacheFileName);
+        File cacheFile = File(cacheFilePath);
+        if (content != null) {
+          cacheFile.writeAsString(content, flush: true);
+        }
+        else if (await cacheFile.exists()) {
+          await cacheFile.delete();
+        }
+      }
     }
-    else {
-      return null;
+    catch(e) { debugPrint(e.toString()); }
+  }
+
+  @protected
+  String get netAssetFileName => _assetsName;
+
+  @protected
+  Future<String?> loadContentStringFromNet() async {
+    if (Config().assetsUrl != null) {
+      Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
+      return (response?.statusCode == 200) ? response?.body : null;
+    }
+    return null;
+  }
+
+  @protected
+  Future<void> updateFromNet() async {
+    String? netContentSourceString = await loadContentStringFromNet();
+    Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
+    if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
+        ((netContentSource == null) && (_netContentSource != null)))
+    {
+      _netContentSource = netContentSource;
+      await saveToCache(netCacheFileName, netContentSourceString);
+      build();
+      NotificationService().notify(notifyChanged, null);
     }
   }
 
   @protected
-  bool isValidContentSource(Map<String, dynamic>? contentSource) {
-    return isValidContentSourceEntry(JsonUtils.mapValue(MapPathKey.entry(contentSource, defaultContentSourceEntryKey)));
-  }
-
-  @protected
-  String get defaultContentSourceEntryKey => _defaultContentSourceEntryKey;
-
-  @protected
-  Map<String, dynamic>? get defaultContentSourceEntry {
-    return contentSourceEntry(defaultContentSourceEntryKey);
+  Map<String, dynamic> buildContentSource() {
+    Map<String, dynamic> contentSource = <String, dynamic>{};
+    MapUtils.merge(contentSource, _defContentSource);
+    MapUtils.merge(contentSource, _appContentSource);
+    MapUtils.merge(contentSource, _netContentSource);
+    return contentSource;
   }
 
   @protected
@@ -222,45 +249,25 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool isValidContentSourceEntry(Map<String, dynamic>? content) {
-    return (content != null) && (content['content'] is Map) && (content['rules'] is Map);
+  String get defaultContentSourceKey => _defaultContentSourceKey;
+
+  @protected
+  Map<String, dynamic>? get defaultContentSourceEntry {
+    return contentSourceEntry(defaultContentSourceKey);
   }
 
   @protected
-  String get networkAssetName => _flexUIName;
-
-  @protected
-  Future<String?> loadContentSourceStringFromNet() async {
-    Response? response = (Config().assetsUrl != null) ? await Network().get("${Config().assetsUrl}/$networkAssetName") : null;
-    return ((response != null) && (response.statusCode == 200)) ? response.body : null;
-  }
-
-  @protected
-  Future<void> updateContentSourceFromNet() async {
-    String? contentSourceString = await loadContentSourceStringFromNet();
-    if (contentSourceString != null) { // request succeeded
-      
-      Map<String, dynamic>? contentSource = JsonUtils.decodeMap(contentSourceString);
-      if (!isValidContentSource(contentSource) && (_cacheFile != null) && await _cacheFile!.exists()) { // empty JSON content
-        try { _cacheFile!.delete(); }                          // clear cached content source
-        catch(e) { debugPrint(e.toString()); }
-        contentSource = await loadContentSourceFromAssets(); // load content source from assets
-        contentSourceString = null;                           // do not store this content source
-      }
-
-      if (isValidContentSource(contentSource) && ((_contentSource == null) || !const DeepCollectionEquality().equals(_contentSource, contentSource))) {
-        _contentSource = contentSource;
-        saveContentSourceStringToCache(contentSourceString);
-        updateContent();
-      }
-    }
+  void build() {
+    _contentSource = buildContentSource();
+    _defaultContent = buildContent(defaultContentSourceEntry);
+    _defaultFeatures = buildFeatures(_defaultContent);
   }
 
   @protected
   void updateContent() {
-    Map<String, dynamic>? content = buildContent(defaultContentSourceEntry);
-    if ((content != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, content))) {
-      _defaultContent = content;
+    Map<String, dynamic>? defaultContent = buildContent(defaultContentSourceEntry);
+    if ((defaultContent != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, defaultContent))) {
+      _defaultContent = defaultContent;
       _defaultFeatures = buildFeatures(_defaultContent);
       NotificationService().notify(notifyChanged, null);
     }
@@ -275,7 +282,7 @@ class FlexUI with Service implements NotificationsListener {
   // Content
 
   Map<String, dynamic>? content(String key) {
-    if (key == defaultContentSourceEntryKey) {
+    if (key == defaultContentSourceKey) {
       return _defaultContent;
     }
     else {
@@ -289,6 +296,10 @@ class FlexUI with Service implements NotificationsListener {
 
   List<dynamic>? operator [](dynamic key) {
     return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
+  }
+
+  Map<String, dynamic> get defaultRules {
+    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
   }
 
   Set<dynamic>? get defaultFeatures {
@@ -306,11 +317,11 @@ class FlexUI with Service implements NotificationsListener {
   // Local Build
 
   @protected
-  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSourceEntry) {
+  Map<String, dynamic>? buildContent(Map<String, dynamic>? contentSource) {
     Map<String, dynamic>? result;
-    if (contentSourceEntry != null) {
-      Map<String, dynamic> contents = JsonUtils.mapValue(contentSourceEntry['content']) ?? <String, dynamic>{};
-      Map<String, dynamic> rules = JsonUtils.mapValue(contentSourceEntry['rules']) ?? <String, dynamic>{};
+    if (contentSource != null) {
+      Map<String, dynamic> contents = JsonUtils.mapValue(contentSource['content']) ?? <String, dynamic>{};
+      Map<String, dynamic> rules = JsonUtils.mapValue(contentSource['rules']) ?? <String, dynamic>{};
 
       result = {};
       contents.forEach((String key, dynamic contentEntry) {

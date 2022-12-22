@@ -17,7 +17,9 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class Inbox with Service implements NotificationsListener {
 
-  static const String notifyInboxUserInfoChanged   = "edu.illinois.rokwire.inbox.user.info.changed";
+  static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
+  static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
+  static const String notifyInboxMessageRead                 = "edu.illinois.rokwire.inbox.message.read";
 
   String?   _fcmToken;
   String?   _fcmUserId;
@@ -25,6 +27,7 @@ class Inbox with Service implements NotificationsListener {
   DateTime? _pausedDateTime;
   
   InboxUserInfo? _userInfo;
+  int? _unreadMessagesCount;
 
   // Singletone Factory
 
@@ -62,9 +65,11 @@ class Inbox with Service implements NotificationsListener {
     _fcmToken = Storage().inboxFirebaseMessagingToken;
     _fcmUserId = Storage().inboxFirebaseMessagingUserId;
     _userInfo = Storage().inboxUserInfo;
+    _unreadMessagesCount = Storage().inboxUnreadMessagesCount;
     _isServiceInitialized = true;
     _processFcmToken();
     _loadUserInfo();
+    _loadUnreadMessagesCount();
     await super.initService();
   }
 
@@ -83,6 +88,7 @@ class Inbox with Service implements NotificationsListener {
     else if (name == Auth2.notifyLoginChanged) {
       _processFcmToken();
       _loadUserInfo();
+      _loadUnreadMessagesCount();
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param); 
@@ -101,6 +107,7 @@ class Inbox with Service implements NotificationsListener {
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
           _processFcmToken();
           _loadUserInfo();
+          _loadUnreadMessagesCount();
         }
       }
     }
@@ -108,8 +115,8 @@ class Inbox with Service implements NotificationsListener {
 
   // Inbox APIs
 
-  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, int? offset, int? limit }) async {
-    
+  Future<List<InboxMessage>?> loadMessages({DateTime? startDate, DateTime? endDate, String? category, Iterable<String>? messageIds, bool? muted, bool? unread, int? offset, int? limit }) async {
+
     String urlParams = "";
     
     if (offset != null) {
@@ -140,6 +147,20 @@ class Inbox with Service implements NotificationsListener {
       urlParams += "end_date=${endDate.millisecondsSinceEpoch}";
     }
 
+    if (muted != null) {
+      if (urlParams.isNotEmpty) {
+        urlParams += "&";
+      }
+      urlParams += "mute=$muted";
+    }
+
+    if (unread != null) {
+      if (urlParams.isNotEmpty) {
+        urlParams += "&";
+      }
+      urlParams += "read=${!unread}";
+    }
+
     if (urlParams.isNotEmpty) {
       urlParams = "?$urlParams";
     }
@@ -148,7 +169,14 @@ class Inbox with Service implements NotificationsListener {
 
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages$urlParams" : null;
     Response? response = await Network().get(url, body: body, auth: Auth2());
-    return (response?.statusCode == 200) ? (InboxMessage.listFromJson(JsonUtils.decodeList(response?.body)) ?? []) : null;
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return (InboxMessage.listFromJson(JsonUtils.decodeList(responseString)) ?? []);
+    } else {
+      debugPrint('Failed to load notifications messages. Reason: $responseCode, body: $responseString');
+      return null;
+    }
   }
 
   Future<bool> deleteMessages(Iterable<String>? messageIds) async {
@@ -167,6 +195,39 @@ class Inbox with Service implements NotificationsListener {
 
     Response? response = await Network().post(url, body: body, auth: Auth2());
     return (response?.statusCode == 200);
+  }
+
+  Future<bool> readMessage(String? messageId) async {
+    if (StringUtils.isEmpty(messageId)) {
+      debugPrint('Failed to read message - missing message id.');
+      return false;
+    }
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/message/$messageId/read" : null;
+    Response? response = await Network().put(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
+      NotificationService().notify(notifyInboxMessageRead);
+      return true;
+    } else {
+      debugPrint('Failed to read message. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
+  }
+
+  Future<bool> markAllMessagesAsRead() async {
+    String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages/read" : null;
+    String? body = JsonUtils.encode({'read': true});//{"read":true|false}
+    Response? response = await Network().put(url, body: body, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      _loadUnreadMessagesCount(); // Reload unread messages count when all messages are read.
+      NotificationService().notify(notifyInboxMessageRead);
+      return true;
+    } else {
+      debugPrint('Failed to read messages. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
   }
 
   Future<bool> subscribeToTopic({String? topic, String? token}) async {
@@ -326,5 +387,33 @@ class Inbox with Service implements NotificationsListener {
 
   InboxUserInfo? get userInfo{
     return _userInfo;
+  }
+
+  // Unread Messages Count
+  Future<void> _loadUnreadMessagesCount() async {
+    if (Auth2().isLoggedIn && (Config().notificationsUrl != null)) {
+      String url = "${Config().notificationsUrl}/api/messages/stats";
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        Map<String, dynamic>? jsonData = JsonUtils.decode(responseBody);
+        int? unreadCount = jsonData != null ? JsonUtils.intValue(jsonData["not_read_not_mute"]) : null;
+        _applyUnreadMessagesCount(unreadCount);
+      } else {
+        debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, $responseBody');
+      }
+    }
+  }
+
+  void _applyUnreadMessagesCount(int? unreadMessagesCount){
+    if (_unreadMessagesCount != unreadMessagesCount){
+      Storage().inboxUnreadMessagesCount = _unreadMessagesCount = unreadMessagesCount;
+      NotificationService().notify(notifyInboxUnreadMessagesCountChanged);
+    }
+  }
+
+  int get unreadMessagesCount {
+    return _unreadMessagesCount ?? 0;
   }
 }

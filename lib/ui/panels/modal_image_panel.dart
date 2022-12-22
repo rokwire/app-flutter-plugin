@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class ModalImagePanel extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
+  final String? imageKey;
   final EdgeInsetsGeometry imagePadding;
 
   final Map<String, String>? networkImageHeaders;
@@ -38,10 +37,14 @@ class ModalImagePanel extends StatelessWidget {
   final double progressWidth;
   final Color? progressColor;
 
+  final ImageProvider? image;
+
   final void Function()? onDismiss;
 
   const ModalImagePanel({Key? key,
-    required this.imageUrl,
+    this.imageUrl,
+    this.imageKey,
+    this.image,
     this.imagePadding = const EdgeInsets.symmetric(vertical: 64, horizontal: 32),
 
     this.networkImageHeaders,
@@ -63,33 +66,25 @@ class ModalImagePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Image networkImage = Image.network(imageUrl, headers: (networkImageHeaders ?? Config().networkAuthHeaders));
-    Completer<ui.Image> networkImageCompleter = Completer<ui.Image>();
-    networkImage.image.resolve(const ImageConfiguration()).addListener(ImageStreamListener((ImageInfo info, bool syncCall) => networkImageCompleter.complete(info.image)));
-    
+    Widget? imageWidget;
+    if(image != null){
+      imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
+    }
+    else if (StringUtils.isNotEmpty(imageKey)) {
+      imageWidget = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
+        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder);
+    }
+    else if (StringUtils.isNotEmpty(imageUrl)) {
+      imageWidget = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
+        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
+    }
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:
         InkWell(onTap: () => _onDismiss(context), child:
           Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
             Expanded(child:
               Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(child:
-                  FutureBuilder<ui.Image>(future: networkImageCompleter.future, builder: (BuildContext context, AsyncSnapshot<ui.Image> snapshot) {
-                    return snapshot.hasData ?
-                      Padding(padding: imagePadding, child:
-                        InkWell(onTap: (){ /* ignore taps on image*/ }, child:
-                          Stack(children:[
-                            Image.network(imageUrl, excludeFromSemantics: true, fit: BoxFit.fitWidth, headers: Config().networkAuthHeaders),
-                            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                              _buildCloseWidget(context),
-                            ],)
-                          ]),
-                        ),
-                      ) :
-                      Center(child:
-                        _buildProgressWidget(context)
-                      );
-                  }),
+                Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget),) : Container()
                 ),
               ],)
             ),
@@ -97,6 +92,25 @@ class ModalImagePanel extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    if (loadingProgress == null) {
+      return child;
+    }
+    return Center(child: _buildProgressWidget(context, loadingProgress));
+  }
+
+  Widget _imageFrameBuilder(BuildContext context, Widget child, int? frame, bool wasSynchronouslyLoaded,){ //Some images do not show X button //Do not call loadingBuilder so fix with frameBuilder
+    return Stack(
+      children:[
+          child,
+          Visibility(
+            visible: frame != null, //It will be null before the first image frame is ready, and zero  for the first image frame. Show Close button when ready to draw - leave the progress indicator till then
+            child:Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              _buildCloseWidget(context),
+            ],))
+        ]);
   }
 
   Widget _buildCloseWidget(BuildContext context) {
@@ -109,9 +123,10 @@ class ModalImagePanel extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressWidget(BuildContext context) {
+  Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white),),
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
 

@@ -15,7 +15,6 @@
  */
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';

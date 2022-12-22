@@ -289,11 +289,6 @@ class Storage with Service {
   String? get currentLanguage => getStringWithName(currentLanguageKey);
   set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
 
-  // Styles
-  String get stylesContentModeKey => 'edu.illinois.rokwire.styles.content_mode';
-  String? get stylesContentMode => getStringWithName(stylesContentModeKey);
-  set stylesContentMode(String? value) => setStringWithName(stylesContentModeKey, value);
-
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
   String? get inboxFirebaseMessagingToken => getStringWithName(inboxFirebaseMessagingTokenKey);
@@ -306,6 +301,10 @@ class Storage with Service {
   String get inboxUserInfoKey => 'edu.illinois.rokwire.inbox.user_info';
   InboxUserInfo? get inboxUserInfo => InboxUserInfo.fromJson(JsonUtils.decode(getStringWithName(inboxUserInfoKey)));
   set inboxUserInfo(InboxUserInfo? value) => setStringWithName(inboxUserInfoKey, JsonUtils.encode(value?.toJson()));
+
+  String get _inboxUnreadMessagesCountKey => 'edu.illinois.rokwire.inbox.messages.unread.count';
+  int? get inboxUnreadMessagesCount => getIntWithName(_inboxUnreadMessagesCountKey);
+  set inboxUnreadMessagesCount(int? value) => setIntWithName(_inboxUnreadMessagesCountKey, value);
 
   // Firebase
   String get inboxFirebaseMessagingSubscriptionTopicsKey => 'edu.illinois.rokwire.inbox.firebase_messaging.subscription_topis';
@@ -347,7 +346,6 @@ class Storage with Service {
   set geoFenceRegionOverrides(Map<String, bool>? value) => setStringWithName(geoFenceRegionOverridesKey, JsonUtils.encode(value));
 
   // Calendar
-
   String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
   Map<String, String>? get calendarEventsTable {
     try { return JsonUtils.decodeMap(getStringWithName(calendarEventsTableKey))?.cast<String, String>(); }
@@ -362,4 +360,12 @@ class Storage with Service {
   String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
   bool? get calendarCanPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: false);
   set calendarCanPrompt(bool? value) => setBoolWithName(calendarEnablePromptKey, value);
+
+  // Skills Self-Evaluation
+  String get assessmentsEnableSaveKey => 'edu.illinois.rokwire.assessments.save_enabled';
+  Map<String, bool>? get assessmentsSaveResultsMap {
+    try { return JsonUtils.decodeMap(getStringWithName(assessmentsEnableSaveKey))?.cast<String, bool>(); }
+    catch(e) { debugPrint(e.toString()); return null; }
+  }
+  set assessmentsSaveResultsMap(Map<String, bool>? map) => setStringWithName(assessmentsEnableSaveKey, JsonUtils.encode(map));
 }

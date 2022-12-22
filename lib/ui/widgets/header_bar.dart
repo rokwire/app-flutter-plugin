@@ -17,6 +17,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 // HeaderBar
@@ -92,7 +94,7 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @protected
-  Image? get leadingImage => (leadingAsset != null) ? Image.asset(leadingAsset!, excludeFromSemantics: true) : null;
+  Image? get leadingImage => (leadingAsset != null) ? Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true) as Image? : null;
 
   @protected
   void onTapLeading(BuildContext context) {
@@ -197,9 +199,10 @@ class SliverToutHeaderBar extends StatelessWidget {
       );
 
   @protected
-  Widget buildFlexibleInterior(BuildContext context) => (flexImageUrl != null)
-    ? Positioned.fill(child: Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true))
-    : Container();
+  Widget buildFlexibleInterior(BuildContext context) {
+    Widget? image = Styles().images?.getImage(flexImageUrl, fit: BoxFit.cover, networkHeaders: Config().networkAuthHeaders, excludeFromSemantics: true);
+    return (flexImageUrl != null && image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
+  }
 
   @protected
   Widget buildFlexibleLeftToRightTriangle(BuildContext context) => CustomPaint(
@@ -221,7 +224,7 @@ class SliverToutHeaderBar extends StatelessWidget {
         GestureDetector(onTap: () => onTapLeading(context), child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
-              Image.asset(leadingAsset!, excludeFromSemantics: true)
+              Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true)
             ),
           ),
         ),
@@ -325,7 +328,7 @@ class SliverHeaderBar extends StatelessWidget {
 
   
   @protected
-  Image? get leadingImage => (leadingAsset != null) ? Image.asset(leadingAsset!, excludeFromSemantics: true) : null;
+  Image? get leadingImage => (leadingAsset != null) ? Styles().images?.getImage(leadingAsset!, excludeFromSemantics: true) as Image? : null;
 
   @protected
   void onTapLeading(BuildContext context) {

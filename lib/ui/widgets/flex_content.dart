@@ -25,7 +25,7 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:collection/collection.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 /*
   "emergency": {
@@ -160,7 +160,7 @@ class FlexContent extends StatefulWidget {
       return Semantics(label: closeButtonLabel, hint: closeButtonHint, button: true, excludeSemantics: true, child:
         InkWell(onTap: onTap, child:
           Container(width: closeButtonSize.width, height: closeButtonSize.height, alignment: Alignment.center, child:
-            Image.asset(imageAsset, excludeFromSemantics: true)
+            Styles().images?.getImage(imageAsset, excludeFromSemantics: true)
           )
         )
       );
@@ -206,8 +206,9 @@ class FlexContent extends StatefulWidget {
   }
 
   @protected
-  void launchExternal(BuildContext context, String url) =>
-    launch(url);
+  void launchExternal(BuildContext context, String url) {
+    launchUrlString(url);
+  }
 
   @protected
   void launchInternal(BuildContext context, String url, { String? title }) =>
