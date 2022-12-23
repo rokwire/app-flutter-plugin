@@ -19,7 +19,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -150,7 +150,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   void initState() {
     super.initState();
     NotificationService().subscribe(this, [
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       DeepLink.notifyUri,
     ]);
     if (Platform.isAndroid) {
@@ -222,7 +222,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param){
-    if (name == AppLivecycle.notifyStateChanged) {
+    if (name == AppLifecycle.notifyStateChanged) {
       setState(() {
         _isForeground = (param == AppLifecycleState.resumed);
       });

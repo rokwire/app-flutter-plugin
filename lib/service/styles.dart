@@ -21,7 +21,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -79,7 +79,7 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void createService() {
-    NotificationService().subscribe(this, AppLivecycle.notifyStateChanged);
+    NotificationService().subscribe(this, AppLifecycle.notifyStateChanged);
   }
 
   @override
@@ -121,12 +121,12 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+    if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
     }
   }
 
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -303,65 +303,107 @@ class UiColors {
     return UiColors(colors);
   }
 
-  Color? get fillColorPrimary                   => colorMap['fillColorPrimary'];
-  Color? get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'];
-  Color? get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'];
-  Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
-  Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
-  Color? get textColorPrimary                   => colorMap['textColorPrimary'];
-  Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
-  Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
-  Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
-  Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
-  Color? get textColorSecondary                 => colorMap['textColorSecondary'];
-  Color? get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'];
-  Color? get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'];
-  Color? get gradientColorPrimary               => colorMap['gradientColorPrimary'];
+  Color? get fillColorPrimary           => colorMap['fillColorPrimary'];
+  Color? get fillColorPrimaryVariant    => colorMap['fillColorPrimaryVariant'];
+  Color? get fillColorSecondary         => colorMap['fillColorSecondary'];
+  Color? get fillColorSecondaryVariant  => colorMap['fillColorSecondaryVariant'];
+  Color? get gradientColorPrimary       => colorMap['gradientColorPrimary'];
 
   Color? get surface                    => colorMap['surface'];
-  Color? get textSurface                => colorMap['textSurface'];
-  Color? get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'];
   Color? get surfaceAccent              => colorMap['surfaceAccent'];
-  Color? get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'];
-  Color? get textSurfaceAccent          => colorMap['textSurfaceAccent'];
   Color? get background                 => colorMap['background'];
-  Color? get textBackground             => colorMap['textBackground'];
   Color? get backgroundVariant          => colorMap['backgroundVariant'];
-  Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
-  Color? get headlineText               => colorMap['headlineText'];
+
+  Color? get textPrimary                => colorMap['textPrimary'];
+  Color? get textAccent                 => colorMap['textAccent'];
+  Color? get textLight                  => colorMap['textLight'];
+  Color? get textMedium                 => colorMap['textMedium'];
+  Color? get textDark                   => colorMap['textDark'];
+  Color? get textDisabled               => colorMap['textDisabled'];
 
   Color? get accentColor1               => colorMap['accentColor1'];
   Color? get accentColor2               => colorMap['accentColor2'];
   Color? get accentColor3               => colorMap['accentColor3'];
   Color? get accentColor4               => colorMap['accentColor4'];
 
-  Color? get iconColor                  => colorMap['iconColor'];
-
-  Color? get eventColor                 => colorMap['eventColor'];
-  Color? get diningColor                => colorMap['diningColor'];
-  Color? get placeColor                 => colorMap['placeColor'];
-  Color? get mtdColor                   => colorMap['mtdColor'];
-
-  Color? get white                      => colorMap['white'];
-  Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
-  Color? get whiteTransparent06         => colorMap['whiteTransparent06'];
-  Color? get blackTransparent06         => colorMap['blackTransparent06'];
-  Color? get blackTransparent018        => colorMap['blackTransparent018'];
-
-  Color? get mediumGray                 => colorMap['mediumGray'];
-  Color? get mediumGray1                => colorMap['mediumGray1'];
-  Color? get mediumGray2                => colorMap['mediumGray2'];
-  Color? get lightGray                  => colorMap['lightGray'];
-  Color? get disabledTextColor          => colorMap['disabledTextColor'];
-  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
   Color? get dividerLine                => colorMap['dividerLine'];
 
+  // DEPRECATED
+
+  @Deprecated("Transparency should be handled directly by widgets")
+  Color? get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'];
+  @Deprecated("Transparency should be handled directly by widgets")
+  Color? get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'];
+  @Deprecated("Transparency should be handled directly by widgets")
+  Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
+  @Deprecated("Transparency should be handled directly by widgets")
+  Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
+  @Deprecated("Transparency should be handled directly by widgets")
+  Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
+
+  @Deprecated("Set icon colors in styles asset file")
+  Color? get iconColor                  => colorMap['iconColor'];
+
+  @Deprecated("Use 'textDark' instead")
+  Color? get textSurface                => colorMap['textSurface'];
+  @Deprecated("Use 'textDark' instead")
+  Color? get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'];
+  @Deprecated("Use 'textDark' instead")
+  Color? get textSurfaceAccent          => colorMap['textSurfaceAccent'];
+  @Deprecated("Use 'textDark' instead")
+  Color? get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'];
+  @Deprecated("Use 'textDark' instead")
+  Color? get textBackground             => colorMap['textBackground'];
+  @Deprecated("Use 'textDark' instead")
+  Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
+  @Deprecated("Use 'textPrimary' instead")
+  Color? get headlineText               => colorMap['headlineText'];
+  @Deprecated("Use 'textDisabled' instead")
+  Color? get disabledTextColor          => colorMap['disabledTextColor'];
+  @Deprecated("Use 'textDisabled' instead")
+  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
+
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get white                      => colorMap['white'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get whiteTransparent06         => colorMap['whiteTransparent06'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get blackTransparent06         => colorMap['blackTransparent06'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get blackTransparent018        => colorMap['blackTransparent018'];
+
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get mediumGray                 => colorMap['mediumGray'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get mediumGray1                => colorMap['mediumGray1'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get mediumGray2                => colorMap['mediumGray2'];
+  @Deprecated("Color style names should meaningfully reflect intended usage")
+  Color? get lightGray                  => colorMap['lightGray'];
+
+  @Deprecated("Color style names should meaningfully reflect intended usage")
   Color? get mango                      => colorMap['mango'];
 
+  @Deprecated("Application specific colors should be defined in the application")
+  Color? get eventColor                 => colorMap['eventColor'];
+  @Deprecated("Application specific colors should be defined in the application")
+  Color? get diningColor                => colorMap['diningColor'];
+  @Deprecated("Application specific colors should be defined in the application")
+  Color? get placeColor                 => colorMap['placeColor'];
+  @Deprecated("Rename to 'transitColo', Application specific colors should be defined in the application")
+  Color? get mtdColor                   => colorMap['mtdColor'];
+
+  @Deprecated("Application specific colors should be defined in the application")
   Color? get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'];
+  @Deprecated("Application specific colors should be defined in the application")
   Color? get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'];
+  @Deprecated("Application specific colors should be defined in the application")
   Color? get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'];
+  @Deprecated("Application specific colors should be defined in the application")
   Color? get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'];
+  ///
 
   Color? getColor(String key) => colorMap[key];
 

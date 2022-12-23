@@ -26,7 +26,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/model/event.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
@@ -106,7 +106,7 @@ class Groups with Service implements NotificationsListener {
     NotificationService().subscribe(this,[
       DeepLink.notifyUri,
       Auth2.notifyLoginChanged,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       FirebaseMessaging.notifyGroupsNotification,
       Connectivity.notifyStatusChanged
     ]);
@@ -158,8 +158,8 @@ class Groups with Service implements NotificationsListener {
     else if (name == Auth2.notifyLoginChanged) {
       _onLoginChanged();
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+    else if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
     } else if (name == FirebaseMessaging.notifyGroupsNotification){
       _onFirebaseMessageForGroupUpdate();
     }
@@ -181,7 +181,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
   
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }

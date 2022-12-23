@@ -8,7 +8,7 @@ class ButtonBuilder {
       label: label,
       borderColor: Styles().colors?.fillColorSecondary,
       backgroundColor: Styles().colors?.surface,
-      textStyle: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+      textStyle: Styles().textStyles?.getTextStyle('widget.detail.regular.bold'),
       onTap: onTap,
     );
   }

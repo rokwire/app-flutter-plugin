@@ -282,7 +282,7 @@ class ActionsMessage extends StatelessWidget {
   @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImage('close-circle-white', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors?.surface));
   @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
 
-  static Future<void> show({
+  static Future<T?> show<T>({
     String? title,
     TextStyle? titleTextStyle,
     Color? titleTextColor,

@@ -209,13 +209,13 @@ class SectionSlantHeader extends StatelessWidget {
   Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.textColorPrimary,
+    color: titleTextColor ?? Styles().colors?.textPrimary,
     fontFamily: titleFontFamilly ?? Styles().fontFamilies?.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors?.textColorPrimary,
+    color: subTitleTextColor ?? Styles().colors?.textPrimary,
     fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
     fontSize: subTitleFontSize
   );
@@ -355,13 +355,13 @@ class SectionRibbonHeader extends StatelessWidget {
   Color? get _backgroundColor => backgroundColor ?? Styles().colors?.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.white,
+    color: titleTextColor ?? Styles().colors?.textLight,
     fontFamily: titleFontFamilly ?? Styles().fontFamilies?.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors?.white,
+    color: subTitleTextColor ?? Styles().colors?.textLight,
     fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
     fontSize: subTitleFontSize
   );
@@ -437,7 +437,7 @@ class ImageSlantHeader extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.surface ?? Colors.white),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }

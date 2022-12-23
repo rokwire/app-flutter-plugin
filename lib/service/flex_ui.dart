@@ -22,7 +22,7 @@ import 'package:http/http.dart';
 
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
@@ -76,7 +76,7 @@ class FlexUI with Service implements NotificationsListener {
       Auth2UserPrefs.notifyPrivacyLevelChanged,
       Auth2.notifyLoginChanged,
       Auth2.notifyLinkChanged,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
       GeoFence.notifyCurrentRegionsUpdated,
       Config.notifyConfigChanged,
@@ -130,13 +130,13 @@ class FlexUI with Service implements NotificationsListener {
     {
       updateContent();
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      onAppLivecycleStateChanged(param); 
+    else if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged(param);
     }
   }
 
   @protected
-  void onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }

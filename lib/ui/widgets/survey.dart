@@ -77,8 +77,8 @@ class SurveyWidget extends StatefulWidget {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
       RoundedButton(
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
-          textColor: canContinue ? null : Styles().colors?.disabledTextColor,
-          borderColor: canContinue ? null : Styles().colors?.disabledTextColor,
+          textColor: canContinue ? null : Styles().colors?.textDisabled,
+          borderColor: canContinue ? null : Styles().colors?.textDisabled,
           enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
           progress: controller.saving),
@@ -159,7 +159,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   Widget _buildMoreInfo() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 32.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.fat'),),
+      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.bold'),),
     );
   }
 
@@ -229,7 +229,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
-              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.bold'))),
               Visibility(
                 visible: !surveyWidget.containsText,
                 child: Flexible(
@@ -388,7 +388,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.textDisabled)),
         ),
       )));
     }
@@ -498,7 +498,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
               labelText: title,
               hintText: "MM-dd-yyyy",
               filled: true,
-              fillColor: !enabled ? Styles().colors?.disabledTextColor : Colors.white,
+              fillColor: !enabled ? Styles().colors?.textDisabled : Styles().colors?.surface,
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
                   borderSide: const BorderSide(color: Colors.white)),
@@ -910,7 +910,10 @@ class SingleSelectionList extends StatelessWidget {
               child: Card(
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
-                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                  title: Transform.translate(offset: const Offset(-15, 0),
+                      child: Text(title, style: Styles().textStyles?.getTextStyle('widget.title.regular') ??
+                          TextStyle(fontFamily: Styles().fontFamilies?.regular,
+                              fontSize: 16, color: Styles().colors?.textPrimary))),
                   activeColor: Styles().colors?.fillColorSecondary,
                   value: title,
                   groupValue: selectedValue?.title,
@@ -946,7 +949,11 @@ class MultiSelectionList extends StatelessWidget {
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: ListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                      title: Transform.translate(offset: const Offset(-15, 0),
+                          child: Text(selectionList[index].title,
+                              style: Styles().textStyles?.getTextStyle('widget.title.regular') ??
+                                  TextStyle(fontFamily: Styles().fontFamilies?.regular,
+                                    fontSize: 16, color: Styles().colors?.textPrimary))),
                       leading: Checkbox(
                         checkColor: Colors.white,
                         activeColor: Styles().colors?.fillColorSecondary,

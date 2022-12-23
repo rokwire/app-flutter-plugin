@@ -20,7 +20,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -80,7 +80,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       //TBD: FirebaseMessaging.notifyConfigUpdate
     ]);
   }
@@ -112,15 +112,15 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+    if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
     }
     //else if (name == FirebaseMessaging.notifyConfigUpdate) {
     //  updateFromNet();
     //}
   }
 
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();

@@ -6,7 +6,7 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -81,7 +81,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   void createService() {
     NotificationService().subscribe(this, [
       DeepLink.notifyUri,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       Auth2UserProfile.notifyChanged,
       Auth2UserPrefs.notifyChanged,
     ]);
@@ -146,13 +146,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (name == Auth2UserPrefs.notifyChanged) {
       onUserPrefsChanged(param);
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      onAppLivecycleStateChanged(param);
+    else if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged(param);
     }
   }
 
   @protected
-  void onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }

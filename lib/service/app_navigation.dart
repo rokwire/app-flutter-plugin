@@ -28,7 +28,7 @@ class AppNavigation extends NavigatorObserver {
   static const String notifyParamRoute  = 'route';
   static const String notifyParamPreviousRoute  = 'previous_route';
 
-  // Singletone Factory
+  // Singleton Factory
 
   static AppNavigation ? _instance;
 

@@ -15,7 +15,7 @@ class SurveyBuilder {
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
     List<Widget> content = [];
     if (StringUtils.isNotEmpty(survey.text)) {
-      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.fat')));
+      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.bold')));
     }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
       content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular'))));
@@ -49,7 +49,7 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat'))),
+          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.bold'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -75,7 +75,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(key.replaceAll('_', ' ').toUpperCase() + ':',
-                  style: Styles().textStyles?.getTextStyle('widget.description.regular.fat')),
+                  style: Styles().textStyles?.getTextStyle('widget.description.regular.bold')),
               const SizedBox(width: 8.0),
               Flexible(child: Text(responseData ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
             ],
@@ -118,7 +118,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
+                  style: Styles().textStyles?.getTextStyle('widget.detail.regular.bold')),
               const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],
