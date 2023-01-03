@@ -8,7 +8,6 @@ class InboxMessage {
   final String?   messageId;
   final int?      priority;
   final String?   topic;
-  final String?   category;
   
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
@@ -24,7 +23,7 @@ class InboxMessage {
   final InboxSender?          sender;
   final List<InboxRecepient>? recepients;
 
-  InboxMessage({this.messageId, this.priority, this.topic, this.category,
+  InboxMessage({this.messageId, this.priority, this.topic,
     this.dateCreatedUtc, this.dateUpdatedUtc, this.dateSentUtc,
     this.subject, this.body, this.data,
     this.mute, this.read,
@@ -36,7 +35,6 @@ class InboxMessage {
       messageId: JsonUtils.stringValue(json['id']),
       priority: JsonUtils.intValue(json['priority']),
       topic: JsonUtils.stringValue(json['topic']),
-      category: JsonUtils.stringValue(json['category']),
 
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created'])),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
