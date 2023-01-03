@@ -671,7 +671,6 @@ class UiImages {
 
     try { switch (type) {
       case 'fa.icon':
-
         IconData? iconData = _ImageUtils.faIconDataValue(weight, codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
           FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)

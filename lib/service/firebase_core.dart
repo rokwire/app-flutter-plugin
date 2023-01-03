@@ -21,6 +21,11 @@ import 'package:rokwire_plugin/service/service.dart';
 class FirebaseCore extends Service {
 
   google.FirebaseApp? _firebaseApp;
+  google.FirebaseOptions? _options;
+
+  set options(google.FirebaseOptions options) {
+    _options = options;
+  }
 
   // Singletone Factory
 
@@ -35,6 +40,8 @@ class FirebaseCore extends Service {
 
   @protected
   FirebaseCore.internal();
+
+
   
   // Service
 
@@ -56,7 +63,7 @@ class FirebaseCore extends Service {
   }
 
   Future<void> initFirebase() async{
-    _firebaseApp ??= await google.Firebase.initializeApp();
+    _firebaseApp ??= await google.Firebase.initializeApp(options: _options);
   }
 
   google.FirebaseApp? get app => _firebaseApp;

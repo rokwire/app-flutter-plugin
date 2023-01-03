@@ -114,12 +114,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
       if (!await authenticateAnonymously()) {
-        throw ServiceError(
-          source: this,
-          severity: ServiceErrorSeverity.fatal,
-          title: 'Authentication Initialization Failed',
-          description: 'Failed to initialize anonymous authentication token.',
-        );
+        // throw ServiceError(
+        //   source: this,
+        //   severity: ServiceErrorSeverity.fatal,
+        //   title: 'Authentication Initialization Failed',
+        //   description: 'Failed to initialize anonymous authentication token.',
+        // );
       }
     }
 

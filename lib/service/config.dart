@@ -190,6 +190,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<String?> loadAsStringFromNet() async {
+    return loadAsStringFromCore();
+  }
+
+  Future<String?> loadAsStringFromAppConfig() async {
     try {
       http.Response? response = await Network().get(appConfigUrl, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
@@ -199,12 +203,43 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
+  Future<String?> loadAsStringFromCore() async {
+    Map<String, dynamic> body = {
+      'version': appVersion,
+      'app_type_identifier': appPlatformId,
+      'api_key': rokwireApiKey,
+    };
+    String? bodyString =  JsonUtils.encode(body);
+    try {
+      http.Response? response = await Network().post(appConfigUrl, body: bodyString, headers: {'content-type': 'application/json'});
+      return ((response != null) && (response.statusCode == 200)) ? response.body : null;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
   @protected
   Map<String, dynamic>? configFromJsonString(String? configJsonString) {
+    return configFromJsonObjectString(configJsonString);
+  }
+
+  @protected
+  Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) {
+    Map<String, dynamic>? configJson = JsonUtils.decode(configJsonString);
+    if (configJson != null) {
+      decryptSecretKeys(configJson);
+      return configJson;
+    }
+    return null;
+  }
+
+  @protected
+  Map<String, dynamic>? configFromJsonListString(String? configJsonString) {
     dynamic configJson =  JsonUtils.decode(configJsonString);
     List<dynamic>? jsonList = (configJson is List) ? configJson : null;
     if (jsonList != null) {
-      
+
       jsonList.sort((dynamic cfg1, dynamic cfg2) {
         return ((cfg1 is Map) && (cfg2 is Map)) ? AppVersion.compareVersions(cfg1['mobileAppVersion'], cfg2['mobileAppVersion']) : 0;
       });
@@ -223,9 +258,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void decryptSecretKeys(Map<String, dynamic>? config) {
-    dynamic secretKeys = (config != null) ? config['secretKeys'] : null;
+    dynamic secretKeys = (config != null) ? config['data']['secretKeys'] : null;
     if (secretKeys is String) {
-      config!['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+      String? secrets = AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV);
+      config!['secretKeys'] = JsonUtils.decodeMap(secrets);
     }
   }
 
@@ -264,7 +300,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       _configAsset = null;
 
       _config = (configString != null) ? configFromJsonString(configString) : null;
-      if (_config != null) {
+      if (_config != null && secretKeys.isNotEmpty) {
         configFile.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
