@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+
 ## [1.3.1] - 2023-01-03
 ### Deleted
 - Removed category from inbox message model [#237](https://github.com/rokwire/app-flutter-plugin/issues/237).
