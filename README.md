@@ -8,7 +8,7 @@ Rokwire services Flutter plugin for Flutter bases client applications. Powered b
 
 ### [Android Studio](https://developer.android.com/studio) 2021.3.1+
 
-### [xCode](https://apps.apple.com/us/app/xcode/id497799835) 13.2.1
+### [xCode](https://apps.apple.com/us/app/xcode/id497799835) 14.2
 
 ### [CocoaPods](https://guides.cocoapods.org/using/getting-started.html) 1.11.3+
 
