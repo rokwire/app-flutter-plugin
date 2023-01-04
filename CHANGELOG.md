@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Changed
 - Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+### Fixed
+- Clear unread notifications count when logged out.
 
 ## [1.3.1] - 2023-01-03
 ### Deleted
