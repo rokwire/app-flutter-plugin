@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Switch to xCode 14.2.
 - Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+- Improve default handling for UIImages [#193](https://github.com/rokwire/app-flutter-plugin/issues/193)
 ### Fixed
 - Clear unread notifications count when logged out.
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
