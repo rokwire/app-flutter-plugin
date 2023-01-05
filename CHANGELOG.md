@@ -5,7 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next build on `develop` should refer to version 1.3.0 -->
+<!-- The next build on `develop` should refer to version 1.4.0 -->
+### Changed
+- Switch to xCode 14.2.
+- Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+### Fixed
+- Clear unread notifications count when logged out.
+- Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
+### Added
+- Added hint in VerticalTitleValueSection [#2892](https://github.com/rokwire/illinois-app/issues/2892).
+
+## [1.3.1] - 2023-01-03
+### Deleted
+- Removed category from inbox message model [#237](https://github.com/rokwire/app-flutter-plugin/issues/237).
+
+## [1.3.0] - 2022-12-22
 ### Fixed
 - Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167).
 - Move "getContentString" method to Localization service [#136](https://github.com/rokwire/app-flutter-plugin/issues/136).

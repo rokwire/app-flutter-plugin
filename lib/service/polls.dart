@@ -42,12 +42,12 @@ class Polls with Service implements NotificationsListener {
   static const String notifyResultsChanged   = "edu.illinois.rokwire.poll.resultschanged"; // poll updated
   static const String notifyVoteChanged      = "edu.illinois.rokwire.poll.votechanged"; // poll updated
   static const String notifyStatusChanged    = "edu.illinois.rokwire.poll.statuschnaged"; // poll closed, results could be presented
+  static const String notifyDeleted          = "edu.illinois.rokwire.poll.deleted";
 
   static const String notifyLifecycleCreate  = "edu.illinois.rokwire.poll.lifecycle.create";
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
   static const String notifyLifecycleClose   = "edu.illinois.rokwire.poll.lifecycle.close";
   static const String notifyLifecycleVote    = "edu.illinois.rokwire.poll.lifecycle.vote";
-  static const String notifyLifecycleDelete  = "edu.illinois.rokwire.poll.lifecycle.delete";
 
   final Map<String, PollChunk> _pollChunks = <String, PollChunk>{};
   
@@ -281,8 +281,8 @@ class Polls with Service implements NotificationsListener {
           PollChunk? pollChunk = _pollChunks[pollId];
           if (pollChunk != null) {
             removePollChunk(pollChunk);
-            NotificationService().notify(notifyLifecycleDelete, pollChunk.poll);
           }
+          NotificationService().notify(notifyDeleted, pollId);
         }
         else {
           throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
