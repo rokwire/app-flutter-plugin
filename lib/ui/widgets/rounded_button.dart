@@ -102,7 +102,7 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get defaultBackgroundColor => Styles().colors?.surface;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
   @protected Color? get defautTextColor => Styles().colors?.fillColorPrimary;
@@ -163,9 +163,8 @@ class _RoundedButtonState extends State<RoundedButton> {
 
   Widget get _outerContent {
     //TODO: Fix ripple effect from InkWell (behind button content)
-    return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
-      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent),
-    );
+    return Semantics(label: widget.label, hint: widget.hint, button: true,
+      enabled: widget.enabled, child: _wrapperContent,);
   }
 
   Widget get _wrapperContent {
@@ -207,9 +206,13 @@ class _RoundedButtonState extends State<RoundedButton> {
 
     Border? secondaryBorder = widget.displaySecondaryBorder;
     // BorderRadiusGeometry? borderRadius = 
-    return Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
-      ? Container(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
-      : _innerContent
+    return InkWell(
+      onTap: widget.onTap,
+      borderRadius: borderRadius,
+      child: Ink(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
+        ? Ink(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
+        : _innerContent
+      ),
     );
   }
 

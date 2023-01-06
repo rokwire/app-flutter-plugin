@@ -99,10 +99,12 @@ class Onboarding with Service implements NotificationsListener {
     nextPanel(panel).then((dynamic nextPanel) {
       if (nextPanel is Widget) {
         if (replace) {
-          Navigator.pushReplacement(context, CupertinoPageRoute(builder: (context) => nextPanel));
+          Navigator.pushReplacement(
+              context, CupertinoPageRoute(builder: (context) => nextPanel));
         }
         else {
-          Navigator.push(context, CupertinoPageRoute(builder: (context) => nextPanel));
+          Navigator.push(
+              context, CupertinoPageRoute(builder: (context) => nextPanel));
         }
       }
       else if ((nextPanel is bool) && !nextPanel) {

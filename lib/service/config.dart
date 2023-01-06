@@ -227,9 +227,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @protected
   Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) {
     Map<String, dynamic>? configJson = JsonUtils.decode(configJsonString);
-    if (configJson != null) {
-      decryptSecretKeys(configJson);
-      return configJson;
+    Map<String, dynamic>? configData = configJson?["data"];
+    if (configData != null) {
+      decryptSecretKeys(configData);
+      return configData;
     }
     return null;
   }
@@ -258,7 +259,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void decryptSecretKeys(Map<String, dynamic>? config) {
-    dynamic secretKeys = (config != null) ? config['data']['secretKeys'] : null;
+    dynamic secretKeys = (config != null) ? config['secretKeys'] : null;
     if (secretKeys is String) {
       String? secrets = AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV);
       config!['secretKeys'] = JsonUtils.decodeMap(secrets);

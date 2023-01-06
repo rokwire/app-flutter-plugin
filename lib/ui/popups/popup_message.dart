@@ -255,7 +255,7 @@ class ActionsMessage extends StatelessWidget {
   @protected Color? get defautTitleBarColor => Styles().colors?.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defautTitleBarColor;
 
-  @protected Color? get defautTitleTextColor => Styles().colors?.white;
+  @protected Color? get defautTitleTextColor => Styles().colors?.textLight;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defautTitleTextColor;
   
   @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
@@ -368,7 +368,8 @@ class ActionsMessage extends StatelessWidget {
           buttonAxis == Axis.vertical ?
               Padding(padding: buttonsPadding, child: Column(children: buttons),)
                 : Padding(padding: buttonsPadding,
-                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
                 ),
         ])
       ],),

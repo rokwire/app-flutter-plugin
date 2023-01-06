@@ -328,6 +328,9 @@ class UiColors {
 
   Color? get dividerLine                => colorMap['dividerLine'];
 
+  Color? get success                    => colorMap['success'];
+  Color? get alert                      => colorMap['alert'];
+
   // DEPRECATED
 
   @Deprecated("Transparency should be handled directly by widgets")
