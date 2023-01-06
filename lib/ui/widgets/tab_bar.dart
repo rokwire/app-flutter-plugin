@@ -129,16 +129,16 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
 class TabWidget extends StatelessWidget {
   final String? label;
   final String? hint;
-  final String? iconAsset;
-  final String? selectedIconAsset;
+  final String? iconKey;
+  final String? selectedIconKey;
   final bool selected;
   final void Function(TabWidget tabWidget) onTap;
 
   const TabWidget({
     Key? key,
     this.label,
-    this.iconAsset,
-    this.selectedIconAsset,
+    this.iconKey,
+    this.selectedIconKey,
     this.hint,
     this.selected = false,
     required this.onTap
@@ -203,9 +203,9 @@ class TabWidget extends StatelessWidget {
 
   @protected
   Widget getTabIcon(BuildContext context)  {
-    String? asset = selected ? (selectedIconAsset ?? iconAsset) : iconAsset;
+    String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (asset != null) ? Styles().images?.getImage(asset, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
+    return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
   }
 
   @protected

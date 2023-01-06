@@ -30,7 +30,7 @@ class ExpandableText extends StatefulWidget {
   final TextStyle? readMoreStyle;
 
   final Widget? readMoreIcon;
-  final String? readMoreIconAsset;
+  final String? readMoreIconKey;
   final EdgeInsetsGeometry readMoreIconPadding;
 
   const ExpandableText(this.text, {
@@ -46,7 +46,7 @@ class ExpandableText extends StatefulWidget {
     this.readMoreStyle,
 
     this.readMoreIcon,
-    this.readMoreIconAsset,
+    this.readMoreIconKey,
     this.readMoreIconPadding = const EdgeInsets.only(left: 7),
   })  : super(key: key);
 
@@ -60,7 +60,7 @@ class ExpandableText extends StatefulWidget {
   String? get readMoreHint => null;
   TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
 
-  Widget? get _readMoreIcon => readMoreIcon ?? ((readMoreIconAsset != null) ? Styles().images?.getImage(readMoreIconAsset!, excludeFromSemantics: true) : null);
+  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images?.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();

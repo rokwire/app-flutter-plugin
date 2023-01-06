@@ -190,8 +190,28 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<String?> loadAsStringFromNet() async {
+    return loadAsStringFromAppConfig();
+  }
+
+  Future<String?> loadAsStringFromAppConfig() async {
     try {
       http.Response? response = await Network().get(appConfigUrl, auth: this);
+      return ((response != null) && (response.statusCode == 200)) ? response.body : null;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
+  Future<String?> loadAsStringFromCore() async {
+    Map<String, dynamic> body = {
+      'version': appVersion,
+      'app_type_identifier': appPlatformId,
+      'api_key': rokwireApiKey,
+    };
+    String? bodyString =  JsonUtils.encode(body);
+    try {
+      http.Response? response = await Network().post(appConfigUrl, body: bodyString);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());

@@ -17,11 +17,11 @@ class RibbonButton extends StatefulWidget {
   final TextAlign textAlign;
 
   final Widget? leftIcon;
-  final String? leftIconAsset;
+  final String? leftIconKey;
   final EdgeInsetsGeometry leftIconPadding;
   
   final Widget? rightIcon;
-  final String? rightIconAsset;
+  final String? rightIconKey;
   final EdgeInsetsGeometry rightIconPadding;
 
   final BoxBorder? border;
@@ -53,11 +53,11 @@ class RibbonButton extends StatefulWidget {
     this.textAlign               = TextAlign.left,
 
     this.leftIcon,
-    this.leftIconAsset,
+    this.leftIconKey,
     this.leftIconPadding         = const EdgeInsets.only(right: 8),
     
     this.rightIcon,
-    this.rightIconAsset,
+    this.rightIconKey,
     this.rightIconPadding        = const EdgeInsets.only(left: 8),
 
     this.border,
@@ -85,8 +85,8 @@ class RibbonButton extends StatefulWidget {
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
-  @protected Widget? get leftIconImage => (leftIconAsset != null) ? Styles().images?.getImage(leftIconAsset!, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconAsset != null) ? Styles().images?.getImage(rightIconAsset!, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;
 
   @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
@@ -186,10 +186,10 @@ class ToggleRibbonButton extends RibbonButton {
 
   final bool toggled;
   final Map<bool, Widget>? leftIcons;
-  final Map<bool, String>? leftIconAssets;
+  final Map<bool, String>? leftIconKeys;
 
   final Map<bool, Widget>? rightIcons;
-  final Map<bool, String>? rightIconAssets;
+  final Map<bool, String>? rightIconKeys;
 
   final Map<bool, String>? semanticsValues;
 
@@ -208,11 +208,11 @@ class ToggleRibbonButton extends RibbonButton {
     TextAlign textAlign                 = TextAlign.left,
 
     Widget? leftIcon,
-    String? leftIconAsset,
+    String? leftIconKey,
     EdgeInsetsGeometry leftIconPadding  = const EdgeInsets.only(right: 8),
     
     Widget? rightIcon,
-    String? rightIconAsset,
+    String? rightIconKey,
     EdgeInsetsGeometry rightIconPadding = const EdgeInsets.only(left: 8),
 
     BoxBorder? border,
@@ -225,10 +225,10 @@ class ToggleRibbonButton extends RibbonButton {
     this.toggled = false,
     
     this.leftIcons,
-    this.leftIconAssets,
+    this.leftIconKeys,
     
     this.rightIcons,
-    this.rightIconAssets,
+    this.rightIconKeys,
 
     this.semanticsValues,
   }): super(
@@ -246,11 +246,11 @@ class ToggleRibbonButton extends RibbonButton {
     textAlign: textAlign,
 
     leftIcon: leftIcon,
-    leftIconAsset: leftIconAsset,
+    leftIconKey: leftIconKey,
     leftIconPadding: leftIconPadding,
     
     rightIcon: rightIcon,
-    rightIconAsset: rightIconAsset,
+    rightIconKey: rightIconKey,
     rightIconPadding: rightIconPadding,
 
     border: border,
@@ -262,9 +262,9 @@ class ToggleRibbonButton extends RibbonButton {
   );
 
   Widget? get _leftIcon => (leftIcons != null) ? leftIcons![toggled] : null;
-  String? get _leftIconAsset => (leftIconAssets != null) ? leftIconAssets![toggled] : null;
+  String? get _leftIconKey => (leftIconKeys != null) ? leftIconKeys![toggled] : null;
   Widget? get _rightIcon => (rightIcons != null) ? rightIcons![toggled] : null;
-  String? get _rightIconAsset => (rightIconAssets != null) ? rightIconAssets![toggled] : null;
+  String? get _rightIconAsset => (rightIconKeys != null) ? rightIconKeys![toggled] : null;
   String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![toggled] : null;
   String? get _changedSemanticsValue => (semanticsValues != null) ? semanticsValues![!toggled] : null;
 
@@ -272,13 +272,13 @@ class ToggleRibbonButton extends RibbonButton {
   Widget? get leftIcon => _leftIcon ?? super.leftIcon;
   
   @override
-  String? get leftIconAsset => _leftIconAsset ?? super.leftIconAsset;
+  String? get leftIconKey => _leftIconKey ?? super.leftIconKey;
 
   @override
   Widget? get rightIcon => _rightIcon ?? super.rightIcon;
   
   @override
-  String? get rightIconAsset => _rightIconAsset ?? super.rightIconAsset;
+  String? get rightIconKey => _rightIconAsset ?? super.rightIconKey;
 
   @override
   String? get semanticsValue => _semanticsValue ?? super.semanticsValue;
