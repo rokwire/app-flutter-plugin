@@ -29,8 +29,11 @@ class Group {
 	String?                       title;
   String?                       description;
   GroupPrivacy?                 privacy;
+
   DateTime?                     dateCreatedUtc;
   DateTime?                     dateUpdatedUtc;
+  DateTime?                     dateManagedMembershipUpdatedUtc;
+  DateTime?                     dateMembershipUpdatedUtc;
 
   bool?                         certified;
   bool?                         hiddenForSearch;
@@ -54,10 +57,11 @@ class Group {
   List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
   GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
-  GroupSettings?             settings;
+  GroupSettings?                 settings;
 
   Group({
-	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
+	  this.id, this.category, this.type, this.title, this.description, this.privacy, 
+    this.dateCreatedUtc, this.dateUpdatedUtc, this.dateManagedMembershipUpdatedUtc, this.dateMembershipUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
     this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
@@ -72,8 +76,11 @@ class Group {
       title                          : JsonUtils.stringValue(json['title']),
       description                    : JsonUtils.stringValue(json['description']),
       privacy                        : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
-      dateCreatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
-      dateUpdatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+
+      dateCreatedUtc                   : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
+      dateUpdatedUtc                   : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+      dateManagedMembershipUpdatedUtc  : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_managed_membership_updated'])),
+      dateMembershipUpdatedUtc         : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_membership_updated'])),
       
       certified                      : JsonUtils.boolValue(json['certified']),
       hiddenForSearch                : JsonUtils.boolValue(json['hidden_for_search']),
@@ -109,8 +116,11 @@ class Group {
       title                          : other.title,
       description                    : other.description,
       privacy                        : other.privacy,
-      dateCreatedUtc                 : other.dateCreatedUtc,
-      dateUpdatedUtc                 : other.dateUpdatedUtc,
+
+      dateCreatedUtc                   : other.dateCreatedUtc,
+      dateUpdatedUtc                   : other.dateUpdatedUtc,
+      dateManagedMembershipUpdatedUtc  : other.dateManagedMembershipUpdatedUtc,
+      dateMembershipUpdatedUtc         : other.dateMembershipUpdatedUtc,
 
       certified                      : other.certified,
       hiddenForSearch                : other.hiddenForSearch,
@@ -146,8 +156,11 @@ class Group {
       'title'                         : title,
       'description'                   : description,
       'privacy'                       : groupPrivacyToString(privacy),
-      'date_created'                  : groupUtcDateTimeToString(dateCreatedUtc),
-      'date_updated'                  : groupUtcDateTimeToString(dateUpdatedUtc),
+      
+      'date_created'                     : groupUtcDateTimeToString(dateCreatedUtc),
+      'date_updated'                     : groupUtcDateTimeToString(dateUpdatedUtc),
+      'date_managed_membership_updated'  : groupUtcDateTimeToString(dateManagedMembershipUpdatedUtc),
+      'date_membership_updated'          : groupUtcDateTimeToString(dateMembershipUpdatedUtc),
       
       'certified'                     : certified,
       'hidden_for_search'             : hiddenForSearch,
@@ -184,8 +197,11 @@ class Group {
       (other.title == title) &&
       (other.description == description) &&
       (other.privacy == privacy) &&
+
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      (other.dateManagedMembershipUpdatedUtc == dateManagedMembershipUpdatedUtc) &&
+      (other.dateMembershipUpdatedUtc == dateMembershipUpdatedUtc) &&
 
       (other.certified == certified) &&
       (other.hiddenForSearch == hiddenForSearch) &&
@@ -220,8 +236,11 @@ class Group {
     (title?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
     (privacy?.hashCode ?? 0) ^
+
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
+    (dateManagedMembershipUpdatedUtc?.hashCode ?? 0) ^
+    (dateMembershipUpdatedUtc?.hashCode ?? 0) ^
 
     (certified?.hashCode ?? 0) ^
     (hiddenForSearch?.hashCode ?? 0) ^
