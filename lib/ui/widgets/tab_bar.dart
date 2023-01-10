@@ -27,7 +27,7 @@ class TabBar extends StatefulWidget {
   }
 
   @protected
-  BoxBorder? get border => Border(top: BorderSide(color: Styles().colors!.surfaceAccent!, width: 1, style: BorderStyle.solid));
+  BoxBorder? get border => null;
 
   @protected
   Decoration? get decoration => BoxDecoration(color: backgroundColor, border: border);
@@ -71,13 +71,11 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(decoration: widget.decoration, child:
-        SafeArea(child:
-          Row(children: 
-            buildTabs(),
-          ),
+        Row(children:
+          buildTabs(),
         ),
       ),
-    ],);
+    ]);
   }
 
   @protected
@@ -146,11 +144,12 @@ class TabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
-      Stack(children: <Widget>[
-        buildTab(context),
-        selected ? buildSelectedIndicator(context) : Container(),
-        ],
+    return Material(color: Colors.transparent,
+      child: InkWell(onTap: () => onTap(this), child:
+        Column(children: [
+          selected ? buildSelectedIndicator(context) : Container(),
+          buildTab(context),
+        ]),
       ),
     );
   }
@@ -215,9 +214,7 @@ class TabWidget extends StatelessWidget {
 
   @protected
   Widget buildSelectedIndicator(BuildContext context) => Positioned.fill(child:
-    Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-      Container(height: selectedIndicatorHeight, color: selectedIndicatorColor)
-    ],),
+    Container(height: selectedIndicatorHeight, color: selectedIndicatorColor),
   );
 
   @protected
