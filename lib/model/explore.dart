@@ -256,6 +256,10 @@ class ExploreLocation {
     }
   }
 
+  bool get isLocationCoordinateValid {
+    return (latitude != null) && (latitude != 0) && (longitude != null) && (longitude != 0);
+  }
+
   // ExploreJsonHandler
   static bool canJson(Map<String, dynamic>? json) {
     return (json != null) &&
