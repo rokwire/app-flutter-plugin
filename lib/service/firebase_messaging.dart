@@ -96,6 +96,11 @@ class FirebaseMessaging with Service {
     return { FirebaseCore(), Storage(), };
   }
 
+  Future<NotificationsAuthorizationStatus> get authorizationStatus async {
+    firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
+    return _convertStatus(settings.authorizationStatus);
+  }
+
   Future<bool> get requiresAuthorization async {
     firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
     firebase_messaging.AuthorizationStatus authorizationStatus = settings.authorizationStatus;

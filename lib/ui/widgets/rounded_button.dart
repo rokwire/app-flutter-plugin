@@ -90,7 +90,7 @@ class RoundedButton extends StatefulWidget {
     this.borderColor,          //= Styles().colors.fillColorSecondary
     this.borderWidth             =  2.0,
     this.borderShadow,
-    this.maxBorderRadius         = 24.0,
+    this.maxBorderRadius         = 36.0,
 
     this.secondaryBorder,
     this.secondaryBorderColor,
@@ -163,8 +163,10 @@ class _RoundedButtonState extends State<RoundedButton> {
 
   Widget get _outerContent {
     //TODO: Fix ripple effect from InkWell (behind button content)
-    return Semantics(label: widget.label, hint: widget.hint, button: true,
-      enabled: widget.enabled, child: _wrapperContent,);
+    return Material(color: Colors.transparent,
+      child: Semantics(label: widget.label, hint: widget.hint, button: true,
+        enabled: widget.enabled, child: _wrapperContent,),
+    );
   }
 
   Widget get _wrapperContent {
