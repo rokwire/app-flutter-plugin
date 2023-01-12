@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
 ### Added
 - Added hint in VerticalTitleValueSection [#2892](https://github.com/rokwire/illinois-app/issues/2892).
+- Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
 
 ## [1.3.1] - 2023-01-03
 ### Deleted
