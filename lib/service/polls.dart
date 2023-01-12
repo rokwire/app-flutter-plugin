@@ -326,6 +326,24 @@ class Polls with Service implements NotificationsListener {
     return null;
   }
 
+  Future<Poll?> loadById(String pollId) async {
+    if (!enabled) {
+      debugPrint('Failed to load poll with id "$pollId". Missing polls url');
+      return null;
+    }
+    String url = '${Config().quickPollsUrl}/polls/$pollId';
+    Response? response = await Network().get(url, auth: Auth2());
+    int responseCode = response?.statusCode ?? -1;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      Poll? poll = Poll.fromJson(JsonUtils.decodeMap(responseBody));
+      return poll;
+    } else {
+      debugPrint('Failed to load poll with id "$pollId". Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
   bool presentPollId(String? pollId) {
     if (enabled && presentPoll == null) {
       PollChunk? pollChunk = _pollChunks[pollId];
