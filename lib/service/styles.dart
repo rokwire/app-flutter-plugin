@@ -321,6 +321,12 @@ class UiColors {
   Color? get textDark                   => colorMap['textDark'];
   Color? get textDisabled               => colorMap['textDisabled'];
 
+  Color? get iconPrimary                => colorMap['iconPrimary'];
+  Color? get iconLight                  => colorMap['iconLight'];
+  Color? get iconMedium                 => colorMap['iconMedium'];
+  Color? get iconDark                   => colorMap['iconDark'];
+  Color? get iconDisabled               => colorMap['iconDisabled'];
+
   Color? get accentColor1               => colorMap['accentColor1'];
   Color? get accentColor2               => colorMap['accentColor2'];
   Color? get accentColor3               => colorMap['accentColor3'];

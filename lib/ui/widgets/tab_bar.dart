@@ -17,17 +17,19 @@ class TabBar extends StatefulWidget {
   _TabBarState createState() => _TabBarState();
 
   @protected
-  Color? get backgroundColor {
-    switch(Config().configEnvironment) {
-      case ConfigEnvironment.dev:        return Colors.yellowAccent;
-      case ConfigEnvironment.test:       return Colors.lightGreenAccent;
-      case ConfigEnvironment.production: return Styles().colors?.surface ?? Colors.white;
-      default:                           return Colors.white;
-    }
-  }
+  Color? get backgroundColor => Styles().colors?.surface ?? Colors.white;
 
   @protected
   BoxBorder? get border => null;
+
+  @protected
+  Color? get environmentColor {
+    switch(Config().configEnvironment) {
+      case ConfigEnvironment.dev:        return Colors.yellowAccent;
+      case ConfigEnvironment.test:       return Colors.lightGreenAccent;
+      default:                           return null;
+    }
+  }
 
   @protected
   Decoration? get decoration => BoxDecoration(color: backgroundColor, border: border);
@@ -71,10 +73,10 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(decoration: widget.decoration, child:
-        Row(children:
-          buildTabs(),
-        ),
+        Row(children: buildTabs()),
       ),
+      Visibility(visible: widget.environmentColor != null,
+          child: Container(height: 4, color: widget.environmentColor))
     ]);
   }
 
@@ -85,9 +87,7 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
     for (int tabIndex = 0; tabIndex < tabsCount; tabIndex++) {
       Widget? tab = widget.buildTab(context, _contentListCodes![tabIndex], tabIndex);
       if (tab != null) {
-        tabs.add(Expanded(
-          child: tab,
-        ));
+        tabs.add(Expanded(child: tab));
       }
     }
       
@@ -185,7 +185,7 @@ class TabWidget extends StatelessWidget {
   TextAlign get tabTextAlign => TextAlign.center;
 
   @protected
-  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies!.bold, color: selected ? Styles().colors!.fillColorSecondary : Styles().colors!.mediumGray, fontSize: 12);
+  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium, fontSize: 12);
 
   @protected
   double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
@@ -204,7 +204,8 @@ class TabWidget extends StatelessWidget {
   Widget getTabIcon(BuildContext context)  {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
+    return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
+        color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium) ?? defaultIcon : defaultIcon;
   }
 
   @protected
