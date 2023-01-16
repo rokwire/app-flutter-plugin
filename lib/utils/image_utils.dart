@@ -63,7 +63,7 @@ class ImageUtils {
   static Future<Uint8List?> applyLabelOverImage(Uint8List? imageBytes, String? label, {
     double width = 1024,
     double height = 1024,
-    TextDirection textDirection = TextDirection.ltr,
+    ui.TextDirection textDirection = ui.TextDirection.ltr,
     TextAlign textAlign = TextAlign.center,
     String? fontFamily,
     double? fontSize,
@@ -107,5 +107,84 @@ class ImageUtils {
       }
     }
     return null;
+  }
+
+  static Future<Uint8List?> mapGroupMarkerImage({
+    Color? backColor,
+    
+    Color? strokeColor,
+    double strokeWidth = 1,
+    
+    String? text,
+    TextStyle? textStyle,
+    
+    required double imageSize }) async {
+    ui.PictureRecorder recorder = ui.PictureRecorder();
+    Canvas canvas = Canvas(recorder, Rect.fromLTRB(0, 0, imageSize, imageSize));
+    Offset center = Offset(imageSize / 2, imageSize / 2);
+
+    if (backColor != null) {
+      canvas.drawCircle(center, center.dx, Paint()
+        ..color = backColor
+        ..style = PaintingStyle.fill
+      );
+    }
+
+    if (strokeColor != null) {
+      canvas.drawCircle(center, center.dx, Paint()
+        ..color = strokeColor
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke
+      );
+    }
+
+    if ((text != null) && (textStyle != null)) {
+      ui.Paragraph paragraph = _paragraphThatFitsText(text, size: Size(imageSize, imageSize), textStyle: textStyle);
+      canvas.drawParagraph(paragraph, Offset((imageSize - paragraph.width) / 2, (imageSize - paragraph.height) / 2));
+    }
+
+    ui.Picture picture = recorder.endRecording();
+    ui.Image image = await picture.toImage(imageSize.toInt(), imageSize.toInt());
+    ByteData? imageBytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    return imageBytes?.buffer.asUint8List();
+  }
+
+  static ui.Paragraph _paragraphThatFitsText(String text, {required Size size, required TextStyle textStyle, ui.TextDirection textDirection = ui.TextDirection.ltr, TextAlign textAlign = TextAlign.center, int? maxLines = 1}) {
+    
+    double textScaleFactor = 1.0;
+    while (0.0 < textScaleFactor) {
+      TextPainter textPainter = TextPainter(
+        text: TextSpan(text: text, style: textStyle),
+        textDirection: textDirection,
+        textScaleFactor: textScaleFactor,
+        maxLines: maxLines,
+      )..layout();
+      if ((textPainter.width <= size.width) && (textPainter.height <= size.height)) {
+        break;
+      }
+      else {
+        textScaleFactor -= 0.1;
+      }
+    }
+
+    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaleFactor: (0 < textScaleFactor) ? textScaleFactor : 1, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+    ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
+    return paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: size.width));
+
+    /* ui.Paragraph? paragraph;
+    double textScaleFactor = 1.0;
+    while (0.0 < textScaleFactor) {
+      ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaleFactor: textScaleFactor, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+      ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
+      paragraph = paragraphBuilder.build();
+      paragraph.layout(ui.ParagraphConstraints(width: size.width));
+      if ((paragraph.width <= size.width) && (paragraph.height <= size.hashCode)) {
+        break;
+      }
+      else {
+        textScaleFactor -= 0.1;
+      }
+    }
+    return paragraph ?? (ui.ParagraphBuilder(textStyle.getParagraphStyle())..addText(text)).build()..layout(ui.ParagraphConstraints(width: size.width)); */
   }
 }
