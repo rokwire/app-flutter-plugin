@@ -125,8 +125,11 @@ class AppDateTime with Service {
         format = iso8601DateTimeFormat;
       }
       DateFormat dateFormat = DateFormat(format, locale);
-      if (ignoreTimeZone! || useDeviceLocalTimeZone) {
+      if (ignoreTimeZone!) {
           formattedDateTime = dateFormat.format(dateTime);
+      } else if (useDeviceLocalTimeZone) {
+        DateTime? dt = (dateTime.isUtc) ? getDeviceTimeFromUtcTime(dateTime) : dateTime;
+        formattedDateTime = (dt != null) ? dateFormat.format(dt) : null;
       } else {
           timezone.Location? uniLocation = universityLocation;
           timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;

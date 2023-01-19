@@ -30,6 +30,12 @@ class VerticalTitleValueSection extends StatelessWidget {
   final Color? valueTextColor;
   final TextStyle? valueTextStyle;
 
+  final String? hint;
+  final String? hintFontFamily;
+  final double hintFontSize;
+  final Color? hintTextColor;
+  final TextStyle? hintTextStyle;
+
   final BoxBorder? border;
   final Color? borderColor;
   final double borderWidth;
@@ -49,6 +55,12 @@ class VerticalTitleValueSection extends StatelessWidget {
     this.valueFontSize = 24,
     this.valueTextColor,
     this.valueTextStyle,
+
+    this.hint,
+    this.hintFontFamily,
+    this.hintFontSize = 12,
+    this.hintTextColor,
+    this.hintTextStyle,
 
     this.border,
     this.borderColor,
@@ -76,6 +88,15 @@ class VerticalTitleValueSection extends StatelessWidget {
   @protected TextStyle get defaultValueTextStyle => TextStyle(fontFamily: displayValueFontFamily, fontSize: valueFontSize, color: displayValueTextColor);
   @protected TextStyle get displayValueTextStyle => valueTextStyle ?? defaultValueTextStyle;
 
+  @protected Color? get defaultHintTextColor => Styles().colors?.textBackground;
+  @protected Color? get displayHintTextColor => hintTextColor ?? defaultHintTextColor;
+  
+  @protected String? get defaultHintFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get displayHintFontFamily => hintFontFamily ?? defaultHintFontFamily;
+
+  @protected TextStyle get defaultHintTextStyle => TextStyle(fontFamily: displayHintFontFamily, fontSize: hintFontSize, color: displayHintTextColor);
+  @protected TextStyle get displayHintTextStyle => hintTextStyle ?? defaultHintTextStyle;
+
   @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? Colors.transparent;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
@@ -94,6 +115,7 @@ class VerticalTitleValueSection extends StatelessWidget {
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
               (title != null) ? Row(children: [Expanded(child: Text(title ?? '', style: displayTitleTextStyle,))]) : Container(),
               (value != null) ? Row(children: [Expanded(child: Text(value ?? '', style: displayValueTextStyle))]) : Container(),
+              (hint != null) ? Row(children: [Expanded(child: Text(hint ?? '', style: displayHintTextStyle))]) : Container(),
             ],),
           ),
         ),
