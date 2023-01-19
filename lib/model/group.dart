@@ -25,6 +25,7 @@ import 'package:intl/intl.dart';
 class Group {
 	String?                       id;
 	String?                       category;
+	Map<String, dynamic>?         filters;
 	String?                       type;
 	String?                       title;
   String?                       description;
@@ -60,7 +61,7 @@ class Group {
   GroupSettings?                 settings;
 
   Group({
-	  this.id, this.category, this.type, this.title, this.description, this.privacy, 
+	  this.id, this.category, this.filters, this.type, this.title, this.description, this.privacy, 
     this.dateCreatedUtc, this.dateUpdatedUtc, this.dateManagedMembershipUpdatedUtc, this.dateMembershipUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
@@ -72,6 +73,7 @@ class Group {
     return (json != null) ? Group(
       id                             : JsonUtils.stringValue(json['id']),
       category                       : JsonUtils.stringValue(json['category']),
+      filters                        : JsonUtils.mapValue(json['filters']),
       type                           : JsonUtils.stringValue(json['type']),
       title                          : JsonUtils.stringValue(json['title']),
       description                    : JsonUtils.stringValue(json['description']),
@@ -112,6 +114,7 @@ class Group {
     return (other != null) ? Group(
       id                             : other.id,
       category                       : other.category,
+      filters                        : other.filters,
       type                           : other.type,
       title                          : other.title,
       description                    : other.description,
@@ -152,6 +155,7 @@ class Group {
     return {
       'id'                            : id,
       'category'                      : category,
+      'filters'                       : filters,
       'type'                          : type,
       'title'                         : title,
       'description'                   : description,
@@ -193,6 +197,7 @@ class Group {
     (other is Group) &&
       (other.id == id) &&
       (other.category == category) &&
+      (const DeepCollectionEquality().equals(other.filters, filters)) &&
       (other.type == type) &&
       (other.title == title) &&
       (other.description == description) &&
@@ -232,6 +237,7 @@ class Group {
   int get hashCode =>
     (id?.hashCode ?? 0) ^
     (category?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(filters)) ^
     (type?.hashCode ?? 0) ^
     (title?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
