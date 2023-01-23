@@ -214,9 +214,7 @@ class TabWidget extends StatelessWidget {
   // Selected Indicator
 
   @protected
-  Widget buildSelectedIndicator(BuildContext context) => Positioned.fill(child:
-    Container(height: selectedIndicatorHeight, color: selectedIndicatorColor),
-  );
+  Widget buildSelectedIndicator(BuildContext context) => Container(height: selectedIndicatorHeight, color: selectedIndicatorColor);
 
   @protected
   double get selectedIndicatorHeight => 4;

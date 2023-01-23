@@ -345,7 +345,7 @@ class ActionsMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> flexibleButtons = [];
     for (Widget button in buttons) {
-      flexibleButtons.add(Flexible(flex: 1, child: button));
+      flexibleButtons.add(button);
     }
     Widget? closeButton = displayCloseButtonIcon;
     return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
