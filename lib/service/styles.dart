@@ -435,7 +435,7 @@ class UiTextStyles {
     if(styleMap != null){
       styles = <String, TextStyle> {};
       styleMap.forEach((key, value) {
-        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), colors: colors);
+        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), stylesMap: styleMap, colors: colors);
         if(style!=null){
           styles![key] = style;
         }
@@ -448,7 +448,7 @@ class UiTextStyles {
     return styleMap[key];
   }
 
-  static TextStyle? constructTextStyle({Map<String, dynamic>? style, UiColors? colors}){
+  static TextStyle? constructTextStyle({Map<String, dynamic>? style, Map<String, dynamic>? stylesMap, UiColors? colors}){
     if(style == null){
       return null;
     }
@@ -466,9 +466,22 @@ class UiTextStyles {
     double? letterSpacing = JsonUtils.doubleValue(style['letter_spacing']);
     double? wordSpacing = JsonUtils.doubleValue(style['word_spacing']);
     double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
+    bool inherit =  JsonUtils.boolValue(style["inherit"]) ?? true;
 
-    return  TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor, inherit: inherit);
+
+    //Extending capabilities
+    String? extendsKey = JsonUtils.stringValue(style['extends']);
+    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesMap!=null ? JsonUtils.mapValue(stylesMap[extendsKey]) : null);
+    TextStyle? ancestorTextStyle = constructTextStyle(style: ancestorStyleMap, stylesMap: stylesMap, colors: colors);
+    bool overrides =  JsonUtils.boolValue(style["override"]) ?? true;
+
+    if(ancestorTextStyle != null ){
+      return overrides ? ancestorTextStyle.merge(textStyle) : ancestorTextStyle;
+    }
+
+    return textStyle;
   }
 }
 
