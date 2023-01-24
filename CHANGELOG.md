@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledge the new group date fields [#244](https://github.com/rokwire/app-flutter-plugin/issues/244).
 - Added group filters [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 - Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
+- TextStyle acknowledge extends, override and inherit fields. Supports extending of existing styles [#2932](https://github.com/rokwire/illinois-app/issues/2932).
 
 ## [1.3.1] - 2023-01-03
 ### Deleted
