@@ -285,12 +285,12 @@ class Groups with Service implements NotificationsListener {
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, String? category, Map<String, dynamic>? filters, Set<String>? tags, int? offset, int? limit}) async {
     if (contentType == GroupsContentType.my) {
       await _updateUserGroupsFromNetSync();
       return userGroups;
     } else {
-      return await _loadAllGroups(category: category);
+      return await _loadAllGroups(title: title, category: category, filters: filters, tags: tags, offset: offset, limit:  limit);
     }
   }
 
@@ -340,12 +340,13 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadAllGroups({String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? title, String? category, Map<String, dynamic>? filters, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
       String? post = JsonUtils.encode({
         'title': title,
         'category': category,
+        'filters': filters,
         'tags': tags,
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
