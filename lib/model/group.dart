@@ -114,7 +114,7 @@ class Group {
     return (other != null) ? Group(
       id                             : other.id,
       category                       : other.category,
-      filters                        : other.filters,
+      filters                        : MapUtils.from(other.filters),
       type                           : other.type,
       title                          : other.title,
       description                    : other.description,
