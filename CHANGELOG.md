@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Clear unread notifications count when logged out.
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
+- Fixed Groups copy constructor [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 ### Added
 - Added hint in VerticalTitleValueSection [#2892](https://github.com/rokwire/illinois-app/issues/2892).
 - Acknowledge the new group date fields [#244](https://github.com/rokwire/app-flutter-plugin/issues/244).
