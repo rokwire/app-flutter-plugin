@@ -73,7 +73,7 @@ class Group {
     return (json != null) ? Group(
       id                             : JsonUtils.stringValue(json['id']),
       category                       : JsonUtils.stringValue(json['category']),
-      attributes                     : JsonUtils.mapValue(json['filters']), //TBD: 'attributes'
+      attributes                     : JsonUtils.mapValue(json['attributes']),
       type                           : JsonUtils.stringValue(json['type']),
       title                          : JsonUtils.stringValue(json['title']),
       description                    : JsonUtils.stringValue(json['description']),
@@ -155,7 +155,7 @@ class Group {
     return {
       'id'                            : id,
       'category'                      : category,
-      'filters'                       : attributes, // TBD: 'attributes'
+      'attributes'                    : attributes,
       'type'                          : type,
       'title'                         : title,
       'description'                   : description,

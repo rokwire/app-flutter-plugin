@@ -346,7 +346,7 @@ class Groups with Service implements NotificationsListener {
       String? post = JsonUtils.encode({
         'title': title,
         'category': category,
-        'filters': attributes, // TBD: 'attributes'
+        'attributes': attributes,
         'tags': tags,
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
