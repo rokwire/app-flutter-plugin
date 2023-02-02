@@ -177,6 +177,18 @@ class ContentAttributes {
     return null;
   }
 
+  List<String> displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributesCategoryUsage? usage }) {
+    List<String> displayList = <String>[];
+    if ((categories != null) && (selection != null)) {
+      for (ContentAttributesCategory category in categories!) {
+        if ((usage == null) || (category.usage == usage)) {
+          displayList.addAll(category.displayAttributesListFromSelection(selection, contentAttributes: this) ?? <String>[]);
+        }
+      }
+    }
+    return displayList;
+  }
+
   bool get hasRequired {
     if (categories != null) {
       for (ContentAttributesCategory category in categories!) {
@@ -200,12 +212,13 @@ class ContentAttributesCategory {
   final String? emptyHint;
   final String? semanticsHint;
   final ContentAttributesCategoryWidget? widget;
+  final ContentAttributesCategoryUsage? usage;
   final int? minRequiredCount;
   final int? maxRequiredCount;
   final List<ContentAttribute>? attributes;
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
-    this.emptyHint, this.semanticsHint, this.widget,
+    this.emptyHint, this.semanticsHint, this.widget, this.usage,
     this.minRequiredCount, this.maxRequiredCount,
     this.attributes});
 
@@ -220,6 +233,7 @@ class ContentAttributesCategory {
       emptyHint: JsonUtils.stringValue(json['empty-hint']),
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
+      usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
       minRequiredCount: JsonUtils.intValue(json['min-required-count']),
       maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['values'])),
@@ -234,6 +248,7 @@ class ContentAttributesCategory {
     'empty-hint': emptyHint,
     'semantics-hint': semanticsHint,
     'widget': contentAttributesCategoryWidgetToString(widget),
+    'usage': contentAttributesCategoryUsageToString(usage),
     'min-required-count' : minRequiredCount,
     'max-required-count' : maxRequiredCount,
     'values': attributes,
@@ -251,6 +266,7 @@ class ContentAttributesCategory {
     (emptyHint == other.emptyHint) &&
     (semanticsHint == other.semanticsHint) &&
     (widget == other.widget) &&
+    (usage == other.usage) &&
     (minRequiredCount == other.minRequiredCount) &&
     (maxRequiredCount == other.maxRequiredCount) &&
     const DeepCollectionEquality().equals(attributes, other.attributes);
@@ -264,6 +280,7 @@ class ContentAttributesCategory {
     (emptyHint?.hashCode ?? 0) ^
     (semanticsHint?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
+    (usage?.hashCode ?? 0) ^
     (minRequiredCount?.hashCode ?? 0) ^
     (maxRequiredCount?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes));
@@ -274,8 +291,12 @@ class ContentAttributesCategory {
   bool get isMultipleSelection => (maxRequiredCount != 1);
   bool get isSingleSelection => (maxRequiredCount == 1);
 
-  bool get isDropdownEditWidget => (widget == ContentAttributesCategoryWidget.dropdown);
-  bool get isCheckboxEditWidget => (widget == ContentAttributesCategoryWidget.checkbox);
+  bool get isDropdownWidget => (widget == ContentAttributesCategoryWidget.dropdown);
+  bool get isCheckboxWidget => (widget == ContentAttributesCategoryWidget.checkbox);
+
+  bool get isLabelUsage => (usage == ContentAttributesCategoryUsage.label);
+  bool get isCategoryUsage => (usage == ContentAttributesCategoryUsage.category);
+  bool get isPropertyUsage => (usage == ContentAttributesCategoryUsage.property);
 
   ContentAttribute? findAttribute({String? label, dynamic value}) {
     if (attributes != null) {
@@ -332,6 +353,36 @@ class ContentAttributesCategory {
     return filteredAttributes;
   }
 
+  List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributes? contentAttributes } ) {
+    dynamic value = (selection != null) ? selection[id] : null;
+    if (value is String) {
+      String? displayValue = this.displayValue(value, contentAttributes: contentAttributes);
+      if (displayValue != null) {
+        return <String>[displayValue];
+      }
+    }
+    else if (value is List<String>) {
+      List<String> displayList = <String>[];
+      for (String entry in value) {
+        String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes);
+        if (displayValue != null) {
+          displayList.add(displayValue);
+        }
+      }
+      return displayList.isNotEmpty ? displayList : null;
+    }
+    return null;
+  }
+
+  String? displayValue(String attributeLabel, { ContentAttributes? contentAttributes }) {
+    String? displayValue = attributeLabel;
+    if ((widget == ContentAttributesCategoryWidget.checkbox) && (usage == ContentAttributesCategoryUsage.label)) {
+      ContentAttribute? attribute = findAttribute(label: attributeLabel);
+      displayValue = (attribute?.value == true) ? title : null;
+    }
+    return (displayValue != null) ? (contentAttributes?.stringValue(displayValue) ?? displayValue) : null;
+  }
+
   // List<ContentAttributesCategory> JSON Serialization
 
   static List<ContentAttributesCategory>? listFromJson(List<dynamic>? jsonList) {
@@ -374,6 +425,29 @@ String? contentAttributesCategoryWidgetToString(ContentAttributesCategoryWidget?
   switch(value) {
     case ContentAttributesCategoryWidget.dropdown: return 'dropdown';
     case ContentAttributesCategoryWidget.checkbox: return 'checkbox';
+    default: return null;
+  }
+}
+
+/////////////////////////////////////
+// ContentAttributesCategoryUsage
+
+enum ContentAttributesCategoryUsage { label, category, property }
+
+ContentAttributesCategoryUsage? contentAttributesCategoryUsageFromString(String? value) {
+  switch(value) {
+    case 'label': return ContentAttributesCategoryUsage.label;
+    case 'category': return ContentAttributesCategoryUsage.category;
+    case 'property': return ContentAttributesCategoryUsage.property;
+    default: return null;
+  }
+}
+
+String? contentAttributesCategoryUsageToString(ContentAttributesCategoryUsage? value) {
+  switch(value) {
+    case ContentAttributesCategoryUsage.label: return 'label';
+    case ContentAttributesCategoryUsage.category: return 'category';
+    case ContentAttributesCategoryUsage.property: return 'property';
     default: return null;
   }
 }
