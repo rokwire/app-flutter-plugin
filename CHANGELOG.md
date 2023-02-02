@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
 - TextStyle acknowledge extends, override and inherit fields. Supports extending of existing styles [#2932](https://github.com/rokwire/illinois-app/issues/2932).
 - Added content attributes support to pluging [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Handle multiple encryption keys for limited secret access [#254](https://github.com/rokwire/app-flutter-plugin/issues/254)
 
 ## [1.3.1] - 2023-01-03
 ### Deleted
