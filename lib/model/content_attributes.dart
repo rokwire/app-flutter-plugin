@@ -199,13 +199,13 @@ class ContentAttributesCategory {
   final String? text;
   final String? emptyHint;
   final String? semanticsHint;
-  final ContentAttributesCategoryWidget? widget;
+  final ContentAttributesCategoryEditWidget? editWidget;
   final int? minRequiredCount;
   final int? maxRequiredCount;
   final List<ContentAttribute>? attributes;
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
-    this.emptyHint, this.semanticsHint, this.widget,
+    this.emptyHint, this.semanticsHint, this.editWidget,
     this.minRequiredCount, this.maxRequiredCount,
     this.attributes});
 
@@ -219,7 +219,7 @@ class ContentAttributesCategory {
       text: JsonUtils.stringValue(json['text']),
       emptyHint: JsonUtils.stringValue(json['empty-hint']),
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
-      widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
+      editWidget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['edit-widget'])),
       minRequiredCount: JsonUtils.intValue(json['min-required-count']),
       maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['values'])),
@@ -233,7 +233,7 @@ class ContentAttributesCategory {
     'text': text,
     'empty-hint': emptyHint,
     'semantics-hint': semanticsHint,
-    'widget': contentAttributesCategoryWidgetToString(widget),
+    'edit-widget': contentAttributesCategoryWidgetToString(editWidget),
     'min-required-count' : minRequiredCount,
     'max-required-count' : maxRequiredCount,
     'values': attributes,
@@ -250,7 +250,7 @@ class ContentAttributesCategory {
     (text == other.text) &&
     (emptyHint == other.emptyHint) &&
     (semanticsHint == other.semanticsHint) &&
-    (widget == other.widget) &&
+    (editWidget == other.editWidget) &&
     (minRequiredCount == other.minRequiredCount) &&
     (maxRequiredCount == other.maxRequiredCount) &&
     const DeepCollectionEquality().equals(attributes, other.attributes);
@@ -263,7 +263,7 @@ class ContentAttributesCategory {
     (text?.hashCode ?? 0) ^
     (emptyHint?.hashCode ?? 0) ^
     (semanticsHint?.hashCode ?? 0) ^
-    (widget?.hashCode ?? 0) ^
+    (editWidget?.hashCode ?? 0) ^
     (minRequiredCount?.hashCode ?? 0) ^
     (maxRequiredCount?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes));
@@ -274,8 +274,8 @@ class ContentAttributesCategory {
   bool get isMultipleSelection => (maxRequiredCount != 1);
   bool get isSingleSelection => (maxRequiredCount == 1);
 
-  bool get isDropdownWidget => (widget == ContentAttributesCategoryWidget.dropdown);
-  bool get isCheckboxWidget => (widget == ContentAttributesCategoryWidget.checkbox);
+  bool get isDropdownEditWidget => (editWidget == ContentAttributesCategoryEditWidget.dropdown);
+  bool get isCheckboxEditWidget => (editWidget == ContentAttributesCategoryEditWidget.checkbox);
 
   ContentAttribute? findAttribute({String? label, dynamic value}) {
     if (attributes != null) {
@@ -358,22 +358,22 @@ class ContentAttributesCategory {
 }
 
 /////////////////////////////////////
-// ContentAttributesCategoryWidget
+// ContentAttributesCategoryEditWidget
 
-enum ContentAttributesCategoryWidget { dropdown, checkbox }
+enum ContentAttributesCategoryEditWidget { dropdown, checkbox }
 
-ContentAttributesCategoryWidget? contentAttributesCategoryWidgetFromString(String? value) {
+ContentAttributesCategoryEditWidget? contentAttributesCategoryWidgetFromString(String? value) {
   switch(value) {
-    case 'dropdown': return ContentAttributesCategoryWidget.dropdown;
-    case 'checkbox': return ContentAttributesCategoryWidget.checkbox;
+    case 'dropdown': return ContentAttributesCategoryEditWidget.dropdown;
+    case 'checkbox': return ContentAttributesCategoryEditWidget.checkbox;
     default: return null;
   }
 }
 
-String? contentAttributesCategoryWidgetToString(ContentAttributesCategoryWidget? value) {
+String? contentAttributesCategoryWidgetToString(ContentAttributesCategoryEditWidget? value) {
   switch(value) {
-    case ContentAttributesCategoryWidget.dropdown: return 'dropdown';
-    case ContentAttributesCategoryWidget.checkbox: return 'checkbox';
+    case ContentAttributesCategoryEditWidget.dropdown: return 'dropdown';
+    case ContentAttributesCategoryEditWidget.checkbox: return 'checkbox';
     default: return null;
   }
 }
