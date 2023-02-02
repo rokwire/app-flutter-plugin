@@ -177,12 +177,12 @@ class ContentAttributes {
     return null;
   }
 
-  List<String> displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributesCategoryUsage? usage }) {
+  List<String> displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributesCategoryUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
     if ((categories != null) && (selection != null)) {
       for (ContentAttributesCategory category in categories!) {
         if ((usage == null) || (category.usage == usage)) {
-          displayList.addAll(category.displayAttributesListFromSelection(selection, contentAttributes: this) ?? <String>[]);
+          displayList.addAll(category.displayAttributesListFromSelection(selection, contentAttributes: this, complete: complete) ?? <String>[]);
         }
       }
     }
@@ -294,6 +294,7 @@ class ContentAttributesCategory {
   bool get isDropdownWidget => (widget == ContentAttributesCategoryWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributesCategoryWidget.checkbox);
 
+  bool get isTagUsage => (usage == ContentAttributesCategoryUsage.tag);
   bool get isLabelUsage => (usage == ContentAttributesCategoryUsage.label);
   bool get isCategoryUsage => (usage == ContentAttributesCategoryUsage.category);
   bool get isPropertyUsage => (usage == ContentAttributesCategoryUsage.property);
@@ -353,10 +354,10 @@ class ContentAttributesCategory {
     return filteredAttributes;
   }
 
-  List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributes? contentAttributes } ) {
+  List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributes? contentAttributes, bool complete = false } ) {
     dynamic value = (selection != null) ? selection[id] : null;
     if (value is String) {
-      String? displayValue = this.displayValue(value, contentAttributes: contentAttributes);
+      String? displayValue = this.displayValue(value, contentAttributes: contentAttributes, complete: complete);
       if (displayValue != null) {
         return <String>[displayValue];
       }
@@ -364,7 +365,7 @@ class ContentAttributesCategory {
     else if (value is List<String>) {
       List<String> displayList = <String>[];
       for (String entry in value) {
-        String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes);
+        String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes, complete: complete);
         if (displayValue != null) {
           displayList.add(displayValue);
         }
@@ -374,9 +375,9 @@ class ContentAttributesCategory {
     return null;
   }
 
-  String? displayValue(String attributeLabel, { ContentAttributes? contentAttributes }) {
+  String? displayValue(String attributeLabel, { ContentAttributes? contentAttributes, bool complete = false }) {
     String? displayValue = attributeLabel;
-    if ((widget == ContentAttributesCategoryWidget.checkbox) && (usage == ContentAttributesCategoryUsage.label)) {
+    if ((complete != true) && (widget == ContentAttributesCategoryWidget.checkbox) && (usage == ContentAttributesCategoryUsage.label)) {
       ContentAttribute? attribute = findAttribute(label: attributeLabel);
       displayValue = (attribute?.value == true) ? title : null;
     }
@@ -432,10 +433,11 @@ String? contentAttributesCategoryWidgetToString(ContentAttributesCategoryWidget?
 /////////////////////////////////////
 // ContentAttributesCategoryUsage
 
-enum ContentAttributesCategoryUsage { label, category, property }
+enum ContentAttributesCategoryUsage { tag, label, category, property }
 
 ContentAttributesCategoryUsage? contentAttributesCategoryUsageFromString(String? value) {
   switch(value) {
+    case 'tag': return ContentAttributesCategoryUsage.tag;
     case 'label': return ContentAttributesCategoryUsage.label;
     case 'category': return ContentAttributesCategoryUsage.category;
     case 'property': return ContentAttributesCategoryUsage.property;
@@ -445,6 +447,7 @@ ContentAttributesCategoryUsage? contentAttributesCategoryUsageFromString(String?
 
 String? contentAttributesCategoryUsageToString(ContentAttributesCategoryUsage? value) {
   switch(value) {
+    case ContentAttributesCategoryUsage.tag: return 'tag';
     case ContentAttributesCategoryUsage.label: return 'label';
     case ContentAttributesCategoryUsage.category: return 'category';
     case ContentAttributesCategoryUsage.property: return 'property';
