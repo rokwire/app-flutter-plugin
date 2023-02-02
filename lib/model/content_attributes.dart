@@ -123,48 +123,6 @@ class ContentAttributes {
     while (modified);
   }
 
-  String selectionDescription(Map<String, dynamic>? selection, {
-    String categorySeparator = '; ',
-    String attributeSeparator = ', ',
-    String titleDelimiter = ': '
-  }) {
-    String descr = '';
-    if ((categories != null) && (selection != null)) {
-      for (ContentAttributesCategory category in categories!) {
-        String? categoryTitle = stringValue(category.title);
-        dynamic categorySelection = selection[category.id];
-        List<ContentAttribute>? categoryAttributes = category.attributes;
-        if ((categoryTitle != null) && categoryTitle.isNotEmpty &&
-            ((categorySelection is String) || ((categorySelection is List) && categorySelection.isNotEmpty)) &&
-            (categoryAttributes != null) && categoryAttributes.isNotEmpty) {
-
-          String attributesSelection = '';
-          for (ContentAttribute attribute in categoryAttributes) {
-            if (((categorySelection is String) && (categorySelection == attribute.label)) ||
-                ((categorySelection is List) && categorySelection.contains(attribute.label)))
-            {
-              String? valueTitle = stringValue(attribute.label);
-              if ((valueTitle != null) && valueTitle.isNotEmpty) {
-                if (attributesSelection.isNotEmpty) {
-                  attributesSelection += attributeSeparator;
-                }
-                attributesSelection += valueTitle;
-              }
-            }
-          }
-
-          if (attributesSelection.isNotEmpty) {
-            if (descr.isNotEmpty) {
-              descr += categorySeparator;
-            }
-            descr += "$categoryTitle$titleDelimiter$attributesSelection";
-          }
-        }
-      }
-    }
-    return descr;
-  }
-
   ContentAttributesCategory? unsatisfiedCategoryFromSelection(Map<String, dynamic>? selection) {
     if (categories != null) {
       for (ContentAttributesCategory category in categories!) {
@@ -362,12 +320,14 @@ class ContentAttributesCategory {
         return <String>[displayValue];
       }
     }
-    else if (value is List<String>) {
+    else if (value is List) {
       List<String> displayList = <String>[];
-      for (String entry in value) {
-        String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes, complete: complete);
-        if (displayValue != null) {
-          displayList.add(displayValue);
+      for (dynamic entry in value) {
+        if (entry is String) {
+          String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes, complete: complete);
+          if (displayValue != null) {
+            displayList.add(displayValue);
+          }
         }
       }
       return displayList.isNotEmpty ? displayList : null;
