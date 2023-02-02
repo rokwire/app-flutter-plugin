@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve default handling for UIImages [#193](https://github.com/rokwire/app-flutter-plugin/issues/193)
 - Added miscellaneous helpers for GoogleMap plugin [#243](https://github.com/rokwire/app-flutter-plugin/issues/243)
 - Group filters renamed to attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Group's category and tags replaced by attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 ### Fixed
 - Clear unread notifications count when logged out.
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added filters filter to all groups GET request  [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 - Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
 - TextStyle acknowledge extends, override and inherit fields. Supports extending of existing styles [#2932](https://github.com/rokwire/illinois-app/issues/2932).
+- Added content attributes support to pluging [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 
 ## [1.3.1] - 2023-01-03
 ### Deleted
