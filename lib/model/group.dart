@@ -54,7 +54,6 @@ class Group {
   String?                        imageURL;
   String?                        webURL;
   Member?                        currentMember;
-  List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
   GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
   GroupSettings?                 settings;
@@ -65,7 +64,7 @@ class Group {
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
     this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
-    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest, this.settings
+    this.imageURL, this.webURL, this.currentMember, this.questions, this.membershipQuest, this.settings
     });
 
   static Group? fromJson(Map<String, dynamic>? json) {
@@ -101,7 +100,6 @@ class Group {
       imageURL                       : JsonUtils.stringValue(json['image_url']),
       webURL                         : JsonUtils.stringValue(json['web_url']),
       currentMember                  : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
-      tags                           : JsonUtils.listStringsValue(json['tags']),
       questions                      : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
       membershipQuest                : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
       settings                         : GroupSettings.fromJson(JsonUtils.mapValue(json['settings']))
@@ -141,7 +139,6 @@ class Group {
       imageURL                       : other.imageURL,
       webURL                         : other.webURL,
       currentMember                  : other.currentMember,
-      tags                           : ListUtils.from(other.tags),
       questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
       membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
       settings                          : GroupSettings.fromOther(other.settings),
@@ -181,7 +178,6 @@ class Group {
       'image_url'                     : imageURL,
       'web_url'                       : webURL,
       'current_member'                : currentMember?.toJson(),
-      'tags'                          : tags,
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
       'settings'                                : settings?.toJson()
@@ -222,7 +218,6 @@ class Group {
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
       (other.currentMember == currentMember) &&
-      (const DeepCollectionEquality().equals(other.tags, tags)) &&
       (const DeepCollectionEquality().equals(other.questions, questions)) &&
       (other.membershipQuest == membershipQuest) &&
       (other.settings == settings);
@@ -261,7 +256,6 @@ class Group {
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
     (currentMember?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(tags)) ^
     (const DeepCollectionEquality().hash(questions)) ^
     (membershipQuest?.hashCode ?? 0)^
     (settings?.hashCode ?? 0);
