@@ -300,16 +300,21 @@ class ContentAttributesCategory {
   }
 
   List<ContentAttribute>? attributesFromSelection(Map<String, LinkedHashSet<String>> selection) {
-    List<ContentAttribute>? filteredAttributes;
+    List<ContentAttribute>? fulfilledAttributes;
+    List<ContentAttribute>? suitedAttributes;
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
         if (attribute.fulfillsSelection(selection)) {
-          filteredAttributes ??= <ContentAttribute>[];
-          filteredAttributes.add(attribute);
+          fulfilledAttributes ??= <ContentAttribute>[];
+          fulfilledAttributes.add(attribute);
+        }
+        if (attribute.suitsSelection(selection)) {
+          suitedAttributes ??= <ContentAttribute>[];
+          suitedAttributes.add(attribute);
         }
       }
     }
-    return filteredAttributes;
+    return suitedAttributes ?? fulfilledAttributes;
   }
 
   List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributes? contentAttributes, bool complete = false } ) {
@@ -422,8 +427,9 @@ class ContentAttribute {
   final String? label;
   final dynamic value;
   final Map<String, dynamic>? requirements;
+  final Map<String, dynamic>? recommendations;
 
-  ContentAttribute({this.label, this.value, this.requirements});
+  ContentAttribute({this.label, this.value, this.requirements, this.recommendations});
 
   // JSON serialization
 
@@ -438,6 +444,7 @@ class ContentAttribute {
         label: JsonUtils.stringValue(json['label']),
         value: json['value'],
         requirements: JsonUtils.mapValue(json['requirements']),
+        recommendations: JsonUtils.mapValue(json['recommendations']),
       );
     }
     else {
@@ -449,6 +456,7 @@ class ContentAttribute {
     'label': label,
     'value': value,
     'requirements': requirements,
+    'recommendations': recommendations,
   };
 
   // Equality
@@ -458,13 +466,15 @@ class ContentAttribute {
     (other is ContentAttribute) &&
     (label == other.label) &&
     (value == other.value) &&
-    const DeepCollectionEquality().equals(requirements, other.requirements);
+    const DeepCollectionEquality().equals(requirements, other.requirements) &&
+    const DeepCollectionEquality().equals(recommendations, other.recommendations);
 
   @override
   int get hashCode =>
     (label?.hashCode ?? 0) ^
     (value?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(requirements));
+    (const DeepCollectionEquality().hash(requirements)) ^
+    (const DeepCollectionEquality().hash(recommendations));
 
   // Accessories
 
@@ -477,7 +487,7 @@ class ContentAttribute {
     }
     else {
       for (String key in requirements!.keys) {
-        if (!_matchRequirement(requirement: requirements![key], selection: selection[key])) {
+        if (!_matchCondition(condition: requirements![key], selection: selection[key])) {
           return false;
         }
       }
@@ -485,20 +495,34 @@ class ContentAttribute {
     }
   }
 
-  static bool _matchRequirement({dynamic requirement, LinkedHashSet<String>? selection}) {
-    if (requirement is String) {
-      return selection?.contains(requirement) ?? false;
+  bool suitsSelection(Map<String, LinkedHashSet<String>>? selection) {
+    if ((recommendations == null) || recommendations!.isEmpty || (selection == null) || selection.isEmpty) {
+      return false;
     }
-    else if (requirement is List) {
-      for (dynamic requirementEntry in requirement) {
-        if (!_matchRequirement(requirement: requirementEntry, selection: selection)) {
+    else {
+      for (String key in recommendations!.keys) {
+        if (!_matchCondition(condition: recommendations![key], selection: selection[key])) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  static bool _matchCondition({dynamic condition, LinkedHashSet<String>? selection}) {
+    if (condition is String) {
+      return selection?.contains(condition) ?? false;
+    }
+    else if (condition is List) {
+      for (dynamic conditionEntry in condition) {
+        if (!_matchCondition(condition: conditionEntry, selection: selection)) {
           return false;
         }
       }
       return true;
     }
     else {
-      return (requirement == null);
+      return (condition == null);
     }
   }
 
