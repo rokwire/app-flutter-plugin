@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added miscellaneous helpers for GoogleMap plugin [#243](https://github.com/rokwire/app-flutter-plugin/issues/243)
 - Group filters renamed to attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 - Group's category and tags replaced by attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Updated Group's attributes logic [#256](https://github.com/rokwire/app-flutter-plugin/issues/256).
 ### Fixed
 - Clear unread notifications count when logged out.
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).

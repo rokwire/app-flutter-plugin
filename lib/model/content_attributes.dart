@@ -10,21 +10,24 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class ContentAttributes {
   final List<ContentAttributesCategory>? categories;
+  final ContentAttributesRequirements? requirements;
   final Map<String, dynamic>? strings;
 
-  ContentAttributes({this.categories, this.strings});
+  ContentAttributes({this.categories, this.requirements, this.strings});
 
   // JSON serialization
 
   static ContentAttributes? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ContentAttributes(
       categories: ContentAttributesCategory.listFromJson(JsonUtils.listValue(json['content'])) ,
+      requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
       strings: JsonUtils.mapValue(json['strings']),
     ) : null;
   }
 
   toJson() => {
     'content': categories,
+    'requirements': requirements,
     'strings': strings,
   };
 
@@ -33,11 +36,13 @@ class ContentAttributes {
   @override
   bool operator==(dynamic other) =>
     (other is ContentAttributes) &&
+    (requirements == other.requirements) &&
     const DeepCollectionEquality().equals(categories, other.categories) &&
     const DeepCollectionEquality().equals(strings, other.strings);
 
   @override
   int get hashCode =>
+    (requirements?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(categories)) ^
     (const DeepCollectionEquality().hash(strings));
 
@@ -123,17 +128,33 @@ class ContentAttributes {
     while (modified);
   }
 
-  ContentAttributesCategory? unsatisfiedCategoryFromSelection(Map<String, dynamic>? selection) {
+  bool isCategoriesSelectionValid(Map<String, dynamic>? selection) {
     if (categories != null) {
       for (ContentAttributesCategory category in categories!) {
         dynamic categorySelection = (selection != null) ? selection[category.id] : null;
         if (!category.isSatisfiedFromSelection(categorySelection)) {
-          return category;
+          return false;
         }
       }
     }
-    return null;
+    return true;
   }
+
+  bool isSelectionValid(Map<String, LinkedHashSet<String>>? selection) =>
+    isCategoriesSelectionValid(selection) && (requirements?.isSelectionValid(selection) ?? true);
+
+  bool get hasRequiredCategories {
+    if (categories != null) {
+      for (ContentAttributesCategory category in categories!) {
+        if (category.isRequired) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool get hasRequired => hasRequiredCategories || (requirements?.hasRequired ?? false);
 
   List<String> displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributesCategoryUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
@@ -145,17 +166,6 @@ class ContentAttributes {
       }
     }
     return displayList;
-  }
-
-  bool get hasRequired {
-    if (categories != null) {
-      for (ContentAttributesCategory category in categories!) {
-        if (category.isRequired) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
 
@@ -285,18 +295,21 @@ class ContentAttributesCategory {
   }
 
   bool isSatisfiedFromSelection(dynamic selection) {
-    int selectedAttributesCount; 
+    int selectedCount = selectedAttributesCount(selection); 
+    return ((minRequiredCount == null) || (minRequiredCount! <= selectedCount)) &&
+           ((maxRequiredCount == null) || (maxRequiredCount! >= selectedCount));
+  }
+
+  static int selectedAttributesCount(dynamic selection) {
     if (selection is String) {
-      selectedAttributesCount = 1;
+      return 1;
     }
     else if (selection is Iterable) {
-      selectedAttributesCount = selection.length;
+      return selection.length;
     }
     else {
-      selectedAttributesCount = 0;
+      return 0;
     }
-    return ((minRequiredCount == null) || (minRequiredCount! <= selectedAttributesCount)) &&
-           ((maxRequiredCount == null) || (selectedAttributesCount <= maxRequiredCount!));
   }
 
   List<ContentAttribute>? attributesFromSelection(Map<String, LinkedHashSet<String>> selection) {
@@ -486,8 +499,11 @@ class ContentAttribute {
   }
 
   static bool _matchRequirement({dynamic requirement, LinkedHashSet<String>? selection}) {
-    if (requirement is String) {
-      return selection?.contains(requirement) ?? false;
+    if ((selection == null) || selection.isEmpty) {
+      return true;
+    }
+    else if (requirement is String) {
+      return selection.contains(requirement);
     }
     else if (requirement is List) {
       for (dynamic requirementEntry in requirement) {
@@ -525,4 +541,74 @@ class ContentAttribute {
     }
     return jsonList;
   }
+}
+
+/////////////////////////////////////
+// ContentAttributesRequirements
+
+class ContentAttributesRequirements {
+  final int? minRequiredCount;
+  final int? maxRequiredCount;
+
+  ContentAttributesRequirements({this.minRequiredCount, this.maxRequiredCount});
+
+  // JSON serialization
+
+  static ContentAttributesRequirements? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? ContentAttributesRequirements(
+      minRequiredCount: JsonUtils.intValue(json['min-required-count']),
+      maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
+    ) : null;
+  }
+
+  toJson() => {
+    'min-required-count' : minRequiredCount,
+    'max-required-count' : maxRequiredCount,
+  };
+
+  // Equality
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is ContentAttributesRequirements) &&
+    (minRequiredCount == other.minRequiredCount) &&
+    (maxRequiredCount == other.maxRequiredCount);
+
+  @override
+  int get hashCode =>
+    (minRequiredCount?.hashCode ?? 0) ^
+    (maxRequiredCount?.hashCode ?? 0);
+
+
+  // Accessories
+
+  bool isSelectionValid(Map<String, dynamic>? selection) {
+    if ((minRequiredCount != null) || (maxRequiredCount != null)) {
+      int selectedCount = _selectedCount(selection);
+      return ((minRequiredCount == null) || (minRequiredCount! <= selectedCount)) &&
+            ((maxRequiredCount == null) || (maxRequiredCount! >= selectedCount));
+    }
+    else {
+      return true;
+    }
+  }
+
+  bool canSelectMore(Map<String, LinkedHashSet<String>>? selection) {
+    return (maxRequiredCount == null) || (maxRequiredCount! > _selectedCount(selection));
+  }
+
+  static int _selectedCount(Map<String, dynamic>? selection) {
+    int selectedCount = 0;
+    if (selection != null) {
+      for (dynamic entry in selection.values) {
+        if (0 < ContentAttributesCategory.selectedAttributesCount(entry)) {
+          selectedCount++;
+        }
+      }
+    }
+    return selectedCount;
+  }
+
+  bool get hasRequired =>
+    (minRequiredCount != null) && (minRequiredCount! > 0);
 }
