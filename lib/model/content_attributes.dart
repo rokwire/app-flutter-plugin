@@ -486,8 +486,11 @@ class ContentAttribute {
   }
 
   static bool _matchRequirement({dynamic requirement, LinkedHashSet<String>? selection}) {
-    if (requirement is String) {
-      return selection?.contains(requirement) ?? false;
+    if ((selection == null) || selection.isEmpty) {
+      return true;
+    }
+    else if (requirement is String) {
+      return selection.contains(requirement);
     }
     else if (requirement is List) {
       for (dynamic requirementEntry in requirement) {
