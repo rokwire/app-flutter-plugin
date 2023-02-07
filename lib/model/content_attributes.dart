@@ -181,13 +181,14 @@ class ContentAttributesCategory {
   final String? semanticsHint;
   final ContentAttributesCategoryWidget? widget;
   final ContentAttributesCategoryUsage? usage;
+  final ContentAttributesCategoryRequirementsMode? requirementsMode;
   final int? minRequiredCount;
   final int? maxRequiredCount;
   final List<ContentAttribute>? attributes;
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
     this.emptyHint, this.semanticsHint, this.widget, this.usage,
-    this.minRequiredCount, this.maxRequiredCount,
+    this.requirementsMode, this.minRequiredCount, this.maxRequiredCount,
     this.attributes});
 
   // JSON serialization
@@ -202,6 +203,7 @@ class ContentAttributesCategory {
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
+      requirementsMode: contentAttributesCategoryRequirementsModeFromString(JsonUtils.stringValue(json['requirements-mode'])),
       minRequiredCount: JsonUtils.intValue(json['min-required-count']),
       maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['values'])),
@@ -217,6 +219,7 @@ class ContentAttributesCategory {
     'semantics-hint': semanticsHint,
     'widget': contentAttributesCategoryWidgetToString(widget),
     'usage': contentAttributesCategoryUsageToString(usage),
+    'requirements-mode': contentAttributesCategoryRequirementsModeToString(requirementsMode),
     'min-required-count' : minRequiredCount,
     'max-required-count' : maxRequiredCount,
     'values': attributes,
@@ -235,6 +238,7 @@ class ContentAttributesCategory {
     (semanticsHint == other.semanticsHint) &&
     (widget == other.widget) &&
     (usage == other.usage) &&
+    (requirementsMode == other.requirementsMode) &&
     (minRequiredCount == other.minRequiredCount) &&
     (maxRequiredCount == other.maxRequiredCount) &&
     const DeepCollectionEquality().equals(attributes, other.attributes);
@@ -249,6 +253,7 @@ class ContentAttributesCategory {
     (semanticsHint?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
+    (requirementsMode?.hashCode ?? 0) ^
     (minRequiredCount?.hashCode ?? 0) ^
     (maxRequiredCount?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes));
@@ -285,7 +290,7 @@ class ContentAttributesCategory {
     if (attributeLabels != null) {
       for (String attributeLabel in attributeLabels) {
         ContentAttribute? attribute = findAttribute(label: attributeLabel);
-        if ((attribute == null) || !attribute.fulfillsSelection(selection)) {
+        if ((attribute == null) || !attribute.fulfillsSelection(selection, requirementsMode: requirementsMode)) {
           attributeLabels.remove(attributeLabel);
           return false;
         }
@@ -316,7 +321,7 @@ class ContentAttributesCategory {
     List<ContentAttribute>? filteredAttributes;
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.fulfillsSelection(selection)) {
+        if (attribute.fulfillsSelection(selection, requirementsMode: requirementsMode)) {
           filteredAttributes ??= <ContentAttribute>[];
           filteredAttributes.add(attribute);
         }
@@ -429,6 +434,27 @@ String? contentAttributesCategoryUsageToString(ContentAttributesCategoryUsage? v
 }
 
 /////////////////////////////////////
+// ContentAttributesCategoryRequirementsMode
+
+enum ContentAttributesCategoryRequirementsMode { exclusive, inclusive }
+
+ContentAttributesCategoryRequirementsMode? contentAttributesCategoryRequirementsModeFromString(String? value) {
+  switch(value) {
+    case 'exclusive': return ContentAttributesCategoryRequirementsMode.exclusive;
+    case 'inclusive': return ContentAttributesCategoryRequirementsMode.inclusive;
+    default: return null;
+  }
+}
+
+String? contentAttributesCategoryRequirementsModeToString(ContentAttributesCategoryRequirementsMode? value) {
+  switch(value) {
+    case ContentAttributesCategoryRequirementsMode.exclusive: return 'exclusive';
+    case ContentAttributesCategoryRequirementsMode.inclusive: return 'inclusive';
+    default: return null;
+  }
+}
+
+/////////////////////////////////////
 // ContentAttribute
 
 class ContentAttribute {
@@ -481,16 +507,13 @@ class ContentAttribute {
 
   // Accessories
 
-  bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection) {
+  bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributesCategoryRequirementsMode? requirementsMode }) {
     if ((requirements == null) || requirements!.isEmpty) {
       return true;
     }
-    else if (selection == null) {
-      return false;
-    }
     else {
       for (String key in requirements!.keys) {
-        if (!_matchRequirement(requirement: requirements![key], selection: selection[key])) {
+        if (!_matchRequirement(requirement: requirements![key], selection: selection?[key], requirementsMode: requirementsMode)) {
           return false;
         }
       }
@@ -498,9 +521,12 @@ class ContentAttribute {
     }
   }
 
-  static bool _matchRequirement({dynamic requirement, LinkedHashSet<String>? selection}) {
-    if ((selection == null) || selection.isEmpty) {
+  bool _matchRequirement({ dynamic requirement, LinkedHashSet<String>? selection, ContentAttributesCategoryRequirementsMode? requirementsMode }) {
+    if (requirement == null) {
       return true;
+    }
+    else if ((selection == null) || selection.isEmpty) {
+      return (requirementsMode == ContentAttributesCategoryRequirementsMode.inclusive);
     }
     else if (requirement is String) {
       return selection.contains(requirement);
@@ -514,7 +540,7 @@ class ContentAttribute {
       return true;
     }
     else {
-      return (requirement == null);
+      return false;
     }
   }
 
