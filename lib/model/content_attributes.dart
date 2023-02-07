@@ -141,7 +141,7 @@ class ContentAttributes {
   }
 
   bool isSelectionValid(Map<String, LinkedHashSet<String>>? selection) =>
-    isCategoriesSelectionValid(selection) && (requirements?.isSelectionValid(selection) ?? true);
+    isCategoriesSelectionValid(selection) && (requirements?.isCategoriesSelectionValid(selection) ?? true);
 
   bool get hasRequiredCategories {
     if (categories != null) {
@@ -181,14 +181,12 @@ class ContentAttributesCategory {
   final String? semanticsHint;
   final ContentAttributesCategoryWidget? widget;
   final ContentAttributesCategoryUsage? usage;
-  final ContentAttributesCategoryRequirementsMode? requirementsMode;
-  final int? minRequiredCount;
-  final int? maxRequiredCount;
+  final ContentAttributesRequirements? requirements;
   final List<ContentAttribute>? attributes;
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
     this.emptyHint, this.semanticsHint, this.widget, this.usage,
-    this.requirementsMode, this.minRequiredCount, this.maxRequiredCount,
+    this.requirements,
     this.attributes});
 
   // JSON serialization
@@ -203,9 +201,7 @@ class ContentAttributesCategory {
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
-      requirementsMode: contentAttributesCategoryRequirementsModeFromString(JsonUtils.stringValue(json['requirements-mode'])),
-      minRequiredCount: JsonUtils.intValue(json['min-required-count']),
-      maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
+      requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['values'])),
     ) : null;
   }
@@ -219,9 +215,7 @@ class ContentAttributesCategory {
     'semantics-hint': semanticsHint,
     'widget': contentAttributesCategoryWidgetToString(widget),
     'usage': contentAttributesCategoryUsageToString(usage),
-    'requirements-mode': contentAttributesCategoryRequirementsModeToString(requirementsMode),
-    'min-required-count' : minRequiredCount,
-    'max-required-count' : maxRequiredCount,
+    'requirements': requirements,
     'values': attributes,
   };
 
@@ -238,9 +232,7 @@ class ContentAttributesCategory {
     (semanticsHint == other.semanticsHint) &&
     (widget == other.widget) &&
     (usage == other.usage) &&
-    (requirementsMode == other.requirementsMode) &&
-    (minRequiredCount == other.minRequiredCount) &&
-    (maxRequiredCount == other.maxRequiredCount) &&
+    (requirements == other.requirements) &&
     const DeepCollectionEquality().equals(attributes, other.attributes);
 
   @override
@@ -253,16 +245,14 @@ class ContentAttributesCategory {
     (semanticsHint?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
-    (requirementsMode?.hashCode ?? 0) ^
-    (minRequiredCount?.hashCode ?? 0) ^
-    (maxRequiredCount?.hashCode ?? 0) ^
+    (requirements?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes));
 
   // Accessories
 
-  bool get isRequired => (0 < (minRequiredCount ?? 0));
-  bool get isMultipleSelection => (maxRequiredCount != 1);
-  bool get isSingleSelection => (maxRequiredCount == 1);
+  bool get isRequired => requirements?.hasRequired ?? false;
+  bool get isMultipleSelection => (requirements?.maxSelectedCount != 1);
+  bool get isSingleSelection => (requirements?.maxSelectedCount == 1);
 
   bool get isDropdownWidget => (widget == ContentAttributesCategoryWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributesCategoryWidget.checkbox);
@@ -290,7 +280,7 @@ class ContentAttributesCategory {
     if (attributeLabels != null) {
       for (String attributeLabel in attributeLabels) {
         ContentAttribute? attribute = findAttribute(label: attributeLabel);
-        if ((attribute == null) || !attribute.fulfillsSelection(selection, requirementsMode: requirementsMode)) {
+        if ((attribute == null) || !attribute.fulfillsSelection(selection, requirementsMode: requirements?.mode)) {
           attributeLabels.remove(attributeLabel);
           return false;
         }
@@ -299,29 +289,14 @@ class ContentAttributesCategory {
     return true;
   }
 
-  bool isSatisfiedFromSelection(dynamic selection) {
-    int selectedCount = selectedAttributesCount(selection); 
-    return ((minRequiredCount == null) || (minRequiredCount! <= selectedCount)) &&
-           ((maxRequiredCount == null) || (maxRequiredCount! >= selectedCount));
-  }
-
-  static int selectedAttributesCount(dynamic selection) {
-    if (selection is String) {
-      return 1;
-    }
-    else if (selection is Iterable) {
-      return selection.length;
-    }
-    else {
-      return 0;
-    }
-  }
+  bool isSatisfiedFromSelection(dynamic selection) =>
+    requirements?.isAttributesSelectionValid(selection) ?? true;
 
   List<ContentAttribute>? attributesFromSelection(Map<String, LinkedHashSet<String>> selection) {
     List<ContentAttribute>? filteredAttributes;
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.fulfillsSelection(selection, requirementsMode: requirementsMode)) {
+        if (attribute.fulfillsSelection(selection, requirementsMode: requirements?.mode)) {
           filteredAttributes ??= <ContentAttribute>[];
           filteredAttributes.add(attribute);
         }
@@ -434,27 +409,6 @@ String? contentAttributesCategoryUsageToString(ContentAttributesCategoryUsage? v
 }
 
 /////////////////////////////////////
-// ContentAttributesCategoryRequirementsMode
-
-enum ContentAttributesCategoryRequirementsMode { exclusive, inclusive }
-
-ContentAttributesCategoryRequirementsMode? contentAttributesCategoryRequirementsModeFromString(String? value) {
-  switch(value) {
-    case 'exclusive': return ContentAttributesCategoryRequirementsMode.exclusive;
-    case 'inclusive': return ContentAttributesCategoryRequirementsMode.inclusive;
-    default: return null;
-  }
-}
-
-String? contentAttributesCategoryRequirementsModeToString(ContentAttributesCategoryRequirementsMode? value) {
-  switch(value) {
-    case ContentAttributesCategoryRequirementsMode.exclusive: return 'exclusive';
-    case ContentAttributesCategoryRequirementsMode.inclusive: return 'inclusive';
-    default: return null;
-  }
-}
-
-/////////////////////////////////////
 // ContentAttribute
 
 class ContentAttribute {
@@ -507,7 +461,7 @@ class ContentAttribute {
 
   // Accessories
 
-  bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributesCategoryRequirementsMode? requirementsMode }) {
+  bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributesRequirementsMode? requirementsMode }) {
     if ((requirements == null) || requirements!.isEmpty) {
       return true;
     }
@@ -521,12 +475,12 @@ class ContentAttribute {
     }
   }
 
-  bool _matchRequirement({ dynamic requirement, LinkedHashSet<String>? selection, ContentAttributesCategoryRequirementsMode? requirementsMode }) {
+  bool _matchRequirement({ dynamic requirement, LinkedHashSet<String>? selection, ContentAttributesRequirementsMode? requirementsMode }) {
     if (requirement == null) {
       return true;
     }
     else if ((selection == null) || selection.isEmpty) {
-      return (requirementsMode == ContentAttributesCategoryRequirementsMode.inclusive);
+      return (requirementsMode == ContentAttributesRequirementsMode.inclusive);
     }
     else if (requirement is String) {
       return selection.contains(requirement);
@@ -573,23 +527,26 @@ class ContentAttribute {
 // ContentAttributesRequirements
 
 class ContentAttributesRequirements {
-  final int? minRequiredCount;
-  final int? maxRequiredCount;
+  final int? minSelectedCount;
+  final int? maxSelectedCount;
+  final ContentAttributesRequirementsMode? mode;
 
-  ContentAttributesRequirements({this.minRequiredCount, this.maxRequiredCount});
+  ContentAttributesRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode});
 
   // JSON serialization
 
   static ContentAttributesRequirements? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ContentAttributesRequirements(
-      minRequiredCount: JsonUtils.intValue(json['min-required-count']),
-      maxRequiredCount: JsonUtils.intValue(json['max-required-count']),
+      minSelectedCount: JsonUtils.intValue(json['min-selected-count']),
+      maxSelectedCount: JsonUtils.intValue(json['max-selected-count']),
+      mode: contentAttributesCategoryRequirementsModeFromString(JsonUtils.stringValue(json['mode'])),
     ) : null;
   }
 
   toJson() => {
-    'min-required-count' : minRequiredCount,
-    'max-required-count' : maxRequiredCount,
+    'min-selected-count' : minSelectedCount,
+    'max-selected-count' : maxSelectedCount,
+    'mode': contentAttributesCategoryRequirementsModeToString(mode),
   };
 
   // Equality
@@ -597,37 +554,42 @@ class ContentAttributesRequirements {
   @override
   bool operator==(dynamic other) =>
     (other is ContentAttributesRequirements) &&
-    (minRequiredCount == other.minRequiredCount) &&
-    (maxRequiredCount == other.maxRequiredCount);
+    (minSelectedCount == other.minSelectedCount) &&
+    (maxSelectedCount == other.maxSelectedCount) &&
+    (mode == other.mode);
 
   @override
   int get hashCode =>
-    (minRequiredCount?.hashCode ?? 0) ^
-    (maxRequiredCount?.hashCode ?? 0);
+    (minSelectedCount?.hashCode ?? 0) ^
+    (maxSelectedCount?.hashCode ?? 0) ^
+    (mode?.hashCode ?? 0);
 
 
   // Accessories
 
-  bool isSelectionValid(Map<String, dynamic>? selection) {
-    if ((minRequiredCount != null) || (maxRequiredCount != null)) {
-      int selectedCount = _selectedCount(selection);
-      return ((minRequiredCount == null) || (minRequiredCount! <= selectedCount)) &&
-            ((maxRequiredCount == null) || (maxRequiredCount! >= selectedCount));
+  bool get hasRequired =>
+    (0 < (minSelectedCount ?? 0));
+
+  bool isCategoriesSelectionValid(Map<String, dynamic>? selection) {
+    if ((minSelectedCount != null) || (maxSelectedCount != null)) {
+      int selectedCount = _selectedCategoriesCount(selection);
+      return ((minSelectedCount == null) || (minSelectedCount! <= selectedCount)) &&
+             ((maxSelectedCount == null) || (maxSelectedCount! >= selectedCount));
     }
     else {
       return true;
     }
   }
 
-  bool canSelectMore(Map<String, LinkedHashSet<String>>? selection) {
-    return (maxRequiredCount == null) || (maxRequiredCount! > _selectedCount(selection));
+  bool canSelectMoreCategories(Map<String, dynamic>? selection) {
+    return (maxSelectedCount == null) || (maxSelectedCount! > _selectedCategoriesCount(selection));
   }
 
-  static int _selectedCount(Map<String, dynamic>? selection) {
+  static int _selectedCategoriesCount(Map<String, dynamic>? selection) {
     int selectedCount = 0;
     if (selection != null) {
       for (dynamic entry in selection.values) {
-        if (0 < ContentAttributesCategory.selectedAttributesCount(entry)) {
+        if (0 < _selectedAttributesCount(entry)) {
           selectedCount++;
         }
       }
@@ -635,6 +597,51 @@ class ContentAttributesRequirements {
     return selectedCount;
   }
 
-  bool get hasRequired =>
-    (minRequiredCount != null) && (minRequiredCount! > 0);
+  bool isAttributesSelectionValid(dynamic selection) {
+    int selectedCount = _selectedAttributesCount(selection); 
+    return ((minSelectedCount == null) || (minSelectedCount! <= selectedCount)) &&
+           ((maxSelectedCount == null) || (maxSelectedCount! >= selectedCount));
+  }
+
+  void validateAttributesSelection(LinkedHashSet<String>? selection) {
+    if ((maxSelectedCount != null) && (0 <= maxSelectedCount!) && (selection != null)) {
+      while (maxSelectedCount! < selection.length) {
+        selection.remove(selection.first);
+      }
+    }
+  }
+
+  static int _selectedAttributesCount(dynamic selection) {
+    if (selection is String) {
+      return 1;
+    }
+    else if (selection is Iterable) {
+      return selection.length;
+    }
+    else {
+      return 0;
+    }
+  }
+
+}
+
+/////////////////////////////////////
+// ContentAttributesRequirementsMode
+
+enum ContentAttributesRequirementsMode { exclusive, inclusive }
+
+ContentAttributesRequirementsMode? contentAttributesCategoryRequirementsModeFromString(String? value) {
+  switch(value) {
+    case 'exclusive': return ContentAttributesRequirementsMode.exclusive;
+    case 'inclusive': return ContentAttributesRequirementsMode.inclusive;
+    default: return null;
+  }
+}
+
+String? contentAttributesCategoryRequirementsModeToString(ContentAttributesRequirementsMode? value) {
+  switch(value) {
+    case ContentAttributesRequirementsMode.exclusive: return 'exclusive';
+    case ContentAttributesRequirementsMode.inclusive: return 'inclusive';
+    default: return null;
+  }
 }
