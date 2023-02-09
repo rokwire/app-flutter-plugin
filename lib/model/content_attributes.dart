@@ -128,6 +128,36 @@ class ContentAttributes {
     while (modified);
   }
 
+  void extendSelection(Map<String, LinkedHashSet<String>> selection, String? categoryId ) {
+    Queue<String> categoryIds = (categoryId != null) ? Queue<String>.from([categoryId]) : Queue<String>();
+    while(categoryIds.isNotEmpty) {
+      ContentAttributesCategory? category = findCategory(id: categoryIds.removeFirst());
+      if (category?.requirements?.mode == ContentAttributesRequirementsMode.inclusive) {
+        LinkedHashSet<String>? attributeLabels = selection[category?.id];
+        if ((attributeLabels != null) && attributeLabels.isNotEmpty) {
+          for (String attributeLabel in attributeLabels) {
+            ContentAttribute? attribute = category?.findAttribute(label: attributeLabel);
+            attribute?.requirements?.forEach((String requirementCategoryId, dynamic requirementValue) {
+              if (requirementValue is String) {
+                LinkedHashSet<String>? selectedRequiremntAttributeLabels = selection[requirementCategoryId];
+                if (selectedRequiremntAttributeLabels == null) {
+                  // ignore: prefer_collection_literals
+                  selection[requirementCategoryId] = selectedRequiremntAttributeLabels = LinkedHashSet<String>();
+                }
+                if (selectedRequiremntAttributeLabels.isEmpty) {
+                  selectedRequiremntAttributeLabels.add(requirementValue);
+                  if (!categoryIds.contains(requirementValue)) {
+                    categoryIds.addLast(requirementValue);
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+
   bool isCategoriesSelectionValid(Map<String, dynamic>? selection) {
     if (categories != null) {
       for (ContentAttributesCategory category in categories!) {
@@ -175,17 +205,22 @@ class ContentAttributes {
 class ContentAttributesCategory {
   final String? id;
   final String? title;
+  final String? longTitle;
   final String? description;
   final String? text;
   final String? emptyHint;
+  final String? emptyFilterHint;
   final String? semanticsHint;
+  final String? semanticsFilterHint;
+  final dynamic nullValue;
   final ContentAttributesCategoryWidget? widget;
   final ContentAttributesCategoryUsage? usage;
   final ContentAttributesRequirements? requirements;
   final List<ContentAttribute>? attributes;
 
-  ContentAttributesCategory({this.id, this.title, this.description, this.text,
-    this.emptyHint, this.semanticsHint, this.widget, this.usage,
+  ContentAttributesCategory({this.id, this.title, this.longTitle, this.description, this.text,
+    this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
+    this.nullValue, this.widget, this.usage,
     this.requirements,
     this.attributes});
 
@@ -195,10 +230,14 @@ class ContentAttributesCategory {
     return (json != null) ? ContentAttributesCategory(
       id: JsonUtils.stringValue(json['id']),
       title: JsonUtils.stringValue(json['title']),
+      longTitle: JsonUtils.stringValue(json['long-title']),
       description: JsonUtils.stringValue(json['description']),
       text: JsonUtils.stringValue(json['text']),
       emptyHint: JsonUtils.stringValue(json['empty-hint']),
+      emptyFilterHint: JsonUtils.stringValue(json['empty-filter-hint']),
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
+      semanticsFilterHint: JsonUtils.stringValue(json['semantics-filter-hint']),
+      nullValue: json['null-value'],
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
@@ -209,10 +248,14 @@ class ContentAttributesCategory {
   toJson() => {
     'id': id,
     'title': title,
+    'long-title' : longTitle,
     'description': description,
     'text': text,
     'empty-hint': emptyHint,
+    'empty-filter-hint': emptyFilterHint,
     'semantics-hint': semanticsHint,
+    'semantics-filter-hint': semanticsFilterHint,
+    'null-value': nullValue,
     'widget': contentAttributesCategoryWidgetToString(widget),
     'usage': contentAttributesCategoryUsageToString(usage),
     'requirements': requirements,
@@ -226,10 +269,14 @@ class ContentAttributesCategory {
     (other is ContentAttributesCategory) &&
     (id == other.id) &&
     (title == other.title) &&
+    (longTitle == other.longTitle) &&
     (description == other.description) &&
     (text == other.text) &&
     (emptyHint == other.emptyHint) &&
+    (emptyFilterHint == other.emptyFilterHint) &&
     (semanticsHint == other.semanticsHint) &&
+    (semanticsFilterHint == other.semanticsFilterHint) &&
+    (nullValue == other.nullValue) &&
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
@@ -239,10 +286,14 @@ class ContentAttributesCategory {
   int get hashCode =>
     (id?.hashCode ?? 0) ^
     (title?.hashCode ?? 0) ^
+    (longTitle?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
     (text?.hashCode ?? 0) ^
     (emptyHint?.hashCode ?? 0) ^
+    (emptyFilterHint?.hashCode ?? 0) ^
     (semanticsHint?.hashCode ?? 0) ^
+    (semanticsFilterHint?.hashCode ?? 0) ^
+    (nullValue?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
@@ -262,18 +313,9 @@ class ContentAttributesCategory {
   bool get isCategoryUsage => (usage == ContentAttributesCategoryUsage.category);
   bool get isPropertyUsage => (usage == ContentAttributesCategoryUsage.property);
 
-  ContentAttribute? findAttribute({String? label, dynamic value}) {
-    if (attributes != null) {
-      for (ContentAttribute attribute in attributes!) {
-        if (((label == null) || (attribute.label == label)) &&
-            ((value == null) || (attribute.value == value)))
-        {
-          return attribute;
-        }
-      }
-    }
-    return null;
-  }
+  ContentAttribute? findAttribute({String? label, dynamic value}) =>
+    ContentAttribute.findInList(attributes, label: label, value: value);
+
 
   bool validateSelection(Map<String, LinkedHashSet<String>> selection) {
     LinkedHashSet<String>? attributeLabels = selection[id];
@@ -460,6 +502,19 @@ class ContentAttribute {
     (const DeepCollectionEquality().hash(requirements));
 
   // Accessories
+
+  static ContentAttribute? findInList(List<ContentAttribute>? attributes, {String? label, dynamic value}) {
+    if (attributes != null) {
+      for (ContentAttribute attribute in attributes) {
+        if (((label == null) || (attribute.label == label)) &&
+            ((value == null) || (attribute.value == value)))
+        {
+          return attribute;
+        }
+      }
+    }
+    return null;
+  }
 
   bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributesRequirementsMode? requirementsMode }) {
     if ((requirements == null) || requirements!.isEmpty) {
