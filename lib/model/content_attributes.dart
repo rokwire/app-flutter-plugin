@@ -175,6 +175,7 @@ class ContentAttributes {
 class ContentAttributesCategory {
   final String? id;
   final String? title;
+  final String? longTitle;
   final String? description;
   final String? text;
   final String? emptyHint;
@@ -187,7 +188,7 @@ class ContentAttributesCategory {
   final ContentAttributesRequirements? requirements;
   final List<ContentAttribute>? attributes;
 
-  ContentAttributesCategory({this.id, this.title, this.description, this.text,
+  ContentAttributesCategory({this.id, this.title, this.longTitle, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
     this.nullValue, this.widget, this.usage,
     this.requirements,
@@ -199,6 +200,7 @@ class ContentAttributesCategory {
     return (json != null) ? ContentAttributesCategory(
       id: JsonUtils.stringValue(json['id']),
       title: JsonUtils.stringValue(json['title']),
+      longTitle: JsonUtils.stringValue(json['long-title']),
       description: JsonUtils.stringValue(json['description']),
       text: JsonUtils.stringValue(json['text']),
       emptyHint: JsonUtils.stringValue(json['empty-hint']),
@@ -216,6 +218,7 @@ class ContentAttributesCategory {
   toJson() => {
     'id': id,
     'title': title,
+    'long-title' : longTitle,
     'description': description,
     'text': text,
     'empty-hint': emptyHint,
@@ -236,6 +239,7 @@ class ContentAttributesCategory {
     (other is ContentAttributesCategory) &&
     (id == other.id) &&
     (title == other.title) &&
+    (longTitle == other.longTitle) &&
     (description == other.description) &&
     (text == other.text) &&
     (emptyHint == other.emptyHint) &&
@@ -252,6 +256,7 @@ class ContentAttributesCategory {
   int get hashCode =>
     (id?.hashCode ?? 0) ^
     (title?.hashCode ?? 0) ^
+    (longTitle?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
     (text?.hashCode ?? 0) ^
     (emptyHint?.hashCode ?? 0) ^
