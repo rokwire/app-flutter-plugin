@@ -178,14 +178,17 @@ class ContentAttributesCategory {
   final String? description;
   final String? text;
   final String? emptyHint;
+  final String? emptyFilterHint;
   final String? semanticsHint;
+  final String? semanticsFilterHint;
   final ContentAttributesCategoryWidget? widget;
   final ContentAttributesCategoryUsage? usage;
   final ContentAttributesRequirements? requirements;
   final List<ContentAttribute>? attributes;
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
-    this.emptyHint, this.semanticsHint, this.widget, this.usage,
+    this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
+    this.widget, this.usage,
     this.requirements,
     this.attributes});
 
@@ -198,7 +201,9 @@ class ContentAttributesCategory {
       description: JsonUtils.stringValue(json['description']),
       text: JsonUtils.stringValue(json['text']),
       emptyHint: JsonUtils.stringValue(json['empty-hint']),
+      emptyFilterHint: JsonUtils.stringValue(json['empty-filter-hint']),
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
+      semanticsFilterHint: JsonUtils.stringValue(json['semantics-filter-hint']),
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
@@ -212,7 +217,9 @@ class ContentAttributesCategory {
     'description': description,
     'text': text,
     'empty-hint': emptyHint,
+    'empty-filter-hint': emptyFilterHint,
     'semantics-hint': semanticsHint,
+    'semantics-filter-hint': semanticsFilterHint,
     'widget': contentAttributesCategoryWidgetToString(widget),
     'usage': contentAttributesCategoryUsageToString(usage),
     'requirements': requirements,
@@ -229,7 +236,9 @@ class ContentAttributesCategory {
     (description == other.description) &&
     (text == other.text) &&
     (emptyHint == other.emptyHint) &&
+    (emptyFilterHint == other.emptyFilterHint) &&
     (semanticsHint == other.semanticsHint) &&
+    (semanticsFilterHint == other.semanticsFilterHint) &&
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
@@ -242,7 +251,9 @@ class ContentAttributesCategory {
     (description?.hashCode ?? 0) ^
     (text?.hashCode ?? 0) ^
     (emptyHint?.hashCode ?? 0) ^
+    (emptyFilterHint?.hashCode ?? 0) ^
     (semanticsHint?.hashCode ?? 0) ^
+    (semanticsFilterHint?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
