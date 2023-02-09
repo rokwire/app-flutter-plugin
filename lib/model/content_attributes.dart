@@ -181,6 +181,7 @@ class ContentAttributesCategory {
   final String? emptyFilterHint;
   final String? semanticsHint;
   final String? semanticsFilterHint;
+  final dynamic nullValue;
   final ContentAttributesCategoryWidget? widget;
   final ContentAttributesCategoryUsage? usage;
   final ContentAttributesRequirements? requirements;
@@ -188,7 +189,7 @@ class ContentAttributesCategory {
 
   ContentAttributesCategory({this.id, this.title, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
-    this.widget, this.usage,
+    this.nullValue, this.widget, this.usage,
     this.requirements,
     this.attributes});
 
@@ -204,6 +205,7 @@ class ContentAttributesCategory {
       emptyFilterHint: JsonUtils.stringValue(json['empty-filter-hint']),
       semanticsHint: JsonUtils.stringValue(json['semantics-hint']),
       semanticsFilterHint: JsonUtils.stringValue(json['semantics-filter-hint']),
+      nullValue: json['null-value'],
       widget: contentAttributesCategoryWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
@@ -220,6 +222,7 @@ class ContentAttributesCategory {
     'empty-filter-hint': emptyFilterHint,
     'semantics-hint': semanticsHint,
     'semantics-filter-hint': semanticsFilterHint,
+    'null-value': nullValue,
     'widget': contentAttributesCategoryWidgetToString(widget),
     'usage': contentAttributesCategoryUsageToString(usage),
     'requirements': requirements,
@@ -239,6 +242,7 @@ class ContentAttributesCategory {
     (emptyFilterHint == other.emptyFilterHint) &&
     (semanticsHint == other.semanticsHint) &&
     (semanticsFilterHint == other.semanticsFilterHint) &&
+    (nullValue == other.nullValue) &&
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
@@ -254,6 +258,7 @@ class ContentAttributesCategory {
     (emptyFilterHint?.hashCode ?? 0) ^
     (semanticsHint?.hashCode ?? 0) ^
     (semanticsFilterHint?.hashCode ?? 0) ^
+    (nullValue?.hashCode ?? 0) ^
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
@@ -273,18 +278,9 @@ class ContentAttributesCategory {
   bool get isCategoryUsage => (usage == ContentAttributesCategoryUsage.category);
   bool get isPropertyUsage => (usage == ContentAttributesCategoryUsage.property);
 
-  ContentAttribute? findAttribute({String? label, dynamic value}) {
-    if (attributes != null) {
-      for (ContentAttribute attribute in attributes!) {
-        if (((label == null) || (attribute.label == label)) &&
-            ((value == null) || (attribute.value == value)))
-        {
-          return attribute;
-        }
-      }
-    }
-    return null;
-  }
+  ContentAttribute? findAttribute({String? label, dynamic value}) =>
+    ContentAttribute.findInList(attributes, label: label, value: value);
+
 
   bool validateSelection(Map<String, LinkedHashSet<String>> selection) {
     LinkedHashSet<String>? attributeLabels = selection[id];
@@ -471,6 +467,19 @@ class ContentAttribute {
     (const DeepCollectionEquality().hash(requirements));
 
   // Accessories
+
+  static ContentAttribute? findInList(List<ContentAttribute>? attributes, {String? label, dynamic value}) {
+    if (attributes != null) {
+      for (ContentAttribute attribute in attributes) {
+        if (((label == null) || (attribute.label == label)) &&
+            ((value == null) || (attribute.value == value)))
+        {
+          return attribute;
+        }
+      }
+    }
+    return null;
+  }
 
   bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributesRequirementsMode? requirementsMode }) {
     if ((requirements == null) || requirements!.isEmpty) {
