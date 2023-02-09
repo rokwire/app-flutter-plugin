@@ -128,6 +128,36 @@ class ContentAttributes {
     while (modified);
   }
 
+  void extendSelection(Map<String, LinkedHashSet<String>> selection, String? categoryId ) {
+    Queue<String> categoryIds = (categoryId != null) ? Queue<String>.from([categoryId]) : Queue<String>();
+    while(categoryIds.isNotEmpty) {
+      ContentAttributesCategory? category = findCategory(id: categoryIds.removeFirst());
+      if (category?.requirements?.mode == ContentAttributesRequirementsMode.inclusive) {
+        LinkedHashSet<String>? attributeLabels = selection[category?.id];
+        if ((attributeLabels != null) && attributeLabels.isNotEmpty) {
+          for (String attributeLabel in attributeLabels) {
+            ContentAttribute? attribute = category?.findAttribute(label: attributeLabel);
+            attribute?.requirements?.forEach((String requirementCategoryId, dynamic requirementValue) {
+              if (requirementValue is String) {
+                LinkedHashSet<String>? selectedRequiremntAttributeLabels = selection[requirementCategoryId];
+                if (selectedRequiremntAttributeLabels == null) {
+                  // ignore: prefer_collection_literals
+                  selection[requirementCategoryId] = selectedRequiremntAttributeLabels = LinkedHashSet<String>();
+                }
+                if (selectedRequiremntAttributeLabels.isEmpty) {
+                  selectedRequiremntAttributeLabels.add(requirementValue);
+                  if (!categoryIds.contains(requirementValue)) {
+                    categoryIds.addLast(requirementValue);
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    }
+  }
+
   bool isCategoriesSelectionValid(Map<String, dynamic>? selection) {
     if (categories != null) {
       for (ContentAttributesCategory category in categories!) {
