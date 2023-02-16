@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.4.0 -->
+
+## [1.3.2] - 2023-02-16
 ### Changed
 - Switch to xCode 14.2.
 - Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
