@@ -350,6 +350,11 @@ class UiColors {
   @Deprecated("Transparency should be handled directly by widgets")
   Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
 
+  @Deprecated("Use 'textPrimary' instead")
+  Color? get textColorPrimary      => colorMap['textColorPrimary'];
+  @Deprecated("Use 'textAccent' instead")
+  Color? get textColorPrimaryVariant      => colorMap['textColorPrimaryVariant'];
+
   @Deprecated("Set icon colors in styles asset file")
   Color? get iconColor                  => colorMap['iconColor'];
 
@@ -540,7 +545,6 @@ class UiImages {
   final Map<String, dynamic>? imageMap;
   final UiColors? colors;
   final String Function(Uri uri)? assetPathResolver;
-
 
   UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
