@@ -17,7 +17,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
@@ -54,7 +54,7 @@ class StringUtils {
       return "*********";
     }
     int phoneNumberLength = phoneNumber!.length;
-    int lastXNumbers = min(phoneNumberLength, 4);
+    int lastXNumbers = math.min(phoneNumberLength, 4);
     int starsCount = (phoneNumberLength - lastXNumbers);
     String replacement = "*" * starsCount;
     String maskedPhoneNumber = phoneNumber.replaceRange(0, starsCount, replacement);
@@ -350,6 +350,33 @@ class ColorUtils {
       return "#${value.red.toRadixString(16)}${value.green.toRadixString(16)}${value.blue.toRadixString(16)}";
     }
   }
+
+  static int hueFromColor(Color color) => hueFromRGB(color.red, color.green, color.blue);
+
+  static int hueFromRGB(int red, int green, int blue) {
+    double min = math.min(math.min(red, green), blue).toDouble();
+    double max = math.max(math.max(red, green), blue).toDouble();
+
+    if (min == max) {
+      return 0;
+    }
+
+    double hue = 0.0;
+    if (max == red) {
+      hue = (green - blue) / (max - min);
+    }
+    else if (max == green) {
+      hue = 2.0 + (blue - red) / (max - min);
+    }
+    else {
+      hue = 4.0 + (red - green) / (max - min);
+    }
+
+    hue = hue * 60;
+    if (hue < 0) hue = hue + 360;
+
+    return hue.round();
+  }
 }
 
 class AppVersion {
@@ -357,7 +384,7 @@ class AppVersion {
   static int compareVersions(String? versionString1, String? versionString2) {
     List<String> versionList1 = (versionString1 is String) ? versionString1.split('.') : [];
     List<String> versionList2 = (versionString2 is String) ? versionString2.split('.') : [];
-    int minLen = min(versionList1.length, versionList2.length);
+    int minLen = math.min(versionList1.length, versionList2.length);
     for (int index = 0; index < minLen; index++) {
       String s1 = versionList1[index], s2 = versionList2[index];
       int? n1 = int.tryParse(s1), n2 = int.tryParse(s2);
@@ -380,7 +407,7 @@ class AppVersion {
   static bool matchVersions(String? versionString1, String? versionString2) {
     List<String> versionList1 = (versionString1 is String) ? versionString1.split('.') : [];
     List<String> versionList2 = (versionString2 is String) ? versionString2.split('.') : [];
-    int minLen = min(versionList1.length, versionList2.length);
+    int minLen = math.min(versionList1.length, versionList2.length);
     for (int index = 0; index < minLen; index++) {
       String s1 = versionList1[index], s2 = versionList2[index];
       int? n1 = int.tryParse(s1), n2 = int.tryParse(s2);
