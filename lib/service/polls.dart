@@ -42,12 +42,12 @@ class Polls with Service implements NotificationsListener {
   static const String notifyResultsChanged   = "edu.illinois.rokwire.poll.resultschanged"; // poll updated
   static const String notifyVoteChanged      = "edu.illinois.rokwire.poll.votechanged"; // poll updated
   static const String notifyStatusChanged    = "edu.illinois.rokwire.poll.statuschnaged"; // poll closed, results could be presented
+  static const String notifyDeleted          = "edu.illinois.rokwire.poll.deleted";
 
   static const String notifyLifecycleCreate  = "edu.illinois.rokwire.poll.lifecycle.create";
   static const String notifyLifecycleOpen    = "edu.illinois.rokwire.poll.lifecycle.open";
   static const String notifyLifecycleClose   = "edu.illinois.rokwire.poll.lifecycle.close";
   static const String notifyLifecycleVote    = "edu.illinois.rokwire.poll.lifecycle.vote";
-  static const String notifyLifecycleDelete  = "edu.illinois.rokwire.poll.lifecycle.delete";
 
   final Map<String, PollChunk> _pollChunks = <String, PollChunk>{};
   
@@ -281,8 +281,8 @@ class Polls with Service implements NotificationsListener {
           PollChunk? pollChunk = _pollChunks[pollId];
           if (pollChunk != null) {
             removePollChunk(pollChunk);
-            NotificationService().notify(notifyLifecycleDelete, pollChunk.poll);
           }
+          NotificationService().notify(notifyDeleted, pollId);
         }
         else {
           throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
@@ -324,6 +324,24 @@ class Polls with Service implements NotificationsListener {
       }
     }
     return null;
+  }
+
+  Future<Poll?> loadById(String pollId) async {
+    if (!enabled) {
+      debugPrint('Failed to load poll with id "$pollId". Missing polls url');
+      return null;
+    }
+    String url = '${Config().quickPollsUrl}/polls/$pollId';
+    Response? response = await Network().get(url, auth: Auth2());
+    int responseCode = response?.statusCode ?? -1;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      Poll? poll = Poll.fromJson(JsonUtils.decodeMap(responseBody));
+      return poll;
+    } else {
+      debugPrint('Failed to load poll with id "$pollId". Reason: $responseCode, $responseBody');
+      return null;
+    }
   }
 
   bool presentPollId(String? pollId) {

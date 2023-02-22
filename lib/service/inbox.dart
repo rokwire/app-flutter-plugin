@@ -404,6 +404,9 @@ class Inbox with Service implements NotificationsListener {
         debugPrint('Failed to retrieve unread messages count. Reason: $responseCode, $responseBody');
       }
     }
+    else {
+      _applyUnreadMessagesCount(0);
+    }
   }
 
   void _applyUnreadMessagesCount(int? unreadMessagesCount){

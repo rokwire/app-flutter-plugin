@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.3.2] - 2023-02-16
+### Changed
+- Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+### Fixed
+- Clear unread notifications count when logged out.
+- Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
+### Added
+- Added hint in VerticalTitleValueSection [#2892](https://github.com/rokwire/illinois-app/issues/2892).
+- Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
+
+## [1.3.1] - 2023-01-03
+### Deleted
+- Removed category from inbox message model [#237](https://github.com/rokwire/app-flutter-plugin/issues/237).
+
 ## [1.3.0] - 2022-12-22
 ### Fixed
 - Fix launchUrlString LaunchMode [#167](https://github.com/rokwire/app-flutter-plugin/issues/167).
