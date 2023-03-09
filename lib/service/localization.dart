@@ -62,7 +62,6 @@ class Localization with Service implements NotificationsListener {
   Map<String, dynamic>? _defaultNetStrings;
 
   Locale? _currentLocale;
-  Locale? _appSelectedLocale;
   Map<String, dynamic>? _localeStrings;
   Map<String, dynamic>? _localeAssetsStrings;
   Map<String, dynamic>? _localeAppAssetsStrings;
@@ -115,6 +114,16 @@ class Localization with Service implements NotificationsListener {
   }
 
   set currentLocale(Locale? value)  {
+    _updateLocale(value);
+  }
+
+  Future<void> selectLanguage(String? language) {
+    Storage().appSelectedLanguage = language;
+    Locale? locale = language != null ? Locale(language) : null;
+    return _updateLocale(locale);
+  }
+
+  Future<void> _updateLocale(Locale? value) async {
     if ((value == null) || (value.languageCode == _defaultLocale?.languageCode)) {
       // use default
       _currentLocale = null;
@@ -126,10 +135,9 @@ class Localization with Service implements NotificationsListener {
     else if ((_currentLocale == null) || (_currentLocale!.languageCode != value.languageCode)) {
       _currentLocale = value;
       Storage().currentLanguage = value.languageCode;
-      initLocaleStrings(value.languageCode).then((_) {
-        //Notyfy when we change the locale (valid change)
-        NotificationService().notify(notifyLocaleChanged, null);
-      });
+      await initLocaleStrings(value.languageCode);
+      //Notyfy when we change the locale (valid change)
+      NotificationService().notify(notifyLocaleChanged, null);
     }
   }
 
@@ -159,7 +167,7 @@ class Localization with Service implements NotificationsListener {
       asset: _localeAssetsStrings = await loadAssetsStrings(language),
       appAsset: _localeAppAssetsStrings = await loadAssetsStrings(language, app: true),
       net: _localeNetStrings = await loadNetStringsFromCache(language));
-    await updateLocaleStrings();
+    updateLocaleStrings();
   }
 
   @protected
