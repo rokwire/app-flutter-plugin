@@ -60,8 +60,9 @@ class Localization with Service implements NotificationsListener {
   Map<String, dynamic>? _defaultAssetsStrings;
   Map<String, dynamic>? _defaultAppAssetsStrings;
   Map<String, dynamic>? _defaultNetStrings;
-  
+
   Locale? _currentLocale;
+  Locale? _appSelectedLocale;
   Map<String, dynamic>? _localeStrings;
   Map<String, dynamic>? _localeAssetsStrings;
   Map<String, dynamic>? _localeAppAssetsStrings;
@@ -83,17 +84,16 @@ class Localization with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-
     _assetsDir = await getAssetsDir();
     
     String defaultLanguage = supportedLanguages[0];
     _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
-    await initDefaultStirngs(defaultLanguage);
+    await initDefaultStrings(defaultLanguage);
 
     String? curentLanguage = Storage().currentLanguage;
     if (curentLanguage != null) {
       _currentLocale = Locale.fromSubtags(languageCode : curentLanguage);
-      await initLocaleStirngs(curentLanguage);
+      await initLocaleStrings(curentLanguage);
     }
 
     await super.initService();
@@ -126,9 +126,10 @@ class Localization with Service implements NotificationsListener {
     else if ((_currentLocale == null) || (_currentLocale!.languageCode != value.languageCode)) {
       _currentLocale = value;
       Storage().currentLanguage = value.languageCode;
-      initLocaleStirngs(value.languageCode);
-      //Notyfy when we change the locale (valid change)
-      NotificationService().notify(notifyLocaleChanged, null);
+      initLocaleStrings(value.languageCode).then((_) {
+        //Notyfy when we change the locale (valid change)
+        NotificationService().notify(notifyLocaleChanged, null);
+      });
     }
   }
 
@@ -144,7 +145,7 @@ class Localization with Service implements NotificationsListener {
   }
 
   @protected
-  Future<void> initDefaultStirngs(String language) async {
+  Future<void> initDefaultStrings(String language) async {
     _defaultStrings = _buildStrings(
       asset: _defaultAssetsStrings = await loadAssetsStrings(language),
       appAsset: _defaultAppAssetsStrings = await loadAssetsStrings(language, app: true),
@@ -153,12 +154,12 @@ class Localization with Service implements NotificationsListener {
   }
 
   @protected
-  Future<void> initLocaleStirngs(String language) async {
+  Future<void> initLocaleStrings(String language) async {
     _localeStrings = _buildStrings(
       asset: _localeAssetsStrings = await loadAssetsStrings(language),
       appAsset: _localeAppAssetsStrings = await loadAssetsStrings(language, app: true),
       net: _localeNetStrings = await loadNetStringsFromCache(language));
-    updateLocaleStrings();
+    await updateLocaleStrings();
   }
 
   @protected
@@ -207,15 +208,14 @@ class Localization with Service implements NotificationsListener {
   }
 
   @protected
-  void updateLocaleStrings() {
+  Future<void> updateLocaleStrings() async {
     if (_currentLocale != null) {
-     final String requestedLocale = _currentLocale!.languageCode;
-     _updateStringsFromNet(_currentLocale!.languageCode, cache: _localeNetStrings).then((Map<String,dynamic>? update) {
-        if (update != null && (requestedLocale == _currentLocale?.languageCode)) { // Sync: If the locale was not changed while update was in process
-          _localeStrings = _buildStrings(asset: _localeAssetsStrings, appAsset: _localeAppAssetsStrings, net: _localeNetStrings = update);
-          NotificationService().notify(notifyStringsUpdated, null);
-        }
-      });
+      final String requestedLocale = _currentLocale!.languageCode;
+      Map<String,dynamic>? update = await _updateStringsFromNet(_currentLocale!.languageCode, cache: _localeNetStrings);
+      if (update != null && (requestedLocale == _currentLocale?.languageCode)) { // Sync: If the locale was not changed while update was in process
+        _localeStrings = _buildStrings(asset: _localeAssetsStrings, appAsset: _localeAppAssetsStrings, net: _localeNetStrings = update);
+        NotificationService().notify(notifyStringsUpdated, null);
+      }
     }
   }
 
@@ -353,7 +353,9 @@ class AppLocalizations {
   Locale? locale;
   
   AppLocalizations(Locale locale) {
-    Localization().currentLocale = this.locale = locale;
+    if (Storage().appSelectedLanguage == null) {
+      Localization().currentLocale = this.locale = locale;
+    }
   }
   
   static AppLocalizations? of(BuildContext context) {

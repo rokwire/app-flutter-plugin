@@ -289,6 +289,10 @@ class Storage with Service {
   String? get currentLanguage => getStringWithName(currentLanguageKey);
   set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
 
+  String get appSelectedLanguageKey => 'edu.illinois.rokwire.app_selected_language';
+  String? get appSelectedLanguage => getStringWithName(appSelectedLanguageKey);
+  set appSelectedLanguage(String? value) => setStringWithName(appSelectedLanguageKey, value);
+
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
   String? get inboxFirebaseMessagingToken => getStringWithName(inboxFirebaseMessagingTokenKey);
