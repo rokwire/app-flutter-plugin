@@ -197,10 +197,10 @@ packages:
     dependency: transitive
     description:
       name: device_calendar
-      sha256: "3b22c89e1edb6ad296452df5a7ed3ce45e9f4abff74e838d0b73357cb39a4326"
+      sha256: d0cad5428c8f5afb9b774b9a263922a16a2c01a05fb0ca50f8ea69ea294fb275
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.0-3635229635"
+    version: "4.3.1-4217521123"
   device_info:
     dependency: transitive
     description:
