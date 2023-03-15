@@ -309,6 +309,7 @@ class UiColors {
   Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
   Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
   Color? get textColorPrimary                   => colorMap['textColorPrimary'];
+  Color? get textColorDisabled                  => colorMap['textColorDisabled'];
   Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
   Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
   Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
@@ -328,6 +329,7 @@ class UiColors {
   Color? get textBackground             => colorMap['textBackground'];
   Color? get backgroundVariant          => colorMap['backgroundVariant'];
   Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
+  Color? get textBackgroundVariant2      => colorMap['textBackgroundVariant2'];
   Color? get headlineText               => colorMap['headlineText'];
 
   Color? get accentColor1               => colorMap['accentColor1'];
