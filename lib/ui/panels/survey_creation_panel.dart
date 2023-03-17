@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
+import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
@@ -40,14 +41,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   final ScrollController _scrollController = ScrollController();
 
+  String _title = '';
+  bool _scored = true;
+  bool _sensitive = false;
   late final SurveyWidgetController _surveyController;
 
   @override
   void initState() {
     _surveyController = SurveyWidgetController(onComplete: widget.onComplete);
-    // if (widget.survey is Survey) {
-    //   _survey = widget.survey;
-    // }
     super.initState();
   }
 
@@ -78,6 +79,91 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSurveyCreationTools() {
-    return Container();
+    return Column(children: [
+      // title
+      const FormFieldText('Title', inputType: TextInputType.text, textCapitalization: TextCapitalization.words),
+      // more_info
+      const FormFieldText('Additional Information', multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+
+      // type
+      //TODO: use dropdown here
+
+      // scored
+      Checkbox(
+        checkColor: Styles().colors?.surface,
+        activeColor: Styles().colors?.fillColorPrimary,
+        value: _scored,
+        onChanged: (value) {
+          if (mounted) {
+            setState(() {
+              _scored = value ?? true;
+            });
+          }
+        },
+      ),
+
+      // sensitive
+      Checkbox(
+        checkColor: Styles().colors?.surface,
+        activeColor: Styles().colors?.fillColorPrimary,
+        value: _sensitive,
+        onChanged: (value) {
+          if (mounted) {
+            setState(() {
+              _sensitive = value ?? false;
+            });
+          }
+        },
+      ),
+    ],);
+    //TODO:
+    // ExpandablePageView(
+    //         controller: _pageController,
+    //         children: pages,
+    //         onPageChanged: _onPageChanged,
+    //       )
+    //     )
+    
+    // data
+        // "true_false"
+        // "multiple_choice"
+        // "date_time"
+        // "numeric"
+        // "text"
+        // "entry"
+        // "result"
+        // "page"
+    // default data key (i.e., first "question")
+    // default data key rule (i.e., rule for determining first "question")
+    // constants
+        // unique ID: value
+    // strings
+        // language code
+            // unique ID: string
+    // result_rules (list)
+        // dropdown for actions
+            // "return":
+            // "sum":
+            // "set_result":
+            // "show_survey":
+            // "alert":
+            // "alert_result":
+            // "notify":
+            // "save":
+            // "local_notify"
+        // dropdown for comparison options
+            // "<":
+            // ">":
+            // "<=":
+            // ">=":
+            // "==":
+            // "!=":
+            // "in_range":
+            // "any":
+            // "all"
+        // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
+    // sub_rules
+    // response_keys? (history?)
+
   }
 }
