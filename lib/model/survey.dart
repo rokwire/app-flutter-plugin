@@ -268,14 +268,6 @@ class Survey extends RuleEngine {
     return result;
   }
 
-  @override
-  Future<dynamic> save() async {
-    if (Storage().assessmentsSaveResultsMap?[type] != false) {
-      return await Surveys().createSurveyResponse(this);
-    }
-    return null;
-  }
-
   bool canContinue() {
     for (SurveyData? data = firstQuestion; data != null; data = data.followUp(this)) {
       if (!data.canContinue) {

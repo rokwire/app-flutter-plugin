@@ -24,6 +24,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 // Surveys service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
@@ -46,9 +47,19 @@ class Surveys /* with Service */ {
   @protected
   Surveys.internal();
 
+  // Survey
+  Survey? _survey;
+
+  Future<dynamic> save() async {
+    if (Storage().assessmentsSaveResultsMap?[type] != false) {
+      return await Surveys().createSurveyResponse(this);
+    }
+    return null;
+  }
+
   // Accessories
 
-  Future<Survey?> loadSurvey(String id) async {
+  Future<void> loadSurvey(String id) async {
     if (enabled) {
       String url = '${Config().surveysUrl}/surveys/$id';
       Response? response = await Network().get(url, auth: Auth2());
@@ -57,13 +68,11 @@ class Surveys /* with Service */ {
       if (responseCode == 200) {
         Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseBody);
         if (responseMap != null) {
-          Survey? survey = Survey.fromJson(responseMap);
+          _survey = Survey.fromJson(responseMap);
           NotificationService().notify(notifySurveyLoaded);
-          return survey;
         }
       }
     }
-    return null;
   }
 
   Future<SurveyResponse?> createSurveyResponse(Survey survey) async {

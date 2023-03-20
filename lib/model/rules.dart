@@ -13,16 +13,6 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/model/alert.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
-import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/local_notifications.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
-import 'package:rokwire_plugin/service/surveys.dart';
-import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class RuleCondition {
@@ -42,8 +32,6 @@ abstract class RuleCondition {
   }
 
   Map<String, dynamic> toJson();
-
-  bool evaluate(RuleEngine engine);
 }
 
 class RuleComparison extends RuleCondition {
@@ -78,74 +66,7 @@ class RuleComparison extends RuleCondition {
       'compare_to_param': compareToParam,
       'default_result': defaultResult,
     };
-  }
-
-  @override
-  bool evaluate(RuleEngine engine) {
-    dynamic dataVal = engine.getVal(dataKey, dataParam);
-
-    dynamic compareToVal = compareTo;
-    if (compareToVal is String) {
-      compareToVal = engine.getVal(compareTo, compareToParam);
-    }
-    return compare(operator, dataVal, compareToVal, defaultResult: defaultResult);
-  }
-
-  bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
-    try {
-      switch (operator) {
-        case "<":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isBefore(ruleVal);
-          }
-          return val < ruleVal;
-        case ">":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAfter(ruleVal);
-          }
-          return ruleVal < val;
-        case "<=":
-          return val <= ruleVal;
-        case ">=":
-          return ruleVal <= val;
-        case "==":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAtSameMomentAs(ruleVal);
-          }
-          return val == ruleVal;
-        case "!=":
-          if (val is DateTime && ruleVal is DateTime) {
-            return !val.isAtSameMomentAs(ruleVal);
-          }
-          return val != ruleVal;
-        case "in_range":
-          //TODO: implement
-          return defaultResult;
-        case "any":
-          if (ruleVal is Iterable) {
-            return ListUtils.contains(ruleVal.toList(), val) ?? false;
-          }
-          if (val is Iterable) {
-            return ListUtils.contains(val.toList(), ruleVal) ?? false;
-          }
-          return val == ruleVal;
-        case "all":
-          if (ruleVal is Iterable) {
-            return ListUtils.contains(ruleVal.toList(), val, checkAll: true) ?? false;
-          }
-          if (val is Iterable) {
-            return ListUtils.contains(val.toList(), ruleVal, checkAll: true) ?? false;
-          }
-          return val == ruleVal;
-        default:
-          return defaultResult;
-      }
-    } catch(e) {
-      return defaultResult;
-    }
-  }
-
-  
+  }  
 }
 
 class RuleLogic extends RuleCondition {
@@ -160,24 +81,7 @@ class RuleLogic extends RuleCondition {
       'operator': operator,
       'conditions': conditions.map((e) => e.toJson()),
     };
-  }
-
-  @override
-  bool evaluate(RuleEngine engine) {
-    bool defaultResult = (operator == "and");
-    for (RuleCondition subCondition in conditions) {
-      if (operator == "and") {
-        if (!subCondition.evaluate(engine)) {
-          return false;
-        }
-      } else if (operator == "or") {
-        if (subCondition.evaluate(engine)) {
-          return true;
-        }
-      }
-    }
-    return defaultResult;
-  }
+  }  
 }
 
 abstract class RuleResult {
@@ -215,9 +119,6 @@ abstract class RuleActionResult extends RuleResult {
     }
     return RuleAction.fromJson(json);
   }
-
-  @override
-  Map<String, dynamic> toJson();
 }
 
 class RuleReference extends RuleResult {
@@ -258,112 +159,6 @@ class RuleAction extends RuleActionResult {
       'data_key': dataKey,
       'priority': priority,
     };
-  }
-
-  dynamic evaluate(RuleEngine engine) {
-    switch (action) {
-      case "return":
-        return _return(engine);
-      case "sum":
-        return _sum(engine);
-      case "set_result":
-        _setResult(engine);
-        return null;
-      case "show_survey":
-        //TODO: fix this (should use notification like alert)
-      case "alert":
-        _alert(engine);
-        return null;
-      case "alert_result":
-        _alert(engine);
-        _setResult(engine);
-        return null;
-      case "notify":
-        return _notify(engine);
-      case "save":
-        return _save(engine);
-      case "local_notify":
-        return _localNotify(engine);
-    }
-    return null;
-  }
-
-  dynamic _return(RuleEngine engine) {
-    return engine.getValOrCollection(data);
-  }
-
-  dynamic _sum(RuleEngine engine) {
-    dynamic evaluatedData = engine.getValOrCollection(data);
-    if (data is List<dynamic>) {
-      num sum = 0;
-      for (dynamic item in evaluatedData) {
-        if (item is num) {
-          sum += item;
-        }
-      }
-      return sum;
-    } else if (data is num) {
-      return data;
-    }
-    return null;
-  }
-
-  void _setResult(RuleEngine engine) {
-    if (engine.resultData is Map && dataKey != null) {
-      engine.resultData[dataKey] = engine.getValOrCollection(data);
-    } else if (dataKey != null) {
-      engine.resultData = <String, dynamic>{dataKey!: engine.getValOrCollection(data)};
-    } else {
-      engine.resultData = engine.getValOrCollection(data);
-    }
-  }
-
-  void _alert(RuleEngine engine) {
-    dynamic alertData = engine.getValOrCollection(data);
-    if (alertData is SurveyDataResult) {
-      NotificationService().notify(Alerts.notifyAlert, Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions));
-    } else if (alertData is Alert) {
-      NotificationService().notify(Alerts.notifyAlert, alertData);
-    }
-  }
-
-  Future<bool> _notify(RuleEngine engine) {
-    dynamic notificationData = engine.getValOrCollection(data);
-    if (notificationData is Map<String, dynamic>) {
-      SurveyAlert alert = SurveyAlert.fromJson(notificationData);
-      return Surveys().createSurveyAlert(alert);
-    }
-    return Future<bool>.value(false);
-  } 
-
-  Future<dynamic> _save(RuleEngine engine) {
-    return engine.save();
-  }
-
-  Future<bool> _localNotify(RuleEngine engine) {
-    dynamic resolvedData = engine.getValOrCollection(data);
-    if (resolvedData is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(resolvedData);
-      switch (JsonUtils.stringValue(alert.params?["type"])) {
-        case "relative":
-          Duration? notifyWaitTime = JsonUtils.durationValue(alert.params?["schedule"]);
-          if (notifyWaitTime != null) {
-            return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-              title: alert.title,
-              message: alert.text,
-              payload: JsonUtils.encode(alert.actions),
-              dateTime: DateTime.now().add(notifyWaitTime)
-            );
-          }
-          break;
-        case "absolute":
-          //TODO: implement
-        case "cron":
-          //TODO: implement
-      }
-    }
-    
-    return Future<bool>.value(false);
   }
 }
 
@@ -432,34 +227,6 @@ class Rule extends RuleResult {
     }
     return rulesJson;
   }
-
-  dynamic evaluate(RuleEngine engine) {
-    RuleResult? result;
-    if (condition == null || condition!.evaluate(engine)) {
-      result = trueResult;
-    } else {
-      result = falseResult;
-    }
-
-    if (result is RuleReference) {
-      Rule? subRule = engine.subRules[result.ruleKey];
-      if (subRule != null) {
-        return subRule.evaluate(engine);
-      }
-    } else if (result is Rule) {
-      return result.evaluate(engine);
-    } else if (result is RuleAction) {
-      return result.evaluate(engine);
-    } else if (result is RuleActionList) {
-      List<dynamic> actionResults = [];
-      for (RuleAction action in result.actions) {
-        actionResults.add(action.evaluate(engine));
-      }
-      return actionResults;
-    }
-
-    return null;
-  }
 }
 
 abstract class RuleEngine {
@@ -470,8 +237,6 @@ abstract class RuleEngine {
   final Map<String, Map<String, String>> strings;
   final Map<String, Rule> subRules;
   dynamic resultData;
-
-  final Map<String, List<RuleData>> _dataCache = {};
 
   RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}, this.resultData});
 
@@ -514,319 +279,6 @@ abstract class RuleEngine {
       }
     }
     return constMap;
-  }
-
-  dynamic getProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "auth":
-        return _auth2GetProperty(key?.subRuleKey);
-    }
-    return key?.toString();
-  }
-
-  Future<dynamic> save();
-
-  void clearCache() {
-    _dataCache.clear();
-  }
-
-  void evaluateRules(List<Rule> rules, {bool clearCache = true}) {
-    if (clearCache) {
-      this.clearCache();
-    }
-    RuleActionResult? topAction;
-    for (Rule rule in rules) {
-      try {
-        RuleActionResult? action = rule.evaluate(this);
-        if (action != null && (topAction == null || (topAction.priority ?? 0) < (action.priority ?? 0))) {
-          topAction = action;
-        }
-      } catch(e) {
-        debugPrint(e.toString());
-      }
-    }
-
-    if (topAction is RuleAction) {
-      topAction.evaluate(this);
-    } else if (topAction is RuleActionList) {
-      for (RuleAction action in topAction.actions) {
-        action.evaluate(this);
-      }
-    }
-  }
-
-  String localeString(String key) {
-    String? currentLanguage = Localization().currentLocale?.languageCode;
-    Map<String, String>? currentLanguageStrings = (currentLanguage != null) ? strings[currentLanguage] : null;
-    dynamic currentResult = (currentLanguageStrings != null) ? currentLanguageStrings[key] : null;
-    if (currentResult != null) {
-      return currentResult;
-    }
-
-    String? defaultLanguage = Localization().defaultLocale?.languageCode;
-    Map<String, String>? defaultLanguageStrings = (defaultLanguage != null) ? strings[defaultLanguage] : null;
-    dynamic defaultResult = (defaultLanguageStrings != null) ? defaultLanguageStrings[key] : null;
-    if (defaultResult is String) {
-      return defaultResult;
-    }
-
-    return Localization().getString(key) ?? key;
-  }
-
-  String? stringValue(String? string) {
-    if (string == null) {
-      return null;
-    }
-
-    dynamic val = getVal(string, null);
-    if (val is String) {
-      return interpolateString(val);
-    }
-    return interpolateString(string);
-  }
-
-  String? interpolateString(String? string) {
-    if (string == null) {
-      return null;
-    }
-
-    RegExp regExp = RegExp(r"%{(.*?)}");
-    for (Match match in regExp.allMatches(string)) {
-      String? full = match.group(0);
-      String? key = match.group(1);
-
-      if (full != null && key != null){
-        List<String> parts = key.split(",");
-        String val;
-        if (parts.length == 2) {
-          val = getDisplayVal(parts[0], parts[1]);
-        } else {
-          val = getDisplayVal(key, null);
-        }
-        string = string?.replaceFirst(full, val);
-      }
-    }
-    return string;
-  }
-
-  String getDisplayVal(String key, String? param) {
-    dynamic val = getVal(key, param);
-    if (val is DateTime) {
-      return AppDateTime().getDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
-    }
-    return val.toString();
-  }
-
-  dynamic getValOrCollection(dynamic data) {
-    if (data is String) {
-      return getVal(data, null);
-    } else if (data is Map<String, dynamic>) {
-      Map<String, dynamic> out = {};
-      for (MapEntry<String, dynamic> entry in data.entries) {
-        if (entry.value is String) {
-          out[entry.key] = getVal(entry.value, null);
-        } else {
-          out[entry.key] = getValOrCollection(entry.value);
-        }
-      }
-      return out;
-    } else if (data is List<dynamic>) {
-      List<dynamic> out = [];
-      for (int i = 0; i < data.length; i++) {
-        if (data[i] is String) {
-          out.add(getVal(data[i], null));
-        } else {
-          out.add(getValOrCollection(data[i]));
-        }
-      }
-      return out;
-    }
-    return data;
-  }
-
-  dynamic getVal(String? key, dynamic param) {
-    if (key == null) {
-      return null;
-    }
-
-    List<RuleData> cached = _dataCache[key] ?? [];
-    for (RuleData data in cached.reversed) {
-      if (data.match(param)) {
-        return data.value;
-      }
-    }
-
-    // dynamic val = getValDirect(key, param);
-    // if (val != null) {
-    //   cached.add(RuleData(value: val, param: param));
-    //   _dataCache[key] = cached;
-    // }
-    return getValDirect(key, param);
-  }
-
-  dynamic getValDirect(String? key, dynamic param) {
-    if (key == null) {
-      return null;
-    }
-
-    param = getValOrCollection(param);
-
-    RuleKey ruleKey = RuleKey.fromKey(key);
-    switch (ruleKey.key) {
-      case "literal":
-        _dataCache[key]?.add(RuleData(value: ruleKey.subKey, param: param));
-        return ruleKey.subKey;
-      case "constants":
-        if (ruleKey.subKey != null) {
-          dynamic constVal = constants[ruleKey.subKey!];
-          _dataCache[key]?.add(RuleData(value: constVal, param: param));
-          return constVal;
-        }
-        return null;
-      case "strings":
-        if (ruleKey.subKey != null) {
-          String? stringVal = interpolateString(localeString(ruleKey.subKey!));
-          _dataCache[key]?.add(RuleData(value: stringVal, param: param));
-          return stringVal;
-        }
-        return null;
-      case "current_time":
-        return DateTime.now();
-      case "current_time_offset":
-        Duration offset = JsonUtils.durationValue(param) ?? const Duration();
-        return DateTime.now().subtract(offset);
-      default:
-        return getProperty(ruleKey);
-    }
-  }
-
-  // Property getters
-  dynamic _auth2GetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "uin":
-        return Auth2().uin;
-      case "net_id":
-        return Auth2().netId;
-      case "email":
-        return Auth2().email;
-      case "phone":
-        return Auth2().phone;
-      case "login_type":
-        return Auth2().loginType != null ? auth2LoginTypeToString(Auth2().loginType!) : null;
-      case "full_name":
-        return Auth2().fullName;
-      case "first_name":
-        return Auth2().firstName;
-      case "profile":
-        return _auth2UserProfileGetProperty(key?.subRuleKey);
-      case "preferences":
-        return _auth2UserPrefsGetProperty(key?.subRuleKey);
-      case "permissions":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.hasPermission(subKey);
-        }
-        return Auth2().account?.permissions;
-      case "roles":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.hasRole(subKey);
-        }
-        return Auth2().account?.roles;
-      case "groups":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.belongsToGroup(subKey);
-        }
-        return Auth2().account?.groups;
-      case "system_configs":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.systemConfigs?[subKey];
-        }
-        return Auth2().account?.systemConfigs;
-      case "is_logged_in":
-        return Auth2().isLoggedIn;
-      case "is_oidc_logged_in":
-        return Auth2().isOidcLoggedIn;
-      case "is_email_logged_in":
-        return Auth2().isEmailLoggedIn;
-      case "is_phone_logged_in":
-        return Auth2().isPhoneLoggedIn;
-    }
-    return null;
-  }
-
-  dynamic _auth2UserProfileGetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "first_name":
-        return Auth2().profile?.firstName;
-      case "middle_name":
-        return Auth2().profile?.middleName;
-      case "last_name":
-        return Auth2().profile?.lastName;
-      case "birth_year":
-        return Auth2().profile?.birthYear;
-      case "photo_url":
-        return Auth2().profile?.photoUrl;
-      case "email":
-        return Auth2().profile?.email;
-      case "phone":
-        return Auth2().profile?.phone;
-      case "address":
-        return Auth2().profile?.address;
-      case "state":
-        return Auth2().profile?.state;
-      case "zip":
-        return Auth2().profile?.zip;
-      case "country":
-        return Auth2().profile?.country;
-      case "data":
-        return Auth2().profile?.data?[key?.subRuleKey];
-    }
-    return null;
-  }
-
-  dynamic _auth2UserPrefsGetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "privacy_level":
-        return Auth2().prefs?.privacyLevel;
-      case "roles":
-        return Auth2().prefs?.roles;
-      case "favorites":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getFavorites(subKey);
-        }
-        return null;
-      case "interests":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getInterestsFromCategory(subKey);
-        }
-        return null;
-      case "food_filters":
-        switch (key?.subRuleKey?.key) {
-          case "included":
-            return Auth2().prefs?.includedFoodTypes;
-          case "excluded":
-            return Auth2().prefs?.excludedFoodIngredients;
-        }
-        return null;
-      case "tags":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.hasTag(subKey);
-        }
-        return null;
-      case "settings":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getSetting(subKey);
-        }
-        return null;
-    }
-    return null;
   }
 }
 
