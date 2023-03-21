@@ -88,6 +88,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       // type
       //TODO: use dropdown here
 
+      //TODO: label checkboxes
       // scored
       Checkbox(
         checkColor: Styles().colors?.surface,
@@ -127,12 +128,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         // "entry"
         // "result"
         // "page"
-    // default data key (i.e., first "question")
-    // default data key rule (i.e., rule for determining first "question")
+    // default data key (i.e., first "question") -> assume first data widget represents first question
+    // default data key rule (i.e., rule for determining first "question") -> checkbox to use rule to determine first question, when checked shows UI to create rule
     // constants
         // unique ID: value
     // strings
-        // language code
+        // language code (dropdown for supported languages?)
             // unique ID: string
     // result_rules (list)
         // dropdown for actions
@@ -155,9 +156,17 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             // "in_range":
             // "any":
             // "all"
+        // dropdown for logic options
+            // "or":
+            // "and":
         // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
     // sub_rules
     // response_keys? (history?)
 
+    //TODO: "modifiable list widget"
+    // Needs to be able to :
+        // add to end of list
+        // insert at any index in list
+        // each entry is collapsible
   }
 }
