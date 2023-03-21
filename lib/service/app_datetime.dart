@@ -70,7 +70,11 @@ class AppDateTime with Service {
     return DateTime.now();
   }
 
-  Future<Uint8List?> get timezoneDatabase async => null;
+  @protected
+  Future<Uint8List?> get timezoneDatabase async {
+    ByteData? byteData = await AppBundle.loadBytes('packages/rokwire_plugin/assets/timezone.tzf');
+    return byteData?.buffer.asUint8List();
+  }
 
   String? get universityLocationName  => null;
 
