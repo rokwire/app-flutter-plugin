@@ -66,7 +66,7 @@ class SurveyWidget extends StatefulWidget {
 
   static Widget buildContinueButton(SurveyWidgetController controller) {
     Survey? survey = controller.getSurvey?.call();
-    bool canContinue =  survey?.canContinue() == true;
+    bool canContinue = survey != null ? Surveys().canContinue(survey) : false;
 
     int? totalQuestions = survey?.stats?.total;
     int? completedQuestions = survey?.stats?.complete;
@@ -173,7 +173,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
 
     List<Widget> contentList = [];
-    for (SurveyData? data = _mainSurveyData; data != null; data = data.followUp(_survey!)) {
+    for (SurveyData? data = _mainSurveyData; data != null; data = Surveys().getFollowUp(_survey!, data)) {
       Widget? surveyWidget = _buildInlineSurveyWidget(data);
       if (surveyWidget != null) {
         // GlobalKey? key;
@@ -193,7 +193,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   void _onChangeResponse(bool scrollEnd) {
     setState(() {
-      _survey?.evaluate();
+      if (_survey != null) {
+        Surveys().evaluate(_survey!);
+      }
     });
     widget.controller.onChangeSurveyResponse?.call(scrollEnd);
   }
@@ -692,8 +694,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     _survey = survey;
     _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
 
-    _mainSurveyData?.evaluateDefaultResponse(_survey!, defaultResponses: widget.defaultResponses);
-    _survey?.evaluate();
+    Surveys().evaluateDefaultDataResponse(_survey!, _mainSurveyData, defaultResponses: widget.defaultResponses);
+    Surveys().evaluate(_survey!);
   }
 
   void _onTapContinue() {
@@ -712,7 +714,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     //   }
     // }
 
-    if (!_survey!.canContinue()) {
+    if (!Surveys().canContinue(_survey!)) {
       AppToast.show("Please answer all required questions to continue");
       return;
     }
@@ -724,7 +726,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   void _finishSurvey() {
     _setSaving(true);
     widget.controller.beforeComplete?.call();
-    _survey!.evaluate(evalResultRules: true).then((result) {
+    Surveys().evaluate(_survey!, evalResultRules: true).then((result) {
       if (result is! SurveyResponse) {
         result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
       }
