@@ -16,6 +16,7 @@
 
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -76,14 +77,14 @@ class AppDateTime with Service {
     return byteData?.buffer.asUint8List();
   }
 
-  String? get universityLocationName  => null;
+  String? get universityLocationName  => Config().timezoneLocation;
 
   timezone.Location? get universityLocation {
     String? locationName = universityLocationName;
     return (locationName != null) ? timezone.getLocation(locationName) : null;
   }
 
-  bool get useDeviceLocalTimeZone => false;
+  bool get useDeviceLocalTimeZone => true;
 
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
@@ -165,7 +166,7 @@ class AppDateTime with Service {
     
     String? timePrefix = getDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime, includeAtSuffix: includeAtSuffix);
     String? timeSuffix = getDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime);
-    return '$timePrefix $timeSuffix';
+    return '$timePrefix, $timeSuffix';
   }
 
   String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {

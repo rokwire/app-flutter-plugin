@@ -540,7 +540,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
   int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
-  
+  String? get timezoneLocation      => JsonUtils.stringValue(settings['timezoneLocation']) ?? 'America/Chicago';
+
   // Getters: other
   String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
