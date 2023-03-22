@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.4.0 -->
+### Fixed
+- Handle exceptions that Geolocator.getCurrentPosition could throw. 
 
 ## [1.3.2] - 2023-02-16
 ### Changed
