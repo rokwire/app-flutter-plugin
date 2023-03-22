@@ -32,7 +32,7 @@ abstract class RuleCondition {
   }
 
   Map<String, dynamic> toJson();
-}
+}           
 
 class RuleComparison extends RuleCondition {
   final String operator;
@@ -66,7 +66,19 @@ class RuleComparison extends RuleCondition {
       'compare_to_param': compareToParam,
       'default_result': defaultResult,
     };
-  }  
+  }
+
+  static Map<String, String> get supportedOperators => const {
+    "<": "Less than",
+    ">": "Greater than",
+    "<=": "Less than or equal to",
+    ">=": "Greater than or equal to",
+    "==": "Equal to",
+    "!=": "Not equal to",
+    "in_range": "In range",
+    "any": "Any of",
+    "all": "All of",
+  };
 }
 
 class RuleLogic extends RuleCondition {
@@ -81,7 +93,12 @@ class RuleLogic extends RuleCondition {
       'operator': operator,
       'conditions': conditions.map((e) => e.toJson()),
     };
-  }  
+  }
+
+  static Map<String, String> get supportedOperators => const {
+    "or": "OR",
+    "and": "AND",
+  };
 }
 
 abstract class RuleResult {
@@ -160,6 +177,18 @@ class RuleAction extends RuleActionResult {
       'priority': priority,
     };
   }
+
+  static Map<String, String> get supportedActions => const {
+    "return": "Return",
+    "sum": "Sum",
+    "set_result": "Set Result",
+    "show_survey": "Show Survey",
+    "alert": "Alert",
+    "alert_result": "Alert Result",
+    "notify": "Notify",
+    "save": "Save",
+    "local_notify": "Local Notify",
+  };      
 }
 
 class RuleActionList extends RuleActionResult {

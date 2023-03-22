@@ -298,8 +298,6 @@ class SurveyStats {
   }
 }
 
-enum SurveyDataStyle { yesNo, checkbox, toggle, vertical, horizontal }
-
 abstract class SurveyData {
   final String key;
   final String? section;
@@ -326,9 +324,9 @@ abstract class SurveyData {
       case "survey_data.date_time": return SurveyQuestionDateTime.fromJson(key, json);
       case "survey_data.numeric": return SurveyQuestionNumeric.fromJson(key, json);
       case "survey_data.text": return SurveyQuestionText.fromJson(key, json);
-      case "survey_data.entry": return SurveyDataEntry.fromJson(key, json);
+      // case "survey_data.entry": return SurveyDataEntry.fromJson(key, json);
       case "survey_data.result": return SurveyDataResult.fromJson(key, json);
-      case "survey_data.page": return SurveyDataPage.fromJson(key, json);
+      // case "survey_data.page": return SurveyDataPage.fromJson(key, json);
       default:
         throw Exception("Invalid survey data type");
     }
@@ -345,13 +343,14 @@ abstract class SurveyData {
       return SurveyQuestionDateTime.fromOther(other);
     } else if (other is SurveyQuestionNumeric) {
       return SurveyQuestionNumeric.fromOther(other);
-    } else if (other is SurveyDataEntry) {
-      return SurveyDataEntry.fromOther(other);
     } else if (other is SurveyDataResult) {
       return SurveyDataResult.fromOther(other);
-    } else if (other is SurveyDataPage) {
-      return SurveyDataPage.fromOther(other);
     }
+    // else if (other is SurveyDataPage) {
+    //   return SurveyDataPage.fromOther(other);
+    // } else if (other is SurveyDataEntry) {
+    //   return SurveyDataEntry.fromOther(other);
+    // }
     throw Exception("Invalid other survey type");
   }
 
@@ -375,6 +374,15 @@ abstract class SurveyData {
     };
   }
 
+  static Map<String, String> get supportedTypes => const {
+    "survey_data.true_false": "True/False",
+    "survey_data.multiple_choice": "Multiple Choice",
+    "survey_data.date_time": "Date/Time",
+    "survey_data.numeric": "Numeric",
+    "survey_data.text": "Text",
+    "survey_data.result": "Info/Action"
+  };
+
   bool get isQuestion;
   bool get canContinue => allowSkip || response != null;
   bool get scored => scoreRule != null;
@@ -384,17 +392,17 @@ class SurveyQuestionTrueFalse extends SurveyData {
   final bool? correctAnswer;
   final List<OptionData> options;
 
-  SurveyQuestionTrueFalse({required String question, this.correctAnswer, required String key, String? section, String? defaultFollowUpKey,
+  SurveyQuestionTrueFalse({required String text, this.correctAnswer, required String key, String? section, String? defaultFollowUpKey,
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
       : options = [OptionData(title: style == "yes_no" ? "Yes" : "True", value: true), OptionData(title: style == "yes_no" ? "No" : "False", value: false)],
-        super(allowSkip: allowSkip, replace: replace, key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
+        super(allowSkip: allowSkip, replace: replace, key: key, section: section, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, 
           followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, maximumScore: maximumScore, response: response);
 
   factory SurveyQuestionTrueFalse.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionTrueFalse(
       correctAnswer: JsonUtils.boolValue(json['correct_answer']),
 
-      question: json['text'],
+      text: json['text'],
       key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -415,7 +423,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
       key: other.key,
       section: other.section,
       correctAnswer: other.correctAnswer,
-      question: other.text,
+      text: other.text,
       defaultFollowUpKey: other.defaultFollowUpKey,
       defaultResponseRule: other.defaultResponseRule,
       followUpRule: other.followUpRule,
@@ -436,6 +444,13 @@ class SurveyQuestionTrueFalse extends SurveyData {
     return json;
   }
 
+  static Map<String, String> get supportedStyles => const {
+    "true_false": "True/False",
+    "yes_no": "Yes/No",
+    "toggle": "Toggle",
+    "checkbox": "Checkbox",
+  };
+
   @override
   bool get isQuestion => true;
 }
@@ -446,9 +461,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   final bool allowMultiple;
   final bool selfScore;
 
-  SurveyQuestionMultipleChoice({required String question, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, String? section,
+  SurveyQuestionMultipleChoice({required String text, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, String? section,
     String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
-      : super(key: key, section: section, allowSkip: allowSkip, replace: replace, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
+      : super(key: key, section: section, allowSkip: allowSkip, replace: replace, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, maximumScore: maximumScore, response: response);
 
   factory SurveyQuestionMultipleChoice.fromJson(String key, Map<String, dynamic> json) {
@@ -458,7 +473,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       allowMultiple: JsonUtils.boolValue(json['allow_multiple']) ?? false,
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
-      question: json['text'],
+      text: json['text'],
       key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -478,7 +493,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
     return SurveyQuestionMultipleChoice(
       key: other.key,
       section: other.section,
-      question: other.text,
+      text: other.text,
       options: other.options,
       correctAnswers: other.correctAnswers,
       allowMultiple: other.allowMultiple,
@@ -506,6 +521,11 @@ class SurveyQuestionMultipleChoice extends SurveyData {
     return json;
   }
 
+  static Map<String, String> get supportedStyles => const {
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
+  };
+
   @override
   bool get isQuestion => true;
 
@@ -518,9 +538,9 @@ class SurveyQuestionDateTime extends SurveyData {
   final DateTime? endTime;
   final bool askTime;
 
-  SurveyQuestionDateTime({required String question, this.startTime, this.endTime, this.askTime = true, required String key, String? section, String? defaultFollowUpKey, 
+  SurveyQuestionDateTime({required String text, this.startTime, this.endTime, this.askTime = true, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
-      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
+      : super(key: key, section: section, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, maximumScore: maximumScore, response: response, allowSkip: allowSkip, replace: replace);
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
@@ -529,7 +549,7 @@ class SurveyQuestionDateTime extends SurveyData {
       endTime: AppDateTime().dateTimeLocalFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 
-      question: json['text'],
+      text: json['text'],
       section: JsonUtils.stringValue(json['section']),
       key: key,
       response: json['response'],
@@ -549,7 +569,7 @@ class SurveyQuestionDateTime extends SurveyData {
     return SurveyQuestionDateTime(
       key: other.key,
       section: other.section,
-      question: other.text,
+      text: other.text,
       startTime: other.startTime,
       endTime: other.endTime,
       askTime: other.askTime,
@@ -585,9 +605,9 @@ class SurveyQuestionNumeric extends SurveyData {
   final bool wholeNum;
   final bool selfScore;
 
-  SurveyQuestionNumeric({required String question, this.minimum, this.maximum, this.wholeNum = false, this.selfScore = false, required String key, String? section, String? defaultFollowUpKey, 
+  SurveyQuestionNumeric({required String text, this.minimum, this.maximum, this.wholeNum = false, this.selfScore = false, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
-      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
+      : super(key: key, section: section, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, maximumScore: maximumScore, response: response, allowSkip: allowSkip, replace: replace);
 
   factory SurveyQuestionNumeric.fromJson(String key, Map<String, dynamic> json) {
@@ -597,7 +617,7 @@ class SurveyQuestionNumeric extends SurveyData {
       wholeNum: JsonUtils.boolValue(json['whole_num']) ?? false,
       selfScore: JsonUtils.boolValue(json['self_score']) ?? false,
 
-      question: json['text'],
+      text: json['text'],
       key: key,
       section: JsonUtils.stringValue(json['section']),
       response: json['response'],
@@ -617,7 +637,7 @@ class SurveyQuestionNumeric extends SurveyData {
     return SurveyQuestionNumeric(
       key: other.key,
       section: other.section,
-      question: other.text,
+      text: other.text,
       minimum: other.minimum,
       maximum: other.maximum,
       wholeNum: other.wholeNum,
@@ -645,6 +665,11 @@ class SurveyQuestionNumeric extends SurveyData {
     return json;
   }
 
+  static Map<String, String> get supportedStyles => const {
+    "text": "Text",
+    "slider": "Slider",
+  };
+
   @override
   bool get isQuestion => true;
 
@@ -656,9 +681,9 @@ class SurveyQuestionText extends SurveyData {
   final int minLength;
   final int? maxLength;
 
-  SurveyQuestionText({required String question, this.minLength = 0, this.maxLength, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
+  SurveyQuestionText({required String text, this.minLength = 0, this.maxLength, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
     Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool scored = false, bool allowSkip = false, bool replace = false})
-      : super(key: key, section: section, text: question, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
+      : super(key: key, section: section, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule,
         followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, maximumScore: maximumScore, response: response, allowSkip: allowSkip, replace: replace);
 
   factory SurveyQuestionText.fromJson(String key, Map<String, dynamic> json) {
@@ -666,7 +691,7 @@ class SurveyQuestionText extends SurveyData {
       minLength: JsonUtils.intValue(json['min_length']) ?? 0,
       maxLength: JsonUtils.intValue(json['max_length']),
 
-      question: json['text'],
+      text: json['text'],
       key: key,
       section: JsonUtils.stringValue(json['section']),
       scored: json['scored'],
@@ -687,7 +712,7 @@ class SurveyQuestionText extends SurveyData {
     return SurveyQuestionText(
       key: other.key,
       section: other.section,
-      question: other.text,
+      text: other.text,
       minLength: other.minLength,
       maxLength: other.maxLength,
       allowSkip: other.allowSkip,
@@ -723,6 +748,7 @@ class SurveyQuestionText extends SurveyData {
   }
 }
 
+/*
 enum DataType { int, double, bool, string, date }
 
 class SurveyDataEntry extends SurveyData {
@@ -797,6 +823,7 @@ class SurveyDataEntry extends SurveyData {
   @override
   bool get isQuestion => false;
 }
+*/
 
 class SurveyDataResult extends SurveyData {
   List<ActionData>? actions;
@@ -844,6 +871,7 @@ class SurveyDataResult extends SurveyData {
   bool get isQuestion => false;
 }
 
+/*
 class SurveyDataPage extends SurveyData {
   List<String> dataKeys;
 
@@ -882,3 +910,4 @@ class SurveyDataPage extends SurveyData {
   @override
   bool get isQuestion => false;
 }
+*/

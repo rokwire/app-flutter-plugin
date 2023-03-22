@@ -216,9 +216,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       surveyWidget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
       surveyWidget = _buildTextSurveySection(survey);
-    } else if (survey is SurveyDataPage) {
-      surveyWidget = _buildPageWidget(survey);
     }
+    // else if (survey is SurveyDataPage) {
+    //   surveyWidget = _buildPageWidget(survey);
+    // }
 
     return surveyWidget?.widget != null ? Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -686,9 +687,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     ));
   }
 
-  SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
-    return SurveyDataWidget(Container());
-  }
+  // SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
+  //   return SurveyDataWidget(Container());
+  // }
 
   void _setSurvey(Survey survey) {
     _survey = survey;
