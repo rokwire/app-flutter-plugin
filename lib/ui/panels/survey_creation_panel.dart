@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
-
-import 'package:rokwire_plugin/ui/widgets/survey.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
+import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
+import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/ui/widgets/survey.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
   final Function(SurveyResponse?)? onComplete;
-  final bool showSummaryOnFinish;
-  final bool allowBack;
   final Widget? tabBar;
   final Widget? offlineWidget;
 
-  const SurveyCreationPanel({Key? key, this.showSummaryOnFinish = false, this.allowBack = true, this.onComplete, this.tabBar, this.offlineWidget}) : super(key: key);
+  const SurveyCreationPanel({Key? key, this.onComplete, this.tabBar, this.offlineWidget}) : super(key: key);
 
   @override
   _SurveyCreationPanelState createState() => _SurveyCreationPanelState();
@@ -41,6 +42,7 @@ class SurveyCreationPanel extends StatefulWidget {
 class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   GlobalKey? dataKey;
 
+  bool _loading = false;
   final ScrollController _scrollController = ScrollController();
   late final SurveyWidgetController _surveyController;
   late final Map<String, TextEditingController> _textControllers;
@@ -48,8 +50,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   final List<SurveyData> _data = [];
   bool _scored = true;
   // bool _sensitive = false;
+
+  final Map<String, String> _constants = {};
+  final Map<String, Map<String, String>> _strings = {};
+
   Rule? _defaultDataKeyRule;
   List<Rule>? _resultRules;
+  List<Rule>? _subRules;
   List<String>? _responseKeys;
 
   @override
@@ -59,6 +66,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
       "type": TextEditingController(),
+      "default_data_key": TextEditingController(),
     };
     super.initState();
   }
@@ -77,43 +85,39 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       backgroundColor: Styles().colors?.background,
       body: Column(
         children: [
-          // Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
           Expanded(child: Scrollbar(
             radius: const Radius.circular(2),
             thumbVisibility: true,
             controller: _scrollController,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: _buildSurveyCreationTools(),
-            ),
-          )),
+            child: Column(children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(children: [
+                  _buildSurveyCreationTools(),
+                ]),
+              ),
+              _buildPreviewAndContinue(),
+            ]
+          ))),
           Padding(
             padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
             child: SurveyWidget.buildContinueButton(_surveyController),
           ),
         ],
     ));
-
-    //TODO:
-    // Ability to preview survey being created -> pass survey object to SurveyPanel
   }
 
   Widget _buildSurveyCreationTools() {
-    //TODO: use for required fields
-    // Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
-
     return Column(children: [
-      //TODO: TextField
       // title
-      FormFieldText('Title', controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words),
+      FormFieldText('Title', controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
       // more_info
       FormFieldText('Additional Information', controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
-      // survey type
-      //TODO: make this a dropdown?
-      FormFieldText('Type', controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words),
+      // survey type (make this a dropdown?)
+      FormFieldText('Type', controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
 
       // data
-      _buildSurveyDataWrapper(),
+      _buildCollapsibleWrapper(_data.length, _buildSurveyDataWidget),
 
       // scored
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -136,31 +140,80 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       //     onChanged: _onToggleSensitive,
       //   ),
       // ],),
-    ],);
-    
-    // default data key (i.e., first "question") -> assume first data widget represents first question
-    // default data key rule (i.e., rule for determining first "question") -> checkbox to use rule to determine first question, when checked shows UI to create rule
-    // constants
-        // unique ID: value
-    // strings
-        // language code (dropdown for supported languages?) -> Localization().defaultSupportedLanguages
-            // unique ID: string
-    // result_rules (list)
-        // dropdown for actions
-        // dropdown for comparison options
-        // dropdown for logic options
-        // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
-    // sub_rules
-    // response_keys? (history?)
 
-    //TODO: "modifiable list widget"
-    // Needs to be able to :
-        // add to end of list
-        // insert at any index in list
-        // each entry is collapsible
+      // default data key (i.e., first "question") -> assume first data widget represents first question
+      FormFieldText('First Item', controller: _textControllers["default_data_key"], multipleLines: false, inputType: TextInputType.text,),
+
+      // default data key rule (i.e., rule for determining first "question") -> checkbox to use rule to determine first question, when checked shows UI to create rule
+      _buildRuleWidget(0),
+
+      // constants
+      _buildCollapsibleWrapper(_constants.length, _buildStringMapWidget),
+      // strings
+      _buildCollapsibleWrapper(_strings.length, _buildStringsWidget),
+      // result_rules
+      _buildCollapsibleWrapper(_resultRules?.length ?? 0, _buildRuleWidget),
+      // sub_rules
+      _buildCollapsibleWrapper(_subRules?.length ?? 0, _buildRuleWidget),
+      // response_keys
+      Ink(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: ExpansionTile(
+          iconColor: Styles().colors?.getColor('fillColorSecondary'),
+          backgroundColor: Styles().colors?.getColor('surface'),
+          collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+          title: Text(
+            "Response Keys",
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          ),
+          children: <Widget>[
+            Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: 500
+              ),
+              child: (_responseKeys?.length ?? 0) > 0 ? Scrollbar(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _responseKeys!.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    _textControllers["response_keys$index"] ??= TextEditingController();
+                    return Column(
+                      children: [
+                        FormFieldText('', controller: _textControllers["response_keys$index"], multipleLines: false, inputType: TextInputType.text, padding: EdgeInsets.zero),
+                        Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
+                      ],
+                    );
+                  },
+                ),
+              ) : _buildAddDataButton(0),
+            ),
+          ],
+        ),
+      )
+    ],);
   }
 
-  Widget _buildSurveyDataWrapper() {
+  Widget _buildPreviewAndContinue() {
+    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: RoundedButton(
+        label: 'Preview',
+        borderColor: Styles().colors?.fillColorPrimaryVariant,
+        backgroundColor: Styles().colors?.surface,
+        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        onTap: _onTapPreview,
+      )),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: RoundedButton(
+        label: 'Continue',
+        borderColor: Styles().colors?.fillColorSecondary,
+        backgroundColor: Styles().colors?.surface,
+        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        onTap: _onTapContinue,
+      )),
+    ],);
+  }
+
+  Widget _buildCollapsibleWrapper(int dataLength, Widget Function(int) listItemBuilder) {
     return Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
@@ -177,14 +230,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             constraints: const BoxConstraints(
               maxHeight: 500
             ),
-            child: _data.isNotEmpty ? Scrollbar(
+            child: dataLength > 0 ? Scrollbar(
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: _data.length,
+                itemCount: dataLength,
                 itemBuilder: (BuildContext context, int index) {
                   return Column(
                     children: [
-                      _buildSurveyDataWidget(index),
+                      listItemBuilder(index),
                       Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
                     ],
                   );
@@ -224,22 +277,63 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     );
   }
 
-  Widget _buildAddDataButton(int index, {SurveyData? other}) {
+  Widget _buildRuleWidget(int index) {
+    // condition = 
+    // {
+    //   "operator": "",
+    //   "conditions": [
+            // condition
+    //   ]
+    // } OR
+    // {
+    //   'operator': "",
+    //   'data_key': "",
+    //   'data_param': "",
+    //   'compare_to': "",
+    //   'compare_to_param': "",
+    //   'default_result': "",
+    // }
+      //TODO
+  // 
+  // RuleAction.supportedActions
+  // RuleComparison.supportedOperators
+  // RuleLogic.supportedOperators
+    
+          // dropdown for actions
+          // dropdown for comparison options
+          // dropdown for logic options
+          // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
+    //TODO
+    return Container();
+  }
+
+  Widget _buildStringMapWidget(int index) {
+        // unique ID: value
+  }
+
+  Widget _buildStringsWidget(int index) {
+    // language code (dropdown for supported languages?) -> Localization().defaultSupportedLanguages
+              // unique ID: string
+  }
+
+  Widget _buildAddDataButton(int index) {
     return IconButton(icon: Styles().images?.getImage('plus-dark') ?? const Icon(Icons.add), onPressed: () => _onTapAddDataAtIndex(index),);
   }
 
   Widget _buildSurveyDataComponents(int index) {
     List<Widget> dataContent = [
       //key*
-      TextField(),
+      FormFieldText(),
       //question text*
-      TextField(),
+      FormFieldText(),
       //more info (Additional Info)
-      TextField(),
+      FormFieldText(),
       //section
-      TextField(),
+      FormFieldText(),
       //maximum score (number, show if survey is scored)
-      TextField(),
+      FormFieldText(),
+      //defaultFollowUpKey (defaults to next data in list if unspecified)
+      FormFieldText(),
 
       // data type
       DropdownButtonHideUnderline(child:
@@ -247,7 +341,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
           isExpanded: true,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDataTypeDropDownItems(),
+          items: _buildSurveyDropDownItems(SurveyData.supportedTypes),
           value: SurveyData.supportedTypes.entries.first.key,
           onChanged: (_) => _onChangeSurveyDataType(index),
           dropdownColor: Styles().colors?.textBackground,
@@ -276,15 +370,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       //   ),
       // ],),
 
-    // data (assume follow ups go in order given (populate defaultFollowUpKey fields "onCreate"))
-        // optional defaultResponseRule
-        // optional followUpRule (overrides display ordering)
-        // optional scoreRule (show entry if survey is scored)
-
-  String? defaultFollowUpKey;
-  Rule? defaultResponseRule;
-  Rule? followUpRule;
-  Rule? scoreRule;
+      // defaultResponseRule (assume follow ups go in order given (populate defaultFollowUpKey fields "onCreate"))
+      _buildRuleWidget(),
+      // followUpRule (overrides display ordering)
+      _buildRuleWidget(),
+      // scoreRule (show entry if survey is scored)
+      _buildRuleWidget(),
     ];
     if (_data[index] is SurveyQuestionTrueFalse) {
       // style
@@ -293,8 +384,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
           isExpanded: true,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDataStyleDropDownItems(_data[index]),
-          value: SurveyData.supportedTypes.entries.first.key,
+          items: _buildSurveyDropDownItems(SurveyQuestionTrueFalse.supportedStyles),
+          value: SurveyQuestionTrueFalse.supportedStyles.entries.first.key,
           onChanged: (_) => _onChangeSurveyDataStyle(index),
           dropdownColor: Styles().colors?.textBackground,
         ),
@@ -308,8 +399,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
           isExpanded: true,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDataStyleDropDownItems(_data[index]),
-          value: SurveyData.supportedTypes.entries.first.key,
+          items: _buildSurveyDropDownItems(SurveyQuestionMultipleChoice.supportedStyles),
+          value: SurveyQuestionMultipleChoice.supportedStyles.entries.first.key,
           onChanged: (_) => _onChangeSurveyDataStyle(index),
           dropdownColor: Styles().colors?.textBackground,
         ),
@@ -335,8 +426,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
           isExpanded: true,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDataStyleDropDownItems(_data[index]),
-          value: SurveyData.supportedTypes.entries.first.key,
+          items: _buildSurveyDropDownItems(SurveyQuestionNumeric.supportedStyles),
+          value: SurveyQuestionNumeric.supportedStyles.entries.first.key,
           onChanged: (_) => _onChangeSurveyDataStyle(index),
           dropdownColor: Styles().colors?.textBackground,
         ),
@@ -352,11 +443,27 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
                 // optional maxLength
     } else if (_data[index] is SurveyDataResult) {
       // "result"
-                // optional ActionData actions (null for "pure info")
-                    // type (launchUri, showSurvey, showPanel, dismiss, none) -> ActionType.values?
-                    // optional label
-                    // dynamic data
-                    // Map<String, dynamic> params
+      Map<String, String> supportedActions = {};
+      for (ActionType action in ActionType.values) {
+        supportedActions[action.name] = action.name;
+      }
+
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDropDownItems(supportedActions),
+          value: supportedActions.entries.first.key,
+          onChanged: (_) => _onChangeSurveyDataAction(index),
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+      // optional ActionData actions (null for "pure info")
+          // type (launchUri, showSurvey, showPanel, dismiss, none) -> ActionType.values? ActionType.values
+          // optional label
+          // dynamic data
+          // Map<String, dynamic> params
     } else {
       //TODO: return widget with invalid survey data message
     }
@@ -365,82 +472,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Column(children: dataContent,);
   }
 
-  //TODO: merge dropdown items funcs into one?
-  List<DropdownMenuItem<String>> _buildSurveyDataTypeDropDownItems() {
+  List<DropdownMenuItem<String>> _buildSurveyDropDownItems(Map<String, String> supportedItems) {
     List<DropdownMenuItem<String>> items = [];
 
-    for (MapEntry<String, String> supportedType in SurveyData.supportedTypes.entries) {
+    for (MapEntry<String, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<String>(
-        value: supportedType.key,
-        child: Align(alignment: Alignment.center, child: Text(supportedType.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
-  }
-
-  List<DropdownMenuItem<String>> _buildSurveyDataStyleDropDownItems(SurveyData data) {
-    List<DropdownMenuItem<String>> items = [];
-
-    Map<String, String>? supportedStyles;
-    if (data is SurveyQuestionTrueFalse) {
-      supportedStyles = SurveyQuestionTrueFalse.supportedStyles;
-    } else if (data is SurveyQuestionMultipleChoice) {
-      supportedStyles = SurveyQuestionTrueFalse.supportedStyles;
-    } else if (data is SurveyQuestionNumeric) {
-      supportedStyles = SurveyQuestionTrueFalse.supportedStyles;
-    }
-    for (MapEntry<String, String> supportedType in supportedStyles?.entries ?? []) {
-      items.add(DropdownMenuItem<String>(
-        value: supportedType.key,
-        child: Align(alignment: Alignment.center, child: Text(supportedType.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
-  }
-
-  List<DropdownMenuItem<String>> _buildSurveyDataActionDropDownItems() {
-    List<DropdownMenuItem<String>> items = [];
-
-    for (ActionType action in ActionType.values) {
-      items.add(DropdownMenuItem<String>(
-        value: action.name,
-        child: Align(alignment: Alignment.center, child: Text(action.name, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
-  }
-
-  List<DropdownMenuItem<String>> _buildRuleActionDropDownItems() {
-    List<DropdownMenuItem<String>> items = [];
-
-    for (MapEntry<String, String> supportedAction in RuleAction.supportedActions.entries) {
-      items.add(DropdownMenuItem<String>(
-        value: supportedAction.key,
-        child: Align(alignment: Alignment.center, child: Text(supportedAction.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
-  }
-
-  List<DropdownMenuItem<String>> _buildRuleComparisonDropDownItems() {
-    List<DropdownMenuItem<String>> items = [];
-
-    for (MapEntry<String, String> operator in RuleComparison.supportedOperators.entries) {
-      items.add(DropdownMenuItem<String>(
-        value: operator.key,
-        child: Align(alignment: Alignment.center, child: Text(operator.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
-  }
-
-  List<DropdownMenuItem<String>> _buildRuleLogicDropDownItems() {
-    List<DropdownMenuItem<String>> items = [];
-
-    for (MapEntry<String, String> operator in RuleLogic.supportedOperators.entries) {
-      items.add(DropdownMenuItem<String>(
-        value: operator.key,
-        child: Align(alignment: Alignment.center, child: Text(operator.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
+        value: item.key,
+        child: Align(alignment: Alignment.center, child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
       ));
     }
     return items;
@@ -468,6 +506,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onChangeSurveyDataType(int index) {
+    //TODO
+  }
+
+  void _onChangeSurveyDataStyle(int index) {
+    //TODO
+  }
+
+  void _onChangeSurveyDataAction(int index) {
     //TODO
   }
 
@@ -502,4 +548,45 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   //     });
   //   }
   // }
+  
+  Survey _buildSurvey() {
+    //TODO: create data map, subRules map
+    return Survey(
+      id: '',
+      data: _data,
+      type: _textControllers["type"]?.text ?? 'survey',
+      scored: _scored,
+      title: _textControllers["title"]?.text ?? 'New Survey',
+      moreInfo: _textControllers["more_info"]?.text,
+      defaultDataKey: _textControllers["default_data_key"]?.text ?? (_defaultDataKeyRule == null && _data.isNotEmpty ? _data.first.key : null),
+      defaultDataKeyRule: _defaultDataKeyRule,
+      resultRules: _resultRules,
+      responseKeys: _responseKeys,
+      constants: _constants,
+      strings: _strings,
+      subRules: _subRules,
+    );
+  }
+
+  void _onTapPreview() {
+    //TODO
+    // Map<String, SurveyData> 
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey(), inputEnabled: false)));
+  }
+
+  void _onTapContinue() {
+    setLoading(true);
+    Surveys().createSurvey(_buildSurvey()).then((success) {
+      setLoading(false);
+      //TODO: if success != true, show error message
+    });
+  }
+
+  void setLoading(bool value) {
+    if (mounted) {
+      setState(() {
+        _loading = value;
+      });
+    }
+  }
 }

@@ -14,6 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 class FormFieldText extends StatefulWidget {
@@ -21,6 +22,7 @@ class FormFieldText extends StatefulWidget {
   final EdgeInsets padding;
   final bool readOnly;
   final bool multipleLines;
+  final bool required;
   
   final String? initialValue;
   final String? hint;
@@ -35,7 +37,7 @@ class FormFieldText extends StatefulWidget {
 
 
   const FormFieldText(this.label, {Key? key, this.padding = const EdgeInsets.only(bottom: 20), this.readOnly = false, this.multipleLines = false, 
-    this.initialValue, this.hint, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved, this.onChanged, this.validator, 
+    this.required = false, this.initialValue, this.hint, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved, this.onChanged, this.validator, 
     this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
 
   @override
@@ -64,6 +66,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
               hintText: widget.hint,
+              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles?.getTextStyle('widget.error.regular.fat')) : null,
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(

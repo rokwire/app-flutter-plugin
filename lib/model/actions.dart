@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 enum ActionType {
+  none,
   launchUri,
   showSurvey,
   showPanel,
   dismiss,
-  none
 }
 
 class ActionData {

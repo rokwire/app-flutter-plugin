@@ -274,6 +274,21 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<bool?> createSurvey(Survey survey) async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/surveys';
+      Response? response = await Network().post(url, body: JsonUtils.encode(survey.toJson()), auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        return true;
+      }
+      String? responseBody = response?.body;
+      debugPrint(responseBody);
+      return false;
+    }
+    return null;
+  }
+
   Future<SurveyResponse?> createSurveyResponse(Survey survey) async {
     if (enabled && Storage().assessmentsSaveResultsMap?[survey.type] != false) {
       String? body = JsonUtils.encode(survey.toJson());

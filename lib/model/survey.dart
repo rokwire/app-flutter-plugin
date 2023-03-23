@@ -103,12 +103,12 @@ class Survey extends RuleEngine {
   final Rule? defaultDataKeyRule;
   final List<Rule>? resultRules;
   final List<String>? responseKeys;
-  DateTime dateCreated;
+  DateTime? dateCreated;
   DateTime? dateUpdated;
   SurveyStats? stats;
 
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
-    this.responseKeys, this.dateUpdated, required this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
@@ -156,7 +156,7 @@ class Survey extends RuleEngine {
       'response_keys': responseKeys,
       'constants': constants,
       'strings': strings,
-      'sub_rules': subRules,
+      'sub_rules': RuleEngine.subRulesToJson(subRules),
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),

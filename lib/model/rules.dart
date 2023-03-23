@@ -280,6 +280,14 @@ abstract class RuleEngine {
     return subRules;
   }
 
+  static Map<String, dynamic> subRulesToJson(Map<String, Rule> subRules) {
+    Map<String, dynamic> json = {};
+    for (MapEntry<String, Rule> entry in subRules.entries) {
+      json[entry.key] = entry.value.toJson();
+    }
+    return json;
+  }
+
   static Map<String, Map<String, String>> stringsFromJson(Map<String, dynamic> json) {
     Map<String, Map<String, String>> stringsMap = {};
     dynamic stringsJson = json["strings"];
