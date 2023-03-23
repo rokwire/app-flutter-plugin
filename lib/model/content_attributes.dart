@@ -11,9 +11,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class ContentAttributes {
   final List<ContentAttributesCategory>? categories;
   final ContentAttributesRequirements? requirements;
-  final Map<String, dynamic>? strings;
 
-  ContentAttributes({this.categories, this.requirements, this.strings});
+  ContentAttributes({this.categories, this.requirements});
 
   // JSON serialization
 
@@ -21,14 +20,12 @@ class ContentAttributes {
     return (json != null) ? ContentAttributes(
       categories: ContentAttributesCategory.listFromJson(JsonUtils.listValue(json['content'])) ,
       requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
-      strings: JsonUtils.mapValue(json['strings']),
     ) : null;
   }
 
   toJson() => {
     'content': categories,
     'requirements': requirements,
-    'strings': strings,
   };
 
   // Equality
@@ -37,33 +34,17 @@ class ContentAttributes {
   bool operator==(dynamic other) =>
     (other is ContentAttributes) &&
     (requirements == other.requirements) &&
-    const DeepCollectionEquality().equals(categories, other.categories) &&
-    const DeepCollectionEquality().equals(strings, other.strings);
+    const DeepCollectionEquality().equals(categories, other.categories);
 
   @override
   int get hashCode =>
     (requirements?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(categories)) ^
-    (const DeepCollectionEquality().hash(strings));
+    (const DeepCollectionEquality().hash(categories));
 
   // Accessories
 
   bool get isEmpty => categories?.isEmpty ?? true;
   bool get isNotEmpty => !isEmpty;
-
-  String? stringValue(String? key, { String? languageCode }) {
-    if ((strings != null) && (key != null)) {
-      Map<String, dynamic>? mapping =
-        JsonUtils.mapValue(strings![languageCode]) ??
-        JsonUtils.mapValue(strings![Localization().currentLocale?.languageCode]) ??
-        JsonUtils.mapValue(strings![Localization().defaultLocale?.languageCode]);
-      String? value = (mapping != null) ? JsonUtils.stringValue(mapping[key]) : null;
-      if (value != null) {
-        return value;
-      }
-    }
-    return key;
-  }
 
   ContentAttributesCategory? findCategory({String? id, String? title}) {
     if ((categories != null) && ((id != null) || (title != null))) {
@@ -191,7 +172,7 @@ class ContentAttributes {
     if ((categories != null) && (selection != null)) {
       for (ContentAttributesCategory category in categories!) {
         if ((usage == null) || (category.usage == usage)) {
-          displayList.addAll(category.displayAttributesListFromSelection(selection, contentAttributes: this, complete: complete) ?? <String>[]);
+          displayList.addAll(category.displayAttributesListFromSelection(selection, complete: complete) ?? <String>[]);
         }
       }
     }
@@ -217,12 +198,12 @@ class ContentAttributesCategory {
   final ContentAttributesCategoryUsage? usage;
   final ContentAttributesRequirements? requirements;
   final List<ContentAttribute>? attributes;
+  final Map<String, dynamic>? translations;
 
   ContentAttributesCategory({this.id, this.title, this.longTitle, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
     this.nullValue, this.widget, this.usage,
-    this.requirements,
-    this.attributes});
+    this.requirements, this.attributes, this.translations});
 
   // JSON serialization
 
@@ -242,6 +223,7 @@ class ContentAttributesCategory {
       usage: contentAttributesCategoryUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributesRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['values'])),
+      translations: JsonUtils.mapValue(json['translations'])
     ) : null;
   }
 
@@ -260,6 +242,7 @@ class ContentAttributesCategory {
     'usage': contentAttributesCategoryUsageToString(usage),
     'requirements': requirements,
     'values': attributes,
+    'translations': translations,
   };
 
   // Equality
@@ -280,7 +263,8 @@ class ContentAttributesCategory {
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
-    const DeepCollectionEquality().equals(attributes, other.attributes);
+    const DeepCollectionEquality().equals(attributes, other.attributes) &&
+    const DeepCollectionEquality().equals(translations, other.translations);
 
   @override
   int get hashCode =>
@@ -297,9 +281,19 @@ class ContentAttributesCategory {
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(attributes));
+    (const DeepCollectionEquality().hash(attributes)) ^
+    (const DeepCollectionEquality().hash(translations));
 
   // Accessories
+
+  String? get displayTitle => displayString(title);
+  String? get displayLongTitle => displayString(longTitle);
+  String? get displayDescription => displayString(description);
+  String? get displayText => displayString(text);
+  String? get displayEmptyHint => displayString(emptyHint);
+  String? get displayEmptyFilterHint => displayString(emptyFilterHint);
+  String? get displaySemanticsHint => displayString(semanticsHint);
+  String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
   bool get isRequired => requirements?.hasRequired ?? false;
   bool get isMultipleSelection => (requirements?.maxSelectedCount != 1);
@@ -347,10 +341,10 @@ class ContentAttributesCategory {
     return filteredAttributes;
   }
 
-  List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { ContentAttributes? contentAttributes, bool complete = false } ) {
+  List<String>? displayAttributesListFromSelection(Map<String, dynamic>? selection, { bool complete = false } ) {
     dynamic value = (selection != null) ? selection[id] : null;
     if (value is String) {
-      String? displayValue = this.displayValue(value, contentAttributes: contentAttributes, complete: complete);
+      String? displayValue = displayAttributeValue(value, complete: complete);
       if (displayValue != null) {
         return <String>[displayValue];
       }
@@ -359,7 +353,7 @@ class ContentAttributesCategory {
       List<String> displayList = <String>[];
       for (dynamic entry in value) {
         if (entry is String) {
-          String? displayValue = this.displayValue(entry, contentAttributes: contentAttributes, complete: complete);
+          String? displayValue = displayAttributeValue(entry, complete: complete);
           if (displayValue != null) {
             displayList.add(displayValue);
           }
@@ -370,13 +364,27 @@ class ContentAttributesCategory {
     return null;
   }
 
-  String? displayValue(String attributeLabel, { ContentAttributes? contentAttributes, bool complete = false }) {
+  String? displayAttributeValue(String attributeLabel, { bool complete = false }) {
     String? displayValue = attributeLabel;
     if ((complete != true) && (widget == ContentAttributesCategoryWidget.checkbox) && (usage == ContentAttributesCategoryUsage.label)) {
       ContentAttribute? attribute = findAttribute(label: attributeLabel);
       displayValue = (attribute?.value == true) ? title : null;
     }
-    return (displayValue != null) ? (contentAttributes?.stringValue(displayValue) ?? displayValue) : null;
+    return (displayValue != null) ? (displayString(displayValue) ?? displayValue) : null;
+  }
+
+  String? displayString(String? key, { String? languageCode }) {
+    if ((translations != null) && (key != null)) {
+      Map<String, dynamic>? mapping =
+        JsonUtils.mapValue(translations![languageCode]) ??
+        JsonUtils.mapValue(translations![Localization().currentLocale?.languageCode]) ??
+        JsonUtils.mapValue(translations![Localization().defaultLocale?.languageCode]);
+      String? value = (mapping != null) ? JsonUtils.stringValue(mapping[key]) : null;
+      if (value != null) {
+        return value;
+      }
+    }
+    return key;
   }
 
   // List<ContentAttributesCategory> JSON Serialization
