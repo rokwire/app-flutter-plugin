@@ -299,20 +299,20 @@ class SurveyStats {
 }
 
 abstract class SurveyData {
-  final String key;
-  final String? section;
-  final bool allowSkip;
-  final bool replace;
-  final String text;
-  final String? moreInfo;
-  final String? style;
-  final num? maximumScore;
+  String key;
+  String? section;
+  bool allowSkip;
+  bool replace;
+  String text;
+  String? moreInfo;
+  String? style;
+  num? maximumScore;
   dynamic response;
   
-  final String? defaultFollowUpKey;
-  final Rule? defaultResponseRule;
-  final Rule? followUpRule;
-  final Rule? scoreRule;
+  String? defaultFollowUpKey;
+  Rule? defaultResponseRule;
+  Rule? followUpRule;
+  Rule? scoreRule;
   SurveyData({required this.key, this.section, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule,
     this.moreInfo, this.style, this.maximumScore, this.response, this.allowSkip = false, this.replace = false});
 

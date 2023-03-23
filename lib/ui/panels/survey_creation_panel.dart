@@ -45,7 +45,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   late final SurveyWidgetController _surveyController;
   late final Map<String, TextEditingController> _textControllers;
 
-  final Map<String, SurveyData> _data = {};
+  final List<SurveyData> _data = [];
   bool _scored = true;
   // bool _sensitive = false;
   Rule? _defaultDataKeyRule;
@@ -93,10 +93,17 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           ),
         ],
     ));
+
+    //TODO:
+    // Ability to preview survey being created -> pass survey object to SurveyPanel
   }
 
   Widget _buildSurveyCreationTools() {
+    //TODO: use for required fields
+    // Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.fat'))),
+
     return Column(children: [
+      //TODO: TextField
       // title
       FormFieldText('Title', controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words),
       // more_info
@@ -108,38 +115,28 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       // data
       _buildSurveyDataWrapper(),
 
-      //TODO: label checkboxes
       // scored
-      Checkbox(
-        checkColor: Styles().colors?.surface,
-        activeColor: Styles().colors?.fillColorPrimary,
-        value: _scored,
-        onChanged: (value) {
-          if (mounted) {
-            setState(() {
-              _scored = value ?? true;
-            });
-          }
-        },
-      ),
-
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text("Scored", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
+        Checkbox(
+          checkColor: Styles().colors?.surface,
+          activeColor: Styles().colors?.fillColorPrimary,
+          value: _scored,
+          onChanged: _onToggleScored,
+        ),
+      ],),
+      
       // sensitive
-      // Checkbox(
-      //   checkColor: Styles().colors?.surface,
-      //   activeColor: Styles().colors?.fillColorPrimary,
-      //   value: _sensitive,
-      //   onChanged: (value) {
-      //     if (mounted) {
-      //       setState(() {
-      //         _sensitive = value ?? false;
-      //       });
-      //     }
-      //   },
-      // ),
+      // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      //   Text("Scored", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
+      //   Checkbox(
+      //     checkColor: Styles().colors?.surface,
+      //     activeColor: Styles().colors?.fillColorPrimary,
+      //     value: _sensitive,
+      //     onChanged: _onToggleSensitive,
+      //   ),
+      // ],),
     ],);
-    
-    //TODO:
-    // Ability to preview survey being created -> pass survey object to SurveyPanel
     
     // default data key (i.e., first "question") -> assume first data widget represents first question
     // default data key rule (i.e., rule for determining first "question") -> checkbox to use rule to determine first question, when checked shows UI to create rule
@@ -185,45 +182,139 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
                 shrinkWrap: true,
                 itemCount: _data.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    child: Column(
-                      children: [
-                        _buildSurveyDataWidget(),
-                        Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
-                        //TODO: build '+' button here to add to data map
-                      ],
-                    ),
+                  return Column(
+                    children: [
+                      _buildSurveyDataWidget(index),
+                      Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
+                    ],
                   );
                 },
               ),
-            ) : Container(), //TODO: build '+' button here to add to data map
+            ) : _buildAddDataButton(0),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSurveyDataWidget() {
-    // data type
-    // DropdownButtonHideUnderline(child:
-    //   DropdownButton<String>(
-    //     icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-    //     isExpanded: true,
-    //     style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-    //     items: _buildSurveyDataTypeDropDownItems(),
-    //     value: SurveyData.supportedTypes.entries.first.key,
-    //     onChanged: _onResponseDateDropDownChanged,
-    //     dropdownColor: Styles().colors?.textBackground,
-    //   ),
-    // ),
+  Widget _buildSurveyDataWidget(int index) {
+    return Ink(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      child: ExpansionTile(
+        iconColor: Styles().colors?.getColor('fillColorSecondary'),
+        backgroundColor: Styles().colors?.getColor('surface'),
+        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+        title: Text(
+          _data[index].key,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+        ),
+        trailing: _buildAddDataButton(index + 1),
+        children: <Widget>[
+          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: 500
+            ),
+            child: Scrollbar(
+              child: _buildSurveyDataComponents(index),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddDataButton(int index, {SurveyData? other}) {
+    return IconButton(icon: Styles().images?.getImage('plus-dark') ?? const Icon(Icons.add), onPressed: () => _onTapAddDataAtIndex(index),);
+  }
+
+  Widget _buildSurveyDataComponents(int index) {
+    List<Widget> dataContent = [
+      //key*
+      TextField(),
+      //question text*
+      TextField(),
+      //more info (Additional Info)
+      TextField(),
+      //section
+      TextField(),
+      //maximum score (number, show if survey is scored)
+      TextField(),
+
+      // data type
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDataTypeDropDownItems(),
+          value: SurveyData.supportedTypes.entries.first.key,
+          onChanged: (_) => _onChangeSurveyDataType(index),
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+
+      // allowSkip
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text("Required", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
+        Checkbox(
+          checkColor: Styles().colors?.surface,
+          activeColor: Styles().colors?.fillColorPrimary,
+          value: !_data[index].allowSkip,
+          onChanged: (value) => _onToggleRequired(value, index),
+        ),
+      ],),
+      
+      // replace
+      // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      //   Text("Scored", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
+      //   Checkbox(
+      //     checkColor: Styles().colors?.surface,
+      //     activeColor: Styles().colors?.fillColorPrimary,
+      //     value: _data[index].replace,
+      //     onChanged: (value) => _onToggleReplace(value, index),
+      //   ),
+      // ],),
 
     // data (assume follow ups go in order given (populate defaultFollowUpKey fields "onCreate"))
-        // key (unique identifier)*
-        // optional section string
-        // types:
-            // "true_false"
+        // optional defaultResponseRule
+        // optional followUpRule (overrides display ordering)
+        // optional scoreRule (show entry if survey is scored)
+
+  String? defaultFollowUpKey;
+  Rule? defaultResponseRule;
+  Rule? followUpRule;
+  Rule? scoreRule;
+    ];
+    if (_data[index] is SurveyQuestionTrueFalse) {
+      // style
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDataStyleDropDownItems(_data[index]),
+          value: SurveyData.supportedTypes.entries.first.key,
+          onChanged: (_) => _onChangeSurveyDataStyle(index),
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+      // "true_false"
                 // correct answer (dropdown: Yes/True, No/False, null)
-            // "multiple_choice"
+    } else if (_data[index] is SurveyQuestionMultipleChoice) {
+      // style
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDataStyleDropDownItems(_data[index]),
+          value: SurveyData.supportedTypes.entries.first.key,
+          onChanged: (_) => _onChangeSurveyDataStyle(index),
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+      // "multiple_choice"
                 // OptionData options
                     // title;
                     // optional hint;
@@ -232,39 +323,46 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
                 // optional correctAnswers
                 // allowMultiple answers
                 // selfScore (default to survey scored flag)
-            // "date_time"
+    } else if (_data[index] is SurveyQuestionDateTime) {
+      // "date_time"
                 // optional DateTime startTime (datetime picker?)
                 // optional DateTime endTime (datetime picker?)
                 // askTime flag
-            // "numeric"
+    } else if (_data[index] is SurveyQuestionNumeric) {
+      // style
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDataStyleDropDownItems(_data[index]),
+          value: SurveyData.supportedTypes.entries.first.key,
+          onChanged: (_) => _onChangeSurveyDataStyle(index),
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+      // "numeric"
                 // optional minimum
                 // optional maximum
                 // wholeNum flag
                 // selfScore (default to survey scored flag)
-            // "text"
+    } else if (_data[index] is SurveyQuestionText) {
+      // "text"
                 // minLength
                 // optional maxLength
-            // "entry" (unused for now)
-            // "result"
+    } else if (_data[index] is SurveyDataResult) {
+      // "result"
                 // optional ActionData actions (null for "pure info")
                     // type (launchUri, showSurvey, showPanel, dismiss, none) -> ActionType.values?
                     // optional label
                     // dynamic data
                     // Map<String, dynamic> params
-            // "page" (unused for now)
-        // required flag
-        // replace flag (unused for now)
-        // question text
-        // additional info
-        // style (dropdown)
-            // "true_false"
-            // "multiple_choice"
-            // "numeric"
-        // optional maximumScore (show entry if survey is scored)
-        // optional defaultResponseRule
-        // optional followUpRule (overrides display ordering)
-        // optional scoreRule (show entry if survey is scored)
-    return Container();
+    } else {
+      //TODO: return widget with invalid survey data message
+    }
+
+    //TODO: add SurveyDataPage and SurveyDataEntry later
+    return Column(children: dataContent,);
   }
 
   //TODO: merge dropdown items funcs into one?
@@ -347,4 +445,61 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
     return items;
   }
+
+  void _onTapAddDataAtIndex(int index) {
+    if (mounted) {
+      SurveyData insert;
+      if (index > 0) {
+        insert = SurveyData.fromOther(_data[index-1]);
+        insert.key = "data$index";
+        insert.text = "New survey data";
+        insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
+      } else {
+        insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "data$index");
+      }
+      setState(() {
+        _data.insert(index, insert);
+        if (index > 0 && _data[index-1].followUpRule == null) {
+          _data[index-1].defaultFollowUpKey = "data$index";
+        }
+        //TODO: how to update follow up rules?
+      });
+    }
+  }
+
+  void _onChangeSurveyDataType(int index) {
+    //TODO
+  }
+
+  void _onToggleScored(bool? value) {
+    if (mounted) {
+      setState(() {
+        _scored = value ?? true;
+      });
+    }
+  }
+
+  // void _onToggleSensitive(bool? value) {
+  //   if (mounted) {
+  //     setState(() {
+  //       _sensitive = value ?? false;
+  //     });
+  //   }
+  // }
+
+  void _onToggleRequired(bool? value, int index) {
+    if (mounted) {
+      setState(() {
+        _data[index].allowSkip = value ?? false;
+      });
+    }
+  }
+
+  // void _onToggleReplace(bool? value, int index) {
+  //   if (mounted) {
+  //     setState(() {
+  //       _data[index].replace = value ?? false;
+  //     });
+  //   }
+  // }
 }
