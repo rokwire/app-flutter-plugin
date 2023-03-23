@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:args/args.dart';
+
+const flagUpdateCode = 'update-code';
 
 Map<String, String> classMap = {
   'color': 'AppColors',
@@ -37,9 +40,17 @@ String camelCase(String s, {bool startUpper = false}) {
   return out;
 }
 
-void main() async {
+Map<String, String> replacements = {};
+
+void main(List<String> arguments) async {
+  final parser = ArgParser()..addFlag(flagUpdateCode, negatable: false, abbr: 'u');
+  ArgResults argResults = parser.parse(arguments);
+
+  bool updateCode = argResults[flagUpdateCode];
+
   String assetFilepath = 'assets/styles.json';
-  String genFilepath = 'lib/gen/styles.dart';
+  String libPath = 'lib/';
+  String genFilepath = '${libPath}gen/styles.dart';
 
   Map<String, dynamic>? asset = await _loadFileJson(assetFilepath);
   if (asset != null) {
@@ -47,6 +58,9 @@ void main() async {
     if (fileString.isNotEmpty) {
       File(genFilepath).writeAsString(fileString);
       print("saved generated file to $genFilepath");
+      if (updateCode) {
+        _updateCodeRefs(libPath, genFilepath);
+      }
     }
   } else {
     print('asset was not loaded');
@@ -78,7 +92,10 @@ String? _buildClass(String name, Map<String, dynamic> json) {
 
   String classString = "class $className {\n";
   for (MapEntry<String, dynamic> entry in json.entries) {
-    classString += "    static $type ${camelCase(entry.key)} = ${ref.replaceAll("%key", "'${entry.key}'")};\n";
+    String varName = camelCase(entry.key);
+    String varRef = ref.replaceAll("%key", "'${entry.key}'");
+    classString += "    static $type $varName = $varRef;\n";
+    replacements[varRef] = '$className.$varName';
   }
   classString += "}\n";
   return classString;
@@ -101,4 +118,20 @@ Future<Map<String, dynamic>?> _loadFileJson(String filepath) async {
     print(e);
   }
   return null;
+}
+
+void _updateCodeRefs(String libPath, String genFilepath) async {
+  print('updating code references...');
+  final dir = Directory(libPath);
+  List allContents = dir.listSync(recursive: true);
+  for (FileSystemEntity entity in allContents) {
+    if (entity is File && entity.path != genFilepath) {
+      print('processing file ${entity.path}');
+      String data = entity.readAsStringSync();
+      for (MapEntry<String, String> replacement in replacements.entries) {
+        data = data.replaceAll(replacement.key, replacement.value);
+      }
+      entity.writeAsStringSync(data);
+    }
+  }
 }
