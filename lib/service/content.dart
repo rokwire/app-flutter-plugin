@@ -16,12 +16,17 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
+import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -29,10 +34,17 @@ import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
-class Content /* with Service */ {
+class Content with Service implements NotificationsListener {
 
-  static const String notifyUserProfilePictureChanged = "edu.illinois.rokwire.content.user.picture.profile.changed";
-  
+  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.group.content_attributes.changed";
+  static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture.profile.changed";
+
+  static const String _contentAttributesCacheFileName = "contentAttributes.json";
+
+  Directory? _appDocDir;
+  DateTime?  _pausedDateTime;
+  ContentAttributes? _contentAttributes;
+
   // Singletone Factory
 
   static Content? _instance;
@@ -46,6 +58,134 @@ class Content /* with Service */ {
 
   @protected
   Content.internal();
+
+  // Service
+
+  @override
+  void createService() {
+    NotificationService().subscribe(this,[
+      AppLivecycle.notifyStateChanged,
+    ]);
+    super.createService();
+  }
+
+  @override
+  void destroyService() {
+    NotificationService().unsubscribe(this);
+    super.destroyService();
+  }
+
+  @override
+  Future<void> initService() async {
+    _appDocDir = await _getAppDocumentsDirectory();
+    _contentAttributes = await _loadContentAttributesFromCache();
+    if (_contentAttributes == null) {
+      String? contentAttributesString = await _loadContentAttributesStringFromNet();
+      ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
+      if (contentAttributes != null) {
+        _contentAttributes = contentAttributes;
+        _saveContentAttributesStringToCache(contentAttributesString);
+      }
+    }
+    else {
+      _updateContentAttributes();
+    }
+
+    await super.initService();
+  }
+
+  @override
+  Set<Service> get serviceDependsOn {
+    return { Config() };
+  }
+
+  // NotificationsListener
+
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == AppLivecycle.notifyStateChanged) {
+      _onAppLivecycleStateChanged(param);
+    }
+  }
+
+  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+    if (state == AppLifecycleState.paused) {
+      _pausedDateTime = DateTime.now();
+    }
+    else if (state == AppLifecycleState.resumed) {
+      if (_pausedDateTime != null) {
+        Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
+        if (Config().refreshTimeout < pausedDuration.inSeconds) {
+          _updateContentAttributes();
+        }
+      }
+    }
+  }
+
+  // Caching
+
+  Future<Directory?> _getAppDocumentsDirectory() async {
+    try {
+      return await getApplicationDocumentsDirectory();
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  // Content Attributes
+
+  ContentAttributes? get contentAttributes => _contentAttributes;
+
+  File? _getContentAttributesCacheFile() =>
+    (_appDocDir != null) ? File(join(_appDocDir!.path, _contentAttributesCacheFileName)) : null;
+
+  Future<String?> _loadContentAttributesStringFromCache() async {
+    try {
+      File? cacheFile = _getContentAttributesCacheFile();
+      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
+    }
+    catch(e) { 
+      debugPrint(e.toString()); 
+    }
+    return null;
+  }
+
+  Future<void> _saveContentAttributesStringToCache(String? value) async {
+    try {
+      File? cacheFile = _getContentAttributesCacheFile();
+      if (cacheFile != null) {
+        if (value != null) {
+          await cacheFile.writeAsString(value, flush: true);
+        }
+        else if (await cacheFile.exists()){
+          await cacheFile.delete();
+        }
+      }
+    }
+    catch(e) { 
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<ContentAttributes?> _loadContentAttributesFromCache() async {
+    return ContentAttributes.fromJson(JsonUtils.decodeMap(await _loadContentAttributesStringFromCache()));
+  }
+
+  Future<String?> _loadContentAttributesStringFromNet() async {
+    return await AppBundle.loadString('assets/content.attributes.json');
+  }
+
+  Future<void> _updateContentAttributes() async {
+    String? contentAttributesString = await _loadContentAttributesStringFromNet();
+    ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
+    if ((contentAttributes != null) && (contentAttributes != _contentAttributes)) {
+      _contentAttributes = contentAttributes;
+      _saveContentAttributesStringToCache(contentAttributesString);
+      NotificationService().notify(notifyContentAttributesChanged);
+    }
+  }
 
   // Implementation
 
@@ -232,7 +372,8 @@ class Content /* with Service */ {
     }
   }
 
-  //Content items
+  // Content Items
+
   Future<List<dynamic>?> loadContentItems({List<String>? categories, List<String>? ids}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {

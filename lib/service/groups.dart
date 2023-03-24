@@ -67,14 +67,10 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMembershipSwitchToAdmin  = "edu.illinois.rokwire.group.membership.switch_to_admin";
   static const String notifyGroupMembershipSwitchToMember = "edu.illinois.rokwire.group.membership.switch_to_member";
   static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
-
-  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.group.content_attributes.changed";
-
-  static const String _userLoginVersionSetting         = "edu.illinois.rokwire.settings.groups.user.login.version";
+  static const String _userLoginVersionSetting            = "edu.illinois.rokwire.settings.groups.user.login.version";
 
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
-  static const String _contentAttributesCacheFileName = "group_attributes.json";
 
   List<Map<String, dynamic>>? _groupDetailsCache;
   List<Map<String, dynamic>>? get groupDetailsCache => _groupDetailsCache;
@@ -83,8 +79,6 @@ class Groups with Service implements NotificationsListener {
 
   List<Group>? _userGroups;
   Set<String>? _userGroupNames;
-
-  ContentAttributes? _contentAttributes;
 
   Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
 
@@ -119,11 +113,13 @@ class Groups with Service implements NotificationsListener {
       Connectivity.notifyStatusChanged
     ]);
     _groupDetailsCache = [];
+    super.createService();
   }
 
   @override
   void destroyService() {
     NotificationService().unsubscribe(this);
+    super.destroyService();
   }
 
   @override
@@ -143,19 +139,6 @@ class Groups with Service implements NotificationsListener {
     }
     else {
       _updateUserGroupsFromNetSync();
-    }
-
-    _contentAttributes = await _loadContentAttributesFromCache();
-    if (_contentAttributes == null) {
-      String? contentAttributesString = await _loadContentAttributesStringFromNet();
-      ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
-      if (contentAttributes != null) {
-        _contentAttributes = contentAttributes;
-        _saveContentAttributesStringToCache(contentAttributesString);
-      }
-    }
-    else {
-      _updateContentAttributes();
     }
 
     await super.initService();
@@ -183,7 +166,8 @@ class Groups with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param);
-    } else if (name == FirebaseMessaging.notifyGroupsNotification){
+    }
+    else if (name == FirebaseMessaging.notifyGroupsNotification){
       _onFirebaseMessageForGroupUpdate();
     }
     else if (name == Connectivity.notifyStatusChanged) {
@@ -213,7 +197,6 @@ class Groups with Service implements NotificationsListener {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
           _updateUserGroupsFromNetSync();
-          _updateContentAttributes();
         }
       }
     }
@@ -244,56 +227,8 @@ class Groups with Service implements NotificationsListener {
 
   // Content Attributes
 
-  ContentAttributes? get contentAttributes => _contentAttributes;
+  ContentAttributes? get contentAttributes => Content().contentAttributes; //TBD
 
-  File? _getContentAttributesCacheFile() =>
-    (_appDocDir != null) ? File(join(_appDocDir!.path, _contentAttributesCacheFileName)) : null;
-
-  Future<String?> _loadContentAttributesStringFromCache() async {
-    try {
-      File? cacheFile = _getContentAttributesCacheFile();
-      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
-    }
-    catch(e) { 
-      debugPrint(e.toString()); 
-    }
-    return null;
-  }
-
-  Future<void> _saveContentAttributesStringToCache(String? value) async {
-    try {
-      File? cacheFile = _getContentAttributesCacheFile();
-      if (cacheFile != null) {
-        if (value != null) {
-          await cacheFile.writeAsString(value, flush: true);
-        }
-        else if (await cacheFile.exists()){
-          await cacheFile.delete();
-        }
-      }
-    }
-    catch(e) { 
-      debugPrint(e.toString());
-    }
-  }
-
-  Future<ContentAttributes?> _loadContentAttributesFromCache() async {
-    return ContentAttributes.fromJson(JsonUtils.decodeMap(await _loadContentAttributesStringFromCache()));
-  }
-
-  Future<String?> _loadContentAttributesStringFromNet() async {
-    return await AppBundle.loadString('assets/content.attributes.groups.json');
-  }
-
-  Future<void> _updateContentAttributes() async {
-    String? contentAttributesString = await _loadContentAttributesStringFromNet();
-    ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
-    if ((contentAttributes != null) && (contentAttributes != _contentAttributes)) {
-      _contentAttributes = contentAttributes;
-      _saveContentAttributesStringToCache(contentAttributesString);
-      NotificationService().notify(notifyContentAttributesChanged);
-    }
-  }
 
   // Categories APIs
   // TBD: REMOVE
