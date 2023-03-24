@@ -43,7 +43,9 @@ class Content with Service implements NotificationsListener {
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
+  
   ContentAttributes? _contentAttributes;
+  final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
 
   // Singletone Factory
 
@@ -136,7 +138,8 @@ class Content with Service implements NotificationsListener {
 
   // Content Attributes
 
-  ContentAttributes? get contentAttributes => _contentAttributes;
+  ContentAttributes? contentAttributes(String scope) => (_contentAttributes != null) ?
+      (_contentAttributesByScope[scope] ??= (ContentAttributes.fromOther(_contentAttributes, scope: scope) ?? ContentAttributes())) : null;
 
   File? _getContentAttributesCacheFile() =>
     (_appDocDir != null) ? File(join(_appDocDir!.path, _contentAttributesCacheFileName)) : null;
@@ -182,6 +185,7 @@ class Content with Service implements NotificationsListener {
     ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
     if ((contentAttributes != null) && (contentAttributes != _contentAttributes)) {
       _contentAttributes = contentAttributes;
+      _contentAttributesByScope.clear();
       _saveContentAttributesStringToCache(contentAttributesString);
       NotificationService().notify(notifyContentAttributesChanged);
     }

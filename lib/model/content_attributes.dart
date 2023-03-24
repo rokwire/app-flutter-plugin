@@ -41,6 +41,15 @@ class ContentAttributes {
     (requirements?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes));
 
+  // Copy
+
+  static ContentAttributes? fromOther(ContentAttributes? other, { String? scope }) {
+    return (other != null) ? ContentAttributes(
+      attributes: ContentAttribute.listFromOther(other.attributes, scope: scope),
+      requirements: other.requirements,
+    ) : null;
+  }
+
   // Accessories
 
   bool get isEmpty => attributes?.isEmpty ?? true;
@@ -197,13 +206,14 @@ class ContentAttribute {
   final ContentAttributeWidget? widget;
   final ContentAttributeUsage? usage;
   final ContentAttributeRequirements? requirements;
+  final Set<String>? scope;
   final List<ContentAttributeValue>? values;
   final Map<String, dynamic>? translations;
 
   ContentAttribute({this.id, this.title, this.longTitle, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
-    this.nullValue, this.widget, this.usage,
-    this.requirements, this.values, this.translations});
+    this.nullValue, this.widget, this.usage, this.requirements,
+    this.scope, this.values, this.translations});
 
   // JSON serialization
 
@@ -222,6 +232,7 @@ class ContentAttribute {
       widget: contentAttributeWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributeUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributeRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
+      scope: JsonUtils.setStringsValue(json['scope']),
       values: ContentAttributeValue.listFromJson(JsonUtils.listValue(json['values'])),
       translations: JsonUtils.mapValue(json['translations'])
     ) : null;
@@ -241,6 +252,7 @@ class ContentAttribute {
     'widget': contentAttributeWidgetToString(widget),
     'usage': contentAttributeUsageToString(usage),
     'requirements': requirements,
+    'scope': JsonUtils.listStringsValue(scope),
     'values': values,
     'translations': translations,
   };
@@ -263,6 +275,7 @@ class ContentAttribute {
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
+    const DeepCollectionEquality().equals(scope, other.scope) &&
     const DeepCollectionEquality().equals(values, other.values) &&
     const DeepCollectionEquality().equals(translations, other.translations);
 
@@ -281,6 +294,7 @@ class ContentAttribute {
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(scope)) ^
     (const DeepCollectionEquality().hash(values)) ^
     (const DeepCollectionEquality().hash(translations));
 
@@ -307,9 +321,10 @@ class ContentAttribute {
   bool get isCategoryUsage => (usage == ContentAttributeUsage.category);
   bool get isPropertyUsage => (usage == ContentAttributeUsage.property);
 
+  bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
+
   ContentAttributeValue? findValue({String? label, dynamic value}) =>
     ContentAttributeValue.findInList(values, label: label, value: value);
-
 
   bool validateSelection(Map<String, LinkedHashSet<String>> selection) {
     LinkedHashSet<String>? attributeLabels = selection[id];
@@ -410,6 +425,9 @@ class ContentAttribute {
     }
     return jsonList;
   }
+
+  static List<ContentAttribute>? listFromOther(List<ContentAttribute>? otherList, { String? scope }) =>
+    (otherList != null) ? List<ContentAttribute>.from((scope != null) ? otherList.where((ContentAttribute attribute) => attribute.inScope(scope)) : otherList) : null;
 }
 
 /////////////////////////////////////

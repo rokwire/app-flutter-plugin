@@ -227,7 +227,7 @@ class Groups with Service implements NotificationsListener {
 
   // Content Attributes
 
-  ContentAttributes? get contentAttributes => Content().contentAttributes; //TBD
+  ContentAttributes? get contentAttributes => Content().contentAttributes('groups');
 
 
   // Categories APIs
