@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Handle exceptions that Geolocator.getCurrentPosition could throw. 
 - Fixed processing analyticsUrl when sending notifyHttpResponse notification for Analytics [#266](https://github.com/rokwire/app-flutter-plugin/issues/266).
+### Changed
+- Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
 
 ## [1.3.2] - 2023-02-16
 ### Changed
