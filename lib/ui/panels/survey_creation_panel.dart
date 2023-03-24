@@ -47,7 +47,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   bool _loading = false;
   final ScrollController _scrollController = ScrollController();
-  late final SurveyWidgetController _surveyController;
   late final Map<String, TextEditingController> _textControllers;
 
   final List<SurveyData> _data = [];
@@ -64,7 +63,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   @override
   void initState() {
-    _surveyController = SurveyWidgetController(onComplete: widget.onComplete);
     _textControllers = {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
@@ -92,20 +90,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             radius: const Radius.circular(2),
             thumbVisibility: true,
             controller: _scrollController,
-            child: Column(children: [
-              SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(children: [
-                  _buildSurveyCreationTools(),
-                ]),
-              ),
-              _buildPreviewAndContinue(),
-            ]
-          ))),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
-            child: SurveyWidget.buildContinueButton(_surveyController),
-          ),
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: _buildSurveyCreationTools(),
+            ),
+          )),
+          //TODO: causes exception (has no size?)
+          // _buildPreviewAndContinue(),
         ],
     ));
   }
@@ -368,9 +359,17 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildAddRemoveButtons(int index, String textGroup) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      IconButton(icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('surface')) ?? const Icon(Icons.add), onPressed: () => _onTapAddDataAtIndex(index, textGroup),),
-      IconButton(icon: Styles().images?.getImage('minus-circle', color: Styles().colors?.getColor('alert')) ?? const Icon(Icons.add), onPressed: () => _onTapRemoveDataAtIndex(index, textGroup),),
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      IconButton(
+        icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary')) ?? const Icon(Icons.add),
+        onPressed: () => _onTapAddDataAtIndex(index, textGroup),
+        padding: EdgeInsets.zero,
+      ),
+      IconButton(
+        icon: Styles().images?.getImage('minus-circle', color: Styles().colors?.getColor('alert')) ?? const Icon(Icons.add),
+        onPressed: () => _onTapRemoveDataAtIndex(index, textGroup),
+        padding: EdgeInsets.zero,
+      ),
     ]);
   }
 
@@ -550,6 +549,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return items;
   }
 
+  //TODO: this causes some UI exceptions
   void _onTapAddDataAtIndex(int index, String textGroup) {
     if (mounted) {
       SurveyData insert;
