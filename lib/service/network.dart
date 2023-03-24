@@ -518,11 +518,11 @@ class Network  {
   }
 
   static dynamic _notifyHttpResponseParam(http.BaseResponse? response, { String? analyticsUrl }) {
-    return (analyticsUrl != null) ? response : {
-      notifyHttpRequestUrl: response?.request?.url.toString(),
+    return (analyticsUrl != null) ? {
+      notifyHttpRequestUrl: analyticsUrl,
       notifyHttpRequestMethod: response?.request?.method,
       notifyHttpResponseCode: response?.statusCode,
-    };
+    } : response;
   }
 
   static Uri? _uriFromUrlString(dynamic url) {
