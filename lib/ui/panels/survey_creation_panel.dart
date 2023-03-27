@@ -60,6 +60,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   final Map<String, Rule> _subRules = {};
   List<String>? _responseKeys;
 
+  final Map<String, String> _supportedLangs = {};
+
   @override
   void initState() {
     _textControllers = {
@@ -74,6 +76,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   @override
   void dispose() {
     _textControllers.forEach((_, value) { value.dispose(); });
+
+    for (String lang in Localization().defaultSupportedLanguages) {
+      _supportedLangs[lang] = lang;
+    }
+
     super.dispose();
   }
 
@@ -149,7 +156,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       // result_rules
       _buildCollapsibleWrapper("Result Rules", "result_rules", _resultRules?.length ?? 0, _buildRuleWidget),
       // sub_rules
-      _buildCollapsibleWrapper("Sub Rules", "sub_rules", _subRules.length, _buildRuleWidget),
+      _buildCollapsibleWrapper("Sub Rules", "sub_rules", _subRules.length, _buildRuleWidget), //TODO: rule map widget
       // response_keys
       _buildCollapsibleWrapper("Response Keys", "response_keys", _responseKeys?.length ?? 0, _buildStringListEntryWidget),
     ],);
@@ -242,6 +249,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildRuleWidget(int index, String textGroup) {
+    //RuleCondition
+      //RuleComparison
+      //RuleLogic
+    //RuleResult
+      //Rule
+      //RuleReference
+      //RuleActionResult
+        //RuleAction
+        //RuleActionList
+
     // condition = 
     // {
     //   "operator": "",
@@ -274,7 +291,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   Widget _buildStringListEntryWidget(int index, String textGroup) {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       FormFieldText('Value', controller: _textControllers["$textGroup$index.value"], inputType: TextInputType.text, required: true),
-      _buildAddRemoveButtons(index, textGroup),
+      _buildAddRemoveButtons(index + 1, textGroup),
     ]);
   }
 
@@ -282,18 +299,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       FormFieldText('Key', controller: _textControllers["$textGroup$index.key"], inputType: TextInputType.text, required: true),
       FormFieldText('Value', controller: _textControllers["$textGroup$index.value"], inputType: TextInputType.text, required: true),
-      _buildAddRemoveButtons(index, textGroup),
+      _buildAddRemoveButtons(index + 1, textGroup),
     ]);
   }
 
   Widget _buildStringMapWidget(int index, String textGroup) {
-    Map<String, String> supportedLangs = {};
-    for (String lang in Localization().defaultSupportedLanguages) {
-      if (_strings[lang] == null) {
-        supportedLangs[lang] = lang;
-      }
-    }
-
     return Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
@@ -301,7 +311,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         backgroundColor: Styles().colors?.getColor('surface'),
         collapsedBackgroundColor: Styles().colors?.getColor('surface'),
         title: Text(
-          _data[index].key,
+          "Language Strings",
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
         ),
         leading: DropdownButtonHideUnderline(child:
@@ -309,9 +319,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
             isExpanded: true,
             style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(supportedLangs),
-            value: supportedLangs.entries.first.key,
-            onChanged: (_) => _onChangeSurveyDataStyle(index),
+            items: _buildSurveyDropDownItems<String>(_supportedLangs),
+            value: index < _strings.length ? _strings.keys.elementAt(index) : Localization().defaultSupportedLanguages.first,
+            onChanged: (value) => _onChangeStringsLanguage(index, value),
             dropdownColor: Styles().colors?.textBackground,
           ),
         ),
@@ -322,23 +332,20 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             constraints: const BoxConstraints(
               maxHeight: 500
             ),
-            // child: dataLength > 0 ? Scrollbar(
-            //   child: ListView.builder(
-            //     shrinkWrap: true,
-            //     itemCount: dataLength,
-            //     itemBuilder: (BuildContext context, int index) {
-            //       return Column(
-            //         children: [
-            //           listItemBuilder(index, textGroup),
-            //           Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
-            //         ],
-            //       );
-            //     },
-            //   ),
-            // ) : _buildAddRemoveButtons(0, textGroup),
-            child: Scrollbar(
-              child: _buildStringMapEntryWidget(index, textGroup),
-            ),
+            child: _strings[_strings.keys.elementAt(index)]?.isNotEmpty ?? false ? Scrollbar(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _strings[_strings.keys.elementAt(index)]!.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Column(
+                    children: [
+                      _buildStringMapEntryWidget(index, "${_strings.keys.elementAt(index)}.$textGroup"),
+                      Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
+                    ],
+                  );
+                },
+              ),
+            ) : _buildAddRemoveButtons(0, textGroup),
           ),
         ],
       ),
@@ -361,7 +368,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSurveyDataComponents(int index, String textGroup) {
-    //TODO: determine widget order for survey data
     List<Widget> dataContent = [];
     if (_data[index] is SurveyQuestionTrueFalse) {
       // style
@@ -403,13 +409,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           dropdownColor: Styles().colors?.textBackground,
         ),
       ));
+
+      // options
       dataContent.add(_buildCollapsibleWrapper('Options', "$textGroup$index.options", (_data[index] as SurveyQuestionMultipleChoice).options.length, _buildOptionDataWidget));
-      // "multiple_choice"
-                // OptionData options
-                    // title;
-                    // optional hint;
-                    // dynamic value (value = _value ?? title);
-                    // optional score;
+      
       // correctAnswers
       dataContent.add(_buildCollapsibleWrapper('Correct Answer(s)', "$textGroup$index.correct_answers", (_data[index] as SurveyQuestionMultipleChoice).correctAnswers?.length ?? 0, _buildStringListEntryWidget));
       // allowMultiple
@@ -559,8 +562,21 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildOptionDataWidget(int index, String textGroup) {
-    //TODO
-    return Container();
+    //TODO: fix this!
+    _textControllers["$textGroup$index.key"] ??= TextEditingController();
+    _textControllers["$textGroup$index.text"] ??= TextEditingController();
+    _textControllers["$textGroup$index.more_info"] ??= TextEditingController();
+    _textControllers["$textGroup$index.section"] ??= TextEditingController();
+    return Column(children: [
+      //title*
+      FormFieldText('Key', controller: _textControllers["$textGroup$index.key"], multipleLines: false, inputType: TextInputType.text, required: true),
+      //hint
+      FormFieldText('Question Text', controller: _textControllers["$textGroup$index.text"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+      //value* (dynamic value = _value ?? title)
+      FormFieldText('Additional Info', controller: _textControllers["$textGroup$index.more_info"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      //score
+      FormFieldText('Section', controller: _textControllers["$textGroup$index.section"], multipleLines: false, inputType: TextInputType.text,),
+    ],);
   }
 
   List<DropdownMenuItem<T>> _buildSurveyDropDownItems<T>(Map<T, String> supportedItems) {
@@ -575,39 +591,70 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return items;
   }
 
-  //TODO: this causes some UI exceptions
-  void _onTapAddDataAtIndex(int index, String textGroup) {
+  void _onTapAddDataAtIndex(int index, String textGroup, {int? dataIndex}) {
     if (mounted) {
-      SurveyData insert;
-      if (index > 0) {
-        insert = SurveyData.fromOther(_data[index-1]);
-        insert.key = "$textGroup$index";
-        insert.text = "New survey data";
-        insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
-      } else {
-        insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "$textGroup$index");
-      }
-      setState(() {
-        _data.insert(index, insert);
-        if (index > 0 && _data[index-1].followUpRule == null) {
-          _data[index-1].defaultFollowUpKey = "$textGroup$index";
+      if (textGroup.contains("data")) {
+        if (textGroup.contains("options")) {
+          //TODO
+        } else if (textGroup.contains("correct_answers")) {
+          //TODO
+        } else if (textGroup.contains("actions")) {
+          //TODO
+          // "params"
+        } else {
+          SurveyData insert;
+          if (index > 0) {
+            insert = SurveyData.fromOther(_data[index-1]);
+            insert.key = "$textGroup${_data.length}";
+            insert.text = "New survey data";
+            insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
+          } else {
+            insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "$textGroup${_data.length}");
+          }
+          setState(() {
+            _data.insert(index, insert);
+            if (index > 0 && _data[index-1].followUpRule == null) {
+              _data[index-1].defaultFollowUpKey = "$textGroup${_data.length}";
+            }
+            //TODO: how to update follow up rules?
+          });
         }
-        //TODO: how to update follow up rules?
-      });
-    }
-  }
-
-// final Map<String, String> _constants = {};
-//   final Map<String, Map<String, String>> _strings = {};
-
-//   List<Rule>? _resultRules;
-//   final Map<String, Rule> _subRules = {};
-//   List<String>? _responseKeys;
-  void _addDataToConstants(int index, String textGroup) {
-    if (mounted) {
-      setState(() {
-        _constants["$textGroup$index"] = "";
-      });
+      } else if (textGroup.contains("constants")) {
+        setState(() {
+          _constants["$textGroup${_constants.length}"] = _constants["$textGroup${_constants.length - 1}"] ?? "";
+        });
+      } else if (textGroup.contains("strings")) {
+        if (textGroup.contains(".")) {
+          List<String> stringsKeys = textGroup.split(".");
+          setState(() {
+            _strings[stringsKeys[0]] ??= {};
+            _strings[stringsKeys[0]]!["${stringsKeys[1]}${_strings[stringsKeys[0]]!.length}"] = _strings[stringsKeys[0]]!["${stringsKeys[1]}${_strings[stringsKeys[0]]!.length - 1}"] ?? "";
+          });
+        } else {
+          for (String lang in Localization().defaultSupportedLanguages) {
+            if (_strings[lang] == null) {
+              setState(() {
+                _strings[lang] = {};
+              });
+              break;
+            }
+          }
+        }
+      } else if (textGroup.contains("result_rules")) {
+        setState(() {
+          _resultRules ??= [];
+          _resultRules!.insert(index, index > 0 ? Rule.fromOther(_resultRules![index-1]) : Rule());
+        });
+      } else if (textGroup.contains("sub_rules")) {
+        setState(() {
+          _subRules["$textGroup${_subRules.length}"] =  _subRules["$textGroup${_subRules.length - 1}"] ?? Rule();
+        });
+      } else if (textGroup.contains("response_keys")) {
+        setState(() {
+          _responseKeys ??= [];
+          _responseKeys!.insert(index, index > 0 ? _responseKeys![index-1] : "");
+        });
+      }
     }
   }
 
@@ -665,6 +712,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onChangeSurveyDataAction(int index) {
+    //TODO
+  }
+
+  void _onChangeStringsLanguage(int index, String? value) {
     //TODO
   }
 

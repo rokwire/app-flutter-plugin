@@ -224,6 +224,14 @@ class Rule extends RuleResult {
     );
   }
 
+  factory Rule.fromOther(Rule other) {
+    return Rule(
+      condition: other.condition,
+      trueResult: other.trueResult,
+      falseResult: other.falseResult,
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() {
     return {
