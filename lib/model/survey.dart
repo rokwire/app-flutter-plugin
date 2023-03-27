@@ -456,10 +456,10 @@ class SurveyQuestionTrueFalse extends SurveyData {
 }
 
 class SurveyQuestionMultipleChoice extends SurveyData {
-  final List<OptionData> options;
-  final List<dynamic>? correctAnswers;
-  final bool allowMultiple;
-  final bool selfScore;
+  List<OptionData> options;
+  List<dynamic>? correctAnswers;
+  bool allowMultiple;
+  bool selfScore;
 
   SurveyQuestionMultipleChoice({required String text, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, String? section,
     String? defaultFollowUpKey, Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
