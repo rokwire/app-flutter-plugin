@@ -10,10 +10,10 @@ enum ActionType {
 }
 
 class ActionData {
-  final ActionType type;
-  final String? label;
-  final dynamic data;
-  final Map<String, dynamic> params;
+  ActionType type;
+  String? label;
+  dynamic data;
+  Map<String, dynamic> params;
 
   ActionData({this.type = ActionType.none, this.label, this.data, this.params = const {}});
 

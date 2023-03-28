@@ -389,7 +389,7 @@ abstract class SurveyData {
 }
 
 class SurveyQuestionTrueFalse extends SurveyData {
-  final bool? correctAnswer;
+  bool? correctAnswer;
   final List<OptionData> options;
 
   SurveyQuestionTrueFalse({required String text, this.correctAnswer, required String key, String? section, String? defaultFollowUpKey,
