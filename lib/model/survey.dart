@@ -534,9 +534,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
 }
 
 class SurveyQuestionDateTime extends SurveyData {
-  final DateTime? startTime;
-  final DateTime? endTime;
-  final bool askTime;
+  DateTime? startTime;
+  DateTime? endTime;
+  bool askTime;
 
   SurveyQuestionDateTime({required String text, this.startTime, this.endTime, this.askTime = true, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
@@ -600,10 +600,10 @@ class SurveyQuestionDateTime extends SurveyData {
 }
 
 class SurveyQuestionNumeric extends SurveyData {
-  final double? minimum;
-  final double? maximum;
-  final bool wholeNum;
-  final bool selfScore;
+  double? minimum;
+  double? maximum;
+  bool wholeNum;
+  bool selfScore;
 
   SurveyQuestionNumeric({required String text, this.minimum, this.maximum, this.wholeNum = false, this.selfScore = false, required String key, String? section, String? defaultFollowUpKey, 
     Rule? defaultResponseRule, Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool allowSkip = false, bool replace = false})
