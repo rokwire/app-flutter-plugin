@@ -15,7 +15,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-abstract class RuleCondition {
+abstract class RuleElement {
+
+  RuleElement();
+
+  Map<String, dynamic> toJson();
+
+  String get summary;
+} 
+
+abstract class RuleCondition extends RuleElement {
 
   RuleCondition();
 
@@ -32,6 +41,8 @@ abstract class RuleCondition {
   }
 
   Map<String, dynamic> toJson();
+
+  String get summary;
 }           
 
 class RuleComparison extends RuleCondition {
@@ -79,6 +90,9 @@ class RuleComparison extends RuleCondition {
     "any": "Any of",
     "all": "All of",
   };
+
+  @override
+  String get summary => "$dataKey ${supportedOperators[operator]} $compareTo";
 }
 
 class RuleLogic extends RuleCondition {
@@ -99,9 +113,22 @@ class RuleLogic extends RuleCondition {
     "or": "OR",
     "and": "AND",
   };
+
+  @override
+  String get summary {
+    String sum = "";
+    for (int i = 0; i < conditions.length; i++) {
+      if (i == conditions.length - 1) {
+        sum += "(${conditions[i].summary})";
+      } else {
+        sum += "(${conditions[i].summary}) ${supportedOperators[operator]}";
+      }
+    }
+    return sum;
+  }
 }
 
-abstract class RuleResult {
+abstract class RuleResult extends RuleElement {
 
   RuleResult();
 
@@ -118,6 +145,8 @@ abstract class RuleResult {
   }
 
   Map<String, dynamic> toJson();
+
+  String get summary;
 }
 
 abstract class RuleActionResult extends RuleResult {
@@ -149,6 +178,9 @@ class RuleReference extends RuleResult {
       'rule_key': ruleKey,
     };
   }
+
+  @override
+  String get summary => "Evaluate $ruleKey";
 }
 
 class RuleAction extends RuleActionResult {
@@ -188,7 +220,10 @@ class RuleAction extends RuleActionResult {
     "notify": "Notify",
     "save": "Save",
     "local_notify": "Local Notify",
-  };      
+  };
+
+  @override
+  String get summary => "${supportedActions[action]} $data";
 }
 
 class RuleActionList extends RuleActionResult {
@@ -203,6 +238,19 @@ class RuleActionList extends RuleActionResult {
       'priority': priority,
       'actions': actions.map((e) => e.toJson()),
     };
+  }
+
+  @override
+  String get summary {
+    String sum = "";
+    for (int i = 0; i < actions.length; i++) {
+      if (i == actions.length - 1) {
+        sum += "(${actions[i].summary})";
+      } else {
+        sum += "(${actions[i].summary}) THEN";
+      }
+    }
+    return sum;
   }
 }
 
@@ -263,6 +311,18 @@ class Rule extends RuleResult {
       rulesJson.add(rule.toJson());
     }
     return rulesJson;
+  }
+
+  @override
+  String get summary {
+    if (condition != null) {
+      return "If ${condition!.summary}, then ${trueResult!.summary}, else ${falseResult!.summary}";
+    } else if (trueResult != null) {
+      return trueResult!.summary;
+    } else if (falseResult != null) {
+      return falseResult!.summary;
+    }
+    return "";
   }
 }
 

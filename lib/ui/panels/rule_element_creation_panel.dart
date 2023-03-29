@@ -25,17 +25,17 @@ import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class SurveyDataCreationPanel extends StatefulWidget {
+class RuleElementCreationPanel extends StatefulWidget {
   final SurveyData data;
   final Widget? tabBar;
 
-  const SurveyDataCreationPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
+  const RuleElementCreationPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
 
   @override
-  _SurveyDataCreationPanelState createState() => _SurveyDataCreationPanelState();
+  _RuleElementCreationPanelState createState() => _RuleElementCreationPanelState();
 }
 
-class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
+class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   GlobalKey? dataKey;
 
   final ScrollController _scrollController = ScrollController();
@@ -79,6 +79,41 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   @override
   Widget build(BuildContext context) {
+    //RuleCondition
+      //RuleComparison
+      //RuleLogic
+    //RuleResult
+      //Rule
+      //RuleReference
+      //RuleActionResult
+        //RuleAction
+        //RuleActionList
+
+    // condition = 
+    // {
+    //   "operator": "",
+    //   "conditions": [
+            // condition
+    //   ]
+    // } OR
+    // {
+    //   'operator': "",
+    //   'data_key': "",
+    //   'data_param': "",
+    //   'compare_to': "",
+    //   'compare_to_param': "",
+    //   'default_result': "",
+    // }
+      //TODO
+  // 
+  // RuleAction.supportedActions
+  // RuleComparison.supportedOperators
+  // RuleLogic.supportedOperators
+    
+          // dropdown for actions
+          // dropdown for comparison options
+          // dropdown for logic options
+          // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Survey Data"),
       bottomNavigationBar: widget.tabBar,

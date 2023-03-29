@@ -17,7 +17,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
@@ -56,7 +55,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   final Map<String, Map<String, String>> _strings = {};
 
   Rule? _defaultDataKeyRule;
-  List<Rule>? _resultRules;
+  final List<RuleResult> _followUpRules = [RuleAction(action: "return", data: "(missing Survey Data)")];
+  final List<Rule> _resultRules = [];
   final Map<String, Rule> _subRules = {};
   List<String>? _responseKeys;
 
@@ -68,7 +68,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
       "type": TextEditingController(),
-      "default_data_key": TextEditingController(),
     };
     super.initState();
   }
@@ -143,18 +142,15 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       //   ),
       // ],),
 
-      // default data key (i.e., first "question") -> assume first data widget represents first question
-      FormFieldText('First Item', controller: _textControllers["default_data_key"], multipleLines: false, inputType: TextInputType.text,),
-
-      // default data key rule (i.e., rule for determining first "question") -> checkbox to use rule to determine first question, when checked shows UI to create rule
-      _buildRuleWidget(0, "default_data_key_rule"),
+      // follow up rules (determine survey data ordering/flow)
+      _buildCollapsibleWrapper("Flow Rules", "follow_up_rules", _followUpRules.length, _buildSurveyRuleWidget),
+      // result_rules
+      _buildCollapsibleWrapper("Result Rules", "result_rules", _resultRules.length, _buildSurveyRuleWidget),
 
       // constants
       // _buildCollapsibleWrapper("Constants", "constants", _constants.length, _buildStringMapEntryWidget),
       // strings
       // _buildCollapsibleWrapper("Strings", "strings", _strings.length, _buildStringMapWidget),
-      // result_rules
-      // _buildCollapsibleWrapper("Result Rules", "result_rules", _resultRules?.length ?? 0, _buildRuleWidget),
       // sub_rules
       // _buildCollapsibleWrapper("Sub Rules", "sub_rules", _subRules.length, _buildRuleWidget), //TODO: rule map widget
       // response_keys
@@ -222,63 +218,62 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSurveyDataWidget(int index, String textGroup) {
-    return Ink(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: Row(children: [
-        Flexible(flex: 2, child: Text(
-          _data[index].key,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        )),
-        Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
-          label: 'Edit',
-          borderColor: Styles().colors?.fillColorPrimaryVariant,
-          backgroundColor: Styles().colors?.surface,
-          textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
-          onTap: () => _onTapEditData(index),
-        ))),
-        Flexible(flex: 1, child: _buildAddRemoveButtons(index + 1, textGroup)),
-      ],)
+    Widget surveyDataText = Text(_data[index].key, style: Styles().textStyles?.getTextStyle('widget.detail.regular'),);
+    Widget displayEntry = Row(children: [
+      Flexible(flex: 1, child: surveyDataText),
+      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+        label: 'Edit',
+        borderColor: Styles().colors?.fillColorPrimaryVariant,
+        backgroundColor: Styles().colors?.surface,
+        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        onTap: () => _onTapEditData(index),
+      ))),
+      Flexible(flex: 1, child: _buildAddRemoveButtons(index + 1, textGroup)),
+    ],);
+
+    return Draggable<int>(
+      data: index,
+      feedback: surveyDataText,
+      childWhenDragging: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return displayEntry;
+        },
+        onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
+      ),
+      child: Ink(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: displayEntry,
+      ),
     );
   }
 
-  Widget _buildRuleWidget(int index, String textGroup) {
-    //RuleCondition
-      //RuleComparison
-      //RuleLogic
-    //RuleResult
-      //Rule
-      //RuleReference
-      //RuleActionResult
-        //RuleAction
-        //RuleActionList
+  Widget _buildSurveyRuleWidget(int index, String textGroup) {
+    Widget ruleText = Text(_followUpRules[index].summary, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), overflow: TextOverflow.fade);
+    Widget displayEntry = Row(children: [
+      Flexible(flex: 1, child: ruleText),
+      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+        label: 'Edit',
+        borderColor: Styles().colors?.fillColorPrimaryVariant,
+        backgroundColor: Styles().colors?.surface,
+        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        onTap: () => _onTapEditData(index),
+      ))),
+    ],);
 
-    // condition = 
-    // {
-    //   "operator": "",
-    //   "conditions": [
-            // condition
-    //   ]
-    // } OR
-    // {
-    //   'operator': "",
-    //   'data_key': "",
-    //   'data_param': "",
-    //   'compare_to': "",
-    //   'compare_to_param': "",
-    //   'default_result': "",
-    // }
-      //TODO
-  // 
-  // RuleAction.supportedActions
-  // RuleComparison.supportedOperators
-  // RuleLogic.supportedOperators
-    
-          // dropdown for actions
-          // dropdown for comparison options
-          // dropdown for logic options
-          // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
-    //TODO
-    return Container();
+    return Draggable<int>(
+      data: index,
+      feedback: ruleText,
+      childWhenDragging: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return displayEntry;
+        },
+        onAccept: (oldIndex) => _onAcceptRuleDrag(oldIndex, index),
+      ),
+      child: Ink(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: displayEntry,
+      ),
+    );
   }
 
   Widget _buildStringListEntryWidget(int index, String textGroup) {
@@ -372,6 +367,24 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return items;
   }
 
+  void _onAcceptDataDrag(int oldIndex, int newIndex) {
+    _updateState(() {
+      SurveyData temp = _data[oldIndex];
+      _data.removeAt(oldIndex);
+      _data.insert(newIndex, temp);
+      //TODO: update follow up rules appropriately
+    });
+  }
+
+  void _onAcceptRuleDrag(int oldIndex, int newIndex) {
+    _updateState(() {
+      RuleResult temp = _followUpRules[oldIndex];
+      _followUpRules.removeAt(oldIndex);
+      _followUpRules.insert(newIndex, temp);
+      //TODO: update follow up rules appropriately
+    });
+  }
+
   void _onTapEditData(int index) async {
     SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(data: _data[index], tabBar: widget.tabBar)));
     _updateState(() {
@@ -421,8 +434,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
       } else if (textGroup.contains("result_rules")) {
         setState(() {
-          _resultRules ??= [];
-          _resultRules!.insert(index, index > 0 ? Rule.fromOther(_resultRules![index-1]) : Rule());
+          _resultRules.insert(index, index > 0 ? Rule.fromOther(_resultRules[index-1]) : Rule());
         });
       } else if (textGroup.contains("sub_rules")) {
         setState(() {
@@ -459,41 +471,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     // }
   }
 
-  void _onChangeSurveyDataType(int index, String textGroup, String? type) {
-    if (mounted) {
-      setState(() {
-        switch (type) {
-          case "survey_data.true_false":
-            _data[index] = SurveyQuestionTrueFalse(text: "New True/False Question", key: "$textGroup$index");
-            break;
-          case "survey_data.multiple_choice":
-            _data[index] = SurveyQuestionMultipleChoice(text: "New Multiple Choice Question", key: "$textGroup$index", options: []);
-            break;
-          case "survey_data.date_time":
-            _data[index] = SurveyQuestionDateTime(text: "New Date/Time Question", key: "$textGroup$index");
-            break;
-          case "survey_data.numeric":
-            _data[index] = SurveyQuestionNumeric(text: "New Numeric Question", key: "$textGroup$index");
-            break;
-          case "survey_data.text":
-            _data[index] = SurveyQuestionText(text: "New Text Question", key: "$textGroup$index");
-            break;
-          case "survey_data.result":
-            _data[index] = SurveyDataResult(text: "New Info/Action", key: "$textGroup$index");
-            break;
-        }
-      });
-    }
-  }
-
-  void _onChangeSurveyDataStyle(int index) {
-    //TODO
-  }
-
-  void _onChangeSurveyDataAction(int index) {
-    //TODO
-  }
-
   void _onChangeStringsLanguage(int index, String? value) {
     //TODO
   }
@@ -514,39 +491,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   //   }
   // }
 
-  void _onToggleRequired(bool? value, int index) {
-    if (mounted) {
-      setState(() {
-        _data[index].allowSkip = value ?? false;
-      });
-    }
-  }
-
-  // void _onToggleReplace(bool? value, int index) {
-  //   if (mounted) {
-  //     setState(() {
-  //       _data[index].replace = value ?? false;
-  //     });
-  //   }
-  // }
-
-  void _onToggleMultipleAnswers(bool? value, int index) {
-    if (mounted) {
-      setState(() {
-        (_data[index] as SurveyQuestionMultipleChoice).allowMultiple = value ?? false;
-      });
-    }
-  }
-
-  void _onToggleSelfScore(bool? value, int index) {
-    if (mounted) {
-      setState(() {
-        (_data[index] as SurveyQuestionMultipleChoice).selfScore = value ?? false;
-      });
-    }
-  }
   
   Survey _buildSurvey() {
+    //TODO: map rules into each survey data
     return Survey(
       id: '',
       data: Map.fromIterable(_data, key: (item) => (item as SurveyData).key),
@@ -554,7 +501,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       scored: _scored,
       title: _textControllers["title"]?.text ?? 'New Survey',
       moreInfo: _textControllers["more_info"]?.text,
-      defaultDataKey: _textControllers["default_data_key"]?.text ?? (_defaultDataKeyRule == null && _data.isNotEmpty ? _data.first.key : null),
       defaultDataKeyRule: _defaultDataKeyRule,
       resultRules: _resultRules,
       responseKeys: _responseKeys,
@@ -573,13 +519,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     setLoading(true);
     Surveys().createSurvey(_buildSurvey()).then((success) {
       setLoading(false);
-      if (success != true) {
-        PopupMessage.show(context: context,
-          title: "Create Survey",
-          message: "Survey creation failed",
-          buttonTitle: Localization().getStringEx("dialog.ok.title", "OK")
-        );
-      }
+      PopupMessage.show(context: context,
+        title: "Create Survey",
+        message: "Survey creation ${success == true ? "succeeded" : "failed"}",
+        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
+        onTapButton: (context) {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
+        barrierDismissible: false,
+      );
     });
   }
 
