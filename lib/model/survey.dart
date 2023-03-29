@@ -678,8 +678,8 @@ class SurveyQuestionNumeric extends SurveyData {
 }
 
 class SurveyQuestionText extends SurveyData {
-  final int minLength;
-  final int? maxLength;
+  int minLength;
+  int? maxLength;
 
   SurveyQuestionText({required String text, this.minLength = 0, this.maxLength, required String key, String? section, String? defaultFollowUpKey, Rule? defaultResponseRule, 
     Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, num? maximumScore, dynamic response, bool scored = false, bool allowSkip = false, bool replace = false})

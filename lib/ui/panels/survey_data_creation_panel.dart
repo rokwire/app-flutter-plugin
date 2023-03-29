@@ -40,9 +40,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
-  final List<String> _defaultTextControllers = ["key", "text", "more_info", "section", "maximum_score", "default_follow_up_key"];
+  final List<String> _defaultTextControllers = ["key", "text", "more_info", "section", "maximum_score"];
 
   late SurveyData _data;
+  final List<bool> _correctAnswers = [];
   final Map<String, String> _supportedActions = {};
 
   @override
@@ -58,7 +59,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       "more_info": TextEditingController(text: _data.moreInfo),
       "section": TextEditingController(text: _data.section),
       "maximum_score": TextEditingController(text: _data.maximumScore?.toString()),
-      "default_follow_up_key": TextEditingController(text: _data.defaultFollowUpKey),
     };
     super.initState();
   }
@@ -319,8 +319,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       FormFieldText('Section', controller: _textControllers["section"], inputType: TextInputType.text,),
       //maximum score (number, show if survey is scored)
       FormFieldText('Maximum Score', controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
-      //defaultFollowUpKey (defaults to next data in list if unspecified)
-      FormFieldText('Next Question Key', controller: _textControllers["default_follow_up_key"], inputType: TextInputType.text,),
 
       // data type
       DropdownButtonHideUnderline(child:
@@ -360,10 +358,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // type specific data
       ...dataContent,
 
-      // defaultResponseRule (assume follow ups go in order given (populate defaultFollowUpKey fields "onCreate"))
+      // defaultResponseRule
       // _buildRuleWidget(0, "$textGroup.default_response_rule"),
-      // followUpRule (overrides display ordering)
-      // _buildRuleWidget(0, "$textGroup.follow_up_rule"),
       // scoreRule (show entry if survey is scored)
       // _buildRuleWidget(0, "$textGroup.score_rule"),
     ];
@@ -388,7 +384,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           Checkbox(
             checkColor: Styles().colors?.surface,
             activeColor: Styles().colors?.fillColorPrimary,
-            value: (_data as SurveyQuestionMultipleChoice).correctAnswers?.contains((_data as SurveyQuestionMultipleChoice).options[index].value) ?? false,
+            value: _correctAnswers[index],
             onChanged: (value) => _onToggleCorrect(index, value),
           ),
         ]),
@@ -488,6 +484,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _updateState(() {
       if (textGroup.contains("options") && _data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option"));
+        _correctAnswers.insert(index, false);
       } else if (textGroup.contains("actions") && _data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
         (_data as SurveyDataResult).actions!.insert(index, ActionData());
@@ -501,6 +498,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _updateState(() {
       if (textGroup.contains("options") && _data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.removeAt(index);
+        _correctAnswers.removeAt(index);
       } else if (textGroup.contains("actions") && _data is SurveyDataResult) {
         (_data as SurveyDataResult).actions!.removeAt(index);
         //TODO
@@ -515,28 +513,27 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     String? moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
     String? section = _textControllers["section"]!.text.isNotEmpty ? _textControllers["section"]!.text : null;
     num? maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
-    String? defaultFollowUpKey = _textControllers["default_follow_up_key"]!.text;
     _removeTextControllers(keepDefaults: true);
 
     _updateState(() {
       switch (type) {
         case "survey_data.true_false":
-          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, defaultFollowUpKey: defaultFollowUpKey);
+          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
           break;
         case "survey_data.multiple_choice":
-          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, defaultFollowUpKey: defaultFollowUpKey, options: []);
+          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, options: []);
           break;
         case "survey_data.date_time":
-          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, defaultFollowUpKey: defaultFollowUpKey);
+          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
           break;
         case "survey_data.numeric":
-          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, defaultFollowUpKey: defaultFollowUpKey);
+          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
           break;
         case "survey_data.text":
-          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, defaultFollowUpKey: defaultFollowUpKey);
+          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
           break;
         case "survey_data.result":
-          _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo, defaultFollowUpKey: defaultFollowUpKey);
+          _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo);
           break;
       }
     });
@@ -580,12 +577,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onToggleCorrect(int index, bool? value) {
     _updateState(() {
-      if (value == true) {
-        (_data as SurveyQuestionMultipleChoice).correctAnswers ??= [];
-        (_data as SurveyQuestionMultipleChoice).correctAnswers!.add((_data as SurveyQuestionMultipleChoice).options[index].value);
-      } else {
-        (_data as SurveyQuestionMultipleChoice).correctAnswers!.remove((_data as SurveyQuestionMultipleChoice).options[index].value);
-      }
+      _correctAnswers[index] = value ?? false;
     });
   }
 
@@ -627,31 +619,43 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _onTapDone() {
+    // defaultFollowUpKey and followUpRule will be handled by rules defined on SurveyCreationPanel
     _data.key = _textControllers["key"]!.text;
     _data.text = _textControllers["text"]!.text;
     _data.moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
     _data.section = _textControllers["section"]!.text.isNotEmpty ? _textControllers["section"]!.text : null;
     _data.maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
-    //TODO: use dropdown for this (or some more convenient way of using default ordering or referencing other survey data)
-    _data.defaultFollowUpKey = _textControllers["default_follow_up_key"]!.text;
 
-    //TODO: handle these fields
-    // _textControllers["start_time"]
-    // _textControllers["end_time"] ?
+    if (_data is SurveyQuestionMultipleChoice) {
+      for (int i = 0; i < (_data as SurveyQuestionMultipleChoice).options.length; i++) {
+        String valueText = _textControllers["options$i.value"]!.text;
+        bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
+        (_data as SurveyQuestionMultipleChoice).options[i].title = _textControllers["options$i.title"]!.text;
+        (_data as SurveyQuestionMultipleChoice).options[i].hint = _textControllers["options$i.hint"]!.text;
+        (_data as SurveyQuestionMultipleChoice).options[i].value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? valueText;
+        (_data as SurveyQuestionMultipleChoice).options[i].score = num.tryParse(_textControllers["options$i.score"]!.text);
 
-
-    // _textControllers["minimum"]
-    // _textControllers["maximum"]
-
-    // _textControllers["min_length"]
-    // _textControllers["max_length"]
-
-    // _textControllers["options$index.title"]
-    // _textControllers["options$index.hint"] 
-    // _textControllers["options$index.value"]
-    // _textControllers["options$index.score"]
-
-    // _textControllers["actions$index.label"]
+        if (_correctAnswers[i]) {
+          (_data as SurveyQuestionMultipleChoice).correctAnswers ??= [];
+          (_data as SurveyQuestionMultipleChoice).correctAnswers!.add((_data as SurveyQuestionMultipleChoice).options[i].value);
+        }
+      }
+    } else if (_data is SurveyQuestionDateTime) {
+      (_data as SurveyQuestionDateTime).startTime = DateTimeUtils.dateTimeFromString(_textControllers["start_time"]!.text);
+      (_data as SurveyQuestionDateTime).endTime = DateTimeUtils.dateTimeFromString(_textControllers["end_time"]!.text);
+    } else if (_data is SurveyQuestionNumeric) {
+      (_data as SurveyQuestionNumeric).minimum = double.tryParse(_textControllers["minimum"]!.text);
+      (_data as SurveyQuestionNumeric).maximum = double.tryParse(_textControllers["maximum"]!.text);
+    } else if (_data is SurveyQuestionText) {
+      (_data as SurveyQuestionText).minLength = int.tryParse(_textControllers["min_length"]!.text) ?? 0;
+      (_data as SurveyQuestionText).maxLength = int.tryParse(_textControllers["max_length"]!.text);
+    } else if (_data is SurveyDataResult) {
+      for (int i = 0; i < ((_data as SurveyDataResult).actions?.length ?? 0); i++) {
+        (_data as SurveyDataResult).actions![i].label = _textControllers["actions$i.label"]!.text;
+        //TODO: data, params
+      }
+    }
+    
     Navigator.of(context).pop(_data);
   }
 

@@ -1,11 +1,12 @@
 class OptionData {
-  final String title;
-  final String? hint;
-  final dynamic _value;
-  final num? score;
+  String title;
+  String? hint;
+  dynamic _value;
+  num? score;
   bool selected;
 
   dynamic get value { return _value ?? title; }
+  set value(dynamic newValue) { _value = newValue; }
 
   OptionData({required this.title, this.hint, dynamic value, this.selected = false, this.score}) : _value = value;
 

@@ -379,34 +379,25 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     });
   }
 
-  void _onTapAddDataAtIndex(int index, String textGroup, {int? dataIndex}) {
+  void _onTapAddDataAtIndex(int index, String textGroup) {
     if (mounted) {
       if (textGroup.contains("data")) {
-        if (textGroup.contains("options")) {
-          //TODO
-        } else if (textGroup.contains("correct_answers")) {
-          //TODO
-        } else if (textGroup.contains("actions")) {
-          //TODO
-          // "params"
+        SurveyData insert;
+        if (index > 0) {
+          insert = SurveyData.fromOther(_data[index-1]);
+          insert.key = "$textGroup${_data.length}";
+          insert.text = "New survey data";
+          insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
         } else {
-          SurveyData insert;
-          if (index > 0) {
-            insert = SurveyData.fromOther(_data[index-1]);
-            insert.key = "$textGroup${_data.length}";
-            insert.text = "New survey data";
-            insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
-          } else {
-            insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "$textGroup${_data.length}");
-          }
-          setState(() {
-            _data.insert(index, insert);
-            if (index > 0 && _data[index-1].followUpRule == null) {
-              _data[index-1].defaultFollowUpKey = "$textGroup${_data.length}";
-            }
-            //TODO: how to update follow up rules?
-          });
+          insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "$textGroup${_data.length}");
         }
+        setState(() {
+          _data.insert(index, insert);
+          if (index > 0 && _data[index-1].followUpRule == null) {
+            _data[index-1].defaultFollowUpKey = "$textGroup${_data.length}";
+          }
+          //TODO: how to update follow up rules?
+        });
       } else if (textGroup.contains("constants")) {
         setState(() {
           _constants["$textGroup${_constants.length}"] = _constants["$textGroup${_constants.length - 1}"] ?? "";
@@ -574,7 +565,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapPreview() {
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey(), inputEnabled: false)));
+    // should preview evaluate rules?/which rules should it evaluate if not all of them?
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey())));
   }
 
   void _onTapContinue() {
