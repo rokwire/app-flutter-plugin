@@ -15,6 +15,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
@@ -152,14 +153,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: Styles().textStyles?.getTextStyle('widget.detail.regular'),),
+      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: AppTextStyles.widgetDetailRegular,),
     );
   }
 
   Widget _buildMoreInfo() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 32.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles?.getTextStyle('widget.message.large.bold'),),
+      child: Text(_survey!.moreInfo ?? '', style: AppTextStyles.widgetMessageLargeBold,),
     );
   }
 
@@ -229,14 +230,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
-              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles?.getTextStyle('widget.error.regular.bold'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? AppTextStyles.widgetErrorRegularBold)),
               Visibility(
                 visible: !surveyWidget.containsText,
                 child: Flexible(
                   child: Text(
                     survey.text,
                     textAlign: TextAlign.start,
-                    style: textStyle ?? Styles().textStyles?.getTextStyle('widget.message.medium'),
+                    style: textStyle ?? AppTextStyles.widgetMessageMedium,
                   ),
                 ),
               ),
@@ -251,7 +252,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             child: Text(
               survey.moreInfo ?? '',
               textAlign: TextAlign.start,
-              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+              style: AppTextStyles.widgetDetailRegular,
             ),
           ),
         ),
@@ -384,7 +385,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title, style: Styles().textStyles?.getTextStyle('widget.detail.small'), textAlign: TextAlign.center),
+          textWidget: Text(option.title, style: AppTextStyles.widgetDetailSmall, textAlign: TextAlign.center),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
@@ -911,7 +912,7 @@ class SingleSelectionList extends StatelessWidget {
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
                   title: Transform.translate(offset: const Offset(-15, 0),
-                      child: Text(title, style: Styles().textStyles?.getTextStyle('widget.title.regular') ??
+                      child: Text(title, style: AppTextStyles.widgetTitleRegular ??
                           TextStyle(fontFamily: Styles().fontFamilies?.regular,
                               fontSize: 16, color: Styles().colors?.textPrimary))),
                   activeColor: Styles().colors?.fillColorSecondary,
@@ -951,7 +952,7 @@ class MultiSelectionList extends StatelessWidget {
                     child: ListTile(
                       title: Transform.translate(offset: const Offset(-15, 0),
                           child: Text(selectionList[index].title,
-                              style: Styles().textStyles?.getTextStyle('widget.title.regular') ??
+                              style: AppTextStyles.widgetTitleRegular ??
                                   TextStyle(fontFamily: Styles().fontFamilies?.regular,
                                     fontSize: 16, color: Styles().colors?.textPrimary))),
                       leading: Checkbox(

@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 
@@ -8,7 +9,7 @@ class ButtonBuilder {
       label: label,
       borderColor: Styles().colors?.fillColorSecondary,
       backgroundColor: Styles().colors?.surface,
-      textStyle: Styles().textStyles?.getTextStyle('widget.detail.regular.bold'),
+      textStyle: AppTextStyles.widgetDetailRegularBold,
       onTap: onTap,
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
@@ -15,10 +16,10 @@ class SurveyBuilder {
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
     List<Widget> content = [];
     if (StringUtils.isNotEmpty(survey.text)) {
-      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.bold')));
+      content.add(Text(survey.text, textAlign: TextAlign.start, style: AppTextStyles.widgetTitleLargeBold));
     }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
-      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular'))));
+      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: AppTextStyles.widgetDetailRegular)));
     }
     if (CollectionUtils.isNotEmpty(buttonActions)) {
       content.add(Padding(
@@ -49,11 +50,11 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.bold'))),
+          Flexible(child: Text(response.survey.title.toUpperCase(), style: AppTextStyles.widgetTitleSmallBold)),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
+              Text(date ?? '', style: AppTextStyles.widgetDetailSmall),
               Container(width: 8.0),
               Styles().images?.getImage('chevron-right', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
@@ -75,9 +76,9 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(key.replaceAll('_', ' ').toUpperCase() + ':',
-                  style: Styles().textStyles?.getTextStyle('widget.description.regular.bold')),
+                  style: AppTextStyles.widgetDescriptionRegularBold),
               const SizedBox(width: 8.0),
-              Flexible(child: Text(responseData ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
+              Flexible(child: Text(responseData ?? '', style: AppTextStyles.widgetDetailRegular)),
             ],
           ));
         }
@@ -118,7 +119,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular.bold')),
+                  style: AppTextStyles.widgetDetailRegularBold),
               const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],

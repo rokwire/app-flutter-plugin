@@ -42,9 +42,17 @@ dart plugin/tools/gen_styles.dart
 If successful, you will see a new or updates `gen/styles.dart` file available with the generated classes.
 You can then import this file and use the included references throughout the application.
 
+This tool will also attempt to merge any new additions from `plugin/assets/styles.json` into `assets/styles.json`
+Any existing entries in `assets/styles.json` will not be overridden. To run this tool without attempting
+to merge plugin asset changes, or to run this tool within the plugin itself, provide the `-p` flag:
+
+```
+dart plugin/tools/gen_styles.dart -p
+```
+
 Note that this tool also includes a utility which can find and replace all existing references 
 in the codebase with the new static class members. To use this util after generating the classes, 
-run the following command:
+provide the `-u` flag:
 
 ```
 dart plugin/tools/gen_styles.dart -u

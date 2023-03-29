@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 
 const flagUpdateCode = 'update-code';
+const flagSkipPlugin = 'skip-plugin';
 
 Map<String, String> classMap = {
   'color': 'AppColors',
@@ -43,21 +44,35 @@ String camelCase(String s, {bool startUpper = false}) {
 Map<String, String> replacements = {};
 
 void main(List<String> arguments) async {
-  final parser = ArgParser()..addFlag(flagUpdateCode, negatable: false, abbr: 'u');
+  final parser = ArgParser()..addFlag(flagUpdateCode, negatable: false, abbr: 'u')
+    ..addFlag(flagSkipPlugin, negatable: false, abbr: 'p');
   ArgResults argResults = parser.parse(arguments);
 
   bool updateCode = argResults[flagUpdateCode];
+  bool skipPlugin = argResults[flagSkipPlugin];
 
   String assetFilepath = 'assets/styles.json';
+  String pluginAssetFilepath = 'plugin/assets/styles.json';
   String libPath = 'lib/';
   String genFilepath = '${libPath}gen/styles.dart';
 
   Map<String, dynamic>? asset = await _loadFileJson(assetFilepath);
+  if (!skipPlugin) {
+    print("merging plugin asset...");
+    Map<String, dynamic>? pluginAsset = await _loadFileJson(pluginAssetFilepath);
+    if (pluginAsset != null) {
+      asset = _mergeJson(pluginAsset, asset);
+      File(assetFilepath).writeAsString(_prettyJsonEncode(asset));
+      print('saved merged plugin asset to $assetFilepath');
+    } else {
+      print('plugin asset was not loaded');
+    }
+  }
   if (asset != null) {
     String fileString = _parseAsset(asset);
     if (fileString.isNotEmpty) {
       File(genFilepath).writeAsString(fileString);
-      print("saved generated file to $genFilepath");
+      print("saved generated code to $genFilepath");
       if (updateCode) {
         _updateCodeRefs(libPath, genFilepath);
       }
@@ -65,6 +80,65 @@ void main(List<String> arguments) async {
   } else {
     print('asset was not loaded');
   }
+}
+
+String _prettyJsonEncode(Map<String, dynamic> jsonObject){
+  String out = '{';
+  bool first = true;
+  for (MapEntry<String, dynamic> entry in jsonObject.entries) {
+    if (!first) {
+      out += ',';
+    }
+    out += '\n';
+    out += '  "${entry.key}": {';
+    if (entry.value is Map<String, dynamic>) {
+      bool firstSub = true;
+      for (MapEntry<String, dynamic> subentry in entry.value.entries) {
+        if (!firstSub) {
+          out += ',';
+        }
+        out += '\n';
+        Map<String, dynamic> subMap = {};
+        subMap.addEntries([subentry]);
+        String valJson = json.encode(subMap).replaceAll(':', ': ');
+        out += '    ${valJson.substring(1, valJson.length - 1)}';
+        firstSub = false;
+      }
+    } else {
+      out += '    ${json.encode(entry.value)}\n';
+    }
+    out += '\n';
+    out += '  }';
+    first = false;
+  }
+  out += '\n';
+  out += '}';
+  return out;
+}
+
+Map<String, dynamic> _mergeJson(Map<String, dynamic>? from, Map<String, dynamic>? to) {
+  to ??= {};
+  Map<String, dynamic> out = {};
+  out.addAll(to);
+  for (MapEntry<String, dynamic> section in from?.entries ?? {}) {
+    if (!out.containsKey(section.key)) {
+      out[section.key] = {};
+    }
+
+    if (section.value is Map<String, dynamic>) {
+      for (MapEntry<String, dynamic> entry in section.value.entries ?? {}) {
+        dynamic outSection = out[section.key];
+        if (!outSection.containsKey(entry.key)) {
+          print("added ${section.key}: ${entry.key} = ${entry.value}");
+          out[section.key][entry.key] = entry.value;
+        }
+      }
+    } else {
+      print("unexpected section type: ${section.value}");
+    }
+  }
+
+  return out;
 }
 
 String _parseAsset(Map<String, dynamic> asset) {
@@ -94,7 +168,7 @@ String? _buildClass(String name, Map<String, dynamic> json) {
   for (MapEntry<String, dynamic> entry in json.entries) {
     String varName = camelCase(entry.key);
     String varRef = ref.replaceAll("%key", "'${entry.key}'");
-    classString += "    static $type $varName = $varRef;\n";
+    classString += "    static $type get $varName => $varRef;\n";
     replacements[varRef] = '$className.$varName';
   }
   classString += "}\n";
