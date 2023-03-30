@@ -101,7 +101,7 @@ class Survey extends RuleEngine {
   final String? moreInfo;
   final String? defaultDataKey;
   final Rule? defaultDataKeyRule;
-  final List<Rule>? resultRules;
+  final List<RuleResult>? resultRules;
   final List<String>? responseKeys;
   DateTime? dateCreated;
   DateTime? dateUpdated;
@@ -151,7 +151,7 @@ class Survey extends RuleEngine {
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
-      'result_rules': JsonUtils.encode(Rule.listToJson(resultRules)),
+      'result_rules': JsonUtils.encode(RuleResult.listToJson(resultRules)),
       'result_json': JsonUtils.encode(resultData),
       'response_keys': responseKeys,
       'constants': constants,

@@ -14,14 +14,23 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class RuleElement {
+  String id = const Uuid().v4();
+  int displayDepth = -1;
 
   RuleElement();
 
   Map<String, dynamic> toJson();
 
-  String get summary;
+  String getSummary({String? prefix, String? suffix}) => "";
+
+  void setDisplayDepth(int parentDepth) {
+    displayDepth = parentDepth + 1;
+  }
+
+  RuleElement? findElementById(String elementId) => id == elementId ? this : null;
 } 
 
 abstract class RuleCondition extends RuleElement {
@@ -39,10 +48,6 @@ abstract class RuleCondition extends RuleElement {
     }
     return RuleComparison.fromJson(json);
   }
-
-  Map<String, dynamic> toJson();
-
-  String get summary;
 }           
 
 class RuleComparison extends RuleCondition {
@@ -51,7 +56,7 @@ class RuleComparison extends RuleCondition {
   final dynamic dataParam;
   final dynamic compareTo;
   final dynamic compareToParam;
-  final bool defaultResult;
+  final bool? defaultResult;
 
   RuleComparison({required this.dataKey, required this.operator, this.dataParam,
     required this.compareTo, this.compareToParam, this.defaultResult = false});
@@ -80,19 +85,28 @@ class RuleComparison extends RuleCondition {
   }
 
   static Map<String, String> get supportedOperators => const {
-    "<": "Less than",
-    ">": "Greater than",
-    "<=": "Less than or equal to",
-    ">=": "Greater than or equal to",
-    "==": "Equal to",
-    "!=": "Not equal to",
-    "in_range": "In range",
-    "any": "Any of",
-    "all": "All of",
+    "<": "less than",
+    ">": "greater than",
+    "<=": "less than or equal to",
+    ">=": "greater than or equal to",
+    "==": "equal to",
+    "!=": "not equal to",
+    "in_range": "in range",
+    "any": "any of",
+    "all": "all of",
   };
 
   @override
-  String get summary => "$dataKey ${supportedOperators[operator]} $compareTo";
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Is $dataKey ${supportedOperators[operator]} $compareTo?";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
 }
 
 class RuleLogic extends RuleCondition {
@@ -115,16 +129,31 @@ class RuleLogic extends RuleCondition {
   };
 
   @override
-  String get summary {
-    String sum = "";
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "";
     for (int i = 0; i < conditions.length; i++) {
       if (i == conditions.length - 1) {
-        sum += "(${conditions[i].summary})";
+        summary += "(${conditions[i].getSummary()})";
       } else {
-        sum += "(${conditions[i].summary}) ${supportedOperators[operator]}";
+        summary += "(${conditions[i].getSummary()}) ${supportedOperators[operator]}";
       }
     }
-    return sum;
+    summary = "Is $summary?";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  void setDisplayDepth(int parentDepth) {
+    super.setDisplayDepth(parentDepth);
+    for (RuleCondition condition in conditions) {
+      condition.setDisplayDepth(displayDepth);
+    }
   }
 }
 
@@ -137,6 +166,14 @@ abstract class RuleResult extends RuleElement {
     if (ruleKey is String) {
       return RuleReference(ruleKey);
     }
+    dynamic cases = json["cases"];
+    if (cases is List<dynamic>) {
+      List<Rule> caseList = [];
+      for (dynamic caseItem in caseList) {
+        caseList.add(Rule.fromJson(caseItem));
+      }
+      return RuleCases(cases: caseList);
+    }
     dynamic condition = json["condition"];
     if (condition != null) {
       return Rule.fromJson(json);
@@ -144,9 +181,16 @@ abstract class RuleResult extends RuleElement {
     return RuleActionResult.fromJson(json);
   }
 
-  Map<String, dynamic> toJson();
-
-  String get summary;
+  static List<Map<String, dynamic>> listToJson(List<RuleResult>? resultRules) {
+    if (resultRules == null) {
+      return [];
+    }
+    List<Map<String, dynamic>> resultsJson = [];
+    for (RuleResult ruleResult in resultRules) {
+      resultsJson.add(ruleResult.toJson());
+    }
+    return resultsJson;
+  }
 }
 
 abstract class RuleActionResult extends RuleResult {
@@ -180,7 +224,16 @@ class RuleReference extends RuleResult {
   }
 
   @override
-  String get summary => "Evaluate $ruleKey";
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Evaluate $ruleKey";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
 }
 
 class RuleAction extends RuleActionResult {
@@ -223,7 +276,16 @@ class RuleAction extends RuleActionResult {
   };
 
   @override
-  String get summary => "${supportedActions[action]} $data";
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "${supportedActions[action]} $data";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
 }
 
 class RuleActionList extends RuleActionResult {
@@ -241,16 +303,22 @@ class RuleActionList extends RuleActionResult {
   }
 
   @override
-  String get summary {
-    String sum = "";
-    for (int i = 0; i < actions.length; i++) {
-      if (i == actions.length - 1) {
-        sum += "(${actions[i].summary})";
-      } else {
-        sum += "(${actions[i].summary}) THEN";
+  void setDisplayDepth(int parentDepth) {
+    super.setDisplayDepth(parentDepth);
+    for (RuleAction action in actions) {
+      action.setDisplayDepth(displayDepth);
+    }
+  }
+
+  @override
+  RuleElement? findElementById(String elementId) {
+    for (RuleAction action in actions) {
+      RuleElement? element = action.findElementById(elementId);
+      if (element != null) {
+        return element;
       }
     }
-    return sum;
+    return super.findElementById(elementId);
   }
 }
 
@@ -314,15 +382,57 @@ class Rule extends RuleResult {
   }
 
   @override
-  String get summary {
-    if (condition != null) {
-      return "If ${condition!.summary}, then ${trueResult!.summary}, else ${falseResult!.summary}";
-    } else if (trueResult != null) {
-      return trueResult!.summary;
-    } else if (falseResult != null) {
-      return falseResult!.summary;
+  void setDisplayDepth(int parentDepth) {
+    condition?.setDisplayDepth(parentDepth);
+    trueResult?.setDisplayDepth(condition?.displayDepth ?? parentDepth);
+    falseResult?.setDisplayDepth(condition?.displayDepth ?? parentDepth);
+  }
+
+  @override
+  RuleElement? findElementById(String elementId) => condition?.findElementById(elementId) ?? trueResult?.findElementById(elementId) ?? falseResult?.findElementById(elementId);
+}
+
+class RuleCases extends RuleResult {
+  final List<Rule> cases;
+
+  RuleCases({required this.cases});
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'cases': cases.map((e) => e.toJson()),
+    };
+  }
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Evaluate the contents of the first true statement:";
+    if (prefix != null) {
+      summary = "$prefix $summary";
     }
-    return "";
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  void setDisplayDepth(int parentDepth) {
+    super.setDisplayDepth(parentDepth);
+    for (Rule ruleCase in cases) {
+      ruleCase.setDisplayDepth(displayDepth);
+    }
+  }
+
+  @override
+  RuleElement? findElementById(String elementId) {
+    for (Rule ruleCase in cases) {
+      RuleElement? element = ruleCase.findElementById(elementId);
+      if (element != null) {
+        return element;
+      }
+    }
+    return super.findElementById(elementId);
   }
 }
 

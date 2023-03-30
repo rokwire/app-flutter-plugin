@@ -228,10 +228,10 @@ class Rules {
     if (compareToVal is String) {
       compareToVal = _getEngineVal(engine, comparison.compareTo, comparison.compareToParam);
     }
-    return _compare(comparison.operator, dataVal, compareToVal, defaultResult: comparison.defaultResult);
+    return _compare(comparison.operator, dataVal, compareToVal, comparison.defaultResult ?? false);
   }
 
-  bool _compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
+  bool _compare(String operator, dynamic val, dynamic ruleVal, bool defaultResult) {
     try {
       switch (operator) {
         case "<":

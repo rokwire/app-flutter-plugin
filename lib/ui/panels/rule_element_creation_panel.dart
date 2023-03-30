@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
@@ -26,7 +27,7 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class RuleElementCreationPanel extends StatefulWidget {
-  final SurveyData data;
+  final RuleResult data;
   final Widget? tabBar;
 
   const RuleElementCreationPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
@@ -84,6 +85,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       //RuleLogic
     //RuleResult
       //Rule
+      //RuleCases
       //RuleReference
       //RuleActionResult
         //RuleAction
