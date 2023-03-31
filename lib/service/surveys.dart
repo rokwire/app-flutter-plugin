@@ -105,8 +105,17 @@ class Surveys /* with Service */ {
     dynamic result;
     if (evalResultRules && CollectionUtils.isNotEmpty(survey.resultRules)) {
       Rules().clearDataCache(survey.id);
-      for (Rule rule in survey.resultRules!) {
-        dynamic ruleResult = Rules().evaluateRule(survey, rule);
+      for (RuleResult rule in survey.resultRules!) {
+        dynamic ruleResult;
+        if (rule is Rule) {
+          ruleResult = Rules().evaluateRule(survey, rule);
+        } else if (rule is RuleAction) {
+          ruleResult = Rules().evaluateAction(survey, rule);
+        } else if (rule is RuleActionList) {
+          for (RuleAction action in rule.actions) {
+            ruleResult = Rules().evaluateAction(survey, action);
+          }
+        }
         if (ruleResult is Future) {
           ruleResult = await ruleResult;
         }
