@@ -191,6 +191,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           label,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
         ),
+        //TODO: handle indentation using displayDepthz
         trailing: parentEditor != null && parentId != null ? Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
           label: 'Edit',
           borderColor: Styles().colors?.fillColorPrimaryVariant,
@@ -468,7 +469,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
     _updateState(() {
       _data.insert(index, insert);
-      _followUpRules.insert(index, RuleAction(action: "return", data: insert.key));
+      _followUpRules.insert(index + 1, RuleAction(action: "return", data: insert.key));
       //TODO: update follow up rules
     });
   }
@@ -476,7 +477,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapRemoveDataAtIndex(int index) {
     _updateState(() {
       _data.removeAt(index);
-      _followUpRules.removeAt(index);
+      _followUpRules.removeAt(index + 1);
       //TODO: update follow up rules
     });
   }
