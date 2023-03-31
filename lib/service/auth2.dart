@@ -19,18 +19,22 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
-  static const String notifyLoginStarted      = "edu.illinois.rokwire.auth2.login.started";
-  static const String notifyLoginSucceeded    = "edu.illinois.rokwire.auth2.login.succeeded";
-  static const String notifyLoginFailed       = "edu.illinois.rokwire.auth2.login.failed";
-  static const String notifyLoginChanged      = "edu.illinois.rokwire.auth2.login.changed";
-  static const String notifyLoginFinished     = "edu.illinois.rokwire.auth2.login.finished";
-  static const String notifyLogout            = "edu.illinois.rokwire.auth2.logout";
-  static const String notifyLinkChanged       = "edu.illinois.rokwire.auth2.link.changed";
-  static const String notifyAccountChanged    = "edu.illinois.rokwire.auth2.account.changed";
-  static const String notifyProfileChanged    = "edu.illinois.rokwire.auth2.profile.changed";
-  static const String notifyPrefsChanged      = "edu.illinois.rokwire.auth2.prefs.changed";
-  static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
-  static const String notifyPrepareUserDelete = "edu.illinois.rokwire.auth2.user.prepare.delete";
+  static const String notifyLoginStarted         = "edu.illinois.rokwire.auth2.login.started";
+  static const String notifyLoginSucceeded       = "edu.illinois.rokwire.auth2.login.succeeded";
+  static const String notifyLoginFailed          = "edu.illinois.rokwire.auth2.login.failed";
+  static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
+  static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
+  static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
+  static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
+  static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
+  static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
+  static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
+  static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
+  static const String notifyGetPasskeySuccess    = "edu.illinois.rokwire.auth2.passkey.get.succeeded";
+  static const String notifyGetPasskeyFailed     = "edu.illinois.rokwire.auth2.passkey.get.failed";
+  static const String notifyCreatePasskeySuccess = "edu.illinois.rokwire.auth2.passkey.create.succeeded";
+  static const String notifyCreatePasskeyFailed  = "edu.illinois.rokwire.auth2.passkey.create.failed";
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
@@ -1207,6 +1211,28 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     Log.d(message, lineLength: 512); // max line length of VS Code Debug Console
   }
 
+  // Plugin
+
+  Future<dynamic> onPluginNotification(String? name, dynamic arguments) async {
+    switch (name) {
+      case 'onGetPasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeySuccess, responseJson);
+        break;
+      case 'onGetPasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeyFailed, error);
+        break;
+      case 'onCreatePasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeySuccess, responseJson);
+        break;
+      case 'onCreatePasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeyFailed, error);
+        break;
+    }
+  }
 }
 
 class _OidcLogin {
