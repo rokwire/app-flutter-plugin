@@ -130,8 +130,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
-  Widget _buildCollapsibleWrapper(String label, String textGroup, int dataLength, Widget Function(int, String) listItemBuilder) {
-    return Ink(
+  Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, List<dynamic>, Collapsible) listItemBuilder, Collapsible collType, {String? parentId}) {
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0), child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
@@ -141,44 +141,60 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           label,
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
         ),
+        //TODO: handle indentation using displayDepth
+        trailing: (collType == Collapsible.followUpRules || collType == Collapsible.resultRules) && parentId != null ? Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+          label: 'Edit',
+          borderColor: Styles().colors?.fillColorPrimaryVariant,
+          backgroundColor: Styles().colors?.surface,
+          textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+          onTap: () => collType == Collapsible.followUpRules ? _onTapEditFlowRuleElement(parentId) : _onTapEditResultRuleElement(parentId),
+        )) : null,
         children: <Widget>[
           Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxHeight: 500
             ),
-            child: ListView.builder(
+            child: dataList.isNotEmpty ? ListView.builder(
               shrinkWrap: true,
-              itemCount: dataLength,
+              itemCount: dataList.length,
               itemBuilder: (BuildContext context, int index) {
                 return Column(
                   children: [
-                    listItemBuilder(index, textGroup),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList, collType)),
                     Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
                   ],
                 );
               },
-            ),
+            ) : (collType == Collapsible.data || collType == Collapsible.resultRules) ? _buildAddRemoveButtons(0) : Container(height: 0,),
           ),
         ],
       ),
-    );
-  }
-
-  List<DropdownMenuItem<T>> _buildDropDownItems<T>(Map<T, String> supportedItems) {
-    List<DropdownMenuItem<T>> items = [];
-
-    for (MapEntry<T, String> item in supportedItems.entries) {
-      items.add(DropdownMenuItem<T>(
-        value: item.key,
-        child: Align(alignment: Alignment.center, child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
-      ));
-    }
-    return items;
+    ));
   }
 
   Widget _buildRuleElementComponents() {
-    List<Widget> content = [];
+    List<Widget> content = [DropdownButtonHideUnderline(child:
+      DropdownButton<String>(
+        icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+        isExpanded: true,
+        style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+        items: _buildDropDownItems<String>(RuleElement.supportedElements),
+        value: _getElementTypeString(),
+        onChanged: _onChangeElementType,
+        dropdownColor: Styles().colors?.getColor('surface'),
+      ),
+    )];
+    if (_ruleElem is RuleReference || _ruleElem is RuleAction) {
+      
+    } else if (_ruleElem is Rule) {
+      
+      displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
+    } else if (_ruleElem is RuleCases) {
+      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.cases, _buildRuleWidget, collType, parentId: ruleResult.id);
+    } else if (_ruleElem is RuleActionList) {
+      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.actions, _buildRuleWidget, collType, parentId: ruleResult.id);
+    }
     if (_ruleElem is SurveyQuestionTrueFalse) {
       
     } else if (_ruleElem is SurveyQuestionMultipleChoice) {
@@ -196,6 +212,18 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     return Container();
   }
 
+  List<DropdownMenuItem<T>> _buildDropDownItems<T>(Map<T, String> supportedItems) {
+    List<DropdownMenuItem<T>> items = [];
+
+    for (MapEntry<T, String> item in supportedItems.entries) {
+      items.add(DropdownMenuItem<T>(
+        value: item.key,
+        child: Align(alignment: Alignment.center, child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
+      ));
+    }
+    return items;
+  }
+
   Widget _buildDone() {
     return Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
       label: 'Done',
@@ -204,6 +232,49 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
       onTap: _onTapDone,
     ));
+  }
+
+  void _onChangeElementType(String? elemType) {
+    //TODO: what should defaults be for these?
+    _updateState(() {
+      switch (elemType) {
+        case "comparison":
+          _ruleElem = RuleComparison(dataKey: "", operator: "==", compareTo: "");
+          break;
+        case "logic":
+          _ruleElem = RuleLogic("and", []);
+          break;
+        case "reference":
+          _ruleElem = RuleReference("");
+          break;
+        case "action":
+          _ruleElem = RuleAction(action: "return", data: null);
+          break;
+        case "action_list":
+          _ruleElem = RuleActionList(actions: []);
+          break;
+        case "cases":
+          _ruleElem = RuleCases(cases: []);
+          break;
+      }
+    });
+  }
+
+  String? _getElementTypeString() {
+    if (_ruleElem is RuleComparison) {
+      return "comparison";
+    } else if (_ruleElem is RuleLogic) {
+      return "logic";
+    } else if (_ruleElem is RuleReference) {
+      return "reference";
+    } else if (_ruleElem is RuleAction) {
+      return "action";
+    } else if (_ruleElem is RuleActionList) {
+      return "action_list";
+    } else if (_ruleElem is RuleCases) {
+      return "cases";
+    }
+    return null;
   }
 
   void _onTapDone() {

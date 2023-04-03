@@ -37,6 +37,15 @@ abstract class RuleElement {
       displayDepth = update.displayDepth;
     }
   }
+
+  static Map<String, String> get supportedElements => const {
+    "comparison": "Comparison",
+    "logic": "Logic",
+    "reference": "Reference",
+    "action": "Action",
+    "action_list": "Action List",
+    "cases": "Cases",
+  };
 } 
 
 abstract class RuleCondition extends RuleElement {
