@@ -57,6 +57,7 @@ class SectionSlantHeader extends StatelessWidget {
   final EdgeInsetsGeometry rightIconPadding;
 
   final Widget? headerWidget;
+  final Widget? headerChild;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
   final CrossAxisAlignment childrenAlignment;
@@ -101,6 +102,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16),
     
     this.headerWidget,
+    this.headerChild,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
     this.childrenAlignment = CrossAxisAlignment.center,
@@ -118,6 +120,16 @@ class SectionSlantHeader extends StatelessWidget {
 
     if (StringUtils.isNotEmpty(subTitle)) {
       contentList.add(_buildSubTitle());
+    }
+
+    if (headerChild != null) {
+      contentList.add(Container(
+        color: slantColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: headerChild ?? Container(),
+        ),
+      ));
     }
 
     // Slant

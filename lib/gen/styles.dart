@@ -12,7 +12,7 @@ class AppColors {
     static Color? get textAccent => Styles().colors?.getColor('textAccent');
     static Color? get textDark => Styles().colors?.getColor('textDark');
     static Color? get textMedium => Styles().colors?.getColor('textMedium');
-    static Color? get textLight => Styles().colors?.getColor('textLight');
+    static Color? get textLight => Styles().colors?.getColor('textLight');  
     static Color? get textDisabled => Styles().colors?.getColor('textDisabled');
     static Color? get iconPrimary => Styles().colors?.getColor('iconPrimary');
     static Color? get iconLight => Styles().colors?.getColor('iconLight');
