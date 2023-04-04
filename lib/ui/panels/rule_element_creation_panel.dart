@@ -71,42 +71,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   @override
   Widget build(BuildContext context) {
-    //RuleCondition
-      //RuleComparison
-      //RuleLogic
-    //RuleResult
-      //Rule
-      //RuleCases
-      //RuleReference
-      //RuleActionResult
-        //RuleAction
-        //RuleActionList
-
-    // condition = 
-    // {
-    //   "operator": "",
-    //   "conditions": [
-            // condition
-    //   ]
-    // } OR
-    // {
-    //   'operator': "",
-    //   'data_key': "",
-    //   'data_param': "",
-    //   'compare_to': "",
-    //   'compare_to_param': "",
-    //   'default_result': "",
-    // }
-      //TODO
-  // 
-  // RuleAction.supportedActions
-  // RuleComparison.supportedOperators
-  // RuleLogic.supportedOperators
-    
-          // dropdown for actions
-          // dropdown for comparison options
-          // dropdown for logic options
-          // dropdown for data keys, compare_to options (stats, responses, constants, strings, etc.)
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Rule Element"),
       bottomNavigationBar: widget.tabBar,
@@ -119,7 +83,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             controller: _scrollController,
             child: SingleChildScrollView(
               controller: _scrollController,
-              child: _buildRuleElementComponents(),
+              child: _buildRuleElement(),
             ),
           )),
           Container(
@@ -130,7 +94,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
-  Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, List<dynamic>, Collapsible) listItemBuilder, Collapsible collType, {String? parentId}) {
+  Widget _buildCollapsibleWrapper(String label, List<RuleElement> dataList, Widget Function({RuleElement? element}) listItemBuilder) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0), child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
@@ -142,13 +106,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
         ),
         //TODO: handle indentation using displayDepth
-        trailing: (collType == Collapsible.followUpRules || collType == Collapsible.resultRules) && parentId != null ? Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
-          label: 'Edit',
-          borderColor: Styles().colors?.fillColorPrimaryVariant,
-          backgroundColor: Styles().colors?.surface,
-          textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
-          onTap: () => collType == Collapsible.followUpRules ? _onTapEditFlowRuleElement(parentId) : _onTapEditResultRuleElement(parentId),
-        )) : null,
         children: <Widget>[
           Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
           ConstrainedBox(
@@ -161,19 +118,58 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               itemBuilder: (BuildContext context, int index) {
                 return Column(
                   children: [
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList, collType)),
+                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(element: dataList[index])),
                     Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
                   ],
                 );
               },
-            ) : (collType == Collapsible.data || collType == Collapsible.resultRules) ? _buildAddRemoveButtons(0) : Container(height: 0,),
+            ) : Container(),
           ),
         ],
       ),
     ));
   }
 
-  Widget _buildRuleElementComponents() {
+  Widget _buildRuleElement({RuleElement? element}) {
+    //RuleCondition
+      //RuleComparison
+      //RuleLogic
+    //RuleResult
+      //Rule
+      //RuleCases
+      //RuleReference
+      //RuleActionResult
+        //RuleAction
+        //RuleActionList
+
+    // survey:
+      // "completion":
+      // "scores":
+      // "date_updated":
+      // "scored":
+      // "type":
+      // "stats":
+      // "result_data":
+      // "response_keys":
+      // "data"
+      // "auth"?
+    // survey stats:
+      // "total":
+      // "complete":
+      // "scored":
+      // "scores":
+      // "maximum_scores":
+      // "percentage":
+      // "total_score":
+      // "response_data":
+    // survey data:
+      // "response":
+      // "score":
+      // "maximum_score":
+      // "correct_answer":
+      // "correct_answers"
+    
+    RuleElement ruleElem = element ?? _ruleElem;
     List<Widget> content = [DropdownButtonHideUnderline(child:
       DropdownButton<String>(
         icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
@@ -185,31 +181,62 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         dropdownColor: Styles().colors?.getColor('surface'),
       ),
     )];
-    if (_ruleElem is RuleReference || _ruleElem is RuleAction) {
-      
-    } else if (_ruleElem is Rule) {
-      
-      displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
-    } else if (_ruleElem is RuleCases) {
-      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.cases, _buildRuleWidget, collType, parentId: ruleResult.id);
-    } else if (_ruleElem is RuleActionList) {
-      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.actions, _buildRuleWidget, collType, parentId: ruleResult.id);
+    if (ruleElem is RuleComparison) {
+      // dropdown showing comparison options (RuleComparison.supportedOperators)
+      content.add(DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildDropDownItems<String>(RuleComparison.supportedOperators),
+          value: ruleElem.operator,
+          onChanged: (compType) => _onChangeComparisonType(ruleElem.id, compType),
+          dropdownColor: Styles().colors?.getColor('surface'),
+        ),
+      ));
+      // dropdown for data keys, compare_to options (stats, responses, etc., text entry as alternative)
+    } else if (ruleElem is RuleLogic) {
+      // dropdown showing logic options (RuleLogic.supportedOperators)
+      content.add(DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildDropDownItems<String>(RuleLogic.supportedOperators),
+          value: ruleElem.operator,
+          onChanged: (logicType) => _onChangeLogicType(ruleElem.id, logicType),
+          dropdownColor: Styles().colors?.getColor('surface'),
+        ),
+      ));
+      // collapsible list of conditions
+    } else if (ruleElem is RuleReference) {
+      //TODO
+      // dropdown showing existing rules by summary? (pass existing rules into panel?)
+    } else if (ruleElem is RuleAction) {
+      // dropdown for action options (RuleAction.supportedActions)
+      content.add(DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildDropDownItems<String>(RuleAction.supportedActions),
+          value: ruleElem.action,
+          onChanged: (actionType) => _onChangeActionType(ruleElem.id, actionType),
+          dropdownColor: Styles().colors?.getColor('surface'),
+        ),
+      ));
+      // data entry
+      // data key entry/dropdown
+    } else if (ruleElem is RuleCases) {
+      //collapsible list of cases
+      _buildCollapsibleWrapper('Cases', ruleElem.cases, _buildRuleElement);
+    } else if (ruleElem is RuleActionList) {
+      // collapsible list of actions
+      _buildCollapsibleWrapper('Actions', ruleElem.actions, _buildRuleElement);
     }
-    if (_ruleElem is SurveyQuestionTrueFalse) {
-      
-    } else if (_ruleElem is SurveyQuestionMultipleChoice) {
-      
-    } else if (_ruleElem is SurveyQuestionDateTime) {
-      
-    } else if (_ruleElem is SurveyQuestionNumeric) {
-      
-    } else if (_ruleElem is SurveyQuestionText) {
+    // displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
 
-    } else if (_ruleElem is SurveyDataResult) {
-      
-    }
-
-    return Container();
+    return Column(children: content);
   }
 
   List<DropdownMenuItem<T>> _buildDropDownItems<T>(Map<T, String> supportedItems) {
@@ -218,7 +245,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
-        child: Align(alignment: Alignment.center, child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
+        child: Align(alignment: Alignment.center, child: Container(
+          color: Styles().colors?.getColor('surface'),
+          child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
+        )),
       ));
     }
     return items;
@@ -260,6 +290,34 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
+  void _onChangeComparisonType(String id, String? compType) {
+    //TODO: what should defaults be?
+    if (compType != null) {
+      RuleComparison newComparison = RuleComparison(dataKey: "", operator: compType, compareTo: "");
+      _updateState(() {
+        _ruleElem.updateElementById(id, newComparison);
+      });
+    }
+  }
+
+  void _onChangeLogicType(String id, String? logicType) {
+    if (logicType != null) {
+      RuleLogic newLogic = RuleLogic(logicType, []);
+      _updateState(() {
+        _ruleElem.updateElementById(id, newLogic);
+      });
+    }
+  }
+
+  void _onChangeActionType(String id, String? actionType) {
+    if (actionType != null) {
+      RuleAction newAction = RuleAction(data: null, action: actionType);
+      _updateState(() {
+        _ruleElem.updateElementById(id, newAction);
+      });
+    }
+  }
+
   String? _getElementTypeString() {
     if (_ruleElem is RuleComparison) {
       return "comparison";
@@ -276,6 +334,62 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
     return null;
   }
+
+/*
+  void _onTapAddDataAtIndex(int index) {
+    SurveyData insert;
+    if (index > 0) {
+      insert = SurveyData.fromOther(_data[index-1]);
+      insert.key = "data${_data.length}";
+      insert.text = "New survey data";
+      insert.defaultFollowUpKey = index == _data.length ? null : _data[index].key;
+    } else {
+      insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "data${_data.length}");
+    }
+    _updateState(() {
+      _data.insert(index, insert);
+      if (index == 0) {
+        if (_followUpRules.isEmpty) {
+          _followUpRules.add(RuleAction(action: "return", data: insert.key));
+        } else {
+          _followUpRules[0] = RuleAction(action: "return", data: insert.key);
+          _followUpRules.insert(1, RuleAction(action: "return", data: _data[1].key));
+        }
+      } else {
+        _followUpRules.insert(index, RuleAction(action: "return", data: _data[index].key));
+      }
+      //update follow up rules other than returns
+      // if index > 0:
+        // update keys for _followUpRules[index-1]
+    });
+  }
+
+  void _onTapRemoveDataAtIndex(int index) {
+    _updateState(() {
+      _data.removeAt(index);
+      _followUpRules.removeAt(index);
+    });
+  }
+
+  void _onTapEditResultRuleElement(String id) async {
+    RuleElement? resultRulesElem;
+    for (RuleResult result in _resultRules) {
+      RuleElement? elem = result.findElementById(id);
+      if (elem != null) {
+        resultRulesElem = elem;
+      }
+    }
+
+    if (resultRulesElem != null) {
+      RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(data: resultRulesElem!, tabBar: widget.tabBar)));
+      _updateState(() {
+        for (RuleResult result in _resultRules) {
+          result.updateElementById(id, ruleElement);
+        }
+      });
+    }
+  }
+  */
 
   void _onTapDone() {
     // defaultFollowUpKey and followUpRule will be handled by rules defined on SurveyCreationPanel

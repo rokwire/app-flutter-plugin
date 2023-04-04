@@ -32,16 +32,12 @@ abstract class RuleElement {
 
   RuleElement? findElementById(String elementId) => id == elementId ? this : null;
 
-  void updateElementById(String elementId, RuleElement update) {
-    if (id == elementId) {
-      displayDepth = update.displayDepth;
-    }
-  }
+  bool updateElementById(String elementId, RuleElement update);
 
   static Map<String, String> get supportedElements => const {
     "comparison": "Comparison",
     "logic": "Logic",
-    "reference": "Reference",
+    // "reference": "Reference",
     "action": "Action",
     "action_list": "Action List",
     "cases": "Cases",
@@ -124,7 +120,7 @@ class RuleComparison extends RuleCondition {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleComparison) {
       operator = update.operator;
       dataKey = update.dataKey;
@@ -132,7 +128,9 @@ class RuleComparison extends RuleCondition {
       compareTo = update.compareTo;
       compareToParam = update.compareToParam;
       defaultResult = update.defaultResult;
+      return true;
     }
+    return false;
   }
 }
 
@@ -184,11 +182,19 @@ class RuleLogic extends RuleCondition {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleLogic) {
       operator = update.operator;
       conditions = update.conditions;
+      return true;
     }
+
+    for (RuleCondition condition in conditions) {
+      if (condition.updateElementById(elementId, update)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -271,10 +277,12 @@ class RuleReference extends RuleResult {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleReference) {
       ruleKey = update.ruleKey;
+      return true;
     }
+    return false;
   }
 }
 
@@ -330,13 +338,15 @@ class RuleAction extends RuleActionResult {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleAction) {
       action = update.action;
       data = update.data;
       dataKey = update.dataKey;
       priority = update.priority;
+      return true;
     }
+    return false;
   }
 }
 
@@ -374,11 +384,19 @@ class RuleActionList extends RuleActionResult {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleActionList) {
       actions = update.actions;
       priority = update.priority;
+      return true;
     }
+
+    for (RuleAction action in actions) {
+      if (action.updateElementById(elementId, update)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -450,6 +468,25 @@ class Rule extends RuleResult {
 
   @override
   RuleElement? findElementById(String elementId) => condition?.findElementById(elementId) ?? trueResult?.findElementById(elementId) ?? falseResult?.findElementById(elementId);
+
+  @override
+  bool updateElementById(String elementId, RuleElement update) {
+    if (id == elementId && update is Rule) {
+      condition = update.condition;
+      trueResult = update.trueResult;
+      falseResult = update.falseResult;
+      return true;
+    }
+
+    if (condition?.updateElementById(elementId, update) ?? false) {
+      return true;
+    } else if (trueResult?.updateElementById(elementId, update) ?? false) {
+      return true;
+    } else if (falseResult?.updateElementById(elementId, update) ?? false) {
+      return true;
+    }
+    return false;
+  }
 }
 
 class RuleCases extends RuleResult {
@@ -496,10 +533,18 @@ class RuleCases extends RuleResult {
   }
 
   @override
-  void updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(String elementId, RuleElement update) {
     if (id == elementId && update is RuleCases) {
       cases = update.cases;
+      return true;
     }
+
+    for (Rule ruleCase in cases) {
+      if (ruleCase.updateElementById(elementId, update)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

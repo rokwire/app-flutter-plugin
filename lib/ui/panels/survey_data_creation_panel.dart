@@ -474,7 +474,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
-        child: Align(alignment: Alignment.center, child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)),
+        child: Align(alignment: Alignment.center, child: Container(
+          color: Styles().colors?.getColor('surface'),
+          child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
+        )),
       ));
     }
     return items;
