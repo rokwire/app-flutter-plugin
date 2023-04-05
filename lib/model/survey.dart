@@ -89,8 +89,6 @@ class SurveyAlert {
   }
 }
 
-enum Collapsible { data, followUpRules, resultRules }
-
 // TODO: Add localization support
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';

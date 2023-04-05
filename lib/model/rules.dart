@@ -30,7 +30,7 @@ abstract class RuleElement {
     displayDepth = parentDepth + 1;
   }
 
-  RuleElement? findElementById(String elementId) => id == elementId ? this : null;
+  // RuleElement? findElementById(String elementId) => id == elementId ? this : null;
 
   bool updateElementById(String elementId, RuleElement update);
 
@@ -372,16 +372,16 @@ class RuleActionList extends RuleActionResult {
     }
   }
 
-  @override
-  RuleElement? findElementById(String elementId, {RuleElement? update}) {
-    for (RuleAction action in actions) {
-      RuleElement? element = action.findElementById(elementId);
-      if (element != null) {
-        return element;
-      }
-    }
-    return super.findElementById(elementId);
-  }
+  // @override
+  // RuleElement? findElementById(String elementId, {RuleElement? update}) {
+  //   for (RuleAction action in actions) {
+  //     RuleElement? element = action.findElementById(elementId);
+  //     if (element != null) {
+  //       return element;
+  //     }
+  //   }
+  //   return super.findElementById(elementId);
+  // }
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
@@ -466,8 +466,8 @@ class Rule extends RuleResult {
     falseResult?.setDisplayDepth(condition?.displayDepth ?? parentDepth);
   }
 
-  @override
-  RuleElement? findElementById(String elementId) => condition?.findElementById(elementId) ?? trueResult?.findElementById(elementId) ?? falseResult?.findElementById(elementId);
+  // @override
+  // RuleElement? findElementById(String elementId) => condition?.findElementById(elementId) ?? trueResult?.findElementById(elementId) ?? falseResult?.findElementById(elementId);
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
@@ -521,16 +521,16 @@ class RuleCases extends RuleResult {
     }
   }
 
-  @override
-  RuleElement? findElementById(String elementId) {
-    for (Rule ruleCase in cases) {
-      RuleElement? element = ruleCase.findElementById(elementId);
-      if (element != null) {
-        return element;
-      }
-    }
-    return super.findElementById(elementId);
-  }
+  // @override
+  // RuleElement? findElementById(String elementId) {
+  //   for (Rule ruleCase in cases) {
+  //     RuleElement? element = ruleCase.findElementById(elementId);
+  //     if (element != null) {
+  //       return element;
+  //     }
+  //   }
+  //   return super.findElementById(elementId);
+  // }
 
   @override
   bool updateElementById(String elementId, RuleElement update) {

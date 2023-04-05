@@ -94,42 +94,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
-  Widget _buildCollapsibleWrapper(String label, List<RuleElement> dataList, Widget Function({RuleElement? element}) listItemBuilder) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0), child: Ink(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: ExpansionTile(
-        iconColor: Styles().colors?.getColor('fillColorSecondary'),
-        backgroundColor: Styles().colors?.getColor('surface'),
-        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        title: Text(
-          label,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        ),
-        //TODO: handle indentation using displayDepth
-        children: <Widget>[
-          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 500
-            ),
-            child: dataList.isNotEmpty ? ListView.builder(
-              shrinkWrap: true,
-              itemCount: dataList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Column(
-                  children: [
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(element: dataList[index])),
-                    Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
-                  ],
-                );
-              },
-            ) : Container(),
-          ),
-        ],
-      ),
-    ));
-  }
-
   Widget _buildRuleElement({RuleElement? element}) {
     //RuleCondition
       //RuleComparison
@@ -229,10 +193,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       // data key entry/dropdown
     } else if (ruleElem is RuleCases) {
       //collapsible list of cases
-      _buildCollapsibleWrapper('Cases', ruleElem.cases, _buildRuleElement);
+      // _buildCollapsibleWrapper('Cases', ruleElem.cases, _buildRuleElement);
     } else if (ruleElem is RuleActionList) {
       // collapsible list of actions
-      _buildCollapsibleWrapper('Actions', ruleElem.actions, _buildRuleElement);
+      // _buildCollapsibleWrapper('Actions', ruleElem.actions, _buildRuleElement);
     }
     // displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
 
@@ -392,20 +356,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   */
 
   void _onTapDone() {
-    // defaultFollowUpKey and followUpRule will be handled by rules defined on SurveyCreationPanel
-    // _ruleElem.key = _textControllers["key"]!.text;
-    // _ruleElem.text = _textControllers["text"]!.text;
-    // _ruleElem.moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
-    // _ruleElem.section = _textControllers["section"]!.text.isNotEmpty ? _textControllers["section"]!.text : null;
-    // _ruleElem.maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
-
-    if (_ruleElem is SurveyQuestionMultipleChoice) {
-      
-    } else if (_ruleElem is SurveyQuestionDateTime) {
-    } else if (_ruleElem is SurveyQuestionNumeric) {
-    } else if (_ruleElem is SurveyQuestionText) {
-    } else if (_ruleElem is SurveyDataResult) {
-    }
+    // if (_ruleElem is SurveyQuestionMultipleChoice) {
+    // } else if (_ruleElem is SurveyQuestionDateTime) {
+    // } else if (_ruleElem is SurveyQuestionNumeric) {
+    // } else if (_ruleElem is SurveyQuestionText) {
+    // } else if (_ruleElem is SurveyDataResult) {
+    // }
     
     Navigator.of(context).pop(_ruleElem);
   }
