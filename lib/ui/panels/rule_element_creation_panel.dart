@@ -17,16 +17,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/rules.dart';
-import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 
 class RuleElementCreationPanel extends StatefulWidget {
   final RuleElement data;
+  final bool mayChangeType;
   final Widget? tabBar;
 
-  const RuleElementCreationPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
+  const RuleElementCreationPanel({Key? key, required this.data, this.mayChangeType = true, this.tabBar}) : super(key: key);
 
   @override
   _RuleElementCreationPanelState createState() => _RuleElementCreationPanelState();
@@ -36,8 +36,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   GlobalKey? dataKey;
 
   final ScrollController _scrollController = ScrollController();
-  late final Map<String, TextEditingController> _textControllers;
-  final List<String> _defaultTextControllers = ["key", "text", "more_info", "section", "maximum_score"];
+  // late final Map<String, TextEditingController> _textControllers;
 
   late RuleElement _ruleElem;
 
@@ -55,19 +54,17 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    _removeTextControllers();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _removeTextControllers();
+  //   super.dispose();
+  // }
 
-  void _removeTextControllers({bool keepDefaults = false}) {
-    _textControllers.forEach((key, value) {
-      if (!keepDefaults || !_defaultTextControllers.contains(key)) {
-        value.dispose();
-      }
-    });
-  }
+  // void _removeTextControllers({bool keepDefaults = false}) {
+  //   _textControllers.forEach((_, value) {
+  //     value.dispose();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -134,17 +131,17 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       // "correct_answers"
     
     RuleElement ruleElem = element ?? _ruleElem;
-    List<Widget> content = [DropdownButtonHideUnderline(child:
+    List<Widget> content = [Visibility(visible: widget.mayChangeType, child: DropdownButtonHideUnderline(child:
       DropdownButton<String>(
         icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
         isExpanded: true,
         style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        items: _buildDropDownItems<String>(RuleElement.supportedElements),
+        items: _buildDropDownItems<String>(ruleElem.supportedAlternatives),
         value: _getElementTypeString(),
         onChanged: _onChangeElementType,
         dropdownColor: Styles().colors?.getColor('surface'),
       ),
-    )];
+    ))];
     if (ruleElem is RuleComparison) {
       // dropdown showing comparison options (RuleComparison.supportedOperators)
       content.add(DropdownButtonHideUnderline(child:
@@ -200,7 +197,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
     // displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
 
-    return Column(children: content);
+    return Padding(padding: const EdgeInsets.only(left: 8, right: 8, top: 20), child: Column(children: content));
   }
 
   List<DropdownMenuItem<T>> _buildDropDownItems<T>(Map<T, String> supportedItems) {
@@ -231,6 +228,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onChangeElementType(String? elemType) {
     //TODO: what should defaults be for these?
     _updateState(() {
+      String id = _ruleElem.id;
       switch (elemType) {
         case "comparison":
           _ruleElem = RuleComparison(dataKey: "", operator: "==", compareTo: "");
@@ -251,6 +249,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           _ruleElem = RuleCases(cases: []);
           break;
       }
+      _ruleElem.id = id;
     });
   }
 

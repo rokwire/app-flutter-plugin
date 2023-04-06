@@ -32,9 +32,11 @@ abstract class RuleElement {
 
   // RuleElement? findElementById(String elementId) => id == elementId ? this : null;
 
-  bool updateElementById(String elementId, RuleElement update);
+  bool updateElementById(String elementId, RuleElement update) {
+    return id == elementId;
+  }
 
-  static Map<String, String> get supportedElements => const {
+  Map<String, String> get supportedAlternatives => const {
     "comparison": "Comparison",
     "logic": "Logic",
     // "reference": "Reference",
@@ -59,6 +61,12 @@ abstract class RuleCondition extends RuleElement {
     }
     return RuleComparison.fromJson(json);
   }
+
+  @override
+  Map<String, String> get supportedAlternatives => const {
+    "comparison": "Comparison",
+    "logic": "Logic",
+  };
 }           
 
 class RuleComparison extends RuleCondition {
@@ -118,20 +126,6 @@ class RuleComparison extends RuleCondition {
     }
     return summary;
   }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleComparison) {
-      operator = update.operator;
-      dataKey = update.dataKey;
-      dataParam = update.dataParam;
-      compareTo = update.compareTo;
-      compareToParam = update.compareToParam;
-      defaultResult = update.defaultResult;
-      return true;
-    }
-    return false;
-  }
 }
 
 class RuleLogic extends RuleCondition {
@@ -183,14 +177,9 @@ class RuleLogic extends RuleCondition {
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleLogic) {
-      operator = update.operator;
-      conditions = update.conditions;
-      return true;
-    }
-
-    for (RuleCondition condition in conditions) {
-      if (condition.updateElementById(elementId, update)) {
+    for (int i = 0; i < conditions.length; i++) {
+      if (conditions[i].id == elementId && update is RuleCondition) {
+        conditions[i] = update;
         return true;
       }
     }
@@ -232,6 +221,14 @@ abstract class RuleResult extends RuleElement {
     }
     return resultsJson;
   }
+
+  @override
+  Map<String, String> get supportedAlternatives => const {
+    // "reference": "Reference",
+    "action": "Action",
+    "action_list": "Action List",
+    "cases": "Cases",
+  };
 }
 
 abstract class RuleActionResult extends RuleResult {
@@ -274,15 +271,6 @@ class RuleReference extends RuleResult {
       summary = "$summary $suffix";
     }
     return summary;
-  }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleReference) {
-      ruleKey = update.ruleKey;
-      return true;
-    }
-    return false;
   }
 }
 
@@ -327,7 +315,10 @@ class RuleAction extends RuleActionResult {
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "${supportedActions[action]} $data";
+    String summary = "${supportedActions[action]}";
+    if (data != null) {
+      summary += " $data";
+    }
     if (prefix != null) {
       summary = "$prefix $summary";
     }
@@ -335,18 +326,6 @@ class RuleAction extends RuleActionResult {
       summary = "$summary $suffix";
     }
     return summary;
-  }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleAction) {
-      action = update.action;
-      data = update.data;
-      dataKey = update.dataKey;
-      priority = update.priority;
-      return true;
-    }
-    return false;
   }
 }
 
@@ -385,14 +364,9 @@ class RuleActionList extends RuleActionResult {
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleActionList) {
-      actions = update.actions;
-      priority = update.priority;
-      return true;
-    }
-
-    for (RuleAction action in actions) {
-      if (action.updateElementById(elementId, update)) {
+    for (int i = 0; i < actions.length; i++) {
+      if (actions[i].id == elementId && update is RuleAction) {
+        actions[i] = update;
         return true;
       }
     }
@@ -471,20 +445,25 @@ class Rule extends RuleResult {
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is Rule) {
-      condition = update.condition;
-      trueResult = update.trueResult;
-      falseResult = update.falseResult;
+    if (condition?.updateElementById(elementId, update) ?? false) {
+      return true;
+    } else if (condition?.id == elementId && update is RuleCondition) {
+      condition = update;
+      return true;
+    }
+    
+    if (trueResult?.updateElementById(elementId, update) ?? false) {
+      return true;
+    } else if (trueResult?.id == elementId && update is RuleResult) {
       return true;
     }
 
-    if (condition?.updateElementById(elementId, update) ?? false) {
+    if (falseResult?.updateElementById(elementId, update) ?? false) {
       return true;
-    } else if (trueResult?.updateElementById(elementId, update) ?? false) {
-      return true;
-    } else if (falseResult?.updateElementById(elementId, update) ?? false) {
+    } else if (falseResult?.id == elementId && update is RuleResult) {
       return true;
     }
+
     return false;
   }
 }
@@ -534,13 +513,9 @@ class RuleCases extends RuleResult {
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
-    if (id == elementId && update is RuleCases) {
-      cases = update.cases;
-      return true;
-    }
-
-    for (Rule ruleCase in cases) {
-      if (ruleCase.updateElementById(elementId, update)) {
+    for (int i = 0; i < cases.length; i++) {
+      if (cases[i].id == elementId && update is Rule) {
+        cases[i] = update;
         return true;
       }
     }
