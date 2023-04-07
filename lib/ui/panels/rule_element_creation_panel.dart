@@ -23,10 +23,11 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 
 class RuleElementCreationPanel extends StatefulWidget {
   final RuleElement data;
+  final List<String> dataKeys;
   final bool mayChangeType;
   final Widget? tabBar;
 
-  const RuleElementCreationPanel({Key? key, required this.data, this.mayChangeType = true, this.tabBar}) : super(key: key);
+  const RuleElementCreationPanel({Key? key, required this.data, required this.dataKeys, this.mayChangeType = true, this.tabBar}) : super(key: key);
 
   @override
   _RuleElementCreationPanelState createState() => _RuleElementCreationPanelState();
@@ -91,7 +92,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
-  Widget _buildRuleElement({RuleElement? element}) {
+  Widget _buildRuleElement() {
     //RuleCondition
       //RuleComparison
       //RuleLogic
@@ -102,100 +103,131 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       //RuleActionResult
         //RuleAction
         //RuleActionList
-
-    // survey:
-      // "completion":
-      // "scores":
-      // "date_updated":
-      // "scored":
-      // "type":
-      // "stats":
-      // "result_data":
-      // "response_keys":
-      // "data"
-      // "auth"?
-    // survey stats:
-      // "total":
-      // "complete":
-      // "scored":
-      // "scores":
-      // "maximum_scores":
-      // "percentage":
-      // "total_score":
-      // "response_data":
-    // survey data:
-      // "response":
-      // "score":
-      // "maximum_score":
-      // "correct_answer":
-      // "correct_answers"
     
-    RuleElement ruleElem = element ?? _ruleElem;
     List<Widget> content = [Visibility(visible: widget.mayChangeType, child: DropdownButtonHideUnderline(child:
       DropdownButton<String>(
         icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
         isExpanded: true,
         style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        items: _buildDropDownItems<String>(ruleElem.supportedAlternatives),
+        items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
         value: _getElementTypeString(),
         onChanged: _onChangeElementType,
         dropdownColor: Styles().colors?.getColor('surface'),
       ),
     ))];
-    if (ruleElem is RuleComparison) {
-      // dropdown showing comparison options (RuleComparison.supportedOperators)
-      content.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildDropDownItems<String>(RuleComparison.supportedOperators),
-          value: ruleElem.operator,
-          onChanged: (compType) => _onChangeComparisonType(ruleElem.id, compType),
-          dropdownColor: Styles().colors?.getColor('surface'),
-        ),
-      ));
+    if (_ruleElem is RuleComparison) {
+      // operator
+      content.add(Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(RuleComparison.supportedOperators),
+            value: (_ruleElem as RuleComparison).operator,
+            onChanged: _onChangeComparisonType,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ))),
+      ],));
+
+      // survey:
+        // "completion":
+        // "scores":
+        // "date_updated":
+        // "scored":
+        // "type":
+        // "result_data":
+        // "response_keys":
+        // "auth"?
+      // survey stats:
+        // "total":
+        // "complete":
+        // "scored":
+        // "scores":
+        // "maximum_scores":
+        // "percentage":
+        // "total_score":
+        // "response_data":
+      // survey data:
+        // "response":
+        // "score":
+        // "maximum_score":
+        // "correct_answer":
+        // "correct_answers"
+      // dataKey (suvrey field, stats field (prefix with "stats."), survey data field (prefix with "data."))
+      content.add(Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
+            value: (_ruleElem as RuleComparison).dataKey,
+            onChanged: _onChangeComparisonType,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ))),
+      ],));
+
+      // compareTo (provide text entry as alternative)
+      content.add(Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
+            value: (_ruleElem as RuleComparison).compareTo,
+            onChanged: _onChangeComparisonType,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ))),
+      ],));
+      
       // dropdown for data keys, compare_to options (stats, responses, etc., text entry as alternative)
-    } else if (ruleElem is RuleLogic) {
-      // dropdown showing logic options (RuleLogic.supportedOperators)
-      content.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildDropDownItems<String>(RuleLogic.supportedOperators),
-          value: ruleElem.operator,
-          onChanged: (logicType) => _onChangeLogicType(ruleElem.id, logicType),
-          dropdownColor: Styles().colors?.getColor('surface'),
-        ),
-      ));
+    } else if (_ruleElem is RuleLogic) {
+      // operator
+      content.add(Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(RuleLogic.supportedOperators),
+            value: (_ruleElem as RuleLogic).operator,
+            onChanged: _onChangeLogicType,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ))),
+      ],));
       // collapsible list of conditions
-    } else if (ruleElem is RuleReference) {
+    } else if (_ruleElem is RuleReference) {
       //TODO
       // dropdown showing existing rules by summary? (pass existing rules into panel?)
-    } else if (ruleElem is RuleAction) {
-      // dropdown for action options (RuleAction.supportedActions)
-      content.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildDropDownItems<String>(RuleAction.supportedActions),
-          value: ruleElem.action,
-          onChanged: _onChangeActionType,
-          dropdownColor: Styles().colors?.getColor('surface'),
-        ),
-      ));
+    } else if (_ruleElem is RuleAction) {
+      // action
+      content.add(Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(RuleAction.supportedActions),
+            value: (_ruleElem as RuleAction).action,
+            onChanged: _onChangeActionType,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ))),
+      ],));
       // data entry
       // data key entry/dropdown
-    } else if (ruleElem is RuleCases) {
-      //collapsible list of cases
-      // _buildCollapsibleWrapper('Cases', ruleElem.cases, _buildRuleElement);
-    } else if (ruleElem is RuleActionList) {
-      // collapsible list of actions
-      // _buildCollapsibleWrapper('Actions', ruleElem.actions, _buildRuleElement);
     }
-    // displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, collType, parentId: ruleResult.condition?.id);
 
     return Padding(padding: const EdgeInsets.only(left: 8, right: 8, top: 20), child: Column(children: content));
   }
@@ -270,21 +302,19 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
-  void _onChangeComparisonType(String id, String? compType) {
+  void _onChangeComparisonType(String? compType) {
     //TODO: what should defaults be?
     if (compType != null) {
-      RuleComparison newComparison = RuleComparison(dataKey: "", operator: compType, compareTo: "");
       _updateState(() {
-        _ruleElem.updateElementById(id, newComparison);
+        (_ruleElem as RuleComparison).operator = compType;
       });
     }
   }
 
-  void _onChangeLogicType(String id, String? logicType) {
+  void _onChangeLogicType(String? logicType) {
     if (logicType != null) {
-      RuleLogic newLogic = RuleLogic(logicType, []);
       _updateState(() {
-        _ruleElem.updateElementById(id, newLogic);
+        (_ruleElem as RuleLogic).operator = logicType;
       });
     }
   }

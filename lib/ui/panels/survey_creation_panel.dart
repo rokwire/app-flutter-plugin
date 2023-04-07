@@ -118,6 +118,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       // survey type (make this a dropdown?)
       FormFieldText('Type', controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
 
+      //TODO: sections list entry
+
       // scored
       Row(children: [
         Padding(padding: const EdgeInsets.only(left: 16), child: Text("Scored", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
@@ -185,7 +187,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
         backgroundColor: Styles().colors?.getColor('surface'),
         collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        // tilePadding: EdgeInsets.zero,
+        //TODO: make into Cards
         title: Row(children: [
           Text(
             label,
@@ -211,14 +213,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
                 return Column(
                   children: [
                     Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement)),
-                    Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
+                    // Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
                   ],
                 );
               },
             ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
                 Container(height: 0),
                 Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
-                //TODO: need to be able to edit rules with null condition, trueRes, falseRes
               ]
             )),
           ),
@@ -234,7 +235,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
     ],);
 
-    return Draggable<int>(
+    return LongPressDraggable<int>(
       data: index,
       feedback: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
@@ -298,7 +299,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       displayEntry = _buildCollapsibleWrapper(summary, ruleResult.actions, _buildRuleWidget, surveyElement, parentElement: ruleResult, parentIndex: ruleResultIndex, grandParentElement: parentElement);
     }
 
-    return Draggable<int>(
+    //LongPressDraggable
+    return LongPressDraggable<int>(
       data: index,
       feedback: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
@@ -383,8 +385,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
     if (element != null) {
-      RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => 
-        RuleElementCreationPanel(data: element, tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList)));
+      RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
+        data: element,
+        dataKeys: List.generate(_data.length, (index) => _data[index].key),
+        tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
+      )));
       _updateState(() {
         if (surveyElement == SurveyElement.followUpRules) {
           for (int i = 0; i < _followUpRules.length; i++) {
