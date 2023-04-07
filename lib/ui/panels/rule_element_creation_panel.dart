@@ -182,7 +182,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
           items: _buildDropDownItems<String>(RuleAction.supportedActions),
           value: ruleElem.action,
-          onChanged: (actionType) => _onChangeActionType(ruleElem.id, actionType),
+          onChanged: _onChangeActionType,
           dropdownColor: Styles().colors?.getColor('surface'),
         ),
       ));
@@ -234,19 +234,36 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           _ruleElem = RuleComparison(dataKey: "", operator: "==", compareTo: "");
           break;
         case "logic":
-          _ruleElem = RuleLogic("and", []);
+          _ruleElem = RuleLogic("and", [
+            RuleComparison(dataKey: "", operator: "==", compareTo: ""),
+            RuleComparison(dataKey: "", operator: "==", compareTo: ""),
+          ]);
           break;
         case "reference":
           _ruleElem = RuleReference("");
+          break;
+        case "rule":
+          _ruleElem = Rule(
+            condition: RuleComparison(dataKey: "", operator: "==", compareTo: ""),
+            trueResult: RuleAction(action: "return", data: null),
+            falseResult: RuleAction(action: "return", data: null),
+          );
           break;
         case "action":
           _ruleElem = RuleAction(action: "return", data: null);
           break;
         case "action_list":
-          _ruleElem = RuleActionList(actions: []);
+          _ruleElem = RuleActionList(actions: [
+            RuleAction(action: "return", data: null)
+          ]);
           break;
         case "cases":
-          _ruleElem = RuleCases(cases: []);
+          _ruleElem = RuleCases(cases: [
+            Rule(
+              condition: RuleComparison(dataKey: "", operator: "==", compareTo: ""),
+              trueResult: RuleAction(action: "return", data: null),
+            )
+          ]);
           break;
       }
       _ruleElem.id = id;
@@ -272,11 +289,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
   }
 
-  void _onChangeActionType(String id, String? actionType) {
+  void _onChangeActionType(String? actionType) {
     if (actionType != null) {
-      RuleAction newAction = RuleAction(data: null, action: actionType);
       _updateState(() {
-        _ruleElem.updateElementById(id, newAction);
+        (_ruleElem as RuleAction).action = actionType;
       });
     }
   }
@@ -288,7 +304,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       return "logic";
     } else if (_ruleElem is RuleReference) {
       return "reference";
-    } else if (_ruleElem is RuleAction) {
+    } else if (_ruleElem is Rule) {
+      return "rule";
+    }  else if (_ruleElem is RuleAction) {
       return "action";
     } else if (_ruleElem is RuleActionList) {
       return "action_list";

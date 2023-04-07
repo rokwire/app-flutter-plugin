@@ -40,6 +40,7 @@ abstract class RuleElement {
     "comparison": "Comparison",
     "logic": "Logic",
     // "reference": "Reference",
+    "rule": "Rule",
     "action": "Action",
     "action_list": "Action List",
     "cases": "Cases",
@@ -182,6 +183,9 @@ class RuleLogic extends RuleCondition {
         conditions[i] = update;
         return true;
       }
+      if (conditions[i].updateElementById(elementId, update)) {
+        return true;
+      }
     }
     return false;
   }
@@ -225,6 +229,7 @@ abstract class RuleResult extends RuleElement {
   @override
   Map<String, String> get supportedAlternatives => const {
     // "reference": "Reference",
+    "rule": "Rule",
     "action": "Action",
     "action_list": "Action List",
     "cases": "Cases",
@@ -445,22 +450,27 @@ class Rule extends RuleResult {
 
   @override
   bool updateElementById(String elementId, RuleElement update) {
-    if (condition?.updateElementById(elementId, update) ?? false) {
-      return true;
-    } else if (condition?.id == elementId && update is RuleCondition) {
+    if (condition?.id == elementId && update is RuleCondition) {
       condition = update;
       return true;
     }
-    
-    if (trueResult?.updateElementById(elementId, update) ?? false) {
+    if (condition?.updateElementById(elementId, update) ?? false) {
       return true;
-    } else if (trueResult?.id == elementId && update is RuleResult) {
+    }
+    
+    if (trueResult?.id == elementId && update is RuleResult) {
+      trueResult = update;
+      return true;
+    }
+    if (trueResult?.updateElementById(elementId, update) ?? false) {
       return true;
     }
 
-    if (falseResult?.updateElementById(elementId, update) ?? false) {
+    if (falseResult?.id == elementId && update is RuleResult) {
+      falseResult = update;
       return true;
-    } else if (falseResult?.id == elementId && update is RuleResult) {
+    }
+    if (falseResult?.updateElementById(elementId, update) ?? false) {
       return true;
     }
 
@@ -482,7 +492,7 @@ class RuleCases extends RuleResult {
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "Evaluate the contents of the first true statement:";
+    String summary = "Cases:";
     if (prefix != null) {
       summary = "$prefix $summary";
     }
@@ -516,6 +526,9 @@ class RuleCases extends RuleResult {
     for (int i = 0; i < cases.length; i++) {
       if (cases[i].id == elementId && update is Rule) {
         cases[i] = update;
+        return true;
+      }
+      if (cases[i].updateElementById(elementId, update)) {
         return true;
       }
     }
