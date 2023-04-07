@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
+### Deleted
+- Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 
 ## [1.3.2] - 2023-02-16
 ### Changed
