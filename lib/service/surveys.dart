@@ -127,6 +127,17 @@ class Surveys /* with Service */ {
     return result;
   }
 
+  static Map<String, String> get properties => {
+    "completion": "Completion",
+    "scores": "Scores",
+    "date_updated": "Date Updated",
+    "scored": "Scored",
+    "type": "Type",
+    "result_data": "Result Data",
+    "response_keys": "Response Keys",
+    // "auth": "Authentication Info",
+  };
+
   // SurveyStats
 
   dynamic _getStatsProperty(Survey survey, RuleKey? key) {
@@ -161,6 +172,16 @@ class Surveys /* with Service */ {
     }
     return null;
   }
+
+  static Map<String, String> get statsProperties => {
+    "total": "Total",
+    "complete": "Complete",
+    "scored": "Scored",
+    "scores": "Scores",
+    "percentage": "Percentage",
+    "total_score": "Total Score",
+    "response_data": "Response Data",
+  };
 
   // SurveyData
 
@@ -262,6 +283,14 @@ class Surveys /* with Service */ {
     }
     return null;
   }
+
+  static Map<String, String> get dataProperties => {
+    "response": "Response",
+    "score": "Score",
+    "maximum_score": "Maximum Score",
+    "correct_answer": "Correct Answer",
+    "correct_answers": "Correct Answers",
+  };
 
   // Accessories
 

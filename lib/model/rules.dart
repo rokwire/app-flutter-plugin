@@ -308,14 +308,14 @@ class RuleAction extends RuleActionResult {
 
   static Map<String, String> get supportedActions => const {
     "return": "Return",
-    "sum": "Sum",
+    // "sum": "Sum",
     "set_result": "Set Result",
-    "show_survey": "Show Survey",
+    // "show_survey": "Show Survey",
     "alert": "Alert",
     "alert_result": "Alert Result",
-    "notify": "Notify",
+    // "notify": "Notify",
     "save": "Save",
-    "local_notify": "Local Notify",
+    // "local_notify": "Local Notify",
   };
 
   @override

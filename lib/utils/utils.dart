@@ -197,11 +197,11 @@ class ListUtils {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
   }
 
-  static bool? contains(List<dynamic>? list, dynamic item, {bool checkAll = false}) {
+  static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
     if (list == null) {
       return null;
     }
-    if (item is List<dynamic>) {
+    if (item is Iterable<dynamic>) {
       for (dynamic val in item) {
         if (list.contains(val)) {
           if (!checkAll) {

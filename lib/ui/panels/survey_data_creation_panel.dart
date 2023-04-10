@@ -652,7 +652,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
         (_data as SurveyQuestionMultipleChoice).options[i].title = _textControllers["options$i.title"]!.text;
         (_data as SurveyQuestionMultipleChoice).options[i].hint = _textControllers["options$i.hint"]!.text;
-        (_data as SurveyQuestionMultipleChoice).options[i].value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? valueText;
+        (_data as SurveyQuestionMultipleChoice).options[i].value = num.tryParse(valueText) ?? DateTimeUtils.parseDateTime(valueText, format: "MM-dd-yyyy") ?? valueBool ?? valueText;
         (_data as SurveyQuestionMultipleChoice).options[i].score = num.tryParse(_textControllers["options$i.score"]!.text);
 
         if (_correctAnswers[i]) {
