@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
+- Added NotificationService.subscribers getter [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 
