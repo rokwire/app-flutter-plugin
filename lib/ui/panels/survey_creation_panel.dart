@@ -181,6 +181,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
+    bool hideEntryManagement = parentElement is RuleLogic && grandParentElement is Rule;
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
@@ -196,8 +197,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
             element: parentElement,
             parentElement: grandParentElement,
-            addRemove: parentElement != null && parentIndex != null,
-            editable: parentElement != null
+            addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
+            editable: parentElement != null && !hideEntryManagement
           )),
         ],),
         children: <Widget>[
@@ -213,7 +214,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
                 return Column(
                   children: [
                     Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement)),
-                    // Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
                   ],
                 );
               },
@@ -255,48 +255,55 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
-    RuleResult ruleResult = data as RuleResult;
-    String summary = ruleResult.getSummary();
+    RuleElement ruleElem = data as RuleElement;
+    String summary = ruleElem.getSummary();
     if (index == 0 && surveyElement == SurveyElement.followUpRules) {
       summary = "Start: $summary";
     }
 
     bool addRemove = false;
-    int? ruleResultIndex;
+    int? ruleElemIndex;
     if (parentElement is RuleCases) {
       addRemove = true;
-      ruleResultIndex = parentElement.cases.indexOf(ruleResult as Rule);
+      ruleElemIndex = parentElement.cases.indexOf(ruleElem as Rule);
     } else if(parentElement is RuleActionList) {
       addRemove = true;
-      ruleResultIndex = parentElement.actions.indexOf(ruleResult as RuleAction);
+      ruleElemIndex = parentElement.actions.indexOf(ruleElem as RuleAction);
     } else if (parentElement is RuleLogic) {
       addRemove = true;
-      ruleResultIndex = parentElement.conditions.indexOf(ruleResult as RuleCondition);
+      ruleElemIndex = parentElement.conditions.indexOf(ruleElem as RuleCondition);
     } else if (parentElement == null && surveyElement == SurveyElement.resultRules) {
       addRemove = true;
-      ruleResultIndex = index;
+      ruleElemIndex = index;
     }
 
     late Widget displayEntry;
     Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), overflow: TextOverflow.fade);
-    if (ruleResult is RuleReference || ruleResult is RuleAction) {
+    if (ruleElem is RuleReference || ruleElem is RuleAction) {
       displayEntry = Row(children: [
         ruleText,
-        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleResult, parentElement: parentElement, addRemove: addRemove)),
+        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
       ],);
-    } else if (ruleResult is Rule) {
+    } else if (ruleElem is RuleLogic) {
+      displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, ruleElem.conditions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
+    } else if (ruleElem is Rule) {
+      bool isComparison = ruleElem.condition is RuleComparison;
+      String label = ruleElem.condition?.getSummary() ?? "";
       List<RuleElement> elementsSlice = [];
-      if (ruleResult.trueResult != null) {
-        elementsSlice.add(ruleResult.trueResult!);
+      if (!isComparison) {
+        elementsSlice.add(ruleElem.condition!);
       }
-      if (ruleResult.falseResult != null) {
-        elementsSlice.add(ruleResult.falseResult!);
+      if (ruleElem.trueResult != null) {
+        elementsSlice.add(ruleElem.trueResult!);
       }
-      displayEntry = _buildCollapsibleWrapper(ruleResult.condition?.getSummary() ?? "", elementsSlice, _buildRuleWidget, surveyElement, parentElement: ruleResult.condition, parentIndex: ruleResultIndex, grandParentElement: parentElement);
-    } else if (ruleResult is RuleCases) {
-      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.cases, _buildRuleWidget, surveyElement, parentElement: ruleResult, parentIndex: ruleResultIndex, grandParentElement: parentElement);
-    } else if (ruleResult is RuleActionList) {
-      displayEntry = _buildCollapsibleWrapper(summary, ruleResult.actions, _buildRuleWidget, surveyElement, parentElement: ruleResult, parentIndex: ruleResultIndex, grandParentElement: parentElement);
+      if (ruleElem.falseResult != null) {
+        elementsSlice.add(ruleElem.falseResult!);
+      }
+      displayEntry = _buildCollapsibleWrapper(label, elementsSlice, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
+    } else if (ruleElem is RuleCases) {
+      displayEntry = _buildCollapsibleWrapper(summary, ruleElem.cases, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
+    } else if (ruleElem is RuleActionList) {
+      displayEntry = _buildCollapsibleWrapper(summary, ruleElem.actions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     }
 
     //LongPressDraggable
@@ -320,6 +327,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
+    //TODO: in certain cases, do not show remove button when list size is = 2 (logic, cases, actions)
     BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
       Visibility(visible: addRemove, child: IconButton(
@@ -351,7 +359,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       SurveyData temp = _data[oldIndex];
       _data.removeAt(oldIndex);
       _data.insert(newIndex, temp);
-      //TODO: update follow up rules appropriately
+      _updateFollowUpRules();
     });
 
     _onAcceptFlowRuleDrag(oldIndex, newIndex);
@@ -362,7 +370,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleResult temp = _followUpRules[oldIndex];
       _followUpRules.removeAt(oldIndex);
       _followUpRules.insert(newIndex, temp);
-      //TODO: update follow up rules appropriately
+      _updateFollowUpRules();
     });
   }
 
@@ -371,7 +379,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleResult temp = _resultRules[oldIndex];
       _resultRules.removeAt(oldIndex);
       _resultRules.insert(newIndex, temp);
-      //TODO: update follow up rules appropriately
+      _updateFollowUpRules();
     });
   }
 
@@ -379,8 +387,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(data: _data[index], tabBar: widget.tabBar)));
     _updateState(() {
       _data[index] = updatedData;
-      //TODO: update follow up rules appropriately
+      _updateFollowUpRules();
     });
+  }
+
+  void _updateFollowUpRules() {
+    //TODO: update follow up rules appropriately
   }
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
@@ -437,7 +449,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       } else {
         _followUpRules.insert(index, RuleAction(action: "return", data: _data[index].key));
       }
-      //TODO: update follow up rules and result rules other than returns
+      _updateFollowUpRules();
     });
   }
 
@@ -445,7 +457,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     _updateState(() {
       _data.removeAt(index);
       _followUpRules.removeAt(index);
-      //TODO: update follow up rules and result rules other than returns
+      _updateFollowUpRules();
     });
   }
 

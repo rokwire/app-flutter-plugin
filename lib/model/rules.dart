@@ -37,13 +37,13 @@ abstract class RuleElement {
   }
 
   Map<String, String> get supportedAlternatives => const {
-    "comparison": "Comparison",
-    "logic": "Logic",
-    // "reference": "Reference",
-    "rule": "Rule",
-    "action": "Action",
-    "action_list": "Action List",
+    "if": "If",
+    "and": "AND",
+    "or": "OR",
     "cases": "Cases",
+    "action": "Action",
+    "action_list": "Actions",
+    // "reference": "Reference",
   };
 } 
 
@@ -62,12 +62,6 @@ abstract class RuleCondition extends RuleElement {
     }
     return RuleComparison.fromJson(json);
   }
-
-  @override
-  Map<String, String> get supportedAlternatives => const {
-    "comparison": "Comparison",
-    "logic": "Logic",
-  };
 }           
 
 class RuleComparison extends RuleCondition {
@@ -150,15 +144,7 @@ class RuleLogic extends RuleCondition {
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "";
-    for (int i = 0; i < conditions.length; i++) {
-      if (i == conditions.length - 1) {
-        summary += "(${conditions[i].getSummary()})";
-      } else {
-        summary += "(${conditions[i].getSummary()}) ${supportedOperators[operator]}";
-      }
-    }
-    summary = "Is $summary?";
+    String summary = supportedOperators[operator] ?? 'Invalid operator';
     if (prefix != null) {
       summary = "$prefix $summary";
     }
@@ -225,15 +211,6 @@ abstract class RuleResult extends RuleElement {
     }
     return resultsJson;
   }
-
-  @override
-  Map<String, String> get supportedAlternatives => const {
-    // "reference": "Reference",
-    "rule": "Rule",
-    "action": "Action",
-    "action_list": "Action List",
-    "cases": "Cases",
-  };
 }
 
 abstract class RuleActionResult extends RuleResult {
