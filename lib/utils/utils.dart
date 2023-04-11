@@ -476,6 +476,25 @@ class UrlUtils {
     }
     return url;
   }
+
+  static String? fixUrl(String url) {
+    Uri? uri = Uri.tryParse(url);
+    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    return (fixedUri != null) ? fixedUri.toString() : null;
+  }
+
+  static Uri? fixUri(Uri uri) {
+    return uri.scheme.isEmpty ? Uri(
+      scheme: 'http',
+      userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+      host: uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null),
+      port: (0 < uri.port) ? uri.port : null,
+      path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
+      //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+      query: uri.query.isNotEmpty ? uri.query : null,
+      //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+      fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
+  }
 }
 
 
