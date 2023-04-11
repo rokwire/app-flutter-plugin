@@ -560,10 +560,6 @@ class Event with Explore, Favorite {
     return result;
   }
 
-  static bool canJson(Map<String, dynamic>? json) {
-    return (json != null) && (json['eventId'] != null);
-  }
-
   static List<Event>? listFromJson(List<dynamic>? jsonList) {
     List<Event>? result;
     if (jsonList != null) {

@@ -100,6 +100,9 @@ class NotificationService {
     }
   }
 
+  Set<NotificationsListener>? subscribers(String name) =>
+    _listeners[name];
+
 }
 
 abstract class NotificationsListener {
