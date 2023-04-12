@@ -190,10 +190,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         collapsedBackgroundColor: Styles().colors?.getColor('surface'),
         //TODO: make into Cards
         title: Row(children: [
-          Text(
+          Expanded(child: Text(
             label,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          ),
+            maxLines: 2,
+            style: Styles().textStyles?.getTextStyle('widget.detail.small'),
+          )),
           Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
             element: parentElement,
             parentElement: grandParentElement,
@@ -203,33 +204,35 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         ],),
         children: <Widget>[
           Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 500
-            ),
-            child: dataList.isNotEmpty ? ListView.builder(
-              shrinkWrap: true,
-              itemCount: dataList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Column(
-                  children: [
-                    Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement)),
-                  ],
-                );
-              },
-            ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
-                Container(height: 0),
-                Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
-              ]
-            )),
-          ),
+          // ConstrainedBox(
+          //   constraints: const BoxConstraints(
+          //     maxHeight: 500
+          //   ),
+          //   child: 
+          // ),
+          dataList.isNotEmpty ? ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: dataList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Column(
+                children: [
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement)),
+                ],
+              );
+            },
+          ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
+              Container(height: 0),
+              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
+            ]
+          )),
         ],
       ),
     );
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? _) {
-    Widget surveyDataText = Text((data as SurveyData).key, style: Styles().textStyles?.getTextStyle('widget.detail.regular'),);
+    Widget surveyDataText = Text((data as SurveyData).key, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
     Widget displayEntry = Row(children: [
       surveyDataText,
       Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
@@ -278,8 +281,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
 
     late Widget displayEntry;
-    Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), overflow: TextOverflow.fade);
-    if (ruleElem is RuleReference || ruleElem is RuleAction) {
+    Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.fade);
+    if (ruleElem is RuleReference || ruleElem is RuleAction || ruleElem is RuleComparison) {
       displayEntry = Row(children: [
         ruleText,
         Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
@@ -409,7 +412,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
               _followUpRules[i] = ruleElement;
               return;
             }
-            if (_followUpRules[i].updateElementById(element.id, ruleElement)) {
+            if (_followUpRules[i].updateElementById(ruleElement)) {
               return;
             }
           }
@@ -419,7 +422,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
               _resultRules[i] = ruleElement;
               return;
             }
-            if (_resultRules[i].updateElementById(element.id, ruleElement)) {
+            if (_resultRules[i].updateElementById(ruleElement)) {
               return;
             }
           }
@@ -471,18 +474,15 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     } else if (element is RuleActionList) {
       element.actions.insert(index, RuleAction(action: "return", data: null));
     } else if (element is RuleLogic) {
-      element.conditions.insertAll(index, [
-        RuleComparison(dataKey: "", operator: "==", compareTo: ""),
-        RuleComparison(dataKey: "", operator: "==", compareTo: ""),
-      ]);
+      element.conditions.insert(index, RuleComparison(dataKey: "", operator: "==", compareTo: ""));
     }
 
     _updateState(() {
       if (element == null && surveyElement == SurveyElement.resultRules) {
          _resultRules.insert(index, RuleAction(action: "save", data: null));
-      } else {
+      } else if (element != null) {
         for (RuleResult result in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
-          if (result.updateElementById(element!.id, element)) {
+          if (result.updateElementById(element)) {
             return;
           }
         }
@@ -503,9 +503,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     _updateState(() {
       if (element == null && surveyElement == SurveyElement.resultRules) {
          _resultRules.removeAt(index);
-      } else {
+      } else if (element != null) {
         for (RuleResult result in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
-          if (result.updateElementById(element!.id, element)) {
+          if (result.updateElementById(element)) {
             return;
           }
         }

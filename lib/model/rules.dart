@@ -18,22 +18,15 @@ import 'package:uuid/uuid.dart';
 
 abstract class RuleElement {
   String id = const Uuid().v4();
-  int displayDepth;
 
-  RuleElement({this.displayDepth = 0});
+  RuleElement();
 
   Map<String, dynamic> toJson();
 
   String getSummary({String? prefix, String? suffix}) => "";
 
-  void setDisplayDepth(int parentDepth) {
-    displayDepth = parentDepth + 1;
-  }
-
-  // RuleElement? findElementById(String elementId) => id == elementId ? this : null;
-
-  bool updateElementById(String elementId, RuleElement update) {
-    return id == elementId;
+  bool updateElementById(RuleElement update) {
+    return id == update.id;
   }
 
   Map<String, String> get supportedAlternatives => const {
@@ -49,7 +42,7 @@ abstract class RuleElement {
 
 abstract class RuleCondition extends RuleElement {
 
-  RuleCondition({int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleCondition();
 
   factory RuleCondition.fromJson(Map<String, dynamic> json) {
     dynamic conditions = json["conditions"];
@@ -73,7 +66,7 @@ class RuleComparison extends RuleCondition {
   bool? defaultResult;
 
   RuleComparison({required this.dataKey, required this.operator, this.dataParam,
-    required this.compareTo, this.compareToParam, this.defaultResult = false, int displayDepth = 0}) : super(displayDepth: displayDepth);
+    required this.compareTo, this.compareToParam, this.defaultResult = false});
 
   factory RuleComparison.fromJson(Map<String, dynamic> json) {
     return RuleComparison(
@@ -127,7 +120,7 @@ class RuleLogic extends RuleCondition {
   String operator;
   List<RuleCondition> conditions;
 
-  RuleLogic(this.operator, this.conditions, {int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleLogic(this.operator, this.conditions);
 
   @override
   Map<String, dynamic> toJson() {
@@ -155,21 +148,13 @@ class RuleLogic extends RuleCondition {
   }
 
   @override
-  void setDisplayDepth(int parentDepth) {
-    super.setDisplayDepth(parentDepth);
-    for (RuleCondition condition in conditions) {
-      condition.setDisplayDepth(displayDepth);
-    }
-  }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(RuleElement update) {
     for (int i = 0; i < conditions.length; i++) {
-      if (conditions[i].id == elementId && update is RuleCondition) {
+      if (conditions[i].id == update.id && update is RuleCondition) {
         conditions[i] = update;
         return true;
       }
-      if (conditions[i].updateElementById(elementId, update)) {
+      if (conditions[i].updateElementById(update)) {
         return true;
       }
     }
@@ -179,7 +164,7 @@ class RuleLogic extends RuleCondition {
 
 abstract class RuleResult extends RuleElement {
 
-  RuleResult({int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleResult();
 
   factory RuleResult.fromJson(Map<String, dynamic> json) {
     dynamic ruleKey = json["rule_key"];
@@ -216,7 +201,7 @@ abstract class RuleResult extends RuleElement {
 abstract class RuleActionResult extends RuleResult {
   abstract final int? priority;
 
-  RuleActionResult({int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleActionResult();
 
   factory RuleActionResult.fromJson(Map<String, dynamic> json) {
     dynamic actions = json["actions"];
@@ -234,7 +219,7 @@ abstract class RuleActionResult extends RuleResult {
 class RuleReference extends RuleResult {
   String ruleKey;
 
-  RuleReference(this.ruleKey, {int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleReference(this.ruleKey);
 
   @override
   Map<String, dynamic> toJson() {
@@ -262,7 +247,7 @@ class RuleAction extends RuleActionResult {
   String? dataKey;
   @override int? priority;
 
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority, int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleAction({required this.action, required this.data, this.dataKey, this.priority});
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
     return RuleAction(
@@ -315,7 +300,7 @@ class RuleActionList extends RuleActionResult {
   List<RuleAction> actions;
   @override int? priority;
 
-  RuleActionList({required this.actions, this.priority, int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleActionList({required this.actions, this.priority});
 
   @override
   Map<String, dynamic> toJson() {
@@ -326,28 +311,9 @@ class RuleActionList extends RuleActionResult {
   }
 
   @override
-  void setDisplayDepth(int parentDepth) {
-    super.setDisplayDepth(parentDepth);
-    for (RuleAction action in actions) {
-      action.setDisplayDepth(displayDepth);
-    }
-  }
-
-  // @override
-  // RuleElement? findElementById(String elementId, {RuleElement? update}) {
-  //   for (RuleAction action in actions) {
-  //     RuleElement? element = action.findElementById(elementId);
-  //     if (element != null) {
-  //       return element;
-  //     }
-  //   }
-  //   return super.findElementById(elementId);
-  // }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(RuleElement update) {
     for (int i = 0; i < actions.length; i++) {
-      if (actions[i].id == elementId && update is RuleAction) {
+      if (actions[i].id == update.id && update is RuleAction) {
         actions[i] = update;
         return true;
       }
@@ -361,7 +327,7 @@ class Rule extends RuleResult {
   RuleResult? trueResult;
   RuleResult? falseResult;
 
-  Rule({this.condition, this.trueResult, this.falseResult, int displayDepth = 0}) : super(displayDepth: displayDepth);
+  Rule({this.condition, this.trueResult, this.falseResult});
 
   factory Rule.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? condition = json["condition"];
@@ -414,40 +380,30 @@ class Rule extends RuleResult {
     }
     return rulesJson;
   }
-
+  
   @override
-  void setDisplayDepth(int parentDepth) {
-    condition?.setDisplayDepth(parentDepth);
-    trueResult?.setDisplayDepth(condition?.displayDepth ?? parentDepth);
-    falseResult?.setDisplayDepth(condition?.displayDepth ?? parentDepth);
-  }
-
-  // @override
-  // RuleElement? findElementById(String elementId) => condition?.findElementById(elementId) ?? trueResult?.findElementById(elementId) ?? falseResult?.findElementById(elementId);
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
-    if (condition?.id == elementId && update is RuleCondition) {
+  bool updateElementById(RuleElement update) {
+    if (condition?.id == update.id && update is RuleCondition) {
       condition = update;
       return true;
     }
-    if (condition?.updateElementById(elementId, update) ?? false) {
+    if (condition?.updateElementById(update) ?? false) {
       return true;
     }
     
-    if (trueResult?.id == elementId && update is RuleResult) {
+    if (trueResult?.id == update.id && update is RuleResult) {
       trueResult = update;
       return true;
     }
-    if (trueResult?.updateElementById(elementId, update) ?? false) {
+    if (trueResult?.updateElementById(update) ?? false) {
       return true;
     }
 
-    if (falseResult?.id == elementId && update is RuleResult) {
+    if (falseResult?.id == update.id && update is RuleResult) {
       falseResult = update;
       return true;
     }
-    if (falseResult?.updateElementById(elementId, update) ?? false) {
+    if (falseResult?.updateElementById(update) ?? false) {
       return true;
     }
 
@@ -458,7 +414,7 @@ class Rule extends RuleResult {
 class RuleCases extends RuleResult {
   List<Rule> cases;
 
-  RuleCases({required this.cases, int displayDepth = 0}) : super(displayDepth: displayDepth);
+  RuleCases({required this.cases});
 
   @override
   Map<String, dynamic> toJson() {
@@ -480,32 +436,13 @@ class RuleCases extends RuleResult {
   }
 
   @override
-  void setDisplayDepth(int parentDepth) {
-    super.setDisplayDepth(parentDepth);
-    for (Rule ruleCase in cases) {
-      ruleCase.setDisplayDepth(displayDepth);
-    }
-  }
-
-  // @override
-  // RuleElement? findElementById(String elementId) {
-  //   for (Rule ruleCase in cases) {
-  //     RuleElement? element = ruleCase.findElementById(elementId);
-  //     if (element != null) {
-  //       return element;
-  //     }
-  //   }
-  //   return super.findElementById(elementId);
-  // }
-
-  @override
-  bool updateElementById(String elementId, RuleElement update) {
+  bool updateElementById(RuleElement update) {
     for (int i = 0; i < cases.length; i++) {
-      if (cases[i].id == elementId && update is Rule) {
+      if (cases[i].id == update.id && update is Rule) {
         cases[i] = update;
         return true;
       }
-      if (cases[i].updateElementById(elementId, update)) {
+      if (cases[i].updateElementById(update)) {
         return true;
       }
     }

@@ -62,7 +62,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     "data": null,
     "key": null,
   };
-  bool? _customCompare;
+  bool _customCompare = false;
 
   final Map<String, String?> _actionSettings = {
     "return": null,
@@ -86,9 +86,18 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   @override
   void initState() {
     _ruleElem = widget.data;
-    String compareTo = '';
+
+    RuleComparison? comparison;
     if (_ruleElem is RuleComparison) {
-      List<String> dataKeyFields = compareTo.split(".");
+      comparison = _ruleElem as RuleComparison;
+    } else if (_ruleElem is Rule) {
+      RuleCondition? condition = (_ruleElem as Rule).condition;
+      comparison = (condition is RuleComparison) ? condition : null;
+    }
+
+    String compareTo = '';
+    if (comparison != null) {
+      List<String> dataKeyFields = comparison.dataKey.split(".");
       if (dataKeyFields.length == 1) {
         _dataKeySettings['survey_option'] = 'survey';
         _dataKeySettings['survey'] = dataKeyFields[0];
@@ -97,13 +106,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         _dataKeySettings['stats'] = dataKeyFields[1];
       } else if (dataKeyFields.length == 3) {
         _dataKeySettings['survey_option'] = 'data';
-        _dataKeySettings['data'] = dataKeyFields[2];
         _dataKeySettings['key'] = dataKeyFields[1];
+        _dataKeySettings['data'] = dataKeyFields[2];
       }
 
-      _customCompare = (_ruleElem as RuleComparison).compareTo is! String;
-      if (!_customCompare!) {
-        compareTo = (_ruleElem as RuleComparison).compareTo as String;
+      _customCompare = comparison.compareTo is! String;
+      if (!_customCompare) {
+        compareTo = comparison.compareTo as String;
         if (compareTo.contains('stats') || compareTo.contains('data') || ListUtils.contains(Surveys.properties.keys, compareTo)!) {
           List<String> compareToFields = compareTo.split(".");
           if (compareToFields.length == 1) {
@@ -114,16 +123,16 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             _compareToSettings['stats'] = compareToFields[1];
           } else if (compareToFields.length == 3) {
             _compareToSettings['survey_option'] = 'data';
-            _compareToSettings['data'] = compareToFields[2];
             _compareToSettings['key'] = compareToFields[1];
+            _compareToSettings['data'] = compareToFields[2];
           }
         } else {
           _customCompare = true;
         }
-      } else if ((_ruleElem as RuleComparison).compareTo is! DateTime) {
+      } else if (comparison.compareTo is! DateTime) {
         compareTo = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleComparison).compareTo, format: "MM-dd-yyyy") ?? '';
       } else {
-        compareTo = (_ruleElem as RuleComparison).compareTo.toString();
+        compareTo = comparison.compareTo.toString();
       }
     }
 
@@ -168,53 +177,70 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   Widget _buildRuleElement() {
-    List<Widget> content = [Visibility(visible: widget.mayChangeType, child: DropdownButtonHideUnderline(child:
-      DropdownButton<String>(
-        icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-        isExpanded: true,
-        style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
-        value: _getElementTypeString(),
-        onChanged: _onChangeElementType,
-        dropdownColor: Styles().colors?.getColor('surface'),
-      ),
+    List<Widget> content = [Visibility(visible: widget.mayChangeType, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: 
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
+          value: _getElementTypeString(),
+          onChanged: _onChangeElementType,
+          dropdownColor: Styles().colors?.getColor('background'),
+        ),
+      )
     ))];
+
+    String? operator;
     if (_ruleElem is RuleComparison) {
+      operator = (_ruleElem as RuleComparison).operator;
+    } else if (_ruleElem is Rule) {
+      RuleCondition? condition = (_ruleElem as Rule).condition;
+      operator = (condition is RuleComparison) ? condition.operator : null;
+    }
+
+    if (operator != null) {
       // operator
-      content.add(Row(children: [
-        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+      content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
         Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
           DropdownButton<String>(
             icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
             isExpanded: true,
             style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
             items: _buildDropDownItems<String>(RuleComparison.supportedOperators),
-            value: (_ruleElem as RuleComparison).operator,
+            value: operator,
             onChanged: _onChangeComparisonType,
-            dropdownColor: Styles().colors?.getColor('surface'),
+            dropdownColor: Styles().colors?.getColor('background'),
           ),
         ))),
-      ],));
+      ],)));
 
-      content.add(Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: RadioButton<bool>(
+      // dataKey
+      content.add(_buildSurveyPropertyOptions('data_key'));
+
+      // compareTo
+      content.add(Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
           semanticsLabel: 'Survey Value',
           value: false,
           groupValue: _customCompare,
           onChanged: _onChangeCompareToType,
           textWidget: Text('Survey Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
+          insidePadding: const EdgeInsets.all(4),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
           disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
           size: 24
         ),),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: RadioButton<bool>(
+        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
           semanticsLabel: 'Custom Value',
           value: true,
           groupValue: _customCompare,
           onChanged: _onChangeCompareToType,
           textWidget: Text('Custom Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
+          insidePadding: const EdgeInsets.all(4),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
@@ -223,34 +249,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         ),)
       ],));
 
-      // dataKey
-      content.add(_buildSurveyPropertyOptions('data_key'));
-      // compareTo
       content.add(_buildSurveyPropertyOptions('compare_to'));
-      
-      // dropdown for data keys, compare_to options (stats, responses, etc., text entry as alternative)
-    } else if (_ruleElem is RuleLogic) {
-      // operator
-      content.add(Row(children: [
-        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildDropDownItems<String>(RuleLogic.supportedOperators),
-            value: (_ruleElem as RuleLogic).operator,
-            onChanged: _onChangeLogicType,
-            dropdownColor: Styles().colors?.getColor('surface'),
-          ),
-        ))),
-      ],));
     } else if (_ruleElem is RuleReference) {
       //TODO: add later - dropdown showing existing rules by summary? (pass existing rules into panel?)
     } else if (_ruleElem is RuleAction) {
       // action
-      content.add(Row(children: [
-        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Action", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+      content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Action", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
         Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
           DropdownButton<String>(
             icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
@@ -259,10 +264,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             items: _buildDropDownItems<String>(RuleAction.supportedActions),
             value: (_ruleElem as RuleAction).action,
             onChanged: _onChangeActionType,
-            dropdownColor: Styles().colors?.getColor('surface'),
+            dropdownColor: Styles().colors?.getColor('background'),
           ),
         ))),
-      ],));
+      ],)));
 
       content.add(_buildActionSurveyOptions());
     }
@@ -271,19 +276,27 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   Widget _buildSurveyPropertyOptions(String settings) {
-    if (!_customCompare!) {
+    if (!_customCompare || settings == 'data_key') {
       List<Widget> content = [];
 
       String? surveyOption;
+      String headerText = "";
+      Map<String, String?> settingsMap = {};
       switch (settings) {
         case 'data_key':
           surveyOption = _dataKeySettings['survey_option'];
+          headerText = 'Data Field';
+          settingsMap = _dataKeySettings;
           break;
         case 'compare_to':
           surveyOption = _compareToSettings['survey_option'];
+          headerText = 'Compare To';
+          settingsMap = _compareToSettings;
           break;
         case 'action':
           surveyOption = _actionSettings['survey_option'];
+          headerText = 'Data Field';
+          settingsMap = _actionSettings;
           break;
       }
 
@@ -296,6 +309,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             groupValue: surveyOption,
             onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'survey_option'),
             textWidget: Text(option.value, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
+            insidePadding: const EdgeInsets.all(4),
             backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
             borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
             selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
@@ -304,7 +318,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           ),
         ));
       }
-      content.add(Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: surveyComparisonOptions,));
+      content.add(Column(children: [
+        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(headerText, style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: surveyComparisonOptions,)
+      ],));
 
       switch (surveyOption) {
         case 'survey':
@@ -316,9 +333,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 isExpanded: true,
                 style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
                 items: _buildDropDownItems<String>(Surveys.properties),
-                value: _dataKeySettings['survey'],
+                value: settingsMap['survey'],
                 onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'survey'),
-                dropdownColor: Styles().colors?.getColor('surface'),
+                dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
           ],));
@@ -332,9 +349,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 isExpanded: true,
                 style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
                 items: _buildDropDownItems<String>(Surveys.statsProperties),
-                value: _dataKeySettings['stats'],
+                value: settingsMap['stats'],
                 onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'stats'),
-                dropdownColor: Styles().colors?.getColor('surface'),
+                dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
           ],));
@@ -348,9 +365,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 isExpanded: true,
                 style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
                 items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
-                value: _dataKeySettings['key'],
+                value: settingsMap['key'],
                 onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'key'),
-                dropdownColor: Styles().colors?.getColor('surface'),
+                dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
           ],));
@@ -362,14 +379,16 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 isExpanded: true,
                 style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
                 items: _buildDropDownItems<String>(Surveys.dataProperties),
-                value: _dataKeySettings['data'],
+                value: settingsMap['data'],
                 onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'data'),
-                dropdownColor: Styles().colors?.getColor('surface'),
+                dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
           ],));
           break;
       }
+
+      return Column(children: content,);
     }
 
     return FormFieldText('Value', controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
@@ -390,7 +409,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
               value: _actionSettings['return'],
               onChanged: (value) => _onChangeActionSetting(value, 'return'),
-              dropdownColor: Styles().colors?.getColor('surface'),
+              dropdownColor: Styles().colors?.getColor('background'),
             ),
           ))),
         ],);
@@ -410,7 +429,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
               value: _actionSettings['alert'],
               onChanged: (value) => _onChangeActionSetting(value, 'alert'),
-              dropdownColor: Styles().colors?.getColor('surface'),
+              dropdownColor: Styles().colors?.getColor('background'),
             ),
           ))),
         ],);
@@ -426,7 +445,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
                 value: _actionSettings['alert_result'],
                 onChanged: (value) => _onChangeActionSetting(value, 'alert_result'),
-                dropdownColor: Styles().colors?.getColor('surface'),
+                dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
           ],),
@@ -444,7 +463,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('surface'),
+          color: Styles().colors?.getColor('background'),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
         )),
       ));
@@ -480,48 +499,64 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   dynamic get compareToValue {
-    if (_customCompare!) {
+    if (_customCompare) {
       String valueText = _textControllers['custom_compare']!.text;
       bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
-      return num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? valueText;
+      return num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
     }
 
     switch (_compareToSettings['survey_option']) {
       case 'survey':
-        return _compareToSettings['survey'] ?? '';
+        return _compareToSettings['survey'];
       case 'stats':
         String statsProperty = _compareToSettings['stats'] ?? '';
-        return statsProperty.isNotEmpty ? 'stats.$statsProperty' : 'stats';
+        return statsProperty.isNotEmpty ? 'stats.$statsProperty' : null;
       case 'data':
         String dataKey = _compareToSettings['key'] ?? '';
         String dataProperty = _compareToSettings['data'] ?? '';
-        return dataKey.isNotEmpty ? (dataProperty.isNotEmpty ? 'data.$dataKey.$dataProperty' : 'data.$dataKey') : 'data';
+        return dataKey.isNotEmpty && dataProperty.isNotEmpty ? 'data.$dataKey.$dataProperty' : null;
       default:
         return '';
     }
   }
 
-  void _onChangeElementType(String? elemType) {
-    //TODO: what should defaults be for these?
-    RuleComparison defaultRuleComparison = RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
-    RuleAction defaultRuleAction = RuleAction(action: "return", data: widget.dataKeys.isNotEmpty ? 'data.${widget.dataKeys[0]}' : null);
+  RuleComparison get defaultRuleComparison => RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
 
+  RuleAction get defaultRuleAction => RuleAction(action: "return", data: widget.dataKeys.isNotEmpty ? 'data.${widget.dataKeys[0]}' : null);
+
+  void _onChangeElementType(String? elemType) {
     _updateState(() {
       String id = _ruleElem.id;
       switch (elemType) {
         case "if":
-          _ruleElem = (_ruleElem is RuleCondition) ? 
-            RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue) :
-            Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
-          _customCompare ??= false;
+          if (_ruleElem is RuleCondition) {
+            _ruleElem = defaultRuleComparison;
+          } else if (_ruleElem is Rule) {
+            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+          } else {
+            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          }
+          _customCompare = false;
           break;
         case "and":
           RuleLogic defaultAnd = RuleLogic("and", [defaultRuleComparison, defaultRuleComparison]);
-          _ruleElem = (_ruleElem is RuleCondition) ? defaultAnd : Rule(condition: defaultAnd, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          if (_ruleElem is RuleCondition) {
+            _ruleElem = defaultAnd;
+          } else if (_ruleElem is Rule) {
+            _ruleElem = Rule(condition: defaultAnd, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+          } else {
+            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          }
           break;
         case "or":
           RuleLogic defaultOr = RuleLogic("or", [defaultRuleComparison, defaultRuleComparison]);
-          _ruleElem = (_ruleElem is RuleCondition) ? defaultOr : Rule(condition: defaultOr, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          if (_ruleElem is RuleCondition) {
+            _ruleElem = defaultOr;
+          } else if (_ruleElem is Rule) {
+            _ruleElem = Rule(condition: defaultOr, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+          } else {
+            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          }
           break;
         case "cases":
           _ruleElem = RuleCases(cases: [
@@ -574,15 +609,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onChangeComparisonType(String? compType) {
     if (compType != null) {
       _updateState(() {
-        (_ruleElem as RuleComparison).operator = compType;
-      });
-    }
-  }
-
-  void _onChangeLogicType(String? logicType) {
-    if (logicType != null) {
-      _updateState(() {
-        (_ruleElem as RuleLogic).operator = logicType;
+        if ((_ruleElem as Rule).condition is RuleComparison) {
+          ((_ruleElem as Rule).condition as RuleComparison).operator = compType;
+        } else if (_ruleElem is RuleComparison) {
+          (_ruleElem as RuleComparison).operator = compType;
+        }
       });
     }
   }
@@ -597,30 +628,40 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   String? _getElementTypeString() {
     if (_ruleElem is RuleComparison) {
-      return "comparison";
+      return "if";
     } else if (_ruleElem is RuleLogic) {
-      return "logic";
-    } else if (_ruleElem is RuleReference) {
-      return "reference";
-    } else if (_ruleElem is Rule) {
-      return "rule";
-    }  else if (_ruleElem is RuleAction) {
+      return (_ruleElem as RuleLogic).operator;
+    } else if (_ruleElem is Rule && (_ruleElem as Rule).condition != null) {
+      RuleCondition condition = (_ruleElem as Rule).condition!;
+      return condition is RuleComparison ? "if" : (condition as RuleLogic).operator;
+    } else if (_ruleElem is RuleAction) {
       return "action";
     } else if (_ruleElem is RuleActionList) {
       return "action_list";
     } else if (_ruleElem is RuleCases) {
       return "cases";
     }
+    // else if (_ruleElem is RuleReference) {
+    //   return "reference";
+    // }
     return null;
   }
 
   void _onTapDone() {
+    bool error = false;
     if (_ruleElem is RuleComparison) {
-      (_ruleElem as RuleComparison).dataKey = toSurveyPropertyString('data_key');
+      String dataKeyString = toSurveyPropertyString('data_key');
+      error = dataKeyString.isEmpty;
+      (_ruleElem as RuleComparison).dataKey = dataKeyString;
       (_ruleElem as RuleComparison).compareTo = compareToValue;
       (_ruleElem as RuleComparison).defaultResult = false;
+    } else if (_ruleElem is Rule && (_ruleElem as Rule).condition is RuleComparison) {
+      String dataKeyString = toSurveyPropertyString('data_key');
+      error = dataKeyString.isEmpty;
+      ((_ruleElem as Rule).condition as RuleComparison).dataKey = dataKeyString;
+      ((_ruleElem as Rule).condition as RuleComparison).compareTo = compareToValue;
+      ((_ruleElem as Rule).condition as RuleComparison).defaultResult = false;
     } else if (_ruleElem is RuleAction) {
-      bool error = false;
       switch ((_ruleElem as RuleAction).action) {
         case 'return':
           error = _actionSettings['return'] == null;
@@ -642,17 +683,17 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
       }
+    }
 
-      if (error) {
-        PopupMessage.show(context: context,
-          title: "Missing Data Key",
-          message: "A survey data key must be selected for any action other than 'Save'",
-          buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
-          onTapButton: (context) {
-            Navigator.pop(context);
-          },
-        );
-      }
+    if (error) {
+      PopupMessage.show(context: context,
+        title: "Invalid Data Key",
+        message: "Please fill in all required fields.",
+        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
+        onTapButton: (context) {
+          Navigator.pop(context);
+        },
+      );
     }
     
     Navigator.of(context).pop(_ruleElem);
