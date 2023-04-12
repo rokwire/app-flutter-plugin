@@ -516,16 +516,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           _customCompare ??= false;
           break;
         case "and":
-          _ruleElem = RuleLogic("and", [defaultRuleComparison, defaultRuleComparison]);
-          _ruleElem = (_ruleElem is RuleCondition) ? 
-            RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue) :
-            Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          RuleLogic defaultAnd = RuleLogic("and", [defaultRuleComparison, defaultRuleComparison]);
+          _ruleElem = (_ruleElem is RuleCondition) ? defaultAnd : Rule(condition: defaultAnd, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           break;
         case "or":
-          _ruleElem = RuleLogic("or", [defaultRuleComparison, defaultRuleComparison]);
-          _ruleElem = (_ruleElem is RuleCondition) ? 
-            RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue) :
-            Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+          RuleLogic defaultOr = RuleLogic("or", [defaultRuleComparison, defaultRuleComparison]);
+          _ruleElem = (_ruleElem is RuleCondition) ? defaultOr : Rule(condition: defaultOr, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           break;
         case "cases":
           _ruleElem = RuleCases(cases: [
