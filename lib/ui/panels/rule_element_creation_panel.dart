@@ -176,19 +176,25 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
+  //TODO:
+    // better error messaging (required dropdowns missing selection)
+    // handle missing data keys for survey data comparisons
   Widget _buildRuleElement() {
     List<Widget> content = [Visibility(visible: widget.mayChangeType, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: 
-      DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
-          value: _getElementTypeString(),
-          onChanged: _onChangeElementType,
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
-      )
+      Row(children: [
+        Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
+            value: _getElementTypeString(),
+            onChanged: _onChangeElementType,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ))),
+      ],)
     ))];
 
     String? operator;

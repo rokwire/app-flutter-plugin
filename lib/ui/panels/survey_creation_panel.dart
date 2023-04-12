@@ -223,7 +223,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
             },
           ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
               Container(height: 0),
-              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
+              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement))
             ]
           )),
         ],
@@ -340,16 +340,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
-      Visibility(visible: addRemove, child: IconButton(
+      Visibility(visible: addRemove && index > 0, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
         onPressed: () => surveyElement == SurveyElement.data ? _onTapRemoveDataAtIndex(index - 1) : _onTapRemoveRuleElementForId(index - 1, surveyElement, parentElement),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
-      Visibility(visible: editable, child: IconButton(
+      Visibility(visible: editable && index > 0, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
-        onPressed: () => surveyElement == SurveyElement.data ? _onTapEditData(index) : _onTapEditRuleElement(element, surveyElement),
+        onPressed: () => surveyElement == SurveyElement.data ? _onTapEditData(index - 1) : _onTapEditRuleElement(element, surveyElement),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,

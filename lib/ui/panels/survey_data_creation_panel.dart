@@ -28,8 +28,9 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class SurveyDataCreationPanel extends StatefulWidget {
   final SurveyData data;
   final Widget? tabBar;
+  final List<String> sections;
 
-  const SurveyDataCreationPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
+  const SurveyDataCreationPanel({Key? key, required this.data, required this.sections, this.tabBar}) : super(key: key);
 
   @override
   _SurveyDataCreationPanelState createState() => _SurveyDataCreationPanelState();
@@ -103,7 +104,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildCollapsibleWrapper(String label, String textGroup, int dataLength, Widget Function(int, String) listItemBuilder) {
-    return Ink(
+    return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
@@ -171,7 +172,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           items: _buildSurveyDropDownItems<String>(SurveyQuestionTrueFalse.supportedStyles),
           value: (_data as SurveyQuestionTrueFalse).style ?? SurveyQuestionTrueFalse.supportedStyles.entries.first.key,
           onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('surface'),
+          dropdownColor: Styles().colors?.getColor('background'),
         ),
       ));
 
@@ -185,7 +186,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           items: _buildSurveyDropDownItems<bool?>(supportedAnswers),
           value: (_data as SurveyQuestionTrueFalse).correctAnswer,
           onChanged: _onChangeCorrectAnswer,
-          dropdownColor: Styles().colors?.getColor('surface'),
+          dropdownColor: Styles().colors?.getColor('background'),
         ),
       ));
     } else if (_data is SurveyQuestionMultipleChoice) {
@@ -198,7 +199,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           items: _buildSurveyDropDownItems<String>(SurveyQuestionMultipleChoice.supportedStyles),
           value: (_data as SurveyQuestionMultipleChoice).style ?? SurveyQuestionMultipleChoice.supportedStyles.entries.first.key,
           onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('surface'),
+          dropdownColor: Styles().colors?.getColor('background'),
         ),
       ));
 
@@ -264,7 +265,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           items: _buildSurveyDropDownItems<String>(SurveyQuestionNumeric.supportedStyles),
           value: (_data as SurveyQuestionNumeric).style ?? SurveyQuestionNumeric.supportedStyles.entries.first.key,
           onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('surface'),
+          dropdownColor: Styles().colors?.getColor('background'),
         ),
       ));
 
@@ -309,28 +310,20 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     // add SurveyDataPage and SurveyDataEntry later
 
     List<Widget> baseContent = [
-      //key*
-      FormFieldText('Key', controller: _textControllers["key"], inputType: TextInputType.text, required: true),
-      //question text*
-      FormFieldText('Question Text', controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
-      //more info (Additional Info)
-      FormFieldText('Additional Info', controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
-      //section
-      FormFieldText('Section', controller: _textControllers["section"], inputType: TextInputType.text,),
-      //maximum score (number, show if survey is scored)
-      FormFieldText('Maximum Score', controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
-
       // data type
-      DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
-          value: _getTypeString(),
-          onChanged: _onChangeType,
-          dropdownColor: Styles().colors?.textBackground,
-        ),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
+            value: _getTypeString(),
+            onChanged: _onChangeType,
+            dropdownColor: Styles().colors?.textBackground,
+          ),
+        ))),],)
       ),
 
       // allowSkip
@@ -343,7 +336,29 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           onChanged: (value) => _onToggleRequired(value),
         ),
       ],),
-      
+
+      //section
+      DropdownButtonHideUnderline(child:
+        DropdownButton<String>(
+          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+          isExpanded: true,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
+          value: _getTypeString(),
+          onChanged: _onChangeType,
+          dropdownColor: Styles().colors?.textBackground,
+        ),
+      ),
+
+      //key*
+      FormFieldText('Key', controller: _textControllers["key"], inputType: TextInputType.text, required: true),
+      //question text*
+      FormFieldText('Question Text', controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      //more info (Additional Info)
+      FormFieldText('Additional Info', controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
+      //maximum score (number, show if survey is scored)
+      FormFieldText('Maximum Score', controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
+
       // replace
       // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
       //   Text("Scored", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
@@ -367,9 +382,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return Column(children: baseContent,);
   }
 
+  //TODO: collapsible
   Widget _buildOptionsWidget(int index, String textGroup) {
     String title = (_data as SurveyQuestionMultipleChoice).options[index].title;
-    return Ink(
+    return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
@@ -415,7 +431,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildActionsWidget(int index, String textGroup) {
-    return Ink(
+    return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
@@ -447,7 +463,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           items: _buildSurveyDropDownItems<String>(_supportedActions),
           value: (_data as SurveyDataResult).actions![index].type.name,
           onChanged: (value) => _onChangeAction(index, value),
-          dropdownColor: Styles().colors?.getColor('surface'),
+          dropdownColor: Styles().colors?.getColor('background'),
         ),
       ),
       //label
@@ -475,7 +491,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('surface'),
+          color: Styles().colors?.getColor('background'),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
         )),
       ));
