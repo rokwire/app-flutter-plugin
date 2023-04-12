@@ -442,6 +442,11 @@ class UrlUtils {
     return null;
   }
 
+  static String? getHost(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
+  }
+
   static String? getExt(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
