@@ -1012,6 +1012,14 @@ class DateTimeUtils {
     return (date != null) ? DateTime(date.year, date.month, date.day) : null;
   }
 
+  static DateTime dayStart(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  static DateTime dayEnd(DateTime date) {
+    return dayStart(date).add(const Duration(days: 1)).subtract(const Duration(microseconds: 1));
+  }
+
   static DateTime nowTimezone(timezone.Location? location) {
     DateTime now = DateTime.now();
     if (location != null) {
@@ -1020,47 +1028,56 @@ class DateTimeUtils {
     return now;
   }
 
-  static bool isToday(DateTime? date, {timezone.Location? location}) {
+  static bool isToday(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime now = nowTimezone(location);
+    now ??= nowTimezone(location);
     return now.day == date.day && now.month == date.month && now.year == date.year;
   }
 
-  static bool isYesterday(DateTime? date, {timezone.Location? location}) {
+  static bool isYesterday(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime yesterday = nowTimezone(location).subtract(const Duration(days: 1));
+    now ??= nowTimezone(location);
+    DateTime yesterday = now.subtract(const Duration(days: 1));
     return yesterday.day == date.day && yesterday.month == date.month && yesterday.year == date.year;
   }
 
-  static bool isTomorrow(DateTime? date, {timezone.Location? location}) {
+  static bool isTomorrow(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime tomorrow = nowTimezone(location).add(const Duration(days: 1));
+    now ??= nowTimezone(location);
+    DateTime tomorrow = now.add(const Duration(days: 1));
     return tomorrow.day == date.day && tomorrow.month == date.month && tomorrow.year == date.year;
   }
 
-  static bool isThisWeek(DateTime? date, {timezone.Location? location}) {
-    if (date == null) {
-      return false;
-    }
-    if (date.isAfter(weekStart(location: location)) && date.isBefore(weekEnd(location: location))) {
-      return true;
-    }
-    return false;
+  static bool isThisWeek(DateTime? date, {DateTime? now, timezone.Location? location}) {
+    return isInRange(date, start: weekStart(now: now, location: location), end: weekEnd(now: now, location: location));
   }
 
-  static DateTime weekStart({timezone.Location? location}) {
-    DateTime now = nowTimezone(location);
+  static DateTime weekStart({DateTime? now, timezone.Location? location}) {
+    now ??= nowTimezone(location);
     return now.subtract(Duration(days: now.weekday - 1));
   }
 
-  static DateTime weekEnd({timezone.Location? location}) {
-    return weekStart(location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
+  static DateTime weekEnd({DateTime? now, timezone.Location? location}) {
+    return weekStart(now: now, location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
+  }
+
+  static bool isInRange(DateTime? date, {DateTimeRange? range, DateTime? start, DateTime? end}) {
+    if (date == null) {
+      return false;
+    }
+    if (range != null && date.isAfter(range.start) && date.isBefore(range.end)) {
+      return true;
+    }
+    if (start != null && end != null && date.isAfter(start) && date.isBefore(end)) {
+      return true;
+    }
+    return false;
   }
   
   static timezone.TZDateTime? changeTimeZoneToDate(DateTime time, timezone.Location location) {

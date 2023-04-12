@@ -193,7 +193,7 @@ class AppDateTime with Service {
       } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
         displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
       } else {
-        displayDay = formatDateTime(dateTimeToCompare, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
+        displayDay = formatDateTime(dateTimeToCompare, format: "MMM d", ignoreTimeZone: true, showTzSuffix: false);
       }
     }
     return displayDay;
@@ -203,7 +203,7 @@ class AppDateTime with Service {
     String? timeToString = '';
     if (dateTimeUtc != null && !allDay) {
       DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      String format = (dateTimeToCompare.minute == 0) ? 'ha' : 'h:mma';
+      String format = (dateTimeToCompare.minute == 0) ? 'h a' : 'h:mm a';
       timeToString = formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTimeZone);
     }
     return timeToString;
