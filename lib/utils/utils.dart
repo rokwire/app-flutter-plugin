@@ -663,6 +663,21 @@ class JsonUtils {
     return null;
   }
 
+  static List<int>? listIntsValue(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<int>();
+      }
+      else if (value is Set) {
+        return List<int>.from(value.cast<int>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
   static Set<String>? setStringsValue(dynamic value) {
     try {
       if (value is Set) {

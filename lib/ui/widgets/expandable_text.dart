@@ -114,16 +114,16 @@ class _ExpandableTextState extends State<ExpandableText> {
             readMoreList.add(Padding(padding: widget.readMoreIconPadding, child: readMoreIcon));
           }
 
-          contentList.addAll(<Widget>[
-            Container(color: widget._splitterColor, height: widget.splitterHeight, margin: widget.splitterMargin,),
-            Semantics(button: true, label: widget.readMoreText, hint: widget.readMoreHint, child:
-              GestureDetector(onTap: _onTapLink, child:
+          contentList.add(Semantics(button: true, label: widget.readMoreText, hint: widget.readMoreHint, child:
+            InkWell(onTap: _onTapLink, child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(color: widget._splitterColor, height: widget.splitterHeight, margin: widget.splitterMargin,),
                 Center(child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: readMoreList,),
                 ),
-              ),
-            ),
-          ]);
+              ],)
+            )
+          ));
         }
         else if (widget.footerWidget != null) {
           contentList.add(widget.footerWidget!);
