@@ -12,10 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed taps processing on Read More expandable text [#269](https://github.com/rokwire/app-flutter-plugin/issues/269).
 ### Changed
 - Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
+- Use Core Url host to test online status in web panel [#271](https://github.com/rokwire/app-flutter-plugin/issues/271).
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
 - Added NotificationService.subscribers getter [#3070](https://github.com/rokwire/illinois-app/issues/3070).
+- Added UrlUtils.launchExternal [#3129](https://github.com/rokwire/illinois-app/issues/3129).
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 

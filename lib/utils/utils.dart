@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
@@ -442,6 +443,11 @@ class UrlUtils {
     return null;
   }
 
+  static String? getHost(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
+  }
+
   static String? getExt(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
@@ -495,6 +501,17 @@ class UrlUtils {
       //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
       fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
   }
+
+  static Future<bool?> launchExternal(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri? uri = Uri.tryParse(url!);
+      if (uri != null) {
+        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      }
+    }
+    return null;
+  }
+
 }
 
 
