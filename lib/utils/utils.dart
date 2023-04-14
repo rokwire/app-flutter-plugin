@@ -1060,7 +1060,8 @@ class DateTimeUtils {
 
   static DateTime weekStart({DateTime? now, timezone.Location? location}) {
     now ??= nowTimezone(location);
-    return now.subtract(Duration(days: now.weekday - 1));
+    DateTime today = dayStart(now);
+    return today.subtract(Duration(days: today.weekday - 1));
   }
 
   static DateTime weekEnd({DateTime? now, timezone.Location? location}) {
