@@ -505,6 +505,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsCacheDir != null) ? Directory(assetsCacheDir) : null;
   }
 
+  bool get supportsAnonymousAuth => false;
+
   // Getters: compound entries
   Map<String, dynamic> get content                 => _config ?? {};
 

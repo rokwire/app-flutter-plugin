@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -76,9 +77,9 @@ class RibbonButton extends StatefulWidget {
     this.semanticsValue,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get defaultBackgroundColor => AppColors.background;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
-  @protected Color? get defaulttextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaulttextColor => AppColors.textPrimary;
   @protected Color? get displayTextColor => textColor ?? defaulttextColor;
   @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
