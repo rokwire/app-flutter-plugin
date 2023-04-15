@@ -158,7 +158,10 @@ class AppDateTime with Service {
     return DateTimeUtils.utcDateTimeToString(getUtcTimeFromDeviceTime(dateTime));
   }
 
-  String getDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false, bool multiLine = false}) {
+  String getDisplayDateTime(DateTime? dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false, bool multiLine = false}) {
+    if (dateTimeUtc == null) {
+      return '';
+    }
     if (format != null) {
       DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
       return formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
