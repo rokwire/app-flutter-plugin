@@ -48,6 +48,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
 
+  final List<String> _sections = [];
   final List<SurveyData> _data = [];
   int dataCount = 0;
   bool _scored = true;
@@ -118,7 +119,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       // survey type (make this a dropdown?)
       FormFieldText('Type', controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
 
-      //TODO: sections list entry
+      // sections
+      Padding(padding: const EdgeInsets.only(top: 16.0), child: 
+        _buildCollapsibleWrapper("Sections", _sections, _buildSectionTextEntryWidget, SurveyElement.sections),
+      ),
 
       // scored
       Row(children: [
@@ -204,12 +208,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         ],),
         children: <Widget>[
           Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          // ConstrainedBox(
-          //   constraints: const BoxConstraints(
-          //     maxHeight: 500
-          //   ),
-          //   child: 
-          // ),
           dataList.isNotEmpty ? ListView.builder(
             physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
@@ -330,32 +328,85 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     );
   }
 
+  Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
+    //TODO
+    Widget surveyDataText = Text((data as SurveyData).key, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    Widget displayEntry = Row(children: [
+      surveyDataText,
+      Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+    ],);
+
+    return LongPressDraggable<int>(
+      data: index,
+      feedback: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: surveyDataText
+      ),
+      child: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return Ink(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+            child: displayEntry,
+          );
+        },
+        onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
+      ),
+      childWhenDragging: displayEntry,
+      axis: Axis.vertical,
+    );
+  }
+
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
     //TODO: in certain cases, do not show remove button when list size is = 2 (logic, cases, actions)
     BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
       Visibility(visible: addRemove, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.add),
-        onPressed: () => surveyElement == SurveyElement.data ? _onTapAddDataAtIndex(index) : _onTapAddRuleElementForId(index, surveyElement, parentElement),
+        onPressed: () => _onTapAdd(index, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
       Visibility(visible: addRemove && index > 0, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
-        onPressed: () => surveyElement == SurveyElement.data ? _onTapRemoveDataAtIndex(index - 1) : _onTapRemoveRuleElementForId(index - 1, surveyElement, parentElement),
+        onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
       Visibility(visible: editable && index > 0, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
-        onPressed: () => surveyElement == SurveyElement.data ? _onTapEditData(index - 1) : _onTapEditRuleElement(element, surveyElement),
+        onPressed: () => _onTapEdit(index - 1, surveyElement, element: element),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
     ]);
+  }
+
+  void _onTapAdd(int index, SurveyElement surveyElement, {RuleElement? parentElement}) {
+    switch (surveyElement) {
+      case SurveyElement.data: _onTapAddDataAtIndex(index); break;
+      case SurveyElement.sections: _onTapAddSectionAtIndex(index); break;
+      default: _onTapAddRuleElementForId(index, surveyElement, parentElement); break;
+    }
+  }
+
+  void _onTapRemove(int index, SurveyElement surveyElement, {RuleElement? parentElement}) {
+    switch (surveyElement) {
+      case SurveyElement.data: _onTapRemoveDataAtIndex(index); break;
+      case SurveyElement.sections: _onTapRemoveSectionAtIndex(index); break;
+      default: _onTapRemoveRuleElementForId(index, surveyElement, parentElement); break;
+    }
+  }
+
+  void _onTapEdit(int index, SurveyElement surveyElement, {RuleElement? element}) {
+    switch (surveyElement) {
+      case SurveyElement.data: _onTapEditData(index); break;
+      case SurveyElement.followUpRules: _onTapEditRuleElement(element, surveyElement); break;
+      case SurveyElement.resultRules: _onTapEditRuleElement(element, surveyElement); break;
+      default: return;
+    }
   }
 
   void _onAcceptDataDrag(int oldIndex, int newIndex) {
@@ -589,4 +640,4 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 }
 
-enum SurveyElement { data, followUpRules, resultRules }
+enum SurveyElement { data, sections, followUpRules, resultRules }
