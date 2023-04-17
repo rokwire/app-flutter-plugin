@@ -254,6 +254,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
       ),
       childWhenDragging: displayEntry,
+      axis: Axis.vertical,
     );
   }
 
@@ -309,7 +310,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       displayEntry = _buildCollapsibleWrapper(summary, ruleElem.actions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     }
 
-    //LongPressDraggable
     return LongPressDraggable<int>(
       data: index,
       feedback: Container(
@@ -326,6 +326,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         onAccept: (oldIndex) => surveyElement == SurveyElement.followUpRules ? _onAcceptFlowRuleDrag(oldIndex, index) : _onAcceptResultRuleDrag(oldIndex, index),
       ),
       childWhenDragging: displayEntry,
+      axis: Axis.vertical,
     );
   }
 
