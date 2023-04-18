@@ -41,7 +41,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
-  final List<String> _defaultTextControllers = ["key", "text", "more_info", "section", "maximum_score"];
+  final List<String> _defaultTextControllers = ["key", "text", "more_info", "maximum_score"];
 
   late SurveyData _data;
   final List<bool> _correctAnswers = [];
@@ -58,9 +58,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       "key": TextEditingController(text: _data.key),
       "text": TextEditingController(text: _data.text),
       "more_info": TextEditingController(text: _data.moreInfo),
-      "section": TextEditingController(text: _data.section),
       "maximum_score": TextEditingController(text: _data.maximumScore?.toString()),
     };
+
+    if (_data.section != null && !widget.sections.contains(_data.section)) {
+      _data.section = null;
+    }
+
     super.initState();
   }
 
@@ -71,11 +75,17 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _removeTextControllers({bool keepDefaults = false}) {
+    List<String> removedControllers = [];
     _textControllers.forEach((key, value) {
       if (!keepDefaults || !_defaultTextControllers.contains(key)) {
         value.dispose();
+        removedControllers.add(key);
       }
     });
+
+    for (String removed in removedControllers) {
+      _textControllers.remove(removed);
+    }
   }
 
   @override
@@ -164,43 +174,53 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     List<Widget> dataContent = [];
     if (_data is SurveyQuestionTrueFalse) {
       // style
-      dataContent.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(SurveyQuestionTrueFalse.supportedStyles),
-          value: (_data as SurveyQuestionTrueFalse).style ?? SurveyQuestionTrueFalse.supportedStyles.entries.first.key,
-          onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
+      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<String>(SurveyQuestionTrueFalse.supportedStyles),
+            value: (_data as SurveyQuestionTrueFalse).style ?? SurveyQuestionTrueFalse.supportedStyles.entries.first.key,
+            onChanged: _onChangeStyle,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ),))],)
       ));
 
       // correct answer (dropdown: Yes/True, No/False, null)
       Map<bool?, String> supportedAnswers = {true: "Yes/True", false: "No/False", null: ""};
-      dataContent.add(DropdownButtonHideUnderline(child:
-        DropdownButton<bool?>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<bool?>(supportedAnswers),
-          value: (_data as SurveyQuestionTrueFalse).correctAnswer,
-          onChanged: _onChangeCorrectAnswer,
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
+      
+      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Correct Answer", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<bool?>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<bool?>(supportedAnswers),
+            value: (_data as SurveyQuestionTrueFalse).correctAnswer,
+            onChanged: _onChangeCorrectAnswer,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ),))],)
       ));
     } else if (_data is SurveyQuestionMultipleChoice) {
       // style
-      dataContent.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(SurveyQuestionMultipleChoice.supportedStyles),
-          value: (_data as SurveyQuestionMultipleChoice).style ?? SurveyQuestionMultipleChoice.supportedStyles.entries.first.key,
-          onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
+      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<String>(SurveyQuestionMultipleChoice.supportedStyles),
+            value: (_data as SurveyQuestionMultipleChoice).style ?? SurveyQuestionMultipleChoice.supportedStyles.entries.first.key,
+            onChanged: _onChangeStyle,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ),))],)
       ));
 
       // options
@@ -256,17 +276,21 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       //   ),
       // ],));
     } else if (_data is SurveyQuestionNumeric) {
+      
       // style
-      dataContent.add(DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(SurveyQuestionNumeric.supportedStyles),
-          value: (_data as SurveyQuestionNumeric).style ?? SurveyQuestionNumeric.supportedStyles.entries.first.key,
-          onChanged: _onChangeStyle,
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
+      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<String>(SurveyQuestionNumeric.supportedStyles),
+            value: (_data as SurveyQuestionNumeric).style ?? SurveyQuestionNumeric.supportedStyles.entries.first.key,
+            onChanged: _onChangeStyle,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ),))],)
       ));
 
       _textControllers["minimum"] ??= TextEditingController(text: (_data as SurveyQuestionNumeric).minimum?.toString());
@@ -310,6 +334,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     // add SurveyDataPage and SurveyDataEntry later
 
     List<Widget> baseContent = [
+      Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('General', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))),
       // data type
       Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
         Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
@@ -321,43 +346,46 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
             value: _getTypeString(),
             onChanged: _onChangeType,
-            dropdownColor: Styles().colors?.textBackground,
+            dropdownColor: Styles().colors?.getColor('background'),
           ),
         ))),],)
       ),
 
+      //section
+      Visibility(visible: widget.sections.isNotEmpty, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+        Text("Section", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<String>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropDownItems<String>(Map.fromIterable(widget.sections)),
+            value: _data.section,
+            onChanged: _onChangeSection,
+            dropdownColor: Styles().colors?.getColor('background'),
+          ),
+        ),))],)
+      )),
+
+      //key*
+      FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
+      //question text*
+      FormFieldText('Question Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      //more info (Additional Info)
+      FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
+      //maximum score (number, show if survey is scored)
+      FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
+
       // allowSkip
       Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-        Text("Required", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-        Checkbox(
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Required", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
           value: !_data.allowSkip,
           onChanged: (value) => _onToggleRequired(value),
-        ),
+        ))),
       ],),
-
-      //section
-      DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
-          value: _getTypeString(),
-          onChanged: _onChangeType,
-          dropdownColor: Styles().colors?.textBackground,
-        ),
-      ),
-
-      //key*
-      FormFieldText('Key', controller: _textControllers["key"], inputType: TextInputType.text, required: true),
-      //question text*
-      FormFieldText('Question Text', controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
-      //more info (Additional Info)
-      FormFieldText('Additional Info', controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
-      //maximum score (number, show if survey is scored)
-      FormFieldText('Maximum Score', controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
 
       // replace
       // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -371,6 +399,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // ],),
 
       // type specific data
+      Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('Type Specific', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))),
+
       ...dataContent,
 
       // defaultResponseRule
@@ -530,26 +560,25 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     String key = _textControllers["key"]!.text;
     String text = _textControllers["text"]!.text;
     String? moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
-    String? section = _textControllers["section"]!.text.isNotEmpty ? _textControllers["section"]!.text : null;
     num? maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
     _removeTextControllers(keepDefaults: true);
 
     _updateState(() {
       switch (type) {
         case "survey_data.true_false":
-          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
+          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
           break;
         case "survey_data.multiple_choice":
-          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore, options: []);
+          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore, options: []);
           break;
         case "survey_data.date_time":
-          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
+          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
           break;
         case "survey_data.numeric":
-          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
+          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
           break;
         case "survey_data.text":
-          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: section, maximumScore: maximumScore);
+          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
           break;
         case "survey_data.result":
           _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo);
@@ -573,6 +602,12 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       return "survey_data.result";
     }
     return null;
+  }
+
+  void _onChangeSection(String? section) {
+    _updateState(() {
+      _data.section = section;
+    });
   }
 
   void _onChangeStyle(String? style) {
@@ -659,7 +694,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _data.key = _textControllers["key"]!.text;
     _data.text = _textControllers["text"]!.text;
     _data.moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
-    _data.section = _textControllers["section"]!.text.isNotEmpty ? _textControllers["section"]!.text : null;
     _data.maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
 
     if (_data is SurveyQuestionMultipleChoice) {

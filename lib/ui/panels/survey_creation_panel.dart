@@ -47,10 +47,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   bool _loading = false;
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
+  late final List<TextEditingController> _sectionTextControllers;
 
-  final List<String> _sections = [];
   final List<SurveyData> _data = [];
   int dataCount = 0;
+  int sectionCount = 0;
   bool _scored = true;
   // bool _sensitive = false;
 
@@ -71,12 +72,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       "more_info": TextEditingController(),
       "type": TextEditingController(),
     };
+    _sectionTextControllers = [];
     super.initState();
   }
 
   @override
   void dispose() {
     _textControllers.forEach((_, value) { value.dispose(); });
+    for (TextEditingController controller in _sectionTextControllers) {
+      controller.dispose();
+    }
 
     for (String lang in Localization().defaultSupportedLanguages) {
       _supportedLangs[lang] = lang;
@@ -111,22 +116,22 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSurveyCreationTools() {
-    return Padding(padding: const EdgeInsets.only(left: 8, right: 8, top: 20), child: Column(children: [
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Column(children: [
       // title
-      FormFieldText('Title', controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
+      FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
       // more_info
-      FormFieldText('Additional Information', controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+      FormFieldText('Additional Information', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
       // survey type (make this a dropdown?)
-      FormFieldText('Type', controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
+      FormFieldText('Type', padding: const EdgeInsets.only(top: 16), controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
 
       // sections
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper("Sections", _sections, _buildSectionTextEntryWidget, SurveyElement.sections),
+        _buildCollapsibleWrapper("Sections", _sectionTextControllers, _buildSectionTextEntryWidget, SurveyElement.sections),
       ),
 
       // scored
       Row(children: [
-        Padding(padding: const EdgeInsets.only(left: 16), child: Text("Scored", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Scored", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
         Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
@@ -230,7 +235,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? _) {
-    Widget surveyDataText = Text((data as SurveyData).key, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    String entryText = (data as SurveyData).key;
+    if (data.section?.isNotEmpty ?? false) {
+      entryText += ' (${data.section})';
+    }
+    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
     Widget displayEntry = Row(children: [
       surveyDataText,
       Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
@@ -329,31 +338,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
-    //TODO
-    Widget surveyDataText = Text((data as SurveyData).key, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
-    Widget displayEntry = Row(children: [
-      surveyDataText,
-      Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+    Widget sectionTextEntry = TextField(controller: data as TextEditingController, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    return Row(children: [
+      Expanded(child: sectionTextEntry),
+      Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
     ],);
-
-    return LongPressDraggable<int>(
-      data: index,
-      feedback: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: surveyDataText
-      ),
-      child: DragTarget<int>(
-        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
-          return Ink(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-            child: displayEntry,
-          );
-        },
-        onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
-      ),
-      childWhenDragging: displayEntry,
-      axis: Axis.vertical,
-    );
   }
 
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
@@ -439,7 +428,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapEditData(int index) async {
-    SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(data: _data[index], tabBar: widget.tabBar)));
+    List<String> sections = [];
+    for (TextEditingController controller in _sectionTextControllers) {
+      if (controller.text.isNotEmpty) {
+        sections.add(controller.text);
+      }
+    }
+    SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(data: _data[index], sections: sections, tabBar: widget.tabBar)));
     _updateState(() {
       _data[index] = updatedData;
       _updateFollowUpRules();
@@ -513,6 +508,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       _data.removeAt(index);
       _followUpRules.removeAt(index);
       _updateFollowUpRules();
+    });
+  }
+
+  void _onTapAddSectionAtIndex(int index) {
+    _updateState(() {
+      _sectionTextControllers.insert(index, TextEditingController(text: index > 0 ? _sectionTextControllers[index - 1].text : ''));
+    });
+  }
+
+  void _onTapRemoveSectionAtIndex(int index) {
+    _sectionTextControllers[index].dispose();
+    _updateState(() {
+      _sectionTextControllers.removeAt(index);
     });
   }
 
