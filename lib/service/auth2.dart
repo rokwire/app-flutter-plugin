@@ -41,7 +41,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Timer? _oidcAuthenticationTimer;
 
   final Map<String, Future<Response?>> _refreshTokenFutures = {};
-  final Map<String, int> _refreshTonenFailCounts = {};
+  final Map<String, int> _refreshTokenFailCounts = {};
 
   Client? _updateUserPrefsClient;
   Timer? _updateUserPrefsTimer;
@@ -94,22 +94,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _token = Storage().auth2Token;
-    _account = Storage().auth2Account;
+    _token = await Storage().getAuth2Token();
+    _account = await Storage().getAuth2Account();
 
     _anonymousId = Storage().auth2AnonymousId;
-    _anonymousToken = Storage().auth2AnonymousToken;
-    _anonymousPrefs = Storage().auth2AnonymousPrefs;
-    _anonymousProfile = Storage().auth2AnonymousProfile;
+    _anonymousToken = await Storage().getAuth2AnonymousToken();
+    _anonymousPrefs = await Storage().getAuth2AnonymousPrefs();
+    _anonymousProfile = await Storage().getAuth2AnonymousProfile();
 
     _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
 
     if ((_account == null) && (_anonymousPrefs == null)) {
-      Storage().auth2AnonymousPrefs = _anonymousPrefs = defaultAnonimousPrefs;
+      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonimousPrefs);
     }
 
     if ((_account == null) && (_anonymousProfile == null)) {
-      Storage().auth2AnonymousProfile = _anonymousProfile = defaultAnonimousProfile;
+      await Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonimousProfile);
     }
 
     if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
@@ -305,9 +305,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? params = JsonUtils.mapValue(responseJson['params']);
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
-          _refreshTonenFailCounts.remove(_anonymousToken?.refreshToken);
-          Storage().auth2AnonymousId = _anonymousId = anonymousId;
-          Storage().auth2AnonymousToken = _anonymousToken = anonymousToken;
+          _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
+          await Storage().setAuth2AnonymousId(_anonymousId = anonymousId);
+          await Storage().setAuth2AnonymousToken(_anonymousToken = anonymousToken);
           _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
           return true;
         }
@@ -417,14 +417,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<void> applyLogin(Auth2Account account, Auth2Token token, { Map<String, dynamic>? params }) async {
 
-    _refreshTonenFailCounts.remove(_token?.refreshToken);
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile);
-    Storage().auth2Token = _token = token;
-    Storage().auth2Account = _account = account;
-    Storage().auth2AnonymousPrefs = _anonymousPrefs = null;
-    Storage().auth2AnonymousProfile = _anonymousProfile = null;
+    await Storage().setAuth2Token(_token = token);
+    await Storage().setAuth2Account(_account = account);
+    await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null);
+    await Storage().setAuth2AnonymousProfile(_anonymousProfile = null);
 
     if (prefsUpdated == true) {
       _saveAccountUserPrefs();
@@ -805,7 +805,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
         List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
         if (authTypes != null) {
-          Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
+          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, authTypes: authTypes));
           NotificationService().notify(notifyLinkChanged);
           return Auth2LinkResult.succeeded;
         }
@@ -845,7 +845,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
       if (authTypes != null) {
-        Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
+        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, authTypes: authTypes));
         NotificationService().notify(notifyLinkChanged);
         return true;
       }
@@ -866,33 +866,31 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Logout
 
-  void logout({ Auth2UserPrefs? prefs }) {
-    if (_token != null) {
-      _log("Auth2: logout");
-      _refreshTonenFailCounts.remove(_token?.refreshToken);
+  Future<void> logout({ Auth2UserPrefs? prefs }) async {
+    _log("Auth2: logout");
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
-      Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
-      Storage().auth2AnonymousProfile = _anonymousProfile = Auth2UserProfile.empty();
-      Storage().auth2Token = _token = null;
-      Storage().auth2Account = _account = null;
+    await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty());
+    await Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty());
+    await Storage().setAuth2Token(_token = null);
+    await Storage().setAuth2Account(_account = null);
 
-      _updateUserPrefsTimer?.cancel();
-      _updateUserPrefsTimer = null;
+    _updateUserPrefsTimer?.cancel();
+    _updateUserPrefsTimer = null;
 
-      _updateUserPrefsClient?.close();
-      _updateUserPrefsClient = null;
+    _updateUserPrefsClient?.close();
+    _updateUserPrefsClient = null;
 
-      _updateUserProfileTimer?.cancel();
-      _updateUserProfileTimer = null;
+    _updateUserProfileTimer?.cancel();
+    _updateUserProfileTimer = null;
 
-      _updateUserProfileClient?.close();
-      _updateUserProfileClient = null;
+    _updateUserProfileClient?.close();
+    _updateUserProfileClient = null;
 
-      NotificationService().notify(notifyProfileChanged);
-      NotificationService().notify(notifyPrefsChanged);
-      NotificationService().notify(notifyLoginChanged);
-      NotificationService().notify(notifyLogout);
-    }
+    NotificationService().notify(notifyProfileChanged);
+    NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyLoginChanged);
+    NotificationService().notify(notifyLogout);
   }
 
   // Delete
@@ -943,22 +941,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
               _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token.refreshToken}");
-              _refreshTonenFailCounts.remove(token.refreshToken);
+              _refreshTokenFailCounts.remove(token.refreshToken);
 
               if (token == _token) {
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
                 return responseToken;
               }
               else if (token == _anonymousToken) {
-                Storage().auth2AnonymousToken = _anonymousToken = responseToken;
+                await Storage().setAuth2AnonymousToken(_anonymousToken = responseToken);
                 return responseToken;
               }
             }
           }
 
           _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token.refreshToken}");
-          int refreshTonenFailCount  = (_refreshTonenFailCounts[token.refreshToken] ?? 0) + 1;
-          if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTonenFailCount)) {
+          int refreshTokenFailCount  = (_refreshTokenFailCounts[token.refreshToken] ?? 0) + 1;
+          if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
             if (token == _token) {
               logout();
             }
@@ -967,7 +965,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             }
           }
           else {
-            _refreshTonenFailCounts[token.refreshToken!] = refreshTonenFailCount;
+            _refreshTokenFailCounts[token.refreshToken!] = refreshTokenFailCount;
           }
         }
       }
@@ -980,8 +978,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  void applyToken(Auth2Token token, { Map<String, dynamic>? params }) {
-    Storage().auth2Token = _token = token;
+  Future<void> applyToken(Auth2Token token, { Map<String, dynamic>? params }) async {
+    await Storage().setAuth2Token(_token = token);
   }
 
   static Future<Response?> _refreshToken(String? refreshToken) async {
@@ -1006,11 +1004,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<void> onUserPrefsChanged(Auth2UserPrefs? prefs) async {
     if (identical(prefs, _anonymousPrefs)) {
-      Storage().auth2AnonymousPrefs = _anonymousPrefs;
+      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs);
       NotificationService().notify(notifyPrefsChanged);
     }
     else if (identical(prefs, _account?.prefs)) {
-      Storage().auth2Account = _account;
+      await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyPrefsChanged);
       return _saveAccountUserPrefs();
     }
@@ -1070,13 +1068,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // User Profile
   
   @protected
-  void onUserProfileChanged(Auth2UserProfile? profile) {
+  Future<void> onUserProfileChanged(Auth2UserProfile? profile) async {
     if (identical(profile, _anonymousProfile)) {
-      Storage().auth2AnonymousProfile = _anonymousProfile;
+      await Storage().setAuth2AnonymousProfile(_anonymousProfile);
       NotificationService().notify(notifyProfileChanged);
     }
     else if (identical(profile, _account?.profile)) {
-      Storage().auth2Account = _account;
+      await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyProfileChanged);
       _saveAccountUserProfile();
     }
@@ -1089,7 +1087,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
     if (await _saveExternalAccountUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
-        Storage().auth2Account = _account;
+        await Storage().setAuth2Account(_account);
         NotificationService().notify(notifyProfileChanged);
       }
       return true;
@@ -1177,8 +1175,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
-      
-      Storage().auth2Account = _account = account;
+
+      await Storage().setAuth2Account(_account = account);
       NotificationService().notify(notifyAccountChanged);
 
       if (profileUpdated) {

@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -32,6 +33,8 @@ class Storage with Service {
   static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
 
   SharedPreferences? _sharedPreferences;
+  FlutterSecureStorage? _secureStorage;
+
   String? _encryptionKey;
   String? _encryptionIV;
 
@@ -54,6 +57,13 @@ class Storage with Service {
   @override
   Future<void> initService() async {
     _sharedPreferences = await SharedPreferences.getInstance();
+
+    AndroidOptions _getAndroidOptions() => const AndroidOptions(
+      encryptedSharedPreferences: true,
+    );
+    IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
+    _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
+
     _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     
@@ -86,15 +96,15 @@ class Storage with Service {
   String  get encryptionIVId => _encryptionIVId;
   String? get encryptionIV => _encryptionIV;
 
-  String? encrypt(String? value) {
-    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
-      AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
-  }
-
-  String? decrypt(String? value) {
-    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
-      AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
-  }
+  // String? encrypt(String? value) {
+  //   return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+  //     AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
+  // }
+  //
+  // String? decrypt(String? value) {
+  //   return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+  //     AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
+  // }
 
   // Utilities
 
@@ -111,30 +121,30 @@ class Storage with Service {
     NotificationService().notify(notifySettingChanged, name);
   }
 
-  String? getEncryptedStringWithName(String name, {String? defaultValue}) {
-    String? value = _sharedPreferences?.getString(name);
-    if (value != null) {
-      if ((_encryptionKey != null) && (_encryptionIV != null)) {
-        value = decrypt(value);
-      }
-      else {
-        value = null;
-      }
-    }
-    return value ?? defaultValue;
-  }
-
-  void setEncryptedStringWithName(String name, String? value) {
-    if (value != null) {
-      if ((_encryptionKey != null) && (_encryptionIV != null)) {
-        value = encrypt(value);
-        _sharedPreferences?.setString(name, value!);
-      }
-    } else {
-      _sharedPreferences?.remove(name);
-    }
-    NotificationService().notify(notifySettingChanged, name);
-  }
+  // String? getEncryptedStringWithName(String name, {String? defaultValue}) {
+  //   String? value = _sharedPreferences?.getString(name);
+  //   if (value != null) {
+  //     if ((_encryptionKey != null) && (_encryptionIV != null)) {
+  //       value = decrypt(value);
+  //     }
+  //     else {
+  //       value = null;
+  //     }
+  //   }
+  //   return value ?? defaultValue;
+  // }
+  //
+  // void setEncryptedStringWithName(String name, String? value) {
+  //   if (value != null) {
+  //     if ((_encryptionKey != null) && (_encryptionIV != null)) {
+  //       value = encrypt(value);
+  //       _sharedPreferences?.setString(name, value!);
+  //     }
+  //   } else {
+  //     _sharedPreferences?.remove(name);
+  //   }
+  //   NotificationService().notify(notifySettingChanged, name);
+  // }
 
   List<String>? getStringListWithName(String name, {List<String>? defaultValue}) {
     return _sharedPreferences?.getStringList(name) ?? defaultValue;
@@ -249,27 +259,27 @@ class Storage with Service {
   
   String get auth2AnonymousIdKey => 'edu.illinois.rokwire.auth2.anonymous.id';
   String? get auth2AnonymousId => getStringWithName(auth2AnonymousIdKey);
-  set auth2AnonymousId(String? value) => setStringWithName(auth2AnonymousIdKey, value);
+  Future<void> setAuth2AnonymousId(String? value) async => setStringWithName(auth2AnonymousIdKey, value);
 
   String get auth2AnonymousTokenKey => 'edu.illinois.rokwire.auth2.anonymous.token';
-  Auth2Token? get auth2AnonymousToken => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousTokenKey)));
-  set auth2AnonymousToken(Auth2Token? value) => setEncryptedStringWithName(auth2AnonymousTokenKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2AnonymousToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousTokenKey)));
+  Future<void> setAuth2AnonymousToken(Auth2Token? value) async => await _secureStorage?.write(key: auth2AnonymousTokenKey, value: JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousPrefsKey => 'edu.illinois.rokwire.auth2.anonymous.prefs';
-  Auth2UserPrefs? get auth2AnonymousPrefs => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousPrefsKey)));
-  set auth2AnonymousPrefs(Auth2UserPrefs? value) => setEncryptedStringWithName(auth2AnonymousPrefsKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserPrefs?> getAuth2AnonymousPrefs() async => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousPrefsKey)));
+  Future<void> setAuth2AnonymousPrefs(Auth2UserPrefs? value) async => await _secureStorage?.write(key: auth2AnonymousPrefsKey, value: JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousProfileKey => 'edu.illinois.rokwire.auth2.anonymous.profile';
-  Auth2UserProfile? get auth2AnonymousProfile =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousProfileKey)));
-  set auth2AnonymousProfile(Auth2UserProfile? value) => setEncryptedStringWithName(auth2AnonymousProfileKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserProfile?> getAuth2AnonymousProfile() async =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousProfileKey)));
+  Future<void> setAuth2AnonymousProfile(Auth2UserProfile? value) async => await _secureStorage?.write(key: auth2AnonymousProfileKey, value: JsonUtils.encode(value?.toJson()));
 
   String get auth2TokenKey => 'edu.illinois.rokwire.auth2.token';
-  Auth2Token? get auth2Token => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2TokenKey)));
-  set auth2Token(Auth2Token? value) => setEncryptedStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2Token() async => Auth2Token.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2TokenKey)));
+  Future<void> setAuth2Token(Auth2Token? value) async => await _secureStorage?.write(key: auth2TokenKey, value: JsonUtils.encode(value?.toJson()));
 
   String get auth2AccountKey => 'edu.illinois.rokwire.auth2.account';
-  Auth2Account? get auth2Account => Auth2Account.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AccountKey)));
-  set auth2Account(Auth2Account? value) => setEncryptedStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Account?> getAuth2Account() async => Auth2Account.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AccountKey)));
+  Future<void> setAuth2Account(Auth2Account? value) async => await _secureStorage?.write(key: auth2AccountKey, value: JsonUtils.encode(value?.toJson()));
 
   // Http Proxy
   String get httpProxyEnabledKey =>  'edu.illinois.rokwire.http_proxy.enabled';
