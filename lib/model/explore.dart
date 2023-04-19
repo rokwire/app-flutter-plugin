@@ -31,7 +31,6 @@ abstract class Explore implements Comparable<Explore> {
   String?   get explorePlaceId;
   ExploreLocation? get exploreLocation;
   String? get exploreLocationDescription => exploreLocation?.description;
-  Map<String, dynamic> toJson();
 
   @override
   int compareTo(Explore other) => SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc);
