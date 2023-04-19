@@ -5,10 +5,12 @@ class OptionData {
   num? score;
   bool selected;
 
+  bool isCorrect;
+
   dynamic get value { return _value ?? title; }
   set value(dynamic newValue) { _value = newValue; }
 
-  OptionData({required this.title, this.hint, dynamic value, this.selected = false, this.score}) : _value = value;
+  OptionData({required this.title, this.hint, dynamic value, this.selected = false, this.score, this.isCorrect = false}) : _value = value;
 
   factory OptionData.fromJson(Map<String, dynamic> json) {
     return OptionData(

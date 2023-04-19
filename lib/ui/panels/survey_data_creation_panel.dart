@@ -44,7 +44,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   final List<String> _defaultTextControllers = ["key", "text", "more_info", "maximum_score"];
 
   late SurveyData _data;
-  final List<bool> _correctAnswers = [];
   final Map<String, String> _supportedActions = {};
 
   @override
@@ -113,59 +112,62 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     ));
   }
 
-  Widget _buildCollapsibleWrapper(String label, String textGroup, int dataLength, Widget Function(int, String) listItemBuilder) {
+  Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, dynamic) listItemBuilder) {
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
         backgroundColor: Styles().colors?.getColor('surface'),
         collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        title: Text(
-          label,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        ),
+        title: Text(label, style: Styles().textStyles?.getTextStyle('widget.detail.small'),),
         children: <Widget>[
           Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 500
-            ),
-            child: dataLength > 0 ? ListView.builder(
-              shrinkWrap: true,
-              itemCount: dataLength,
-              itemBuilder: (BuildContext context, int index) {
-                return Column(
-                  children: [
-                    listItemBuilder(index, textGroup),
-                    Container(height: 1, color: Styles().colors?.getColor('dividerLine'),),
-                  ],
-                );
-              },
-            ) : _buildAddRemoveButtons(0, textGroup),
-          ),
+          dataList.isNotEmpty ? ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: dataList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Column(
+                children: [
+                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index])),
+                ],
+              );
+            },
+          ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
+              Container(height: 0),
+              Expanded(child: _buildEntryManagementOptions(0))
+            ]
+          )),
         ],
       ),
     );
   }
 
-  // Widget _buildStringListEntryWidget(, String textGroup) {
-  //   return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-  //     FormFieldText('Value', controller: _textControllers["$textGroup$index.value"], inputType: TextInputType.text, required: true),
-  //     _buildAddRemoveButtons(index + 1, textGroup),
-  //   ]);
-  // }
-
-  Widget _buildAddRemoveButtons(int index, String textGroup) {
-    return Row(mainAxisAlignment: MainAxisAlignment.end, mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+  Widget _buildEntryManagementOptions(int index) {
+    //TODO: in certain cases, do not show remove button when list size is = 2 (logic, cases, actions)
+    BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
+    return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
       IconButton(
-        icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary')) ?? const Icon(Icons.add),
-        onPressed: () => _onTapAddDataAtIndex(index, textGroup),
+        icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.add),
+        onPressed: () => _onTapAddDataAtIndex(index),
         padding: EdgeInsets.zero,
+        alignment: Alignment.centerRight,
+        constraints: constraints,
       ),
       Visibility(visible: index > 0, child: IconButton(
-        icon: Styles().images?.getImage('minus-circle', color: Styles().colors?.getColor('alert')) ?? const Icon(Icons.add),
-        onPressed: () => _onTapRemoveDataAtIndex(index - 1, textGroup),
+        icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
+        onPressed: () => _onTapRemoveDataAtIndex(index),
         padding: EdgeInsets.zero,
+        alignment: Alignment.centerRight,
+        constraints: constraints,
+      )),
+      //TODO: fix?
+      Visibility(visible: index > 0, child: IconButton(
+        icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
+        onPressed: () => _onTapEditData(index),
+        padding: EdgeInsets.zero,
+        alignment: Alignment.centerRight,
+        constraints: constraints,
       )),
     ]);
   }
@@ -224,27 +226,28 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ));
 
       // options
-      dataContent.add(_buildCollapsibleWrapper('Options', 'options', (_data as SurveyQuestionMultipleChoice).options.length, _buildOptionsWidget));
+      dataContent.add(_buildCollapsibleWrapper('Options', (_data as SurveyQuestionMultipleChoice).options, _buildOptionsWidget));
       
       // allowMultiple
-      dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text("Multiple Answers", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-        Checkbox(
+      dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Multiple Answers", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
           value: (_data as SurveyQuestionMultipleChoice).allowMultiple,
           onChanged: _onToggleMultipleAnswers,
-        ),
+        ))),
       ],));
+      
       // selfScore
-      dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text("Self-Score", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-        Checkbox(
+      dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Self-Score", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
           value: (_data as SurveyQuestionMultipleChoice).selfScore,
           onChanged: _onToggleSelfScore,
-        ),
+        ))),
       ],));
     } else if (_data is SurveyQuestionDateTime) {
       _textControllers["start_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).startTime, format: "MM-dd-yyyy"));
@@ -302,23 +305,24 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
       // wholeNum
       dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-        Text("Whole Number", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-        Checkbox(
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Whole Number", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
           value: (_data as SurveyQuestionNumeric).wholeNum,
           onChanged: _onToggleWholeNumber,
-        ),
+        ))),
       ],));
+
       // selfScore
       dataContent.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-        Text("Self-Score", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-        Checkbox(
+        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Self-Score", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
           activeColor: Styles().colors?.fillColorPrimary,
           value: (_data as SurveyQuestionNumeric).selfScore,
           onChanged: _onToggleSelfScore,
-        ),
+        ))),
       ],));
     } else if (_data is SurveyQuestionText) {
       _textControllers["min_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).minLength.toString());
@@ -329,7 +333,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(FormFieldText('Maximum Length', controller: _textControllers["max_length"], inputType: TextInputType.number,));
     } else if (_data is SurveyDataResult) {
       // actions
-      dataContent.add(_buildCollapsibleWrapper('Actions', 'actions', (_data as SurveyDataResult).actions?.length ?? 0, _buildActionsWidget));
+      dataContent.add(_buildCollapsibleWrapper('Actions', (_data as SurveyDataResult).actions ?? [], _buildActionsWidget));
     }
     // add SurveyDataPage and SurveyDataEntry later
 
@@ -412,8 +416,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return Column(children: baseContent,);
   }
 
-  //TODO: collapsible
-  Widget _buildOptionsWidget(int index, String textGroup) {
+  Widget _buildOptionsWidget(int index, dynamic data) {
     String title = (_data as SurveyQuestionMultipleChoice).options[index].title;
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
@@ -444,23 +447,40 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildOptionsItemWidget(int index) {
-    _textControllers["options$index.title"] ??= TextEditingController(text: (_data as SurveyQuestionMultipleChoice).options[index].title);
-    _textControllers["options$index.hint"] ??= TextEditingController(text: (_data as SurveyQuestionMultipleChoice).options[index].hint);
-    _textControllers["options$index.value"] ??= TextEditingController(text: (_data as SurveyQuestionMultipleChoice).options[index].value.toString());
-    _textControllers["options$index.score"] ??= TextEditingController(text: (_data as SurveyQuestionMultipleChoice).options[index].score?.toString());
-    return Column(children: [
-      //title*
-      FormFieldText('Title', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["options$index.title"], inputType: TextInputType.text, required: true),
-      //hint
-      FormFieldText('Hint', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["options$index.hint"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
-      //value* (dynamic value = _value ?? title)
-      FormFieldText('Value', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["options$index.value"], inputType: TextInputType.text, required: true),
-      //score
-      FormFieldText('Score', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["options$index.score"], inputType: TextInputType.number,),
-    ],);
+    String entryText = (_data as SurveyQuestionMultipleChoice).key;
+    if (data.section?.isNotEmpty ?? false) {
+      entryText += ' (${data.section})';
+    }
+    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    Widget displayEntry = Card(child: Ink(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      padding: const EdgeInsets.all(8.0),
+      child: Row(children: [
+        surveyDataText,
+        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+      ],)
+    ));
+
+    return LongPressDraggable<int>(
+      data: index,
+      maxSimultaneousDrags: 1,
+      feedback: Card(child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: surveyDataText,
+      )),
+      child: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return displayEntry;
+        },
+        onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
+      ),
+      childWhenDragging: displayEntry,
+      axis: Axis.vertical,
+    );
   }
 
-  Widget _buildActionsWidget(int index, String textGroup) {
+  Widget _buildActionsWidget(int index, dynamic data) {
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: ExpansionTile(
@@ -529,12 +549,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return items;
   }
 
-  void _onTapAddDataAtIndex(int index, String textGroup) {
+  void _onTapAddDataAtIndex(int index) {
     _updateState(() {
-      if (textGroup.contains("options") && _data is SurveyQuestionMultipleChoice) {
+      if (_data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option"));
-        _correctAnswers.insert(index, false);
-      } else if (textGroup.contains("actions") && _data is SurveyDataResult) {
+      } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
         (_data as SurveyDataResult).actions!.insert(index, ActionData());
         //TODO
@@ -543,12 +562,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     });
   }
 
-  void _onTapRemoveDataAtIndex(int index, String textGroup) {
+  void _onTapRemoveDataAtIndex(int index) {
     _updateState(() {
-      if (textGroup.contains("options") && _data is SurveyQuestionMultipleChoice) {
+      if (_data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.removeAt(index);
-        _correctAnswers.removeAt(index);
-      } else if (textGroup.contains("actions") && _data is SurveyDataResult) {
+      } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions!.removeAt(index);
         //TODO
         // "params"

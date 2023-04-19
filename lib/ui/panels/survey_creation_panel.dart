@@ -197,7 +197,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         iconColor: Styles().colors?.getColor('fillColorSecondary'),
         backgroundColor: Styles().colors?.getColor('surface'),
         collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        //TODO: make into Cards
         title: Row(children: [
           Expanded(child: Text(
             label,
@@ -240,23 +239,26 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       entryText += ' (${data.section})';
     }
     Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
-    Widget displayEntry = Row(children: [
-      surveyDataText,
-      Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
-    ],);
+    Widget displayEntry = Card(child: Ink(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      padding: const EdgeInsets.all(8.0),
+      child: Row(children: [
+        surveyDataText,
+        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+      ],)
+    ));
 
     return LongPressDraggable<int>(
       data: index,
-      feedback: Container(
+      maxSimultaneousDrags: 1,
+      feedback: Card(child: Container(
+        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: surveyDataText
-      ),
+        child: surveyDataText,
+      )),
       child: DragTarget<int>(
         builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
-          return Ink(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-            child: displayEntry,
-          );
+          return displayEntry;
         },
         onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
       ),
@@ -291,10 +293,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     late Widget displayEntry;
     Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.fade);
     if (ruleElem is RuleReference || ruleElem is RuleAction || ruleElem is RuleComparison) {
-      displayEntry = Row(children: [
-        ruleText,
-        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
-      ],);
+      displayEntry = Card(child: Ink(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: Row(children: [
+          ruleText,
+          Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
+        ],)
+      ));
     } else if (ruleElem is RuleLogic) {
       displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, ruleElem.conditions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     } else if (ruleElem is Rule) {
@@ -319,16 +324,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
     return LongPressDraggable<int>(
       data: index,
-      feedback: Container(
+      maxSimultaneousDrags: 1,
+      feedback: Card(child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         child: ruleText
-      ),
+      )),
       child: DragTarget<int>(
         builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
-          return Ink(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-            child: displayEntry,
-          );
+          return displayEntry;
         },
         onAccept: (oldIndex) => surveyElement == SurveyElement.followUpRules ? _onAcceptFlowRuleDrag(oldIndex, index) : _onAcceptResultRuleDrag(oldIndex, index),
       ),
