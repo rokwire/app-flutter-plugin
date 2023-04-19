@@ -325,7 +325,6 @@ class Event with Explore, Favorite {
     return (other != null) ? Event(other: other) : null;
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       "id": id,
