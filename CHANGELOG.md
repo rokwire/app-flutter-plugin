@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
 - Added NotificationService.subscribers getter [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 - Added UrlUtils.launchExternal [#3129](https://github.com/rokwire/illinois-app/issues/3129).
+- Added title parameters to SliverToutHeaderBar [#3149](https://github.com/rokwire/illinois-app/issues/3149).
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 - Removed Explore.toJson definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
