@@ -211,7 +211,7 @@ class Surveys /* with Service */ {
         data.response = defaultResponses![data.key];
       } else if (data.defaultResponseRule != null) {
         Rules().clearDataCache(survey.id);
-        data.response = Rules().evaluateRule(survey, data.defaultResponseRule!);
+        data.response = Rules().evaluateRuleResult(survey, data.defaultResponseRule!);
       }
       if (deep) {
         evaluateDefaultDataResponse(survey, getFollowUp(survey, data), defaultResponses: defaultResponses);
@@ -221,7 +221,7 @@ class Surveys /* with Service */ {
 
   SurveyData? getFollowUp(Survey survey, SurveyData? data) {
     if (data?.followUpRule != null) {
-      dynamic result = Rules().evaluateRule(survey, data!.followUpRule!);
+      dynamic result = Rules().evaluateRuleResult(survey, data!.followUpRule!);
       if (result is SurveyData) {
         return result;
       }
@@ -262,7 +262,7 @@ class Surveys /* with Service */ {
 
   num? _getDataScore(Survey survey, SurveyData? data) {
     if (data?.scoreRule != null) {
-      dynamic ruleResult = Rules().evaluateRule(survey, data!.scoreRule!);
+      dynamic ruleResult = Rules().evaluateRuleResult(survey, data!.scoreRule!);
       if (ruleResult is num) {
         return ruleResult;
       }

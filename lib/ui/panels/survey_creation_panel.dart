@@ -53,13 +53,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   int dataCount = 0;
   int sectionCount = 0;
   bool _scored = true;
-  // bool _sensitive = false;
-
-  // final Map<String, String> _constants = {};
-  // final Map<String, Map<String, String>> _strings = {};
 
   final List<RuleResult> _followUpRules = [];
   final List<RuleResult> _resultRules = [];
+
+  // final Map<String, String> _constants = {};
+  // final Map<String, Map<String, String>> _strings = {};
   // final Map<String, Rule> _subRules = {};
   // List<String>? _responseKeys;
 
@@ -70,7 +69,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     _textControllers = {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
-      "type": TextEditingController(),
     };
     _sectionTextControllers = [];
     super.initState();
@@ -121,8 +119,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
       // more_info
       FormFieldText('Additional Information', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
-      // survey type (make this a dropdown?)
-      FormFieldText('Type', padding: const EdgeInsets.only(top: 16), controller: _textControllers["type"], multipleLines: false, inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
 
       // sections
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
@@ -144,17 +140,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
         _buildCollapsibleWrapper("Survey Data", _data, _buildSurveyDataWidget, SurveyElement.data),
       ),
-      
-      // sensitive
-      // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      //   Text("Scored", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-      //   Checkbox(
-      //     checkColor: Styles().colors?.surface,
-      //     activeColor: Styles().colors?.fillColorPrimary,
-      //     value: _sensitive,
-      //     onChanged: _onToggleSensitive,
-      //   ),
-      // ],),
 
       // follow up rules (determine survey data ordering/flow)
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
@@ -406,7 +391,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       SurveyData temp = _data[oldIndex];
       _data.removeAt(oldIndex);
       _data.insert(newIndex, temp);
-      _updateFollowUpRules();
     });
 
     _onAcceptFlowRuleDrag(oldIndex, newIndex);
@@ -417,7 +401,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleResult temp = _followUpRules[oldIndex];
       _followUpRules.removeAt(oldIndex);
       _followUpRules.insert(newIndex, temp);
-      _updateFollowUpRules();
     });
   }
 
@@ -426,7 +409,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleResult temp = _resultRules[oldIndex];
       _resultRules.removeAt(oldIndex);
       _resultRules.insert(newIndex, temp);
-      _updateFollowUpRules();
     });
   }
 
@@ -486,21 +468,20 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (index > 0) {
       insert = SurveyData.fromOther(_data[index-1]);
       insert.key = "data${dataCount++}";
-      insert.text = "New survey data";
     } else {
-      insert = SurveyQuestionTrueFalse(text: "New True/False Question", key: "data${dataCount++}");
+      insert = SurveyQuestionTrueFalse(text: "", key: "data${dataCount++}");
     }
     _updateState(() {
       _data.insert(index, insert);
       if (index == 0) {
         if (_followUpRules.isEmpty) {
-          _followUpRules.add(RuleAction(action: "return", data: insert.key));
+          _followUpRules.add(RuleAction(action: "return", data: "data.${insert.key}"));
         } else {
-          _followUpRules[0] = RuleAction(action: "return", data: insert.key);
-          _followUpRules.insert(1, RuleAction(action: "return", data: _data[1].key));
+          _followUpRules[0] = RuleAction(action: "return", data: "data.${insert.key}");
+          _followUpRules.insert(1, RuleAction(action: "return", data: "data.${_data[1].key}"));
         }
       } else {
-        _followUpRules.insert(index, RuleAction(action: "return", data: _data[index].key));
+        _followUpRules.insert(index, RuleAction(action: "return", data: "data.${_data[index].key}"));
       }
       _updateFollowUpRules();
     });
@@ -584,26 +565,37 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       });
     }
   }
-
-  // void _onToggleSensitive(bool? value) {
-  //   if (mounted) {
-  //     setState(() {
-  //       _sensitive = value ?? false;
-  //     });
-  //   }
-  // }
-
   
   Survey _buildSurvey() {
+    String? defaultDataKey;
+    RuleResult? defaultDataKeyRule;
+    for (int i = 0; i < _followUpRules.length; i++) {
+      RuleResult rule = _followUpRules[i];
+      if (i == 0) {
+        if (rule is RuleAction && rule.action == 'return' && rule.data is String && (rule.data as String).isNotEmpty) {
+          defaultDataKey = (rule.data as String).split('.').last;
+        } else {
+          defaultDataKeyRule = rule;
+        }
+      } else {
+        if (rule is RuleAction && rule.action == 'return' && rule.data is String && (rule.data as String).isNotEmpty) {
+          _data[i].defaultFollowUpKey = (rule.data as String).split('.').last;
+        } else {
+          _data[i].followUpRule = rule;
+        }
+      }
+    }
+
     //TODO: map rules into each survey data
     return Survey(
       id: '',
       data: Map.fromIterable(_data, key: (item) => (item as SurveyData).key),
-      type: _textControllers["type"]?.text ?? 'survey',
+      type: '',
       scored: _scored,
       title: _textControllers["title"]?.text ?? 'New Survey',
       moreInfo: _textControllers["more_info"]?.text,
-      // defaultDataKeyRule: _defaultDataKeyRule,
+      defaultDataKey: defaultDataKey,
+      defaultDataKeyRule: defaultDataKeyRule,
       resultRules: _resultRules,
       // responseKeys: _responseKeys,
       // constants: _constants,
@@ -613,7 +605,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapPreview() {
-    // should preview evaluate rules?/which rules should it evaluate if not all of them?
+    // describe result rules that would have been evaluated on continue
     Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey())));
   }
 

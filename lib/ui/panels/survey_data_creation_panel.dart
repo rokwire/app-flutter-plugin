@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/panels/survey_data_options_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
@@ -156,15 +158,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ),
       Visibility(visible: index > 0, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
-        onPressed: () => _onTapRemoveDataAtIndex(index),
+        onPressed: () => _onTapRemoveDataAtIndex(index - 1),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
-      //TODO: fix?
       Visibility(visible: index > 0, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
-        onPressed: () => _onTapEditData(index),
+        onPressed: () => _onTapEditData(index - 1),
         padding: EdgeInsets.zero,
         alignment: Alignment.centerRight,
         constraints: constraints,
@@ -378,10 +379,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       //more info (Additional Info)
       FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
       //maximum score (number, show if survey is scored)
-      FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,),
+      Visibility(visible: _data.isQuestion, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
 
       // allowSkip
-      Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+      Visibility(visible: _data.isQuestion, child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Required", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
         Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
           checkColor: Styles().colors?.surface,
@@ -389,7 +390,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           value: !_data.allowSkip,
           onChanged: (value) => _onToggleRequired(value),
         ))),
-      ],),
+      ],)),
 
       // replace
       // Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -407,6 +408,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
       ...dataContent,
 
+      //TODO
       // defaultResponseRule
       // _buildRuleWidget(0, "$textGroup.default_response_rule"),
       // scoreRule (show entry if survey is scored)
@@ -417,47 +419,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildOptionsWidget(int index, dynamic data) {
-    String title = (_data as SurveyQuestionMultipleChoice).options[index].title;
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: ExpansionTile(
-        iconColor: Styles().colors?.getColor('fillColorSecondary'),
-        backgroundColor: Styles().colors?.getColor('surface'),
-        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        title: Text(
-          title.isNotEmpty ? title : (_data as SurveyQuestionMultipleChoice).options[index].value ?? "New Option",
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        ),
-        leading: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text("Correct?", style: Styles().textStyles?.getTextStyle('fillColorSecondary')),
-          Checkbox(
-            checkColor: Styles().colors?.surface,
-            activeColor: Styles().colors?.fillColorPrimary,
-            value: _correctAnswers[index],
-            onChanged: (value) => _onToggleCorrect(index, value),
-          ),
-        ]),
-        trailing: _buildAddRemoveButtons(index + 1, textGroup),
-        children: <Widget>[
-          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          _buildOptionsItemWidget(index),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOptionsItemWidget(int index) {
-    String entryText = (_data as SurveyQuestionMultipleChoice).key;
-    if (data.section?.isNotEmpty ?? false) {
-      entryText += ' (${data.section})';
-    }
-    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    Widget surveyDataText = Text((data as OptionData).title, style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.small.fat' : 'widget.detail.small'),);
     Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       padding: const EdgeInsets.all(8.0),
       child: Row(children: [
         surveyDataText,
-        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+        Expanded(child: _buildEntryManagementOptions(index + 1)),
       ],)
     ));
 
@@ -481,47 +449,33 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildActionsWidget(int index, dynamic data) {
-    return Container(
+    Widget surveyDataText = Text((data as ActionData).label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: ExpansionTile(
-        iconColor: Styles().colors?.getColor('fillColorSecondary'),
-        backgroundColor: Styles().colors?.getColor('surface'),
-        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        title: Text(
-          (_data as SurveyDataResult).actions![index].label ?? "New Action",
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-        ),
-        trailing: _buildAddRemoveButtons(index + 1, textGroup),
-        children: <Widget>[
-          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          _buildActionsItemWidget(index),
-        ],
-      ),
-    );
-  }
+      padding: const EdgeInsets.all(8.0),
+      child: Row(children: [
+        surveyDataText,
+        Expanded(child: _buildEntryManagementOptions(index + 1)),
+      ],)
+    ));
 
-  Widget _buildActionsItemWidget(int index) {
-    // optional ActionData actions (null for "pure info")
-    _textControllers["actions$index.label"] ??= TextEditingController(text: (_data as SurveyDataResult).actions![index].label);
-    return Column(children: [
-      //type*
-      DropdownButtonHideUnderline(child:
-        DropdownButton<String>(
-          icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-          isExpanded: true,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-          items: _buildSurveyDropDownItems<String>(_supportedActions),
-          value: (_data as SurveyDataResult).actions![index].type.name,
-          onChanged: (value) => _onChangeAction(index, value),
-          dropdownColor: Styles().colors?.getColor('background'),
-        ),
+    return LongPressDraggable<int>(
+      data: index,
+      maxSimultaneousDrags: 1,
+      feedback: Card(child: Container(
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: surveyDataText,
+      )),
+      child: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return displayEntry;
+        },
+        onAccept: (oldIndex) => _onAcceptDataDrag(oldIndex, index),
       ),
-      //label
-      FormFieldText('Label', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["actions$index.label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
-      //TODO
-        // dynamic data (e.g., URL, phone num., sms num., etc.)
-        // Map<String, dynamic> params
-    ],);
+      childWhenDragging: displayEntry,
+      axis: Axis.vertical,
+    );
   }
 
   Widget _buildDone() {
@@ -549,29 +503,57 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return items;
   }
 
+  void _onAcceptDataDrag(int oldIndex, int newIndex) {
+    setState(() {
+      if (_data is SurveyQuestionMultipleChoice) {
+        OptionData temp = (_data as SurveyQuestionMultipleChoice).options[oldIndex];
+        (_data as SurveyQuestionMultipleChoice).options.removeAt(oldIndex);
+        (_data as SurveyQuestionMultipleChoice).options.insert(newIndex, temp);
+      } else if (_data is SurveyDataResult) {
+        ActionData temp = (_data as SurveyDataResult).actions![oldIndex];
+        (_data as SurveyDataResult).actions!.removeAt(oldIndex);
+        (_data as SurveyDataResult).actions!.insert(newIndex, temp);
+      }
+    });
+  }
+
   void _onTapAddDataAtIndex(int index) {
-    _updateState(() {
+    setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option"));
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
-        (_data as SurveyDataResult).actions!.insert(index, ActionData());
-        //TODO
-        // "params"
+        (_data as SurveyDataResult).actions!.insert(index, ActionData(label: 'New Action'));
       }
     });
   }
 
   void _onTapRemoveDataAtIndex(int index) {
-    _updateState(() {
+    setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).options.removeAt(index);
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions!.removeAt(index);
-        //TODO
-        // "params"
       }
     });
+  }
+
+  void _onTapEditData(int index) async {
+    if (_data is SurveyQuestionMultipleChoice) {
+      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyQuestionMultipleChoice).options[index], tabBar: widget.tabBar)));
+      if (mounted) {
+        setState(() {
+          (_data as SurveyQuestionMultipleChoice).options[index] = updatedData;
+        });
+      }
+    } else if (_data is SurveyDataResult) {
+      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyDataResult).actions![index], tabBar: widget.tabBar)));
+      if (mounted) {
+        setState(() {
+          (_data as SurveyDataResult).actions![index] = updatedData;
+        });
+      }
+    }
   }
 
   void _onChangeType(String? type) {
@@ -581,7 +563,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     num? maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
     _removeTextControllers(keepDefaults: true);
 
-    _updateState(() {
+    setState(() {
       switch (type) {
         case "survey_data.true_false":
           _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
@@ -623,13 +605,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _onChangeSection(String? section) {
-    _updateState(() {
+    setState(() {
       _data.section = section;
     });
   }
 
   void _onChangeStyle(String? style) {
-    _updateState(() {
+    setState(() {
       if (_data is SurveyQuestionTrueFalse) {
         (_data as SurveyQuestionTrueFalse).style = style ?? SurveyQuestionTrueFalse.supportedStyles.keys.first;
       } else if (_data is SurveyQuestionMultipleChoice) {
@@ -641,43 +623,31 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _onChangeCorrectAnswer(bool? answer) {
-    _updateState(() {
+    setState(() {
       (_data as SurveyQuestionTrueFalse).correctAnswer = answer;
     });
   }
 
-  void _onChangeAction(int index, String? action) {
-    _updateState(() {
-      (_data as SurveyDataResult).actions![index].type = action != null ? ActionType.values.byName(action) : ActionType.none;
-    });
-  }
-
   void _onToggleRequired(bool? value) {
-    _updateState(() {
+    setState(() {
       _data.allowSkip = value ?? false;
     });
   }
 
   // void _onToggleReplace(bool? value) {
-  //   _updateState(() {
+  //   setState(() {
   //     _data.replace = value ?? false;
   //   });
   // }
 
-  void _onToggleCorrect(int index, bool? value) {
-    _updateState(() {
-      _correctAnswers[index] = value ?? false;
-    });
-  }
-
   void _onToggleMultipleAnswers(bool? value) {
-    _updateState(() {
+    setState(() {
       (_data as SurveyQuestionMultipleChoice).allowMultiple = value ?? false;
     });
   }
 
   void _onToggleSelfScore(bool? value) {
-    _updateState(() {
+    setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
         (_data as SurveyQuestionMultipleChoice).selfScore = value ?? false;
       } else if (_data is SurveyQuestionNumeric) {
@@ -687,13 +657,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   // void _onToggleAskTime(bool? value) {
-  //   _updateState(() {
+  //   setState(() {
   //     (_data as SurveyQuestionDateTime).askTime = value ?? false;
   //   });
   // }
 
   void _onToggleWholeNumber(bool? value) {
-    _updateState(() {
+    setState(() {
       (_data as SurveyQuestionNumeric).wholeNum = value ?? false;
     });
   }
@@ -715,17 +685,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _data.maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
 
     if (_data is SurveyQuestionMultipleChoice) {
-      for (int i = 0; i < (_data as SurveyQuestionMultipleChoice).options.length; i++) {
-        String valueText = _textControllers["options$i.value"]!.text;
-        bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
-        (_data as SurveyQuestionMultipleChoice).options[i].title = _textControllers["options$i.title"]!.text;
-        (_data as SurveyQuestionMultipleChoice).options[i].hint = _textControllers["options$i.hint"]!.text;
-        (_data as SurveyQuestionMultipleChoice).options[i].value = num.tryParse(valueText) ?? DateTimeUtils.parseDateTime(valueText, format: "MM-dd-yyyy") ?? valueBool ?? valueText;
-        (_data as SurveyQuestionMultipleChoice).options[i].score = num.tryParse(_textControllers["options$i.score"]!.text);
-
-        if (_correctAnswers[i]) {
+      for (OptionData option in (_data as SurveyQuestionMultipleChoice).options) {
+        if (option.isCorrect) {
           (_data as SurveyQuestionMultipleChoice).correctAnswers ??= [];
-          (_data as SurveyQuestionMultipleChoice).correctAnswers!.add((_data as SurveyQuestionMultipleChoice).options[i].value);
+          (_data as SurveyQuestionMultipleChoice).correctAnswers!.add(option.value);
         }
       }
     } else if (_data is SurveyQuestionDateTime) {
@@ -738,20 +701,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       (_data as SurveyQuestionText).minLength = int.tryParse(_textControllers["min_length"]!.text) ?? 0;
       (_data as SurveyQuestionText).maxLength = int.tryParse(_textControllers["max_length"]!.text);
     } else if (_data is SurveyDataResult) {
-      for (int i = 0; i < ((_data as SurveyDataResult).actions?.length ?? 0); i++) {
-        (_data as SurveyDataResult).actions![i].label = _textControllers["actions$i.label"]!.text;
+      // for (int i = 0; i < ((_data as SurveyDataResult).actions?.length ?? 0); i++) {
         //TODO: data, params
-      }
+      // }
     }
     
     Navigator.of(context).pop(_data);
-  }
-
-  void _updateState(Function() fn) {
-    if (mounted) {
-      setState(() {
-        fn();
-      });
-    }
   }
 }

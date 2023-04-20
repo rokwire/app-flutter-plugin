@@ -186,6 +186,19 @@ abstract class RuleResult extends RuleElement {
     return RuleActionResult.fromJson(json);
   }
 
+  static List<RuleResult> listFromJson(List<dynamic>? jsonList) {
+    if (jsonList == null) {
+      return [];
+    }
+    List<RuleResult> ruleResults = [];
+    for (dynamic json in jsonList) {
+      if (json is Map<String, dynamic>) {
+        ruleResults.add(RuleResult.fromJson(json));
+      }
+    }
+    return ruleResults;
+  }
+
   static List<Map<String, dynamic>> listToJson(List<RuleResult>? resultRules) {
     if (resultRules == null) {
       return [];

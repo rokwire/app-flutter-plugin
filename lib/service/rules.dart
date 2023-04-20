@@ -317,6 +317,36 @@ class Rules {
     return defaultResult;
   }
 
+  // RuleResult
+
+  dynamic evaluateRuleResult(RuleEngine engine, RuleResult result) {
+    if (result is RuleReference) {
+      Rule? subRule = engine.subRules[result.ruleKey];
+      if (subRule != null) {
+        return evaluateRule(engine, subRule);
+      }
+    } else if (result is Rule) {
+      return evaluateRule(engine, result);
+    } else if (result is RuleCases) {
+      for (Rule rule in result.cases) {
+        dynamic caseResult = evaluateRule(engine, rule);
+        if (caseResult != null) {
+          return caseResult;
+        }
+      }
+    } else if (result is RuleAction) {
+      return evaluateAction(engine, result);
+    } else if (result is RuleActionList) {
+      List<dynamic> actionResults = [];
+      for (RuleAction action in result.actions) {
+        actionResults.add(evaluateAction(engine, action));
+      }
+      return actionResults;
+    }
+
+    return null;
+  }
+
   // Action
 
   dynamic evaluateAction(RuleEngine engine, RuleAction action) {
@@ -435,24 +465,7 @@ class Rules {
       result = rule.falseResult;
     }
 
-    if (result is RuleReference) {
-      Rule? subRule = engine.subRules[result.ruleKey];
-      if (subRule != null) {
-        return evaluateRule(engine, subRule);
-      }
-    } else if (result is Rule) {
-      return evaluateRule(engine, result);
-    } else if (result is RuleAction) {
-      return evaluateAction(engine, result);
-    } else if (result is RuleActionList) {
-      List<dynamic> actionResults = [];
-      for (RuleAction action in result.actions) {
-        actionResults.add(evaluateAction(engine, action));
-      }
-      return actionResults;
-    }
-
-    return null;
+    return result != null ? evaluateRuleResult(engine, result) : null;
   }
 
   // Property getters
