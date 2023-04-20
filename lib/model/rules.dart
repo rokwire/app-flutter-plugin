@@ -25,7 +25,11 @@ abstract class RuleElement {
 
   String getSummary({String? prefix, String? suffix}) => "";
 
-  bool updateElementById(RuleElement update) {
+  RuleElement? findElement(String id) {
+    return this.id == id ? this : null;
+  }
+
+  bool updateElement(RuleElement update) {
     return id == update.id;
   }
 
@@ -148,13 +152,29 @@ class RuleLogic extends RuleCondition {
   }
 
   @override
-  bool updateElementById(RuleElement update) {
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (RuleCondition condition in conditions) {
+      elem = condition.findElement(id);
+      if (elem != null) {
+        return elem;
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
     for (int i = 0; i < conditions.length; i++) {
       if (conditions[i].id == update.id && update is RuleCondition) {
         conditions[i] = update;
         return true;
       }
-      if (conditions[i].updateElementById(update)) {
+      if (conditions[i].updateElement(update)) {
         return true;
       }
     }
@@ -324,7 +344,22 @@ class RuleActionList extends RuleActionResult {
   }
 
   @override
-  bool updateElementById(RuleElement update) {
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (RuleAction action in actions) {
+      if (action.id == id) {
+        return action;
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
     for (int i = 0; i < actions.length; i++) {
       if (actions[i].id == update.id && update is RuleAction) {
         actions[i] = update;
@@ -393,14 +428,37 @@ class Rule extends RuleResult {
     }
     return rulesJson;
   }
+
+  @override
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    elem = condition?.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+    elem = trueResult?.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+    elem = falseResult?.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    return null;
+  }
   
   @override
-  bool updateElementById(RuleElement update) {
+  bool updateElement(RuleElement update) {
     if (condition?.id == update.id && update is RuleCondition) {
       condition = update;
       return true;
     }
-    if (condition?.updateElementById(update) ?? false) {
+    if (condition?.updateElement(update) ?? false) {
       return true;
     }
     
@@ -408,7 +466,7 @@ class Rule extends RuleResult {
       trueResult = update;
       return true;
     }
-    if (trueResult?.updateElementById(update) ?? false) {
+    if (trueResult?.updateElement(update) ?? false) {
       return true;
     }
 
@@ -416,7 +474,7 @@ class Rule extends RuleResult {
       falseResult = update;
       return true;
     }
-    if (falseResult?.updateElementById(update) ?? false) {
+    if (falseResult?.updateElement(update) ?? false) {
       return true;
     }
 
@@ -449,13 +507,29 @@ class RuleCases extends RuleResult {
   }
 
   @override
-  bool updateElementById(RuleElement update) {
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (Rule rule in cases) {
+      elem = rule.findElement(id);
+      if (elem != null) {
+        return elem;
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
     for (int i = 0; i < cases.length; i++) {
       if (cases[i].id == update.id && update is Rule) {
         cases[i] = update;
         return true;
       }
-      if (cases[i].updateElementById(update)) {
+      if (cases[i].updateElement(update)) {
         return true;
       }
     }

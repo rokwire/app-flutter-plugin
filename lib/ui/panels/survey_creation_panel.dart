@@ -307,18 +307,18 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       displayEntry = _buildCollapsibleWrapper(summary, ruleElem.actions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     }
 
-    return LongPressDraggable<int>(
-      data: index,
+    return LongPressDraggable<String>(
+      data: ruleElem.id,
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         child: ruleText
       )),
-      child: DragTarget<int>(
-        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+      child: DragTarget<String>(
+        builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
           return displayEntry;
         },
-        onAccept: (oldIndex) => surveyElement == SurveyElement.followUpRules ? _onAcceptFlowRuleDrag(oldIndex, index) : _onAcceptResultRuleDrag(oldIndex, index),
+        onAccept: (swapId) => _onAcceptRuleDrag(swapId, ruleElem.id, surveyElement, parentElement: parentElement),
       ),
       childWhenDragging: displayEntry,
       axis: Axis.vertical,
@@ -334,7 +334,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
-    //TODO: in certain cases, do not show remove button when list size is = 2 (logic, cases, actions)
+    bool ruleRemove = true;
+    if ((parentElement is RuleLogic || parentElement is RuleCases || parentElement is RuleActionList) && index <= 2) {
+      ruleRemove = false;
+    }
+
     BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
       Visibility(visible: addRemove, child: IconButton(
@@ -344,7 +348,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         alignment: Alignment.centerRight,
         constraints: constraints,
       )),
-      Visibility(visible: addRemove && index > 0, child: IconButton(
+      Visibility(visible: addRemove && ruleRemove && index > 0, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
         onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
@@ -392,24 +396,65 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       _data.removeAt(oldIndex);
       _data.insert(newIndex, temp);
     });
-
-    _onAcceptFlowRuleDrag(oldIndex, newIndex);
+    _onAcceptRuleDrag(_followUpRules[oldIndex].id, _followUpRules[newIndex].id, SurveyElement.followUpRules);
   }
 
-  void _onAcceptFlowRuleDrag(int oldIndex, int newIndex) {
-    _updateState(() {
-      RuleResult temp = _followUpRules[oldIndex];
-      _followUpRules.removeAt(oldIndex);
-      _followUpRules.insert(newIndex, temp);
-    });
+  //TODO: does it make sense to swap?
+  void _onAcceptRuleDrag(String swapId, String id, SurveyElement surveyElement, {RuleElement? parentElement}) {
+    RuleElement? current, swap;
+    for (RuleResult followUp in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
+      current ??= followUp.findElement(id);
+      swap ??= followUp.findElement(swapId);
+      if (current != null && swap != null) {
+        current.id = swapId;
+        swap.id = id;
+        break;
+      }
+    }
+
+    if (_maySwapRuleElements(current, swap, parentElement)) {
+      _updateState(() {
+        bool currentUpdated = false, swapUpdated = false;
+        if (surveyElement == SurveyElement.followUpRules) {
+          for (int i = 0; i < _followUpRules.length; i++) {
+            if (!currentUpdated) {
+              currentUpdated = _followUpRules[i].updateElement(swap!);
+            }
+            if (!swapUpdated) {
+              swapUpdated = _followUpRules[i].updateElement(current!);
+            }
+            if (currentUpdated && swapUpdated) {
+              break;
+            }
+          }
+        } else {
+          for (int i = 0; i < _resultRules.length; i++) {
+            if (!currentUpdated) {
+              currentUpdated = _resultRules[i].updateElement(swap!);
+            }
+            if (!swapUpdated) {
+              swapUpdated = _resultRules[i].updateElement(current!);
+            }
+            if (currentUpdated && swapUpdated) {
+              break;
+            }
+          }
+        }
+      });
+    }
   }
 
-  void _onAcceptResultRuleDrag(int oldIndex, int newIndex) {
-    _updateState(() {
-      RuleResult temp = _resultRules[oldIndex];
-      _resultRules.removeAt(oldIndex);
-      _resultRules.insert(newIndex, temp);
-    });
+  bool _maySwapRuleElements(RuleElement? current, RuleElement? swap, RuleElement? parentElement) {
+    if (current is Rule) {
+      return swap is RuleResult && parentElement is! RuleCases;
+    } else if (current is RuleAction) {
+      return (swap is RuleResult) && (parentElement is! RuleActionList);
+    } else if (current is RuleActionList || current is RuleCases) {
+      return swap is RuleResult;
+    } else if (current is RuleCondition) {
+      return swap is RuleCondition;
+    }
+    return false;
   }
 
   void _onTapEditData(int index) async {
@@ -444,7 +489,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
               _followUpRules[i] = ruleElement;
               return;
             }
-            if (_followUpRules[i].updateElementById(ruleElement)) {
+            if (_followUpRules[i].updateElement(ruleElement)) {
               return;
             }
           }
@@ -454,7 +499,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
               _resultRules[i] = ruleElement;
               return;
             }
-            if (_resultRules[i].updateElementById(ruleElement)) {
+            if (_resultRules[i].updateElement(ruleElement)) {
               return;
             }
           }
@@ -526,7 +571,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
          _resultRules.insert(index, RuleAction(action: "save", data: null));
       } else if (element != null) {
         for (RuleResult result in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
-          if (result.updateElementById(element)) {
+          if (result.updateElement(element)) {
             return;
           }
         }
@@ -549,7 +594,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
          _resultRules.removeAt(index);
       } else if (element != null) {
         for (RuleResult result in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
-          if (result.updateElementById(element)) {
+          if (result.updateElement(element)) {
             return;
           }
         }
