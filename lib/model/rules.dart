@@ -33,6 +33,8 @@ abstract class RuleElement {
     return id == update.id;
   }
 
+  void updateDataKeys(String oldKey, String newKey);
+
   Map<String, String> get supportedAlternatives => const {
     "if": "If",
     "and": "AND",
@@ -118,6 +120,14 @@ class RuleComparison extends RuleCondition {
     }
     return summary;
   }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    dataKey = dataKey.replaceAll(oldKey, newKey);
+    if (compareTo is String) {
+      compareTo = (compareTo as String).replaceAll(oldKey, newKey);
+    }
+  }
 }
 
 class RuleLogic extends RuleCondition {
@@ -179,6 +189,13 @@ class RuleLogic extends RuleCondition {
       }
     }
     return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < conditions.length; i++) {
+      conditions[i].updateDataKeys(oldKey, newKey);
+    }
   }
 }
 
@@ -272,6 +289,11 @@ class RuleReference extends RuleResult {
     }
     return summary;
   }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    ruleKey = ruleKey.replaceAll(oldKey, newKey);
+  }
 }
 
 class RuleAction extends RuleActionResult {
@@ -327,6 +349,14 @@ class RuleAction extends RuleActionResult {
     }
     return summary;
   }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    dataKey = dataKey?.replaceAll(oldKey, newKey);
+    if (data is String) {
+      data = (data as String).replaceAll(oldKey, newKey);
+    }
+  }
 }
 
 class RuleActionList extends RuleActionResult {
@@ -367,6 +397,13 @@ class RuleActionList extends RuleActionResult {
       }
     }
     return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < actions.length; i++) {
+      actions[i].updateDataKeys(oldKey, newKey);
+    }
   }
 }
 
@@ -480,6 +517,13 @@ class Rule extends RuleResult {
 
     return false;
   }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    condition?.updateDataKeys(oldKey, newKey);
+    trueResult?.updateDataKeys(oldKey, newKey);
+    falseResult?.updateDataKeys(oldKey, newKey);
+  }
 }
 
 class RuleCases extends RuleResult {
@@ -534,6 +578,13 @@ class RuleCases extends RuleResult {
       }
     }
     return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < cases.length; i++) {
+      cases[i].updateDataKeys(oldKey, newKey);
+    }
   }
 }
 

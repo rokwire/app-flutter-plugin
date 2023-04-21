@@ -223,7 +223,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (data.section?.isNotEmpty ?? false) {
       entryText += ' (${data.section})';
     }
-    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
     Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       padding: const EdgeInsets.all(8.0),
@@ -418,10 +418,20 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         if (surveyElement == SurveyElement.followUpRules) {
           for (int i = 0; i < _followUpRules.length; i++) {
             if (!currentUpdated) {
-              currentUpdated = _followUpRules[i].updateElement(swap!);
+              if (swap!.id == _followUpRules[i].id && swap is RuleResult) {
+                _followUpRules[i] = swap;
+                currentUpdated = true;
+              } else {
+                currentUpdated = _followUpRules[i].updateElement(swap);
+              }
             }
             if (!swapUpdated) {
-              swapUpdated = _followUpRules[i].updateElement(current!);
+              if (current!.id == _followUpRules[i].id && current is RuleResult) {
+                _followUpRules[i] = current;
+                swapUpdated = true;
+              } else {
+                swapUpdated = _followUpRules[i].updateElement(current);
+              }
             }
             if (currentUpdated && swapUpdated) {
               break;
@@ -430,10 +440,20 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         } else {
           for (int i = 0; i < _resultRules.length; i++) {
             if (!currentUpdated) {
-              currentUpdated = _resultRules[i].updateElement(swap!);
+              if (swap!.id == _resultRules[i].id && swap is RuleResult) {
+                _resultRules[i] = swap;
+                currentUpdated = true;
+              } else {
+                currentUpdated = _resultRules[i].updateElement(swap);
+              }
             }
             if (!swapUpdated) {
-              swapUpdated = _resultRules[i].updateElement(current!);
+              if (current!.id == _resultRules[i].id && current is RuleResult) {
+                _resultRules[i] = current;
+                swapUpdated = true;
+              } else {
+                swapUpdated = _resultRules[i].updateElement(current);
+              }
             }
             if (currentUpdated && swapUpdated) {
               break;
@@ -446,7 +466,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   bool _maySwapRuleElements(RuleElement? current, RuleElement? swap, RuleElement? parentElement) {
     if (current is Rule) {
-      return swap is RuleResult && parentElement is! RuleCases;
+      return (swap is RuleResult) && (parentElement is! RuleCases);
     } else if (current is RuleAction) {
       return (swap is RuleResult) && (parentElement is! RuleActionList);
     } else if (current is RuleActionList || current is RuleCases) {
@@ -464,15 +484,28 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         sections.add(controller.text);
       }
     }
-    SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(data: _data[index], sections: sections, tabBar: widget.tabBar)));
+    SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
+      data: _data[index],
+      dataKeys: List.generate(_data.length, (index) => _data[index].key),
+      sections: sections,
+      scoredSurvey: _scored,
+      tabBar: widget.tabBar
+    )));
     _updateState(() {
+      _updateFollowUpRules(_data[index].key, updatedData.key);
       _data[index] = updatedData;
-      _updateFollowUpRules();
     });
   }
 
-  void _updateFollowUpRules() {
-    //TODO: update follow up rules appropriately
+  //TODO: this function will probably need more
+  void _updateFollowUpRules(String oldKey, String newKey) {
+    if (oldKey != newKey) {
+      _updateState(() {
+        for (int i = 0; i < _followUpRules.length; i++) {
+          _followUpRules[i].updateDataKeys(oldKey, newKey);
+        }
+      }); 
+    }
   }
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
@@ -528,7 +561,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       } else {
         _followUpRules.insert(index, RuleAction(action: "return", data: "data.${_data[index].key}"));
       }
-      _updateFollowUpRules();
+      // _updateFollowUpRules();
     });
   }
 
@@ -536,7 +569,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     _updateState(() {
       _data.removeAt(index);
       _followUpRules.removeAt(index);
-      _updateFollowUpRules();
+      // _updateFollowUpRules();
     });
   }
 
@@ -651,7 +684,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapPreview() {
     // describe result rules that would have been evaluated on continue
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey())));
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey(), tabBar: widget.tabBar)));
   }
 
   void _onTapContinue() {
@@ -687,5 +720,3 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
   }
 }
-
-enum SurveyElement { data, sections, followUpRules, resultRules }

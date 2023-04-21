@@ -911,3 +911,5 @@ class SurveyDataPage extends SurveyData {
   bool get isQuestion => false;
 }
 */
+
+enum SurveyElement { data, sections, followUpRules, resultRules, defaultResponseRule, scoreRule }
