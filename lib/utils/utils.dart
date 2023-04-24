@@ -472,6 +472,16 @@ class UrlUtils {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
   }
 
+  static Future<bool?> launchExternal(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri? uri = Uri.tryParse(url!);
+      if (uri != null) {
+        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      }
+    }
+    return null;
+  }
+
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
       Uri uri = Uri.parse(url);
@@ -502,14 +512,16 @@ class UrlUtils {
       fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
   }
 
-  static Future<bool?> launchExternal(String? url) async {
-    if (StringUtils.isNotEmpty(url)) {
-      Uri? uri = Uri.tryParse(url!);
-      if (uri != null) {
-        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-      }
+  static Future<bool> isHostAvailable(String? url) async {
+    List<InternetAddress>? result;
+    String? host = getHost(url);
+    try {
+      result = (host != null) ? await InternetAddress.lookup(host) : null;
     }
-    return null;
+    on SocketException catch (e) {
+      debugPrint(e.toString());
+    }
+    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
 
 }
