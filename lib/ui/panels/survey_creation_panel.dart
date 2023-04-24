@@ -657,9 +657,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
       } else {
         if (rule is RuleAction && rule.action == 'return' && rule.data is String && (rule.data as String).isNotEmpty) {
-          _data[i].defaultFollowUpKey = (rule.data as String).split('.').last;
+          _data[i-1].defaultFollowUpKey = (rule.data as String).split('.').last;
         } else {
-          _data[i].followUpRule = rule;
+          _data[i-1].followUpRule = rule;
         }
       }
     }
