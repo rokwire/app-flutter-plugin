@@ -45,15 +45,7 @@ class WebPanel extends StatefulWidget {
 
   @protected
   Future<bool> getOnline() async {
-    List<InternetAddress>? result;
-    String? coreHost = UrlUtils.getHost(Config().coreUrl);
-    try {
-      result = (coreHost != null) ? await InternetAddress.lookup(coreHost) : null;
-    }
-    on SocketException catch (e) {
-      debugPrint(e.toString());
-    }
-    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+    return UrlUtils.isHostAvailable(Config().coreUrl);
   }
 
   @protected
