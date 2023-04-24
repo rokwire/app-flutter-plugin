@@ -216,11 +216,11 @@ abstract class RuleResult extends RuleElement {
       }
       return RuleCases(cases: caseList);
     }
-    dynamic condition = json["condition"];
-    if (condition != null) {
+    try {
       return Rule.fromJson(json);
+    } catch (_) {
+      return RuleActionResult.fromJson(json);
     }
-    return RuleActionResult.fromJson(json);
   }
 
   static List<RuleResult> listFromJson(List<dynamic>? jsonList) {
