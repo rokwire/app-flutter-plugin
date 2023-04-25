@@ -88,6 +88,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     super.dispose();
   }
 
+  List<String> get sections {
+    List<String> sectionList = [];
+    for (TextEditingController controller in _sectionTextControllers) {
+      if (controller.text.isNotEmpty) {
+        sectionList.add(controller.text);
+      }
+    }
+    return sectionList;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -478,15 +488,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapEditData(int index) async {
-    List<String> sections = [];
-    for (TextEditingController controller in _sectionTextControllers) {
-      if (controller.text.isNotEmpty) {
-        sections.add(controller.text);
-      }
-    }
     SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
       data: _data[index],
       dataKeys: List.generate(_data.length, (index) => _data[index].key),
+      dataTypes: List.generate(_data.length, (index) => _data[index].type),
       sections: sections,
       scoredSurvey: _scored,
       tabBar: widget.tabBar
@@ -513,6 +518,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
         dataKeys: List.generate(_data.length, (index) => _data[index].key),
+        dataTypes: List.generate(_data.length, (index) => _data[index].type),
+        sections: sections,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
       _updateState(() {

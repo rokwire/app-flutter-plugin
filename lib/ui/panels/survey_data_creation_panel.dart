@@ -32,11 +32,12 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class SurveyDataCreationPanel extends StatefulWidget {
   final SurveyData data;
   final List<String> dataKeys;
+  final List<String> dataTypes;
   final Widget? tabBar;
   final List<String> sections;
   final bool scoredSurvey;
 
-  const SurveyDataCreationPanel({Key? key, required this.data, required this.dataKeys, required this.sections, required this.scoredSurvey, this.tabBar}) : super(key: key);
+  const SurveyDataCreationPanel({Key? key, required this.data, required this.dataKeys, required this.dataTypes, required this.sections, required this.scoredSurvey, this.tabBar}) : super(key: key);
 
   @override
   _SurveyDataCreationPanelState createState() => _SurveyDataCreationPanelState();
@@ -344,7 +345,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             isExpanded: true,
             style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
             items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
-            value: _getTypeString(),
+            value: _data.type,
             onChanged: _onChangeType,
             dropdownColor: Styles().colors?.getColor('background'),
           ),
@@ -800,6 +801,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
         dataKeys: widget.dataKeys,
+        dataTypes: widget.dataTypes,
+        sections: widget.sections,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
       setState(() {
@@ -864,23 +867,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           break;
       }
     });
-  }
-
-  String? _getTypeString() {
-    if (_data is SurveyQuestionTrueFalse) {
-      return "survey_data.true_false";
-    } else if (_data is SurveyQuestionMultipleChoice) {
-      return "survey_data.multiple_choice";
-    } else if (_data is SurveyQuestionDateTime) {
-      return "survey_data.date_time";
-    } else if (_data is SurveyQuestionNumeric) {
-      return "survey_data.numeric";
-    } else if (_data is SurveyQuestionText) {
-      return "survey_data.text";
-    } else if (_data is SurveyDataResult) {
-      return "survey_data.result";
-    }
-    return null;
   }
 
   void _onChangeSection(String? section) {

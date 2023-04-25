@@ -386,6 +386,7 @@ abstract class SurveyData {
   bool get isQuestion;
   bool get canContinue => allowSkip || response != null;
   bool get scored => scoreRule != null;
+  String get type;
 }
 
 class SurveyQuestionTrueFalse extends SurveyData {
@@ -453,6 +454,9 @@ class SurveyQuestionTrueFalse extends SurveyData {
 
   @override
   bool get isQuestion => true;
+
+  @override
+  String get type => 'survey_data.true_false';
 }
 
 class SurveyQuestionMultipleChoice extends SurveyData {
@@ -531,6 +535,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
 
   @override
   bool get scored => scoreRule != null || selfScore;
+
+  @override
+  String get type => 'survey_data.multiple_choice';
 }
 
 class SurveyQuestionDateTime extends SurveyData {
@@ -597,6 +604,9 @@ class SurveyQuestionDateTime extends SurveyData {
 
   @override
   bool get isQuestion => true;
+
+  @override
+  String get type => 'survey_data.date_time';
 }
 
 class SurveyQuestionNumeric extends SurveyData {
@@ -675,6 +685,9 @@ class SurveyQuestionNumeric extends SurveyData {
 
   @override
   bool get scored => scoreRule != null || selfScore;
+
+  @override
+  String get type => 'survey_data.numeric';
 }
 
 class SurveyQuestionText extends SurveyData {
@@ -746,6 +759,9 @@ class SurveyQuestionText extends SurveyData {
     }
     return false;
   }
+
+  @override
+  String get type => 'survey_data.text';
 }
 
 /*
@@ -869,6 +885,9 @@ class SurveyDataResult extends SurveyData {
 
   @override
   bool get isQuestion => false;
+
+  @override
+  String get type => 'survey_data.result';
 }
 
 /*
