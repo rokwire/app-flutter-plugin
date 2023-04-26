@@ -513,29 +513,27 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ruleRemove = false;
     }
 
-    BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
+    double buttonBoxSize = 36;
+    double splashRadius = 18;
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
-      Visibility(visible: addRemove, child: IconButton(
+      Visibility(visible: addRemove, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.add),
         onPressed: () => _onTapAdd(index, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
-      Visibility(visible: addRemove && ruleRemove && index > 0, child: IconButton(
+        splashRadius: splashRadius,
+      ))),
+      Visibility(visible: addRemove && ruleRemove && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
         onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
-      Visibility(visible: editable && index > 0, child: IconButton(
+        splashRadius: splashRadius,
+      ))),
+      Visibility(visible: editable && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
         onPressed: () => _onTapEdit(index - 1, surveyElement, element: element),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
+        splashRadius: splashRadius,
+      ))),
     ]);
   }
 
@@ -543,7 +541,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     String entryText = (data as OptionData).title;
     if (data.value != null) {
       String valueString = data.value.toString();
-      if (valueString.isNotEmpty) {
+      if (valueString.isNotEmpty && valueString != entryText) {
         entryText += entryText.isNotEmpty ? ' ($valueString)' : '($valueString)';
       }
     }
@@ -724,7 +722,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   void _onTapAddDataAtIndex(int index) {
     setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
-        (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option"));
+        (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(
+          title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option",
+          value: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].value : ""
+        ));
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
         (_data as SurveyDataResult).actions!.insert(index, ActionData(label: 'New Action'));
@@ -745,14 +746,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   void _onTapEditData(int index) async {
     if (_data is SurveyQuestionMultipleChoice) {
       dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyQuestionMultipleChoice).options[index], tabBar: widget.tabBar)));
-      if (mounted) {
+      if (updatedData != null && mounted) {
         setState(() {
           (_data as SurveyQuestionMultipleChoice).options[index] = updatedData;
         });
       }
     } else if (_data is SurveyDataResult) {
       dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyDataResult).actions![index], tabBar: widget.tabBar)));
-      if (mounted) {
+      if (updatedData != null && mounted) {
         setState(() {
           (_data as SurveyDataResult).actions![index] = updatedData;
         });
@@ -798,30 +799,33 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
     if (element != null) {
-      RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
+      RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
         dataKeys: widget.dataKeys,
         dataTypes: widget.dataTypes,
         sections: widget.sections,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
-      setState(() {
-        if (surveyElement == SurveyElement.defaultResponseRule) {
-          if (element.id == _defaultResponseRule!.id && ruleElement is RuleResult) {
-            _defaultResponseRule = ruleElement;
+
+      if (ruleElement != null && mounted) {
+        setState(() {
+          if (surveyElement == SurveyElement.defaultResponseRule) {
+            if (element.id == _defaultResponseRule!.id && ruleElement is RuleResult) {
+              _defaultResponseRule = ruleElement;
+            }
+            else {
+              _defaultResponseRule!.updateElement(ruleElement);
+            }
+          } else {
+            if (element.id == _scoreRule!.id && ruleElement is RuleResult) {
+              _scoreRule = ruleElement;
+            }
+            else {
+              _scoreRule!.updateElement(ruleElement);
+            }
           }
-          else {
-            _defaultResponseRule!.updateElement(ruleElement);
-          }
-        } else {
-          if (element.id == _scoreRule!.id && ruleElement is RuleResult) {
-            _scoreRule = ruleElement;
-          }
-          else {
-            _scoreRule!.updateElement(ruleElement);
-          }
-        }
-      });
+        });
+      }
     }
   }
 

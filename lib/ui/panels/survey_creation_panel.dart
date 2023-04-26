@@ -236,20 +236,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
     Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      padding: const EdgeInsets.all(8.0),
-      child: Row(children: [
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
         surveyDataText,
         Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
-      ],)
+      ],))
     ));
 
     return LongPressDraggable<int>(
       data: index,
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
-        padding: const EdgeInsets.all(16.0),
+        height: 32,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: surveyDataText,
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
       )),
       child: DragTarget<int>(
         builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
@@ -290,11 +289,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (ruleElem is RuleReference || ruleElem is RuleAction || ruleElem is RuleComparison) {
       displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Row(children: [
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
           ruleText,
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
         ],)
-      ));
+      )));
     } else if (ruleElem is RuleLogic) {
       displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, ruleElem.conditions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     } else if (ruleElem is Rule) {
@@ -321,8 +320,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       data: ruleElem.id,
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
+        height: 32,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: ruleText
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
       )),
       child: DragTarget<String>(
         builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
@@ -349,29 +349,27 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       ruleRemove = false;
     }
 
-    BoxConstraints constraints = const BoxConstraints(maxWidth: 64, maxHeight: 80,);
+    double buttonBoxSize = 36;
+    double splashRadius = 18;
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
-      Visibility(visible: addRemove, child: IconButton(
+      Visibility(visible: addRemove, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.add),
         onPressed: () => _onTapAdd(index, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
-      Visibility(visible: addRemove && ruleRemove && index > 0, child: IconButton(
+        splashRadius: splashRadius,
+      ))),
+      Visibility(visible: addRemove && ruleRemove && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
         onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
-      Visibility(visible: editable && index > 0, child: IconButton(
+        splashRadius: splashRadius,
+      ))),
+      Visibility(visible: editable && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
         onPressed: () => _onTapEdit(index - 1, surveyElement, element: element),
         padding: EdgeInsets.zero,
-        alignment: Alignment.centerRight,
-        constraints: constraints,
-      )),
+        splashRadius: splashRadius,
+      ))),
     ]);
   }
 
@@ -401,7 +399,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onAcceptDataDrag(int oldIndex, int newIndex) {
-    _updateState(() {
+    setState(() {
       SurveyData temp = _data[oldIndex];
       _data.removeAt(oldIndex);
       _data.insert(newIndex, temp);
@@ -423,7 +421,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
 
     if (_maySwapRuleElements(current, swap, parentElement)) {
-      _updateState(() {
+      setState(() {
         bool currentUpdated = false, swapUpdated = false;
         if (surveyElement == SurveyElement.followUpRules) {
           for (int i = 0; i < _followUpRules.length; i++) {
@@ -488,7 +486,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapEditData(int index) async {
-    SurveyData updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
+    String dataKey = _data[index].key;
+    SurveyData? updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
       data: _data[index],
       dataKeys: List.generate(_data.length, (index) => _data[index].key),
       dataTypes: List.generate(_data.length, (index) => _data[index].type),
@@ -496,16 +495,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       scoredSurvey: _scored,
       tabBar: widget.tabBar
     )));
-    _updateState(() {
-      _updateFollowUpRules(_data[index].key, updatedData.key);
-      _data[index] = updatedData;
-    });
+
+    if (updatedData != null && mounted) {
+      setState(() {
+        _updateFollowUpRules(dataKey, updatedData.key);
+        _data[index] = updatedData;
+      });
+    }
   }
 
   //TODO: this function will probably need more
   void _updateFollowUpRules(String oldKey, String newKey) {
     if (oldKey != newKey) {
-      _updateState(() {
+      setState(() {
         for (int i = 0; i < _followUpRules.length; i++) {
           _followUpRules[i].updateDataKeys(oldKey, newKey);
         }
@@ -515,36 +517,39 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
     if (element != null) {
-      RuleElement ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
+      RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
         dataKeys: List.generate(_data.length, (index) => _data[index].key),
         dataTypes: List.generate(_data.length, (index) => _data[index].type),
         sections: sections,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
-      _updateState(() {
-        if (surveyElement == SurveyElement.followUpRules) {
-          for (int i = 0; i < _followUpRules.length; i++) {
-            if (element.id == _followUpRules[i].id && ruleElement is RuleResult) {
-              _followUpRules[i] = ruleElement;
-              return;
+
+      if (ruleElement != null && mounted) {
+        setState(() {
+          if (surveyElement == SurveyElement.followUpRules) {
+            for (int i = 0; i < _followUpRules.length; i++) {
+              if (element.id == _followUpRules[i].id && ruleElement is RuleResult) {
+                _followUpRules[i] = ruleElement;
+                return;
+              }
+              if (_followUpRules[i].updateElement(ruleElement)) {
+                return;
+              }
             }
-            if (_followUpRules[i].updateElement(ruleElement)) {
-              return;
+          } else {
+            for (int i = 0; i < _resultRules.length; i++) {
+              if (element.id == _resultRules[i].id && ruleElement is RuleResult) {
+                _resultRules[i] = ruleElement;
+                return;
+              }
+              if (_resultRules[i].updateElement(ruleElement)) {
+                return;
+              }
             }
           }
-        } else {
-          for (int i = 0; i < _resultRules.length; i++) {
-            if (element.id == _resultRules[i].id && ruleElement is RuleResult) {
-              _resultRules[i] = ruleElement;
-              return;
-            }
-            if (_resultRules[i].updateElement(ruleElement)) {
-              return;
-            }
-          }
-        }
-      });
+        });
+      }
     }
   }
 
@@ -556,7 +561,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     } else {
       insert = SurveyQuestionTrueFalse(text: "", key: "data${dataCount++}");
     }
-    _updateState(() {
+    setState(() {
       _data.insert(index, insert);
       if (index == 0) {
         if (_followUpRules.isEmpty) {
@@ -573,7 +578,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapRemoveDataAtIndex(int index) {
-    _updateState(() {
+    setState(() {
       _data.removeAt(index);
       _followUpRules.removeAt(index);
       // _updateFollowUpRules();
@@ -581,14 +586,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapAddSectionAtIndex(int index) {
-    _updateState(() {
+    setState(() {
       _sectionTextControllers.insert(index, TextEditingController(text: index > 0 ? _sectionTextControllers[index - 1].text : ''));
     });
   }
 
   void _onTapRemoveSectionAtIndex(int index) {
     _sectionTextControllers[index].dispose();
-    _updateState(() {
+    setState(() {
       _sectionTextControllers.removeAt(index);
     });
   }
@@ -606,7 +611,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       element.conditions.insert(index, RuleComparison(dataKey: "", operator: "==", compareTo: ""));
     }
 
-    _updateState(() {
+    setState(() {
       if (element == null && surveyElement == SurveyElement.resultRules) {
          _resultRules.insert(index, RuleAction(action: "save", data: null));
       } else if (element != null) {
@@ -616,7 +621,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           }
         }
       }
-      //TODO: update follow up rules and result rules other than returns
     });
   }
 
@@ -629,7 +633,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       element.conditions.removeAt(index);
     }
 
-    _updateState(() {
+    setState(() {
       if (element == null && surveyElement == SurveyElement.resultRules) {
          _resultRules.removeAt(index);
       } else if (element != null) {
@@ -639,16 +643,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           }
         }
       }
-      //TODO: update follow up rules and result rules other than returns
     });
   }
 
   void _onToggleScored(bool? value) {
-    if (mounted) {
-      setState(() {
-        _scored = value ?? true;
-      });
-    }
+    setState(() {
+      _scored = value ?? true;
+    });
   }
   
   Survey _buildSurvey() {
@@ -671,7 +672,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       }
     }
 
-    //TODO: map rules into each survey data
     return Survey(
       id: '',
       data: Map.fromIterable(_data, key: (item) => (item as SurveyData).key),
@@ -712,18 +712,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void setLoading(bool value) {
-    if (mounted) {
-      setState(() {
-        _loading = value;
-      });
-    }
-  }
-
-  void _updateState(Function() fn) {
-    if (mounted) {
-      setState(() {
-        fn();
-      });
-    }
+    setState(() {
+      _loading = value;
+    });
   }
 }

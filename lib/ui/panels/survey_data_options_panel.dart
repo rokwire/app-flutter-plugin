@@ -22,6 +22,7 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyDataOptionsPanel extends StatefulWidget {
   final dynamic data;
@@ -192,9 +193,11 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     if (_data is OptionData) {
       (_data as OptionData).title = _textControllers["title"]!.text;
       (_data as OptionData).hint = _textControllers["hint"]!.text;
-      //TODO: parse this string?
-      (_data as OptionData).value = _textControllers["value"]!.text.isNotEmpty ? _textControllers["value"]!.text : null;
       (_data as OptionData).score = num.tryParse(_textControllers["score"]!.text);
+
+      String valueText = _textControllers['value']!.text;
+      bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
+      (_data as OptionData).value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
     } else if (_data is ActionData) {
       (_data as ActionData).label = _textControllers["label"]!.text;
     }

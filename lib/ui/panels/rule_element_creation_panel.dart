@@ -97,60 +97,70 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       comparison = (condition is RuleComparison) ? condition : null;
     }
 
-    String compareTo = '';
+    String? customData;
     if (comparison != null) {
-      List<String> dataKeyFields = comparison.dataKey.split(".");
-      if (dataKeyFields.length == 1) {
-        _dataKeySettings['survey_option'] = 'survey';
-        _dataKeySettings['survey'] = dataKeyFields[0];
-      } else if (dataKeyFields.length > 1) {
-        _dataKeySettings['survey_option'] = dataKeyFields[0];
-        if (dataKeyFields[0] == 'stats') {
-          _dataKeySettings['stats'] = dataKeyFields[1];
-          if (dataKeyFields.length > 2 && widget.sections.contains(dataKeyFields[2])) {
-            _dataKeySettings['key'] = dataKeyFields[2];
-          }
-        } else if (dataKeyFields[0] == 'data') {
-          _dataKeySettings['key'] = dataKeyFields[1];
-          _dataKeySettings['data'] = dataKeyFields[2];
-        }
-      }
+      _dataKeySettings.addEntries(_initSettings(comparison.dataKey));
 
       _customCompare = comparison.compareTo is! String;
       if (!_customCompare) {
-        compareTo = comparison.compareTo as String;
-        if (compareTo.contains('stats') || compareTo.contains('data') || ListUtils.contains(Surveys.properties.keys, compareTo)!) {
-          List<String> compareToFields = compareTo.split(".");
-          if (compareToFields.length == 1) {
-            _compareToSettings['survey_option'] = 'survey';
-            _compareToSettings['survey'] = compareToFields[0];
-          } else if (compareToFields.length > 1) {
-            _compareToSettings['survey_option'] = compareToFields[0];
-            if (compareToFields[0] == 'stats') {
-              _compareToSettings['stats'] = compareToFields[1];
-              if (compareToFields.length > 2 && widget.sections.contains(compareToFields[2])) {
-                _compareToSettings['key'] = compareToFields[2];
-              }
-            } else if (compareToFields[0] == 'data') {
-              _compareToSettings['key'] = compareToFields[1];
-              _compareToSettings['data'] = compareToFields[2];
-            }
-          }
+        customData = comparison.compareTo as String;
+        if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
+          _compareToSettings.addEntries(_initSettings(customData));
         } else {
           _customCompare = true;
         }
       } else if (comparison.compareTo is DateTime) {
-        compareTo = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleComparison).compareTo, format: "MM-dd-yyyy") ?? '';
+        customData = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleComparison).compareTo, format: "MM-dd-yyyy") ?? '';
       } else {
-        compareTo = comparison.compareTo.toString();
+        customData = comparison.compareTo?.toString() ?? '';
+      }
+    } else if (_ruleElem is RuleAction) {
+      dynamic actionData = (_ruleElem as RuleAction).data;
+      _customCompare = actionData is! String;
+      if (!_customCompare) {
+        customData = actionData as String;
+        if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
+          _actionSettings.addEntries(_initSettings(customData));
+        } else {
+          _customCompare = true;
+        }
+      } else if (actionData is DateTime) {
+        customData = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleAction).data, format: "MM-dd-yyyy") ?? '';
+      } else {
+        customData = actionData?.toString() ?? '';
       }
     }
 
     _textControllers = {
-      "custom_compare": TextEditingController(text: compareTo),
+      "custom_compare": TextEditingController(text: customData),
       "result_data_key": TextEditingController(text: (_ruleElem is RuleAction) ? (_ruleElem as RuleAction).dataKey : null),
     };
     super.initState();
+  }
+
+  List<MapEntry<String, String>> _initSettings(String data) {
+    List<MapEntry<String, String>> settingsEntries = [];
+    
+    List<String> dataFields = data.split(".");
+    if (dataFields.length == 1) {
+      settingsEntries.add(const MapEntry('survey_option', 'survey'));
+      settingsEntries.add(MapEntry('survey', dataFields[0]));
+    } else if (dataFields.length > 1) {
+      settingsEntries.add(MapEntry('survey_option', dataFields[0]));
+      if (dataFields[0] == 'stats') {
+        settingsEntries.add(MapEntry('stats', dataFields[1]));
+        if (dataFields.length > 2 && widget.sections.contains(dataFields[2])) {
+          settingsEntries.add(MapEntry('key', dataFields[2]));
+        }
+      } else if (dataFields[0] == 'data') {
+        settingsEntries.add(MapEntry('key', dataFields[1]));
+        if (dataFields.length > 2) {
+          settingsEntries.add(MapEntry('data', dataFields[2]));
+        }
+      }
+    }
+
+    return settingsEntries;
   }
 
   @override
@@ -382,7 +392,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               ))),
             ],)));
           } else if (settingsMap['stats'] == 'response_data') {
-            content.add(Visibility(visible: widget.sections.isNotEmpty, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+            content.add(Visibility(visible: widget.sections.isNotEmpty, child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
               Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
               Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
                 DropdownButton<String>(
@@ -399,7 +409,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           }
           break;
         case 'data':
-          content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
+          content.add(Padding(padding: const EdgeInsets.all(16), child: Row(children: [
             Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
             Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
               DropdownButton<String>(
@@ -451,8 +461,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     
     switch (ruleAction.action) {
       case 'return':
-        return Row(children: [
-          Padding(padding: const EdgeInsets.only(left: 16), child: Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        return Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+          Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
           Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
             DropdownButton<String>(
               icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
@@ -464,7 +474,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               dropdownColor: Styles().colors?.getColor('background'),
             ),
           ))),
-        ],);
+        ],));
       case 'set_result':
         return Column(children: [
           Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('Data Field', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))),
@@ -500,8 +510,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           Padding(padding: const EdgeInsets.only(top: 16.0), child: FormFieldText('Result Key', controller: _textControllers["result_data_key"], inputType: TextInputType.text, padding: const EdgeInsets.only(bottom: 8))),
         ]);
       case 'alert':
-        return Row(children: [
-          Padding(padding: const EdgeInsets.only(left: 16), child: Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        return Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+          Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
           Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
             DropdownButton<String>(
               icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
@@ -513,11 +523,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               dropdownColor: Styles().colors?.getColor('background'),
             ),
           ))),
-        ],);
+        ],));
       case 'alert_result':
         return Column(children: [
-          Row(children: [
-            Padding(padding: const EdgeInsets.only(left: 16), child: Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+          Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+            Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
             Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
               DropdownButton<String>(
                 icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
@@ -529,7 +539,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
                 dropdownColor: Styles().colors?.getColor('background'),
               ),
             ))),
-          ],),
+          ],)),
           FormFieldText('Result Key', controller: _textControllers["result_data_key"], inputType: TextInputType.text, padding: const EdgeInsets.only(bottom: 8))
         ]);
     }
@@ -607,7 +617,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   RuleAction get defaultRuleAction => RuleAction(action: "return", data: widget.dataKeys.isNotEmpty ? 'data.${widget.dataKeys[0]}' : null);
 
   void _onChangeElementType(String? elemType) {
-    _updateState(() {
+    setState(() {
       String id = _ruleElem.id;
       switch (elemType) {
         case "if":
@@ -661,13 +671,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   void _onChangeCompareToType(bool value) {
-    _updateState(() {
+    setState(() {
       _customCompare = value;
     });
   }
 
   void _onChangeSurveyPropertySetting(String? value, String settings, String key) {
-    _updateState(() {
+    setState(() {
       switch (settings) {
         case 'data_key':
           _dataKeySettings[key] = value;
@@ -683,14 +693,14 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   void _onChangeActionSetting(String? value, String key) {
-    _updateState(() {
+    setState(() {
       _actionSettings[key] = value;
     });
   }
 
   void _onChangeComparisonType(String? compType) {
     if (compType != null) {
-      _updateState(() {
+      setState(() {
         if ((_ruleElem as Rule).condition is RuleComparison) {
           ((_ruleElem as Rule).condition as RuleComparison).operator = compType;
         } else if (_ruleElem is RuleComparison) {
@@ -702,7 +712,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   void _onChangeActionType(String? actionType) {
     if (actionType != null) {
-      _updateState(() {
+      setState(() {
         (_ruleElem as RuleAction).action = actionType;
       });
     }
@@ -750,7 +760,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           (_ruleElem as RuleAction).data = 'data.${_actionSettings['return']}';
           break;
         case 'set_result':
-          error = _actionSettings['set_result'] == null;
+          error = _customCompare ? (_textControllers['custom_compare']?.text.isEmpty ?? true) : _actionSettings['set_result'] == null;
           (_ruleElem as RuleAction).data = _customCompare ? compareToValue : toSurveyPropertyString('action');
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
@@ -776,16 +786,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           Navigator.pop(context);
         },
       );
-    }
-    
-    Navigator.of(context).pop(_ruleElem);
-  }
-
-  void _updateState(Function() fn) {
-    if (mounted) {
-      setState(() {
-        fn();
-      });
-    }
+    } else {
+      Navigator.of(context).pop(_ruleElem);
+    }    
   }
 }

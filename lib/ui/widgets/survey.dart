@@ -52,11 +52,12 @@ class SurveyWidget extends StatefulWidget {
   final bool internalContinueButton;
   final Map<String, dynamic>? defaultResponses;
   final Widget? offlineWidget;
+  final bool summarizeResultRules;
 
   late final SurveyWidgetController controller;
 
-  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, 
-    this.internalContinueButton = true, this.surveyDataKey, this.defaultResponses, this.offlineWidget, SurveyWidgetController? controller}) :
+  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, this.internalContinueButton = true,
+    this.surveyDataKey, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -727,6 +728,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   void _finishSurvey() {
     _setSaving(true);
     widget.controller.beforeComplete?.call();
+    //TODO: use widget.summarizeResultRules to summarize instead of evaluate here
     Surveys().evaluate(_survey!, evalResultRules: true).then((result) {
       if (result is! SurveyResponse) {
         result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
