@@ -4,7 +4,7 @@ import 'package:encrypt/encrypt.dart' as encrypt_package;
 
 void main() async {
   String encryptedFilepath = "assets/configs.json.enc";
-  String keysFilepath = "assets/secrets/rokmetro/config.keys.json";
+  String keysFilepath = "assets/config.keys.json";
   String decryptedFile = "assets/configs.json";
 
   Map<String, dynamic>? encryptionKeys = await loadEncryptionKeysFromAssets(keysFilepath);
