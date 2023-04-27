@@ -453,6 +453,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       return Column(children: content,);
     }
 
+    // dropdown for type selection
     return Padding(padding: const EdgeInsets.only(top: 16.0), child: FormFieldText('Value', controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true));
   }
 
@@ -774,6 +775,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           (_ruleElem as RuleAction).data = 'data.${_actionSettings['alert_result']}';
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
+          break;
+        case 'save':
+          (_ruleElem as RuleAction).data = (_ruleElem as RuleAction).dataKey = null;
       }
     }
 

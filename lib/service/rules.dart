@@ -124,7 +124,7 @@ class Rules {
         Duration offset = JsonUtils.durationValue(param) ?? const Duration();
         return DateTime.now().subtract(offset);
       default:
-        return getEngineProperty(ruleKey);
+        return engine is Survey ? Surveys().getProperty(engine, ruleKey) : getEngineProperty(ruleKey);
     }
   }
 

@@ -51,7 +51,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   final List<SurveyData> _data = [];
   int dataCount = 0;
-  int sectionCount = 0;
   bool _scored = true;
 
   final List<RuleResult> _followUpRules = [];
@@ -117,115 +116,109 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           )),
           Container(
             color: Styles().colors?.backgroundVariant,
-            child: _buildPreviewAndContinue(),
+            child: _buildPreviewAndCreate(),
           ),
         ],
     ));
   }
 
   Widget _buildSurveyCreationTools() {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Column(children: [
+    return Padding(padding: const EdgeInsets.all(16), child: Column(children: [
       // title
-      FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
+      FormFieldText('Title', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
       // more_info
-      FormFieldText('Additional Information', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+      FormFieldText('Additional Information', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+
+      // scored
+      CheckboxListTile(
+        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Scored", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+        tileColor: Styles().colors?.getColor('surface'),
+        checkColor: Styles().colors?.getColor('surface'),
+        activeColor: Styles().colors?.getColor('fillColorPrimary'),
+        value: _scored,
+        onChanged: _onToggleScored,
+      ),
 
       // sections
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper("Sections", _sectionTextControllers, _buildSectionTextEntryWidget, SurveyElement.sections),
+        _buildCollapsibleWrapper("Sections (${_sectionTextControllers.length})", _sectionTextControllers, _buildSectionTextEntryWidget, SurveyElement.sections),
       ),
-
-      // scored
-      Row(children: [
-        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Scored", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
-          checkColor: Styles().colors?.surface,
-          activeColor: Styles().colors?.fillColorPrimary,
-          value: _scored,
-          onChanged: _onToggleScored,
-        ))),
-      ],),
 
       // data
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper("Survey Data", _data, _buildSurveyDataWidget, SurveyElement.data),
+        _buildCollapsibleWrapper("Survey Data (${_data.length})", _data, _buildSurveyDataWidget, SurveyElement.data),
       ),
 
       // follow up rules (determine survey data ordering/flow)
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper("Flow Rules", _followUpRules, _buildRuleWidget, SurveyElement.followUpRules),
+        _buildCollapsibleWrapper("Flow Rules (${_followUpRules.length})", _followUpRules, _buildRuleWidget, SurveyElement.followUpRules),
       ),
+
       // result_rules
       Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper("Result Rules", _resultRules, _buildRuleWidget, SurveyElement.resultRules),
+        _buildCollapsibleWrapper("Result Rules (${_resultRules.length})", _resultRules, _buildRuleWidget, SurveyElement.resultRules),
       ),
     ],));
   }
 
-  Widget _buildPreviewAndContinue() {
+  Widget _buildPreviewAndCreate() {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
-      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
         borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
         backgroundColor: Styles().colors?.surface,
         textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
         onTap: _onTapPreview,
       ))),
-      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(4.0), child: Stack(children: [
+      Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         Visibility(visible: _loading, child: LoadingBuilder.loading()),
         RoundedButton(
-          label: 'Continue',
+          label: 'Create',
           borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
           backgroundColor: Styles().colors?.surface,
           textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
-          onTap: _onTapContinue,
+          onTap: _onTapCreate,
         ),
       ]))),
     ],);
   }
 
   Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
-    bool hideEntryManagement = parentElement is RuleLogic && grandParentElement is Rule;
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: ExpansionTile(
-        iconColor: Styles().colors?.getColor('fillColorSecondary'),
-        backgroundColor: Styles().colors?.getColor('surface'),
-        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-        title: Row(children: [
-          Expanded(child: Text(
-            label,
-            maxLines: 2,
-            style: Styles().textStyles?.getTextStyle('widget.detail.small'),
-          )),
-          Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
-            element: parentElement,
-            parentElement: grandParentElement,
-            addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
-            editable: parentElement != null && !hideEntryManagement
-          )),
-        ],),
-        children: <Widget>[
-          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          dataList.isNotEmpty ? ListView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: dataList.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Column(
-                children: [
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement)),
-                ],
-              );
-            },
-          ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 16.0), child: Row(children: [
-              Container(height: 0),
-              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement))
-            ]
-          )),
-        ],
-      ),
-    );
+    bool hideEntryManagement = (parentElement is RuleLogic) && (grandParentElement is Rule);
+    return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: ExpansionTile(
+      iconColor: Styles().colors?.getColor('fillColorSecondary'),
+      backgroundColor: Styles().colors?.getColor('background'),
+      collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+      title: Row(children: [
+        Expanded(child: Text(
+          label,
+          maxLines: 2,
+          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+        )),
+        Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
+          element: parentElement,
+          parentElement: grandParentElement,
+          addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
+          editable: parentElement != null && !hideEntryManagement
+        )),
+      ],),
+      children: <Widget>[
+        Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
+        dataList.isNotEmpty ? ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: dataList.length,
+          itemBuilder: (BuildContext context, int index) {
+            return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement));
+          },
+        ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
+            Container(height: 0),
+            Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
+          ]
+        )),
+      ],
+    ));
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? _) {
@@ -236,8 +229,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
     Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
-        surveyDataText,
+      child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText),
         Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
       ],))
     ));
@@ -248,7 +241,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       feedback: Card(child: Container(
         height: 32,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
       )),
       child: DragTarget<int>(
         builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
@@ -264,7 +257,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     RuleElement ruleElem = data as RuleElement;
     String summary = ruleElem.getSummary();
-    if (index == 0 && surveyElement == SurveyElement.followUpRules) {
+    if (index == 0 && surveyElement == SurveyElement.followUpRules && parentElement == null) {
       summary = "Start: $summary";
     }
 
@@ -289,11 +282,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (ruleElem is RuleReference || ruleElem is RuleAction || ruleElem is RuleComparison) {
       displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
-          ruleText,
+        child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+          Padding(padding: const EdgeInsets.only(left: 8), child: ruleText),
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
-        ],)
-      )));
+        ],))
+      ));
     } else if (ruleElem is RuleLogic) {
       displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, ruleElem.conditions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     } else if (ruleElem is Rule) {
@@ -322,7 +315,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       feedback: Card(child: Container(
         height: 32,
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
       )),
       child: DragTarget<String>(
         builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
@@ -336,11 +329,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
-    Widget sectionTextEntry = TextField(controller: data as TextEditingController, style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
-    return Row(children: [
-      Expanded(child: sectionTextEntry),
+    Widget sectionTextEntry = TextField(
+      controller: data as TextEditingController,
+      style: Styles().textStyles?.getTextStyle('widget.detail.small'),
+      decoration: const InputDecoration.collapsed(
+        hintText: "Section Name",
+        border: InputBorder.none,
+      ),
+    );
+    return Card(child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+      // Padding(padding: const EdgeInsets.only(right: 8), child: Text('Name:', style: Styles().textStyles?.getTextStyle('widget.detail.small.fat'), overflow: TextOverflow.fade)),
+      Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
       Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
-    ],);
+    ],)));
   }
 
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
@@ -351,22 +352,23 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
     double buttonBoxSize = 36;
     double splashRadius = 18;
+    double buttonSize = 18;
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
       Visibility(visible: addRemove, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
-        icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.add),
+        icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.add),
         onPressed: () => _onTapAdd(index, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
-      Visibility(visible: addRemove && ruleRemove && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
-        icon: Styles().images?.getImage('clear', size: 14) ?? const Icon(Icons.remove),
-        onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
+      Visibility(visible: editable, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
+        icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.edit),
+        onPressed: () => _onTapEdit(index - 1, surveyElement, element: element),
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
-      Visibility(visible: editable && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
-        icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: 14) ?? const Icon(Icons.edit),
-        onPressed: () => _onTapEdit(index - 1, surveyElement, element: element),
+      Visibility(visible: addRemove && ruleRemove && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
+        icon: Styles().images?.getImage('clear', size: buttonSize) ?? const Icon(Icons.remove),
+        onPressed: () => _onTapRemove(index - 1, surveyElement, parentElement: parentElement),
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
@@ -382,6 +384,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapRemove(int index, SurveyElement surveyElement, {RuleElement? parentElement}) {
+    //TODO: confirmation dialog
     switch (surveyElement) {
       case SurveyElement.data: _onTapRemoveDataAtIndex(index); break;
       case SurveyElement.sections: _onTapRemoveSectionAtIndex(index); break;
@@ -403,8 +406,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       SurveyData temp = _data[oldIndex];
       _data.removeAt(oldIndex);
       _data.insert(newIndex, temp);
+
+      RuleResult tempRule = _followUpRules[oldIndex];
+      _followUpRules.removeAt(oldIndex);
+      _followUpRules.insert(newIndex, tempRule);
     });
-    _onAcceptRuleDrag(_followUpRules[oldIndex].id, _followUpRules[newIndex].id, SurveyElement.followUpRules);
   }
 
   //TODO: does it make sense to swap?
@@ -613,7 +619,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
     setState(() {
       if (element == null && surveyElement == SurveyElement.resultRules) {
-         _resultRules.insert(index, RuleAction(action: "save", data: null));
+         _resultRules.insert(index, index > 0 ? RuleResult.fromOther(_resultRules[index-1]) : RuleAction(action: "save", data: null));
       } else if (element != null) {
         for (RuleResult result in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
           if (result.updateElement(element)) {
@@ -674,7 +680,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
     return Survey(
       id: '',
-      data: Map.fromIterable(_data, key: (item) => (item as SurveyData).key),
+      data: <String, SurveyData>{for (var data in _data) data.key: SurveyData.fromOther(data)},
       type: '',
       scored: _scored,
       title: _textControllers["title"]?.text ?? 'New Survey',
@@ -694,7 +700,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey(), tabBar: widget.tabBar)));
   }
 
-  void _onTapContinue() {
+  void _onTapCreate() {
     setLoading(true);
     Surveys().createSurvey(_buildSurvey()).then((success) {
       setLoading(false);

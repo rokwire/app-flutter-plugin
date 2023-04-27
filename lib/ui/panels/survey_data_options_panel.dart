@@ -107,7 +107,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     if (_data is OptionData) {
       content.addAll([
         //title*
-        FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text, required: true),
+        FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text),
         //hint
         FormFieldText('Hint', padding: const EdgeInsets.only(top: 16), controller: _textControllers["hint"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
         //value* (dynamic value = _value ?? title)

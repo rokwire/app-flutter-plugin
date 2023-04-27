@@ -61,6 +61,14 @@ abstract class RuleCondition extends RuleElement {
     }
     return RuleComparison.fromJson(json);
   }
+
+  factory RuleCondition.fromOther(RuleCondition other) {
+    if (other is RuleComparison) {
+      return RuleComparison.fromOther(other);
+    } else {  // (other is RuleLogic)
+      return RuleLogic.fromOther(other as RuleLogic);
+    }
+  }
 }           
 
 class RuleComparison extends RuleCondition {
@@ -82,6 +90,17 @@ class RuleComparison extends RuleCondition {
       compareTo: json["compare_to"],
       compareToParam: json["compare_to_param"],
       defaultResult: json["default_result"] ?? false,
+    );
+  }
+
+  factory RuleComparison.fromOther(RuleComparison other) {
+    return RuleComparison(
+      operator: other.operator,
+      dataKey: other.dataKey,
+      dataParam: other.dataParam,
+      compareTo: other.compareTo,
+      compareToParam: other.compareToParam,
+      defaultResult: other.defaultResult,
     );
   }
 
@@ -135,6 +154,10 @@ class RuleLogic extends RuleCondition {
   List<RuleCondition> conditions;
 
   RuleLogic(this.operator, this.conditions);
+
+  factory RuleLogic.fromOther(RuleLogic other) {
+    return RuleLogic(other.operator, List.from(other.conditions));
+  }
 
   @override
   Map<String, dynamic> toJson() {
@@ -217,9 +240,23 @@ abstract class RuleResult extends RuleElement {
       return RuleCases(cases: caseList);
     }
     try {
-      return Rule.fromJson(json);
-    } catch (_) {
       return RuleActionResult.fromJson(json);
+    } catch (_) {
+      return Rule.fromJson(json);
+    }
+  }
+
+  factory RuleResult.fromOther(RuleResult other) {
+    if (other is RuleAction) {
+      return RuleAction.fromOther(other);
+    } else if (other is RuleActionList) {
+      return RuleActionList.fromOther(other);
+    } else if (other is RuleReference) {
+      return RuleReference.fromOther(other);
+    } else if (other is Rule) {
+      return Rule.fromOther(other);
+    } else {  // (other is RuleCases)
+      return RuleCases.fromOther(other as RuleCases);
     }
   }
 
@@ -271,6 +308,10 @@ class RuleReference extends RuleResult {
 
   RuleReference(this.ruleKey);
 
+  factory RuleReference.fromOther(RuleReference other) {
+    return RuleReference(other.ruleKey);
+  }
+
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -310,6 +351,15 @@ class RuleAction extends RuleActionResult {
       data: json["data"],
       dataKey: JsonUtils.stringValue(json["data_key"]),
       priority: json["priority"],
+    );
+  }
+
+  factory RuleAction.fromOther(RuleAction other) {
+    return RuleAction(
+      action: other.action,
+      data: other.data,
+      dataKey: other.dataKey,
+      priority: other.priority,
     );
   }
 
@@ -365,12 +415,30 @@ class RuleActionList extends RuleActionResult {
 
   RuleActionList({required this.actions, this.priority});
 
+  factory RuleActionList.fromOther(RuleActionList other) {
+    return RuleActionList(
+      actions: List.from(other.actions)
+    );
+  }
+
   @override
   Map<String, dynamic> toJson() {
     return {
       'priority': priority,
       'actions': actions.map((e) => e.toJson()),
     };
+  }
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Action List";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
   }
 
   @override
@@ -427,9 +495,9 @@ class Rule extends RuleResult {
 
   factory Rule.fromOther(Rule other) {
     return Rule(
-      condition: other.condition,
-      trueResult: other.trueResult,
-      falseResult: other.falseResult,
+      condition: other.condition != null ? RuleCondition.fromOther(other.condition!) : null,
+      trueResult: other.trueResult != null ? RuleResult.fromOther(other.trueResult!) : null,
+      falseResult: other.falseResult != null ? RuleResult.fromOther(other.falseResult!) : null,
     );
   }
 
@@ -530,6 +598,12 @@ class RuleCases extends RuleResult {
   List<Rule> cases;
 
   RuleCases({required this.cases});
+
+  factory RuleCases.fromOther(RuleCases other) {
+    return RuleCases(
+      cases: List.from(other.cases)
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() {
