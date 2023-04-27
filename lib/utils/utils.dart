@@ -493,6 +493,11 @@ class UrlUtils {
     return url;
   }
 
+  static bool isValidUrl(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
+  }
+
   static String? fixUrl(String url) {
     Uri? uri = Uri.tryParse(url);
     Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
