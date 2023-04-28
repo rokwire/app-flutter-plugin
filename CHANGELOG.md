@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added NotificationService.subscribers getter [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 - Added UrlUtils.launchExternal [#3129](https://github.com/rokwire/illinois-app/issues/3129).
 - Added UrlUtils.isValidUrl [#3193](https://github.com/rokwire/illinois-app/issues/3193).
+- Added DateTimeUtils.min & max [#3206](https://github.com/rokwire/illinois-app/issues/3206).
 - Added title parameters to SliverToutHeaderBar [#3149](https://github.com/rokwire/illinois-app/issues/3149).
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
