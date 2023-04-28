@@ -31,65 +31,9 @@ abstract class Explore implements Comparable<Explore> {
   String?   get explorePlaceId;
   ExploreLocation? get exploreLocation;
   String? get exploreLocationDescription => exploreLocation?.description;
-  Map<String, dynamic> toJson();
 
   @override
   int compareTo(Explore other) => SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc);
-
-  // ExploreJsonHandler
-  static final Set<ExploreJsonHandler> _jsonHandlers = {};
-  static void addJsonHandler(ExploreJsonHandler handler) => _jsonHandlers.add(handler);
-  static void removeJsonHandler(ExploreJsonHandler handler) => _jsonHandlers.remove(handler);
-
-  static ExploreJsonHandler? _getJsonHandler(Map<String, dynamic>? json) {
-    if (json != null) {
-      for (ExploreJsonHandler handler in _jsonHandlers) {
-        if (handler.exploreCanJson(json)) {
-          return handler;
-        }
-      }
-    }
-    return null;
-  }
-
-  static Explore? fromJson(Map<String, dynamic>? json)  =>
-    _getJsonHandler(json)?.exploreFromJson(json);
-
-  // List
-  
-  static List<Explore>? listFromJson(List<dynamic>? jsonList) {
-    List<Explore>? explores;
-    if (jsonList is List) {
-      explores = <Explore>[];
-      for (dynamic jsonEntry in jsonList) {
-        Explore? explore = Explore.fromJson(jsonEntry);
-        if (explore != null) {
-          explores.add(explore);
-        }
-      }
-    }
-    return explores;
-  }
-
-  static List<dynamic>? listToJson(List<Explore>? explores) {
-    List<dynamic>? result;
-    if (explores != null) {
-      result = [];
-      for (Explore explore in explores) {
-        result.add(explore.toJson());
-      }
-    }
-    return result;
-  }
-
-}
-
-//////////////////////////////
-/// ExploreJsonHandler
-
-abstract class ExploreJsonHandler {
-  bool exploreCanJson(Map<String, dynamic>? json) => false;
-  Explore? exploreFromJson(Map<String, dynamic>? json) => null;
 }
 
 //////////////////////////////
@@ -258,12 +202,5 @@ class ExploreLocation {
 
   bool get isLocationCoordinateValid {
     return (latitude != null) && (latitude != 0) && (longitude != null) && (longitude != 0);
-  }
-
-  // ExploreJsonHandler
-  static bool canJson(Map<String, dynamic>? json) {
-    return (json != null) &&
-      (JsonUtils.doubleValue(json['latitude']) != null) &&
-      (JsonUtils.doubleValue(json['longitude']) != null);
   }
 }

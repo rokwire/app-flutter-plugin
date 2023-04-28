@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
@@ -442,6 +443,11 @@ class UrlUtils {
     return null;
   }
 
+  static String? getHost(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
+  }
+
   static String? getExt(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
@@ -466,6 +472,16 @@ class UrlUtils {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
   }
 
+  static Future<bool?> launchExternal(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri? uri = Uri.tryParse(url!);
+      if (uri != null) {
+        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      }
+    }
+    return null;
+  }
+
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
       Uri uri = Uri.parse(url);
@@ -476,6 +492,43 @@ class UrlUtils {
     }
     return url;
   }
+
+  static bool isValidUrl(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
+  }
+
+  static String? fixUrl(String url) {
+    Uri? uri = Uri.tryParse(url);
+    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    return (fixedUri != null) ? fixedUri.toString() : null;
+  }
+
+  static Uri? fixUri(Uri uri) {
+    return uri.scheme.isEmpty ? Uri(
+      scheme: 'http',
+      userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+      host: uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null),
+      port: (0 < uri.port) ? uri.port : null,
+      path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
+      //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+      query: uri.query.isNotEmpty ? uri.query : null,
+      //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+      fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
+  }
+
+  static Future<bool> isHostAvailable(String? url) async {
+    List<InternetAddress>? result;
+    String? host = getHost(url);
+    try {
+      result = (host != null) ? await InternetAddress.lookup(host) : null;
+    }
+    on SocketException catch (e) {
+      debugPrint(e.toString());
+    }
+    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+  }
+
 }
 
 
@@ -636,6 +689,21 @@ class JsonUtils {
       }
       else if (value is Set) {
         return List<String>.from(value.cast<String>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static List<int>? listIntsValue(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<int>();
+      }
+      else if (value is Set) {
+        return List<int>.from(value.cast<int>());
       }
     }
     catch(e) {
@@ -1144,6 +1212,9 @@ class DateTimeUtils {
     int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
     return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
+
+  static DateTime min(DateTime v1, DateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
 
 class Pair<L,R> {

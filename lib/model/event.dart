@@ -325,7 +325,6 @@ class Event with Explore, Favorite {
     return (other != null) ? Event(other: other) : null;
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       "id": id,
@@ -558,10 +557,6 @@ class Event with Explore, Favorite {
     }
 
     return result;
-  }
-
-  static bool canJson(Map<String, dynamic>? json) {
-    return (json != null) && (json['eventId'] != null);
   }
 
   static List<Event>? listFromJson(List<dynamic>? jsonList) {
