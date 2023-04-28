@@ -107,7 +107,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     if (_data is OptionData) {
       content.addAll([
         //title*
-        FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["title"], inputType: TextInputType.text),
+        FormFieldText('Title', padding: EdgeInsets.zero, controller: _textControllers["title"], inputType: TextInputType.text),
         //hint
         FormFieldText('Hint', padding: const EdgeInsets.only(top: 16), controller: _textControllers["hint"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
         //value* (dynamic value = _value ?? title)
@@ -117,43 +117,48 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       ],);
 
       // correct answer
-      content.add(Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-        Padding(padding: const EdgeInsets.only(top: 16, left: 16), child: Text("Correct Answer", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: Checkbox(
-          checkColor: Styles().colors?.surface,
-          activeColor: Styles().colors?.fillColorPrimary,
-          value: (_data as OptionData).isCorrect,
-          onChanged: _onToggleCorrect,
-        ))),
-      ],));
+      content.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
+        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Correct Answer", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+        tileColor: Styles().colors?.getColor('surface'),
+        checkColor: Styles().colors?.getColor('surface'),
+        activeColor: Styles().colors?.getColor('fillColorPrimary'),
+        value: (_data as OptionData).isCorrect,
+        onChanged: _onToggleCorrect,
+      ),));
     } else if (_data is ActionData) {
       //type*
-      content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(_supportedActions),
-            value: (_data as ActionData).type.name,
-            onChanged: _onChangeAction,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ))),],)
+      content.add(Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        margin: EdgeInsets.zero,
+        child: Row(children: [
+          Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+          Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+            DropdownButton<String>(
+              icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+              isExpanded: true,
+              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+              items: _buildSurveyDropdownItems<String>(_supportedActions),
+              value: (_data as ActionData).type.name,
+              onChanged: _onChangeAction,
+              dropdownColor: Styles().colors?.getColor('surface'),
+            ),
+          ),))],
+        )
       ));
       //label
-      content.add(FormFieldText('Label', padding: const EdgeInsets.symmetric(vertical: 4.0), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences));
+      content.add(FormFieldText('Label', padding: const EdgeInsets.only(top: 16), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences));
       //TODO
         // dynamic data (e.g., URL, phone num., sms num., etc.)
         // Map<String, dynamic> params
     }
 
-    return Column(children: content,);
+    return Padding(padding: const EdgeInsets.all(16), child: Column(children: content,));
   }
 
   Widget _buildDone() {
-    return Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+    return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
       borderColor: Styles().colors?.fillColorPrimaryVariant,
       backgroundColor: Styles().colors?.surface,
@@ -162,14 +167,14 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     ));
   }
 
-  List<DropdownMenuItem<T>> _buildSurveyDropDownItems<T>(Map<T, String> supportedItems) {
+  List<DropdownMenuItem<T>> _buildSurveyDropdownItems<T>(Map<T, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('background'),
+          color: Styles().colors?.getColor('surface'),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
         )),
       ));

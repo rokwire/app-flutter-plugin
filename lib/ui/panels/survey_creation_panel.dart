@@ -309,23 +309,24 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       displayEntry = _buildCollapsibleWrapper(summary, ruleElem.actions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
     }
 
-    return LongPressDraggable<String>(
-      data: ruleElem.id,
-      maxSimultaneousDrags: 1,
-      feedback: Card(child: Container(
-        height: 32,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
-      )),
-      child: DragTarget<String>(
-        builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
-          return displayEntry;
-        },
-        onAccept: (swapId) => _onAcceptRuleDrag(swapId, ruleElem.id, surveyElement, parentElement: parentElement),
-      ),
-      childWhenDragging: displayEntry,
-      axis: Axis.vertical,
-    );
+    // return LongPressDraggable<String>(
+    //   data: ruleElem.id,
+    //   maxSimultaneousDrags: 1,
+    //   feedback: Card(child: Container(
+    //     height: 32,
+    //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+    //     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
+    //   )),
+    //   child: DragTarget<String>(
+    //     builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
+    //       return displayEntry;
+    //     },
+    //     onAccept: (swapId) => _onAcceptRuleDrag(swapId, ruleElem.id, surveyElement, parentElement: parentElement),
+    //   ),
+    //   childWhenDragging: displayEntry,
+    //   axis: Axis.vertical,
+    // );
+    return displayEntry;
   }
 
   Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
@@ -414,6 +415,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   //TODO: does it make sense to swap?
+  /*
   void _onAcceptRuleDrag(String swapId, String id, SurveyElement surveyElement, {RuleElement? parentElement}) {
     RuleElement? current, swap;
     for (RuleResult followUp in surveyElement == SurveyElement.followUpRules ? _followUpRules : _resultRules) {
@@ -490,6 +492,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
     return false;
   }
+  */
 
   void _onTapEditData(int index) async {
     String dataKey = _data[index].key;

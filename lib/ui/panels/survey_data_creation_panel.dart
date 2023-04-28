@@ -125,81 +125,28 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     List<Widget> dataContent = [];
     if (_data is SurveyQuestionTrueFalse) {
       // style
-      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(SurveyQuestionTrueFalse.supportedStyles),
-            value: (_data as SurveyQuestionTrueFalse).style ?? SurveyQuestionTrueFalse.supportedStyles.entries.first.key,
-            onChanged: _onChangeStyle,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ),))],)
-      ));
+      String styleVal = (_data as SurveyQuestionTrueFalse).style ?? SurveyQuestionTrueFalse.supportedStyles.entries.first.key;
+      dataContent.add(_buildDropdownWidget<String>(SurveyQuestionTrueFalse.supportedStyles, "Style", styleVal, _onChangeStyle));
 
       // correct answer (dropdown: Yes/True, No/False, null)
       Map<bool?, String> supportedAnswers = {true: "Yes/True", false: "No/False", null: ""};
-      
-      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Correct Answer", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<bool?>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<bool?>(supportedAnswers),
-            value: (_data as SurveyQuestionTrueFalse).correctAnswer,
-            onChanged: _onChangeCorrectAnswer,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ),))],)
-      ));
+      dataContent.add(_buildDropdownWidget<bool?>(supportedAnswers, "Correct Answer", (_data as SurveyQuestionTrueFalse).correctAnswer, _onChangeCorrectAnswer));
     } else if (_data is SurveyQuestionMultipleChoice) {
       // style
-      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(SurveyQuestionMultipleChoice.supportedStyles),
-            value: (_data as SurveyQuestionMultipleChoice).style ?? SurveyQuestionMultipleChoice.supportedStyles.entries.first.key,
-            onChanged: _onChangeStyle,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ),))],)
-      ));
+      String styleVal = (_data as SurveyQuestionMultipleChoice).style ?? SurveyQuestionMultipleChoice.supportedStyles.entries.first.key;
+      dataContent.add(_buildDropdownWidget<String>(SurveyQuestionMultipleChoice.supportedStyles, "Style", styleVal, _onChangeStyle));
 
       // options
+      List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
       dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper('Options', (_data as SurveyQuestionMultipleChoice).options, _buildOptionsWidget, SurveyElement.data))
+        _buildCollapsibleWrapper('Options (${options.length})', options, _buildOptionsWidget, SurveyElement.data))
       );
       
       // allowMultiple
-      dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Multiple Answers", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: (_data as SurveyQuestionMultipleChoice).allowMultiple,
-        onChanged: _onToggleMultipleAnswers,
-      ),));
+      dataContent.add(_buildCheckboxWidget("Multiple Answers", (_data as SurveyQuestionMultipleChoice).allowMultiple, _onToggleMultipleAnswers));
       
       // selfScore
-      dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Self-Score", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: (_data as SurveyQuestionMultipleChoice).selfScore,
-        onChanged: _onToggleSelfScore,
-      ),));
+      dataContent.add(_buildCheckboxWidget("Self-Score", (_data as SurveyQuestionMultipleChoice).selfScore, _onToggleSelfScore));
     } else if (_data is SurveyQuestionDateTime) {
       _textControllers["start_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).startTime, format: "MM-dd-yyyy"));
       _textControllers["end_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).endTime, format: "MM-dd-yyyy"));
@@ -222,49 +169,21 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ));
     } else if (_data is SurveyQuestionNumeric) {
       // style
-      dataContent.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Style", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(SurveyQuestionNumeric.supportedStyles),
-            value: (_data as SurveyQuestionNumeric).style ?? SurveyQuestionNumeric.supportedStyles.entries.first.key,
-            onChanged: _onChangeStyle,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ),))],)
-      ));
+      String styleVal = (_data as SurveyQuestionNumeric).style ?? SurveyQuestionNumeric.supportedStyles.entries.first.key;
+      dataContent.add(_buildDropdownWidget<String>(SurveyQuestionNumeric.supportedStyles, "Style", styleVal, _onChangeStyle));
 
       _textControllers["minimum"] ??= TextEditingController(text: (_data as SurveyQuestionNumeric).minimum?.toString());
       _textControllers["maximum"] ??= TextEditingController(text: (_data as SurveyQuestionNumeric).maximum?.toString());
       //minimum
-      dataContent.add(FormFieldText('Minimum', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["minimum"], inputType: TextInputType.number,));
+      dataContent.add(FormFieldText('Minimum', padding: const EdgeInsets.symmetric(vertical: 16), controller: _textControllers["minimum"], inputType: TextInputType.number,));
       //maximum
       dataContent.add(FormFieldText('Maximum', padding: EdgeInsets.zero, controller: _textControllers["maximum"], inputType: TextInputType.number,));
 
       // wholeNum
-      dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Whole Number", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: (_data as SurveyQuestionNumeric).wholeNum,
-        onChanged: _onToggleWholeNumber,
-      ),));
+      dataContent.add(_buildCheckboxWidget("Whole Number", (_data as SurveyQuestionNumeric).wholeNum, _onToggleWholeNumber));
 
       // selfScore
-      dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Self-Score", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: (_data as SurveyQuestionNumeric).selfScore,
-        onChanged: _onToggleSelfScore,
-      ),));
+      dataContent.add(_buildCheckboxWidget("Self-Score", (_data as SurveyQuestionNumeric).selfScore, _onToggleSelfScore));
     } else if (_data is SurveyQuestionText) {
       _textControllers["min_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).minLength.toString());
       _textControllers["max_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).maxLength?.toString());
@@ -274,44 +193,19 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(FormFieldText('Maximum Length', padding: EdgeInsets.zero, controller: _textControllers["max_length"], inputType: TextInputType.number,));
     } else if (_data is SurveyDataResult) {
       // actions
+      List<ActionData> actions = (_data as SurveyDataResult).actions ?? [];
       dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: 
-        _buildCollapsibleWrapper('Actions', (_data as SurveyDataResult).actions ?? [], _buildActionsWidget, SurveyElement.data))
+        _buildCollapsibleWrapper('Actions (${actions.length})', actions, _buildActionsWidget, SurveyElement.data))
       );
     }
     // add SurveyDataPage and SurveyDataEntry later
 
     List<Widget> baseContent = [
       // data type
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(SurveyData.supportedTypes),
-            value: _data.type,
-            onChanged: _onChangeType,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ))),],)
-      ),
+      _buildDropdownWidget<String>(SurveyData.supportedTypes, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
 
       //section
-      Visibility(visible: widget.sections.isNotEmpty, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Section", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropDownItems<String>(Map.fromIterable(widget.sections)),
-            value: _data.section,
-            onChanged: _onChangeSection,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ),))],)
-      )),
+      Visibility(visible: widget.sections.isNotEmpty, child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections), "Section", _data.section, _onChangeSection)),
 
       //key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
@@ -323,15 +217,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       Visibility(visible: _data.isQuestion, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
 
       // allowSkip
-      Visibility(visible: _data.isQuestion, child: Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Required", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: !_data.allowSkip,
-        onChanged: _onToggleRequired,
-      ),)),
+      Visibility(visible: _data.isQuestion, child: _buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
       
       // defaultResponseRule
       Container(
@@ -441,10 +327,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       if (ruleElem is RuleReference || ruleElem is RuleAction || ruleElem is RuleComparison) {
         displayEntry = Card(child: Ink(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-          child: Row(children: [
-            ruleText,
+          child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+            Padding(padding: const EdgeInsets.only(left: 8), child: ruleText),
             Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: ruleElem, parentElement: parentElement, addRemove: addRemove)),
-          ],)
+          ],))
         ));
       } else if (ruleElem is RuleLogic) {
         displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, ruleElem.conditions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
@@ -468,22 +354,23 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         displayEntry = _buildCollapsibleWrapper(summary, ruleElem.actions, _buildRuleWidget, surveyElement, parentElement: ruleElem, parentIndex: ruleElemIndex, grandParentElement: parentElement);
       }
 
-      return LongPressDraggable<String>(
-        data: ruleElem.id,
-        maxSimultaneousDrags: 1,
-        feedback: Card(child: Container(
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-          child: ruleText
-        )),
-        child: DragTarget<String>(
-          builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
-            return displayEntry;
-          },
-          onAccept: (swapId) => _onAcceptRuleDrag(swapId, ruleElem.id, surveyElement, parentElement: parentElement),
-        ),
-        childWhenDragging: displayEntry,
-        axis: Axis.vertical,
-      );
+      // return LongPressDraggable<String>(
+      //   data: ruleElem.id,
+      //   maxSimultaneousDrags: 1,
+      //   feedback: Card(child: Container(
+      //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      //     child: ruleText
+      //   )),
+      //   child: DragTarget<String>(
+      //     builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
+      //       return displayEntry;
+      //     },
+      //     onAccept: (swapId) => _onAcceptRuleDrag(swapId, ruleElem.id, surveyElement, parentElement: parentElement),
+      //   ),
+      //   childWhenDragging: displayEntry,
+      //   axis: Axis.vertical,
+      // );
+      return displayEntry;
     }
     return Container();
   }
@@ -587,7 +474,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   Widget _buildDone() {
-    return Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+    return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
       borderColor: Styles().colors?.fillColorPrimaryVariant,
       backgroundColor: Styles().colors?.surface,
@@ -596,14 +483,48 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     ));
   }
 
-  List<DropdownMenuItem<T>> _buildSurveyDropDownItems<T>(Map<T, String> supportedItems) {
+  Widget _buildDropdownWidget<T>(Map<T, String> supportedItems, String label, T? value, Function(T?)? onChanged, {EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      margin: margin,
+      child: Row(children: [
+        Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<T>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildSurveyDropdownItems<T>(supportedItems),
+            value: value,
+            onChanged: onChanged,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ),))],
+      )
+    );
+  }
+
+  Widget _buildCheckboxWidget(String label, bool? value, Function(bool?)? onChanged) {
+    return Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
+      title: Padding(padding: const EdgeInsets.only(left: 8), child: Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
+      tileColor: Styles().colors?.getColor('surface'),
+      checkColor: Styles().colors?.getColor('surface'),
+      activeColor: Styles().colors?.getColor('fillColorPrimary'),
+      value: value,
+      onChanged: onChanged,
+    ),);
+  }
+
+  List<DropdownMenuItem<T>> _buildSurveyDropdownItems<T>(Map<T, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('background'),
+          color: Styles().colors?.getColor('surface'),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
         )),
       ));
@@ -653,6 +574,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   //TODO: does it make sense to swap?
+  /*
   void _onAcceptRuleDrag(String swapId, String id, SurveyElement surveyElement, {RuleElement? parentElement}) {
     RuleElement? current = (surveyElement == SurveyElement.defaultResponseRule ? _defaultResponseRule : _scoreRule)?.findElement(id);
     RuleElement? swap = (surveyElement == SurveyElement.defaultResponseRule ? _defaultResponseRule : _scoreRule)?.findElement(swapId);
@@ -700,6 +622,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     }
     return false;
   }
+  */
 
   void _onTapAddDataAtIndex(int index) {
     setState(() {

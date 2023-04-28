@@ -23,7 +23,6 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/popups/popup_message.dart';
-import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -200,22 +199,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     // better error messaging (required dropdowns missing selection)
     // handle missing data keys for survey data comparisons
   Widget _buildRuleElement() {
-    List<Widget> content = [Visibility(visible: widget.mayChangeType, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: 
-      Row(children: [
-        Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildDropDownItems<String>(_ruleElem.supportedAlternatives),
-            value: _getElementTypeString(),
-            onChanged: _onChangeElementType,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ))),
-      ],)
-    ))];
+    List<Widget> content = [Visibility(
+      visible: widget.mayChangeType,
+      child: _buildDropdownWidget<String>(_ruleElem.supportedAlternatives, "Type", _getElementTypeString(), _onChangeElementType, margin: EdgeInsets.zero)
+    )];
 
     String? operator;
     if (_ruleElem is RuleComparison) {
@@ -227,80 +214,25 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
     if (operator != null) {
       // dataKey
-      content.add(Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('Data Field', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))));
       content.add(_buildSurveyPropertyOptions('data_key'));
 
       // operator
-      content.add(Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 16), child: Row(children: [
-        Text("Operator", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildDropDownItems<String>(RuleComparison.supportedOperators),
-            value: operator,
-            onChanged: _onChangeComparisonType,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ))),
-      ],)));
+      content.add(_buildDropdownWidget<String>(RuleComparison.supportedOperators, "Operator", operator, _onChangeComparisonType));
 
       // compareTo
-      content.add(Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('Compare To', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))));
-      content.add(Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
-          semanticsLabel: 'Survey Value',
-          value: false,
-          groupValue: _customCompare,
-          onChanged: _onChangeCompareToType,
-          textWidget: Text('Survey Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
-          insidePadding: const EdgeInsets.all(4),
-          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-          size: 36
-        ),),
-        Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
-          semanticsLabel: 'Custom Value',
-          value: true,
-          groupValue: _customCompare,
-          onChanged: _onChangeCompareToType,
-          textWidget: Text('Custom Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
-          insidePadding: const EdgeInsets.all(4),
-          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-          size: 36
-        ),)
-      ],));
-
+      Map<bool, String> valueOptions = {false: 'Survey Value', true: 'Custom Value'};
+      content.add(_buildDropdownWidget<bool>(valueOptions, "Compare To", _customCompare, _onChangeCompareToType));
       content.add(_buildSurveyPropertyOptions('compare_to'));
     } else if (_ruleElem is RuleReference) {
       //TODO: add later - dropdown showing existing rules by summary? (pass existing rules into panel?)
     } else if (_ruleElem is RuleAction) {
       // action
-      content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-        Text("Action", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<String>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildDropDownItems<String>(RuleAction.supportedActions),
-            value: (_ruleElem as RuleAction).action,
-            onChanged: _onChangeActionType,
-            dropdownColor: Styles().colors?.getColor('background'),
-          ),
-        ))),
-      ],)));
+      content.add(_buildDropdownWidget<String>(RuleAction.supportedActions, "Action", (_ruleElem as RuleAction).action, _onChangeActionType));
 
       content.add(_buildActionSurveyOptions());
     }
 
-    return Padding(padding: const EdgeInsets.only(left: 8, right: 8, top: 20), child: Column(children: content));
+    return Padding(padding: const EdgeInsets.all(16), child: Column(children: content));
   }
 
   Widget _buildSurveyPropertyOptions(String settings) {
@@ -324,105 +256,26 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           break;
       }
 
-      List<Widget> surveyComparisonOptions = [];
-      for (MapEntry<String, String> option in _surveyPropertyOptions.entries) {
-        surveyComparisonOptions.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child:
-          RadioButton<String>(
-            semanticsLabel: option.value,
-            value: option.key,
-            groupValue: surveyOption,
-            onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'survey_option'),
-            textWidget: Text(option.value, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
-            insidePadding: const EdgeInsets.all(4),
-            backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-            borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-            selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-            disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-            size: 36
-          ),
-        ));
-      }
-      content.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: surveyComparisonOptions,)));
+      content.add(_buildDropdownWidget<String>(_surveyPropertyOptions, "Data Field", surveyOption, (value) => _onChangeSurveyPropertySetting(value, settings, 'survey_option')));
 
       switch (surveyOption) {
         case 'survey':
-          content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-            Text("Select survey option:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-            Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-              DropdownButton<String>(
-                icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                isExpanded: true,
-                style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                items: _buildDropDownItems<String>(Surveys.properties),
-                value: settingsMap['survey'],
-                onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'survey'),
-                dropdownColor: Styles().colors?.getColor('background'),
-              ),
-            ))),
-          ],)));
+          content.add(_buildDropdownWidget<String>(Surveys.properties, "Select survey option:", settingsMap['survey'], (value) => _onChangeSurveyPropertySetting(value, settings, 'survey')));
           break;
         case 'stats':
-          content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-            Text("Select stats option:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-            Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-              DropdownButton<String>(
-                icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                isExpanded: true,
-                style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                items: _buildDropDownItems<String>(Surveys.statsProperties),
-                value: settingsMap['stats'],
-                onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'stats'),
-                dropdownColor: Styles().colors?.getColor('background'),
-              ),
-            ))),
-          ],)));
+          content.add(_buildDropdownWidget<String>(Surveys.statsProperties, "Select stats option:", settingsMap['stats'], (value) => _onChangeSurveyPropertySetting(value, settings, 'stats')));
           if (settingsMap['stats'] == 'percentage') {
-            content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-              Text("Select section:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-              Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-                DropdownButton<String>(
-                  icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                  isExpanded: true,
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                  items: _buildDropDownItems<String>(Map.fromIterable(widget.sections)),
-                  value: settingsMap['key'],
-                  onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'key'),
-                  dropdownColor: Styles().colors?.getColor('background'),
-                ),
-              ))),
-            ],)));
+            content.add(_buildDropdownWidget<String>(Map.fromIterable(widget.sections), "Select section:", settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
           } else if (settingsMap['stats'] == 'response_data') {
-            content.add(Visibility(visible: widget.sections.isNotEmpty, child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-              Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-              Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-                DropdownButton<String>(
-                  icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                  isExpanded: true,
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                  items: _buildDropDownItems<String>(Map.fromIterable(widget.sections)),
-                  value: settingsMap['key'],
-                  onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'key'),
-                  dropdownColor: Styles().colors?.getColor('background'),
-                ),
-              ),))],)
-            )));
+            content.add(Visibility(
+              visible: widget.sections.isNotEmpty,
+              child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections), "Select section:", settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key'))
+            ));
           }
           break;
         case 'data':
-          content.add(Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-            Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-            Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-              DropdownButton<String>(
-                icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                isExpanded: true,
-                style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
-                value: settingsMap['key'],
-                onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'key'),
-                dropdownColor: Styles().colors?.getColor('background'),
-              ),
-            ))),
-          ],)));
+          content.add(_buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", settingsMap['key'],
+            (value) => _onChangeSurveyPropertySetting(value, settings, 'key'), padding: const EdgeInsets.all(16)));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
           int dataKeyIndex = widget.dataKeys.indexOf(settingsMap['data'] ?? '');
@@ -433,20 +286,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           if (dataType != 'survey_data.multiple_choice') {
             dataProperties.remove('correct_answers');
           }
-          content.add(Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: [
-            Text("Select survey data option:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-            Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-              DropdownButton<String>(
-                icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                isExpanded: true,
-                style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                items: _buildDropDownItems<String>(dataProperties),
-                value: settingsMap['data'],
-                onChanged: (value) => _onChangeSurveyPropertySetting(value, settings, 'data'),
-                dropdownColor: Styles().colors?.getColor('background'),
-              ),
-            ))),
-          ],)));
+          
+          content.add(_buildDropdownWidget<String>(dataProperties, "Select survey data option:", settingsMap['data'], (value) => _onChangeSurveyPropertySetting(value, settings, 'data')));
           break;
       }
 
@@ -454,7 +295,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
 
     // dropdown for type selection
-    return Padding(padding: const EdgeInsets.only(top: 16.0), child: FormFieldText('Value', controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true));
+    return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
   }
 
   Widget _buildActionSurveyOptions() {
@@ -462,100 +303,60 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     
     switch (ruleAction.action) {
       case 'return':
-        return Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-          Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-            DropdownButton<String>(
-              icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-              isExpanded: true,
-              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-              items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
-              value: _actionSettings['return'],
-              onChanged: (value) => _onChangeActionSetting(value, 'return'),
-              dropdownColor: Styles().colors?.getColor('background'),
-            ),
-          ))),
-        ],));
+        return _buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['return'],
+          (value) => _onChangeActionSetting(value, 'return'), padding: const EdgeInsets.all(16));
       case 'set_result':
+        Map<bool, String> valueOptions = {false: 'Survey Value', true: 'Custom Value'};
         return Column(children: [
-          Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text('Data Field', style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'))),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-            Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
-              semanticsLabel: 'Survey Value',
-              value: false,
-              groupValue: _customCompare,
-              onChanged: _onChangeCompareToType,
-              textWidget: Text('Survey Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
-              insidePadding: const EdgeInsets.all(4),
-              backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-              borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-              selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-              disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-              size: 36
-            ),),
-            Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: RadioButton<bool>(
-              semanticsLabel: 'Custom Value',
-              value: true,
-              groupValue: _customCompare,
-              onChanged: _onChangeCompareToType,
-              textWidget: Text('Custom Value', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), textAlign: TextAlign.center),
-              insidePadding: const EdgeInsets.all(4),
-              backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-              borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-              selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-              disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.mediumGray)),
-              size: 36
-            ),)
-          ],),
+          _buildDropdownWidget<bool>(valueOptions, "Data Field", _customCompare, _onChangeCompareToType),
           _buildSurveyPropertyOptions('action'),
-          Padding(padding: const EdgeInsets.only(top: 16.0), child: FormFieldText('Result Key', controller: _textControllers["result_data_key"], inputType: TextInputType.text, padding: const EdgeInsets.only(bottom: 8))),
+          FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
-        return Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-          Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-            DropdownButton<String>(
-              icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-              isExpanded: true,
-              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-              items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
-              value: _actionSettings['alert'],
-              onChanged: (value) => _onChangeActionSetting(value, 'alert'),
-              dropdownColor: Styles().colors?.getColor('background'),
-            ),
-          ))),
-        ],));
+        return _buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['alert'],
+          (value) => _onChangeActionSetting(value, 'alert'), padding: const EdgeInsets.all(16));
       case 'alert_result':
         return Column(children: [
-          Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-            Text("Select survey data key:", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-            Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-              DropdownButton<String>(
-                icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-                isExpanded: true,
-                style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-                items: _buildDropDownItems<String>(Map.fromIterable(widget.dataKeys)),
-                value: _actionSettings['alert_result'],
-                onChanged: (value) => _onChangeActionSetting(value, 'alert_result'),
-                dropdownColor: Styles().colors?.getColor('background'),
-              ),
-            ))),
-          ],)),
-          FormFieldText('Result Key', controller: _textControllers["result_data_key"], inputType: TextInputType.text, padding: const EdgeInsets.only(bottom: 8))
+          _buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['alert_result'],
+            (value) => _onChangeActionSetting(value, 'alert_result'), padding: const EdgeInsets.all(16)),
+          FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
     }
 
     return Container();
   }
 
-  List<DropdownMenuItem<T>> _buildDropDownItems<T>(Map<T, String> supportedItems) {
+  Widget _buildDropdownWidget<T>(Map<T, String> supportedItems, String label, T? value, Function(T?)? onChanged,
+    {EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 16), EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      padding: padding,
+      margin: margin,
+      child: Row(children: [
+        Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<T>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropdownItems<T>(supportedItems),
+            value: value,
+            onChanged: onChanged,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ),))],
+      )
+    );
+  }
+
+  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('background'),
+          color: Styles().colors?.getColor('surface'),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
         )),
       ));
@@ -564,7 +365,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   Widget _buildDone() {
-    return Padding(padding: const EdgeInsets.all(4.0), child: RoundedButton(
+    return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
       borderColor: Styles().colors?.fillColorPrimaryVariant,
       backgroundColor: Styles().colors?.surface,
@@ -573,7 +374,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     ));
   }
 
-  String toSurveyPropertyString(String settings) {
+  String _toSurveyPropertyString(String settings) {
     Map<String, String?> settingsMap = settings == 'data_key' ? _dataKeySettings : _actionSettings;
     switch (settingsMap['survey_option']) {
       case 'survey':
@@ -613,7 +414,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
   }
 
-  RuleComparison get defaultRuleComparison => RuleComparison(dataKey: toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
+  RuleComparison get defaultRuleComparison => RuleComparison(dataKey: _toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
 
   RuleAction get defaultRuleAction => RuleAction(action: "return", data: widget.dataKeys.isNotEmpty ? 'data.${widget.dataKeys[0]}' : null);
 
@@ -671,9 +472,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
-  void _onChangeCompareToType(bool value) {
+  void _onChangeCompareToType(bool? value) {
     setState(() {
-      _customCompare = value;
+      _customCompare = value ?? false;
     });
   }
 
@@ -743,13 +544,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onTapDone() {
     bool error = false;
     if (_ruleElem is RuleComparison) {
-      String dataKeyString = toSurveyPropertyString('data_key');
+      String dataKeyString = _toSurveyPropertyString('data_key');
       error = dataKeyString.isEmpty;
       (_ruleElem as RuleComparison).dataKey = dataKeyString;
       (_ruleElem as RuleComparison).compareTo = compareToValue;
       (_ruleElem as RuleComparison).defaultResult = false;
     } else if (_ruleElem is Rule && (_ruleElem as Rule).condition is RuleComparison) {
-      String dataKeyString = toSurveyPropertyString('data_key');
+      String dataKeyString = _toSurveyPropertyString('data_key');
       error = dataKeyString.isEmpty;
       ((_ruleElem as Rule).condition as RuleComparison).dataKey = dataKeyString;
       ((_ruleElem as Rule).condition as RuleComparison).compareTo = compareToValue;
@@ -762,7 +563,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           break;
         case 'set_result':
           error = _customCompare ? (_textControllers['custom_compare']?.text.isEmpty ?? true) : _actionSettings['set_result'] == null;
-          (_ruleElem as RuleAction).data = _customCompare ? compareToValue : toSurveyPropertyString('action');
+          (_ruleElem as RuleAction).data = _customCompare ? compareToValue : _toSurveyPropertyString('action');
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
           break;
