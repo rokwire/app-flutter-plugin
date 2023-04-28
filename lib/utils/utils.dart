@@ -1212,6 +1212,9 @@ class DateTimeUtils {
     int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
     return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
+
+  static DateTime min(DateTime v1, DateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
 
 class Pair<L,R> {
