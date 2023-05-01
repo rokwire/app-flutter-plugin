@@ -225,3 +225,11 @@ class AppDateTime with Service {
     return dateTimeToCompare;
   }
 }
+
+extension DateTimeUni on DateTime {
+  DateTime? toUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(this, AppDateTime().universityLocation!) : null;
+  static DateTime? nowUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(DateTime.now(), AppDateTime().universityLocation!) : null;
+
+  DateTime  toUniOrLocal() => timezone.TZDateTime.from(this, AppDateTime().universityLocation ?? timezone.local);
+  static DateTime  nowUniOrLocal() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(DateTime.now(), AppDateTime().universityLocation!) : DateTime.now();
+}

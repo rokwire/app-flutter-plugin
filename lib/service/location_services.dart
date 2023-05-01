@@ -117,7 +117,11 @@ class LocationServices with Service implements NotificationsListener {
   }
 
   Future<Position?> get location async {
-    return (await status == LocationServicesStatus.permissionAllowed) ? await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high) : null;
+    if (await status == LocationServicesStatus.permissionAllowed) {
+      try { return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high); }
+      catch(e) { debugPrint(e.toString()); }
+    }
+    return null;
   }
 
   // Location Monitor

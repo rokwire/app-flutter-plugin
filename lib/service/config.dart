@@ -259,10 +259,20 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void decryptSecretKeys(Map<String, dynamic>? config) {
-    dynamic secretKeys = (config != null) ? config['secretKeys'] : null;
+    dynamic secretKeys = config?['secretKeys'];
     if (secretKeys is String) {
-      String? secrets = AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV);
-      config!['secretKeys'] = JsonUtils.decodeMap(secrets);
+      config?['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+    }
+
+    if (config?['secretKeys'] is! Map<String, dynamic>) {
+      // Handle different encryption keys for limiting developer secret access
+      dynamic secrets = config?['secrets'];
+      if (secrets is Map<String, dynamic>) {
+        secretKeys = secrets[encryptionID];
+        if (secretKeys is String) {
+          config?['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+        }
+      }
     }
   }
 
@@ -397,6 +407,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: Encryption Keys
 
+  String? get encryptionID => (_encryptionKeys != null) ? _encryptionKeys!['id'] : null;
   String? get encryptionKey => (_encryptionKeys != null) ? _encryptionKeys!['key'] : null;
   String? get encryptionIV => (_encryptionKeys != null) ? _encryptionKeys!['iv'] : null;
 
