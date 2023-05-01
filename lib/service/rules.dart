@@ -319,27 +319,27 @@ class Rules {
 
   // RuleResult
 
-  dynamic evaluateRuleResult(RuleEngine engine, RuleResult result) {
+  dynamic evaluateRuleResult(RuleEngine engine, RuleResult result, {bool summarize = false}) {
     if (result is RuleReference) {
       Rule? subRule = engine.subRules[result.ruleKey];
       if (subRule != null) {
-        return evaluateRule(engine, subRule);
+        return evaluateRule(engine, subRule, summarize: summarize);
       }
     } else if (result is Rule) {
-      return evaluateRule(engine, result);
+      return evaluateRule(engine, result, summarize: summarize);
     } else if (result is RuleCases) {
       for (Rule rule in result.cases) {
-        dynamic caseResult = evaluateRule(engine, rule);
+        dynamic caseResult = evaluateRule(engine, rule, summarize: summarize);
         if (caseResult != null) {
           return caseResult;
         }
       }
     } else if (result is RuleAction) {
-      return evaluateAction(engine, result);
+      return evaluateAction(engine, result, summarize: summarize);
     } else if (result is RuleActionList) {
       List<dynamic> actionResults = [];
       for (RuleAction action in result.actions) {
-        actionResults.add(evaluateAction(engine, action));
+        actionResults.add(evaluateAction(engine, action, summarize: summarize));
       }
       return actionResults;
     }
@@ -349,7 +349,10 @@ class Rules {
 
   // Action
 
-  dynamic evaluateAction(RuleEngine engine, RuleAction action) {
+  dynamic evaluateAction(RuleEngine engine, RuleAction action, {bool summarize = false}) {
+    if (summarize) {
+      return action.getSummary();
+    }
     switch (action.action) {
       case "return":
         return _return(engine, action);
@@ -453,7 +456,7 @@ class Rules {
 
   // Rule
 
-  dynamic evaluateRule(RuleEngine engine, Rule rule) {
+  dynamic evaluateRule(RuleEngine engine, Rule rule, {bool summarize = false}) {
     RuleResult? result;
     if (rule.condition == null) {
       result = rule.trueResult;
@@ -465,7 +468,7 @@ class Rules {
       result = rule.falseResult;
     }
 
-    return result != null ? evaluateRuleResult(engine, result) : null;
+    return result != null ? evaluateRuleResult(engine, result, summarize: summarize) : null;
   }
 
   // Property getters

@@ -87,8 +87,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     super.dispose();
   }
 
-  List<String> get sections {
-    List<String> sectionList = [];
+  List<String?> get sections {
+    List<String?> sectionList = [null];
     for (TextEditingController controller in _sectionTextControllers) {
       if (controller.text.isNotEmpty) {
         sectionList.add(controller.text);
@@ -190,11 +190,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       iconColor: Styles().colors?.getColor('fillColorSecondary'),
       backgroundColor: Styles().colors?.getColor('background'),
       collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       title: Row(children: [
         Expanded(child: Text(
           label,
           maxLines: 2,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
         )),
         Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
           element: parentElement,
@@ -256,7 +258,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     RuleElement ruleElem = data as RuleElement;
-    String summary = ruleElem.getSummary();
+    String? prefix;
+    if (parentElement is Rule) {
+      prefix = index == 0 ? 'Yes:' : 'No:';
+    }
+    String summary = ruleElem.getSummary(prefix: prefix);
     if (index == 0 && surveyElement == SurveyElement.followUpRules && parentElement == null) {
       summary = "Start: $summary";
     }
@@ -531,6 +537,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         dataKeys: List.generate(_data.length, (index) => _data[index].key),
         dataTypes: List.generate(_data.length, (index) => _data[index].type),
         sections: sections,
+        forceActionReturnData: surveyElement == SurveyElement.followUpRules,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
 
@@ -610,14 +617,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapAddRuleElementForId(int index, SurveyElement surveyElement, RuleElement? element) {
     //TODO: what should defaults be?
     if (element is RuleCases) {
-      element.cases.insert(index, Rule(
+      element.cases.insert(index, index > 0 ? Rule.fromOther(element.cases[index-1]) : Rule(
         condition: RuleComparison(dataKey: "", operator: "==", compareTo: ""),
         trueResult: RuleAction(action: "return", data: null),
       ));
     } else if (element is RuleActionList) {
-      element.actions.insert(index, RuleAction(action: "return", data: null));
+      element.actions.insert(index, index > 0 ? RuleAction.fromOther(element.actions[index-1]) : RuleAction(action: "return", data: null));
     } else if (element is RuleLogic) {
-      element.conditions.insert(index, RuleComparison(dataKey: "", operator: "==", compareTo: ""));
+      element.conditions.insert(index, index > 0 ? RuleCondition.fromOther(element.conditions[index-1]) : RuleComparison(dataKey: "", operator: "==", compareTo: ""));
     }
 
     setState(() {
@@ -686,7 +693,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       data: <String, SurveyData>{for (var data in _data) data.key: SurveyData.fromOther(data)},
       type: '',
       scored: _scored,
-      title: _textControllers["title"]?.text ?? 'New Survey',
+      title: (_textControllers["title"]?.text.isNotEmpty ?? false) ? _textControllers["title"]!.text : 'New Survey',
       moreInfo: _textControllers["more_info"]?.text,
       defaultDataKey: defaultDataKey,
       defaultDataKeyRule: defaultDataKeyRule,
@@ -699,11 +706,33 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapPreview() {
-    // describe result rules that would have been evaluated on continue
-    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(survey: _buildSurvey(), tabBar: widget.tabBar)));
+    Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(
+      survey: _buildSurvey(),
+      onComplete: _onPreviewContinue,
+      summarizeResultRules: true,
+      tabBar: widget.tabBar
+    )));
+  }
+
+  void _onPreviewContinue(dynamic result) {
+    if (result is List<String>) {
+      String summary = '';
+      for (String actionSummary in result) {
+        summary += '\u2022 $actionSummary\n';
+      }
+      PopupMessage.show(context: context,
+        title: "Actions",
+        message: "These are the actions that would have been taken had a user completed this survey as you did\n\n$summary",
+        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
+        onTapButton: (context) {
+          Navigator.pop(context);
+        },
+      );
+    }
   }
 
   void _onTapCreate() {
+    //TODO: confirmation dialog?
     setLoading(true);
     Surveys().createSurvey(_buildSurvey()).then((success) {
       setLoading(false);

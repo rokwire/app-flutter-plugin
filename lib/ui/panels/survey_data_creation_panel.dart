@@ -34,7 +34,7 @@ class SurveyDataCreationPanel extends StatefulWidget {
   final List<String> dataKeys;
   final List<String> dataTypes;
   final Widget? tabBar;
-  final List<String> sections;
+  final List<String?> sections;
   final bool scoredSurvey;
 
   const SurveyDataCreationPanel({Key? key, required this.data, required this.dataKeys, required this.dataTypes, required this.sections, required this.scoredSurvey, this.tabBar}) : super(key: key);
@@ -129,7 +129,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(_buildDropdownWidget<String>(SurveyQuestionTrueFalse.supportedStyles, "Style", styleVal, _onChangeStyle));
 
       // correct answer (dropdown: Yes/True, No/False, null)
-      Map<bool?, String> supportedAnswers = {true: "Yes/True", false: "No/False", null: ""};
+      Map<bool?, String> supportedAnswers = {true: "Yes/True", false: "No/False", null: "None"};
       dataContent.add(_buildDropdownWidget<bool?>(supportedAnswers, "Correct Answer", (_data as SurveyQuestionTrueFalse).correctAnswer, _onChangeCorrectAnswer));
     } else if (_data is SurveyQuestionMultipleChoice) {
       // style
@@ -205,7 +205,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       _buildDropdownWidget<String>(SurveyData.supportedTypes, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
 
       //section
-      Visibility(visible: widget.sections.isNotEmpty, child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections), "Section", _data.section, _onChangeSection)),
+      Visibility(visible: widget.sections.isNotEmpty, child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section", _data.section, _onChangeSection)),
 
       //key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
@@ -274,7 +274,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         Expanded(child: Text(
           label,
           maxLines: 2,
-          style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+          style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
         )),
         Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
           element: parentElement,
@@ -304,7 +304,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data != null) {
       RuleElement ruleElem = data as RuleElement;
-      String summary = ruleElem.getSummary();
+      String? prefix;
+      if (parentElement is Rule) {
+        prefix = index == 0 ? 'Yes:' : 'No:';
+      }
+      String summary = ruleElem.getSummary(prefix: prefix);
       
       bool addRemove = false;
       int? ruleElemIndex;
@@ -483,7 +487,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     ));
   }
 
-  Widget _buildDropdownWidget<T>(Map<T, String> supportedItems, String label, T? value, Function(T?)? onChanged, {EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
+  Widget _buildDropdownWidget<T>(Map<T?, String> supportedItems, String label, T? value, Function(T?)? onChanged, {EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
     return Container(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -495,7 +499,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
             isExpanded: true,
             style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildSurveyDropdownItems<T>(supportedItems),
+            items: _buildDropdownItems<T>(supportedItems),
             value: value,
             onChanged: onChanged,
             dropdownColor: Styles().colors?.getColor('surface'),
@@ -517,16 +521,17 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     ),);
   }
 
-  List<DropdownMenuItem<T>> _buildSurveyDropdownItems<T>(Map<T, String> supportedItems) {
+  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T?, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
-    for (MapEntry<T, String> item in supportedItems.entries) {
+    for (MapEntry<T?, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
-        child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('surface'),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 16),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
-        )),
+        ),
+        alignment: Alignment.centerRight,
       ));
     }
     return items;
@@ -669,14 +674,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   void _onTapAddRuleElementForId(int index, SurveyElement surveyElement, RuleElement? element) {
     //TODO: what should defaults be?
     if (element is RuleCases) {
-      element.cases.insert(index, Rule(
+      element.cases.insert(index, index > 0 ? Rule.fromOther(element.cases[index-1]) : Rule(
         condition: RuleComparison(dataKey: "", operator: "==", compareTo: ""),
         trueResult: RuleAction(action: "return", data: null),
       ));
     } else if (element is RuleActionList) {
-      element.actions.insert(index, RuleAction(action: "return", data: null));
+      element.actions.insert(index, index > 0 ? RuleAction.fromOther(element.actions[index-1]) : RuleAction(action: "return", data: null));
     } else if (element is RuleLogic) {
-      element.conditions.insert(index, RuleComparison(dataKey: "", operator: "==", compareTo: ""));
+      element.conditions.insert(index, index > 0 ? RuleCondition.fromOther(element.conditions[index-1]) : RuleComparison(dataKey: "", operator: "==", compareTo: ""));
     }
 
     if (element != null) {

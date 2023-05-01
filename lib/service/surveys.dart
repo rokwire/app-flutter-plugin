@@ -95,7 +95,7 @@ class Surveys /* with Service */ {
     return Rules().getEngineProperty(key);
   }
 
-  Future<dynamic> evaluate(Survey survey, {bool evalResultRules = false}) async {
+  Future<dynamic> evaluate(Survey survey, {bool evalResultRules = false, bool summarizeResultRules = false}) async {
     SurveyStats surveyStats = SurveyStats();
     for (SurveyData? data = survey.firstQuestion; data != null; data = getFollowUp(survey, data)) {
       surveyStats += _getDataStats(survey, data);
@@ -103,17 +103,27 @@ class Surveys /* with Service */ {
     survey.stats = surveyStats;
 
     dynamic result;
+    List<String> resultSummaries = [];
     if (evalResultRules && CollectionUtils.isNotEmpty(survey.resultRules)) {
       Rules().clearDataCache(survey.id);
       for (RuleResult rule in survey.resultRules!) {
         dynamic ruleResult;
         if (rule is Rule) {
-          ruleResult = Rules().evaluateRule(survey, rule);
+          ruleResult = Rules().evaluateRule(survey, rule, summarize: summarizeResultRules);
+          if (summarizeResultRules) {
+            resultSummaries.add(ruleResult);
+          }
         } else if (rule is RuleAction) {
-          ruleResult = Rules().evaluateAction(survey, rule);
+          ruleResult = Rules().evaluateAction(survey, rule, summarize: summarizeResultRules);
+          if (summarizeResultRules) {
+            resultSummaries.add(ruleResult);
+          }
         } else if (rule is RuleActionList) {
           for (RuleAction action in rule.actions) {
-            ruleResult = Rules().evaluateAction(survey, action);
+            ruleResult = Rules().evaluateAction(survey, action, summarize: summarizeResultRules);
+            if (summarizeResultRules) {
+              resultSummaries.add(ruleResult);
+            }
           }
         }
         if (ruleResult is Future) {
@@ -124,7 +134,7 @@ class Surveys /* with Service */ {
         }
       }
     }
-    return result;
+    return summarizeResultRules ? resultSummaries : result;
   }
 
   static Map<String, String> get properties => {

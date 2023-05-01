@@ -139,7 +139,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
               icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
               isExpanded: true,
               style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-              items: _buildSurveyDropdownItems<String>(_supportedActions),
+              items: _buildDropdownItems<String>(_supportedActions),
               value: (_data as ActionData).type.name,
               onChanged: _onChangeAction,
               dropdownColor: Styles().colors?.getColor('surface'),
@@ -167,16 +167,17 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     ));
   }
 
-  List<DropdownMenuItem<T>> _buildSurveyDropdownItems<T>(Map<T, String> supportedItems) {
+  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
     for (MapEntry<T, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
-        child: Align(alignment: Alignment.center, child: Container(
-          color: Styles().colors?.getColor('surface'),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 16),
           child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
-        )),
+        ),
+        alignment: Alignment.centerRight,
       ));
     }
     return items;

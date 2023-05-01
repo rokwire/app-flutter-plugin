@@ -36,7 +36,7 @@ class SurveyWidgetController {
   // Callbacks
   Function(bool)? onChangeSurveyResponse;
   Function()? beforeComplete;
-  Function(SurveyResponse?)? onComplete;
+  Function(dynamic?)? onComplete;
   Function(Survey?)? onLoad;
   bool saving;
 
@@ -728,9 +728,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   void _finishSurvey() {
     _setSaving(true);
     widget.controller.beforeComplete?.call();
-    //TODO: use widget.summarizeResultRules to summarize instead of evaluate here
-    Surveys().evaluate(_survey!, evalResultRules: true).then((result) {
-      if (result is! SurveyResponse) {
+    Surveys().evaluate(_survey!, evalResultRules: true, summarizeResultRules: widget.summarizeResultRules).then((result) {
+      if (result is! SurveyResponse && !widget.summarizeResultRules) {
         result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
       }
       widget.controller.onComplete?.call(result);
