@@ -1217,6 +1217,17 @@ class DateTimeUtils {
   static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
 
+class TZDateTimeUtils {
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day);
+
+  static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
+    (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;
+
+  static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
 class Pair<L,R> {
   final L left;
   final R right;
