@@ -26,6 +26,7 @@ import 'package:rokwire_plugin/ui/panels/rule_element_creation_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_creation_panel.dart';
 import 'package:rokwire_plugin/ui/popups/popup_message.dart';
+import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
 import 'package:rokwire_plugin/ui/widget_builders/loading.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -732,7 +733,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapCreate() {
-    //TODO: confirmation dialog?
+    List<Widget> buttons = [
+      Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: _createSurvey)),
+      Padding(padding: const EdgeInsets.only(left: 8), child: ButtonBuilder.standardRoundedButton(label: 'No', onTap: _dismissCreateSurvey)),
+    ];
+    ActionsMessage.show(context: context,
+      title: "Create Survey",
+      message: "Are you sure you want to create this survey?",
+      buttons: buttons,
+    );
+  }
+
+  void _createSurvey() {
+    Navigator.pop(context);
     setLoading(true);
     Surveys().createSurvey(_buildSurvey()).then((success) {
       setLoading(false);
@@ -747,6 +760,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         barrierDismissible: false,
       );
     });
+  }
+
+  void _dismissCreateSurvey() {
+    Navigator.pop(context);
   }
 
   void setLoading(bool value) {

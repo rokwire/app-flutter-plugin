@@ -139,12 +139,12 @@ class Surveys /* with Service */ {
 
   static Map<String, String> get properties => {
     "completion": "Completion",
-    "scores": "Scores",
-    "date_updated": "Date Updated",
+    // "scores": "Scores",
+    // "date_updated": "Date Updated",
     "scored": "Scored",
-    "type": "Type",
+    // "type": "Type",
     "result_data": "Result Data",
-    "response_keys": "Response Keys",
+    // "response_keys": "Response Keys",
     // "auth": "Authentication Info",
   };
 
@@ -164,7 +164,7 @@ class Surveys /* with Service */ {
       case "scores":
         return stats?.scores;
       case "maximum_scores":
-        return stats?.scores;
+        return stats?.maximumScores;
       case "percentage":
         String subKey = key?.subKey ?? '';
         if (stats?.scores[subKey] != null && stats?.maximumScores[subKey] != null) {
@@ -187,10 +187,11 @@ class Surveys /* with Service */ {
     "total": "Total",
     "complete": "Complete",
     "scored": "Scored",
-    "scores": "Scores",
+    // "scores": "Scores",
+    // "maximum_scores": "Maximum Scores",
     "percentage": "Percentage",
     "total_score": "Total Score",
-    "response_data": "Response Data",
+    // "response_data": "Response Data",
   };
 
   // SurveyData

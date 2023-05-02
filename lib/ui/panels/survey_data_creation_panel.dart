@@ -204,16 +204,16 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // data type
       _buildDropdownWidget<String>(SurveyData.supportedTypes, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
 
-      //section
-      Visibility(visible: widget.sections.isNotEmpty, child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section", _data.section, _onChangeSection)),
+      // section
+      Visibility(visible: widget.sections.isNotEmpty && _data is! SurveyDataResult, child: _buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section", _data.section, _onChangeSection)),
 
-      //key*
+      // key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
-      //question text*
+      // question text*
       FormFieldText('Question Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
-      //more info (Additional Info)
+      // more info (Additional Info)
       FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
-      //maximum score (number, show if survey is scored)
+      // maximum score (number, show if survey is scored)
       Visibility(visible: _data.isQuestion, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
 
       // allowSkip
