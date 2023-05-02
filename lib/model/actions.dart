@@ -65,6 +65,14 @@ class ActionData {
       'params': params
     };
   }
+
+  static Map<String, String> get supportedTypes => const {
+    // "none": "None",
+    "launchUri": "Launch URI",
+    // "showSurvey": "Show Survey",
+    // "showPanel": "Show Panel",
+    // "dismiss": "Dismiss",
+  };
 }
 
 class ButtonAction {

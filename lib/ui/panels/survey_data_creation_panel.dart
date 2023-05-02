@@ -191,7 +191,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(FormFieldText('Minimum Length', padding: const EdgeInsets.symmetric(vertical: 16), controller: _textControllers["min_length"], inputType: TextInputType.number, required: true));
       //maxLength
       dataContent.add(FormFieldText('Maximum Length', padding: EdgeInsets.zero, controller: _textControllers["max_length"], inputType: TextInputType.number,));
-    } else if (_data is SurveyDataResult) {
+    } else if (_data is SurveyDataResult && _data.type == 'survey_data.action') {
       // actions
       List<ActionData> actions = (_data as SurveyDataResult).actions ?? [];
       dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: 
@@ -220,7 +220,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       Visibility(visible: _data.isQuestion, child: _buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
       
       // defaultResponseRule
-      Container(
+      Visibility(visible: _data is! SurveyDataResult, child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
@@ -236,10 +236,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             _buildRuleWidget(0, _defaultResponseRule, SurveyElement.defaultResponseRule, null)
           )),
         ])
-      ),
+      )),
 
       // scoreRule (show entry if survey is scored)
-      Visibility(visible: widget.scoredSurvey, child: Container(
+      Visibility(visible: widget.scoredSurvey && _data is! SurveyDataResult, child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
@@ -740,9 +740,28 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _onTapManageDefaultResponseRule() {
+    RuleResult? defaultRule;
+    switch (_data.type) {
+      case "survey_data.true_false":
+        List<OptionData> options = (_data as SurveyQuestionTrueFalse).options;
+        defaultRule = RuleAction(action: "return", data: options.first.value);
+        break;
+      case "survey_data.multiple_choice":
+        List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
+        defaultRule = RuleAction(action: "return", data: options.isNotEmpty ? options.first.value : 0);
+        break;
+      case "survey_data.date_time":
+        defaultRule = RuleAction(action: "return", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
+        break;
+      case "survey_data.numeric":
+        defaultRule = RuleAction(action: "return", data: 0);
+        break;
+      case "survey_data.text":
+        defaultRule = RuleAction(action: "return", data: "");
+        break;
+    }
     setState(() {
-      //TODO: use SurveyData type to determine what default data field should be
-      _defaultResponseRule = _defaultResponseRule == null ? RuleAction(action: "return", data: null) : null;
+      _defaultResponseRule = _defaultResponseRule == null ? defaultRule : null;
     });
   }
 
@@ -776,8 +795,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         case "survey_data.text":
           _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
           break;
-        case "survey_data.result":
+        case "survey_data.info":
           _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo);
+          break;
+        case "survey_data.action":
+          _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo, actions: []);
           break;
       }
     });

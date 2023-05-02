@@ -380,7 +380,8 @@ abstract class SurveyData {
     "survey_data.date_time": "Date/Time",
     "survey_data.numeric": "Numeric",
     "survey_data.text": "Text",
-    "survey_data.result": "Info/Action"
+    "survey_data.info": "Info",
+    "survey_data.action": "Action"
   };
 
   bool get isQuestion;
@@ -441,7 +442,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
     json['correct_answer'] = correctAnswer;
-    json['type'] = 'survey_data.true_false';
+    json['type'] = type;
     return json;
   }
 
@@ -521,7 +522,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
     json['correct_answers'] = correctAnswers;
     json['allow_multiple'] = allowMultiple;
     json['self_score'] = selfScore;
-    json['type'] = 'survey_data.multiple_choice';
+    json['type'] = type;
     return json;
   }
 
@@ -598,7 +599,7 @@ class SurveyQuestionDateTime extends SurveyData {
     json['start_time'] = AppDateTime().dateTimeLocalToJson(startTime);
     json['end_time'] = AppDateTime().dateTimeLocalToJson(endTime);
     json['ask_time'] = askTime;
-    json['type'] = 'survey_data.date_time';
+    json['type'] = type;
     return json;
   }
 
@@ -671,7 +672,7 @@ class SurveyQuestionNumeric extends SurveyData {
     json['maximum'] = maximum;
     json['whole_num'] = wholeNum;
     json['self_score'] = selfScore;
-    json['type'] = 'survey_data.numeric';
+    json['type'] = type;
     return json;
   }
 
@@ -745,7 +746,7 @@ class SurveyQuestionText extends SurveyData {
     Map<String, dynamic> json = baseJson();
     json['min_length'] = minLength;
     json['max_length'] = maxLength;
-    json['type'] = 'survey_data.text';
+    json['type'] = type;
     return json;
   }
 
@@ -887,7 +888,7 @@ class SurveyDataResult extends SurveyData {
   bool get isQuestion => false;
 
   @override
-  String get type => 'survey_data.result';
+  String get type => actions != null ? 'survey_data.action' : 'survey_data.info';
 }
 
 /*

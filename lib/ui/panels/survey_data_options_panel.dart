@@ -42,7 +42,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
 
   late dynamic _data;
   String _headerText = '';
-  final Map<String, String> _supportedActions = {};
+  String? _actionDataType;
 
   @override
   void initState() {
@@ -59,10 +59,16 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       _headerText = 'Edit Action';
 
       _textControllers["label"] = TextEditingController(text: (_data as ActionData).label?.toString());
-    }
+      _textControllers["data"] = TextEditingController(text: (_data as ActionData).data?.toString());
 
-    for (ActionType action in ActionType.values) {
-      _supportedActions[action.name] = action.name;
+      dynamic actionData = (_data as ActionData).data;
+      if (actionData is String) {
+        if (actionData.startsWith('tel:')) {
+          _actionDataType = 'phone';
+        } else if (actionData.startsWith('http')) {
+          _actionDataType = 'url';
+        }
+      }
     }
 
     super.initState();
@@ -128,30 +134,20 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       ),));
     } else if (_data is ActionData) {
       //type*
-      content.add(Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        margin: EdgeInsets.zero,
-        child: Row(children: [
-          Text("Type", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-          Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-            DropdownButton<String>(
-              icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-              isExpanded: true,
-              style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-              items: _buildDropdownItems<String>(_supportedActions),
-              value: (_data as ActionData).type.name,
-              onChanged: _onChangeAction,
-              dropdownColor: Styles().colors?.getColor('surface'),
-            ),
-          ),))],
-        )
-      ));
+      content.add(_buildDropdownWidget<String>(ActionData.supportedTypes, "Type", (_data as ActionData).type.name, _onChangeAction, margin: EdgeInsets.zero));
       //label
       content.add(FormFieldText('Label', padding: const EdgeInsets.only(top: 16), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences));
-      //TODO
-        // dynamic data (e.g., URL, phone num., sms num., etc.)
-        // Map<String, dynamic> params
+      
+      //data
+      Map<String, String>? supportedDataTypes = _getSupportedActionDataTypes((_data as ActionData).type);
+      if (supportedDataTypes != null) {
+        content.add(_buildDropdownWidget<String>(supportedDataTypes, "Data Type", _actionDataType, _onChangeActionDataType));
+
+        content.add(FormFieldText('Value', padding: const EdgeInsets.only(top: 16), controller: _textControllers["data"],
+          inputType: _getActionTextInputType(_actionDataType), maxLength: _getActionTextMaxLength(_actionDataType)));
+      }
+      
+      //TODO: Map<String, dynamic> params (internal flag for URIs)
     }
 
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: content,));
@@ -167,10 +163,32 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     ));
   }
 
-  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T, String> supportedItems) {
+  Widget _buildDropdownWidget<T>(Map<T?, String> supportedItems, String label, T? value, Function(T?)? onChanged, {EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
+    return Container(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      margin: margin,
+      child: Row(children: [
+        Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
+          DropdownButton<T>(
+            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            isExpanded: true,
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
+            items: _buildDropdownItems<T>(supportedItems),
+            value: value,
+            onChanged: onChanged,
+            dropdownColor: Styles().colors?.getColor('surface'),
+          ),
+        ),))],
+      )
+    );
+  }
+
+  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T?, String> supportedItems) {
     List<DropdownMenuItem<T>> items = [];
 
-    for (MapEntry<T, String> item in supportedItems.entries) {
+    for (MapEntry<T?, String> item in supportedItems.entries) {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Padding(
@@ -183,9 +201,51 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     return items;
   }
 
+  Map<String, String>? _getSupportedActionDataTypes(ActionType actionType) {
+    switch (actionType) {
+      case ActionType.launchUri:
+        //TODO: add more URI types (e.g., email?, sms?)
+        return {'phone': 'Phone Number', 'url': 'URL'};
+      case ActionType.showSurvey:
+        //TODO: get list of surveys that the creator may "link" to?
+      case ActionType.showPanel:
+        //TODO: get list of panels that the creator may "link" to?
+      default:
+        return null;
+    }
+  }
+
+  TextInputType? _getActionTextInputType(String? actionDataType) {
+    switch (actionDataType) {
+      case 'phone':
+        return TextInputType.phone;
+      case 'url':
+        return TextInputType.url;
+      default:
+        return null;
+    }
+  }
+
+  int? _getActionTextMaxLength(String? actionDataType) {
+    switch (actionDataType) {
+      case 'phone':
+        return 10;
+      default:
+        return null;
+    }
+  }
+
   void _onChangeAction(String? action) {
     setState(() {
       (_data as ActionData).type = action != null ? ActionType.values.byName(action) : ActionType.none;
+      Map<String, String>? supportedDataTypes = _getSupportedActionDataTypes((_data as ActionData).type);
+      _actionDataType = supportedDataTypes?.isNotEmpty ?? false ? supportedDataTypes!.keys.first : null;
+    });
+  }
+
+  void _onChangeActionDataType(String? dataType) {
+    setState(() {
+      _actionDataType = dataType;
     });
   }
 
@@ -206,6 +266,10 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       (_data as OptionData).value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
     } else if (_data is ActionData) {
       (_data as ActionData).label = _textControllers["label"]!.text;
+      (_data as ActionData).data = _textControllers["data"]!.text;
+      if (_actionDataType == 'phone') {
+        (_data as ActionData).data = 'tel:${StringUtils.constructUsPhone((_data as ActionData).data)}';
+      }
     }
 
     Navigator.of(context).pop(_data);
