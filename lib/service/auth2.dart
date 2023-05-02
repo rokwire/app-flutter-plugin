@@ -754,6 +754,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           "username": username,
           "password": password
         },
+        'params': {
+          "sign_up": false,
+        },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
@@ -768,7 +771,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       else {
         _notifyLogin(usernameLoginType, false);
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
-        if (error?.status == 'invalid') {
+        if (error?.status == 'not-found') {
+          return Auth2UsernameSignInResult.failedNotFound;
+        } else if (error?.status == 'invalid') {
           return Auth2UsernameSignInResult.failedInvalid;
         }
       }
@@ -802,7 +807,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        return Auth2UsernameSignUpResult.succeeded;
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        _notifyLogin(usernameLoginType, result);
+        return result ? Auth2UsernameSignUpResult.succeeded : Auth2UsernameSignUpResult.failed;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
         return Auth2UsernameSignUpResult.failedAccountExist;
@@ -1463,6 +1470,7 @@ Auth2UsernameSignUpResult auth2UsernameSignUpResultFromAuth2LinkResult(Auth2Link
 enum Auth2UsernameSignInResult {
   succeeded,
   failed,
+  failedNotFound,
   failedInvalid,
 }
 
