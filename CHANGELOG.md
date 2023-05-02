@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added title parameters to SliverToutHeaderBar [#3149](https://github.com/rokwire/illinois-app/issues/3149).
 - Created TZDateTimeUtils [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
+- Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
+
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 - Removed Explore.toJson definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
