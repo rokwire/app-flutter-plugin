@@ -382,7 +382,7 @@ class RuleAction extends RuleActionResult {
     "alert_result": "Alert Result",
     // "notify": "Notify",
     "save": "Save",
-    // "local_notify": "Local Notify",
+    "local_notify": "Local Notify",
   };
 
   @override

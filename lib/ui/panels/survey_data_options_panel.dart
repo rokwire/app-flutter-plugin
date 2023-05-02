@@ -22,6 +22,7 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyDataOptionsPanel extends StatefulWidget {
@@ -89,23 +90,8 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       appBar: HeaderBar(title: _headerText),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: Column(
-        children: [
-          Expanded(child: Scrollbar(
-            radius: const Radius.circular(2),
-            thumbVisibility: true,
-            controller: _scrollController,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: _buildSurveyDataOptions(),
-            ),
-          )),
-          Container(
-            color: Styles().colors?.backgroundVariant,
-            child: _buildDone(),
-          ),
-        ],
-    ));
+      body: SurveyElementCreationWidget(body: _buildSurveyDataOptions(), completionOptions: _buildDone(), scrollController: _scrollController,)
+    );
   }
 
   Widget _buildSurveyDataOptions() {
@@ -123,31 +109,25 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       ],);
 
       // correct answer
-      content.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: CheckboxListTile(
-        title: Padding(padding: const EdgeInsets.only(left: 8), child: Text("Correct Answer", style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-        tileColor: Styles().colors?.getColor('surface'),
-        checkColor: Styles().colors?.getColor('surface'),
-        activeColor: Styles().colors?.getColor('fillColorPrimary'),
-        value: (_data as OptionData).isCorrect,
-        onChanged: _onToggleCorrect,
-      ),));
+      content.add(SurveyElementCreationWidget.buildCheckboxWidget("Correct Answer", (_data as OptionData).isCorrect, _onToggleCorrect));
     } else if (_data is ActionData) {
       //type*
-      content.add(_buildDropdownWidget<String>(ActionData.supportedTypes, "Type", (_data as ActionData).type.name, _onChangeAction, margin: EdgeInsets.zero));
+      //TODO: error building
+      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(ActionData.supportedTypes, "Type", (_data as ActionData).type.name, _onChangeAction, margin: EdgeInsets.zero));
       //label
       content.add(FormFieldText('Label', padding: const EdgeInsets.only(top: 16), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences));
       
       //data
       Map<String, String>? supportedDataTypes = _getSupportedActionDataTypes((_data as ActionData).type);
       if (supportedDataTypes != null) {
-        content.add(_buildDropdownWidget<String>(supportedDataTypes, "Data Type", _actionDataType, _onChangeActionDataType));
+        content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(supportedDataTypes, "Data Type", _actionDataType, _onChangeActionDataType));
 
         content.add(FormFieldText('Value', padding: const EdgeInsets.only(top: 16), controller: _textControllers["data"],
           inputType: _getActionTextInputType(_actionDataType), maxLength: _getActionTextMaxLength(_actionDataType)));
       }
       
       //TODO: Map<String, dynamic> params (internal flag for URIs)
+      // need this for local_notify
     }
 
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: content,));
@@ -163,44 +143,6 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     ));
   }
 
-  Widget _buildDropdownWidget<T>(Map<T?, String> supportedItems, String label, T? value, Function(T?)? onChanged, {EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
-    return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      margin: margin,
-      child: Row(children: [
-        Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular')),
-        Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
-          DropdownButton<T>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
-            isExpanded: true,
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular'),
-            items: _buildDropdownItems<T>(supportedItems),
-            value: value,
-            onChanged: onChanged,
-            dropdownColor: Styles().colors?.getColor('surface'),
-          ),
-        ),))],
-      )
-    );
-  }
-
-  List<DropdownMenuItem<T>> _buildDropdownItems<T>(Map<T?, String> supportedItems) {
-    List<DropdownMenuItem<T>> items = [];
-
-    for (MapEntry<T?, String> item in supportedItems.entries) {
-      items.add(DropdownMenuItem<T>(
-        value: item.key,
-        child: Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
-        ),
-        alignment: Alignment.centerRight,
-      ));
-    }
-    return items;
-  }
-
   Map<String, String>? _getSupportedActionDataTypes(ActionType actionType) {
     switch (actionType) {
       case ActionType.launchUri:
@@ -208,6 +150,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
         return {'phone': 'Phone Number', 'url': 'URL'};
       case ActionType.showSurvey:
         //TODO: get list of surveys that the creator may "link" to?
+        // need this for local_notify (how to self-reference this survey?, right now, need to set data = id, which is set by backend)
       case ActionType.showPanel:
         //TODO: get list of panels that the creator may "link" to?
       default:

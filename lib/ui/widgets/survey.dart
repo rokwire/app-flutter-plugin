@@ -36,7 +36,7 @@ class SurveyWidgetController {
   // Callbacks
   Function(bool)? onChangeSurveyResponse;
   Function()? beforeComplete;
-  Function(dynamic?)? onComplete;
+  Function(dynamic)? onComplete;
   Function(Survey?)? onLoad;
   bool saving;
 
@@ -113,11 +113,6 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         }
       });
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   @override
