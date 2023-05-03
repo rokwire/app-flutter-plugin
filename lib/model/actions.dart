@@ -17,17 +17,21 @@ class ActionData {
 
   ActionData({this.type = ActionType.none, this.label, this.data, this.params = const {}});
 
-  factory ActionData.fromJson(dynamic json) {
+  factory ActionData.fromJson(dynamic json, {String? engineId}) {
     if (json is Map<String, dynamic>) {
       ActionType? type;
       try {
         type = ActionType.values.byName(json['type']);
       } catch(e) { debugPrint(e.toString()); }
 
+      dynamic data = json['data'];
+      if (type == ActionType.showSurvey && json['data'] == 'this') {
+        data = engineId;
+      }
       return ActionData(
         type: type ?? ActionType.none,
         label: JsonUtils.stringValue(json['label']),
-        data: json['data'],
+        data: data,
         params: JsonUtils.mapValue(json['params']) ?? {},
       );
     } else if (json is String) {
@@ -41,10 +45,10 @@ class ActionData {
     return ActionData(type: ActionType.none);
   }
 
-  static List<ActionData> listFromJson(List<dynamic>? jsonList) {
+  static List<ActionData> listFromJson(List<dynamic>? jsonList, {String? engineId}) {
     List<ActionData> list = [];
     for (dynamic json in jsonList ?? []) {
-      list.add(ActionData.fromJson(json));
+      list.add(ActionData.fromJson(json, engineId: engineId));
     }
     return list;
   }
@@ -69,10 +73,22 @@ class ActionData {
   static Map<String, String> get supportedTypes => const {
     // "none": "None",
     "launchUri": "Launch URI",
-    // "showSurvey": "Show Survey",
+    "showSurvey": "Show Survey",
     // "showPanel": "Show Panel",
     // "dismiss": "Dismiss",
   };
+
+  bool? get isInternalUri => params["internal"] is bool ? params["internal"] : null;
+
+  set isInternalUri(bool? value) {
+    params["internal"] = value;
+  }
+
+  bool? get isPrimaryForNotification => params["primary"] is bool ? params["primary"] : null;
+
+  set isPrimaryForNotification(bool? value) {
+    params["primary"] = value;
+  }
 }
 
 class ButtonAction {

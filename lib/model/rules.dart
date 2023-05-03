@@ -388,6 +388,7 @@ class RuleAction extends RuleActionResult {
   @override
   String getSummary({String? prefix, String? suffix}) {
     String summary = "${supportedActions[action]}";
+    //TODO: summarize class objects (Alert)
     if (data != null) {
       summary += " $data";
     }

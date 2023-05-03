@@ -18,6 +18,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
+import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
@@ -78,6 +79,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     "set_result": null,
     "alert": null,
     "alert_result": null,
+    "local_notify.period": null,
 
     "survey_option": null, // survey, stats, or data
     "survey": null,
@@ -105,6 +107,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     }
 
     String? customData;
+    String? localNotifyTitle;
+    String? localNotifyText;
+    int? localNotifyPeriod;
     if (comparison != null) {
       _dataKeySettings.addEntries(_initSettings(comparison.dataKey));
 
@@ -122,25 +127,50 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         customData = comparison.compareTo?.toString() ?? '';
       }
     } else if (_ruleElem is RuleAction) {
-      dynamic actionData = (_ruleElem as RuleAction).data;
-      _customCompare = actionData is! String;
+      RuleAction action = _ruleElem as RuleAction;
+      _customCompare = action.data is! String;
       if (!_customCompare) {
-        customData = actionData as String;
+        customData = action.data as String;
         if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
           _actionSettings.addEntries(_initSettings(customData));
         } else {
           _customCompare = true;
         }
-      } else if (actionData is DateTime) {
+      } else if (action.data is DateTime) {
         customData = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleAction).data, format: "MM-dd-yyyy") ?? '';
       } else {
-        customData = actionData?.toString() ?? '';
+        customData = action.data?.toString() ?? '';
+      }
+
+      if (action.action == 'local_notify') {
+        Alert alert = action.data as Alert;
+        localNotifyTitle = alert.title;
+        localNotifyText = alert.text;
+        Duration? duration = alert.timeToAlert;
+        if (duration != null) {
+          if (duration.inDays > 0) {
+            localNotifyPeriod = duration.inDays;
+            _actionSettings['local_notify.period'] = 'days';
+          } else if (duration.inHours > 0) {
+            localNotifyPeriod = duration.inHours;
+            _actionSettings['local_notify.period'] = 'hours';
+          } else if (duration.inMinutes > 0) {
+            localNotifyPeriod = duration.inMinutes;
+            _actionSettings['local_notify.period'] = 'minutes';
+          } else if (duration.inSeconds > 0) {
+            localNotifyPeriod = duration.inSeconds;
+            _actionSettings['local_notify.period'] = 'seconds';
+          }
+        }
       }
     }
 
     _textControllers = {
       "custom_compare": TextEditingController(text: customData),
       "result_data_key": TextEditingController(text: (_ruleElem is RuleAction) ? (_ruleElem as RuleAction).dataKey : null),
+      "local_notify.title": TextEditingController(text: localNotifyTitle),
+      "local_notify.text": TextEditingController(text: localNotifyText),
+      "local_notify.period": TextEditingController(text: localNotifyPeriod?.toString())
     };
     super.initState();
   }
@@ -256,6 +286,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
       case 'local_notify':
+        Map<String, String> unitOptions = {'seconds': 'Seconds', 'minutes': 'Minutes', 'hours': 'Hours', 'days': 'Days'};
         return Column(children: [
           // title
           FormFieldText('Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["local_notify.title"], textCapitalization: TextCapitalization.words,),
@@ -272,10 +303,18 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             onRemove: _onTapRemoveAction,
             onDrag: _onAcceptDataDrag,
           ),
-          //TODO: period (number and secs/mins/hrs) should there be a minimum or maximum?
-          FormFieldText('Period', padding: const EdgeInsets.only(top: 16), controller: _textControllers["local_notify.period"], inputType: TextInputType.number),
-          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Unit:", _actionSettings['local_notify.period'],
-            (value) => _onChangeActionSetting(value, 'local_notify.period')),
+          // period
+          Row(children: [
+            Flexible(
+              flex: 1,
+              child: FormFieldText('Period', padding: const EdgeInsets.only(top: 16, right: 8), controller: _textControllers["local_notify.period"], inputType: TextInputType.number),
+            ),
+            Flexible(
+              flex: 1,
+              child: SurveyElementCreationWidget.buildDropdownWidget<String>(unitOptions, "Unit", _actionSettings['local_notify.period'],
+                (value) => _onChangeActionSetting(value, 'local_notify.period'), margin: const EdgeInsets.only(top: 16, left: 8)),
+            ),
+          ],)
         ]);
     }
 
@@ -512,7 +551,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onTapAddAction(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     setState(() {
       _actions ??= [];
-      _actions!.insert(index, index > 0 ? _actions![index-1] : ActionData(label: 'New Action'));
+      _actions!.insert(index, index > 0 ? _actions![index-1] : ActionData(label: 'New Action', type: ActionType.launchUri));
     });
   }
 
@@ -523,7 +562,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   void _onTapEditAction(int index, SurveyElement surveyElement, RuleElement? element) async {
-    dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: _actions![index], tabBar: widget.tabBar)));
+    dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
+      data: _actions![index],
+      dataKeys: widget.dataKeys,
+      isRuleData: true,
+      tabBar: widget.tabBar
+    )));
     if (updatedData != null && mounted) {
       setState(() {
         _actions![index] = updatedData;
@@ -600,7 +644,21 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           (_ruleElem as RuleAction).data = (_ruleElem as RuleAction).dataKey = null;
           break;
         case 'local_notify':
-          //TODO: implement
+          int? periodValue = int.tryParse(_textControllers['local_notify.period']!.text);
+          error = CollectionUtils.isEmpty(_actions) || periodValue == null || _actionSettings['local_notify.period'] == null;
+          if (!error) {
+            (_ruleElem as RuleAction).data = Alert(
+              title: _textControllers['local_notify.title']!.text,
+              text: _textControllers['local_notify.text']!.text,
+              actions: _actions,
+              params: <String, dynamic>{
+                'type': 'relative',  //TODO: implement other types
+                'schedule': <String, int>{
+                  _actionSettings['local_notify.period']!: periodValue,
+                }
+              }
+            );
+          }
       }
     }
 

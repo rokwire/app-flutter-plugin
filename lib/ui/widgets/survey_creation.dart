@@ -74,7 +74,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     return _buildCollapsibleWrapper(widget.label, widget.dataList, listItemBuilder, widget.surveyElement);
   }
 
-  Widget _buildCollapsibleWrapper(String label, List<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
+  Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
     bool hideEntryManagement = parentElement is RuleLogic && grandParentElement is Rule;
     return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: ExpansionTile(
       iconColor: Styles().colors?.getColor('fillColorSecondary'),
@@ -102,7 +102,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           shrinkWrap: true,
           itemCount: dataList.length,
           itemBuilder: (BuildContext context, int index) {
-            return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList[index], surveyElement, parentElement));
+            return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement));
           },
         ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
             Container(height: 0),
@@ -114,39 +114,42 @@ class _SurveyElementListState extends State<SurveyElementList> {
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
+    String entryText = '';
     if (data is SurveyData) {
-      String entryText = data.key;
+      entryText = data.key;
       if (data.section?.isNotEmpty ?? false) {
         entryText += ' (${data.section})';
       }
-      Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
-      Widget displayEntry = Card(child: Ink(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-          Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText),
-          Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
-        ],))
-      ));
-
-      return LongPressDraggable<int>(
-        data: index,
-        maxSimultaneousDrags: 1,
-        feedback: Card(child: Container(
-          height: 32,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
-        )),
-        child: DragTarget<int>(
-          builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
-            return displayEntry;
-          },
-          onAccept: widget.onDrag != null ? (oldIndex) => widget.onDrag!(oldIndex, index) : null,
-        ),
-        childWhenDragging: displayEntry,
-        axis: Axis.vertical,
-      );
+    } else if (data is String) {
+      entryText = data;
     }
-    return Container();
+    
+    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
+    Widget displayEntry = Card(child: Ink(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+      child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+        Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText),
+        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
+      ],))
+    ));
+
+    return widget.onDrag != null ? LongPressDraggable<int>(
+      data: index,
+      maxSimultaneousDrags: 1,
+      feedback: Card(child: Container(
+        height: 32,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
+      )),
+      child: DragTarget<int>(
+        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+          return displayEntry;
+        },
+        onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
+      ),
+      childWhenDragging: displayEntry,
+      axis: Axis.vertical,
+    ) : displayEntry;
   }
 
   Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
@@ -255,66 +258,66 @@ class _SurveyElementListState extends State<SurveyElementList> {
           entryText += entryText.isNotEmpty ? ' ($valueString)' : '($valueString)';
         }
       }
-      Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.small.fat' : 'widget.detail.small'),);
+      Widget optionDataText = Text(entryText, style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.small.fat' : 'widget.detail.small'),);
       Widget displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
-          surveyDataText,
+          Padding(padding: const EdgeInsets.only(left: 8), child: optionDataText),
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
         ],)
       ));
 
-      return LongPressDraggable<int>(
+      return widget.onDrag != null ? LongPressDraggable<int>(
         data: index,
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-          child: surveyDataText,
+          child: optionDataText,
         )),
         child: DragTarget<int>(
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: widget.onDrag != null ? (oldIndex) => widget.onDrag!(oldIndex, index) : null,
+          onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
-      );
+      ) : displayEntry;
     }
     return Container();
   }
 
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data is ActionData) {
-      Widget surveyDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+      Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
       Widget displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
-          surveyDataText,
+          Padding(padding: const EdgeInsets.only(left: 8), child: actionDataText),
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
         ],)
       ));
 
-      return LongPressDraggable<int>(
+      return widget.onDrag != null ? LongPressDraggable<int>(
         data: index,
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-          child: surveyDataText,
+          child: actionDataText,
         )),
         child: DragTarget<int>(
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: widget.onDrag != null ? (oldIndex) => widget.onDrag!(oldIndex, index) : null,
+          onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
-      );
+      ) : displayEntry;
     }
     return Container();
   }

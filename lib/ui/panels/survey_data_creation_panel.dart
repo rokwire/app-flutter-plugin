@@ -345,7 +345,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         ));
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
-        (_data as SurveyDataResult).actions!.insert(index, ActionData(label: 'New Action'));
+        (_data as SurveyDataResult).actions!.insert(index, ActionData(label: 'New Action', type: ActionType.launchUri));
       }
     });
   }
@@ -362,14 +362,22 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapEditData(int index) async {
     if (_data is SurveyQuestionMultipleChoice) {
-      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyQuestionMultipleChoice).options[index], tabBar: widget.tabBar)));
+      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
+        data: (_data as SurveyQuestionMultipleChoice).options[index],
+        dataKeys: widget.dataKeys,
+        tabBar: widget.tabBar
+      )));
       if (updatedData != null && mounted) {
         setState(() {
           (_data as SurveyQuestionMultipleChoice).options[index] = updatedData;
         });
       }
     } else if (_data is SurveyDataResult) {
-      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(data: (_data as SurveyDataResult).actions![index], tabBar: widget.tabBar)));
+      dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
+        data: (_data as SurveyDataResult).actions![index],
+        dataKeys: widget.dataKeys,
+        tabBar: widget.tabBar
+      )));
       if (updatedData != null && mounted) {
         setState(() {
           (_data as SurveyDataResult).actions![index] = updatedData;

@@ -431,23 +431,14 @@ class Rules {
   Future<bool> _localNotify(RuleEngine engine, RuleAction action) {
     dynamic resolvedData = _getEngineValOrCollection(engine, action.data);
     if (resolvedData is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(resolvedData);
-      switch (JsonUtils.stringValue(alert.params?["type"])) {
-        case "relative":
-          Duration? notifyWaitTime = JsonUtils.durationValue(alert.params?["schedule"]);
-          if (notifyWaitTime != null) {
-            return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-              title: alert.title,
-              message: alert.text,
-              payload: JsonUtils.encode(alert.actions),
-              dateTime: DateTime.now().add(notifyWaitTime)
-            );
-          }
-          break;
-        case "absolute":
-          //TODO: implement
-        case "cron":
-          //TODO: implement
+      Alert alert = Alert.fromJson(resolvedData, engineId: engine.id);
+      if (alert.timeToAlert != null) {
+        return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
+          title: alert.title,
+          message: alert.text,
+          payload: JsonUtils.encode(alert.actions),
+          dateTime: DateTime.now().add(alert.timeToAlert!)
+        );
       }
     }
     

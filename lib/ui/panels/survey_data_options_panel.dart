@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
+import 'package:rokwire_plugin/model/rules.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -27,9 +30,11 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyDataOptionsPanel extends StatefulWidget {
   final dynamic data;
+  final List<String> dataKeys;
+  final bool isRuleData;
   final Widget? tabBar;
 
-  const SurveyDataOptionsPanel({Key? key, required this.data, this.tabBar}) : super(key: key);
+  const SurveyDataOptionsPanel({Key? key, required this.data, required this.dataKeys, this.isRuleData = false, this.tabBar}) : super(key: key);
 
   @override
   _SurveyDataOptionsPanelState createState() => _SurveyDataOptionsPanelState();
@@ -44,6 +49,8 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
   late dynamic _data;
   String _headerText = '';
   String? _actionDataType;
+  List<String>? _defaultResponseKeys;
+  List<dynamic>? _defaultResponseValues;
 
   @override
   void initState() {
@@ -112,7 +119,6 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       content.add(SurveyElementCreationWidget.buildCheckboxWidget("Correct Answer", (_data as OptionData).isCorrect, _onToggleCorrect));
     } else if (_data is ActionData) {
       //type*
-      //TODO: error building
       content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(ActionData.supportedTypes, "Type", (_data as ActionData).type.name, _onChangeAction, margin: EdgeInsets.zero));
       //label
       content.add(FormFieldText('Label', padding: const EdgeInsets.only(top: 16), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences));
@@ -126,8 +132,28 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
           inputType: _getActionTextInputType(_actionDataType), maxLength: _getActionTextMaxLength(_actionDataType)));
       }
       
-      //TODO: Map<String, dynamic> params (internal flag for URIs)
-      // need this for local_notify
+      //params
+      content.add(Visibility(
+        visible: (_data as ActionData).type == ActionType.launchUri,
+        child: SurveyElementCreationWidget.buildCheckboxWidget("Internal", (_data as ActionData).isPrimaryForNotification, _onToggleInternal)
+      ));
+      content.add(Visibility(
+        visible: (_data as ActionData).type == ActionType.showSurvey,
+        child: SurveyElementCreationWidget.buildCheckboxWidget("Primary", (_data as ActionData).isPrimaryForNotification, _onTogglePrimary)
+      ));
+      //TODO: defaultResponses
+      content.add(Visibility(
+        visible: (_data as ActionData).type == ActionType.showSurvey && widget.dataKeys.isNotEmpty,
+        child: SurveyElementList(
+          type: SurveyElementListType.data,
+          label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
+          dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
+          surveyElement: SurveyElement.data,
+          onAdd: _onTapAddDefaultResponse,
+          onEdit: _onTapEditDefaultResponse,
+          onRemove: _onTapRemoveDefaultResponse,
+        ),
+      ));
     }
 
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: content,));
@@ -150,7 +176,6 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
         return {'phone': 'Phone Number', 'url': 'URL'};
       case ActionType.showSurvey:
         //TODO: get list of surveys that the creator may "link" to?
-        // need this for local_notify (how to self-reference this survey?, right now, need to set data = id, which is set by backend)
       case ActionType.showPanel:
         //TODO: get list of panels that the creator may "link" to?
       default:
@@ -178,6 +203,35 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     }
   }
 
+  void _onTapAddDefaultResponse(int index, SurveyElement surveyElement, RuleElement? parentElement) {
+    setState(() {
+      _defaultResponseKeys ??= [];
+      _defaultResponseKeys!.insert(index, index > 0 ? _defaultResponseKeys![index-1] : widget.dataKeys.first);
+      _defaultResponseValues ??= [];
+      _defaultResponseValues!.insert(index, index > 0 ? _defaultResponseValues![index-1] : 'data.${_defaultResponseKeys![index]}.response');
+    });
+  }
+
+  void _onTapRemoveDefaultResponse(int index, SurveyElement surveyElement, RuleElement? parentElement) {
+    setState(() {
+      _defaultResponseKeys!.removeAt(index);
+      _defaultResponseValues!.removeAt(index);
+    });
+  }
+
+  void _onTapEditDefaultResponse(int index, SurveyElement surveyElement, RuleElement? element) async {
+    dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
+      data: (_data as SurveyDataResult).actions![index],
+      dataKeys: widget.dataKeys,
+      tabBar: widget.tabBar
+    )));
+    if (updatedData != null && mounted) {
+      setState(() {
+        (_data as SurveyDataResult).actions![index] = updatedData;
+      });
+    }
+  }
+
   void _onChangeAction(String? action) {
     setState(() {
       (_data as ActionData).type = action != null ? ActionType.values.byName(action) : ActionType.none;
@@ -198,6 +252,18 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     });
   }
 
+  void _onTogglePrimary(bool? value) {
+    setState(() {
+      (_data as ActionData).isPrimaryForNotification = value;
+    });
+  }
+
+  void _onToggleInternal(bool? value) {
+    setState(() {
+      (_data as ActionData).isInternalUri = value;
+    });
+  }
+
   void _onTapDone() {
     if (_data is OptionData) {
       (_data as OptionData).title = _textControllers["title"]!.text;
@@ -209,7 +275,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       (_data as OptionData).value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
     } else if (_data is ActionData) {
       (_data as ActionData).label = _textControllers["label"]!.text;
-      (_data as ActionData).data = _textControllers["data"]!.text;
+      (_data as ActionData).data = (_data as ActionData).type == ActionType.showSurvey ? 'this' : _textControllers["data"]!.text;
       if (_actionDataType == 'phone') {
         (_data as ActionData).data = 'tel:${StringUtils.constructUsPhone((_data as ActionData).data)}';
       }

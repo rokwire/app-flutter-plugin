@@ -207,8 +207,7 @@ class LocalNotifications with Service {
           case NotificationResponseType.selectedNotification:
             if (actions.length > 1) {
               for (ActionData action in actions) {
-                dynamic primary = action.params["primary"];
-                if (primary is bool && primary) {
+                if (action.isPrimaryForNotification == true) {
                   return action;
                 }
               }
