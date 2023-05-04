@@ -339,13 +339,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   void _onTapAddDataAtIndex(int index) {
     setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
-        (_data as SurveyQuestionMultipleChoice).options.insert(index, OptionData(
+        (_data as SurveyQuestionMultipleChoice).options.insert(index, index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1] : OptionData(
           title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option",
           value: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].value : ""
         ));
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
-        (_data as SurveyDataResult).actions!.insert(index, ActionData(label: 'New Action', type: ActionType.launchUri));
+        (_data as SurveyDataResult).actions!.insert(index, index > 0 ? (_data as SurveyDataResult).actions![index-1] : ActionData(label: 'New Action', type: ActionType.launchUri, params: {}));
       }
     });
   }

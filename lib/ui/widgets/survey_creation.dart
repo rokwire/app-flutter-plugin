@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 typedef EntryManagementFunc = Function(int, SurveyElement, RuleElement?);
 
@@ -38,9 +39,10 @@ class SurveyElementList extends StatefulWidget {
 
   final bool labelStart;
   final bool singleton;
+  final int? limit;
 
   const SurveyElementList({Key? key, required this.type, required this.label, required this.dataList, required this.surveyElement,
-    this.onAdd, this.onEdit, this.onRemove, this.onDrag, this.labelStart = false, this.singleton = false});
+    this.onAdd, this.onEdit, this.onRemove, this.onDrag, this.labelStart = false, this.singleton = false, this.limit});
 
   @override
   State<SurveyElementList> createState() => _SurveyElementListState();
@@ -328,11 +330,16 @@ class _SurveyElementListState extends State<SurveyElementList> {
       ruleRemove = false;
     }
 
+    bool belowLimit = true;
+    if (widget.limit != null && widget.dataList.length >= widget.limit!) {
+      belowLimit = false;
+    }
+
     double buttonBoxSize = 36;
     double splashRadius = 18;
     double buttonSize = 18;
     return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
-      Visibility(visible: addRemove, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
+      Visibility(visible: addRemove && belowLimit, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.add),
         onPressed: widget.onAdd != null ? () => widget.onAdd!(index, surveyElement, parentElement) : null,
         padding: EdgeInsets.zero,
@@ -459,7 +466,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
     );
   }
 
-  static Widget buildCheckboxWidget(String label, bool? value, Function(bool?)? onChanged, {EdgeInsetsGeometry padding = const EdgeInsets.only(top: 16.0)}) {
+  static Widget buildCheckboxWidget(String label, bool value, Function(bool?)? onChanged, {EdgeInsetsGeometry padding = const EdgeInsets.only(top: 16.0)}) {
     return Padding(padding: padding, child: CheckboxListTile(
       title: Padding(padding: const EdgeInsets.only(left: 8), child: Text(label, style: Styles().textStyles?.getTextStyle('widget.message.regular'))),
       contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -485,6 +492,11 @@ class SurveyElementCreationWidget extends StatefulWidget {
       ));
     }
     return items;
+  }
+
+  static dynamic parseTextForType(String text) {
+    bool? valueBool = text.toLowerCase() == 'true' ? true : (text.toLowerCase() == 'false' ? false : null);
+    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? (text.isNotEmpty ? text : null);
   }
 }
 

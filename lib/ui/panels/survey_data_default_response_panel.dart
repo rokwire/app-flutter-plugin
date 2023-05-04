@@ -16,19 +16,21 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyDataDefaultResponsePanel extends StatefulWidget {
+  final String dataKey;
+  final List<String> dataKeys;
   final dynamic response;
   //TODO: pass allowed responses?
   final Widget? tabBar;
 
-  const SurveyDataDefaultResponsePanel({Key? key, required this.response, this.tabBar}) : super(key: key);
+  const SurveyDataDefaultResponsePanel({Key? key, required this.dataKey, required this.dataKeys, required this.response, this.tabBar}) : super(key: key);
 
   @override
   _SurveyDataDefaultResponsePanelState createState() => _SurveyDataDefaultResponsePanelState();
@@ -38,24 +40,31 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
   GlobalKey? dataKey;
 
   final ScrollController _scrollController = ScrollController();
-  final Map<String, TextEditingController> _textControllers = {};
+  final TextEditingController _responseTextController = TextEditingController();
 
-  late dynamic _response;
+  late String _surveyDataKey;
+  bool _usePreviousResponse = false;
 
   @override
   void initState() {
-    _response = widget.response;
+    _surveyDataKey = widget.dataKey;
+    if (widget.response is String) {
+      List<String> responseParts = (widget.response as String).split('.');
+      _usePreviousResponse = responseParts.length == 3 && responseParts[0] == 'data' && responseParts[2] == 'response';
+    }
 
-    //TODO
-
+    if (widget.response is DateTime) {
+      _responseTextController.text = DateTimeUtils.utcDateTimeToString(widget.response, format: "MM-dd-yyyy") ?? '';
+    } else {
+      _responseTextController.text = widget.response?.toString() ?? '';
+    }
+    
     super.initState();
   }
 
   @override
   void dispose() {
-    _textControllers.forEach((_, value) {
-      value.dispose();
-    });
+    _responseTextController.dispose();
 
     super.dispose();
   }
@@ -71,10 +80,10 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
   }
 
   Widget _buildDefaultResponseOptions() {
-    //TODO
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: [
-      SurveyElementCreationWidget.buildCheckboxWidget("Correct Answer", (_data as OptionData).isCorrect, _onToggleCorrect),
-      FormFieldText('Label', padding: const EdgeInsets.only(top: 16), controller: _textControllers["label"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences)
+      SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _surveyDataKey, _onChangeSurveyDataKey, margin: EdgeInsets.zero),
+      SurveyElementCreationWidget.buildCheckboxWidget("Previous Answer", _usePreviousResponse, _onTogglePreviousResponse),
+      Visibility(visible: !_usePreviousResponse, child: FormFieldText('Response', padding: const EdgeInsets.only(top: 16), controller: _responseTextController))
     ],));
   }
 
@@ -88,9 +97,22 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
     ));
   }
 
-  void _onTapDone() {
-    //TODO
+  void _onChangeSurveyDataKey(String? value) {
+    if (value != null) {
+      setState(() {
+        _surveyDataKey = value;
+      });
+    }
+  }
 
-    Navigator.of(context).pop(_response);
+  void _onTogglePreviousResponse(bool? value) {
+    setState(() {
+      _usePreviousResponse = value ?? false;
+    });
+  }
+
+  void _onTapDone() {
+    MapEntry<String, dynamic> updatedResponse = MapEntry(_surveyDataKey, SurveyElementCreationWidget.parseTextForType(_usePreviousResponse ? 'data.${widget.dataKey}.response' : _responseTextController.text));
+    Navigator.of(context).pop(updatedResponse);
   }
 }

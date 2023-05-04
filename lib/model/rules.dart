@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/alert.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:uuid/uuid.dart';
 
@@ -388,9 +390,14 @@ class RuleAction extends RuleActionResult {
   @override
   String getSummary({String? prefix, String? suffix}) {
     String summary = "${supportedActions[action]}";
-    //TODO: summarize class objects (Alert)
     if (data != null) {
-      summary += " $data";
+      if (data is Alert) {
+        summary += " (${data.title})";
+      } else if (data is SurveyAlert) {
+        summary += " (${data.contactKey})";
+      } else {
+        summary += " ($data)";
+      }
     }
     if (prefix != null) {
       summary = "$prefix $summary";

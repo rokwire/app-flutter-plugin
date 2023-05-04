@@ -122,7 +122,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           _customCompare = true;
         }
       } else if (comparison.compareTo is DateTime) {
-        customData = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleComparison).compareTo, format: "MM-dd-yyyy") ?? '';
+        customData = DateTimeUtils.utcDateTimeToString(comparison.compareTo, format: "MM-dd-yyyy") ?? '';
       } else {
         customData = comparison.compareTo?.toString() ?? '';
       }
@@ -137,13 +137,14 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           _customCompare = true;
         }
       } else if (action.data is DateTime) {
-        customData = DateTimeUtils.utcDateTimeToString((_ruleElem as RuleAction).data, format: "MM-dd-yyyy") ?? '';
+        customData = DateTimeUtils.utcDateTimeToString(action.data, format: "MM-dd-yyyy") ?? '';
       } else {
         customData = action.data?.toString() ?? '';
       }
 
       if (action.action == 'local_notify') {
         Alert alert = action.data as Alert;
+        _actions = alert.actions;
         localNotifyTitle = alert.title;
         localNotifyText = alert.text;
         Duration? duration = alert.timeToAlert;
@@ -265,7 +266,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     switch (ruleAction.action) {
       case 'return':
         if (widget.forceActionReturnData) {
-          return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
+          return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
         }
 
         return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
@@ -277,11 +278,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
-        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['alert'],
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['alert'],
           (value) => _onChangeActionSetting(value, 'alert'), padding: const EdgeInsets.all(16));
       case 'alert_result':
         return Column(children: [
-          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", _actionSettings['alert_result'],
+          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['alert_result'],
             (value) => _onChangeActionSetting(value, 'alert_result'), padding: const EdgeInsets.all(16)),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
@@ -346,25 +347,25 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
       switch (surveyOption) {
         case 'survey':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Surveys.properties, "Select survey option:", settingsMap['survey'],
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Surveys.properties, "Survey option", settingsMap['survey'],
             (value) => _onChangeSurveyPropertySetting(value, settings, 'survey')));
           break;
         case 'stats':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Surveys.statsProperties, "Select stats option:", settingsMap['stats'],
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Surveys.statsProperties, "Stats option", settingsMap['stats'],
             (value) => _onChangeSurveyPropertySetting(value, settings, 'stats')));
           if (settingsMap['stats'] == 'percentage') {
-            content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Select section:",
+            content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section",
               settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
           } else if (settingsMap['stats'] == 'response_data') {
             content.add(Visibility(
               visible: widget.sections.isNotEmpty,
-              child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Select section:",
+              child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section",
                 settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key'))
             ));
           }
           break;
         case 'data':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Select survey data key:", settingsMap['key'],
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", settingsMap['key'],
             (value) => _onChangeSurveyPropertySetting(value, settings, 'key'), padding: const EdgeInsets.all(16)));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
@@ -419,9 +420,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   dynamic get compareToValue {
     if (_customCompare) {
-      String valueText = _textControllers['custom_compare']!.text;
-      bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
-      return num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
+      return SurveyElementCreationWidget.parseTextForType(_textControllers['custom_compare']!.text);
     }
 
     switch (_compareToSettings['survey_option']) {
@@ -551,7 +550,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onTapAddAction(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     setState(() {
       _actions ??= [];
-      _actions!.insert(index, index > 0 ? _actions![index-1] : ActionData(label: 'New Action', type: ActionType.launchUri));
+      _actions!.insert(index, index > 0 ? _actions![index-1] : ActionData(label: 'New Action', type: ActionType.launchUri, params: {}));
     });
   }
 

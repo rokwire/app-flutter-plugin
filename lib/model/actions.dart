@@ -79,15 +79,18 @@ class ActionData {
   };
 
   bool? get isInternalUri => params["internal"] is bool ? params["internal"] : null;
-
   set isInternalUri(bool? value) {
     params["internal"] = value;
   }
 
   bool? get isPrimaryForNotification => params["primary"] is bool ? params["primary"] : null;
-
   set isPrimaryForNotification(bool? value) {
     params["primary"] = value;
+  }
+
+  Map<String, dynamic>? get defaultResponsesForNotification => params['default_responses'] is Map<String, dynamic> ? params['default_responses'] : null;
+  set defaultResponsesForNotification(Map<String, dynamic>? responses) {
+    params["default_responses"] = responses;
   }
 }
 

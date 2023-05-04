@@ -22,6 +22,7 @@ import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/panels/survey_data_default_response_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
@@ -75,6 +76,15 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
           _actionDataType = 'phone';
         } else if (actionData.startsWith('http')) {
           _actionDataType = 'url';
+        }
+      }
+      if ((_data as ActionData).type == ActionType.showSurvey) {
+        Map<String, dynamic>? defaultResponses = (_data as ActionData).defaultResponsesForNotification;
+        for (MapEntry<String, dynamic> response in defaultResponses?.entries ?? []) {
+          _defaultResponseKeys ??= [];
+          _defaultResponseKeys!.add(response.key);
+          _defaultResponseValues ??= [];
+          _defaultResponseValues!.add(response.value);
         }
       }
     }
@@ -133,27 +143,24 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       }
       
       //params
-      content.add(Visibility(
-        visible: (_data as ActionData).type == ActionType.launchUri,
-        child: SurveyElementCreationWidget.buildCheckboxWidget("Internal", (_data as ActionData).isPrimaryForNotification, _onToggleInternal)
-      ));
-      content.add(Visibility(
-        visible: (_data as ActionData).type == ActionType.showSurvey,
-        child: SurveyElementCreationWidget.buildCheckboxWidget("Primary", (_data as ActionData).isPrimaryForNotification, _onTogglePrimary)
-      ));
-      //TODO: defaultResponses
-      content.add(Visibility(
-        visible: (_data as ActionData).type == ActionType.showSurvey && widget.dataKeys.isNotEmpty,
-        child: SurveyElementList(
-          type: SurveyElementListType.data,
-          label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
-          dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
-          surveyElement: SurveyElement.data,
-          onAdd: _onTapAddDefaultResponse,
-          onEdit: _onTapEditDefaultResponse,
-          onRemove: _onTapRemoveDefaultResponse,
-        ),
-      ));
+      if ((_data as ActionData).type == ActionType.launchUri) {
+        content.add(SurveyElementCreationWidget.buildCheckboxWidget("Internal", (_data as ActionData).isInternalUri ?? false, _onToggleInternal));
+      } else if ((_data as ActionData).type == ActionType.showSurvey) {
+        content.add(SurveyElementCreationWidget.buildCheckboxWidget("Primary", (_data as ActionData).isPrimaryForNotification ?? false, _onTogglePrimary, padding: const EdgeInsets.symmetric(vertical: 16)));
+        content.add(Visibility(
+          visible: widget.dataKeys.isNotEmpty,
+          child: SurveyElementList(
+            type: SurveyElementListType.data,
+            label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
+            dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
+            surveyElement: SurveyElement.data,
+            onAdd: _onTapAddDefaultResponse,
+            onEdit: _onTapEditDefaultResponse,
+            onRemove: _onTapRemoveDefaultResponse,
+            limit: widget.dataKeys.length,
+          ),
+        ));
+      }
     }
 
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: content,));
@@ -206,9 +213,9 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
   void _onTapAddDefaultResponse(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     setState(() {
       _defaultResponseKeys ??= [];
-      _defaultResponseKeys!.insert(index, index > 0 ? _defaultResponseKeys![index-1] : widget.dataKeys.first);
+      _defaultResponseKeys!.insert(index, widget.dataKeys[index]);
       _defaultResponseValues ??= [];
-      _defaultResponseValues!.insert(index, index > 0 ? _defaultResponseValues![index-1] : 'data.${_defaultResponseKeys![index]}.response');
+      _defaultResponseValues!.insert(index, 'data.${widget.dataKeys[index]}.response');
     });
   }
 
@@ -220,14 +227,16 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
   }
 
   void _onTapEditDefaultResponse(int index, SurveyElement surveyElement, RuleElement? element) async {
-    dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
-      data: (_data as SurveyDataResult).actions![index],
+    MapEntry<String, dynamic>? updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataDefaultResponsePanel(
+      dataKey: _defaultResponseKeys![index],
       dataKeys: widget.dataKeys,
+      response: _defaultResponseValues![index],
       tabBar: widget.tabBar
     )));
     if (updatedData != null && mounted) {
       setState(() {
-        (_data as SurveyDataResult).actions![index] = updatedData;
+        _defaultResponseKeys![index] = updatedData.key;
+        _defaultResponseValues![index] = updatedData.value;
       });
     }
   }
@@ -269,15 +278,15 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       (_data as OptionData).title = _textControllers["title"]!.text;
       (_data as OptionData).hint = _textControllers["hint"]!.text;
       (_data as OptionData).score = num.tryParse(_textControllers["score"]!.text);
-
-      String valueText = _textControllers['value']!.text;
-      bool? valueBool = valueText.toLowerCase() == 'true' ? true : (valueText.toLowerCase() == 'false' ? false : null);
-      (_data as OptionData).value = num.tryParse(valueText) ?? DateTimeUtils.dateTimeFromString(valueText) ?? valueBool ?? (valueText.isNotEmpty ? valueText : null);
+      (_data as OptionData).value =  SurveyElementCreationWidget.parseTextForType(_textControllers['value']!.text);
     } else if (_data is ActionData) {
       (_data as ActionData).label = _textControllers["label"]!.text;
       (_data as ActionData).data = (_data as ActionData).type == ActionType.showSurvey ? 'this' : _textControllers["data"]!.text;
       if (_actionDataType == 'phone') {
         (_data as ActionData).data = 'tel:${StringUtils.constructUsPhone((_data as ActionData).data)}';
+      }
+      if ((_data as ActionData).type == ActionType.showSurvey) {
+        (_data as ActionData).defaultResponsesForNotification = Map.fromIterables(_defaultResponseKeys ?? [], _defaultResponseValues ?? []);
       }
     }
 
