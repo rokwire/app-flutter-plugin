@@ -52,8 +52,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   final List<String> _defaultTextControllers = ["key", "text", "more_info", "maximum_score"];
 
   late SurveyData _data;
-  RuleResult? _defaultResponseRule;
-  RuleResult? _scoreRule;
   final Map<String, String> _supportedActions = {};
 
   @override
@@ -217,7 +215,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // more info (Additional Info)
       FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
       // maximum score (number, show if survey is scored)
-      Visibility(visible: _data.isQuestion, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
+      Visibility(visible: _data.isQuestion && widget.scoredSurvey, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
 
       // allowSkip
       Visibility(visible: _data.isQuestion, child: SurveyElementCreationWidget.buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
@@ -232,14 +230,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             Text("Default Response Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
             GestureDetector(
               onTap: _onTapManageDefaultResponseRule,
-              child: Text(_defaultResponseRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.defaultResponseRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
-          Visibility(visible: _defaultResponseRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
+          Visibility(visible: _data.defaultResponseRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
             SurveyElementList(
               type: SurveyElementListType.rules,
               label: '',
-              dataList: [_defaultResponseRule],
+              dataList: [_data.defaultResponseRule],
               surveyElement: SurveyElement.defaultResponseRule,
               onAdd: _onTapAdd,
               onEdit: _onTapEdit,
@@ -260,14 +258,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             Text("Score Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
             GestureDetector(
               onTap: _onTapManageScoreRule,
-              child: Text(_scoreRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.scoreRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
-          Visibility(visible: widget.scoredSurvey && _scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
+          Visibility(visible: widget.scoredSurvey && _data.scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
             SurveyElementList(
               type: SurveyElementListType.rules,
               label: '',
-              dataList: [_scoreRule],
+              dataList: [_data.scoreRule],
               surveyElement: SurveyElement.scoreRule,
               onAdd: _onTapAdd,
               onEdit: _onTapEdit,
@@ -401,7 +399,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
     if (element != null) {
       setState(() {
-        (surveyElement == SurveyElement.defaultResponseRule ? _defaultResponseRule : _scoreRule)?.updateElement(element);
+        (surveyElement == SurveyElement.defaultResponseRule ? _data.defaultResponseRule : _data.scoreRule)?.updateElement(element);
       });
     }
   }
@@ -417,7 +415,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
     if (element != null) {
       setState(() {
-        (surveyElement == SurveyElement.defaultResponseRule ? _defaultResponseRule : _scoreRule)?.updateElement(element);
+        (surveyElement == SurveyElement.defaultResponseRule ? _data.defaultResponseRule : _data.scoreRule)?.updateElement(element);
       });
     }
   }
@@ -435,18 +433,18 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       if (ruleElement != null && mounted) {
         setState(() {
           if (surveyElement == SurveyElement.defaultResponseRule) {
-            if (element.id == _defaultResponseRule!.id && ruleElement is RuleResult) {
-              _defaultResponseRule = ruleElement;
+            if (element.id == _data.defaultResponseRule!.id && ruleElement is RuleResult) {
+              _data.defaultResponseRule = ruleElement;
             }
             else {
-              _defaultResponseRule!.updateElement(ruleElement);
+              _data.defaultResponseRule!.updateElement(ruleElement);
             }
           } else {
-            if (element.id == _scoreRule!.id && ruleElement is RuleResult) {
-              _scoreRule = ruleElement;
+            if (element.id == _data.scoreRule!.id && ruleElement is RuleResult) {
+              _data.scoreRule = ruleElement;
             }
             else {
-              _scoreRule!.updateElement(ruleElement);
+              _data.scoreRule!.updateElement(ruleElement);
             }
           }
         });
@@ -476,13 +474,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         break;
     }
     setState(() {
-      _defaultResponseRule = _defaultResponseRule == null ? defaultRule : null;
+      _data.defaultResponseRule = _data.defaultResponseRule == null ? defaultRule : null;
     });
   }
 
   void _onTapManageScoreRule() {
     setState(() {
-      _scoreRule = _scoreRule == null ? RuleAction(action: "return", data: 0) : null;
+      _data.scoreRule = _data.scoreRule == null ? RuleAction(action: "return", data: 0) : null;
     });
   }
 
@@ -604,10 +602,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     } else if (_data is SurveyQuestionText) {
       (_data as SurveyQuestionText).minLength = int.tryParse(_textControllers["min_length"]!.text) ?? 0;
       (_data as SurveyQuestionText).maxLength = int.tryParse(_textControllers["max_length"]!.text);
-    } else if (_data is SurveyDataResult) {
-      // for (int i = 0; i < ((_data as SurveyDataResult).actions?.length ?? 0); i++) {
-        //TODO: data, params
-      // }
     }
     
     Navigator.of(context).pop(_data);
