@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
 - Use Core Url host to test online status in web panel [#271](https://github.com/rokwire/app-flutter-plugin/issues/271).
 - UrlUtis.isHostAvailable exposed to public [#3052](https://github.com/rokwire/illinois-app/issues/3052).
+- Updated TZDateTimeUtils [#3225](https://github.com/rokwire/illinois-app/issues/3225).
+- Always post "research_group" POST paramter in v2/groups and v2/user/groups API calls [#275](https://github.com/rokwire/app-flutter-plugin/issues/275).
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
@@ -22,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UrlUtils.isValidUrl [#3193](https://github.com/rokwire/illinois-app/issues/3193).
 - Added DateTimeUtils.min & max [#3206](https://github.com/rokwire/illinois-app/issues/3206).
 - Added title parameters to SliverToutHeaderBar [#3149](https://github.com/rokwire/illinois-app/issues/3149).
+- Created TZDateTimeUtils [#3215](https://github.com/rokwire/illinois-app/issues/3215).
+- Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
+- Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
+
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 - Removed Explore.toJson definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).

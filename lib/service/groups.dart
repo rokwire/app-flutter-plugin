@@ -375,8 +375,8 @@ class Groups with Service implements NotificationsListener {
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
         'limit': limit,
+        'research_group': false,
       });
-
 
       try {
         await _ensureLogin();
@@ -1294,7 +1294,11 @@ class Groups with Service implements NotificationsListener {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
       await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
+      String url = '${Config().groupsUrl}/v2/user/groups';
+      String? post = JsonUtils.encode({
+        'research_group': false,
+      });
+      Response? response = await Network().get(url, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         return response?.body;
       }
