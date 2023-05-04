@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_passkey/flutter_passkey.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -37,6 +38,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyCreatePasskeyFailed  = "edu.illinois.rokwire.auth2.passkey.create.failed";
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
+
+  final flutterPasskeyPlugin = FlutterPasskey();
 
   _OidcLogin? _oidcLogin;
   bool? _oidcLink;
@@ -218,6 +221,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
   Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
   Auth2LoginType get emailLoginType => Auth2LoginType.email;
+  Auth2LoginType get passkeyLoginType => Auth2LoginType.passkey;
 
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
@@ -320,6 +324,155 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     return false;
   }
+
+  // Passkey authentication
+  // Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? username) async {
+  //   if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
+  //
+  //     NotificationService().notify(notifyLoginStarted, passkeyLoginType);
+  //
+  //     final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
+  //     if (!isPasskeySupported) {
+  //       return Auth2PasskeySignInResult.failedNotSupported;
+  //     }
+  //
+  //     // Obtain requestOptions from the server
+  //     final requestOptions = getCredentialRequestOptions();
+  //     flutterPasskeyPlugin.getCredential(requestOptions).then((response) {
+  //       // Send response to the server
+  //     }).catchError((error) {
+  //       // Handle error
+  //     });
+  //
+  //     String url = "${Config().coreUrl}/services/auth/login";
+  //     Map<String, String> headers = {
+  //       'Content-Type': 'application/json'
+  //     };
+  //     String? post = JsonUtils.encode({
+  //       'auth_type': auth2LoginTypeToString(emailLoginType),
+  //       'app_type_identifier': Config().appPlatformId,
+  //       'api_key': Config().rokwireApiKey,
+  //       'org_id': Config().coreOrgId,
+  //       'creds': {
+  //         "email": email,
+  //         "password": password
+  //       },
+  //       'profile': _anonymousProfile?.toJson(),
+  //       'preferences': _anonymousPrefs?.toJson(),
+  //       'device': deviceInfo,
+  //     });
+  //
+  //     Response? response = await Network().post(url, headers: headers, body: post);
+  //     if (response?.statusCode == 200) {
+  //       bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+  //       _notifyLogin(emailLoginType, result);
+  //       return result ? Auth2EmailSignInResult.succeeded : Auth2EmailSignInResult.failed;
+  //     }
+  //     else {
+  //       _notifyLogin(emailLoginType, false);
+  //       Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+  //       if (error?.status == 'unverified') {
+  //         return Auth2EmailSignInResult.failedNotActivated;
+  //       }
+  //       else if (error?.status == 'verification-expired') {
+  //         return Auth2EmailSignInResult.failedActivationExpired;
+  //       }
+  //       else if (error?.status == 'invalid') {
+  //         return Auth2EmailSignInResult.failedInvalid;
+  //       }
+  //     }
+  //   }
+  //   return Auth2EmailSignInResult.failed;
+  // }
+
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
+      final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
+      if (!isPasskeySupported) {
+        return Auth2PasskeySignUpResult.failedNotSupported;
+      }
+
+      String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(emailLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'params': {
+          "sign_up": true,
+          "name": username,
+          "display_name": displayName,
+        },
+        'profile': _anonymousProfile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        final creationOptions = response.body;
+        try {
+          String response = await flutterPasskeyPlugin.createCredential(creationOptions);
+          // _completeSignUpWithPasskey(response);
+        } catch(error) {
+          Log.e(error.toString());
+        }
+        return Auth2PasskeySignUpResult.succeeded;
+      }
+      // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+      //   return Auth2PasskeySignUpResult.failedAccountExist;
+      // }
+    }
+    return Auth2PasskeySignUpResult.failed;
+  }
+
+  // Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String response) async {
+  //   if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+  //     final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
+  //     if (!isPasskeySupported) {
+  //       return Auth2PasskeySignUpResult.failedNotSupported;
+  //     }
+  //
+  //     String url = "${Config().coreUrl}/services/auth/login";
+  //     Map<String, String> headers = {
+  //       'Content-Type': 'application/json'
+  //     };
+  //     String? post = JsonUtils.encode({
+  //       'auth_type': auth2LoginTypeToString(emailLoginType),
+  //       'app_type_identifier': Config().appPlatformId,
+  //       'api_key': Config().rokwireApiKey,
+  //       'org_id': Config().coreOrgId,
+  //       'creds': {
+  //         "sign_up": true,
+  //         "name": username,
+  //         "display_name": displayName,
+  //       },
+  //       'profile': _anonymousProfile?.toJson(),
+  //       'preferences': _anonymousPrefs?.toJson(),
+  //       'device': deviceInfo,
+  //     });
+  //
+  //     Response? response = await Network().post(url, headers: headers, body: post);
+  //     if (response != null && response.statusCode == 200) {
+  //       // Obtain creationOptions from the server
+  //       final creationOptions = response.body;
+  //       flutterPasskeyPlugin.createCredential(creationOptions).then((response) {
+  //         // Send response to the server
+  //       }).catchError((error) {
+  //         // Handle error
+  //       });
+  //       return Auth2PasskeySignUpResult.succeeded;
+  //     }
+  //     // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+  //     //   return Auth2PasskeySignUpResult.failedAccountExist;
+  //     // }
+  //   }
+  //   return Auth2PasskeySignUpResult.failed;
+  // }
 
   // OIDC Authentication
 
@@ -1255,6 +1408,22 @@ class _OidcLogin {
     };
   }  
 
+}
+
+// Auth2PasskeySignUpResult
+
+enum Auth2PasskeySignUpResult {
+  succeeded,
+  failed,
+  failedNotSupported,
+}
+
+// Auth2PasskeySignInResult
+
+enum Auth2PasskeySignInResult {
+  succeeded,
+  failed,
+  failedNotSupported,
 }
 
 // Auth2PhoneRequestCodeResult

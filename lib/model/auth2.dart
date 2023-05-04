@@ -71,7 +71,7 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, phoneTwilio, oidc, oidcIllinois }
+enum Auth2LoginType { anonymous, apiKey, email, phone, phoneTwilio, oidc, oidcIllinois, passkey }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
@@ -82,6 +82,7 @@ String? auth2LoginTypeToString(Auth2LoginType value) {
     case Auth2LoginType.phoneTwilio: return 'twilio_phone';
     case Auth2LoginType.oidc: return 'oidc';
     case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
+    case Auth2LoginType.passkey: return 'passkey';
   }
 }
 
@@ -106,6 +107,9 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   }
   else if (value == 'illinois_oidc') {
     return Auth2LoginType.oidcIllinois;
+  }
+  else if (value == 'passkey') {
+    return Auth2LoginType.passkey;
   }
   return null;
 }
