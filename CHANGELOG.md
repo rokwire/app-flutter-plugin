@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use Core Url host to test online status in web panel [#271](https://github.com/rokwire/app-flutter-plugin/issues/271).
 - UrlUtis.isHostAvailable exposed to public [#3052](https://github.com/rokwire/illinois-app/issues/3052).
 - Updated TZDateTimeUtils [#3225](https://github.com/rokwire/illinois-app/issues/3225).
+- Always post "research_group" POST paramter in v2/groups and v2/user/groups API calls [#275](https://github.com/rokwire/app-flutter-plugin/issues/275).
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
