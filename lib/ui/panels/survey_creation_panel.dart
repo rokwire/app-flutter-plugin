@@ -49,7 +49,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   bool _loading = false;
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
-  late final List<TextEditingController> _sectionTextControllers;
+  final List<TextEditingController> _sectionTextControllers = [];
 
   final List<SurveyData> _data = [];
   int dataCount = 0;
@@ -71,7 +71,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
     };
-    _sectionTextControllers = [];
     super.initState();
   }
 
@@ -105,7 +104,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       appBar: const HeaderBar(title: "Create Survey"),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndCreate(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,)
     );
   }
 
@@ -121,12 +120,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
       // sections
       Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
-        type: SurveyElementListType.sections,
+        type: SurveyElementListType.textEntry,
         label: 'Sections (${_sectionTextControllers.length})',
         dataList: _sectionTextControllers,
         surveyElement: SurveyElement.sections,
         onAdd: _onTapAdd,
-        onEdit: _onTapEdit,
         onRemove: _onTapRemove,
       )),
 
@@ -167,7 +165,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     ],));
   }
 
-  Widget _buildPreviewAndCreate() {
+  Widget _buildPreviewAndSave() {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
@@ -179,11 +177,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         Visibility(visible: _loading, child: LoadingBuilder.loading()),
         RoundedButton(
-          label: 'Create',
+          label: 'Save',
           borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
           backgroundColor: Styles().colors?.surface,
           textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
-          onTap: _onTapCreate,
+          onTap: _onTapSave,
         ),
       ]))),
     ],);
@@ -263,7 +261,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         dataTypes: List.generate(_data.length, (index) => _data[index].type),
         sections: sections,
         forceActionReturnData: surveyElement == SurveyElement.followUpRules,
-        tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
+        tabBar: widget.tabBar,
+        mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
       )));
 
       if (ruleElement != null && mounted) {
@@ -454,14 +453,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
   }
 
-  void _onTapCreate() {
+  void _onTapSave() {
     List<Widget> buttons = [
       Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: _createSurvey)),
       Padding(padding: const EdgeInsets.only(left: 8), child: ButtonBuilder.standardRoundedButton(label: 'No', onTap: _dismissCreateSurvey)),
     ];
     ActionsMessage.show(context: context,
-      title: "Create Survey",
-      message: "Are you sure you want to create this survey?",
+      title: "Save Survey",
+      message: "Are you sure you want to save this survey?", //TODO: you may return to edit it later
       buttons: buttons,
     );
   }

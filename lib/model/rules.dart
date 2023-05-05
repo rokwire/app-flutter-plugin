@@ -125,7 +125,7 @@ class RuleComparison extends RuleCondition {
     ">=": "greater than or equal to",
     "==": "equal to",
     "!=": "not equal to",
-    "in_range": "in range",
+    // "in_range": "in range", //TODO: implement
     "any": "any of",
     "all": "all of",
   };

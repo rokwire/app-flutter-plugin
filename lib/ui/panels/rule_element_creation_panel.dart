@@ -53,6 +53,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
+  final List<TextEditingController> _customValueTextControllers = [];
 
   late RuleElement _ruleElem;
   List<ActionData>? _actions;
@@ -72,7 +73,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     "data": null,
     "key": null,
   };
-  bool _customCompare = false;
 
   final Map<String, String?> _actionSettings = {
     "return": null,
@@ -88,6 +88,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     "key": null,
   };
 
+  String _customValueSelection = 'survey';
+  final Map<String, String> _customValueOptions = {
+    'survey': 'Survey Value',
+    'custom_single': 'Custom Value (Single)',
+    'custom_multiple': 'Custom Value (Multiple)'
+  };
   final Map<String, String> _surveyPropertyOptions = {
     'survey': 'Survey',
     'stats': 'Stats',
@@ -113,33 +119,48 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     if (comparison != null) {
       _dataKeySettings.addEntries(_initSettings(comparison.dataKey));
 
-      _customCompare = comparison.compareTo is! String;
-      if (!_customCompare) {
+      //TODO: combine with below
+      if (comparison.compareTo is String) {
         customData = comparison.compareTo as String;
         if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
           _compareToSettings.addEntries(_initSettings(customData));
+          _customValueSelection = 'survey';
         } else {
-          _customCompare = true;
+          _customValueSelection = 'custom_single';
         }
+      } else if (comparison.compareTo is Iterable) {
+        for (dynamic value in comparison.compareTo as Iterable) {
+          _customValueTextControllers.add(TextEditingController(text: value.toString()));
+        }
+        _customValueSelection = 'custom_multiple';
       } else if (comparison.compareTo is DateTime) {
         customData = DateTimeUtils.utcDateTimeToString(comparison.compareTo, format: "MM-dd-yyyy") ?? '';
+        _customValueSelection = 'custom_single';
       } else {
         customData = comparison.compareTo?.toString() ?? '';
+        _customValueSelection = 'custom_single';
       }
     } else if (_ruleElem is RuleAction) {
       RuleAction action = _ruleElem as RuleAction;
-      _customCompare = action.data is! String;
-      if (!_customCompare) {
+      if (action.data is String) {
         customData = action.data as String;
         if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
           _actionSettings.addEntries(_initSettings(customData));
+          _customValueSelection = 'survey';
         } else {
-          _customCompare = true;
+          _customValueSelection = 'custom_single';
         }
+      } else if (action.data is Iterable) {
+        for (dynamic value in action.data as Iterable) {
+          _customValueTextControllers.add(TextEditingController(text: value.toString()));
+        }
+        _customValueSelection = 'custom_multiple';
       } else if (action.data is DateTime) {
         customData = DateTimeUtils.utcDateTimeToString(action.data, format: "MM-dd-yyyy") ?? '';
+        _customValueSelection = 'custom_single';
       } else {
         customData = action.data?.toString() ?? '';
+        _customValueSelection = 'custom_single';
       }
 
       if (action.action == 'local_notify') {
@@ -206,6 +227,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     _textControllers.forEach((_, value) {
       value.dispose();
     });
+    for (TextEditingController controller in _customValueTextControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -245,8 +269,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(RuleComparison.supportedOperators, "Operator", operator, _onChangeComparisonType));
 
       // compareTo
-      Map<bool, String> valueOptions = {false: 'Survey Value', true: 'Custom Value'};
-      content.add(SurveyElementCreationWidget.buildDropdownWidget<bool>(valueOptions, "Compare To", _customCompare, _onChangeCompareToType));
+      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Compare To", _customValueSelection, _onChangeCustomValueSelection));
       content.add(_buildSurveyPropertyOptions('compare_to'));
     } else if (_ruleElem is RuleReference) {
       //TODO: add later - dropdown showing existing rules by summary? (pass existing rules into panel?)
@@ -269,11 +292,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
         }
 
-        return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
-      case 'set_result':
-        Map<bool, String> valueOptions = {false: 'Survey Value', true: 'Custom Value'};
         return Column(children: [
-          SurveyElementCreationWidget.buildDropdownWidget<bool>(valueOptions, "Data Field", _customCompare, _onChangeCompareToType),
+          SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Value Type", _customValueSelection, _onChangeCustomValueSelection),
+          _buildSurveyPropertyOptions('action'),
+        ]);
+      case 'set_result':
+        return Column(children: [
+          SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Value Type", _customValueSelection, _onChangeCustomValueSelection),
           _buildSurveyPropertyOptions('action'),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
@@ -323,7 +348,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   Widget _buildSurveyPropertyOptions(String settings) {
-    if (!_customCompare || settings == 'data_key') {
+    if (_customValueSelection == 'survey' || settings == 'data_key') {
       List<Widget> content = [];
 
       String? surveyOption;
@@ -366,7 +391,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           break;
         case 'data':
           content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", settingsMap['key'],
-            (value) => _onChangeSurveyPropertySetting(value, settings, 'key'), padding: const EdgeInsets.all(16)));
+            (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
           int dataKeyIndex = widget.dataKeys.indexOf(settingsMap['data'] ?? '');
@@ -378,16 +403,24 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             dataProperties.remove('correct_answers');
           }
           
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(dataProperties, "Select survey data option:", settingsMap['data'],
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(dataProperties, "Survey data option", settingsMap['data'],
             (value) => _onChangeSurveyPropertySetting(value, settings, 'data')));
           break;
       }
 
       return Column(children: content,);
+    } else if (_customValueSelection == 'custom_single') {
+      return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
     }
 
-    // dropdown for type selection
-    return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
+    return Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
+      type: SurveyElementListType.textEntry,
+      label: 'Values (${_customValueTextControllers.length})',
+      dataList: _customValueTextControllers,
+      surveyElement: SurveyElement.data,
+      onAdd: _onTapAddValueAtIndex,
+      onRemove: _onTapRemoveValueAtIndex,
+    ));
   }
 
   Widget _buildDone() {
@@ -419,8 +452,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   dynamic get compareToValue {
-    if (_customCompare) {
+    if (_customValueSelection == 'custom_single') {
       return SurveyElementCreationWidget.parseTextForType(_textControllers['custom_compare']!.text);
+    } else if (_customValueSelection == 'custom_multiple') {
+      return customValueList;
     }
 
     switch (_compareToSettings['survey_option']) {
@@ -436,6 +471,14 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       default:
         return '';
     }
+  }
+
+  List<dynamic> get customValueList {
+    List<dynamic> valueList = [];
+    for (TextEditingController controller in _customValueTextControllers) {
+      valueList.add(SurveyElementCreationWidget.parseTextForType(controller.text));
+    }
+    return valueList;
   }
 
   RuleComparison get defaultRuleComparison => RuleComparison(dataKey: _toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
@@ -454,7 +497,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           } else {
             _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           }
-          _customCompare = false;
+          _customValueSelection = 'survey';
           break;
         case "and":
           RuleLogic defaultAnd = RuleLogic("and", [defaultRuleComparison, defaultRuleComparison]);
@@ -496,9 +539,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
-  void _onChangeCompareToType(bool? value) {
+  void _onChangeCustomValueSelection(String? value) {
     setState(() {
-      _customCompare = value ?? false;
+      _customValueSelection = value ?? 'survey';
     });
   }
 
@@ -582,6 +625,19 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
+  void _onTapAddValueAtIndex(int index, SurveyElement surveyElement, RuleElement? parentElement) {
+    setState(() {
+      _customValueTextControllers.insert(index, TextEditingController(text: index > 0 ? _customValueTextControllers[index - 1].text : ''));
+    });
+  }
+
+  void _onTapRemoveValueAtIndex(int index, SurveyElement surveyElement, RuleElement? parentElement) {
+    _customValueTextControllers[index].dispose();
+    setState(() {
+      _customValueTextControllers.removeAt(index);
+    });
+  }
+
   String? _getElementTypeString() {
     if (_ruleElem is RuleComparison) {
       return "if";
@@ -624,8 +680,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           (_ruleElem as RuleAction).data = widget.forceActionReturnData ? 'data.${_actionSettings['return']}' : compareToValue;
           break;
         case 'set_result':
-          error = _customCompare ? (_textControllers['custom_compare']?.text.isEmpty ?? true) : _actionSettings['set_result'] == null;
-          (_ruleElem as RuleAction).data = _customCompare ? compareToValue : _toSurveyPropertyString('action');
+          error = _customValueSelection == 'survey' && (_actionSettings['set_result'] == null);
+          (_ruleElem as RuleAction).data = _customValueSelection == 'survey' ? _toSurveyPropertyString('action') : compareToValue;
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
           break;

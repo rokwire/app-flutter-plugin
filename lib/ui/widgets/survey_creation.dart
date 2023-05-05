@@ -24,7 +24,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 typedef EntryManagementFunc = Function(int, SurveyElement, RuleElement?);
 
-enum SurveyElementListType { data, sections, rules, options, actions }
+enum SurveyElementListType { data, textEntry, rules, options, actions }
 
 class SurveyElementList extends StatefulWidget {
   final SurveyElementListType type;
@@ -56,8 +56,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
       case SurveyElementListType.data:
         listItemBuilder = _buildSurveyDataWidget;
         break;
-      case SurveyElementListType.sections:
-        listItemBuilder = _buildSectionTextEntryWidget;
+      case SurveyElementListType.textEntry:
+        listItemBuilder = _buildTextEntryWidget;
         break;
       case SurveyElementListType.rules:
         listItemBuilder = _buildRuleWidget;
@@ -85,10 +85,11 @@ class _SurveyElementListState extends State<SurveyElementList> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       title: Row(children: [
-        Expanded(child: Text(
+        Expanded(flex: 2, child: Text(
           label,
           maxLines: 2,
           style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
+          overflow: TextOverflow.ellipsis
         )),
         Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
           element: parentElement,
@@ -154,15 +155,14 @@ class _SurveyElementListState extends State<SurveyElementList> {
     ) : displayEntry;
   }
 
-  Widget _buildSectionTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
+  Widget _buildTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     Widget sectionTextEntry = TextField(
       controller: data as TextEditingController,
       style: Styles().textStyles?.getTextStyle('widget.detail.small'),
-      decoration: const InputDecoration.collapsed(
-        hintText: "Section Name",
+      decoration: InputDecoration.collapsed(
+        hintText: surveyElement == SurveyElement.sections ? "Section Name" : "Value",
         border: InputBorder.none,
       ),
-      maxLines: 2,
     );
     return Card(child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
       Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
@@ -491,8 +491,8 @@ class SurveyElementCreationWidget extends StatefulWidget {
       items.add(DropdownMenuItem<T>(
         value: item.key,
         child: Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center,)
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(item.value, style: Styles().textStyles?.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center, maxLines: 2,)
         ),
         alignment: Alignment.centerRight,
       ));

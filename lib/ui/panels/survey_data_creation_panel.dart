@@ -137,7 +137,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Multiple Answers", (_data as SurveyQuestionMultipleChoice).allowMultiple, _onToggleMultipleAnswers));
       
       // selfScore
-      dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Self-Score", (_data as SurveyQuestionMultipleChoice).selfScore, _onToggleSelfScore));
+      if (_data.scoreRule == null) {
+        dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Self-Score", (_data as SurveyQuestionMultipleChoice).selfScore, _onToggleSelfScore));
+      }
     } else if (_data is SurveyQuestionDateTime) {
       _textControllers["start_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).startTime, format: "MM-dd-yyyy"));
       _textControllers["end_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).endTime, format: "MM-dd-yyyy"));
@@ -174,7 +176,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Whole Number", (_data as SurveyQuestionNumeric).wholeNum, _onToggleWholeNumber));
 
       // selfScore
-      dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Self-Score", (_data as SurveyQuestionNumeric).selfScore, _onToggleSelfScore));
+      if (_data.scoreRule == null) {
+        dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Self-Score", (_data as SurveyQuestionNumeric).selfScore, _onToggleSelfScore));
+      }
     } else if (_data is SurveyQuestionText) {
       _textControllers["min_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).minLength.toString());
       _textControllers["max_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).maxLength?.toString());
@@ -211,7 +215,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
       // question text*
-      FormFieldText('Question Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      FormFieldText(_data.isQuestion ? 'Question Text' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
       // more info (Additional Info)
       FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
       // maximum score (number, show if survey is scored)
@@ -230,7 +234,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             Expanded(child: Text("Default Response Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular'), maxLines: 2, overflow: TextOverflow.ellipsis,)),
             GestureDetector(
               onTap: _onTapManageDefaultResponseRule,
-              child: Text(_data.defaultResponseRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.defaultResponseRule == null ? "Create" : "Remove", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
           Visibility(visible: _data.defaultResponseRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
@@ -258,7 +262,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
             Text("Score Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
             GestureDetector(
               onTap: _onTapManageScoreRule,
-              child: Text(_data.scoreRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.scoreRule == null ? "Create" : "Remove", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
           Visibility(visible: widget.scoredSurvey && _data.scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
@@ -419,9 +423,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
     if (element != null) {
+      List<String> dataKeys = List.from(widget.dataKeys);
+      int oldKeyIndex = dataKeys.indexOf(widget.data.key);
+      if (oldKeyIndex != -1) {
+        dataKeys[oldKeyIndex] = _textControllers['key']!.text;
+      }
       RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
-        dataKeys: widget.dataKeys,
+        dataKeys: dataKeys,
         dataTypes: widget.dataTypes,
         sections: widget.sections,
         tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
@@ -601,6 +610,12 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       (_data as SurveyQuestionText).maxLength = int.tryParse(_textControllers["max_length"]!.text);
     }
     
+    //TODO: update rules with contents of data key text entry
+    // if (_data.defaultResponseRule != null) {
+    // }
+    // if (_data.scoreRule != null) {
+    // }
+
     Navigator.of(context).pop(_data);
   }
 }

@@ -74,6 +74,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       if (actionData is String) {
         if (actionData.startsWith('tel:')) {
           _actionDataType = 'phone';
+          _textControllers["data"]!.text = _textControllers["data"]!.text.substring(6);
         } else if (actionData.startsWith('http')) {
           _actionDataType = 'url';
         }
@@ -143,7 +144,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       }
       
       //params
-      if ((_data as ActionData).type == ActionType.launchUri) {
+      if ((_data as ActionData).type == ActionType.launchUri && _actionDataType == 'url') {
         content.add(SurveyElementCreationWidget.buildCheckboxWidget("Internal", (_data as ActionData).isInternalUri ?? false, _onToggleInternal));
       } else if ((_data as ActionData).type == ActionType.showSurvey) {
         content.add(SurveyElementCreationWidget.buildCheckboxWidget("Primary", (_data as ActionData).isPrimaryForNotification ?? false, _onTogglePrimary, padding: const EdgeInsets.symmetric(vertical: 16)));
