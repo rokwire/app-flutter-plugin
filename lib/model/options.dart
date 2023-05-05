@@ -1,16 +1,15 @@
 class OptionData {
   String title;
   String? hint;
-  dynamic _value;
+  dynamic value;
   num? score;
   bool selected;
 
   bool isCorrect;
 
-  dynamic get value { return _value ?? title; }
-  set value(dynamic newValue) { _value = newValue; }
+  dynamic get responseValue { return value ?? title; }
 
-  OptionData({required this.title, this.hint, dynamic value, this.selected = false, this.score, this.isCorrect = false}) : _value = value;
+  OptionData({required this.title, this.hint, this.value, this.selected = false, this.score, this.isCorrect = false});
 
   factory OptionData.fromJson(Map<String, dynamic> json) {
     return OptionData(
@@ -19,6 +18,16 @@ class OptionData {
       value: json['value'],
       score: json['score'],
       selected: json['selected'] ?? false,
+    );
+  }
+
+  factory OptionData.fromOther(OptionData other) {
+    return OptionData(
+      title: other.title,
+      hint: other.hint,
+      value: other.value is Map ? Map.from(other.value) : (other.value is Iterable ? List.from(other.value) : other.value),
+      score: other.score,
+      isCorrect: other.isCorrect
     );
   }
 
@@ -64,7 +73,7 @@ class OptionData {
     return {
       'title': title,
       'hint': hint,
-      'value': _value,
+      'value': value,
       'score': score,
       'selected': selected,
     };

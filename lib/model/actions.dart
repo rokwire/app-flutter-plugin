@@ -45,6 +45,15 @@ class ActionData {
     return ActionData(type: ActionType.none);
   }
 
+  factory ActionData.fromOther(ActionData other) {
+    return ActionData(
+      type: other.type,
+      label: other.label,
+      data: other.data is Map ? Map.from(other.data) : (other.data is Iterable ? List.from(other.data) : other.data),
+      params: Map.from(other.params),
+    );
+  }
+
   static List<ActionData> listFromJson(List<dynamic>? jsonList, {String? engineId}) {
     List<ActionData> list = [];
     for (dynamic json in jsonList ?? []) {

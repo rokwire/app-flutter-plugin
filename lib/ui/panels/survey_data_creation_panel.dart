@@ -227,7 +227,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         margin: const EdgeInsets.only(top: 16),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text("Default Response Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+            Expanded(child: Text("Default Response Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular'), maxLines: 2, overflow: TextOverflow.ellipsis,)),
             GestureDetector(
               onTap: _onTapManageDefaultResponseRule,
               child: Text(_data.defaultResponseRule == null ? "None" : "Clear", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
@@ -337,13 +337,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   void _onTapAddDataAtIndex(int index) {
     setState(() {
       if (_data is SurveyQuestionMultipleChoice) {
-        (_data as SurveyQuestionMultipleChoice).options.insert(index, index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1] : OptionData(
-          title: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].title : "New Option",
-          value: index > 0 ? (_data as SurveyQuestionMultipleChoice).options[index-1].value : ""
-        ));
+        (_data as SurveyQuestionMultipleChoice).options.insert(index, index > 0 ? OptionData.fromOther((_data as SurveyQuestionMultipleChoice).options[index-1]) : OptionData(title: "New Option", value: ""));
       } else if (_data is SurveyDataResult) {
         (_data as SurveyDataResult).actions ??= [];
-        (_data as SurveyDataResult).actions!.insert(index, index > 0 ? (_data as SurveyDataResult).actions![index-1] : ActionData(label: 'New Action', type: ActionType.launchUri, params: {}));
+        (_data as SurveyDataResult).actions!.insert(index, index > 0 ? ActionData.fromOther((_data as SurveyDataResult).actions![index-1]) : ActionData(label: 'New Action', type: ActionType.launchUri, params: {}));
       }
     });
   }
@@ -457,11 +454,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     switch (_data.type) {
       case "survey_data.true_false":
         List<OptionData> options = (_data as SurveyQuestionTrueFalse).options;
-        defaultRule = RuleAction(action: "return", data: options.first.value);
+        defaultRule = RuleAction(action: "return", data: options.first.responseValue);
         break;
       case "survey_data.multiple_choice":
         List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
-        defaultRule = RuleAction(action: "return", data: options.isNotEmpty ? options.first.value : 0);
+        defaultRule = RuleAction(action: "return", data: options.isNotEmpty ? options.first.responseValue : 0);
         break;
       case "survey_data.date_time":
         defaultRule = RuleAction(action: "return", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
@@ -590,7 +587,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       for (OptionData option in (_data as SurveyQuestionMultipleChoice).options) {
         if (option.isCorrect) {
           (_data as SurveyQuestionMultipleChoice).correctAnswers ??= [];
-          (_data as SurveyQuestionMultipleChoice).correctAnswers!.add(option.value);
+          (_data as SurveyQuestionMultipleChoice).correctAnswers!.add(option.responseValue);
         }
       }
     } else if (_data is SurveyQuestionDateTime) {

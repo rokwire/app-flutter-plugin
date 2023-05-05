@@ -281,10 +281,10 @@ class Surveys /* with Service */ {
       num score = 0;
       for (OptionData option in data.options) {
         if (data.response is List<dynamic>) {
-          if (data.response.contains(option.value)) {
+          if (data.response.contains(option.responseValue)) {
             score += option.score ?? 0;
           }
-        } else if (data.response == option.value) {
+        } else if (data.response == option.responseValue) {
           score += option.score ?? 0;
         }
       }

@@ -126,11 +126,11 @@ class _SurveyElementListState extends State<SurveyElementList> {
       entryText = data;
     }
     
-    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis);
+    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
     Widget displayEntry = Card(child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-        Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText),
+        Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
         Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
       ],))
     ));
@@ -162,6 +162,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         hintText: "Section Name",
         border: InputBorder.none,
       ),
+      maxLines: 2,
     );
     return Card(child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
       Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
@@ -197,12 +198,12 @@ class _SurveyElementListState extends State<SurveyElementList> {
       }
 
       late Widget displayEntry;
-      Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.fade);
+      Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       if (data is RuleReference || data is RuleAction || data is RuleComparison) {
         displayEntry = Card(child: Ink(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
           child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-            Padding(padding: const EdgeInsets.only(left: 8), child: ruleText),
+            Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
             Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),
           ],))
         ));
@@ -260,12 +261,17 @@ class _SurveyElementListState extends State<SurveyElementList> {
           entryText += entryText.isNotEmpty ? ' ($valueString)' : '($valueString)';
         }
       }
-      Widget optionDataText = Text(entryText, style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.small.fat' : 'widget.detail.small'),);
+      Widget optionDataText = Text(
+        entryText,
+        style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.small.fat' : 'widget.detail.small'),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      );
       Widget displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
-          Padding(padding: const EdgeInsets.only(left: 8), child: optionDataText),
+          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: optionDataText)),
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
         ],)
       ));
@@ -293,12 +299,12 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data is ActionData) {
-      Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'),);
+      Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       Widget displayEntry = Card(child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
-          Padding(padding: const EdgeInsets.only(left: 8), child: actionDataText),
+          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: actionDataText)),
           Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
         ],)
       ));
@@ -338,7 +344,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     double buttonBoxSize = 36;
     double splashRadius = 18;
     double buttonSize = 18;
-    return Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.end, children: [
+    return Align(alignment: Alignment.centerRight, child: Row(mainAxisSize: MainAxisSize.min, children: [
       Visibility(visible: addRemove && belowLimit, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.add),
         onPressed: widget.onAdd != null ? () => widget.onAdd!(index, surveyElement, parentElement) : null,
@@ -357,7 +363,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
-    ]);
+    ]));
   }
 
   //TODO: add option to noot show removal popup again?

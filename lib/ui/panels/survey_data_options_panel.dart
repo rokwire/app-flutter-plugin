@@ -62,13 +62,13 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
 
       _textControllers["title"] = TextEditingController(text: (_data as OptionData).title);
       _textControllers["hint"] = TextEditingController(text: (_data as OptionData).hint);
-      _textControllers["value"] = TextEditingController(text: (_data as OptionData).value.toString());
+      _textControllers["value"] = TextEditingController(text: (_data as OptionData).value?.toString() ?? '');
       _textControllers["score"] = TextEditingController(text: (_data as OptionData).score?.toString());
     } else if (_data is ActionData) {
       _headerText = 'Edit Action';
 
       _textControllers["label"] = TextEditingController(text: (_data as ActionData).label?.toString());
-      _textControllers["data"] = TextEditingController(text: (_data as ActionData).data?.toString());
+      _textControllers["data"] = TextEditingController(text: (_data as ActionData).data?.toString() ?? '');
 
       dynamic actionData = (_data as ActionData).data;
       if (actionData is String) {
@@ -116,7 +116,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     if (_data is OptionData) {
       content.addAll([
         //title*
-        FormFieldText('Title', padding: EdgeInsets.zero, controller: _textControllers["title"], inputType: TextInputType.text),
+        FormFieldText('Title', padding: EdgeInsets.zero, controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words,),
         //hint
         FormFieldText('Hint', padding: const EdgeInsets.only(top: 16), controller: _textControllers["hint"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
         //value* (dynamic value = _value ?? title)

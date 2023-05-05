@@ -287,7 +287,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     OptionData? selected;
     for (OptionData data in optionList) {
-      if (data.value == survey.response) {
+      if (data.responseValue == survey.response) {
         selected = data;
         break;
       }
@@ -300,7 +300,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
-          survey.response = optionList[index].value;
+          survey.response = optionList[index].responseValue;
           _onChangeResponse(true);
         } : null,
         selectedValue: selected));
@@ -323,9 +323,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       OptionData data = options[i];
       dynamic response = survey.response;
       if (response is List<dynamic>) {
-        if (response.contains(data.value)) {
+        if (response.contains(data.responseValue)) {
           isCheckedList[i] = true;
-          selectedOptions.add(data.value);
+          selectedOptions.add(data.responseValue);
         }
       }
     }
@@ -342,9 +342,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         // }
 
         if (!isCheckedList[index]) {
-          selectedOptions.add(options[index].value);
+          selectedOptions.add(options[index].responseValue);
         } else {
-          selectedOptions.remove(options[index].value);
+          selectedOptions.remove(options[index].responseValue);
         }
 
         if (selectedOptions.isNotEmpty) {
@@ -376,7 +376,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 2),
         child: RadioButton<dynamic>(
           semanticsLabel: option.hint ?? option.title,
-          value: option.value,
+          value: option.responseValue,
           groupValue: survey.response,
           onChanged: (value) {
             survey.response = value;
@@ -443,7 +443,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     OptionData? selected;
     for (OptionData data in optionList) {
-      if (data.value == survey.response) {
+      if (data.responseValue == survey.response) {
         selected = data;
         break;
       }
@@ -455,7 +455,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
-          survey.response = optionList[index].value;
+          survey.response = optionList[index].responseValue;
           _onChangeResponse(true);
         } : null,
         selectedValue: selected
@@ -870,7 +870,7 @@ class CustomIconSelectionList extends StatelessWidget {
   bool isOptionCorrect(List<dynamic>? correctAnswers, OptionData option) {
     if (correctAnswers == null) return true;
 
-    return correctAnswers.contains(option.value);
+    return correctAnswers.contains(option.responseValue);
   }
 
   bool isOptionSelected(List<dynamic>? selectedValues, OptionData option) {
@@ -878,7 +878,7 @@ class CustomIconSelectionList extends StatelessWidget {
 
     // return selectedValues!.contains(answer);
     for (int i = 0; i < selectedValues.length; i++) {
-      if (selectedValues[i] == option.value) return true;
+      if (selectedValues[i] == option.responseValue) return true;
     }
 
     return false;
