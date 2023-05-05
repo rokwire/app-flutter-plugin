@@ -96,7 +96,9 @@ class RokwirePlugin {
         'requestJson': requestJson,
         'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
       });
-    } catch(e) { debugPrint(e.toString()); }
+    } catch(e) {
+      debugPrint(e.toString());
+    }
   }
 
   // Compound APIs

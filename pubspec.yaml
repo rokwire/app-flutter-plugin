@@ -42,7 +42,7 @@ dependencies:
   webview_flutter: ^2.0.13
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.2.1
-  flutter_passkey: ^1.0.1
+  flutter_passkey: ^1.0.2
 
   #Firebase
   firebase_core: ^1.10.0

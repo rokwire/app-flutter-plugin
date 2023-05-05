@@ -394,10 +394,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_passkey
-      sha256: "8166c502f43dab8175f00878a63c6eb5e731479a9326952fc79daf2467a77bcc"
+      sha256: ba37994842e9f60dce7a9691b3a787c2180587dbcc107fa9ad7dbe20d47b6812
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:

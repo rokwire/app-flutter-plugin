@@ -397,7 +397,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'app_type_identifier': Config().appPlatformId,
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
@@ -414,14 +414,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
-        final creationOptions = response.body;
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
+        Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
+        Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
         try {
-          String response = await flutterPasskeyPlugin.createCredential(creationOptions);
+          // await RokwirePlugin.createPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+          String response = await flutterPasskeyPlugin.createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
           // _completeSignUpWithPasskey(response);
+          return Auth2PasskeySignUpResult.succeeded;
         } catch(error) {
           Log.e(error.toString());
         }
-        return Auth2PasskeySignUpResult.succeeded;
       }
       // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
       //   return Auth2PasskeySignUpResult.failedAccountExist;
