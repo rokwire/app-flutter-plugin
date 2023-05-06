@@ -34,10 +34,11 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
+  final Survey? survey;
   final Widget? tabBar;
   final Widget? offlineWidget;
 
-  const SurveyCreationPanel({Key? key, this.tabBar, this.offlineWidget}) : super(key: key);
+  const SurveyCreationPanel({Key? key, this.survey, this.tabBar, this.offlineWidget}) : super(key: key);
 
   @override
   _SurveyCreationPanelState createState() => _SurveyCreationPanelState();
@@ -51,19 +52,19 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   late final Map<String, TextEditingController> _textControllers;
   final List<TextEditingController> _sectionTextControllers = [];
 
-  final List<SurveyData> _data = [];
+  List<SurveyData> _data = [];
   int dataCount = 0;
   bool _scored = true;
 
   final List<RuleResult> _followUpRules = [];
-  final List<RuleResult> _resultRules = [];
+  List<RuleResult> _resultRules = [];
 
   // final Map<String, String> _constants = {};
   // final Map<String, Map<String, String>> _strings = {};
   // final Map<String, Rule> _subRules = {};
   // List<String>? _responseKeys;
 
-  final Map<String, String> _supportedLangs = {};
+  // final Map<String, String> _supportedLangs = {};
 
   @override
   void initState() {
@@ -71,6 +72,31 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       "title": TextEditingController(),
       "more_info": TextEditingController(),
     };
+
+    if (widget.survey != null) {
+      _data = widget.survey!.data.values.toList();
+      _resultRules = widget.survey!.resultRules ?? [];
+      _scored = widget.survey!.scored;
+
+      List<String> sections = [];
+      //TODO: data and follow up rules will likely be out of order by default
+      for (SurveyData surveyData in _data) {
+        dataCount++;
+        if (surveyData.followUpRule != null) {
+          _followUpRules.add(surveyData.followUpRule!);
+        } else {
+          _followUpRules.add(RuleAction(action: 'return', data: surveyData.defaultFollowUpKey));
+        }
+
+        if (surveyData.section != null && !sections.contains(surveyData.section)) {
+          sections.add(surveyData.section!);
+          _sectionTextControllers.add(TextEditingController(text: surveyData.section!));
+        }
+      }
+
+      _textControllers["title"]!.text = widget.survey!.title;
+      _textControllers["more_info"]!.text = widget.survey!.moreInfo ?? '';
+    }
     super.initState();
   }
 
@@ -81,9 +107,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       controller.dispose();
     }
 
-    for (String lang in Localization().defaultSupportedLanguages) {
-      _supportedLangs[lang] = lang;
-    }
+    // for (String lang in Localization().defaultSupportedLanguages) {
+    //   _supportedLangs[lang] = lang;
+    // }
 
     super.dispose();
   }
@@ -101,7 +127,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const HeaderBar(title: "Create Survey"),
+      appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,)
@@ -411,7 +437,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
 
     return Survey(
-      id: '',
+      id: widget.survey != null ? widget.survey!.id : '',
       data: <String, SurveyData>{for (var data in _data) data.key: SurveyData.fromOther(data)},
       type: '',
       scored: _scored,
@@ -455,8 +481,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapSave() {
     List<Widget> buttons = [
-      Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: _createSurvey)),
-      Padding(padding: const EdgeInsets.only(left: 8), child: ButtonBuilder.standardRoundedButton(label: 'No', onTap: _dismissCreateSurvey)),
+      Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: _saveSurvey)),
+      Padding(padding: const EdgeInsets.only(left: 8), child: ButtonBuilder.standardRoundedButton(label: 'No', onTap: _dismissSaveSurvey)),
     ];
     ActionsMessage.show(context: context,
       title: "Save Survey",
@@ -465,26 +491,32 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     );
   }
 
-  void _createSurvey() {
+  void _saveSurvey() {
     Navigator.pop(context);
     setLoading(true);
-    Surveys().createSurvey(_buildSurvey()).then((success) {
-      setLoading(false);
-      PopupMessage.show(context: context,
-        title: "Create Survey",
-        message: "Survey creation ${success == true ? "succeeded" : "failed"}",
-        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
-        onTapButton: (context) {
-          Navigator.pop(context);
-          Navigator.pop(context);
-        },
-        barrierDismissible: false,
-      );
-    });
+    if (widget.survey != null) {
+      Surveys().updateSurvey(_buildSurvey()).then(_saveSurveyCallback);
+    } else {
+      Surveys().createSurvey(_buildSurvey()).then(_saveSurveyCallback);
+    }
   }
 
-  void _dismissCreateSurvey() {
+  void _dismissSaveSurvey() {
     Navigator.pop(context);
+  }
+
+  void _saveSurveyCallback(bool? success) {
+    setLoading(false);
+    PopupMessage.show(context: context,
+      title: "Save Survey",
+      message: "Survey save ${success == true ? "succeeded" : "failed"}", //TODO: better messaging here
+      buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
+      onTapButton: (context) {
+        Navigator.pop(context);
+        Navigator.pop(context);
+      },
+      barrierDismissible: success != true,
+    );
   }
 
   void setLoading(bool value) {

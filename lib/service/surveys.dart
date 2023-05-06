@@ -305,6 +305,23 @@ class Surveys /* with Service */ {
 
   // Accessories
 
+  Future<List<Survey>?> loadCreatorSurveys() async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/creator/surveys';
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+        if (responseList != null) {
+          List<Survey>? surveys = Survey.listFromJson(responseList);
+          return surveys;
+        }
+      }
+    }
+    return null;
+  }
+
   Future<Survey?> loadSurvey(String id) async {
     if (enabled) {
       String url = '${Config().surveysUrl}/surveys/$id';
@@ -327,6 +344,21 @@ class Surveys /* with Service */ {
     if (enabled) {
       String url = '${Config().surveysUrl}/surveys';
       Response? response = await Network().post(url, body: JsonUtils.encode(survey.toJson()), auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        return true;
+      }
+      String? responseBody = response?.body;
+      debugPrint(responseBody);
+      return false;
+    }
+    return null;
+  }
+
+  Future<bool?> updateSurvey(Survey survey) async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/surveys/${survey.id}';
+      Response? response = await Network().put(url, body: JsonUtils.encode(survey.toJson()), auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       if (responseCode == 200) {
         return true;
