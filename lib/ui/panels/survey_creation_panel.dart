@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:collection';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -52,12 +53,13 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   late final Map<String, TextEditingController> _textControllers;
   final List<TextEditingController> _sectionTextControllers = [];
 
-  List<SurveyData> _data = [];
-  int dataCount = 0;
+  final List<SurveyData> _data = [];
+  int _dataCount = 0;
   bool _scored = true;
 
   final List<RuleResult> _followUpRules = [];
   List<RuleResult> _resultRules = [];
+  //TODO: defaultDataKeyRule?
 
   // final Map<String, String> _constants = {};
   // final Map<String, Map<String, String>> _strings = {};
@@ -74,17 +76,21 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     };
 
     if (widget.survey != null) {
-      _data = widget.survey!.data.values.toList();
       _resultRules = widget.survey!.resultRules ?? [];
       _scored = widget.survey!.scored;
 
       List<String> sections = [];
       //TODO: data and follow up rules will likely be out of order by default
-      for (SurveyData surveyData in _data) {
-        dataCount++;
+      SurveyData? firstData = widget.survey!.firstQuestion;
+      if (widget.survey!.defaultDataKey != null) {
+        _followUpRules.add(RuleAction(action: 'return', data: widget.survey!.defaultDataKey));
+        firstData = widget.survey!.data[widget.survey!.defaultDataKey];
+      }
+      for (SurveyData? surveyData = firstData; surveyData != null; surveyData = Surveys().getFollowUp(widget.survey!, surveyData)) {
+        _data.add(surveyData);
         if (surveyData.followUpRule != null) {
           _followUpRules.add(surveyData.followUpRule!);
-        } else {
+        } else if (surveyData.defaultFollowUpKey != null) {
           _followUpRules.add(RuleAction(action: 'return', data: surveyData.defaultFollowUpKey));
         }
 
@@ -94,9 +100,11 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
       }
 
+      _dataCount = _data.length;
       _textControllers["title"]!.text = widget.survey!.title;
       _textControllers["more_info"]!.text = widget.survey!.moreInfo ?? '';
     }
+    
     super.initState();
   }
 
@@ -323,9 +331,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     SurveyData insert;
     if (index > 0) {
       insert = SurveyData.fromOther(_data[index-1]);
-      insert.key = "data${dataCount++}";
+      insert.key = "data${_dataCount++}";
     } else {
-      insert = SurveyQuestionTrueFalse(text: "", key: "data${dataCount++}");
+      insert = SurveyQuestionTrueFalse(text: "", key: "data${_dataCount++}");
     }
     setState(() {
       _data.insert(index, insert);
@@ -438,7 +446,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
     return Survey(
       id: widget.survey != null ? widget.survey!.id : '',
-      data: <String, SurveyData>{for (var data in _data) data.key: SurveyData.fromOther(data)},
+      data: SplayTreeMap.fromIterable(_data, value: (data) => SurveyData.fromOther(data)),
       type: '',
       scored: _scored,
       title: (_textControllers["title"]?.text.isNotEmpty ?? false) ? _textControllers["title"]!.text : 'New Survey',

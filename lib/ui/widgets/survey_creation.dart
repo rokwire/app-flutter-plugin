@@ -78,42 +78,45 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
     bool hideEntryManagement = parentElement is RuleLogic && grandParentElement is Rule;
-    return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: ExpansionTile(
-      iconColor: Styles().colors?.getColor('fillColorSecondary'),
-      backgroundColor: Styles().colors?.getColor('background'),
-      collapsedBackgroundColor: Styles().colors?.getColor('surface'),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-      title: Row(children: [
-        Expanded(flex: 2, child: Text(
-          label,
-          maxLines: 2,
-          style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
-          overflow: TextOverflow.ellipsis
-        )),
-        Expanded(child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
-          element: parentElement,
-          parentElement: grandParentElement,
-          addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
-          editable: parentElement != null && !hideEntryManagement
-        )),
-      ],),
-      children: <Widget>[
-        Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-        dataList.isNotEmpty ? ListView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: dataList.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement));
-          },
-        ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
-            Container(height: 0),
-            Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
-          ]
-        )),
-      ],
-    ));
+    return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: Padding(
+      padding: parentElement != null ? const EdgeInsets.only(top: 8) : EdgeInsets.zero,
+      child: ListTileTheme(horizontalTitleGap: 8, child: ExpansionTile(
+        iconColor: Styles().colors?.getColor('fillColorSecondary'),
+        backgroundColor: Styles().colors?.getColor('background'),
+        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+        title: Material(color: Colors.transparent, child: Row(children: [
+          Expanded(flex: 5, child: Text(
+            label,
+            maxLines: 2,
+            style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
+            overflow: TextOverflow.ellipsis
+          )),
+          Expanded(flex: 3, child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
+            element: parentElement,
+            parentElement: grandParentElement,
+            addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
+            editable: parentElement != null && !hideEntryManagement
+          )),
+        ],)),
+        children: <Widget>[
+          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
+          dataList.isNotEmpty ? ListView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: dataList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement));
+            },
+          ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
+              Container(height: 0),
+              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
+            ]
+          )),
+        ],
+      )
+    )));
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
@@ -128,7 +131,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     }
     
     Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
-    Widget displayEntry = Card(child: Ink(
+    Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
         Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
@@ -140,7 +143,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       data: index,
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
-        height: 32,
+        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
       )),
@@ -164,19 +167,18 @@ class _SurveyElementListState extends State<SurveyElementList> {
         border: InputBorder.none,
       ),
     );
-    return Card(child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-      Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
-      Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
-    ],)));
+    return Card(
+      margin: const EdgeInsets.only(top: 8),
+      child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+        Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
+        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
+      ],))
+    );
   }
 
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data is RuleElement) {
-      String? prefix;
-      if (parentElement is Rule) {
-        prefix = index == 0 ? 'Yes:' : 'No:';
-      }
-      String summary = data.getSummary(prefix: prefix);
+      String summary = data.getSummary(prefix: parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null);
       if (widget.labelStart && index == 0 && surveyElement == SurveyElement.followUpRules && parentElement == null) {
         summary = "Start: $summary";
       }
@@ -200,7 +202,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       late Widget displayEntry;
       Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       if (data is RuleReference || data is RuleAction || data is RuleComparison) {
-        displayEntry = Card(child: Ink(
+        displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
           child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
             Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
@@ -211,7 +213,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         displayEntry = _buildCollapsibleWrapper(parentElement is Rule ? 'Conditions' : summary, data.conditions, _buildRuleWidget, surveyElement, parentElement: data, parentIndex: ruleElemIndex, grandParentElement: parentElement);
       } else if (data is Rule) {
         bool isComparison = data.condition is RuleComparison;
-        String label = data.condition?.getSummary() ?? "";
+        String label = data.condition?.getSummary(prefix: parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null) ?? "";
         List<RuleElement> elementsSlice = [];
         if (!isComparison) {
           elementsSlice.add(data.condition!);
@@ -267,7 +269,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
       );
-      Widget displayEntry = Card(child: Ink(
+      Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
@@ -300,7 +302,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data is ActionData) {
       Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
-      Widget displayEntry = Card(child: Ink(
+      Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
