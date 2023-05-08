@@ -689,7 +689,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
   void _setSurvey(Survey survey) {
     _survey = survey;
-    _mainSurveyData = widget.surveyDataKey != null ? _survey?.data[widget.surveyDataKey] : _survey?.firstQuestion;
+    _mainSurveyData = widget.surveyDataKey != null ? survey.data[widget.surveyDataKey] : Surveys().getFirstQuestion(survey);
 
     Surveys().evaluateDefaultDataResponse(_survey!, _mainSurveyData, defaultResponses: widget.defaultResponses);
     Surveys().evaluate(_survey!);

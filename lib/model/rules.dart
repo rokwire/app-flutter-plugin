@@ -285,6 +285,8 @@ abstract class RuleResult extends RuleElement {
     }
     return resultsJson;
   }
+
+  List<RuleAction> get possibleActions => [];
 }
 
 abstract class RuleActionResult extends RuleResult {
@@ -415,6 +417,9 @@ class RuleAction extends RuleActionResult {
       data = (data as String).replaceAll(oldKey, newKey);
     }
   }
+
+  @override
+  List<RuleAction> get possibleActions => [this];
 }
 
 class RuleActionList extends RuleActionResult {
@@ -481,6 +486,9 @@ class RuleActionList extends RuleActionResult {
       actions[i].updateDataKeys(oldKey, newKey);
     }
   }
+
+  @override
+  List<RuleAction> get possibleActions => actions;
 }
 
 class Rule extends RuleResult {
@@ -600,6 +608,18 @@ class Rule extends RuleResult {
     trueResult?.updateDataKeys(oldKey, newKey);
     falseResult?.updateDataKeys(oldKey, newKey);
   }
+
+  @override
+  List<RuleAction> get possibleActions {
+    List<RuleAction> actions = [];
+    if (trueResult != null) {
+      actions.addAll(trueResult!.possibleActions);
+    }
+    if (falseResult != null) {
+      actions.addAll(falseResult!.possibleActions);
+    }
+    return actions;
+  }
 }
 
 class RuleCases extends RuleResult {
@@ -667,6 +687,15 @@ class RuleCases extends RuleResult {
     for (int i = 0; i < cases.length; i++) {
       cases[i].updateDataKeys(oldKey, newKey);
     }
+  }
+
+  @override
+  List<RuleAction> get possibleActions {
+    List<RuleAction> actions = [];
+    for (Rule ruleCase in cases) {
+      actions.addAll(ruleCase.possibleActions);
+    }
+    return actions;
   }
 }
 

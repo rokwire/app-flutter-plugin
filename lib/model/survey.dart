@@ -202,8 +202,6 @@ class Survey extends RuleEngine {
     }
     return result;
   }
-
-  SurveyData? get firstQuestion => data[defaultDataKey ?? defaultQuestionKey];
 }
 
 class SurveyStats {
@@ -387,6 +385,7 @@ abstract class SurveyData {
   bool get isQuestion;
   bool get canContinue => allowSkip || response != null;
   bool get scored => scoreRule != null;
+  bool get isAction => false;
   String get type;
 }
 
@@ -886,6 +885,9 @@ class SurveyDataResult extends SurveyData {
 
   @override
   bool get isQuestion => false;
+
+  @override
+  bool get isAction => actions != null;
 
   @override
   String get type => actions != null ? 'survey_data.action' : 'survey_data.info';

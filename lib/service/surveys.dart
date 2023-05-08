@@ -53,7 +53,7 @@ class Surveys /* with Service */ {
   // Survey
   
   bool canContinue(Survey survey) {
-    for (SurveyData? data = survey.firstQuestion; data != null; data = getFollowUp(survey, data)) {
+    for (SurveyData? data = getFirstQuestion(survey); data != null; data = getFollowUp(survey, data)) {
       if (!data.canContinue) {
         return false;
       }
@@ -97,7 +97,7 @@ class Surveys /* with Service */ {
 
   Future<dynamic> evaluate(Survey survey, {bool evalResultRules = false, bool summarizeResultRules = false}) async {
     SurveyStats surveyStats = SurveyStats();
-    for (SurveyData? data = survey.firstQuestion; data != null; data = getFollowUp(survey, data)) {
+    for (SurveyData? data = getFirstQuestion(survey); data != null; data = getFollowUp(survey, data)) {
       surveyStats += _getDataStats(survey, data);
     }
     survey.stats = surveyStats;
@@ -135,6 +135,14 @@ class Surveys /* with Service */ {
       }
     }
     return summarizeResultRules ? resultSummaries : result;
+  }
+
+  SurveyData? getFirstQuestion(Survey survey) {
+    if (survey.defaultDataKeyRule != null) {
+      dynamic result = Rules().evaluateRuleResult(survey, survey.defaultDataKeyRule!);
+      return result is SurveyData ? result : null;
+    }
+    return survey.data[survey.defaultDataKey ?? Survey.defaultQuestionKey];
   }
 
   static Map<String, String> get properties => {
@@ -236,11 +244,8 @@ class Surveys /* with Service */ {
       if (result is SurveyData) {
         return result;
       }
-    } else {
-      return data?.defaultFollowUpKey != null ? survey.data[data!.defaultFollowUpKey] : null;
     }
-
-    return null;
+    return data?.defaultFollowUpKey != null ? survey.data[data!.defaultFollowUpKey] : null;
   }
 
   SurveyStats _getDataStats(Survey survey, SurveyData data) {
