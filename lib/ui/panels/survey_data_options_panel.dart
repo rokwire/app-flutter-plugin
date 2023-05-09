@@ -154,7 +154,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
             type: SurveyElementListType.data,
             label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
             dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
-            surveyElement: SurveyElement.data,
+            surveyElement: SurveyElement.questionData,
             onAdd: _onTapAddDefaultResponse,
             onEdit: _onTapEditDefaultResponse,
             onRemove: _onTapRemoveDefaultResponse,

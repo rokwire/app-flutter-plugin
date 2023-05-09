@@ -131,7 +131,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     }
     
     Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
-    Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
+    Widget displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
         Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
@@ -145,7 +145,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       feedback: Card(child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: surveyDataText)),
+        child: Align(alignment: Alignment.centerLeft, child: surveyDataText),
       )),
       child: DragTarget<int>(
         builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
@@ -168,7 +168,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       ),
     );
     return Card(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
         Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
         Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
@@ -202,7 +202,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       late Widget displayEntry;
       Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       if (data is RuleReference || data is RuleAction || data is RuleComparison) {
-        displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
+        displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
           child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
             Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
@@ -236,9 +236,9 @@ class _SurveyElementListState extends State<SurveyElementList> {
       //   data: ruleElem.id,
       //   maxSimultaneousDrags: 1,
       //   feedback: Card(child: Container(
-      //     height: 32,
+      //     padding: const EdgeInsets.all(16),
       //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      //     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: Align(alignment: Alignment.centerLeft, child: ruleText))
+      //     child: Align(alignment: Alignment.centerLeft, child: ruleText)
       //   )),
       //   child: DragTarget<String>(
       //     builder: (BuildContext context, List<String?> accepted, List<dynamic> rejected) {
@@ -269,7 +269,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
       );
-      Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
+      Widget displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
@@ -302,7 +302,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
     if (data is ActionData) {
       Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
-      Widget displayEntry = Card(margin: const EdgeInsets.only(top: 8), child: Ink(
+      Widget displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
@@ -504,7 +504,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
 
   static dynamic parseTextForType(String text) {
     bool? valueBool = text.toLowerCase() == 'true' ? true : (text.toLowerCase() == 'false' ? false : null);
-    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? (text.isNotEmpty ? text : null);
+    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? (text == null.toString() ? null : text);
   }
 }
 

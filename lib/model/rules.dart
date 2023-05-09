@@ -392,15 +392,16 @@ class RuleAction extends RuleActionResult {
   @override
   String getSummary({String? prefix, String? suffix}) {
     String summary = "${supportedActions[action]}";
-    if (data != null) {
-      if (data is Alert) {
-        summary += " (${data.title})";
-      } else if (data is SurveyAlert) {
-        summary += " (${data.contactKey})";
-      } else {
-        summary += " ($data)";
-      }
+    if (data is Alert) {
+      summary += " (${data.title})";
+    } else if (data is SurveyAlert) {
+      summary += " (${data.contactKey})";
+    } else if (data is String && data.startsWith('data.')) {
+      summary += " (${data.substring(5)})";
+    } else {
+      summary += " ($data)";
     }
+
     if (prefix != null) {
       summary = "$prefix $summary";
     }

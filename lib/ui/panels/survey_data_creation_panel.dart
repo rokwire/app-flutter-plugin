@@ -37,8 +37,10 @@ class SurveyDataCreationPanel extends StatefulWidget {
   final Widget? tabBar;
   final List<String?> sections;
   final bool scoredSurvey;
+  final bool mayChangeType;
 
-  const SurveyDataCreationPanel({Key? key, required this.data, required this.dataKeys, required this.dataTypes, required this.sections, required this.scoredSurvey, this.tabBar}) : super(key: key);
+  const SurveyDataCreationPanel({Key? key, required this.data, required this.dataKeys, required this.dataTypes, required this.sections, required this.scoredSurvey,
+    this.mayChangeType = true, this.tabBar}) : super(key: key);
 
   @override
   _SurveyDataCreationPanelState createState() => _SurveyDataCreationPanelState();
@@ -126,7 +128,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         type: SurveyElementListType.options,
         label: 'Options (${options.length})',
         dataList: options,
-        surveyElement: SurveyElement.data,
+        surveyElement: SurveyElement.questionData,
         onAdd: _onTapAdd,
         onEdit: _onTapEdit,
         onRemove: _onTapRemove,
@@ -193,7 +195,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         type: SurveyElementListType.actions,
         label: 'Actions (${actions.length})',
         dataList: actions,
-        surveyElement: SurveyElement.data,
+        surveyElement: SurveyElement.actionData,
         onAdd: _onTapAdd,
         onEdit: _onTapEdit,
         onRemove: _onTapRemove,
@@ -204,8 +206,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
     List<Widget> baseContent = [
       // data type
-      SurveyElementCreationWidget.buildDropdownWidget<String>(SurveyData.supportedTypes, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
-
+      SurveyElementCreationWidget.buildDropdownWidget<String>(widget.mayChangeType ? SurveyData.supportedTypes : {"survey_data.action": "Action"}, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
+      
       // section
       Visibility(
         visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
@@ -215,7 +217,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
       // question text*
-      FormFieldText(_data.isQuestion ? 'Question Text' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      FormFieldText(_data.isQuestion ? 'Question Text' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
       // more info (Additional Info)
       FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
       // maximum score (number, show if survey is scored)
@@ -253,7 +255,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       )),
 
       // scoreRule (show entry if survey is scored)
-      Visibility(visible: widget.scoredSurvey && _data is! SurveyDataResult, child: Container(
+      Visibility(visible: _data is! SurveyDataResult, child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
@@ -265,7 +267,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
               child: Text(_data.scoreRule == null ? "Create" : "Remove", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
-          Visibility(visible: widget.scoredSurvey && _data.scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
+          Visibility(visible: _data.scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
             SurveyElementList(
               type: SurveyElementListType.rules,
               label: '',
@@ -299,7 +301,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapAdd(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     switch (surveyElement) {
-      case SurveyElement.data: _onTapAddDataAtIndex(index); break;
+      case SurveyElement.questionData: _onTapAddDataAtIndex(index); break;
+      case SurveyElement.actionData: _onTapAddDataAtIndex(index); break;
       case SurveyElement.defaultResponseRule: _onTapAddRuleElementForId(index, surveyElement, parentElement); break;
       case SurveyElement.scoreRule: _onTapAddRuleElementForId(index, surveyElement, parentElement); break;
       default: return;
@@ -308,7 +311,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapRemove(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     switch (surveyElement) {
-      case SurveyElement.data: _onTapRemoveDataAtIndex(index); break;
+      case SurveyElement.questionData: _onTapRemoveDataAtIndex(index); break;
+      case SurveyElement.actionData: _onTapRemoveDataAtIndex(index); break;
       case SurveyElement.defaultResponseRule: _onTapRemoveRuleElementForId(index, surveyElement, parentElement); break;
       case SurveyElement.scoreRule: _onTapRemoveRuleElementForId(index, surveyElement, parentElement); break;
       default: return;
@@ -317,7 +321,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapEdit(int index, SurveyElement surveyElement, RuleElement? element) {
     switch (surveyElement) {
-      case SurveyElement.data: _onTapEditData(index); break;
+      case SurveyElement.questionData: _onTapEditData(index); break;
+      case SurveyElement.actionData: _onTapEditData(index); break;
       case SurveyElement.defaultResponseRule: _onTapEditRuleElement(element, surveyElement); break;
       case SurveyElement.scoreRule: _onTapEditRuleElement(element, surveyElement); break;
       default: return;
@@ -430,10 +435,12 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       }
       RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
-        dataKeys: dataKeys,
-        dataTypes: widget.dataTypes,
+        questionDataKeys: dataKeys,
+        questionDataTypes: widget.dataTypes,
         sections: widget.sections,
-        tabBar: widget.tabBar, mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList
+        mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList,
+        forceReturn: true,
+        tabBar: widget.tabBar,
       )));
 
       if (ruleElement != null && mounted) {

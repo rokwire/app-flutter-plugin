@@ -54,20 +54,26 @@ class ActionData {
     );
   }
 
-  static List<ActionData> listFromJson(List<dynamic>? jsonList, {String? engineId}) {
-    List<ActionData> list = [];
-    for (dynamic json in jsonList ?? []) {
-      list.add(ActionData.fromJson(json, engineId: engineId));
+  static List<ActionData>? listFromJson(List<dynamic>? jsonList, {String? engineId}) {
+    if (jsonList != null) {
+      List<ActionData> list = [];
+      for (dynamic json in jsonList) {
+        list.add(ActionData.fromJson(json, engineId: engineId));
+      }
+      return list;
     }
-    return list;
+    return null;
   }
 
-  static List<Map<String, dynamic>> listToJson(List<ActionData>? actions) {
-    List<Map<String, dynamic>> actionsJson = [];
-    for (ActionData action in actions ?? []) {
-      actionsJson.add(action.toJson());
+  static List<Map<String, dynamic>>? listToJson(List<ActionData>? actions) {
+    if (actions != null) {
+      List<Map<String, dynamic>> actionsJson = [];
+      for (ActionData action in actions) {
+        actionsJson.add(action.toJson());
+      }
+      return actionsJson;
     }
-    return actionsJson;
+    return null;
   }
 
   Map<String, dynamic> toJson() {

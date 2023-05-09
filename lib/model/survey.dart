@@ -176,16 +176,16 @@ class Survey extends RuleEngine {
       title: other.title,
       moreInfo: other.moreInfo,
       defaultDataKey: other.defaultDataKey,
-      defaultDataKeyRule: other.defaultDataKeyRule,
-      resultRules: other.resultRules,
-      resultData: other.resultData,
-      responseKeys: other.responseKeys,
+      defaultDataKeyRule: other.defaultDataKeyRule != null ? RuleResult.fromOther(other.defaultDataKeyRule!) : null,
+      resultRules: other.resultRules != null ? List.from(other.resultRules!) : null,
+      resultData: other.resultData is Map ? Map.from(other.resultData) : (other.resultData is Iterable ? List.from(other.resultData) : other.resultData),
+      responseKeys: other.responseKeys != null ? List.from(other.responseKeys!) : null,
       dateCreated: other.dateCreated,
       dateUpdated: other.dateUpdated,
-      constants: other.constants,
-      strings: other.strings,
-      subRules: other.subRules,
-      stats: other.stats,
+      constants: Map.of(other.constants),
+      strings: Map.of(other.strings),
+      subRules: Map.of(other.subRules),
+      stats: other.stats != null ? SurveyStats.fromOther(other.stats!) : null,
     );
   }
 
@@ -243,6 +243,17 @@ class SurveyStats {
       scores: scores,
       maximumScores: maxScores,
       responseData: JsonUtils.mapValue(json['response_data']) ?? {},
+    );
+  }
+
+  factory SurveyStats.fromOther(SurveyStats other) {
+    return SurveyStats(
+      total: other.total,
+      complete: other.complete,
+      scored: other.scored,
+      scores: Map.of(other.scores),
+      maximumScores: Map.of(other.maximumScores),
+      responseData: Map.of(other.responseData),
     );
   }
 
@@ -379,7 +390,7 @@ abstract class SurveyData {
     "survey_data.numeric": "Numeric",
     "survey_data.text": "Text",
     "survey_data.info": "Info",
-    "survey_data.action": "Action"
+    // "survey_data.action": "Action" // do not include because not allowed to switch to or from this type
   };
 
   bool get isQuestion;
@@ -426,9 +437,9 @@ class SurveyQuestionTrueFalse extends SurveyData {
       correctAnswer: other.correctAnswer,
       text: other.text,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      defaultResponseRule: other.defaultResponseRule,
-      followUpRule: other.followUpRule,
-      scoreRule: other.scoreRule,
+      defaultResponseRule: other.defaultResponseRule != null ? RuleResult.fromOther(other.defaultResponseRule!) : null,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
+      scoreRule: other.scoreRule != null ? RuleResult.fromOther(other.scoreRule!) : null,
       moreInfo: other.moreInfo,
       allowSkip: other.allowSkip,
       replace: other.replace,
@@ -498,16 +509,16 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       key: other.key,
       section: other.section,
       text: other.text,
-      options: other.options,
-      correctAnswers: other.correctAnswers,
+      options: List.generate(other.options.length, (index) => OptionData.fromOther(other.options[index])),
+      correctAnswers: other.correctAnswers != null ? List.from(other.correctAnswers!) : null,
       allowMultiple: other.allowMultiple,
       selfScore: other.selfScore,
       allowSkip: other.allowSkip,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      defaultResponseRule: other.defaultResponseRule,
-      followUpRule: other.followUpRule,
-      scoreRule: other.scoreRule,
+      defaultResponseRule: other.defaultResponseRule != null ? RuleResult.fromOther(other.defaultResponseRule!) : null,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
+      scoreRule: other.scoreRule != null ? RuleResult.fromOther(other.scoreRule!) : null,
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
@@ -583,9 +594,9 @@ class SurveyQuestionDateTime extends SurveyData {
       allowSkip: other.allowSkip,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      defaultResponseRule: other.defaultResponseRule,
-      followUpRule: other.followUpRule,
-      scoreRule: other.scoreRule,
+      defaultResponseRule: other.defaultResponseRule != null ? RuleResult.fromOther(other.defaultResponseRule!) : null,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
+      scoreRule: other.scoreRule != null ? RuleResult.fromOther(other.scoreRule!) : null,
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
@@ -655,9 +666,9 @@ class SurveyQuestionNumeric extends SurveyData {
       allowSkip: other.allowSkip,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      defaultResponseRule: other.defaultResponseRule,
-      followUpRule: other.followUpRule,
-      scoreRule: other.scoreRule,
+      defaultResponseRule: other.defaultResponseRule != null ? RuleResult.fromOther(other.defaultResponseRule!) : null,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
+      scoreRule: other.scoreRule != null ? RuleResult.fromOther(other.scoreRule!) : null,
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
@@ -731,9 +742,9 @@ class SurveyQuestionText extends SurveyData {
       allowSkip: other.allowSkip,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      defaultResponseRule: other.defaultResponseRule,
-      followUpRule: other.followUpRule,
-      scoreRule: other.scoreRule,
+      defaultResponseRule: other.defaultResponseRule != null ? RuleResult.fromOther(other.defaultResponseRule!) : null,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
+      scoreRule: other.scoreRule != null ? RuleResult.fromOther(other.scoreRule!) : null,
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
@@ -866,11 +877,11 @@ class SurveyDataResult extends SurveyData {
     return SurveyDataResult(
       key: other.key,
       text: other.text,
-      actions: other.actions,
+      actions: other.actions != null ? List.generate(other.actions!.length, (index) => ActionData.fromOther(other.actions![index])) : null,
       moreInfo: other.moreInfo,
       replace: other.replace,
       defaultFollowUpKey: other.defaultFollowUpKey,
-      followUpRule: other.followUpRule,
+      followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
       style: other.style,
     );
   }
@@ -934,4 +945,4 @@ class SurveyDataPage extends SurveyData {
 }
 */
 
-enum SurveyElement { data, sections, followUpRules, resultRules, defaultResponseRule, scoreRule }
+enum SurveyElement { questionData, actionData, sections, followUpRules, resultRules, defaultResponseRule, scoreRule }

@@ -34,15 +34,17 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class RuleElementCreationPanel extends StatefulWidget {
   final RuleElement data;
-  final List<String> dataKeys;
-  final List<String> dataTypes;
+  final List<String> questionDataKeys;
+  final List<String> questionDataTypes;
+  final List<String>? actionDataKeys;
   final List<String?> sections;
   final bool mayChangeType;
-  final bool forceActionReturnData;
+  final bool forceReturn;
+  final bool forceReturnQuestionData;
   final Widget? tabBar;
 
-  const RuleElementCreationPanel({Key? key, required this.data, required this.dataKeys, required this.dataTypes, required this.sections, this.mayChangeType = true,
-    this.forceActionReturnData = false, this.tabBar}) : super(key: key);
+  const RuleElementCreationPanel({Key? key, required this.data, required this.questionDataKeys, required this.questionDataTypes, this.actionDataKeys, required this.sections,
+    this.mayChangeType = true, this.forceReturn = false, this.forceReturnQuestionData = false, this.tabBar}) : super(key: key);
 
   @override
   _RuleElementCreationPanelState createState() => _RuleElementCreationPanelState();
@@ -141,6 +143,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         _customValueSelection = 'custom_single';
       }
     } else if (_ruleElem is RuleAction) {
+      //TODO: init other actionSettings fields
       RuleAction action = _ruleElem as RuleAction;
       if (action.data is String) {
         customData = action.data as String;
@@ -245,7 +248,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   Widget _buildRuleElement() {
     Map<String, String> supportedTypes = Map.from(_ruleElem.supportedAlternatives);
-    if (widget.forceActionReturnData) {
+    if (widget.forceReturnQuestionData) {
       supportedTypes.remove('action_list');
     }
     List<Widget> content = [Visibility(
@@ -275,7 +278,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       //TODO: add later - dropdown showing existing rules by summary? (pass existing rules into panel?)
     } else if (_ruleElem is RuleAction) {
       // action
-      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(widget.forceActionReturnData ? {'return': 'Return'} : RuleAction.supportedActions,
+      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(widget.forceReturnQuestionData || widget.forceReturn ? {'return': 'Return'} : RuleAction.supportedActions,
         "Action", (_ruleElem as RuleAction).action, _onChangeActionType));
 
       content.add(_buildActionSurveyOptions());
@@ -288,8 +291,10 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     RuleAction ruleAction = _ruleElem as RuleAction;
     switch (ruleAction.action) {
       case 'return':
-        if (widget.forceActionReturnData) {
-          return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
+        if (widget.forceReturnQuestionData) {
+          Map<String?, String> options = Map.fromIterable(widget.questionDataKeys, key: (key) => 'data.$key');
+          options[null] = 'END SURVEY';
+          return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
         }
 
         return Column(children: [
@@ -303,11 +308,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
-        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['alert'],
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['alert'],
           (value) => _onChangeActionSetting(value, 'alert'), padding: const EdgeInsets.all(16));
       case 'alert_result':
         return Column(children: [
-          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _actionSettings['alert_result'],
+          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['alert_result'],
             (value) => _onChangeActionSetting(value, 'alert_result'), padding: const EdgeInsets.all(16)),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
@@ -323,7 +328,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
             type: SurveyElementListType.actions,
             label: 'Actions (${_actions?.length ?? 0})',
             dataList: _actions ?? [],
-            surveyElement: SurveyElement.data,
+            surveyElement: SurveyElement.actionData,
             onAdd: _onTapAddAction,
             onEdit: _onTapEditAction,
             onRemove: _onTapRemoveAction,
@@ -390,12 +395,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           }
           break;
         case 'data':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", settingsMap['key'],
-            (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.questionDataKeys + (widget.actionDataKeys ?? []), key: (key) => 'data.$key'), "Survey data key",
+            settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
-          int dataKeyIndex = widget.dataKeys.indexOf(settingsMap['data'] ?? '');
-          String dataType = dataKeyIndex >= 0 ? widget.dataTypes[dataKeyIndex] : '';
+          int dataKeyIndex = widget.questionDataKeys.indexOf(settingsMap['data']?.substring(5) ?? '');
+          String dataType = dataKeyIndex >= 0 ? widget.questionDataTypes[dataKeyIndex] : '';
           if (dataType != 'survey_data.true_false') {
             dataProperties.remove('correct_answer');
           }
@@ -417,7 +422,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       type: SurveyElementListType.textEntry,
       label: 'Values (${_customValueTextControllers.length})',
       dataList: _customValueTextControllers,
-      surveyElement: SurveyElement.data,
+      surveyElement: SurveyElement.sections,
       onAdd: _onTapAddValueAtIndex,
       onRemove: _onTapRemoveValueAtIndex,
     ));
@@ -483,7 +488,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   RuleComparison get defaultRuleComparison => RuleComparison(dataKey: _toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
 
-  RuleAction get defaultRuleAction => RuleAction(action: "return", data: widget.dataKeys.isNotEmpty ? 'data.${widget.dataKeys[0]}' : null);
+  RuleAction get defaultRuleAction => RuleAction(action: "return", data: null);
 
   void _onChangeElementType(String? elemType) {
     setState(() {
@@ -606,7 +611,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   void _onTapEditAction(int index, SurveyElement surveyElement, RuleElement? element) async {
     dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
       data: _actions![index],
-      dataKeys: widget.dataKeys,
+      dataKeys: widget.questionDataKeys,
       isRuleData: true,
       tabBar: widget.tabBar
     )));
@@ -676,8 +681,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     } else if (_ruleElem is RuleAction) {
       switch ((_ruleElem as RuleAction).action) {
         case 'return':
-          error = widget.forceActionReturnData ? _actionSettings['return'] == null : (_textControllers['custom_compare']?.text.isEmpty ?? true);
-          (_ruleElem as RuleAction).data = widget.forceActionReturnData ? 'data.${_actionSettings['return']}' : compareToValue;
+          error = widget.forceReturnQuestionData ? false : (_textControllers['custom_compare']?.text.isEmpty ?? true);
+          (_ruleElem as RuleAction).data = widget.forceReturnQuestionData ? _actionSettings['return'] : compareToValue;
           break;
         case 'set_result':
           error = _customValueSelection == 'survey' && (_actionSettings['set_result'] == null);
@@ -687,11 +692,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           break;
         case 'alert':
           error = _actionSettings['alert'] == null;
-          (_ruleElem as RuleAction).data = 'data.${_actionSettings['alert']}';
+          (_ruleElem as RuleAction).data = _actionSettings['alert'];
           break;
         case 'alert_result':
           error = _actionSettings['alert_result'] == null;
-          (_ruleElem as RuleAction).data = 'data.${_actionSettings['alert_result']}';
+          (_ruleElem as RuleAction).data = _actionSettings['alert_result'];
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
           break;
