@@ -1034,15 +1034,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Future<Response?>? refreshTokenFuture = _refreshTokenFutures[token.refreshToken];
 
         if (refreshTokenFuture != null) {
-          _log("Auth2: will await refresh token:\nSource Token: ${token.refreshToken}");
+          _log("Auth2: will await refresh token:");
           Response? response = await refreshTokenFuture;
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
-          _log("Auth2: did await refresh token: ${responseToken?.isValid}\nSource Token: ${token.refreshToken}");
+          _log("Auth2: did await refresh token: ${responseToken?.isValid}\n");
           return ((responseToken != null) && responseToken.isValid) ? responseToken : null;
         }
         else {
-          _log("Auth2: will refresh token:\nSource Token: ${token.refreshToken}");
+          _log("Auth2: will refresh token:\n");
 
           _refreshTokenFutures[token.refreshToken!] = refreshTokenFuture = _refreshToken(token.refreshToken);
           Response? response = await refreshTokenFuture;
@@ -1052,7 +1052,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           if (responseJson != null) {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
-              _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token.refreshToken}");
+              _log("Auth2: did refresh token:\n");
               _refreshTokenFailCounts.remove(token.refreshToken);
 
               if (token == _token) {
@@ -1066,7 +1066,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             }
           }
 
-          _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token.refreshToken}");
+          _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\n");
           int refreshTokenFailCount  = (_refreshTokenFailCounts[token.refreshToken] ?? 0) + 1;
           if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
             if (token == _token) {

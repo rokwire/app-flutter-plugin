@@ -74,7 +74,7 @@ class PopupMessage extends StatelessWidget {
   @protected Color? get defautTitleBarColor => Styles().colors?.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defautTitleBarColor;
 
-  @protected Color? get defautTitleTextColor => Styles().colors?.white;
+  @protected Color? get defautTitleTextColor => Styles().colors?.textLight;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defautTitleTextColor;
   
   @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;

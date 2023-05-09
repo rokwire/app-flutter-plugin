@@ -105,8 +105,8 @@ class RoundedButton extends StatefulWidget {
   @protected Color? get defaultBackgroundColor => Styles().colors?.surface;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
-  @protected Color? get defautTextColor => Styles().colors?.textPrimary;
-  @protected Color? get displayTextColor => textColor ?? defautTextColor;
+  @protected Color? get defaultTextColor => Styles().colors?.textPrimary;
+  @protected Color? get displayTextColor => textColor ?? defaultTextColor;
   @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
