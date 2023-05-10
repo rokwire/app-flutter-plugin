@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
+import 'package:rokwire_plugin/ui/widgets/expansion_tile.dart' as rokwire;
 import 'package:rokwire_plugin/utils/utils.dart';
 
 typedef EntryManagementFunc = Function(int, SurveyElement, RuleElement?);
@@ -30,25 +31,39 @@ class SurveyElementList extends StatefulWidget {
   final SurveyElementListType type;
   final String label;
   final List<dynamic> dataList;
+  final List<String?>? dataSubtitles;
+  final List<GlobalKey?>? widgetKeys;
+  final List<GlobalKey?>? targetWidgetKeys;
   final SurveyElement surveyElement;
 
   final EntryManagementFunc? onAdd;
   final EntryManagementFunc? onEdit;
   final EntryManagementFunc? onRemove;
   final Function(int, int)? onDrag;
+  final Function(GlobalKey?)? onScroll;
+  final rokwire.ExpansionTileController? controller;
 
   final bool labelStart;
   final bool singleton;
   final int? limit;
 
-  const SurveyElementList({Key? key, required this.type, required this.label, required this.dataList, required this.surveyElement,
-    this.onAdd, this.onEdit, this.onRemove, this.onDrag, this.labelStart = false, this.singleton = false, this.limit});
+  const SurveyElementList({Key? key, required this.type, required this.label, required this.dataList, this.dataSubtitles, this.widgetKeys, this.targetWidgetKeys,
+    required this.surveyElement, this.onAdd, this.onEdit, this.onRemove, this.onDrag, this.onScroll, this.controller, this.labelStart = false, this.singleton = false, this.limit});
 
   @override
   State<SurveyElementList> createState() => _SurveyElementListState();
 }
 
 class _SurveyElementListState extends State<SurveyElementList> {
+  bool _handleScrolling = false;
+
+  @override
+  void initState() {
+    _handleScrolling = CollectionUtils.isNotEmpty(widget.dataSubtitles) && CollectionUtils.isNotEmpty(widget.widgetKeys) && CollectionUtils.isNotEmpty(widget.targetWidgetKeys);
+
+    super.initState();
+  }
+  
   @override
   Widget build(BuildContext context) {
     late Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder;
@@ -79,44 +94,55 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
     bool hideEntryManagement = parentElement is RuleLogic && grandParentElement is Rule;
     return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: Padding(
-      padding: parentElement != null ? const EdgeInsets.only(top: 8) : EdgeInsets.zero,
-      child: ListTileTheme(horizontalTitleGap: 8, child: ExpansionTile(
-        iconColor: Styles().colors?.getColor('fillColorSecondary'),
-        backgroundColor: Styles().colors?.getColor('background'),
-        collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+      padding: parentElement != null ? const EdgeInsets.symmetric(vertical: 4) : EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        elevation: parentElement != null ? 1.0 : 0.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-        title: Material(color: Colors.transparent, child: Row(children: [
-          Expanded(flex: 5, child: Text(
-            label,
-            maxLines: 2,
-            style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
-            overflow: TextOverflow.ellipsis
-          )),
-          Expanded(flex: 3, child: _buildEntryManagementOptions((parentIndex ?? -1) + 1, surveyElement, 
-            element: parentElement,
-            parentElement: grandParentElement,
-            addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
-            editable: parentElement != null && !hideEntryManagement
-          )),
-        ],)),
-        children: <Widget>[
-          Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
-          dataList.isNotEmpty ? ListView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: dataList.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement));
-            },
-          ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
-              Container(height: 0),
-              Expanded(child: _buildEntryManagementOptions(0, surveyElement, parentElement: parentElement, editable: false))
-            ]
-          )),
-        ],
+        child: ListTileTheme(horizontalTitleGap: 8, child: rokwire.ExpansionTile(
+          key: parentElement == null && parentIndex != null && _handleScrolling ? widget.targetWidgetKeys![parentIndex] : null,
+          controller: widget.controller,
+          iconColor: Styles().colors?.getColor('fillColorSecondary'),
+          backgroundColor: Styles().colors?.getColor('background'),
+          collapsedBackgroundColor: Styles().colors?.getColor('surface'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+          title: Row(children: [
+            Expanded(flex: 5, child: Text(
+              label,
+              maxLines: 2,
+              style: Styles().textStyles?.getTextStyle(parentElement == null ? 'widget.detail.regular' : 'widget.detail.small'),
+              overflow: TextOverflow.ellipsis
+            )),
+            Expanded(flex: 3, child: _buildEntryManagementOptions(parentIndex ?? -1, surveyElement, 
+              element: parentElement,
+              parentElement: grandParentElement,
+              addRemove: parentElement != null && parentIndex != null && !hideEntryManagement,
+              editable: parentElement != null && !hideEntryManagement
+            )),
+          ],),
+          subtitle: parentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles![parentIndex] != null ? GestureDetector(
+            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![parentIndex]) : null,
+            child: Text(widget.dataSubtitles![parentIndex]!, style: Styles().textStyles?.getTextStyle('widget.button.title.small.underline'))
+          ) : null,
+          children: [
+            Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
+            dataList.isNotEmpty ? ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: dataList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement));
+              },
+            ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
+                Container(height: 0),
+                Expanded(child: _buildEntryManagementOptions(-1, surveyElement, parentElement: parentElement, editable: false))
+              ]
+            )),
+          ],
+        ))
       )
-    )));
+    ));
   }
 
   Widget _buildSurveyDataWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement) {
@@ -130,28 +156,46 @@ class _SurveyElementListState extends State<SurveyElementList> {
       entryText = data;
     }
     
-    Widget surveyDataText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
-    Widget displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
-      child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-        Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
-        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement)),
-      ],))
-    ));
+    List<Widget> textWidgets = [
+      Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,),
+    ];
+    if (_handleScrolling && widget.dataSubtitles![index] != null) {
+      textWidgets.add(GestureDetector(
+        onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(widget.dataSubtitles![index]!, style: Styles().textStyles?.getTextStyle('widget.button.title.small.underline'))
+        )
+      ));
+    }
+    Widget surveyDataText = Column(children: textWidgets);
+    Widget displayEntry = Card(
+      key: _handleScrolling ? widget.targetWidgetKeys![index] : null,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      color: Styles().colors?.getColor('surface'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
+      child: InkWell(
+        onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null) : null,
+        child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
+          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
+          Expanded(child: _buildEntryManagementOptions(index, surveyElement)),
+        ],))
+      )
+    );
 
-    return widget.onDrag != null ? LongPressDraggable<int>(
-      data: index,
+    return widget.onDrag != null ? LongPressDraggable<Pair<int, SurveyElement>>(
+      data: Pair(index, surveyElement),
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         child: Align(alignment: Alignment.centerLeft, child: surveyDataText),
       )),
-      child: DragTarget<int>(
-        builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
+      child: DragTarget<Pair<int, SurveyElement>>(
+        builder: (BuildContext context, List<Pair<int, SurveyElement>?> accepted, List<dynamic> rejected) {
           return displayEntry;
         },
-        onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
+        onAccept: (dataPair) => dataPair.right == surveyElement && dataPair.left != index ? widget.onDrag!(dataPair.left, index) : null,
       ),
       childWhenDragging: displayEntry,
       axis: Axis.vertical,
@@ -169,9 +213,11 @@ class _SurveyElementListState extends State<SurveyElementList> {
     );
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
+      color: Styles().colors?.getColor('surface'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-        Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
-        Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, editable: false)),
+          Expanded(child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
+          Expanded(child: _buildEntryManagementOptions(index, surveyElement, editable: false)),
       ],))
     );
   }
@@ -200,13 +246,25 @@ class _SurveyElementListState extends State<SurveyElementList> {
       }
 
       late Widget displayEntry;
-      Widget ruleText = Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       if (data is RuleReference || data is RuleAction || data is RuleComparison) {
-        displayEntry = Card(margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
+        List<Widget> textWidgets = [
+          Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.small'), overflow: TextOverflow.ellipsis, maxLines: 2,),
+        ];
+        if (parentElement == null && _handleScrolling && widget.dataSubtitles![index] != null) {
+          textWidgets.add(GestureDetector(
+            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(widget.dataSubtitles![index]!, style: Styles().textStyles?.getTextStyle('widget.button.title.small.underline'))
+            )
+          ));
+        }
+        Widget ruleText = Column(children: textWidgets);
+        displayEntry = Card(key: _handleScrolling ? widget.targetWidgetKeys![index] : null, margin: const EdgeInsets.symmetric(vertical: 4), child: Ink(
           decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
           child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
             Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
-            Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),
+            Expanded(child: _buildEntryManagementOptions(index, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),
           ],))
         ));
       } else if (data is RuleLogic) {
@@ -274,7 +332,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: optionDataText)),
-          Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
+          Expanded(child: _buildEntryManagementOptions(index, surveyElement, parentElement: parentElement)),
         ],)
       ));
 
@@ -290,7 +348,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
+          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
@@ -307,7 +365,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         padding: const EdgeInsets.all(8.0),
         child: Row(children: [
           Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: actionDataText)),
-          Expanded(child: _buildEntryManagementOptions(index + 1, surveyElement, parentElement: parentElement)),
+          Expanded(child: _buildEntryManagementOptions(index, surveyElement, parentElement: parentElement)),
         ],)
       ));
 
@@ -323,7 +381,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => widget.onDrag!(oldIndex, index),
+          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
@@ -349,17 +407,17 @@ class _SurveyElementListState extends State<SurveyElementList> {
     return Align(alignment: Alignment.centerRight, child: Row(mainAxisSize: MainAxisSize.min, children: [
       Visibility(visible: addRemove && belowLimit, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('plus-circle', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.add),
-        onPressed: widget.onAdd != null ? () => widget.onAdd!(index, surveyElement, parentElement) : null,
+        onPressed: widget.onAdd != null ? () => widget.onAdd!(index + 1, surveyElement, parentElement) : null,
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
       Visibility(visible: editable, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('edit-white', color: Styles().colors?.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.edit),
-        onPressed: widget.onEdit != null ? () => widget.onEdit!(index - 1, surveyElement, element) : null,
+        onPressed: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, element) : null,
         padding: EdgeInsets.zero,
         splashRadius: splashRadius,
       ))),
-      Visibility(visible: addRemove && ruleRemove && index > 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
+      Visibility(visible: addRemove && ruleRemove && index >= 0, child: SizedBox(width: buttonBoxSize, height: buttonBoxSize, child: IconButton(
         icon: Styles().images?.getImage('clear', size: buttonSize) ?? const Icon(Icons.remove),
         onPressed: widget.onRemove != null ? () => _onRemove(index, surveyElement, parentElement) : null,
         padding: EdgeInsets.zero,
@@ -368,7 +426,6 @@ class _SurveyElementListState extends State<SurveyElementList> {
     ]));
   }
 
-  //TODO: add option to noot show removal popup again?
   void _onRemove(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     List<Widget> buttons = [
       Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: () => _removeElement(index, surveyElement, parentElement))),
@@ -383,7 +440,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   void _removeElement(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     Navigator.pop(context);
-    widget.onRemove!(index - 1, surveyElement, parentElement);
+    widget.onRemove!(index, surveyElement, parentElement);
   }
 
   void _dismissRemoveElement() {

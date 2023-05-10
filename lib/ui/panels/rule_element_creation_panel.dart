@@ -77,10 +77,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   };
 
   final Map<String, String?> _actionSettings = {
-    "return": null,
-    "set_result": null,
-    "alert": null,
-    "alert_result": null,
     "local_notify.period": null,
 
     "survey_option": null, // survey, stats, or data
@@ -143,7 +139,6 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         _customValueSelection = 'custom_single';
       }
     } else if (_ruleElem is RuleAction) {
-      //TODO: init other actionSettings fields
       RuleAction action = _ruleElem as RuleAction;
       if (action.data is String) {
         customData = action.data as String;
@@ -292,9 +287,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     switch (ruleAction.action) {
       case 'return':
         if (widget.forceReturnQuestionData) {
-          Map<String?, String> options = Map.fromIterable(widget.questionDataKeys, key: (key) => 'data.$key');
+          Map<String?, String> options = Map.fromIterable(widget.questionDataKeys);
           options[null] = 'END SURVEY';
-          return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['return'], (value) => _onChangeActionSetting(value, 'return'));
+          return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'return'));
         }
 
         return Column(children: [
@@ -308,11 +303,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
-        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['alert'],
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
           (value) => _onChangeActionSetting(value, 'alert'), padding: const EdgeInsets.all(16));
       case 'alert_result':
         return Column(children: [
-          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['alert_result'],
+          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
             (value) => _onChangeActionSetting(value, 'alert_result'), padding: const EdgeInsets.all(16)),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
@@ -395,11 +390,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           }
           break;
         case 'data':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.questionDataKeys + (widget.actionDataKeys ?? []), key: (key) => 'data.$key'), "Survey data key",
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.questionDataKeys + (widget.actionDataKeys ?? [])), "Survey data key",
             settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
-          int dataKeyIndex = widget.questionDataKeys.indexOf(settingsMap['data']?.substring(5) ?? '');
+          int dataKeyIndex = widget.questionDataKeys.indexOf(settingsMap['key'] ?? '');
           String dataType = dataKeyIndex >= 0 ? widget.questionDataTypes[dataKeyIndex] : '';
           if (dataType != 'survey_data.true_false') {
             dataProperties.remove('correct_answer');
@@ -591,6 +586,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         if (actionType == 'local_notify') {
           _actions ??= [];
         }
+        _actionSettings['key'] = null;
       });
     }
   }
@@ -682,21 +678,21 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       switch ((_ruleElem as RuleAction).action) {
         case 'return':
           error = widget.forceReturnQuestionData ? false : (_textControllers['custom_compare']?.text.isEmpty ?? true);
-          (_ruleElem as RuleAction).data = widget.forceReturnQuestionData ? _actionSettings['return'] : compareToValue;
+          (_ruleElem as RuleAction).data = widget.forceReturnQuestionData ? 'data.${_actionSettings['key']}' : compareToValue;
           break;
         case 'set_result':
-          error = _customValueSelection == 'survey' && (_actionSettings['set_result'] == null);
+          error = _customValueSelection == 'survey' && (_actionSettings['key'] == null);
           (_ruleElem as RuleAction).data = _customValueSelection == 'survey' ? _toSurveyPropertyString('action') : compareToValue;
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
           break;
         case 'alert':
-          error = _actionSettings['alert'] == null;
-          (_ruleElem as RuleAction).data = _actionSettings['alert'];
+          error = _actionSettings['key'] == null;
+          (_ruleElem as RuleAction).data = 'data.${_actionSettings['key']}';
           break;
         case 'alert_result':
-          error = _actionSettings['alert_result'] == null;
-          (_ruleElem as RuleAction).data = _actionSettings['alert_result'];
+          error = _actionSettings['key'] == null;
+          (_ruleElem as RuleAction).data = 'data.${_actionSettings['key']}';
           String? dataKey = _textControllers['result_data_key']?.text;
           (_ruleElem as RuleAction).dataKey = (dataKey?.isNotEmpty ?? false) ? dataKey : null;
           break;
