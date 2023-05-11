@@ -25,10 +25,7 @@ class ExpansionTileController {
 }
 
 class ExpansionTile extends StatefulWidget {
-  /// Creates a single-line [ListTile] with an expansion arrow icon that expands or collapses
-  /// the tile to reveal or hide the [children]. The [initiallyExpanded] property must
-  /// be non-null.
-  ExpansionTile({
+  const ExpansionTile({
     Key? key,
     this.leading,
     required this.title,
@@ -52,14 +49,12 @@ class ExpansionTile extends StatefulWidget {
     this.collapsedShape,
     this.clipBehavior,
     this.controlAffinity,
-    ExpansionTileController? controller,
+    this.controller,
   }) : assert(
        expandedCrossAxisAlignment != CrossAxisAlignment.baseline,
        'CrossAxisAlignment.baseline is not supported since the expanded children '
            'are aligned in a column, not a row. Try to use another constant.',
-       ), super(key: key) {
-    this.controller = controller ?? ExpansionTileController();
-  }
+       ), super(key: key);
 
   final Widget? leading;
   final Widget title;
@@ -83,7 +78,7 @@ class ExpansionTile extends StatefulWidget {
   final ShapeBorder? collapsedShape;
   final Clip? clipBehavior;
   final ListTileControlAffinity? controlAffinity;
-  late final ExpansionTileController controller;
+  final ExpansionTileController? controller;
 
   @override
   State<ExpansionTile> createState() => _ExpansionTileState();
@@ -113,8 +108,8 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
   void initState() {
     super.initState();
 
-    widget.controller.expand = _expand;
-    widget.controller.collapse = _collapse;
+    widget.controller?.expand = _expand;
+    widget.controller?.collapse = _collapse;
 
     _controller = AnimationController(duration: _kExpand, vsync: this);
     _heightFactor = _controller.drive(_easeInTween);
@@ -137,13 +132,13 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
   }
 
   void _expand() {
-    if (_isExpanded) {
+    if (!_isExpanded) {
       _handleTap();
     }
   }
 
   void _collapse() {
-    if (!_isExpanded) {
+    if (_isExpanded) {
       _handleTap();
     }
   }

@@ -34,6 +34,7 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
   final Survey? survey;
@@ -104,6 +105,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
       }
 
+      _dataToRuleKeys = List.generate(_questionData.length - 1, (index) => GlobalKey());
+      _ruleToDataKeys = List.generate(_questionData.length - 1, (index) => GlobalKey());
       _dataCount = _questionData.length + _actionData.length;
       _textControllers["title"]!.text = widget.survey!.title;
       _textControllers["more_info"]!.text = widget.survey!.moreInfo ?? '';
@@ -172,9 +175,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   Widget _buildSurveyCreationTools() {
     if (_branchDepth <= _maxBranchDepth) {
-      _dataToRuleKeys = List.generate(_questionData.length - 1, (index) => GlobalKey());
-      _ruleToDataKeys = List.generate(_questionData.length - 1, (index) => GlobalKey());
-
       return Padding(padding: const EdgeInsets.all(16), child: Column(children: [
         // title
         FormFieldText('Title', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
@@ -200,8 +200,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           label: 'Questions and Info (${_questionData.length})',
           dataList: _questionData,
           dataSubtitles: List.generate(_questionData.length, (index) => index < _questionData.length - 1 ? 'Follow up rule' : null),
-          widgetKeys: _dataToRuleKeys != null ? (_dataToRuleKeys! + [null]) : null,
-          targetWidgetKeys: _ruleToDataKeys != null ? (_ruleToDataKeys! + [null]) : null,
+          widgetKeys: CollectionUtils.isNotEmpty(_dataToRuleKeys) ? (_dataToRuleKeys! + [null]) : null,
+          targetWidgetKeys: CollectionUtils.isNotEmpty(_ruleToDataKeys) ? (_ruleToDataKeys! + [null]) : null,
           surveyElement: SurveyElement.questionData,
           onAdd: _onTapAdd,
           onEdit: _onTapEdit,
@@ -229,8 +229,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           label: 'Follow Up Rules (${_followUpRules.length})',
           dataList: _followUpRules,
           dataSubtitles: List.generate(_questionData.length, (index) => index > 0 ? _questionData[index - 1].key : null),
-          widgetKeys: _ruleToDataKeys != null ? (<GlobalKey?>[null] + _ruleToDataKeys!) : null,
-          targetWidgetKeys: _dataToRuleKeys != null ? (<GlobalKey?>[null] + _dataToRuleKeys!) : null,
+          widgetKeys: CollectionUtils.isNotEmpty(_ruleToDataKeys) ? (<GlobalKey?>[null] + _ruleToDataKeys!) : null,
+          targetWidgetKeys: CollectionUtils.isNotEmpty(_dataToRuleKeys) ? (<GlobalKey?>[null] + _dataToRuleKeys!) : null,
           surveyElement: SurveyElement.followUpRules,
           onAdd: _onTapAdd,
           onEdit: _onTapEdit,
@@ -307,15 +307,15 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onScroll(GlobalKey? key) {
-    if (key?.currentContext != null) {
+    if (key != null) {
       if (_dataToRuleKeys?.contains(key) == true) {
         _followUpRulesController.expand?.call();
       } else if (_ruleToDataKeys?.contains(key) == true) {
         _questionDataController.expand?.call();
       }
-      WidgetsBinding.instance.addPostFrameCallback((_) => {
-        Scrollable.ensureVisible(key!.currentContext!)
-      });
+      if (key.currentContext != null) {
+        Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1));
+      }
     }
   }
 
@@ -342,15 +342,20 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (index > 0) {
       insert = SurveyData.fromOther(isQuestionInfo ? _questionData[index-1] : _actionData[index-1]);
       insert.key = "data${_dataCount++}";
+
+      _dataToRuleKeys ??= [];
+      _dataToRuleKeys!.insert(index - 1, GlobalKey());
+      _ruleToDataKeys ??= [];
+      _ruleToDataKeys!.insert(index - 1, GlobalKey());
+    } else if (isQuestionInfo) {
+      insert = SurveyQuestionTrueFalse(text: "", key: "data${_dataCount++}");
     } else {
-      insert = isQuestionInfo ? SurveyQuestionTrueFalse(text: "", key: "data${_dataCount++}") : SurveyDataResult(key: "data${_dataCount++}", text: "New Action", actions: []);
+      insert = SurveyDataResult(key: "data${_dataCount++}", text: "New Action", actions: []);
     }
     setState(() {
       if (isQuestionInfo) {
         _questionData.insert(index, insert);
-        if (!insert.isAction) {
-          _followUpRules.insert(index, RuleAction(action: "return", data: "data.${_questionData[index].key}"));
-        }
+        _followUpRules.insert(index, RuleAction(action: "return", data: "data.${_questionData[index].key}"));
       } else {
         _actionData.insert(index, insert);
       }
@@ -358,6 +363,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapRemoveDataAtIndex(int index, SurveyElement surveyElement) {
+    if (index > 0) {
+      _dataToRuleKeys!.removeAt(index - 1);
+      _ruleToDataKeys!.removeAt(index - 1);
+    }
     setState(() {
       if (surveyElement == SurveyElement.questionData) {
         _questionData.removeAt(index);

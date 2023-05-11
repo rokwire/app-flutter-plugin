@@ -378,6 +378,7 @@ class RuleAction extends RuleActionResult {
   }
 
   static Map<String, String> get supportedActions => const {
+    //TODO: "show", "set_to"
     "return": "Return",
     // "sum": "Sum",
     "set_result": "Set Result",
