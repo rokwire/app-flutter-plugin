@@ -109,7 +109,21 @@ class _SurveyElementListState extends State<SurveyElementList> {
   }
 
   Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, Widget Function(int, dynamic, SurveyElement, RuleElement?) listItemBuilder, SurveyElement surveyElement, {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement}) {
-    GlobalKey? key = grandParentElement == null && parentIndex != null && _handleScrolling ? widget.targetWidgetKeys![parentIndex] : null;
+    bool useSubtitle = grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles![parentIndex] != null;
+    Widget title = Row(children: [
+      Expanded(flex: 5, child: Text(
+        label,
+        maxLines: 2,
+        style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+        overflow: TextOverflow.ellipsis
+      )),
+      Expanded(flex: 3, child: _buildEntryManagementOptions(parentIndex ?? -1, surveyElement, 
+        element: parentElement,
+        parentElement: grandParentElement,
+        addRemove: parentElement != null && parentIndex != null && (grandParentElement != null || surveyElement != SurveyElement.followUpRules),
+        editable: parentElement != null
+      )),
+    ],);
     return Theme(data: Theme.of(context).copyWith(dividerColor: Colors.transparent), child: Padding(
       padding: parentElement != null ? const EdgeInsets.symmetric(vertical: 4) : EdgeInsets.zero,
       child: Material(
@@ -117,31 +131,27 @@ class _SurveyElementListState extends State<SurveyElementList> {
         elevation: parentElement != null ? 1.0 : 0.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
         child: ListTileTheme(horizontalTitleGap: 8, child: rokwire.ExpansionTile(
-          key: key,
+          key: grandParentElement == null && parentIndex != null && _handleScrolling ? widget.targetWidgetKeys![parentIndex] : null,
           controller: parentElement == null ? widget.controller : null,
           iconColor: Styles().colors?.getColor('fillColorSecondary'),
           backgroundColor: Styles().colors?.getColor('background'),
           collapsedBackgroundColor: Styles().colors?.getColor('surface'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-          title: Row(children: [
-            Expanded(flex: 5, child: Text(
-              label,
-              maxLines: 2,
-              style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
-              overflow: TextOverflow.ellipsis
-            )),
-            Expanded(flex: 3, child: _buildEntryManagementOptions(parentIndex ?? -1, surveyElement, 
-              element: parentElement,
-              parentElement: grandParentElement,
-              addRemove: parentElement != null && parentIndex != null && (grandParentElement != null || surveyElement != SurveyElement.followUpRules),
-              editable: parentElement != null
-            )),
-          ],),
-          subtitle: grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles![parentIndex] != null ? GestureDetector(
+          title: useSubtitle ? GestureDetector(
             onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![parentIndex]) : null,
-            child: Text(widget.dataSubtitles![parentIndex]!, style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'))
-          ) : null,
+            child: Text.rich(TextSpan(children: [
+              TextSpan(
+                text: 'From ',
+                style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+              ),
+              TextSpan(
+                text: widget.dataSubtitles![parentIndex]!,
+                style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+              ),
+            ],),),
+          ) : title,
+          subtitle: useSubtitle ? Padding(padding: const EdgeInsets.only(bottom: 4), child: title) : null,
           children: [
             Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
             dataList.isNotEmpty ? ListView.builder(
@@ -265,7 +275,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         List<Widget> textWidgets = [];
         if (parentElement == null && _handleScrolling && widget.dataSubtitles![index] != null) {
           textWidgets.add(GestureDetector(
-            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
+            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index - 1]) : null,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text.rich(TextSpan(children: [
@@ -281,10 +291,28 @@ class _SurveyElementListState extends State<SurveyElementList> {
             )
           ));
         }
-        textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+        if (summary.toLowerCase().contains('show')) {
+          //TODO: scroll will not go to correct widget for cards in expansion tiles
+          String dataKey = data.getSummary().split(' ')[1];
+          textWidgets.add(GestureDetector(
+            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
+            child: Text.rich(TextSpan(children: [
+              TextSpan(
+                text: 'Show ',
+                style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+              ),
+              TextSpan(
+                text: dataKey,
+                style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+              ),
+            ],),)
+          ));
+        } else {
+          textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+        }
         Widget ruleText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
         displayEntry = Card(
-          key: _handleScrolling ? widget.targetWidgetKeys![index] : null,
+          key: _handleScrolling && parentElement == null ? widget.targetWidgetKeys![index] : null,
           margin: const EdgeInsets.symmetric(vertical: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           child: InkWell(
@@ -426,7 +454,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildEntryManagementOptions(int index, SurveyElement surveyElement, {RuleElement? element, RuleElement? parentElement, bool addRemove = true, bool editable = true}) {
     if (element is! RuleLogic || parentElement is! Rule) {
       bool ruleRemove = true;
-      if ((parentElement is RuleLogic || parentElement is RuleCases || parentElement is RuleActionList) && index <= 2) {
+      if ((parentElement is RuleLogic || parentElement is RuleCases || parentElement is RuleActionList) && index < 2) {
         ruleRemove = false;
       }
 

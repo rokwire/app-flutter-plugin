@@ -54,14 +54,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   final List<String> _defaultTextControllers = ["key", "text", "more_info", "maximum_score"];
 
   late SurveyData _data;
-  final Map<String, String> _supportedActions = {};
 
   @override
   void initState() {
     _data = widget.data;
-    for (ActionType action in ActionType.values) {
-      _supportedActions[action.name] = action.name;
-    }
 
     _textControllers = {
       "key": TextEditingController(text: _data.key),
@@ -73,6 +69,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     if (_data.section != null && !widget.sections.contains(_data.section)) {
       _data.section = null;
     }
+
+    _data.defaultResponseRule?.updateSupportedOption('return', 'set_to');
+    _data.scoreRule?.updateSupportedOption('return', 'set_to');
 
     super.initState();
   }
@@ -435,11 +434,11 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       }
       RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
         data: element,
+        surveyElement: surveyElement,
         questionDataKeys: dataKeys,
         questionDataTypes: widget.dataTypes,
         sections: widget.sections,
         mayChangeType: parentElement is! RuleCases && parentElement is! RuleActionList,
-        forceReturn: true,
         tabBar: widget.tabBar,
       )));
 

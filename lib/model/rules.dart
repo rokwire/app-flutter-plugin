@@ -36,6 +36,7 @@ abstract class RuleElement {
   }
 
   void updateDataKeys(String oldKey, String newKey);
+  void updateSupportedOption(String oldOption, String newOption);
 
   Map<String, String> get supportedAlternatives => const {
     "if": "If",
@@ -43,7 +44,7 @@ abstract class RuleElement {
     "or": "OR",
     "cases": "Cases",
     "action": "Action",
-    "action_list": "Actions",
+    "actions": "Actions",
     // "reference": "Reference",
   };
 } 
@@ -149,6 +150,13 @@ class RuleComparison extends RuleCondition {
       compareTo = (compareTo as String).replaceAll(oldKey, newKey);
     }
   }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (operator == oldOption) {
+      operator = newOption;
+    }
+  }
 }
 
 class RuleLogic extends RuleCondition {
@@ -220,6 +228,16 @@ class RuleLogic extends RuleCondition {
   void updateDataKeys(String oldKey, String newKey) {
     for (int i = 0; i < conditions.length; i++) {
       conditions[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (operator == oldOption) {
+      operator = newOption;
+    }
+    for (int i = 0; i < conditions.length; i++) {
+      conditions[i].updateSupportedOption(oldOption, newOption);
     }
   }
 }
@@ -339,6 +357,11 @@ class RuleReference extends RuleResult {
   void updateDataKeys(String oldKey, String newKey) {
     ruleKey = ruleKey.replaceAll(oldKey, newKey);
   }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    ruleKey = ruleKey.replaceAll(oldOption, newOption);
+  }
 }
 
 class RuleAction extends RuleActionResult {
@@ -377,30 +400,49 @@ class RuleAction extends RuleActionResult {
     };
   }
 
+  static Map<String, String> getSupportedActionsForSurvey(SurveyElement surveyElement) {
+    switch (surveyElement) {
+      case SurveyElement.defaultResponseRule: return {"set_to": "Set To"};
+      case SurveyElement.scoreRule: return {"set_to": "Set To"};
+      case SurveyElement.followUpRules: return {"show": "Show"};
+      case SurveyElement.resultRules: return {
+        "set_result": "Set Result",
+        "alert": "Alert",
+        "alert_result": "Alert Result",
+        "save": "Save",
+        "local_notify": "Local Notify",
+        // "notify": "Notify",
+        // "show_survey": "Show Survey",
+        // "sum": "Sum",
+      };
+      default: return {};
+    }
+  }
+
   static Map<String, String> get supportedActions => const {
-    //TODO: "show", "set_to"
-    "return": "Return",
-    // "sum": "Sum",
+    "show": "Show",
+    "set_to": "Set To",
     "set_result": "Set Result",
-    // "show_survey": "Show Survey",
     "alert": "Alert",
     "alert_result": "Alert Result",
-    // "notify": "Notify",
     "save": "Save",
     "local_notify": "Local Notify",
+    // "notify": "Notify",
+    // "show_survey": "Show Survey",
+    // "sum": "Sum",
   };
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "${supportedActions[action]}";
+    String summary = supportedActions[action] ?? '';
     if (data is Alert) {
       summary += " (${data.title})";
     } else if (data is SurveyAlert) {
       summary += " (${data.contactKey})";
     } else if (data is String && data.startsWith('data.')) {
-      summary += " (${data.substring(5)})";
-    } else {
-      summary += " ($data)";
+      summary += " ${data.substring(5)}";
+    } else if (action != 'save') {
+      summary += " $data";
     }
 
     if (prefix != null) {
@@ -417,6 +459,13 @@ class RuleAction extends RuleActionResult {
     dataKey = dataKey?.replaceAll(oldKey, newKey);
     if (data is String) {
       data = (data as String).replaceAll(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (action == oldOption) {
+      action = newOption;
     }
   }
 
@@ -486,6 +535,13 @@ class RuleActionList extends RuleActionResult {
   void updateDataKeys(String oldKey, String newKey) {
     for (int i = 0; i < actions.length; i++) {
       actions[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    for (int i = 0; i < actions.length; i++) {
+      actions[i].updateSupportedOption(oldOption, newOption);
     }
   }
 
@@ -612,6 +668,13 @@ class Rule extends RuleResult {
   }
 
   @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    condition?.updateSupportedOption(oldOption, newOption);
+    trueResult?.updateSupportedOption(oldOption, newOption);
+    falseResult?.updateSupportedOption(oldOption, newOption);
+  }
+
+  @override
   List<RuleAction> get possibleActions {
     List<RuleAction> actions = [];
     if (trueResult != null) {
@@ -688,6 +751,13 @@ class RuleCases extends RuleResult {
   void updateDataKeys(String oldKey, String newKey) {
     for (int i = 0; i < cases.length; i++) {
       cases[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    for (int i = 0; i < cases.length; i++) {
+      cases[i].updateSupportedOption(oldOption, newOption);
     }
   }
 

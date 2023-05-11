@@ -356,6 +356,10 @@ class Rules {
     switch (action.action) {
       case "return":
         return _return(engine, action);
+      case "show":
+        return _return(engine, action);
+      case "set_to":
+        return _return(engine, action);
       case "sum":
         return _sum(engine, action);
       case "set_result":

@@ -34,17 +34,16 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class RuleElementCreationPanel extends StatefulWidget {
   final RuleElement data;
+  final SurveyElement surveyElement;
   final List<String> questionDataKeys;
   final List<String> questionDataTypes;
   final List<String>? actionDataKeys;
   final List<String?> sections;
   final bool mayChangeType;
-  final bool forceReturn;
-  final bool forceReturnQuestionData;
   final Widget? tabBar;
 
-  const RuleElementCreationPanel({Key? key, required this.data, required this.questionDataKeys, required this.questionDataTypes, this.actionDataKeys, required this.sections,
-    this.mayChangeType = true, this.forceReturn = false, this.forceReturnQuestionData = false, this.tabBar}) : super(key: key);
+  const RuleElementCreationPanel({Key? key, required this.data, required this.surveyElement, required this.questionDataKeys, required this.questionDataTypes,
+    this.actionDataKeys, required this.sections, this.mayChangeType = true, this.tabBar}) : super(key: key);
 
   @override
   _RuleElementCreationPanelState createState() => _RuleElementCreationPanelState();
@@ -52,6 +51,7 @@ class RuleElementCreationPanel extends StatefulWidget {
 
 class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   GlobalKey? dataKey;
+  bool _forceReturn = false;
 
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
@@ -101,6 +101,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   @override
   void initState() {
     _ruleElem = widget.data;
+    _forceReturn = widget.surveyElement == SurveyElement.defaultResponseRule || widget.surveyElement == SurveyElement.scoreRule || widget.surveyElement == SurveyElement.followUpRules;
 
     RuleComparison? comparison;
     if (_ruleElem is RuleComparison) {
@@ -161,7 +162,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         _customValueSelection = 'custom_single';
       }
 
-      if (action.action == 'local_notify') {
+      if (action.action == 'return') {
+        if (widget.surveyElement == SurveyElement.defaultResponseRule && widget.surveyElement == SurveyElement.scoreRule) {
+          (_ruleElem as RuleAction).action = 'set_to';
+        } else if (widget.surveyElement == SurveyElement.followUpRules) {
+          (_ruleElem as RuleAction).action = 'show';
+        }
+      } else if (action.action == 'local_notify') {
         Alert alert = action.data as Alert;
         _actions = alert.actions;
         localNotifyTitle = alert.title;
@@ -243,8 +250,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   Widget _buildRuleElement() {
     Map<String, String> supportedTypes = Map.from(_ruleElem.supportedAlternatives);
-    if (widget.forceReturnQuestionData) {
-      supportedTypes.remove('action_list');
+    if (_forceReturn) {
+      supportedTypes.remove('actions');
     }
     List<Widget> content = [Visibility(
       visible: widget.mayChangeType,
@@ -273,8 +280,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       //TODO: add later - dropdown showing existing rules by summary? (pass existing rules into panel?)
     } else if (_ruleElem is RuleAction) {
       // action
-      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(widget.forceReturnQuestionData || widget.forceReturn ? {'return': 'Return'} : RuleAction.supportedActions,
-        "Action", (_ruleElem as RuleAction).action, _onChangeActionType));
+      content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(RuleAction.getSupportedActionsForSurvey(widget.surveyElement), "Action",
+        (_ruleElem as RuleAction).action, _onChangeActionType));
 
       content.add(_buildActionSurveyOptions());
     }
@@ -285,13 +292,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   Widget _buildActionSurveyOptions() {
     RuleAction ruleAction = _ruleElem as RuleAction;
     switch (ruleAction.action) {
-      case 'return':
-        if (widget.forceReturnQuestionData) {
-          Map<String?, String> options = Map.fromIterable(widget.questionDataKeys);
-          options[null] = 'END SURVEY';
-          return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'return'));
-        }
-
+      case 'show':
+        Map<String?, String> options = Map.fromIterable(widget.questionDataKeys);
+        options[null] = 'END SURVEY';
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'key'));
+      case 'set_to':
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Value Type", _customValueSelection, _onChangeCustomValueSelection),
           _buildSurveyPropertyOptions('action'),
@@ -417,7 +422,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       type: SurveyElementListType.textEntry,
       label: 'Values (${_customValueTextControllers.length})',
       dataList: _customValueTextControllers,
-      surveyElement: SurveyElement.sections,
+      surveyElement: SurveyElement.followUpRules, // can be anything except sections
       onAdd: _onTapAddValueAtIndex,
       onRemove: _onTapRemoveValueAtIndex,
     ));
@@ -469,7 +474,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         String dataProperty = _compareToSettings['data'] ?? '';
         return dataKey.isNotEmpty && dataProperty.isNotEmpty ? 'data.$dataKey.$dataProperty' : null;
       default:
-        return '';
+        return null;
     }
   }
 
@@ -481,9 +486,24 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     return valueList;
   }
 
-  RuleComparison get defaultRuleComparison => RuleComparison(dataKey: _toSurveyPropertyString('data_key'), operator: "==", compareTo: compareToValue);
+  RuleComparison get defaultRuleComparison {
+    String dataKey = _toSurveyPropertyString('data_key');
+    if (dataKey.isEmpty && widget.questionDataKeys.isNotEmpty) {
+      dataKey = 'data.${widget.questionDataKeys.first}.response';
+    } else {
+      dataKey = 'completion';
+    }
+    return RuleComparison(dataKey: dataKey, operator: "==", compareTo: compareToValue);
+  }
 
-  RuleAction get defaultRuleAction => RuleAction(action: "return", data: null);
+  RuleAction get defaultRuleAction {
+    switch (widget.surveyElement) {
+      case SurveyElement.defaultResponseRule: return RuleAction(action: "set_to", data: null); 
+      case SurveyElement.scoreRule: return RuleAction(action: "set_to", data: null);
+      case SurveyElement.followUpRules: return RuleAction(action: "show", data: null);
+      default: return RuleAction(action: "alert_result", data: null); 
+    }
+  }
 
   void _onChangeElementType(String? elemType) {
     setState(() {
@@ -528,7 +548,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         case "action":
           _ruleElem = defaultRuleAction;
           break;
-        case "action_list":
+        case "actions":
           _ruleElem = RuleActionList(actions: [defaultRuleAction, defaultRuleAction]);
           break;
         // case "reference":
@@ -650,7 +670,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     } else if (_ruleElem is RuleAction) {
       return "action";
     } else if (_ruleElem is RuleActionList) {
-      return "action_list";
+      return "actions";
     } else if (_ruleElem is RuleCases) {
       return "cases";
     }
@@ -676,9 +696,12 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       ((_ruleElem as Rule).condition as RuleComparison).defaultResult = false;
     } else if (_ruleElem is RuleAction) {
       switch ((_ruleElem as RuleAction).action) {
-        case 'return':
-          error = widget.forceReturnQuestionData ? false : (_textControllers['custom_compare']?.text.isEmpty ?? true);
-          (_ruleElem as RuleAction).data = widget.forceReturnQuestionData ? 'data.${_actionSettings['key']}' : compareToValue;
+        case 'show':
+          (_ruleElem as RuleAction).data = 'data.${_actionSettings['key']}';
+          break;
+        case 'set_to':
+          error = (_textControllers['custom_compare']?.text.isEmpty ?? true);
+          (_ruleElem as RuleAction).data = compareToValue;
           break;
         case 'set_result':
           error = _customValueSelection == 'survey' && (_actionSettings['key'] == null);
