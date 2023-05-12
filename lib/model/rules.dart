@@ -365,6 +365,8 @@ class RuleReference extends RuleResult {
 }
 
 class RuleAction extends RuleActionResult {
+  static const String endSurveySummary = 'END SURVEY';
+
   String action;
   dynamic data;
   String? dataKey;
@@ -441,6 +443,12 @@ class RuleAction extends RuleActionResult {
       summary += " (${data.contactKey})";
     } else if (data is String && data.startsWith('data.')) {
       summary += " ${data.substring(5)}";
+    } else if (action == 'show') {
+      if (data != null) {
+        summary += " $data";
+      } else {
+        summary = endSurveySummary;
+      }
     } else if (action != 'save') {
       summary += " $data";
     }

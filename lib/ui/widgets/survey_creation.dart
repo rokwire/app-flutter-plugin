@@ -291,22 +291,26 @@ class _SurveyElementListState extends State<SurveyElementList> {
             )
           ));
         }
-        if (summary.toLowerCase().contains('show')) {
-          //TODO: scroll will not go to correct widget for cards in expansion tiles
+        if (summary.toLowerCase().contains('show') && widget.dataSubtitles != null) {
           String dataKey = data.getSummary().split(' ')[1];
-          textWidgets.add(GestureDetector(
-            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
-            child: Text.rich(TextSpan(children: [
-              TextSpan(
-                text: 'Show ',
-                style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
-              ),
-              TextSpan(
-                text: dataKey,
-                style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
-              ),
-            ],),)
-          ));
+          int dataKeyIndex = widget.dataSubtitles!.indexOf(dataKey);
+          if (dataKeyIndex > 0) {
+            textWidgets.add(GestureDetector(
+              onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex - 1]) : null,
+              child: Text.rich(TextSpan(children: [
+                TextSpan(
+                  text: 'Show ',
+                  style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+                ),
+                TextSpan(
+                  text: dataKey,
+                  style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+                ),
+              ],),)
+            ));
+          } else {
+            textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+          }
         } else {
           textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
         }
@@ -316,7 +320,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           child: InkWell(
-            onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null) : null,
+            onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, data) : null,
             child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
               Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
               Expanded(child: _buildEntryManagementOptions(index, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),

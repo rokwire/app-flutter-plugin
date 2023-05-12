@@ -229,7 +229,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           type: SurveyElementListType.rules,
           label: 'Follow Up Rules (${_followUpRules.length})',
           dataList: _followUpRules,
-          dataSubtitles: List.generate(_questionData.length, (index) => index > 0 ? _questionData[index - 1].key : null),
+          dataSubtitles: List.generate(_questionData.length + 1, (index) => index > 0 ? _questionData[index - 1].key : null),
           widgetKeys: _ruleToDataKeys,
           targetWidgetKeys: CollectionUtils.isNotEmpty(_dataToRuleKeys) ? (<GlobalKey?>[null] + _dataToRuleKeys!) : null,
           surveyElement: SurveyElement.followUpRules,
@@ -315,7 +315,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         _questionDataController.expand?.call();
       }
       if (key.currentContext != null) {
-        Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1));
+        Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5);
       }
     }
   }

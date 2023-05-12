@@ -294,7 +294,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     switch (ruleAction.action) {
       case 'show':
         Map<String?, String> options = Map.fromIterable(widget.questionDataKeys);
-        options[null] = 'END SURVEY';
+        options[null] = RuleAction.endSurveySummary;
         return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'key'));
       case 'set_to':
         return Column(children: [
