@@ -309,6 +309,7 @@ class UiColors {
   Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
   Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
   Color? get textColorPrimary                   => colorMap['textColorPrimary'];
+  Color? get textColorDisabled                  => colorMap['textColorDisabled'];
   Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
   Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
   Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
@@ -328,6 +329,7 @@ class UiColors {
   Color? get textBackground             => colorMap['textBackground'];
   Color? get backgroundVariant          => colorMap['backgroundVariant'];
   Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
+  Color? get textBackgroundVariant2      => colorMap['textBackgroundVariant2'];
   Color? get headlineText               => colorMap['headlineText'];
 
   Color? get accentColor1               => colorMap['accentColor1'];
@@ -435,7 +437,7 @@ class UiTextStyles {
     if(styleMap != null){
       styles = <String, TextStyle> {};
       styleMap.forEach((key, value) {
-        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), colors: colors);
+        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), stylesMap: styleMap, colors: colors);
         if(style!=null){
           styles![key] = style;
         }
@@ -448,7 +450,7 @@ class UiTextStyles {
     return styleMap[key];
   }
 
-  static TextStyle? constructTextStyle({Map<String, dynamic>? style, UiColors? colors}){
+  static TextStyle? constructTextStyle({Map<String, dynamic>? style, Map<String, dynamic>? stylesMap, UiColors? colors}){
     if(style == null){
       return null;
     }
@@ -466,9 +468,22 @@ class UiTextStyles {
     double? letterSpacing = JsonUtils.doubleValue(style['letter_spacing']);
     double? wordSpacing = JsonUtils.doubleValue(style['word_spacing']);
     double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
+    bool inherit =  JsonUtils.boolValue(style["inherit"]) ?? true;
 
-    return  TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor);
+    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor, inherit: inherit);
+
+    //Extending capabilities
+    String? extendsKey = JsonUtils.stringValue(style['extends']);
+    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesMap!=null ? JsonUtils.mapValue(stylesMap[extendsKey]) : null);
+    TextStyle? ancestorTextStyle = constructTextStyle(style: ancestorStyleMap, stylesMap: stylesMap, colors: colors);
+    bool overrides =  JsonUtils.boolValue(style["override"]) ?? true;
+
+    if(ancestorTextStyle != null ){
+      return overrides ? ancestorTextStyle.merge(textStyle) : ancestorTextStyle;
+    }
+
+    return textStyle;
   }
 }
 
@@ -480,47 +495,7 @@ class UiImages {
 
   UiImages({this.imageMap, this.colors, this.assetPathResolver});
 
-  Widget? getImageOrDefault(String imageKey, {Key? key, String? type, dynamic source,
-    double? scale, double? size, double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
-    Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
-    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
-    Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
-    Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
-  ) {
-    // If image spec exists, getImage ignoring default overrides
-    Map<String, dynamic>? imageSpec = (imageMap != null) ? JsonUtils.mapValue(imageMap![imageKey]) : null;
-    if (imageSpec != null) {
-      return getImage(imageKey);
-    }
-
-    // Otherwise, if a type is defined, get image by defaults
-    if (type != null) {
-      return getImage(null, key: key, type: type, source: source, scale: scale, size: size, width: width,
-          height: height, weight: weight, color: color, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, alignment: alignment,
-          opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality, repeat: repeat,
-          centerSlice: centerSlice, textDirection: textDirection, networkHeaders: networkHeaders,
-          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-    }
-
-    // Otherwise ff no image definition for that key or default type - try with asset name / network source
-    Uri? uri = Uri.tryParse(imageKey);
-    if (uri != null) {
-      return _getDefaultFlutterImage(uri, key: key,
-          scale: scale, width: width ?? size, height: height ?? size, color: color,
-          semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-          alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-          repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-    }
-
-    return null;
-  }
-
-  Widget? getImage(String? imageKey, {Key? key, String? type, dynamic source, double? scale, double? size,
+  Widget? getImage(String? imageKey, {ImageSpec? defaultSpec, Key? key, String? type, dynamic source, double? scale, double? size,
     double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
@@ -530,22 +505,21 @@ class UiImages {
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
 
-    Map<String, dynamic> imageSpec = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
-    type ??= JsonUtils.stringValue(imageSpec['type']);
-    if (type != null) {
-      if (type.startsWith('flutter.')) {
+    Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
+    ImageSpec? imageSpec = ImageSpec.fromJson(imageJson) ?? defaultSpec;
+    if (imageSpec != null) {
+      if (imageSpec is FlutterImageSpec) {
         return _getFlutterImage(imageSpec, type: type, source: source, key: key,
-          scale: scale, size: size, width: width, height: height, color: color,
-          semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-          alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-          repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-          frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      }
-      else if (type.startsWith('fa.')) {
-        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight, color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
-      }
-      else {
+            scale: scale, size: size, width: width, height: height, color: color,
+            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
+            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
+      } else if (imageSpec is FontAwesomeImageSpec) {
+        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight,
+            color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
+      } else {
         return null;
       }
     }
@@ -583,31 +557,30 @@ class UiImages {
     }
   */
 
-  Image? _getFlutterImage(Map<String, dynamic> json, { String? type, dynamic source, Key? key,
+  Image? _getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel,
     bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
     AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
     ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
   ) {
-    type ??= JsonUtils.stringValue(json['type']);
-    source ??= json['src'];
+    type ??= imageSpec.type;
+    source ??= imageSpec.source;
 
-    scale ??= JsonUtils.doubleValue(json['scale']) ?? 1.0;
-    size ??= JsonUtils.doubleValue(json['size']);
-    width ??= JsonUtils.doubleValue(json['width']) ?? size;
-    height ??= JsonUtils.doubleValue(json['height']) ?? size;
-    alignment ??= _ImageUtils.alignmentGeometryValue(JsonUtils.stringValue(json['alignment'])) ?? Alignment.center;
-    color ??= _ImageUtils.colorValue(JsonUtils.stringValue(json['color']));
+    scale ??= imageSpec.scale ?? 1.0;
+    size ??= imageSpec.size;
+    width ??= imageSpec.width ?? size;
+    height ??= imageSpec.height ?? size;
+    alignment ??= imageSpec.alignment ?? Alignment.center;
+    color ??= imageSpec.color;
 
     // Image Enums
-    colorBlendMode ??= _ImageUtils.lookup(BlendMode.values, JsonUtils.stringValue(json['color_blend_mode']));
-    fit ??= _ImageUtils.lookup(BoxFit.values, JsonUtils.stringValue(json['fit']));
-    filterQuality ??= _ImageUtils.lookup(FilterQuality.values, JsonUtils.stringValue(json['filter_quality'])) ?? FilterQuality.low;
-    repeat ??= _ImageUtils.lookup(ImageRepeat.values, JsonUtils.stringValue(json['repeat'])) ?? ImageRepeat.noRepeat;
+    colorBlendMode ??= imageSpec.colorBlendMode;
+    fit ??= imageSpec.fit;
+    filterQuality ??= imageSpec.filterQuality ?? FilterQuality.low;
+    repeat ??= imageSpec.repeat ?? ImageRepeat.noRepeat;
     
     try { switch (type) {
-      
       case 'flutter.asset':
         String? assetString = JsonUtils.stringValue(source);
         return (assetString != null) ? Image.asset(assetString,
@@ -657,18 +630,22 @@ class UiImages {
     }
   */
 
-  Widget? _getFaIcon(Map<String, dynamic> json, { String? type, dynamic source, Key? key, double? size, String? weight, Color? color, TextDirection? textDirection, String? semanticLabel, bool excludeFromSemantics = false}) {
+  Widget? _getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
+    Key? key, double? size, String? weight, Color? color, TextDirection? textDirection,
+    String? semanticLabel, bool excludeFromSemantics = false}) {
+    type ??= imageSpec.type;
+    weight ??= imageSpec.weight ?? 'regular';
+    source ??= imageSpec.source;
 
-    type ??= JsonUtils.stringValue(json['type']);
-    source ??= json['src'];
-
-    size ??= JsonUtils.doubleValue(json['size']);
-    color ??= _ImageUtils.colorValue(JsonUtils.stringValue(json['color']));
-    textDirection ??= _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction']));
+    size ??= imageSpec.size;
+    color ??= imageSpec.color;
+    textDirection ??= imageSpec.textDirection;
+    semanticLabel ??= imageSpec.semanticLabel;
 
     try { switch (type) {
       case 'fa.icon':
-        IconData? iconData = _ImageUtils.faIconDataValue(weight ?? JsonUtils.stringValue(json['weight']) ?? 'regular', codePoint: _ImageUtils.faCodePointValue(source));
+
+        IconData? iconData = _ImageUtils.faIconDataValue(weight, codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
           FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
         ) : null;
@@ -714,6 +691,106 @@ class UiImages {
       debugPrint(e.toString());
     }
     return null;
+  }
+}
+
+abstract class ImageSpec {
+  final String type;
+  final dynamic source;
+  final double? size;
+  final Color? color;
+  final String? semanticLabel;
+
+  const ImageSpec({required this.type, this.source, this.size, this.color, this.semanticLabel});
+
+  static ImageSpec? fromJson(Map<String, dynamic> json) {
+    String? type = JsonUtils.stringValue(json['type']);
+    if (type == null) {
+      return null;
+    } else if (type.startsWith('flutter.')) {
+      return FlutterImageSpec.fromJson(json);
+    } else if (type.startsWith('fa.')) {
+      return FontAwesomeImageSpec.fromJson(json);
+    }
+    return null;
+  }
+
+  factory ImageSpec.baseFromJson(Map<String, dynamic> json) {
+    Color? color = _ImageUtils.colorValue(JsonUtils.stringValue(json['color']), colors: Styles().colors);
+    return _BaseImageSpec(
+      type: JsonUtils.stringValue(json['type']) ?? '',
+      source: json['src'],
+      size: JsonUtils.doubleValue(json['size']),
+      color: color,
+      semanticLabel: JsonUtils.stringValue(json['semantic_label']),
+    );
+  }
+}
+
+class _BaseImageSpec extends ImageSpec {
+  _BaseImageSpec({required String type, dynamic source, double? size, Color? color, String? semanticLabel}) :
+        super(type: type, source: source, size: size, color: color, semanticLabel: semanticLabel);
+}
+
+class FlutterImageSpec extends ImageSpec {
+  final double? scale;
+  final double? width;
+  final double? height;
+  final bool? isAntiAlias;
+  final bool? matchTextDirection;
+  final bool? gaplessPlayback;
+  final AlignmentGeometry? alignment;
+  final BlendMode? colorBlendMode;
+  final BoxFit? fit;
+  final FilterQuality? filterQuality;
+  final ImageRepeat? repeat;
+
+  const FlutterImageSpec({required String type, dynamic source, double? size, Color? color, String? semanticLabel,
+    this.scale, this.width, this.height, this.isAntiAlias, this.matchTextDirection, this.gaplessPlayback,
+    this.alignment, this.colorBlendMode, this.fit, this.filterQuality, this.repeat}) :
+        super(type: type, source: source, size: size, color: color, semanticLabel: semanticLabel);
+  
+  FlutterImageSpec.fromBase(ImageSpec base,
+    {this.scale, this.width, this.height, this.isAntiAlias, this.matchTextDirection, this.gaplessPlayback,
+      this.alignment, this.colorBlendMode, this.fit, this.filterQuality, this.repeat}) :
+        super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
+
+  factory FlutterImageSpec.fromJson(Map<String, dynamic> json) {
+    ImageSpec base = ImageSpec.baseFromJson(json);
+    return FlutterImageSpec.fromBase(base,
+      scale: JsonUtils.doubleValue(json['scale']),
+      width: JsonUtils.doubleValue(json['width']),
+      height: JsonUtils.doubleValue(json['height']),
+      isAntiAlias: JsonUtils.boolValue(json['is_anti_alias']),
+      matchTextDirection: JsonUtils.boolValue(json['match_text_direction']),
+      gaplessPlayback: JsonUtils.boolValue(json['gapless_playback']),
+      alignment: _ImageUtils.alignmentGeometryValue(JsonUtils.stringValue(json['alignment'])),
+      colorBlendMode: _ImageUtils.lookup(BlendMode.values, JsonUtils.stringValue(json['color_blend_mode'])),
+      fit: _ImageUtils.lookup(BoxFit.values, JsonUtils.stringValue(json['fit'])),
+      filterQuality: _ImageUtils.lookup(FilterQuality.values, JsonUtils.stringValue(json['filter_quality'])),
+      repeat: _ImageUtils.lookup(ImageRepeat.values, JsonUtils.stringValue(json['repeat'])),
+    );
+  }
+}
+
+class FontAwesomeImageSpec extends ImageSpec {
+  final String? weight;
+  final TextDirection? textDirection;
+
+  const FontAwesomeImageSpec({required String type, dynamic source, double? size, Color? color,
+    String? semanticLabel, this.weight, this.textDirection}) :
+        super(type: type, source: source, size: size, color: color, semanticLabel: semanticLabel);
+
+  FontAwesomeImageSpec.fromBase(ImageSpec base, {this.weight, this.textDirection}) :
+        super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
+
+  factory FontAwesomeImageSpec.fromJson(Map<String, dynamic> json) {
+    ImageSpec base = ImageSpec.baseFromJson(json);
+    TextDirection? textDirection = _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction']));
+    return FontAwesomeImageSpec.fromBase(base,
+      weight: JsonUtils.stringValue(json['weight']),
+      textDirection: textDirection,
+    );
   }
 }
 
@@ -810,7 +887,6 @@ class _ImageUtils {
     else {
       return null;
     }
-    
   }
 
   static T? lookup<T>(List<T> values, String? value) =>

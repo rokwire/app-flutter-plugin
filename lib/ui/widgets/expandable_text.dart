@@ -30,8 +30,10 @@ class ExpandableText extends StatefulWidget {
   final TextStyle? readMoreStyle;
 
   final Widget? readMoreIcon;
-  final String? readMoreIconAsset;
+  final String? readMoreIconKey;
   final EdgeInsetsGeometry readMoreIconPadding;
+
+  final Widget? footerWidget;
 
   const ExpandableText(this.text, {
     Key? key,
@@ -46,8 +48,10 @@ class ExpandableText extends StatefulWidget {
     this.readMoreStyle,
 
     this.readMoreIcon,
-    this.readMoreIconAsset,
+    this.readMoreIconKey,
     this.readMoreIconPadding = const EdgeInsets.only(left: 7),
+
+    this.footerWidget,
   })  : super(key: key);
 
   TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.textBackground,);
@@ -60,7 +64,7 @@ class ExpandableText extends StatefulWidget {
   String? get readMoreHint => null;
   TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
 
-  Widget? get _readMoreIcon => readMoreIcon ?? ((readMoreIconAsset != null) ? Styles().images?.getImage(readMoreIconAsset!, excludeFromSemantics: true) : null);
+  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images?.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();
@@ -74,7 +78,9 @@ class _ExpandableTextState extends State<ExpandableText> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
-
+      
+      List<Widget> contentList = <Widget>[];
+      
       TextPainter textPainter = TextPainter(
         textScaleFactor: MediaQuery.of(context).textScaleFactor,
         textDirection: TextDirection.rtl,
@@ -94,11 +100,9 @@ class _ExpandableTextState extends State<ExpandableText> {
       if (textPainter.didExceedMaxLines) {
         
         String displayText = _collapsed ? widget.text.substring(0, endIndex) + widget.trimSuffix : widget.text;
-        List<Widget> contentList = <Widget>[
-          RichText(textScaleFactor: MediaQuery.of(context).textScaleFactor, softWrap: true, overflow: TextOverflow.clip,
-            text: TextSpan(text: displayText, style: widget._textStyle,),
-          ),
-        ];
+        contentList.add(RichText(textScaleFactor: MediaQuery.of(context).textScaleFactor, softWrap: true, overflow: TextOverflow.clip,
+          text: TextSpan(text: displayText, style: widget._textStyle,),
+        ),);
 
         if (_collapsed) {
           List<Widget> readMoreList = <Widget>[
@@ -110,23 +114,30 @@ class _ExpandableTextState extends State<ExpandableText> {
             readMoreList.add(Padding(padding: widget.readMoreIconPadding, child: readMoreIcon));
           }
 
-          contentList.addAll(<Widget>[
-            Container(color: widget._splitterColor, height: widget.splitterHeight, margin: widget.splitterMargin,),
-            Semantics(button: true, label: widget.readMoreText, hint: widget.readMoreHint, child:
-              GestureDetector(onTap: _onTapLink, child:
+          contentList.add(Semantics(button: true, label: widget.readMoreText, hint: widget.readMoreHint, child:
+            InkWell(onTap: _onTapLink, child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(color: widget._splitterColor, height: widget.splitterHeight, margin: widget.splitterMargin,),
                 Center(child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: readMoreList,),
                 ),
-              ),
-            ),
-          ]);
+              ],)
+            )
+          ));
         }
-        
-        return Column(children: contentList);
+        else if (widget.footerWidget != null) {
+          contentList.add(widget.footerWidget!);
+        }
       }
       else {
-        return Text(widget.text, style: widget._textStyle,);
+        contentList.add(Text(widget.text, style: widget._textStyle,));
+
+        if (widget.footerWidget != null) {
+          contentList.add(widget.footerWidget!);
+        }
       }
+
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: contentList);
     },);
   }
 

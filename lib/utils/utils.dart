@@ -17,13 +17,14 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
@@ -54,7 +55,7 @@ class StringUtils {
       return "*********";
     }
     int phoneNumberLength = phoneNumber!.length;
-    int lastXNumbers = min(phoneNumberLength, 4);
+    int lastXNumbers = math.min(phoneNumberLength, 4);
     int starsCount = (phoneNumberLength - lastXNumbers);
     String replacement = "*" * starsCount;
     String maskedPhoneNumber = phoneNumber.replaceRange(0, starsCount, replacement);
@@ -350,6 +351,33 @@ class ColorUtils {
       return "#${value.red.toRadixString(16)}${value.green.toRadixString(16)}${value.blue.toRadixString(16)}";
     }
   }
+
+  static int hueFromColor(Color color) => hueFromRGB(color.red, color.green, color.blue);
+
+  static int hueFromRGB(int red, int green, int blue) {
+    double min = math.min(math.min(red, green), blue).toDouble();
+    double max = math.max(math.max(red, green), blue).toDouble();
+
+    if (min == max) {
+      return 0;
+    }
+
+    double hue = 0.0;
+    if (max == red) {
+      hue = (green - blue) / (max - min);
+    }
+    else if (max == green) {
+      hue = 2.0 + (blue - red) / (max - min);
+    }
+    else {
+      hue = 4.0 + (red - green) / (max - min);
+    }
+
+    hue = hue * 60;
+    if (hue < 0) hue = hue + 360;
+
+    return hue.round();
+  }
 }
 
 class AppVersion {
@@ -357,7 +385,7 @@ class AppVersion {
   static int compareVersions(String? versionString1, String? versionString2) {
     List<String> versionList1 = (versionString1 is String) ? versionString1.split('.') : [];
     List<String> versionList2 = (versionString2 is String) ? versionString2.split('.') : [];
-    int minLen = min(versionList1.length, versionList2.length);
+    int minLen = math.min(versionList1.length, versionList2.length);
     for (int index = 0; index < minLen; index++) {
       String s1 = versionList1[index], s2 = versionList2[index];
       int? n1 = int.tryParse(s1), n2 = int.tryParse(s2);
@@ -380,7 +408,7 @@ class AppVersion {
   static bool matchVersions(String? versionString1, String? versionString2) {
     List<String> versionList1 = (versionString1 is String) ? versionString1.split('.') : [];
     List<String> versionList2 = (versionString2 is String) ? versionString2.split('.') : [];
-    int minLen = min(versionList1.length, versionList2.length);
+    int minLen = math.min(versionList1.length, versionList2.length);
     for (int index = 0; index < minLen; index++) {
       String s1 = versionList1[index], s2 = versionList2[index];
       int? n1 = int.tryParse(s1), n2 = int.tryParse(s2);
@@ -415,6 +443,11 @@ class UrlUtils {
     return null;
   }
 
+  static String? getHost(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
+  }
+
   static String? getExt(String? url) {
     try {
       Uri? uri = (url != null) ? Uri.parse(url) : null;
@@ -439,6 +472,16 @@ class UrlUtils {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
   }
 
+  static Future<bool?> launchExternal(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri? uri = Uri.tryParse(url!);
+      if (uri != null) {
+        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      }
+    }
+    return null;
+  }
+
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
       Uri uri = Uri.parse(url);
@@ -449,6 +492,43 @@ class UrlUtils {
     }
     return url;
   }
+
+  static bool isValidUrl(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
+  }
+
+  static String? fixUrl(String url) {
+    Uri? uri = Uri.tryParse(url);
+    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    return (fixedUri != null) ? fixedUri.toString() : null;
+  }
+
+  static Uri? fixUri(Uri uri) {
+    return uri.scheme.isEmpty ? Uri(
+      scheme: 'http',
+      userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+      host: uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null),
+      port: (0 < uri.port) ? uri.port : null,
+      path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
+      //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+      query: uri.query.isNotEmpty ? uri.query : null,
+      //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+      fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
+  }
+
+  static Future<bool> isHostAvailable(String? url) async {
+    List<InternetAddress>? result;
+    String? host = getHost(url);
+    try {
+      result = (host != null) ? await InternetAddress.lookup(host) : null;
+    }
+    on SocketException catch (e) {
+      debugPrint(e.toString());
+    }
+    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+  }
+
 }
 
 
@@ -604,7 +684,27 @@ class JsonUtils {
   
   static List<String>? listStringsValue(dynamic value) {
     try {
-      return (value is List) ? value.cast<String>() : null;
+      if (value is List) {
+        return value.cast<String>();
+      }
+      else if (value is Set) {
+        return List<String>.from(value.cast<String>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static List<int>? listIntsValue(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<int>();
+      }
+      else if (value is Set) {
+        return List<int>.from(value.cast<int>());
+      }
     }
     catch(e) {
       debugPrint(e.toString());
@@ -614,7 +714,12 @@ class JsonUtils {
 
   static Set<String>? setStringsValue(dynamic value) {
     try {
-      return (value is List) ? Set<String>.from(value.cast<String>()) : null;
+      if (value is Set) {
+        return value.cast<String>();
+      }
+      else if (value is List) {
+        return Set<String>.from(value.cast<String>());
+      }
     }
     catch(e) {
       debugPrint(e.toString());
@@ -1107,6 +1212,20 @@ class DateTimeUtils {
     int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
     return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
   }
+
+  static DateTime min(DateTime v1, DateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+class TZDateTimeUtils {
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day);
+
+  static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
+    (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;
+
+  static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
 
 class Pair<L,R> {

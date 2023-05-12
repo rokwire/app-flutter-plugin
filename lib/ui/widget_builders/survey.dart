@@ -55,7 +55,7 @@ class SurveyBuilder {
             children: [
               Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
               Container(width: 8.0),
-              Image.asset('images/chevron-right.png')
+              Styles().images?.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
             ],
           ),

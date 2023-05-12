@@ -190,8 +190,28 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<String?> loadAsStringFromNet() async {
+    return loadAsStringFromAppConfig();
+  }
+
+  Future<String?> loadAsStringFromAppConfig() async {
     try {
       http.Response? response = await Network().get(appConfigUrl, auth: this);
+      return ((response != null) && (response.statusCode == 200)) ? response.body : null;
+    } catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
+  Future<String?> loadAsStringFromCore() async {
+    Map<String, dynamic> body = {
+      'version': appVersion,
+      'app_type_identifier': appPlatformId,
+      'api_key': rokwireApiKey,
+    };
+    String? bodyString =  JsonUtils.encode(body);
+    try {
+      http.Response? response = await Network().post(appConfigUrl, body: bodyString);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -223,9 +243,20 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void decryptSecretKeys(Map<String, dynamic>? config) {
-    dynamic secretKeys = (config != null) ? config['secretKeys'] : null;
+    dynamic secretKeys = config?['secretKeys'];
     if (secretKeys is String) {
-      config!['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+      config?['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+    }
+
+    if (config?['secretKeys'] is! Map<String, dynamic>) {
+      // Handle different encryption keys for limiting developer secret access
+      dynamic secrets = config?['secrets'];
+      if (secrets is Map<String, dynamic>) {
+        secretKeys = secrets[encryptionID];
+        if (secretKeys is String) {
+          config?['secretKeys'] = JsonUtils.decodeMap(AESCrypt.decrypt(secretKeys, key: encryptionKey, iv: encryptionIV));
+        }
+      }
     }
   }
 
@@ -360,6 +391,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: Encryption Keys
 
+  String? get encryptionID => (_encryptionKeys != null) ? _encryptionKeys!['id'] : null;
   String? get encryptionKey => (_encryptionKeys != null) ? _encryptionKeys!['key'] : null;
   String? get encryptionIV => (_encryptionKeys != null) ? _encryptionKeys!['iv'] : null;
 

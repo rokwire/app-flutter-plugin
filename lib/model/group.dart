@@ -24,13 +24,16 @@ import 'package:intl/intl.dart';
 
 class Group {
 	String?                       id;
-	String?                       category;
+	Map<String, dynamic>?         attributes;
 	String?                       type;
 	String?                       title;
   String?                       description;
   GroupPrivacy?                 privacy;
+
   DateTime?                     dateCreatedUtc;
   DateTime?                     dateUpdatedUtc;
+  DateTime?                     dateManagedMembershipUpdatedUtc;
+  DateTime?                     dateMembershipUpdatedUtc;
 
   bool?                         certified;
   bool?                         hiddenForSearch;
@@ -51,29 +54,32 @@ class Group {
   String?                        imageURL;
   String?                        webURL;
   Member?                        currentMember;
-  List<String>?                  tags;
   List<GroupMembershipQuestion>? questions;
   GroupMembershipQuest?          membershipQuest; // MD: Looks as deprecated. Consider and remove if need!
-  GroupSettings?             settings;
+  GroupSettings?                 settings;
 
   Group({
-	  this.id, this.category, this.type, this.title, this.description, this.privacy, this.dateCreatedUtc, this.dateUpdatedUtc,
+	  this.id, this.attributes, this.type, this.title, this.description, this.privacy, 
+    this.dateCreatedUtc, this.dateUpdatedUtc, this.dateManagedMembershipUpdatedUtc, this.dateMembershipUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
     this.authManEnabled, this.authManGroupName, this.attendanceGroup,
     this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
-    this.imageURL, this.webURL, this.currentMember, this.tags, this.questions, this.membershipQuest, this.settings
+    this.imageURL, this.webURL, this.currentMember, this.questions, this.membershipQuest, this.settings
     });
 
   static Group? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Group(
       id                             : JsonUtils.stringValue(json['id']),
-      category                       : JsonUtils.stringValue(json['category']),
+      attributes                     : JsonUtils.mapValue(json['attributes']),
       type                           : JsonUtils.stringValue(json['type']),
       title                          : JsonUtils.stringValue(json['title']),
       description                    : JsonUtils.stringValue(json['description']),
       privacy                        : groupPrivacyFromString(JsonUtils.stringValue(json['privacy'])),
-      dateCreatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
-      dateUpdatedUtc                 : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+
+      dateCreatedUtc                   : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_created'])),
+      dateUpdatedUtc                   : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
+      dateManagedMembershipUpdatedUtc  : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_managed_membership_updated'])),
+      dateMembershipUpdatedUtc         : groupUtcDateTimeFromString(JsonUtils.stringValue(json['date_membership_updated'])),
       
       certified                      : JsonUtils.boolValue(json['certified']),
       hiddenForSearch                : JsonUtils.boolValue(json['hidden_for_search']),
@@ -94,7 +100,6 @@ class Group {
       imageURL                       : JsonUtils.stringValue(json['image_url']),
       webURL                         : JsonUtils.stringValue(json['web_url']),
       currentMember                  : Member.fromJson(JsonUtils.mapValue(json['current_member'])),
-      tags                           : JsonUtils.listStringsValue(json['tags']),
       questions                      : GroupMembershipQuestion.listFromStringList(JsonUtils.stringListValue(json['membership_questions'])),
       membershipQuest                : GroupMembershipQuest.fromJson(JsonUtils.mapValue(json['membership_quest'])),
       settings                         : GroupSettings.fromJson(JsonUtils.mapValue(json['settings']))
@@ -104,13 +109,16 @@ class Group {
   static Group? fromOther(Group? other) {
     return (other != null) ? Group(
       id                             : other.id,
-      category                       : other.category,
+      attributes                     : MapUtils.from(other.attributes),
       type                           : other.type,
       title                          : other.title,
       description                    : other.description,
       privacy                        : other.privacy,
-      dateCreatedUtc                 : other.dateCreatedUtc,
-      dateUpdatedUtc                 : other.dateUpdatedUtc,
+
+      dateCreatedUtc                   : other.dateCreatedUtc,
+      dateUpdatedUtc                   : other.dateUpdatedUtc,
+      dateManagedMembershipUpdatedUtc  : other.dateManagedMembershipUpdatedUtc,
+      dateMembershipUpdatedUtc         : other.dateMembershipUpdatedUtc,
 
       certified                      : other.certified,
       hiddenForSearch                : other.hiddenForSearch,
@@ -131,7 +139,6 @@ class Group {
       imageURL                       : other.imageURL,
       webURL                         : other.webURL,
       currentMember                  : other.currentMember,
-      tags                           : ListUtils.from(other.tags),
       questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
       membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
       settings                          : GroupSettings.fromOther(other.settings),
@@ -141,13 +148,16 @@ class Group {
   Map<String, dynamic> toJson() {
     return {
       'id'                            : id,
-      'category'                      : category,
+      'attributes'                    : attributes,
       'type'                          : type,
       'title'                         : title,
       'description'                   : description,
       'privacy'                       : groupPrivacyToString(privacy),
-      'date_created'                  : groupUtcDateTimeToString(dateCreatedUtc),
-      'date_updated'                  : groupUtcDateTimeToString(dateUpdatedUtc),
+      
+      'date_created'                     : groupUtcDateTimeToString(dateCreatedUtc),
+      'date_updated'                     : groupUtcDateTimeToString(dateUpdatedUtc),
+      'date_managed_membership_updated'  : groupUtcDateTimeToString(dateManagedMembershipUpdatedUtc),
+      'date_membership_updated'          : groupUtcDateTimeToString(dateMembershipUpdatedUtc),
       
       'certified'                     : certified,
       'hidden_for_search'             : hiddenForSearch,
@@ -168,7 +178,6 @@ class Group {
       'image_url'                     : imageURL,
       'web_url'                       : webURL,
       'current_member'                : currentMember?.toJson(),
-      'tags'                          : tags,
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
       'settings'                                : settings?.toJson()
@@ -179,13 +188,16 @@ class Group {
   bool operator ==(dynamic other) =>
     (other is Group) &&
       (other.id == id) &&
-      (other.category == category) &&
+      (const DeepCollectionEquality().equals(other.attributes, attributes)) &&
       (other.type == type) &&
       (other.title == title) &&
       (other.description == description) &&
       (other.privacy == privacy) &&
+
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc) &&
+      (other.dateManagedMembershipUpdatedUtc == dateManagedMembershipUpdatedUtc) &&
+      (other.dateMembershipUpdatedUtc == dateMembershipUpdatedUtc) &&
 
       (other.certified == certified) &&
       (other.hiddenForSearch == hiddenForSearch) &&
@@ -206,7 +218,6 @@ class Group {
       (other.imageURL == imageURL) &&
       (other.webURL == webURL) &&
       (other.currentMember == currentMember) &&
-      (const DeepCollectionEquality().equals(other.tags, tags)) &&
       (const DeepCollectionEquality().equals(other.questions, questions)) &&
       (other.membershipQuest == membershipQuest) &&
       (other.settings == settings);
@@ -215,13 +226,16 @@ class Group {
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
-    (category?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(attributes)) ^
     (type?.hashCode ?? 0) ^
     (title?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
     (privacy?.hashCode ?? 0) ^
+
     (dateCreatedUtc?.hashCode ?? 0) ^
     (dateUpdatedUtc?.hashCode ?? 0) ^
+    (dateManagedMembershipUpdatedUtc?.hashCode ?? 0) ^
+    (dateMembershipUpdatedUtc?.hashCode ?? 0) ^
 
     (certified?.hashCode ?? 0) ^
     (hiddenForSearch?.hashCode ?? 0) ^
@@ -242,7 +256,6 @@ class Group {
     (imageURL?.hashCode ?? 0) ^
     (webURL?.hashCode ?? 0) ^
     (currentMember?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(tags)) ^
     (const DeepCollectionEquality().hash(questions)) ^
     (membershipQuest?.hashCode ?? 0)^
     (settings?.hashCode ?? 0);

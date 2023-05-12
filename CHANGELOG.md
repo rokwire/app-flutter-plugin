@@ -5,16 +5,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+<!-- The next build on `develop` should refer to version 1.4.1 -->
+
+## [1.4.0] - 2023-05-12
+### Fixed
+- Handle exceptions that Geolocator.getCurrentPosition could throw. 
+- Fixed processing analyticsUrl when sending notifyHttpResponse notification for Analytics [#266](https://github.com/rokwire/app-flutter-plugin/issues/266).
+- Fixed taps processing on Read More expandable text [#269](https://github.com/rokwire/app-flutter-plugin/issues/269).
+### Changed
+- Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
+- Use Core Url host to test online status in web panel [#271](https://github.com/rokwire/app-flutter-plugin/issues/271).
+- UrlUtis.isHostAvailable exposed to public [#3052](https://github.com/rokwire/illinois-app/issues/3052).
+- Updated TZDateTimeUtils [#3225](https://github.com/rokwire/illinois-app/issues/3225).
+- Always post "research_group" POST paramter in v2/groups and v2/user/groups API calls [#275](https://github.com/rokwire/app-flutter-plugin/issues/275).
+### Added
+- Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
+- Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).
+- Added NotificationService.subscribers getter [#3070](https://github.com/rokwire/illinois-app/issues/3070).
+- Added UrlUtils.launchExternal [#3129](https://github.com/rokwire/illinois-app/issues/3129).
+- Added UrlUtils.isValidUrl [#3193](https://github.com/rokwire/illinois-app/issues/3193).
+- Added DateTimeUtils.min & max [#3206](https://github.com/rokwire/illinois-app/issues/3206).
+- Added title parameters to SliverToutHeaderBar [#3149](https://github.com/rokwire/illinois-app/issues/3149).
+- Created TZDateTimeUtils [#3215](https://github.com/rokwire/illinois-app/issues/3215).
+- Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
+- Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
+
+### Deleted
+- Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
+- Removed Explore.toJson definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
 
 ## [1.3.2] - 2023-02-16
 ### Changed
+- Switch to xCode 14.2.
 - Delete poll notification is not a lifecycle notification any more [#2173](https://github.com/rokwire/illinois-app/issues/2173).
+- Improve default handling for UIImages [#193](https://github.com/rokwire/app-flutter-plugin/issues/193).
+- Added miscellaneous helpers for GoogleMap plugin [#243](https://github.com/rokwire/app-flutter-plugin/issues/243).
+- Group filters renamed to attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Group's category and tags replaced by attributes [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Updated Group's attributes logic [#256](https://github.com/rokwire/app-flutter-plugin/issues/256).
+- Updated Group's attributes logic [#259](https://github.com/rokwire/app-flutter-plugin/issues/259).
 ### Fixed
 - Clear unread notifications count when logged out.
 - Formatting date times when using device local time zone [#240](https://github.com/rokwire/app-flutter-plugin/issues/240).
+- Fixed Groups copy constructor [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 ### Added
 - Added hint in VerticalTitleValueSection [#2892](https://github.com/rokwire/illinois-app/issues/2892).
+- Acknowledge the new group date fields [#244](https://github.com/rokwire/app-flutter-plugin/issues/244).
+- Added group filters [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Added filters filter to all groups GET request  [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
 - Load poll by id [#2645](https://github.com/rokwire/illinois-app/issues/2645).
+- TextStyle acknowledge extends, override and inherit fields. Supports extending of existing styles [#2932](https://github.com/rokwire/illinois-app/issues/2932).
+- Added content attributes support to pluging [#246](https://github.com/rokwire/app-flutter-plugin/issues/246).
+- Handle multiple encryption keys for limited secret access [#254](https://github.com/rokwire/app-flutter-plugin/issues/254)
 
 ## [1.3.1] - 2023-01-03
 ### Deleted

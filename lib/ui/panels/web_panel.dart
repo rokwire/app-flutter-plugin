@@ -18,6 +18,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/tracking_services.dart';
@@ -44,13 +45,7 @@ class WebPanel extends StatefulWidget {
 
   @protected
   Future<bool> getOnline() async {
-    List<InternetAddress>? result;
-    try {
-      result = await InternetAddress.lookup('www.example.com');
-    }
-    on SocketException catch (_) {
-    }
-    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+    return UrlUtils.isHostAvailable(Config().coreUrl);
   }
 
   @protected

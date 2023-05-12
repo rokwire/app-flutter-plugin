@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
@@ -66,14 +67,15 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupMembershipSwitchToAdmin  = "edu.illinois.rokwire.group.membership.switch_to_admin";
   static const String notifyGroupMembershipSwitchToMember = "edu.illinois.rokwire.group.membership.switch_to_member";
   static const String notifyGroupMemberAttended           = "edu.illinois.rokwire.group.member.attended";
-
-  static const String _userLoginVersionSetting         = "edu.illinois.rokwire.settings.groups.user.login.version";
+  static const String _userLoginVersionSetting            = "edu.illinois.rokwire.settings.groups.user.login.version";
 
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
 
   List<Map<String, dynamic>>? _groupDetailsCache;
   List<Map<String, dynamic>>? get groupDetailsCache => _groupDetailsCache;
+
+  Directory? _appDocDir;
 
   List<Group>? _userGroups;
   Set<String>? _userGroupNames;
@@ -111,17 +113,21 @@ class Groups with Service implements NotificationsListener {
       Connectivity.notifyStatusChanged
     ]);
     _groupDetailsCache = [];
+    super.createService();
   }
 
   @override
   void destroyService() {
     NotificationService().unsubscribe(this);
+    super.destroyService();
   }
 
   @override
   Future<void> initService() async {
 
     await _ensureLogin();
+
+    _appDocDir = await _getAppDocumentsDirectory();
 
     _attendedMembers = await _loadAttendedMembersFromCache();
 
@@ -160,7 +166,8 @@ class Groups with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param);
-    } else if (name == FirebaseMessaging.notifyGroupsNotification){
+    }
+    else if (name == FirebaseMessaging.notifyGroupsNotification){
       _onFirebaseMessageForGroupUpdate();
     }
     else if (name == Connectivity.notifyStatusChanged) {
@@ -206,7 +213,25 @@ class Groups with Service implements NotificationsListener {
     return group?.currentUserIsAdmin ?? false;
   }
 
+  // Caching
+
+  Future<Directory?> _getAppDocumentsDirectory() async {
+    try {
+      return await getApplicationDocumentsDirectory();
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  // Content Attributes
+
+  ContentAttributes? get contentAttributes => Content().contentAttributes('groups');
+
+
   // Categories APIs
+  // TBD: REMOVE
 
   Future<List<String>?> loadCategories() async {
     List<dynamic>? categoriesJsonArray = await Events().loadEventCategories();
@@ -219,6 +244,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   // Tags APIs
+  // TBD: REMOVE
 
   Future<List<String>?> loadTags() async {
     return Events().loadEventTags();
@@ -285,12 +311,12 @@ class Groups with Service implements NotificationsListener {
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, String? category, Set<String>? tags, int? offset, int? limit}) async {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, int? offset, int? limit}) async {
     if (contentType == GroupsContentType.my) {
       await _updateUserGroupsFromNetSync();
       return userGroups;
     } else {
-      return await _loadAllGroups(category: category);
+      return await _loadAllGroups(title: title, attributes: attributes, offset: offset, limit:  limit);
     }
   }
 
@@ -340,18 +366,17 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadAllGroups({String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
       String? post = JsonUtils.encode({
         'title': title,
-        'category': category,
-        'tags': tags,
+        'attributes': attributes,
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
         'limit': limit,
+        'research_group': false,
       });
-
 
       try {
         await _ensureLogin();
@@ -1230,21 +1255,12 @@ class Groups with Service implements NotificationsListener {
 
   Set<String>? get userGroupNames => _userGroupNames;
 
-  Future<File?> _getUserGroupsCacheFile() async {
-    try {
-      Directory appDocDir = await getApplicationDocumentsDirectory();
-      String cacheFilePath = join(appDocDir.path, _userGroupsCacheFileName);
-      return File(cacheFilePath);
-    }
-    catch(e) { 
-      debugPrint(e.toString()); 
-    }
-    return null;
-  }
+  File? _getUserGroupsCacheFile()  =>
+    (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
   Future<String?> _loadUserGroupsStringFromCache() async {
     try {
-      File? cacheFile = await _getUserGroupsCacheFile();
+      File? cacheFile = _getUserGroupsCacheFile();
       return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
     }
     catch(e) { 
@@ -1255,7 +1271,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<void> _saveUserGroupsStringToCache(String? value) async {
     try {
-      File? cacheFile = await _getUserGroupsCacheFile();
+      File? cacheFile = _getUserGroupsCacheFile();
       if (cacheFile != null) {
         if (value != null) {
           await cacheFile.writeAsString(value, flush: true);
@@ -1278,7 +1294,11 @@ class Groups with Service implements NotificationsListener {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
       await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
+      String url = '${Config().groupsUrl}/v2/user/groups';
+      String? post = JsonUtils.encode({
+        'research_group': false,
+      });
+      Response? response = await Network().get(url, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         return response?.body;
       }
@@ -1357,21 +1377,12 @@ class Groups with Service implements NotificationsListener {
 
   // Attended Members
 
-  static Future<File?> _getAttendedMembersCacheFile() async {
-    try {
-      Directory appDocDir = await getApplicationDocumentsDirectory();
-      String cacheFilePath = join(appDocDir.path, _attendedMembersCacheFileName);
-      return File(cacheFilePath);
-    }
-    catch(e) { 
-      debugPrint(e.toString()); 
-    }
-    return null;
-  }
+  File? _getAttendedMembersCacheFile() =>
+    (_appDocDir != null) ? File(join(_appDocDir!.path, _attendedMembersCacheFileName)) : null;
 
-  static Future<String?> _loadAttendedMembersStringFromCache() async {
+  Future<String?> _loadAttendedMembersStringFromCache() async {
     try {
-      File? cacheFile = await _getAttendedMembersCacheFile();
+      File? cacheFile = _getAttendedMembersCacheFile();
       return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
     }
     catch(e) { 
@@ -1380,9 +1391,9 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  static Future<void> _saveAttendedMembersStringToCache(String? value) async {
+  Future<void> _saveAttendedMembersStringToCache(String? value) async {
     try {
-      File? cacheFile = await _getAttendedMembersCacheFile();
+      File? cacheFile = _getAttendedMembersCacheFile();
       if (cacheFile != null) {
         if (value != null) {
           await cacheFile.writeAsString(value, flush: true);
@@ -1397,7 +1408,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  static Future<Map<String, List<Member>?>?> _loadAttendedMembersFromCache() async {
+  Future<Map<String, List<Member>?>?> _loadAttendedMembersFromCache() async {
     String? membersString = await _loadAttendedMembersStringFromCache();
     Map<String, dynamic>? attendedMembersMap = JsonUtils.decodeMap(membersString);
     if (attendedMembersMap != null) {
