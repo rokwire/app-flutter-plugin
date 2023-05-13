@@ -21,6 +21,8 @@ class ExpansionTileController {
   void Function()? expand;
   void Function()? collapse;
 
+  GlobalKey? target;
+
   ExpansionTileController({this.expand, this.collapse});
 }
 
@@ -274,6 +276,14 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.controller?.target?.currentContext != null) {
+        //TODO: this does not finish scrolling to where it should for some reason
+        Scrollable.ensureVisible(widget.controller!.target!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5);
+        widget.controller!.target = null;
+      }
+    });
+    
     final ExpansionTileThemeData expansionTileTheme = ExpansionTileTheme.of(context);
     final bool closed = !_isExpanded && _controller.isDismissed;
     final bool shouldRemoveChildren = closed && !widget.maintainState;

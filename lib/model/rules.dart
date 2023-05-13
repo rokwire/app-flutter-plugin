@@ -166,14 +166,14 @@ class RuleLogic extends RuleCondition {
   RuleLogic(this.operator, this.conditions);
 
   factory RuleLogic.fromOther(RuleLogic other) {
-    return RuleLogic(other.operator, List.from(other.conditions));
+    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList());
   }
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'operator': operator,
-      'conditions': conditions.map((e) => e.toJson()),
+      'conditions': conditions.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -254,7 +254,7 @@ abstract class RuleResult extends RuleElement {
     dynamic cases = json["cases"];
     if (cases is List<dynamic>) {
       List<Rule> caseList = [];
-      for (dynamic caseItem in caseList) {
+      for (dynamic caseItem in cases) {
         caseList.add(Rule.fromJson(caseItem));
       }
       return RuleCases(cases: caseList);
@@ -375,9 +375,16 @@ class RuleAction extends RuleActionResult {
   RuleAction({required this.action, required this.data, this.dataKey, this.priority});
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
+    dynamic data = json["data"];
+    String action = json["action"];
+    if (action == 'local_notify') {
+      data = Alert.fromJson(json["data"]);
+    } else if (action == 'notify') {
+      data = SurveyAlert.fromJson(json["data"]);
+    }
     return RuleAction(
-      action: json["action"],
-      data: json["data"],
+      action: action,
+      data: data,
       dataKey: JsonUtils.stringValue(json["data_key"]),
       priority: json["priority"],
     );
@@ -489,7 +496,7 @@ class RuleActionList extends RuleActionResult {
 
   factory RuleActionList.fromOther(RuleActionList other) {
     return RuleActionList(
-      actions: List.from(other.actions)
+      actions: other.actions.map((e) => RuleAction.fromOther(e)).toList()
     );
   }
 
@@ -497,13 +504,13 @@ class RuleActionList extends RuleActionResult {
   Map<String, dynamic> toJson() {
     return {
       'priority': priority,
-      'actions': actions.map((e) => e.toJson()),
+      'actions': actions.map((e) => e.toJson()).toList(),
     };
   }
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "Action List";
+    String summary = "Actions";
     if (prefix != null) {
       summary = "$prefix $summary";
     }
@@ -702,20 +709,20 @@ class RuleCases extends RuleResult {
 
   factory RuleCases.fromOther(RuleCases other) {
     return RuleCases(
-      cases: List.from(other.cases)
+      cases: other.cases.map((e) => Rule.fromOther(e)).toList()
     );
   }
 
   @override
   Map<String, dynamic> toJson() {
     return {
-      'cases': cases.map((e) => e.toJson()),
+      'cases': cases.map((e) => e.toJson()).toList(),
     };
   }
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "Cases:";
+    String summary = "Cases";
     if (prefix != null) {
       summary = "$prefix $summary";
     }

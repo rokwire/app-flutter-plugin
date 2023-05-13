@@ -34,7 +34,6 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
   final Survey? survey;
@@ -49,8 +48,8 @@ class SurveyCreationPanel extends StatefulWidget {
 
 class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   GlobalKey? dataKey;
-  List<GlobalKey?>? _dataToRuleKeys;
-  List<GlobalKey?>? _ruleToDataKeys;
+  List<GlobalKey?> _dataToRuleKeys = [];
+  List<GlobalKey?> _ruleToDataKeys = [];
   final _maxBranchDepth = 10;
 
   bool _loading = false;
@@ -105,7 +104,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
       }
 
-      _dataToRuleKeys = List.generate(_questionData.length - 1, (index) => GlobalKey());
+      _dataToRuleKeys = List.generate(_questionData.length, (index) => GlobalKey());
       _ruleToDataKeys = List.generate(_questionData.length, (index) => GlobalKey());
       _dataCount = _questionData.length + _actionData.length;
       _textControllers["title"]!.text = widget.survey!.title;
@@ -133,8 +132,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
               _handleFollowUpRuleBranches(survey, result);
             }
           }
-        } else if (surveyData.defaultFollowUpKey != null) {
-          _followUpRules.add(RuleAction(action: 'show', data: "data.${surveyData.defaultFollowUpKey}"));
+        } else {
+          _followUpRules.add(RuleAction(action: 'show', data: surveyData.defaultFollowUpKey != null ? "data.${surveyData.defaultFollowUpKey}" : null));
         }
       }
     }
@@ -200,8 +199,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           type: SurveyElementListType.data,
           label: 'Questions and Info (${_questionData.length})',
           dataList: _questionData,
-          dataSubtitles: List.generate(_questionData.length, (index) => index < _questionData.length - 1 ? 'Follow up rule' : null),
-          widgetKeys: CollectionUtils.isNotEmpty(_dataToRuleKeys) ? (_dataToRuleKeys! + [null]) : null,
+          dataSubtitles: List.filled(_questionData.length, 'Follow up rule'),
+          widgetKeys: _dataToRuleKeys,
           targetWidgetKeys: _ruleToDataKeys,
           surveyElement: SurveyElement.questionData,
           onAdd: _onTapAdd,
@@ -210,6 +209,23 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           onDrag: _onAcceptQuestionDataDrag,
           onScroll: _onScroll,
           controller: _questionDataController,
+        )),
+
+        // follow up rules (determine survey data ordering/flow)
+        Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
+          type: SurveyElementListType.rules,
+          label: 'Follow Up Rules (${_followUpRules.length})',
+          dataList: _followUpRules,
+          dataSubtitles: List.generate(_questionData.length + 1, (index) => index > 0 ? _questionData[index - 1].key : null),
+          widgetKeys: _ruleToDataKeys,
+          targetWidgetKeys: _dataToRuleKeys,
+          surveyElement: SurveyElement.followUpRules,
+          onAdd: _onTapAdd,
+          onEdit: _onTapEdit,
+          onRemove: _onTapRemove,
+          onScroll: _onScroll,
+          controller: _followUpRulesController,
+          labelStart: true,
         )),
 
         // data (actions) -> these do not have follow ups because they are actions taken as the result of rule evaluation
@@ -224,24 +240,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           onDrag: _onAcceptActionDataDrag,
         )),
 
-        // follow up rules (determine survey data ordering/flow)
-        Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
-          type: SurveyElementListType.rules,
-          label: 'Follow Up Rules (${_followUpRules.length})',
-          dataList: _followUpRules,
-          dataSubtitles: List.generate(_questionData.length + 1, (index) => index > 0 ? _questionData[index - 1].key : null),
-          widgetKeys: _ruleToDataKeys,
-          targetWidgetKeys: CollectionUtils.isNotEmpty(_dataToRuleKeys) ? (<GlobalKey?>[null] + _dataToRuleKeys!) : null,
-          surveyElement: SurveyElement.followUpRules,
-          onAdd: _onTapAdd,
-          onEdit: _onTapEdit,
-          onRemove: _onTapRemove,
-          onScroll: _onScroll,
-          controller: _followUpRulesController,
-          labelStart: true,
-        )),
-
         // result_rules
+        //TODO: links to action data
         Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
           type: SurveyElementListType.rules,
           label: 'Result Rules (${_resultRules.length})',
@@ -253,7 +253,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         )),
       ],));
     }
-    return Text("Maximum question branch depth (10) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles?.getTextStyle('widget.error.regular.fat'));
+    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles?.getTextStyle('widget.error.regular.fat'));
   }
 
   Widget _buildPreviewAndSave() {
@@ -297,26 +297,25 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
   }
 
-  void _onTapEdit(int index, SurveyElement surveyElement, RuleElement? element) {
+  void _onTapEdit(int index, SurveyElement surveyElement, RuleElement? element, RuleElement? parentElement) {
     switch (surveyElement) {
       case SurveyElement.questionData: _onTapEditQuestionData(index); break;
       case SurveyElement.actionData: _onTapEditActionData(index); break;
-      case SurveyElement.followUpRules: _onTapEditRuleElement(element, surveyElement); break;
-      case SurveyElement.resultRules: _onTapEditRuleElement(element, surveyElement); break;
+      case SurveyElement.followUpRules: _onTapEditRuleElement(element, surveyElement, parentElement: parentElement); break;
+      case SurveyElement.resultRules: _onTapEditRuleElement(element, surveyElement, parentElement: parentElement); break;
       default: return;
     }
   }
 
   void _onScroll(GlobalKey? key) {
-    if (key != null) {
-      if (_dataToRuleKeys?.contains(key) == true) {
-        _followUpRulesController.expand?.call();
-      } else if (_ruleToDataKeys?.contains(key) == true) {
-        _questionDataController.expand?.call();
-      }
-      if (key.currentContext != null) {
-        Scrollable.ensureVisible(key.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5);
-      }
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(key!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5);
+    } else if (_dataToRuleKeys.contains(key) == true) {
+      _followUpRulesController.target = key;
+      _followUpRulesController.expand?.call();
+    } else if (_ruleToDataKeys.contains(key) == true) {
+      _questionDataController.target = key;
+      _questionDataController.expand?.call();
     }
   }
 
@@ -340,22 +339,22 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapAddDataAtIndex(int index, SurveyElement surveyElement) {
     bool isQuestionInfo = surveyElement == SurveyElement.questionData;
     SurveyData insert;
-    _ruleToDataKeys ??= [];
-    _ruleToDataKeys!.insert(index, GlobalKey());
     if (index > 0) {
       insert = SurveyData.fromOther(isQuestionInfo ? _questionData[index-1] : _actionData[index-1]);
       insert.key = "data${_dataCount++}";
-
-      _dataToRuleKeys ??= [];
-      _dataToRuleKeys!.insert(index - 1, GlobalKey());
     } else if (isQuestionInfo) {
       insert = SurveyQuestionTrueFalse(text: "", key: "data${_dataCount++}");
     } else {
       insert = SurveyDataResult(key: "data${_dataCount++}", text: "New Action", actions: []);
     }
     setState(() {
+      _dataToRuleKeys.insert(index, GlobalKey());
+      _ruleToDataKeys.insert(index, GlobalKey());
       if (isQuestionInfo) {
         _questionData.insert(index, insert);
+        if (index == 0) {
+          _followUpRules.insert(0, RuleAction(action: "show", data: null));
+        }
         _followUpRules.insert(index, RuleAction(action: "show", data: "data.${_questionData[index].key}"));
       } else {
         _actionData.insert(index, insert);
@@ -364,14 +363,15 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   }
 
   void _onTapRemoveDataAtIndex(int index, SurveyElement surveyElement) {
-    _ruleToDataKeys!.removeAt(index);
-    if (index > 0) {
-      _dataToRuleKeys!.removeAt(index - 1);
-    }
     setState(() {
+      _dataToRuleKeys.removeAt(index);
+      _ruleToDataKeys.removeAt(index);
       if (surveyElement == SurveyElement.questionData) {
         _questionData.removeAt(index);
         _followUpRules.removeAt(index);
+        if (_questionData.isEmpty) {
+          _followUpRules.removeAt(0);
+        }
       } else {
         _actionData.removeAt(index);
       }
@@ -545,23 +545,28 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     for (int i = 0; i < _followUpRules.length; i++) {
       RuleResult rule = _followUpRules[i];
       if (i == 0) {
-        if (rule is RuleAction && rule.action == 'show' && rule.data is String && (rule.data as String).isNotEmpty) {
-          defaultDataKey = (rule.data as String).split('.').last;
+        if (rule is RuleAction && rule.action == 'show') {
+          defaultDataKey = (rule.data is String && (rule.data as String).isNotEmpty) ? (rule.data as String).split('.').last : null;
+          defaultDataKeyRule = null;
         } else {
           defaultDataKeyRule = rule;
+          defaultDataKey = null;
         }
       } else {
-        if (rule is RuleAction && rule.action == 'show' && rule.data is String && (rule.data as String).isNotEmpty) {
-          _questionData[i-1].defaultFollowUpKey = (rule.data as String).split('.').last;
+        if (rule is RuleAction && rule.action == 'show') {
+          _questionData[i-1].defaultFollowUpKey = (rule.data is String && (rule.data as String).isNotEmpty) ? (rule.data as String).split('.').last : null;
+          _questionData[i-1].followUpRule = null;
         } else {
           _questionData[i-1].followUpRule = rule;
+          _questionData[i-1].defaultFollowUpKey = null;
         }
       }
     }
 
+    Map<String, SurveyData> data = <String, SurveyData>{for (var data in _questionData + _actionData) data.key: SurveyData.fromOther(data)};
     return Survey(
       id: widget.survey != null ? widget.survey!.id : '',
-      data: <String, SurveyData>{for (var data in _questionData + _actionData) data.key: SurveyData.fromOther(data)},
+      data: data,
       type: '',
       scored: _scored,
       title: (_textControllers["title"]?.text.isNotEmpty ?? false) ? _textControllers["title"]!.text : 'New Survey',

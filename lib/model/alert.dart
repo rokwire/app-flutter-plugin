@@ -20,6 +20,16 @@ class Alert {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'text': text,
+      'actions': actions?.map((e) => e.toJson()).toList(),
+      'params': params
+    };
+  }
+
   Duration? get timeToAlert {
     switch (JsonUtils.stringValue(params?["type"])) {
       case "relative":

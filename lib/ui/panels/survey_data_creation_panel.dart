@@ -318,12 +318,12 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     }
   }
 
-  void _onTapEdit(int index, SurveyElement surveyElement, RuleElement? element) {
+  void _onTapEdit(int index, SurveyElement surveyElement, RuleElement? element, RuleElement? parentElement) {
     switch (surveyElement) {
       case SurveyElement.questionData: _onTapEditData(index); break;
       case SurveyElement.actionData: _onTapEditData(index); break;
-      case SurveyElement.defaultResponseRule: _onTapEditRuleElement(element, surveyElement); break;
-      case SurveyElement.scoreRule: _onTapEditRuleElement(element, surveyElement); break;
+      case SurveyElement.defaultResponseRule: _onTapEditRuleElement(element, surveyElement, parentElement: parentElement); break;
+      case SurveyElement.scoreRule: _onTapEditRuleElement(element, surveyElement, parentElement: parentElement); break;
       default: return;
     }
   }

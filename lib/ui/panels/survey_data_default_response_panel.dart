@@ -112,7 +112,7 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
   }
 
   void _onTapDone() {
-    MapEntry<String, dynamic> updatedResponse = MapEntry(_surveyDataKey, SurveyElementCreationWidget.parseTextForType(_usePreviousResponse ? 'data.${widget.dataKey}.response' : _responseTextController.text));
+    MapEntry<String, dynamic> updatedResponse = MapEntry(_surveyDataKey, SurveyElementCreationWidget.parseTextForType(_usePreviousResponse ? 'data.$_surveyDataKey.response' : _responseTextController.text));
     Navigator.of(context).pop(updatedResponse);
   }
 }

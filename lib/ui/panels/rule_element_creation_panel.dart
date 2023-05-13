@@ -116,54 +116,14 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     String? localNotifyText;
     int? localNotifyPeriod;
     if (comparison != null) {
-      _dataKeySettings.addEntries(_initSettings(comparison.dataKey));
-
-      //TODO: combine with below
-      if (comparison.compareTo is String) {
-        customData = comparison.compareTo as String;
-        if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
-          _compareToSettings.addEntries(_initSettings(customData));
-          _customValueSelection = 'survey';
-        } else {
-          _customValueSelection = 'custom_single';
-        }
-      } else if (comparison.compareTo is Iterable) {
-        for (dynamic value in comparison.compareTo as Iterable) {
-          _customValueTextControllers.add(TextEditingController(text: value.toString()));
-        }
-        _customValueSelection = 'custom_multiple';
-      } else if (comparison.compareTo is DateTime) {
-        customData = DateTimeUtils.utcDateTimeToString(comparison.compareTo, format: "MM-dd-yyyy") ?? '';
-        _customValueSelection = 'custom_single';
-      } else {
-        customData = comparison.compareTo?.toString() ?? '';
-        _customValueSelection = 'custom_single';
-      }
+      _initSettings(comparison.dataKey, 'data_key');
+      customData = _initCustomData(comparison.compareTo, 'compare_to');
     } else if (_ruleElem is RuleAction) {
       RuleAction action = _ruleElem as RuleAction;
-      if (action.data is String) {
-        customData = action.data as String;
-        if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
-          _actionSettings.addEntries(_initSettings(customData));
-          _customValueSelection = 'survey';
-        } else {
-          _customValueSelection = 'custom_single';
-        }
-      } else if (action.data is Iterable) {
-        for (dynamic value in action.data as Iterable) {
-          _customValueTextControllers.add(TextEditingController(text: value.toString()));
-        }
-        _customValueSelection = 'custom_multiple';
-      } else if (action.data is DateTime) {
-        customData = DateTimeUtils.utcDateTimeToString(action.data, format: "MM-dd-yyyy") ?? '';
-        _customValueSelection = 'custom_single';
-      } else {
-        customData = action.data?.toString() ?? '';
-        _customValueSelection = 'custom_single';
-      }
+      customData = _initCustomData(action.data, 'action');
 
       if (action.action == 'return') {
-        if (widget.surveyElement == SurveyElement.defaultResponseRule && widget.surveyElement == SurveyElement.scoreRule) {
+        if (widget.surveyElement == SurveyElement.defaultResponseRule || widget.surveyElement == SurveyElement.scoreRule) {
           (_ruleElem as RuleAction).action = 'set_to';
         } else if (widget.surveyElement == SurveyElement.followUpRules) {
           (_ruleElem as RuleAction).action = 'show';
@@ -202,7 +162,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     super.initState();
   }
 
-  List<MapEntry<String, String>> _initSettings(String data) {
+  void _initSettings(String data, String settings) {
     List<MapEntry<String, String>> settingsEntries = [];
     
     List<String> dataFields = data.split(".");
@@ -224,7 +184,41 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       }
     }
 
-    return settingsEntries;
+    switch (settings) {
+      case 'data_key':
+        _dataKeySettings.addEntries(settingsEntries);
+        break;
+      case 'compare_to':
+        _compareToSettings.addEntries(settingsEntries);
+        break;
+      case 'action':
+        _actionSettings.addEntries(settingsEntries);
+    }
+  }
+
+  String? _initCustomData(dynamic data, String settings) {
+    String? customData;
+    if (data is String) {
+      customData = data;
+      if (customData.contains('stats') || customData.contains('data') || ListUtils.contains(Surveys.properties.keys, customData)!) {
+        _initSettings(customData, settings);
+        _customValueSelection = 'survey';
+      } else {
+        _customValueSelection = 'custom_single';
+      }
+    } else if (data is Iterable) {
+      for (dynamic value in data) {
+        _customValueTextControllers.add(TextEditingController(text: value.toString()));
+      }
+      _customValueSelection = 'custom_multiple';
+    } else if (data is DateTime) {
+      customData = DateTimeUtils.utcDateTimeToString(data, format: "MM-dd-yyyy") ?? '';
+      _customValueSelection = 'custom_single';
+    } else {
+      customData = data?.toString() ?? '';
+      _customValueSelection = 'custom_single';
+    }
+    return customData;
   }
 
   @override
@@ -309,11 +303,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         ]);
       case 'alert':
         return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
-          (value) => _onChangeActionSetting(value, 'alert'), padding: const EdgeInsets.all(16));
+          (value) => _onChangeActionSetting(value, 'key'), padding: const EdgeInsets.all(16));
       case 'alert_result':
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
-            (value) => _onChangeActionSetting(value, 'alert_result'), padding: const EdgeInsets.all(16)),
+            (value) => _onChangeActionSetting(value, 'key')),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
       case 'local_notify':
@@ -446,7 +440,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       case 'stats':
         String statsProperty = settingsMap['stats'] ?? '';
         String dataKey = settingsMap['key'] ?? '';
-        return statsProperty.isNotEmpty ? (dataKey.isNotEmpty ? 'stats.$statsProperty.$dataKey' : 'stats.$statsProperty') : 'stats';
+        bool includeDataKey = statsProperty == 'percentage' || statsProperty == 'response_data';
+        return statsProperty.isNotEmpty ? (dataKey.isNotEmpty && includeDataKey ? 'stats.$statsProperty.$dataKey' : 'stats.$statsProperty') : 'stats';
       case 'data':
         String dataKey = settingsMap['key'] ?? '';
         String dataProperty = settingsMap['data'] ?? '';
@@ -624,7 +619,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     });
   }
 
-  void _onTapEditAction(int index, SurveyElement surveyElement, RuleElement? element) async {
+  void _onTapEditAction(int index, SurveyElement surveyElement, RuleElement? element, RuleElement? parentElement) async {
     dynamic updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataOptionsPanel(
       data: _actions![index],
       dataKeys: widget.questionDataKeys,
@@ -697,7 +692,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     } else if (_ruleElem is RuleAction) {
       switch ((_ruleElem as RuleAction).action) {
         case 'show':
-          (_ruleElem as RuleAction).data = 'data.${_actionSettings['key']}';
+          (_ruleElem as RuleAction).data = _actionSettings['key'] != null ? 'data.${_actionSettings['key']}' : null;
           break;
         case 'set_to':
           error = (_textControllers['custom_compare']?.text.isEmpty ?? true);

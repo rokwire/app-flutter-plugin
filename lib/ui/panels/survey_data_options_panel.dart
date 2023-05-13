@@ -153,6 +153,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
           child: SurveyElementList(
             type: SurveyElementListType.data,
             label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
+            //TODO: better card summary here
             dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
             surveyElement: SurveyElement.questionData,
             onAdd: _onTapAddDefaultResponse,
@@ -227,7 +228,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     });
   }
 
-  void _onTapEditDefaultResponse(int index, SurveyElement surveyElement, RuleElement? element) async {
+  void _onTapEditDefaultResponse(int index, SurveyElement surveyElement, RuleElement? element, RuleElement? parentElement) async {
     MapEntry<String, dynamic>? updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataDefaultResponsePanel(
       dataKey: _defaultResponseKeys![index],
       dataKeys: widget.dataKeys,
