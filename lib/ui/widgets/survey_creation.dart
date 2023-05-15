@@ -182,7 +182,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       entryText = data;
     }
     
-    Widget dataKeyText = Text(entryText, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+    Widget dataKeyText = Text('${index + 1}. $entryText', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
     List<Widget> textWidgets = [dataKeyText];
     if (_handleScrolling && widget.dataSubtitles![index] != null) {
       textWidgets.add(GestureDetector(
@@ -381,7 +381,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         }
       }
       Widget optionDataText = Text(
-        entryText,
+        '${index + 1}. $entryText',
         style: Styles().textStyles?.getTextStyle(data.isCorrect ? 'widget.detail.medium.fat' : 'widget.detail.medium'),
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
@@ -421,14 +421,25 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
     if (data is ActionData) {
-      Widget actionDataText = Text(data.label ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+      Widget actionDataText = Text('${index + 1}. ${data.label ?? 'New Action'}', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+      List<Widget> textWidgets = [actionDataText];
+      if (data.data != null) {
+        String dataString = data.data.toString();
+        if (dataString.isNotEmpty) {
+          textWidgets.add(Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(dataString, style: Styles().textStyles?.getTextStyle('widget.detail.medium'))
+          ));
+        }
+      }
+      Widget actionText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
       Widget displayEntry = Card(
         margin: const EdgeInsets.symmetric(vertical: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
         child: InkWell(
           onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
           child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-            Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: actionDataText)),
+            Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: actionText)),
             Expanded(child: _buildEntryManagementOptions(index, surveyElement, parentElement: parentElement)),
           ],))
         )

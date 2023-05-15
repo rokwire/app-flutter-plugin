@@ -303,7 +303,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         ]);
       case 'alert':
         return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
-          (value) => _onChangeActionSetting(value, 'key'), padding: const EdgeInsets.all(16));
+          (value) => _onChangeActionSetting(value, 'key'));
       case 'alert_result':
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],

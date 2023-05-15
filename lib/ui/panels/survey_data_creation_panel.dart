@@ -51,7 +51,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   final ScrollController _scrollController = ScrollController();
   late final Map<String, TextEditingController> _textControllers;
-  final List<String> _defaultTextControllers = ["key", "text", "more_info", "maximum_score"];
+  final List<String> _defaultTextControllers = ["key", "text", "more_info"];
 
   late SurveyData _data;
 
@@ -63,7 +63,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       "key": TextEditingController(text: _data.key),
       "text": TextEditingController(text: _data.text),
       "more_info": TextEditingController(text: _data.moreInfo),
-      "maximum_score": TextEditingController(text: _data.maximumScore?.toString()),
     };
 
     if (_data.section != null && !widget.sections.contains(_data.section)) {
@@ -216,11 +215,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // key*
       FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
       // question text*
-      FormFieldText(_data.isQuestion ? 'Question Text' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      FormFieldText(_data is SurveyDataResult ? 'Title' : (_data.isQuestion ? 'Question Text' : 'Text'), padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
       // more info (Additional Info)
-      FormFieldText('Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
-      // maximum score (number, show if survey is scored)
-      Visibility(visible: _data.isQuestion && widget.scoredSurvey, child: FormFieldText('Maximum Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["maximum_score"], inputType: TextInputType.number,)),
+      FormFieldText(_data is SurveyDataResult ? 'Text' : 'Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
 
       // allowSkip
       Visibility(visible: _data.isQuestion, child: SurveyElementCreationWidget.buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
@@ -254,7 +251,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       )),
 
       // scoreRule (show entry if survey is scored)
-      Visibility(visible: _data is! SurveyDataResult, child: Container(
+      Visibility(visible: _data is! SurveyDataResult && widget.scoredSurvey, child: Container(
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
@@ -394,10 +391,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     if (element is RuleCases) {
       element.cases.insert(index, index > 0 ? Rule.fromOther(element.cases[index-1]) : Rule(
         condition: RuleComparison(dataKey: "", operator: "==", compareTo: ""),
-        trueResult: RuleAction(action: "return", data: null),
+        trueResult: RuleAction(action: "set_to", data: null),
       ));
     } else if (element is RuleActionList) {
-      element.actions.insert(index, index > 0 ? RuleAction.fromOther(element.actions[index-1]) : RuleAction(action: "return", data: null));
+      element.actions.insert(index, index > 0 ? RuleAction.fromOther(element.actions[index-1]) : RuleAction(action: "set_to", data: null));
     } else if (element is RuleLogic) {
       element.conditions.insert(index, index > 0 ? RuleCondition.fromOther(element.conditions[index-1]) : RuleComparison(dataKey: "", operator: "==", compareTo: ""));
     }
@@ -469,20 +466,20 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     switch (_data.type) {
       case "survey_data.true_false":
         List<OptionData> options = (_data as SurveyQuestionTrueFalse).options;
-        defaultRule = RuleAction(action: "return", data: options.first.responseValue);
+        defaultRule = RuleAction(action: "set_to", data: options.first.responseValue);
         break;
       case "survey_data.multiple_choice":
         List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
-        defaultRule = RuleAction(action: "return", data: options.isNotEmpty ? options.first.responseValue : 0);
+        defaultRule = RuleAction(action: "set_to", data: options.isNotEmpty ? options.first.responseValue : 0);
         break;
       case "survey_data.date_time":
-        defaultRule = RuleAction(action: "return", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
+        defaultRule = RuleAction(action: "set_to", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
         break;
       case "survey_data.numeric":
-        defaultRule = RuleAction(action: "return", data: 0);
+        defaultRule = RuleAction(action: "set_to", data: 0);
         break;
       case "survey_data.text":
-        defaultRule = RuleAction(action: "return", data: "");
+        defaultRule = RuleAction(action: "set_to", data: "");
         break;
     }
     setState(() {
@@ -492,7 +489,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
   void _onTapManageScoreRule() {
     setState(() {
-      _data.scoreRule = _data.scoreRule == null ? RuleAction(action: "return", data: 0) : null;
+      _data.scoreRule = _data.scoreRule == null ? RuleAction(action: "set_to", data: 0) : null;
     });
   }
 
@@ -500,25 +497,24 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     String key = _textControllers["key"]!.text;
     String text = _textControllers["text"]!.text;
     String? moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
-    num? maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
     _removeTextControllers(keepDefaults: true);
 
     setState(() {
       switch (type) {
         case "survey_data.true_false":
-          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
+          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section);
           break;
         case "survey_data.multiple_choice":
-          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore, options: []);
+          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: _data.section, options: []);
           break;
         case "survey_data.date_time":
-          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
+          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: _data.section);
           break;
         case "survey_data.numeric":
-          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
+          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: _data.section);
           break;
         case "survey_data.text":
-          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section, maximumScore: maximumScore);
+          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section);
           break;
         case "survey_data.info":
           _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo);
@@ -596,7 +592,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _data.key = _textControllers["key"]!.text;
     _data.text = _textControllers["text"]!.text;
     _data.moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
-    _data.maximumScore = num.tryParse(_textControllers["maximum_score"]!.text);
 
     if (_data is SurveyQuestionMultipleChoice) {
       for (OptionData option in (_data as SurveyQuestionMultipleChoice).options) {

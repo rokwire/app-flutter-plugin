@@ -407,7 +407,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return SurveyDataWidget(Checkbox(
         checkColor: Styles().colors?.surface,
         activeColor: Styles().colors?.fillColorPrimary,
-        value: survey.response,
+        value: survey.response ?? false,
         onChanged: enabled ? (bool? value) {
           // if (survey.scored && survey.response != null) {
           //   return;
