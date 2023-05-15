@@ -39,6 +39,7 @@ class Content with Service implements NotificationsListener {
   static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.group.content_attributes.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture.profile.changed";
 
+  static const String _contentAttributesCategory = "attributes";
   static const String _contentAttributesCacheFileName = "contentAttributes.json";
 
   Directory? _appDocDir;
@@ -82,11 +83,11 @@ class Content with Service implements NotificationsListener {
     _appDocDir = await _getAppDocumentsDirectory();
     _contentAttributes = await _loadContentAttributesFromCache();
     if (_contentAttributes == null) {
-      String? contentAttributesString = await _loadContentAttributesStringFromNet();
-      ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
+      Map<String, dynamic>? contentAttributesJson = await _loadContentAttributesJsonFromNet();
+      ContentAttributes? contentAttributes = ContentAttributes.fromJson(contentAttributesJson);
       if (contentAttributes != null) {
         _contentAttributes = contentAttributes;
-        _saveContentAttributesStringToCache(contentAttributesString);
+        _saveContentAttributesStringToCache(JsonUtils.encode(contentAttributesJson));
       }
     }
     else {
@@ -176,17 +177,21 @@ class Content with Service implements NotificationsListener {
     return ContentAttributes.fromJson(JsonUtils.decodeMap(await _loadContentAttributesStringFromCache()));
   }
 
-  Future<String?> _loadContentAttributesStringFromNet() async {
-    return await AppBundle.loadString('assets/content.attributes.json');
+  Future<Map<String, dynamic>?> _loadContentAttributesJsonFromNet() async {
+    //TMP: return await AppBundle.loadString('assets/content.attributes.json');
+    Response? response = await Network().get("${Config().contentUrl}/content_items", auth: Auth2(), body: JsonUtils.encode({"categories":[_contentAttributesCategory]}));
+    List<dynamic>? resonseJsonList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body) : null;
+    Map<String, dynamic>? resonseJson = ((resonseJsonList != null) && resonseJsonList.isNotEmpty) ? JsonUtils.mapValue(resonseJsonList.first) : null;
+    return (resonseJson != null) ? JsonUtils.mapValue(resonseJson['data']) : null;
   }
 
   Future<void> _updateContentAttributes() async {
-    String? contentAttributesString = await _loadContentAttributesStringFromNet();
-    ContentAttributes? contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(contentAttributesString));
+    Map<String, dynamic>? contentAttributesJson = await _loadContentAttributesJsonFromNet();
+    ContentAttributes? contentAttributes = ContentAttributes.fromJson(contentAttributesJson);
     if ((contentAttributes != null) && (contentAttributes != _contentAttributes)) {
       _contentAttributes = contentAttributes;
       _contentAttributesByScope.clear();
-      _saveContentAttributesStringToCache(contentAttributesString);
+      _saveContentAttributesStringToCache(JsonUtils.encode(contentAttributesJson));
       NotificationService().notify(notifyContentAttributesChanged);
     }
   }
