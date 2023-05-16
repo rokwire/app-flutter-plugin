@@ -27,6 +27,8 @@ abstract class RuleElement {
 
   String getSummary({String? prefix, String? suffix}) => "";
 
+  List<String> getSummaryForLink({String? prefix, String? suffix}) => getSummary(prefix: prefix, suffix: suffix).split(" ");
+
   RuleElement? findElement(String id) {
     return this.id == id ? this : null;
   }
@@ -149,6 +151,13 @@ class RuleComparison extends RuleCondition {
     if (suffix != null) {
       summary = "$summary $suffix";
     }
+    return summary;
+  }
+
+  @override
+  List<String> getSummaryForLink({String? prefix, String? suffix}) {
+    String summaryString = getSummary(prefix: prefix, suffix: suffix);
+    List<String> summary = summaryString.substring(0, summaryString.length - 1).split(" ");
     return summary;
   }
 
@@ -459,12 +468,8 @@ class RuleAction extends RuleActionResult {
       summary += " (${data.contactKey})";
     } else if (data is String && data.startsWith('data.')) {
       summary += " ${data.substring(5)}";
-    } else if (action == 'show') {
-      if (data != null) {
-        summary += " $data";
-      } else {
-        summary = endSurveySummary;
-      }
+    } else if (action == 'show' && data == null) {
+      summary = endSurveySummary;  
     } else if (action != 'save') {
       summary += " $data";
     }

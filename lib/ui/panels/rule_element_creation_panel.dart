@@ -238,7 +238,8 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       appBar: const HeaderBar(title: "Edit Rule Element"),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildRuleElement(), completionOptions: _buildDone(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildRuleElement(), completionOptions: _buildDone(), scrollController: _scrollController,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -289,7 +290,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       case 'show':
         Map<String?, String> options = Map.fromIterable(widget.questionDataKeys);
         options[null] = RuleAction.endSurveySummary;
-        return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Survey data key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'key'));
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(options, "Question reference key", _actionSettings['key'], (value) => _onChangeActionSetting(value, 'key'));
       case 'set_to':
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Value Type", _customValueSelection, _onChangeCustomValueSelection),
@@ -302,11 +303,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
-        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
+        return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Question reference key", _actionSettings['key'],
           (value) => _onChangeActionSetting(value, 'key'));
       case 'alert_result':
         return Column(children: [
-          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Survey data key", _actionSettings['key'],
+          SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Question reference key", _actionSettings['key'],
             (value) => _onChangeActionSetting(value, 'key')),
           FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
@@ -389,7 +390,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           }
           break;
         case 'data':
-          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.questionDataKeys + (widget.actionDataKeys ?? [])), "Survey data key",
+          content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.questionDataKeys + (widget.actionDataKeys ?? [])), "Question reference key",
             settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
 
           Map<String, String> dataProperties = Surveys.dataProperties;
@@ -643,7 +644,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
   void _onTapAddValueAtIndex(int index, SurveyElement surveyElement, RuleElement? parentElement) {
     setState(() {
-      _customValueTextControllers.insert(index, TextEditingController(text: index > 0 ? _customValueTextControllers[index - 1].text : ''));
+      _customValueTextControllers.insert(index, TextEditingController());
     });
   }
 
@@ -726,7 +727,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
               text: _textControllers['local_notify.text']!.text,
               actions: _actions,
               params: <String, dynamic>{
-                'type': 'relative',  //TODO: implement other types
+                'type': 'relative',
                 'schedule': <String, int>{
                   _actionSettings['local_notify.period']!: periodValue,
                 }

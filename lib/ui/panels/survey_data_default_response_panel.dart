@@ -75,13 +75,14 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
       appBar: const HeaderBar(title: 'Edit Default Response'),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildDefaultResponseOptions(), completionOptions: _buildDone(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildDefaultResponseOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
   Widget _buildDefaultResponseOptions() {
     return Padding(padding: const EdgeInsets.all(16), child: Column(children: [
-      SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Survey data key", _surveyDataKey, _onChangeSurveyDataKey, margin: EdgeInsets.zero),
+      SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.dataKeys), "Question reference key", _surveyDataKey, _onChangeSurveyDataKey, margin: EdgeInsets.zero),
       SurveyElementCreationWidget.buildCheckboxWidget("Previous Answer", _usePreviousResponse, _onTogglePreviousResponse),
       Visibility(visible: !_usePreviousResponse, child: FormFieldText('Response', padding: const EdgeInsets.only(top: 16), controller: _responseTextController))
     ],));

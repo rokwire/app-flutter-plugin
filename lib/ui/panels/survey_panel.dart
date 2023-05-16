@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -46,6 +47,7 @@ class SurveyPanel extends StatefulWidget {
 class _SurveyPanelState extends State<SurveyPanel> {
   final bool _loading = false;
   Survey? _survey;
+  SurveyData? _mainSurveyData;
 
   GlobalKey? dataKey;
 
@@ -57,9 +59,9 @@ class _SurveyPanelState extends State<SurveyPanel> {
   @override
   void initState() {
     _surveyController = SurveyWidgetController(beforeComplete: widget.summarizeResultRules ? null : _beforeComplete, onComplete: widget.onComplete,
-        onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
+        onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _onSurveyLoaded);
     if (widget.survey is Survey) {
-      _survey = widget.survey;
+      _setSurvey(widget.survey!);
     }
     super.initState();
   }
@@ -86,6 +88,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 dateTaken: widget.dateTaken,
                 showResult: widget.showResult,
                 surveyDataKey: widget.surveyDataKey,
+                mainSurveyData: _mainSurveyData,
                 internalContinueButton: false,
                 controller: _surveyController,
                 defaultResponses: widget.defaultResponses,
@@ -109,12 +112,21 @@ class _SurveyPanelState extends State<SurveyPanel> {
     Navigator.of(context).pop();
   }
 
-  void _setSurvey(Survey? survey) {
-    if (survey != null) {
+  void _onSurveyLoaded(Survey? survey) {
+    if (survey != null && mounted) {
       setState(() {
         _survey = survey;
       });
     }
+  }
+
+  void _setSurvey(Survey survey) {
+    _survey = widget.survey;
+    _surveyController.getSurvey = () => _survey;
+    _mainSurveyData = widget.surveyDataKey != null ? _survey!.data[widget.surveyDataKey] : Surveys().getFirstQuestion(_survey!);
+
+    Surveys().evaluateDefaultDataResponse(_survey!, _mainSurveyData, defaultResponses: widget.defaultResponses);
+    Surveys().evaluate(_survey!);
   }
 
   void _checkScroll(Duration duration) {

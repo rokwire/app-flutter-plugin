@@ -48,8 +48,9 @@ class SurveyCreationPanel extends StatefulWidget {
 
 class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   GlobalKey? dataKey;
-  List<GlobalKey?> _dataToRuleKeys = [];
-  List<GlobalKey?> _ruleToDataKeys = [];
+  List<GlobalKey> _dataToRuleKeys = [];
+  List<GlobalKey> _ruleToDataKeys = [];
+  List<GlobalKey> _actionKeys = [];
   final _maxBranchDepth = 10;
 
   bool _loading = false;
@@ -57,6 +58,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   late final Map<String, TextEditingController> _textControllers;
   final List<TextEditingController> _sectionTextControllers = [];
   final rokwire.ExpansionTileController _questionDataController = rokwire.ExpansionTileController();
+  final rokwire.ExpansionTileController _actionDataController = rokwire.ExpansionTileController();
   final rokwire.ExpansionTileController _followUpRulesController = rokwire.ExpansionTileController();
 
   final List<SurveyData> _questionData = [];
@@ -106,6 +108,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
       _dataToRuleKeys = List.generate(_questionData.length, (index) => GlobalKey());
       _ruleToDataKeys = List.generate(_questionData.length, (index) => GlobalKey());
+      _actionKeys = List.generate(_actionData.length, (index) => GlobalKey());
       _dataCount = _questionData.length + _actionData.length;
       _textControllers["title"]!.text = widget.survey!.title;
       _textControllers["more_info"]!.text = widget.survey!.moreInfo ?? '';
@@ -169,7 +172,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -187,7 +191,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         // sections
         Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
           type: SurveyElementListType.textEntry,
-          label: 'Scoring Sections (${_sectionTextControllers.length})',
+          label: 'Question Scoring Sections (${_sectionTextControllers.length})',
           dataList: _sectionTextControllers,
           surveyElement: SurveyElement.sections,
           onAdd: _onTapAdd,
@@ -233,23 +237,27 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           type: SurveyElementListType.data,
           label: 'Popups (${_actionData.length})',
           dataList: _actionData,
+          targetWidgetKeys: _actionKeys,
           surveyElement: SurveyElement.actionData,
           onAdd: _onTapAdd,
           onEdit: _onTapEdit,
           onRemove: _onTapRemove,
           onDrag: _onAcceptActionDataDrag,
+          controller: _actionDataController,
         )),
 
         // result_rules
-        //TODO: links to action data
         Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
           type: SurveyElementListType.rules,
           label: 'Post-Completion Rules (${_resultRules.length})',
           dataList: _resultRules,
+          dataSubtitles: List.generate(_questionData.length + _actionData.length, (index) => index < _questionData.length ? _questionData[index].key : _actionData[index - _questionData.length].key),
+          widgetKeys: _ruleToDataKeys + _actionKeys,
           surveyElement: SurveyElement.resultRules,
           onAdd: _onTapAdd,
           onEdit: _onTapEdit,
           onRemove: _onTapRemove,
+          onScroll: _onScroll,
         )),
       ],));
     }
@@ -316,6 +324,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     } else if (_ruleToDataKeys.contains(key) == true) {
       _questionDataController.target = key;
       _questionDataController.expand?.call();
+    } else if (_actionKeys.contains(key) == true) {
+      _actionDataController.target = key;
+      _actionDataController.expand?.call();
     }
   }
 
@@ -323,7 +334,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapAddSectionAtIndex(int index) {
     setState(() {
-      _sectionTextControllers.insert(index, TextEditingController(text: index > 0 ? _sectionTextControllers[index - 1].text : ''));
+      _sectionTextControllers.insert(index, TextEditingController());
     });
   }
 
@@ -357,6 +368,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         }
         _followUpRules.insert(index, RuleAction(action: "show", data: "data.${_questionData[index].key}"));
       } else {
+        _actionKeys.insert(index, GlobalKey());
         _actionData.insert(index, insert);
       }
     });
@@ -373,6 +385,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           _followUpRules.removeAt(0);
         }
       } else {
+        _actionKeys.removeAt(index);
         _actionData.removeAt(index);
       }
     });
@@ -411,6 +424,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       RuleResult tempRule = _followUpRules[oldIndex];
       _followUpRules.removeAt(oldIndex);
       _followUpRules.insert(newIndex, tempRule);
+
+      GlobalKey tempKey = _dataToRuleKeys[oldIndex];
+      _dataToRuleKeys.removeAt(oldIndex);
+      _dataToRuleKeys.insert(newIndex, tempKey);
+      _ruleToDataKeys.removeAt(oldIndex);
+      _ruleToDataKeys.insert(newIndex, tempKey);
     });
   }
 
@@ -439,6 +458,10 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       SurveyData temp = _actionData[oldIndex];
       _actionData.removeAt(oldIndex);
       _actionData.insert(newIndex, temp);
+
+      GlobalKey tempKey = _actionKeys[oldIndex];
+      _actionKeys.removeAt(oldIndex);
+      _actionKeys.insert(newIndex, tempKey);
     });
   }
 

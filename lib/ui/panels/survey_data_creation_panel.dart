@@ -24,6 +24,8 @@ import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/rule_element_creation_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_options_panel.dart';
+import 'package:rokwire_plugin/ui/popups/popup_message.dart';
+import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
@@ -101,7 +103,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       appBar: const HeaderBar(title: "Edit Survey Data"),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildSurveyDataComponents(), completionOptions: _buildDone(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildSurveyDataComponents(), completionOptions: _buildDone(), scrollController: _scrollController,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -113,7 +116,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       dataContent.add(SurveyElementCreationWidget.buildDropdownWidget<String>(SurveyQuestionTrueFalse.supportedStyles, "Style", styleVal, _onChangeStyle));
 
       // correct answer (dropdown: Yes/True, No/False, null)
-      Map<bool?, String> supportedAnswers = {null: "None", true: "Yes/True", false: "No/False"};
+      bool yesNo = (_data as SurveyQuestionTrueFalse).style == "yes_no";
+      Map<bool?, String> supportedAnswers = {null: "None", true: yesNo ? "Yes" : "True", false: yesNo ? "No" : "False"};
       dataContent.add(SurveyElementCreationWidget.buildDropdownWidget<bool?>(supportedAnswers, "Correct Answer", (_data as SurveyQuestionTrueFalse).correctAnswer, _onChangeCorrectAnswer));
     } else if (_data is SurveyQuestionMultipleChoice) {
       // style
@@ -213,7 +217,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ),
 
       // key*
-      FormFieldText('Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
+      FormFieldText('Reference Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
       // question text*
       FormFieldText(_data is SurveyDataResult ? 'Title' : (_data.isQuestion ? 'Question Text' : 'Text'), padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
       // more info (Additional Info)
@@ -460,35 +464,64 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   void _onTapManageDefaultResponseRule() {
-    RuleResult? defaultRule;
-    switch (_data.type) {
-      case "survey_data.true_false":
-        List<OptionData> options = (_data as SurveyQuestionTrueFalse).options;
-        defaultRule = RuleAction(action: "set_to", data: options.first.responseValue);
-        break;
-      case "survey_data.multiple_choice":
-        List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
-        defaultRule = RuleAction(action: "set_to", data: options.isNotEmpty ? options.first.responseValue : 0);
-        break;
-      case "survey_data.date_time":
-        defaultRule = RuleAction(action: "set_to", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
-        break;
-      case "survey_data.numeric":
-        defaultRule = RuleAction(action: "set_to", data: 0);
-        break;
-      case "survey_data.text":
-        defaultRule = RuleAction(action: "set_to", data: "");
-        break;
+    if (_data.defaultResponseRule != null) {
+      _onRemoveRule(() {
+        _data.defaultResponseRule = null;
+      });
+    } else {
+      RuleResult? defaultRule;
+      switch (_data.type) {
+        case "survey_data.true_false":
+          List<OptionData> options = (_data as SurveyQuestionTrueFalse).options;
+          defaultRule = RuleAction(action: "set_to", data: options.first.responseValue);
+          break;
+        case "survey_data.multiple_choice":
+          List<OptionData> options = (_data as SurveyQuestionMultipleChoice).options;
+          defaultRule = RuleAction(action: "set_to", data: options.isNotEmpty ? options.first.responseValue : 0);
+          break;
+        case "survey_data.date_time":
+          defaultRule = RuleAction(action: "set_to", data: DateTimeUtils.localDateTimeToString(DateTime.now(), format: "MM-dd-yyyy"));
+          break;
+        case "survey_data.numeric":
+          defaultRule = RuleAction(action: "set_to", data: 0);
+          break;
+        case "survey_data.text":
+          defaultRule = RuleAction(action: "set_to", data: "");
+          break;
+      }
+      setState(() {
+        _data.defaultResponseRule = defaultRule;
+      });
     }
-    setState(() {
-      _data.defaultResponseRule = _data.defaultResponseRule == null ? defaultRule : null;
-    });
   }
 
   void _onTapManageScoreRule() {
-    setState(() {
-      _data.scoreRule = _data.scoreRule == null ? RuleAction(action: "set_to", data: 0) : null;
-    });
+    if (_data.scoreRule != null) {
+      _onRemoveRule(() {
+        _data.scoreRule = null;
+      });
+    } else {
+      setState(() {
+        _data.scoreRule = RuleAction(action: "set_to", data: 0);
+      });
+    }
+  }
+
+  void _onRemoveRule(Function() removeFunc) {
+    List<Widget> buttons = [
+      Padding(padding: const EdgeInsets.only(right: 8), child: ButtonBuilder.standardRoundedButton(label: 'Yes', onTap: (() {
+        Navigator.pop(context);
+        setState(removeFunc);
+      }))),
+      Padding(padding: const EdgeInsets.only(left: 8), child: ButtonBuilder.standardRoundedButton(label: 'No', onTap: (() {
+        Navigator.pop(context);
+      }))),
+    ];
+    ActionsMessage.show(context: context,
+      title: "Remove Rule",
+      message: "Are you sure you want to remove this rule?",
+      buttons: buttons,
+    );
   }
 
   void _onChangeType(String? type) {
@@ -591,7 +624,12 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     _data.text = _textControllers["text"]!.text;
     _data.moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
 
-    if (_data is SurveyQuestionMultipleChoice) {
+    if (_data is SurveyQuestionTrueFalse) {
+      String? style = (_data as SurveyQuestionTrueFalse).style;
+      if ((style == 'toggle' || style == 'checkbox') && _data.defaultResponseRule == null) {
+        (_data as SurveyQuestionTrueFalse).response = false;
+      }
+    } else if (_data is SurveyQuestionMultipleChoice) {
       for (OptionData option in (_data as SurveyQuestionMultipleChoice).options) {
         if (option.isCorrect) {
           (_data as SurveyQuestionMultipleChoice).correctAnswers ??= [];

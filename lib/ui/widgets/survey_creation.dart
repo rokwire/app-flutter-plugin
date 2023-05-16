@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
@@ -34,8 +36,8 @@ class SurveyElementList extends StatefulWidget {
   final String label;
   final List<dynamic> dataList;
   final List<String?>? dataSubtitles;
-  final List<GlobalKey?>? widgetKeys;
-  final List<GlobalKey?>? targetWidgetKeys;
+  final List<GlobalKey>? widgetKeys;
+  final List<GlobalKey>? targetWidgetKeys;
   final SurveyElement surveyElement;
 
   final AddRemoveFunc? onAdd;
@@ -89,7 +91,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   
   @override
   Widget build(BuildContext context) {
-    _handleScrolling = CollectionUtils.isNotEmpty(widget.dataSubtitles) && CollectionUtils.isNotEmpty(widget.widgetKeys) && CollectionUtils.isNotEmpty(widget.targetWidgetKeys);
+    _handleScrolling = CollectionUtils.isNotEmpty(widget.widgetKeys) || CollectionUtils.isNotEmpty(widget.targetWidgetKeys);
 
     late SurveyElementWidgetBuilder listItemBuilder;
     switch (widget.type) {
@@ -118,7 +120,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, SurveyElementWidgetBuilder listItemBuilder, SurveyElement surveyElement,
     {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement, int depth = 0}) {
-    bool useSubtitle = grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles![parentIndex] != null;
+    bool useSubtitle = grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles?[parentIndex] != null;
     bool titleAddRemove = parentElement != null && parentIndex != null && (grandParentElement != null || surveyElement != SurveyElement.followUpRules);
     int numButtons = _numEntryManagementButtons(parentIndex ?? -1, element: parentElement, parentElement: grandParentElement, addRemove: titleAddRemove, editable: parentElement != null);
     Widget title = Row(children: [
@@ -146,7 +148,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           collapsedBackgroundColor: Styles().colors?.getColor('surface'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
-          title: useSubtitle ? GestureDetector(
+          title: useSubtitle && surveyElement == SurveyElement.followUpRules ? GestureDetector(
             onTap: widget.onScroll != null && parentIndex > 0 ? () => widget.onScroll!(widget.widgetKeys![parentIndex - 1]) : null,
             child: Text.rich(TextSpan(children: [
               TextSpan(
@@ -159,7 +161,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
               ),
             ],),),
           ) : title,
-          subtitle: useSubtitle ? Padding(padding: const EdgeInsets.only(bottom: 4), child: title) : null,
+          subtitle: useSubtitle && surveyElement == SurveyElement.followUpRules ? Padding(padding: const EdgeInsets.only(bottom: 4), child: title) : null,
           children: [
             Container(height: 2, color: Styles().colors?.getColor('fillColorSecondary'),),
             dataList.isNotEmpty ? ListView.builder(
@@ -192,7 +194,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     
     Widget dataKeyText = Text('${index + 1}. $entryText', style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
     List<Widget> textWidgets = [dataKeyText];
-    if (_handleScrolling && widget.dataSubtitles![index] != null) {
+    if (_handleScrolling && widget.dataSubtitles?[index] != null) {
       textWidgets.add(GestureDetector(
         onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
         child: Padding(
@@ -280,10 +282,10 @@ class _SurveyElementListState extends State<SurveyElementList> {
       late Widget displayEntry;
       if (data is RuleReference || data is RuleAction || data is RuleComparison) {
         List<Widget> textWidgets = [];
-        if (parentElement == null && _handleScrolling && widget.dataSubtitles![index] != null) {
-          textWidgets.add(GestureDetector(
-            onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index - 1]) : null,
-            child: Padding(
+        if (widget.dataSubtitles != null) {
+          int widgetKeyOffset = surveyElement == SurveyElement.followUpRules ? -1 : 0;
+          if (surveyElement == SurveyElement.followUpRules && parentElement == null && _handleScrolling && widget.dataSubtitles![index] != null) {
+            textWidgets.add(Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text.rich(TextSpan(children: [
                 TextSpan(
@@ -293,53 +295,40 @@ class _SurveyElementListState extends State<SurveyElementList> {
                 TextSpan(
                   text: widget.dataSubtitles![index]!,
                   style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+                  recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index + widgetKeyOffset]) : null 
                 ),
-              ],),)
-            )
-          ));
-        }
-        if (summary.toLowerCase().contains('show') && widget.dataSubtitles != null) {
-          String dataKey = data.getSummary().split(' ')[1];
-          String? prefix = parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null;
-          int dataKeyIndex = widget.dataSubtitles!.indexOf(dataKey);
-          if (dataKeyIndex > 0) {
-            textWidgets.add(GestureDetector(
-              onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex - 1]) : null,
-              child: Text.rich(TextSpan(children: [
-                TextSpan(
-                  text: prefix != null ? '$prefix Show ' : 'Show ',
-                  style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
-                ),
-                TextSpan(
-                  text: dataKey,
-                  style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
-                ),
-              ],),)
+              ],), overflow: TextOverflow.ellipsis, maxLines: 2,)
             ));
-          } else {
-            textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
           }
-        } else if (widget.surveyElement == SurveyElement.resultRules) {
-          String dataKey = data.getSummary().split(' ')[1];
-          String? prefix = parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null;
-          int dataKeyIndex = widget.dataSubtitles!.indexOf(dataKey);
-          if (dataKeyIndex > 0) {
-            textWidgets.add(GestureDetector(
-              onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex - 1]) : null,
-              child: Text.rich(TextSpan(children: [
-                TextSpan(
-                  text: prefix != null ? '$prefix Show ' : 'Show ',
-                  style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
-                ),
-                TextSpan(
-                  text: dataKey,
-                  style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
-                ),
-              ],),)
-            ));
-          } else {
-            textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+
+          List<String> linkSummary = data.getSummaryForLink(prefix: parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null);
+          List<InlineSpan> textSpans = [];
+          bool previousLink = false;
+          for (String partialLink in linkSummary) {
+            int dataKeyIndex = widget.dataSubtitles!.indexOf(partialLink);
+            if (dataKeyIndex > 0) {
+              textSpans.add(TextSpan(
+                text: partialLink,
+                style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+                recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex + widgetKeyOffset]) : null 
+              ));
+              previousLink = true;
+            } else {
+              String text = partialLink;
+              if (previousLink) {
+                text = ' ' + text;
+              }
+              if (partialLink != linkSummary.last) {
+                text += ' ';
+              }
+              textSpans.add(TextSpan(
+                text: text,
+                style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+              ));
+              previousLink = false;
+            }
           }
+          textWidgets.add(Text.rich(TextSpan(children: textSpans), overflow: TextOverflow.ellipsis, maxLines: 2,));
         } else {
           textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
         }
@@ -692,6 +681,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
   }
 
   static dynamic parseTextForType(String text) {
+    text = text.trim();
     bool? valueBool = text.toLowerCase() == 'true' ? true : (text.toLowerCase() == 'false' ? false : null);
     return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? (text == null.toString() ? null : text);
   }

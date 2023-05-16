@@ -46,6 +46,7 @@ class SurveyWidgetController {
 class SurveyWidget extends StatefulWidget {
   final dynamic survey;
   final String? surveyDataKey;
+  final SurveyData? mainSurveyData;
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
@@ -57,7 +58,7 @@ class SurveyWidget extends StatefulWidget {
   late final SurveyWidgetController controller;
 
   SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, this.internalContinueButton = true,
-    this.surveyDataKey, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, SurveyWidgetController? controller}) :
+    this.surveyDataKey, this.mainSurveyData, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, SurveyWidgetController? controller}) :
         super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
@@ -100,7 +101,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.getSurvey = () => _survey;
 
     if (widget.survey is Survey) {
-      _setSurvey(widget.survey);
+      _survey = widget.survey;
+      _mainSurveyData = widget.mainSurveyData;
     } else if (widget.survey is String) {
       _setLoading(true);
       Surveys().loadSurvey(widget.survey).then((survey) {
@@ -108,9 +110,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           _setSurvey(survey);
           widget.controller.onLoad?.call(survey);
         }
-        if (mounted) {
-          _setLoading(false);
-        }
+        _setLoading(false);
       });
     }
   }
@@ -401,22 +401,18 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     //Widget trueFalse;
     // if (enabled) {
     if (survey.style == 'checkbox') {
-      if (survey.response is! bool?) {
-        survey.response = null;
+      if (survey.response is! bool) {
+        survey.response = false;
       }
       return SurveyDataWidget(Checkbox(
         checkColor: Styles().colors?.surface,
         activeColor: Styles().colors?.fillColorPrimary,
-        value: survey.response ?? false,
+        value: survey.response,
         onChanged: enabled ? (bool? value) {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
-          if (survey.response == null) {
-            survey.response = true;
-          } else {
-            survey.response = !survey.response;
-          }
+          survey.response = value;
           _onChangeResponse(true);
         } : null,
       ), orientation: WidgetOrientation.left);
@@ -433,7 +429,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           // if (survey.scored && survey.response != null) {
           //   return;
           // }
-          survey.response = !survey.response;
+          survey.response = value;
           _onChangeResponse(true);
         } : null,
       ), orientation: WidgetOrientation.right);

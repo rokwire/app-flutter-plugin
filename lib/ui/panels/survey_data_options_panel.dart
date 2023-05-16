@@ -108,7 +108,8 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       appBar: HeaderBar(title: _headerText),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
-      body: SurveyElementCreationWidget(body: _buildSurveyDataOptions(), completionOptions: _buildDone(), scrollController: _scrollController,)
+      body: SurveyElementCreationWidget(body: _buildSurveyDataOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -148,13 +149,23 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
         content.add(SurveyElementCreationWidget.buildCheckboxWidget("Internal", (_data as ActionData).isInternalUri ?? false, _onToggleInternal));
       } else if ((_data as ActionData).type == ActionType.showSurvey) {
         content.add(SurveyElementCreationWidget.buildCheckboxWidget("Primary", (_data as ActionData).isPrimaryForNotification ?? false, _onTogglePrimary, padding: const EdgeInsets.symmetric(vertical: 16)));
+        
+        List<String> defaultResponseSummaries = [];
+        if (CollectionUtils.isNotEmpty(_defaultResponseKeys)) {
+          defaultResponseSummaries = List.generate(_defaultResponseKeys!.length, (index) {
+            String response = _defaultResponseValues![index];
+            if (response == '${_defaultResponseKeys![index]}.response') {
+              response = 'Previous Answer';
+            }
+            return '${_defaultResponseKeys![index].substring(5)} ($response)';
+          });
+        }
         content.add(Visibility(
           visible: widget.dataKeys.isNotEmpty,
           child: SurveyElementList(
             type: SurveyElementListType.data,
             label: 'Default Responses (${_defaultResponseKeys?.length ?? 0})',
-            //TODO: better card summary here
-            dataList: CollectionUtils.isNotEmpty(_defaultResponseKeys) ? List.generate(_defaultResponseKeys!.length, (index) => '${_defaultResponseKeys![index]} (${_defaultResponseValues![index]})') : [],
+            dataList: defaultResponseSummaries,
             surveyElement: SurveyElement.questionData,
             onAdd: _onTapAddDefaultResponse,
             onEdit: _onTapEditDefaultResponse,
