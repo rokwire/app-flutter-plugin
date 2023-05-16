@@ -226,15 +226,20 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   @protected
   Future<void> updateContentItemsFromNet() async {
     Map<String, dynamic>? contentItems = await loadContentItemsFromNet();
-    Set<String>? categoriesDiff = (contentItems != null) ? _compareContentItems(_contentItems, contentItems) : null;
-    if ((categoriesDiff != null) && categoriesDiff.isNotEmpty) {
-      _contentItems = contentItems;
-      await saveContentItemsToCache(contentItems);
-      _onContentItemsChanged(categoriesDiff);
+    if (contentItems != null) {
+      Set<String>? categoriesDiff = await compute(_compareContentItemsInParam, _CompareContentItemsParam(_contentItems, contentItems));
+      if ((categoriesDiff != null) && categoriesDiff.isNotEmpty) {
+        _contentItems = contentItems;
+        await saveContentItemsToCache(contentItems);
+        _onContentItemsChanged(categoriesDiff);
+      }
     }
   }
 
-  Set<String>? _compareContentItems(Map<String, dynamic>? items1, Map<String, dynamic>? items2) {
+  static Set<String>? _compareContentItemsInParam(_CompareContentItemsParam param) =>
+    _compareContentItems(param.items1, param.items2);
+
+  static Set<String>? _compareContentItems(Map<String, dynamic>? items1, Map<String, dynamic>? items2) {
     if (items1 != null) {
       if (items2 != null) {
         Set<String>? result = <String>{};
@@ -521,6 +526,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
 abstract class ContentItemCategoryClient {
   List<String> get contentItemCategory;
+}
+
+class _CompareContentItemsParam {
+  final Map<String, dynamic>? items1;
+  final Map<String, dynamic>? items2;
+  _CompareContentItemsParam(this.items1, this.items2);
 }
 
 enum ImagesResultType { error, cancelled, succeeded }
