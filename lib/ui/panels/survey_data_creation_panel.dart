@@ -191,7 +191,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       List<ActionData> actions = (_data as SurveyDataResult).actions ?? [];
       dataContent.add(Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(
         type: SurveyElementListType.actions,
-        label: 'Actions (${actions.length})',
+        label: 'Buttons (${actions.length})',
         dataList: actions,
         surveyElement: SurveyElement.actionData,
         onAdd: _onTapAdd,
@@ -444,15 +444,13 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
           if (surveyElement == SurveyElement.defaultResponseRule) {
             if (element.id == _data.defaultResponseRule!.id && ruleElement is RuleResult) {
               _data.defaultResponseRule = ruleElement;
-            }
-            else {
+            } else {
               _data.defaultResponseRule!.updateElement(ruleElement);
             }
           } else {
             if (element.id == _data.scoreRule!.id && ruleElement is RuleResult) {
               _data.scoreRule = ruleElement;
-            }
-            else {
+            } else {
               _data.scoreRule!.updateElement(ruleElement);
             }
           }

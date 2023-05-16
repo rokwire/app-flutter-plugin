@@ -75,7 +75,17 @@ class SurveyElementList extends StatefulWidget {
 
 class _SurveyElementListState extends State<SurveyElementList> {
   final double _entryManagementButtonSize = 36;
+  //TODO: make 17 a function of screen width
+  int _flexMax = 17;
   bool _handleScrolling = false;
+
+  @override
+  void initState() {
+    if (widget.singleton) {
+      _flexMax--;
+    }
+    super.initState();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -112,8 +122,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     bool titleAddRemove = parentElement != null && parentIndex != null && (grandParentElement != null || surveyElement != SurveyElement.followUpRules);
     int numButtons = _numEntryManagementButtons(parentIndex ?? -1, element: parentElement, parentElement: grandParentElement, addRemove: titleAddRemove, editable: parentElement != null);
     Widget title = Row(children: [
-      //TODO: make 17 a function of screen width
-      Expanded(flex: 17 - 2 * numButtons - depth, child: Text(
+      Expanded(flex: _flexMax - 2 * numButtons - depth, child: Text(
         label,
         maxLines: 3,
         style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
@@ -160,11 +169,10 @@ class _SurveyElementListState extends State<SurveyElementList> {
               itemBuilder: (BuildContext context, int index) {
                 return Padding(padding: const EdgeInsets.symmetric(horizontal: 8.0), child: listItemBuilder(index, dataList.elementAt(index), surveyElement, parentElement, depth));
               },
-            ) : Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0), child: Row(children: [
-                Container(height: 0),
-                Expanded(child: _buildEntryManagementOptions(-1, surveyElement, parentElement: parentElement, editable: false))
-              ]
-            )),
+            ) : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: _buildEntryManagementOptions(-1, surveyElement, parentElement: parentElement, editable: false)
+            ),
           ],
         ))
       )
@@ -291,6 +299,27 @@ class _SurveyElementListState extends State<SurveyElementList> {
           ));
         }
         if (summary.toLowerCase().contains('show') && widget.dataSubtitles != null) {
+          String dataKey = data.getSummary().split(' ')[1];
+          String? prefix = parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null;
+          int dataKeyIndex = widget.dataSubtitles!.indexOf(dataKey);
+          if (dataKeyIndex > 0) {
+            textWidgets.add(GestureDetector(
+              onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex - 1]) : null,
+              child: Text.rich(TextSpan(children: [
+                TextSpan(
+                  text: prefix != null ? '$prefix Show ' : 'Show ',
+                  style: Styles().textStyles?.getTextStyle('widget.detail.medium'),
+                ),
+                TextSpan(
+                  text: dataKey,
+                  style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+                ),
+              ],),)
+            ));
+          } else {
+            textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+          }
+        } else if (widget.surveyElement == SurveyElement.resultRules) {
           String dataKey = data.getSummary().split(' ')[1];
           String? prefix = parentElement is Rule ? (index == 0 ? 'Yes:' : 'No:') : null;
           int dataKeyIndex = widget.dataSubtitles!.indexOf(dataKey);

@@ -133,7 +133,16 @@ class RuleComparison extends RuleCondition {
 
   @override
   String getSummary({String? prefix, String? suffix}) {
-    String summary = "Is $dataKey ${supportedOperators[operator]} $compareTo?";
+    String dataKeySummary = dataKey;
+    if (dataKey.startsWith('data.')) {
+      dataKeySummary = " ${dataKey.substring(5)}";
+    }
+    dynamic compareToSummary = compareTo;
+    if (compareTo is String && compareTo.startsWith('data.')) {
+      compareToSummary += " ${compareTo.substring(5)}";
+    }
+
+    String summary = "Is $dataKeySummary ${supportedOperators[operator]} $compareToSummary?";
     if (prefix != null) {
       summary = "$prefix $summary";
     }
