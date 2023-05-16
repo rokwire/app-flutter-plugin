@@ -15,6 +15,7 @@
  */
 
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
@@ -34,16 +35,19 @@ import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
-class Content with Service implements NotificationsListener {
+class Content with Service implements NotificationsListener, ContentItemCategoryClient {
 
-  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.group.content_attributes.changed";
-  static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture.profile.changed";
+  static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
+  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.content_attributes.changed";
+  static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
 
   static const String _contentAttributesCategory = "attributes";
-  static const String _contentAttributesCacheFileName = "contentAttributes.json";
+  static const String _contentItemsCacheFileName = "contentItems.json";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
+
+  Map<String, dynamic>? _contentItems;
   
   ContentAttributes? _contentAttributes;
   final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
@@ -80,18 +84,31 @@ class Content with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _appDocDir = await _getAppDocumentsDirectory();
-    _contentAttributes = await _loadContentAttributesFromCache();
-    if (_contentAttributes == null) {
-      Map<String, dynamic>? contentAttributesJson = await _loadContentAttributesJsonFromNet();
-      ContentAttributes? contentAttributes = ContentAttributes.fromJson(contentAttributesJson);
-      if (contentAttributes != null) {
-        _contentAttributes = contentAttributes;
-        _saveContentAttributesStringToCache(JsonUtils.encode(contentAttributesJson));
-      }
+    _appDocDir = await getAppDocumentsDirectory();
+
+    _contentItems = await loadContentItemsFromCache();
+    if (_contentItems != null) {
+      updateContentItemsFromNet();
     }
     else {
-      _updateContentAttributes();
+      _contentItems = await loadContentItemsFromNet();
+      if (_contentItems != null) {
+        await saveContentItemsToCache(_contentItems);
+      }
+    }
+
+    _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
+
+    if (_contentItems != null) {
+      await super.initService();
+    }
+    else {
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.nonFatal,
+        title: 'Content Initialization Failed',
+        description: 'Failed to initialize Content service.',
+      );
     }
 
     await super.initService();
@@ -119,7 +136,7 @@ class Content with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _updateContentAttributes();
+          updateContentItemsFromNet();
         }
       }
     }
@@ -127,7 +144,8 @@ class Content with Service implements NotificationsListener {
 
   // Caching
 
-  Future<Directory?> _getAppDocumentsDirectory() async {
+  @protected
+  Future<Directory?> getAppDocumentsDirectory() async {
     try {
       return await getApplicationDocumentsDirectory();
     }
@@ -137,64 +155,146 @@ class Content with Service implements NotificationsListener {
     return null;
   }
 
-  // Content Attributes
+  // Content
+
+  @protected
+  List<String> get contentItemsCategories {
+    List<String> result = <String>[];
+    Services().enumServices((Service service) {
+      if (service is ContentItemCategoryClient) {
+        result.addAll(((service as ContentItemCategoryClient)).contentItemCategory);
+      }
+    });
+    return result;
+  }
+
+  dynamic contentItem(String category) =>
+    (_contentItems != null) ? _contentItems![category] : null;
+
+  Map<String, dynamic>? contentMapItem(String category) =>
+    JsonUtils.mapValue(contentItem(category));
+
+  List<dynamic>? contentListItem(String category) =>
+    JsonUtils.listValue(contentItem(category));
+
+  @protected
+  File? getContentItemsCacheFile()  =>
+    (_appDocDir != null) ? File(join(_appDocDir?.path ?? '', _contentItemsCacheFileName)) : null;
+
+  @protected
+  Future<Map<String, dynamic>?> loadContentItemsFromCache() async {
+    File? contentItemsCacheFile = getContentItemsCacheFile();
+    String? contentItemsString = (await contentItemsCacheFile?.exists() == true) ? await contentItemsCacheFile?.readAsString() : null;
+    return JsonUtils.decodeMap(contentItemsString);
+  }
+
+  @protected
+  Future<void> saveContentItemsToCache(Map<String, dynamic>? value) async {
+    File? contentItemsCacheFile = getContentItemsCacheFile();
+    String? contentItemsString = JsonUtils.encode(value);
+    if (contentItemsString != null) {
+      await contentItemsCacheFile?.writeAsString(contentItemsString, flush: true);
+    }
+    else {
+      await contentItemsCacheFile?.delete();
+    }
+  }
+
+  @protected
+  Future<Map<String, dynamic>?> loadContentItemsFromNet() async {
+    Map<String, dynamic>? result;
+    if (Config().contentUrl != null) {
+      Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': contentItemsCategories}), auth: Auth2());
+      List<dynamic>? responseList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body)  : null;
+      if (responseList != null) {
+        result = <String, dynamic>{};
+        for (dynamic responseEntry in responseList) {
+          Map<String, dynamic>? contentItem = JsonUtils.mapValue(responseEntry);
+          if (contentItem != null) {
+            String? category = JsonUtils.stringValue(contentItem['category']);
+            dynamic data = contentItem['data'];
+            if ((category != null) && (data != null)) {
+              result[category] ??= data;
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  @protected
+  Future<void> updateContentItemsFromNet() async {
+    Map<String, dynamic>? contentItems = await loadContentItemsFromNet();
+    Set<String>? categoriesDiff = (contentItems != null) ? _compareContentItems(_contentItems, contentItems) : null;
+    if ((categoriesDiff != null) && categoriesDiff.isNotEmpty) {
+      _contentItems = contentItems;
+      await saveContentItemsToCache(contentItems);
+      _onContentItemsChanged(categoriesDiff);
+    }
+  }
+
+  Set<String>? _compareContentItems(Map<String, dynamic>? items1, Map<String, dynamic>? items2) {
+    if (items1 != null) {
+      if (items2 != null) {
+        Set<String>? result = <String>{};
+        Set<String> passed = <String>{};
+        for (String key in items1.keys) {
+          dynamic item1 = items1[key];
+          dynamic item2 = items2[key];
+          if (const DeepCollectionEquality().equals(item1, item2) != true) {
+            result.add(key);
+          }
+          passed.add(key);
+        }
+        for (String key in items2.keys) {
+          if (!passed.contains(key)) {
+            result.add(key);
+          }
+        }
+        return result.isNotEmpty ? result : null;
+      }
+      else {
+        return items1.keys.isNotEmpty ? Set<String>.from(items1.keys) : null;
+      }
+    }
+    else if (items2 != null) {
+      return items2.keys.isNotEmpty ? Set<String>.from(items2.keys) : null;
+    }
+    else {
+      return null;
+    }
+  }
+
+  void _onContentItemsChanged(Set<String> categoriesDiff) {
+    if (categoriesDiff.contains(contentAttributesCategory)) {
+      _onContentAttributesChanged();
+    }
+    NotificationService().notify(notifyContentItemsChanged, categoriesDiff);
+  }
+
+  // Content Attributes Items
+
+  @protected
+  String get contentAttributesCategory =>
+    _contentAttributesCategory;
+
+  Map<String, dynamic>? get _contentAttributesJson =>
+    contentMapItem(contentAttributesCategory);
 
   ContentAttributes? contentAttributes(String scope) => (_contentAttributes != null) ?
       (_contentAttributesByScope[scope] ??= (ContentAttributes.fromOther(_contentAttributes, scope: scope) ?? ContentAttributes())) : null;
 
-  File? _getContentAttributesCacheFile() =>
-    (_appDocDir != null) ? File(join(_appDocDir!.path, _contentAttributesCacheFileName)) : null;
-
-  Future<String?> _loadContentAttributesStringFromCache() async {
-    try {
-      File? cacheFile = _getContentAttributesCacheFile();
-      return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
-    }
-    catch(e) { 
-      debugPrint(e.toString()); 
-    }
-    return null;
+  void _onContentAttributesChanged() {
+    _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
+    _contentAttributesByScope.clear();
+    NotificationService().notify(notifyContentAttributesChanged);
   }
 
-  Future<void> _saveContentAttributesStringToCache(String? value) async {
-    try {
-      File? cacheFile = _getContentAttributesCacheFile();
-      if (cacheFile != null) {
-        if (value != null) {
-          await cacheFile.writeAsString(value, flush: true);
-        }
-        else if (await cacheFile.exists()){
-          await cacheFile.delete();
-        }
-      }
-    }
-    catch(e) { 
-      debugPrint(e.toString());
-    }
-  }
+  // ContentItemCategoryClient
 
-  Future<ContentAttributes?> _loadContentAttributesFromCache() async {
-    return ContentAttributes.fromJson(JsonUtils.decodeMap(await _loadContentAttributesStringFromCache()));
-  }
-
-  Future<Map<String, dynamic>?> _loadContentAttributesJsonFromNet() async {
-    //TMP: return await AppBundle.loadString('assets/content.attributes.json');
-    Response? response = await Network().get("${Config().contentUrl}/content_items", auth: Auth2(), body: JsonUtils.encode({"categories":[_contentAttributesCategory]}));
-    List<dynamic>? resonseJsonList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body) : null;
-    Map<String, dynamic>? resonseJson = ((resonseJsonList != null) && resonseJsonList.isNotEmpty) ? JsonUtils.mapValue(resonseJsonList.first) : null;
-    return (resonseJson != null) ? JsonUtils.mapValue(resonseJson['data']) : null;
-  }
-
-  Future<void> _updateContentAttributes() async {
-    Map<String, dynamic>? contentAttributesJson = await _loadContentAttributesJsonFromNet();
-    ContentAttributes? contentAttributes = ContentAttributes.fromJson(contentAttributesJson);
-    if ((contentAttributes != null) && (contentAttributes != _contentAttributes)) {
-      _contentAttributes = contentAttributes;
-      _contentAttributesByScope.clear();
-      _saveContentAttributesStringToCache(JsonUtils.encode(contentAttributesJson));
-      NotificationService().notify(notifyContentAttributesChanged);
-    }
-  }
+  @override
+  List<String> get contentItemCategory => <String>[contentAttributesCategory];
 
   // Implementation
 
@@ -417,6 +517,10 @@ class Content with Service implements NotificationsListener {
       return null;
     }
   }
+}
+
+abstract class ContentItemCategoryClient {
+  List<String> get contentItemCategory;
 }
 
 enum ImagesResultType { error, cancelled, succeeded }
