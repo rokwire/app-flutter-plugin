@@ -27,8 +27,6 @@ abstract class RuleElement {
 
   String getSummary({String? prefix, String? suffix}) => "";
 
-  List<String> getSummaryForLink({String? prefix, String? suffix}) => getSummary(prefix: prefix, suffix: suffix).split(" ");
-
   RuleElement? findElement(String id) {
     return this.id == id ? this : null;
   }
@@ -137,11 +135,11 @@ class RuleComparison extends RuleCondition {
   String getSummary({String? prefix, String? suffix}) {
     String dataKeySummary = dataKey;
     if (dataKey.startsWith('data.')) {
-      dataKeySummary = " ${dataKey.substring(5)}";
+      dataKeySummary = dataKey.substring(5);
     }
     dynamic compareToSummary = compareTo;
     if (compareTo is String && compareTo.startsWith('data.')) {
-      compareToSummary += " ${compareTo.substring(5)}";
+      compareToSummary = compareTo.substring(5);
     }
 
     String summary = "Is $dataKeySummary ${supportedOperators[operator]} $compareToSummary?";
@@ -151,13 +149,6 @@ class RuleComparison extends RuleCondition {
     if (suffix != null) {
       summary = "$summary $suffix";
     }
-    return summary;
-  }
-
-  @override
-  List<String> getSummaryForLink({String? prefix, String? suffix}) {
-    String summaryString = getSummary(prefix: prefix, suffix: suffix);
-    List<String> summary = summaryString.substring(0, summaryString.length - 1).split(" ");
     return summary;
   }
 
