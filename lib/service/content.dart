@@ -201,10 +201,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadContentItemsFromNet() async {
+  Future<Map<String, dynamic>?> loadContentItemsFromNet() async =>
+    loadContentItems(contentItemsCategories);
+
+  Future<Map<String, dynamic>?> loadContentItems(List<String> categories) async {
     Map<String, dynamic>? result;
     if (Config().contentUrl != null) {
-      Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': contentItemsCategories}), auth: Auth2());
+      Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': categories}), auth: Auth2());
       List<dynamic>? responseList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body)  : null;
       if (responseList != null) {
         result = <String, dynamic>{};
@@ -507,42 +510,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  // Content Items
-
-  Future<List<dynamic>?> loadContentItems({List<String>? categories, List<String>? ids}) async {
-    String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isEmpty(serviceUrl)) {
-      debugPrint('Missing content service url.');
-      return null;
-    }
-    if (CollectionUtils.isEmpty(categories) && CollectionUtils.isEmpty(ids)) {
-      debugPrint('Missing content item category');
-      return null;
-    }
-
-    Map<String, dynamic> json = {};
-    if(CollectionUtils.isNotEmpty(categories)){
-      json["categories"] = categories;
-    }
-
-    if(CollectionUtils.isNotEmpty(ids)){
-      json["ids"] = ids;
-    }
-    String? body = JsonUtils.encode(json);
-
-    String url = "$serviceUrl/content_items";
-    Response? response = await Network().get(url, body: body, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    String? responseBody = response?.body;
-    if (responseCode == 200) {
-      String? responseBody = response?.body;
-      return (responseBody != null) ? JsonUtils.decodeList(responseBody) : null;
-    } else {
-      debugPrint('Failed to load content itemReason: ');
-      debugPrint(responseBody);
-      return null;
-    }
-  }
 }
 
 abstract class ContentItemCategoryClient {

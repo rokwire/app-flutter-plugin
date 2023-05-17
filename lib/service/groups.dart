@@ -1094,19 +1094,11 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
-    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
-    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
-    if (templatesContentItem is! Map) {
-      return null;
-    }
-    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
-    dynamic templatesJson = templatesItem['data'];
-    if (templatesJson is! List) {
-      return null;
-    }
-    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
-    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
+    const String templatesContentCategory = 'gies_post_templates';
     List<GroupPostNudge>? groupNudges;
+    Map<String, dynamic>? contentItems = await Content().loadContentItems([templatesContentCategory]);
+    List<dynamic>? templatesArray = (contentItems != null) ? JsonUtils.listValue(contentItems[templatesContentCategory]) : null;
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
     if (CollectionUtils.isNotEmpty(allTemplates)) {
       groupNudges = <GroupPostNudge>[];
       for (GroupPostNudge template in allTemplates!) {
