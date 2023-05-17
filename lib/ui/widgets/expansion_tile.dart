@@ -279,8 +279,9 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.controller?.target?.currentContext != null) {
         //TODO: this does not finish scrolling to where it should for some reason
-        Scrollable.ensureVisible(widget.controller!.target!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5);
-        widget.controller!.target = null;
+        Scrollable.ensureVisible(widget.controller!.target!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5).then((_) {
+          widget.controller!.target = null;
+        });
       }
     });
     

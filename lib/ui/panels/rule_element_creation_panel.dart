@@ -38,7 +38,7 @@ class RuleElementCreationPanel extends StatefulWidget {
   final List<String> questionDataKeys;
   final List<String> questionDataTypes;
   final List<String>? actionDataKeys;
-  final List<String?> sections;
+  final List<String> sections;
   final bool mayChangeType;
   final Widget? tabBar;
 
@@ -239,19 +239,18 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildRuleElement(), completionOptions: _buildDone(), scrollController: _scrollController,),
-      resizeToAvoidBottomInset: false,
     );
   }
 
   Widget _buildRuleElement() {
-    Map<String, String> supportedTypes = Map.from(_ruleElem.supportedAlternatives);
+    String? elemTypeString = _getElementTypeString();
+    Map<String, String> supportedTypes = widget.mayChangeType || elemTypeString == null ? Map.from(_ruleElem.supportedAlternatives) : {elemTypeString : _ruleElem.supportedAlternatives[elemTypeString]!};
     if (_forceReturn) {
       supportedTypes.remove('actions');
     }
-    List<Widget> content = [Visibility(
-      visible: widget.mayChangeType,
-      child: SurveyElementCreationWidget.buildDropdownWidget<String>(supportedTypes, "Type", _getElementTypeString(), _onChangeElementType, margin: EdgeInsets.zero)
-    )];
+    List<Widget> content = [
+      SurveyElementCreationWidget.buildDropdownWidget<String>(supportedTypes, "Type", _getElementTypeString(), _onChangeElementType, margin: EdgeInsets.zero),
+    ];
 
     String? operator;
     if (_ruleElem is RuleComparison) {
@@ -300,7 +299,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(_customValueOptions, "Value Type", _customValueSelection, _onChangeCustomValueSelection),
           _buildSurveyPropertyOptions('action'),
-          FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
+          FormFieldText('Data reference key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text),
         ]);
       case 'alert':
         return SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Question reference key", _actionSettings['key'],
@@ -309,7 +308,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
         return Column(children: [
           SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.actionDataKeys ?? []), "Question reference key", _actionSettings['key'],
             (value) => _onChangeActionSetting(value, 'key')),
-          FormFieldText('Result Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
+          FormFieldText('Data reference key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["result_data_key"], inputType: TextInputType.text)
         ]);
       case 'local_notify':
         Map<String, String> unitOptions = {'seconds': 'Seconds', 'minutes': 'Minutes', 'hours': 'Hours', 'days': 'Days'};
@@ -379,9 +378,11 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
           content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Surveys.statsProperties, "Stats option", settingsMap['stats'],
             (value) => _onChangeSurveyPropertySetting(value, settings, 'stats')));
           if (settingsMap['stats'] == 'percentage') {
+            //TODO: change to multi selection list
             content.add(SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section",
               settingsMap['key'], (value) => _onChangeSurveyPropertySetting(value, settings, 'key')));
           } else if (settingsMap['stats'] == 'response_data') {
+            //TODO: change to dropdown for question keys
             content.add(Visibility(
               visible: widget.sections.isNotEmpty,
               child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section",
@@ -502,57 +503,64 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   }
 
   void _onChangeElementType(String? elemType) {
-    setState(() {
-      String id = _ruleElem.id;
+    if (elemType != _getElementTypeString()) {
+      RuleElement? newElement;
       switch (elemType) {
         case "if":
           if (_ruleElem is RuleCondition) {
-            _ruleElem = defaultRuleComparison;
+            newElement = defaultRuleComparison;
           } else if (_ruleElem is Rule) {
-            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+            newElement = Rule(condition: defaultRuleComparison, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
           } else {
-            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+            newElement = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           }
-          _customValueSelection = 'survey';
           break;
         case "and":
           RuleLogic defaultAnd = RuleLogic("and", [defaultRuleComparison, defaultRuleComparison]);
           if (_ruleElem is RuleCondition) {
-            _ruleElem = defaultAnd;
+            newElement = defaultAnd;
           } else if (_ruleElem is Rule) {
-            _ruleElem = Rule(condition: defaultAnd, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+            newElement = Rule(condition: defaultAnd, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
           } else {
-            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+            newElement = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           }
           break;
         case "or":
           RuleLogic defaultOr = RuleLogic("or", [defaultRuleComparison, defaultRuleComparison]);
           if (_ruleElem is RuleCondition) {
-            _ruleElem = defaultOr;
+            newElement = defaultOr;
           } else if (_ruleElem is Rule) {
-            _ruleElem = Rule(condition: defaultOr, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
+            newElement = Rule(condition: defaultOr, trueResult: (_ruleElem as Rule).trueResult, falseResult: (_ruleElem as Rule).falseResult);
           } else {
-            _ruleElem = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
+            newElement = Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction, falseResult: defaultRuleAction);
           }
           break;
         case "cases":
-          _ruleElem = RuleCases(cases: [
+          newElement = RuleCases(cases: [
             Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction),
             Rule(condition: defaultRuleComparison, trueResult: defaultRuleAction)
           ]);
           break;
         case "action":
-          _ruleElem = defaultRuleAction;
+          newElement = defaultRuleAction;
           break;
         case "actions":
-          _ruleElem = RuleActionList(actions: [defaultRuleAction, defaultRuleAction]);
+          newElement = RuleActionList(actions: [defaultRuleAction, defaultRuleAction]);
           break;
         // case "reference":
-        //   _ruleElem = RuleReference("");
+        //   newElement = RuleReference("");
         //   break;
       }
-      _ruleElem.id = id;
-    });
+      if (newElement != null) {
+        newElement.id = _ruleElem.id;
+        setState(() {
+          if (elemType == 'if') {
+            _customValueSelection = 'survey';
+          }
+          _ruleElem = newElement!;
+        });
+      }
+    }
   }
 
   void _onChangeCustomValueSelection(String? value) {

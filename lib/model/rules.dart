@@ -424,12 +424,12 @@ class RuleAction extends RuleActionResult {
       case SurveyElement.scoreRule: return {"set_to": "Set To"};
       case SurveyElement.followUpRules: return {"show": "Show"};
       case SurveyElement.resultRules: return {
-        "set_result": "Set Result",
+        "set_result": "Save Data",
         "alert": "Alert",
-        "alert_result": "Alert Result",
+        "alert_result": "Alert and Save Data",
         "save": "Save",
-        "local_notify": "Local Notify",
-        // "notify": "Notify",
+        "local_notify": "Schedule Notification",
+        // "notify": "Send Notification",
         // "show_survey": "Show Survey",
         // "sum": "Sum",
       };
@@ -440,12 +440,12 @@ class RuleAction extends RuleActionResult {
   static Map<String, String> get supportedActions => const {
     "show": "Show",
     "set_to": "Set To",
-    "set_result": "Set Result",
+    "set_result": "Save Data",
     "alert": "Alert",
-    "alert_result": "Alert Result",
+    "alert_result": "Alert and Save Data",
     "save": "Save",
-    "local_notify": "Local Notify",
-    // "notify": "Notify",
+    "local_notify": "Schedule Notification",
+    // "notify": "Send Notification",
     // "show_survey": "Show Survey",
     // "sum": "Sum",
   };

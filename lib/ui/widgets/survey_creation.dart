@@ -91,7 +91,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   
   @override
   Widget build(BuildContext context) {
-    _handleScrolling = CollectionUtils.isNotEmpty(widget.dataSubtitles) && (CollectionUtils.isNotEmpty(widget.widgetKeys) || CollectionUtils.isNotEmpty(widget.targetWidgetKeys));
+    _handleScrolling = CollectionUtils.isNotEmpty(widget.widgetKeys) || CollectionUtils.isNotEmpty(widget.targetWidgetKeys);
 
     late SurveyElementWidgetBuilder listItemBuilder;
     switch (widget.type) {
@@ -120,11 +120,11 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildCollapsibleWrapper(String label, Iterable<dynamic> dataList, SurveyElementWidgetBuilder listItemBuilder, SurveyElement surveyElement,
     {RuleElement? parentElement, int? parentIndex, RuleElement? grandParentElement, int depth = 0}) {
-    bool useSubtitle = surveyElement == SurveyElement.followUpRules && grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles![parentIndex] != null;
+    bool useSubtitle = surveyElement == SurveyElement.followUpRules && grandParentElement == null && parentIndex != null && _handleScrolling && widget.dataSubtitles?[parentIndex] != null;
     bool titleAddRemove = parentElement != null && parentIndex != null && (grandParentElement != null || surveyElement != SurveyElement.followUpRules);
     int numButtons = _numEntryManagementButtons(parentIndex ?? -1, element: parentElement, parentElement: grandParentElement, addRemove: titleAddRemove, editable: parentElement != null);
     Widget title = Row(children: [
-      Expanded(flex: _flexMax - 2 * numButtons - depth, child: _handleScrolling ? Text.rich(
+      Expanded(flex: _flexMax - 2 * numButtons - depth, child: _handleScrolling && widget.dataSubtitles != null ? Text.rich(
         TextSpan(children: _buildTextSpansForLink(label, surveyElement)),
         overflow: TextOverflow.ellipsis,
         maxLines: 3,
@@ -145,7 +145,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         elevation: parentElement != null ? 1.0 : 0.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
         child: ListTileTheme(horizontalTitleGap: 8, child: rokwire.ExpansionTile(
-          key: grandParentElement == null && (parentIndex ?? 0) > 0 && _handleScrolling ? widget.targetWidgetKeys![parentIndex! - 1] : null,
+          key: grandParentElement == null && (parentIndex ?? 0) > 0 && _handleScrolling ? (widget.targetWidgetKeys?[parentIndex! - 1]) : null,
           controller: parentElement == null ? widget.controller : null,
           iconColor: Styles().colors?.getColor('fillColorSecondary'),
           backgroundColor: Styles().colors?.getColor('background'),
@@ -189,7 +189,9 @@ class _SurveyElementListState extends State<SurveyElementList> {
     String entryText = '';
     if (data is SurveyData) {
       entryText = data.key;
-      if (data.section?.isNotEmpty ?? false) {
+      if (CollectionUtils.isNotEmpty(data.sections)) {
+        entryText += ' (${data.sections!.join(', ')})';
+      } else if (data.section?.isNotEmpty ?? false) {
         entryText += ' (${data.section})';
       }
     } else if (data is String) {
@@ -209,7 +211,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     }
     Widget surveyDataText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
     Widget displayEntry = Card(
-      key: _handleScrolling ? widget.targetWidgetKeys![index] : null,
+      key: _handleScrolling ? (widget.targetWidgetKeys?[index]) : null,
       margin: const EdgeInsets.symmetric(vertical: 4),
       color: Styles().colors?.getColor('surface'),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),

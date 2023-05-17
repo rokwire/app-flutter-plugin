@@ -34,6 +34,7 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyCreationPanel extends StatefulWidget {
   final Survey? survey;
@@ -100,7 +101,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         if (surveyData.isAction) {
           _actionData.add(surveyData);
         }
-        if (surveyData.section != null && !sections.contains(surveyData.section)) {
+        if (CollectionUtils.isNotEmpty(surveyData.sections)) {
+          for (String section in surveyData.sections!) {
+            if (!sections.contains(section)) {
+              sections.add(section);
+              _sectionTextControllers.add(TextEditingController(text: section));
+            }
+          }
+        } else if (surveyData.section != null && !sections.contains(surveyData.section)) {
           sections.add(surveyData.section!);
           _sectionTextControllers.add(TextEditingController(text: surveyData.section!));
         }
@@ -156,8 +164,8 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     super.dispose();
   }
 
-  List<String?> get sections {
-    List<String?> sectionList = [null];
+  List<String> get sections {
+    List<String> sectionList = [];
     for (TextEditingController controller in _sectionTextControllers) {
       if (controller.text.isNotEmpty) {
         sectionList.add(controller.text);
@@ -173,7 +181,6 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
-      resizeToAvoidBottomInset: false,
     );
   }
 

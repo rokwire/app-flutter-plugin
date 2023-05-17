@@ -940,15 +940,14 @@ class MultiSelectionList extends StatelessWidget {
               child: Card(
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
-                    child: ListTile(
+                    child: CheckboxListTile(
                       title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
-                      leading: Checkbox(
-                        checkColor: Colors.white,
-                        activeColor: Styles().colors?.fillColorSecondary,
-                        value: isChecked?[index],
-                        onChanged: onChanged != null ? (_) => onChanged!(index) : null,
-                      ),
+                      checkColor: Colors.white,
+                      activeColor: Styles().colors?.fillColorSecondary,
+                      value: isChecked?[index],
+                      onChanged: onChanged != null ? (_) => onChanged!(index) : null,
                       contentPadding: const EdgeInsets.all(8),
+                      controlAffinity: ListTileControlAffinity.leading,
                     ),
                   )
               ));

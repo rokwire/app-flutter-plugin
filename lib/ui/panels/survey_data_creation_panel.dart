@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -37,7 +38,7 @@ class SurveyDataCreationPanel extends StatefulWidget {
   final List<String> dataKeys;
   final List<String> dataTypes;
   final Widget? tabBar;
-  final List<String?> sections;
+  final List<String> sections;
   final bool scoredSurvey;
   final bool mayChangeType;
 
@@ -67,7 +68,15 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       "more_info": TextEditingController(text: _data.moreInfo),
     };
 
-    if (_data.section != null && !widget.sections.contains(_data.section)) {
+    if (CollectionUtils.isNotEmpty(_data.sections)) {
+      List<String> validSections = [];
+      for (String section in _data.sections!) {
+        if (widget.sections.contains(section)) {
+          validSections.add(section);
+        }
+      }
+      _data.sections = validSections;
+    } else if (_data.section != null && !widget.sections.contains(_data.section)) {
       _data.section = null;
     }
 
@@ -104,7 +113,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildSurveyDataComponents(), completionOptions: _buildDone(), scrollController: _scrollController,),
-      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -210,18 +218,27 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // data type
       SurveyElementCreationWidget.buildDropdownWidget<String>(widget.mayChangeType ? SurveyData.supportedTypes : {"survey_data.action": "Action"}, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
       
-      // section
+      // sections
       Visibility(
         visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
-        child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(widget.sections, value: (v) => v ?? 'None'), "Section", _data.section, _onChangeSection)
+        child: MultiSelectionList(
+          selectionList: List.generate(widget.sections.length, (index) => OptionData(title: widget.sections[index])),
+          isChecked: List.generate(widget.sections.length, (index) => _data.sections?.contains(widget.sections[index]) ?? (_data.section == widget.sections[index])),
+          onChanged: _onChangeSection,
+        ),
       ),
-
+      // legacy section (set this to allow section scoring on survey in app version <5.0)
+      Visibility(
+        visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
+        child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(<String?>[null] + widget.sections, value: (v) => v ?? 'None'), "Legacy Section", _data.section, _onChangeLegacySection),
+      ),
+      
       // key*
       FormFieldText('Reference Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
       // question text*
-      FormFieldText(_data is SurveyDataResult ? 'Title' : (_data.isQuestion ? 'Question Text' : 'Text'), padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      FormFieldText(_data.isQuestion ? 'Question Text' : 'Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
       // more info (Additional Info)
-      FormFieldText(_data is SurveyDataResult ? 'Text' : 'Additional Info', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
+      FormFieldText(_data.isQuestion ? 'Additional Info' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
 
       // allowSkip
       Visibility(visible: _data.isQuestion, child: SurveyElementCreationWidget.buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
@@ -530,22 +547,23 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     String? moreInfo = _textControllers["more_info"]!.text.isNotEmpty ? _textControllers["more_info"]!.text : null;
     _removeTextControllers(keepDefaults: true);
 
+    List<String>? sections = _data.sections != null ? List.from(_data.sections!) : null;
     setState(() {
       switch (type) {
         case "survey_data.true_false":
-          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section);
+          _data = SurveyQuestionTrueFalse(key: key, text: text, moreInfo: moreInfo, section: _data.section, sections: sections);
           break;
         case "survey_data.multiple_choice":
-          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: _data.section, options: []);
+          _data = SurveyQuestionMultipleChoice(key: key, text: text, moreInfo: moreInfo, section: _data.section, sections: sections, options: []);
           break;
         case "survey_data.date_time":
-          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: _data.section);
+          _data = SurveyQuestionDateTime(key: key, text: text, moreInfo: moreInfo, section: _data.section, sections: sections);
           break;
         case "survey_data.numeric":
-          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: _data.section);
+          _data = SurveyQuestionNumeric(key: key, text: text, moreInfo: moreInfo, section: _data.section, sections: sections);
           break;
         case "survey_data.text":
-          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section);
+          _data = SurveyQuestionText(key: key, text: text, moreInfo: moreInfo, section: _data.section, sections: sections);
           break;
         case "survey_data.info":
           _data = SurveyDataResult(key: key, text: text, moreInfo: moreInfo);
@@ -557,7 +575,15 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     });
   }
 
-  void _onChangeSection(String? section) {
+  void _onChangeSection(int sectionIndex) {
+    setState(() {
+      String section = widget.sections[sectionIndex];
+      _data.sections ??= [];
+      _data.sections!.contains(widget.sections[sectionIndex]) ? _data.sections!.remove(section) : _data.sections!.add(section);
+    });
+  }
+
+  void _onChangeLegacySection(String? section) {
     setState(() {
       _data.section = section;
     });

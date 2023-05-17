@@ -109,7 +109,6 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildSurveyDataOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
-      resizeToAvoidBottomInset: false,
     );
   }
 

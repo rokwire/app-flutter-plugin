@@ -76,7 +76,6 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
       bottomNavigationBar: widget.tabBar,
       backgroundColor: Styles().colors?.background,
       body: SurveyElementCreationWidget(body: _buildDefaultResponseOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
-      resizeToAvoidBottomInset: false,
     );
   }
 

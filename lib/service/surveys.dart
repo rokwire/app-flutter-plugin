@@ -257,11 +257,23 @@ class Surveys /* with Service */ {
     Map<String, num> scores = {};
     num? score = _getDataScore(survey, data);
     if (score != null) {
-      scores[data.section ?? ''] = score;
+      if (CollectionUtils.isNotEmpty(data.sections)) {
+        for (String section in data.sections!) {
+          scores[section] = score;
+        }
+      } else {
+        scores[data.section ?? ''] = score;
+      }
     }
     Map<String, num> maximumScores = {};
     if (data.maximumScore != null) {
-      maximumScores[data.section ?? ''] = data.maximumScore!;
+      if (CollectionUtils.isNotEmpty(data.sections)) {
+        for (String section in data.sections!) {
+          maximumScores[section] = data.maximumScore!;
+        }
+      } else {
+        maximumScores[data.section ?? ''] = data.maximumScore!;
+      }
     }
 
     SurveyStats stats = SurveyStats(
