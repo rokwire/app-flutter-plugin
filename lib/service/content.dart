@@ -214,7 +214,28 @@ class Content with Service implements NotificationsListener, ContentItemCategory
             String? category = JsonUtils.stringValue(contentItem['category']);
             dynamic data = contentItem['data'];
             if ((category != null) && (data != null)) {
-              result[category] ??= data;
+              dynamic existingCategoryEntry = result[category];
+              if (existingCategoryEntry == null) {
+                result[category] = data;  
+              }
+              else if (existingCategoryEntry is List) {
+                if (data is List) {
+                  existingCategoryEntry.addAll(data);
+                }
+                else {
+                  existingCategoryEntry.add(data);
+                }
+              }
+              else {
+                List<dynamic> newCategoryEntry = <dynamic>[existingCategoryEntry];
+                if (data is List) {
+                  newCategoryEntry.addAll(data);
+                }
+                else {
+                  newCategoryEntry.add(data);
+                }
+                result[category] = newCategoryEntry;
+              }
             }
           }
         }
