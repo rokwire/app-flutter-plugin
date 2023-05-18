@@ -190,7 +190,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<String?> loadAsStringFromNet() async {
-    return loadAsStringFromAppConfig();
+    return loadAsStringFromCore();
   }
 
   Future<String?> loadAsStringFromAppConfig() async {
@@ -211,7 +211,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     };
     String? bodyString =  JsonUtils.encode(body);
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: bodyString);
+      http.Response? response = await Network().post(appConfigUrl, body: bodyString, headers: {'content-type': 'application/json'});
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -221,6 +221,22 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Map<String, dynamic>? configFromJsonString(String? configJsonString) {
+    return configFromJsonObjectString(configJsonString);
+  }
+
+  @protected
+  Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) {
+    Map<String, dynamic>? configJson = JsonUtils.decode(configJsonString);
+    Map<String, dynamic>? configData = configJson?["data"];
+    if (configData != null) {
+      decryptSecretKeys(configData);
+      return configData;
+    }
+    return null;
+  }
+
+  @protected
+  Map<String, dynamic>? configFromJsonListString(String? configJsonString) {
     dynamic configJson =  JsonUtils.decode(configJsonString);
     List<dynamic>? jsonList = (configJson is List) ? configJson : null;
     if (jsonList != null) {
@@ -295,7 +311,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       _configAsset = null;
 
       _config = (configString != null) ? configFromJsonString(configString) : null;
-      if (_config != null) {
+      if (_config != null && secretKeys.isNotEmpty) {
         configFile.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
@@ -500,6 +516,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsCacheDir != null) ? Directory(assetsCacheDir) : null;
   }
 
+  bool get supportsAnonymousAuth => false;
+
   // Getters: compound entries
   Map<String, dynamic> get content                 => _config ?? {};
 
@@ -535,7 +553,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
   int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
-  
+  String? get timezoneLocation      => JsonUtils.stringValue(settings['timezoneLocation']) ?? 'America/Chicago';
+
   // Getters: other
   String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
