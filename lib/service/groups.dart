@@ -1094,21 +1094,19 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
-    const String templatesContentCategory = 'gies_post_templates';
-    List<GroupPostNudge>? groupNudges;
-    Map<String, dynamic>? contentItems = await Content().loadContentItems([templatesContentCategory]);
-    List<dynamic>? templatesArray = (contentItems != null) ? JsonUtils.listValue(contentItems[templatesContentCategory]) : null;
-    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
+    const String templatesCategory = 'gies_post_templates';
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(JsonUtils.listValue(await Content().loadContentItem(templatesCategory)));
     if (CollectionUtils.isNotEmpty(allTemplates)) {
-      groupNudges = <GroupPostNudge>[];
+      List<GroupPostNudge> groupNudges = <GroupPostNudge>[];
       for (GroupPostNudge template in allTemplates!) {
         GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
         if (nudge != null) {
           groupNudges.add(nudge);
         }
       }
+      return groupNudges;
     }
-    return groupNudges;
+    return null;
   }
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
