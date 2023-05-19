@@ -41,12 +41,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
   static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.attributes.changed";
   static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
-  static const String notifyVideoTutorialsChanged         = "edu.illinois.rokwire.content.video_tutorials.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
 
   static const String _attributesContentCategory = "attributes";
   static const String _imagesContentCategory = "images";
-  static const String _videoTutorialsContentCategory = "video_tutorials";
   static const String _contentItemsCacheFileName = "contentItems.json";
 
   Directory? _appDocDir;
@@ -160,7 +158,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return null;
   }
 
-  // Content
+  // Content Items
 
   @protected
   List<String> get contentItemsCategories {
@@ -265,7 +263,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if ((categoriesDiff != null) && categoriesDiff.isNotEmpty) {
         _contentItems = contentItems;
         await saveContentItemsToCache(contentItems);
-        _onContentItemsChanged(categoriesDiff);
+        onContentItemsChanged(categoriesDiff);
       }
     }
   }
@@ -305,15 +303,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  void _onContentItemsChanged(Set<String> categoriesDiff) {
+  @protected
+  void onContentItemsChanged(Set<String> categoriesDiff) {
     if (categoriesDiff.contains(attributesContentCategory)) {
       _onContentAttributesChanged();
     }
     if (categoriesDiff.contains(imagesContentCategory)) {
       _onContentImagesChanged();
-    }
-    if (categoriesDiff.contains(videoTutorialsContentCategory)) {
-      _onVideoTutorialsChanged();
     }
     NotificationService().notify(notifyContentItemsChanged, categoriesDiff);
   }
@@ -354,29 +350,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     NotificationService().notify(notifyContentImagesChanged);
   }
 
-  // Video Tutorials Content Items
-
-  @protected
-  String get videoTutorialsContentCategory =>
-    _videoTutorialsContentCategory;
-
-  Map<String, dynamic>? get videoTutorials =>
-    contentMapItem(videoTutorialsContentCategory);
-
-  List<dynamic>? get videos =>
-    JsonUtils.listValue(MapUtils.get(videoTutorials, 'videos'));
-
-  void _onVideoTutorialsChanged() {
-    NotificationService().notify(notifyVideoTutorialsChanged);
-  }
-
   // ContentItemCategoryClient
 
   @override
   List<String> get contentItemCategory => <String>[
     attributesContentCategory,
     imagesContentCategory,
-    videoTutorialsContentCategory,
   ];
 
   // Implementation
