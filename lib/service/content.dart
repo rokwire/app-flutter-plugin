@@ -15,6 +15,7 @@
  */
 
 import 'dart:io';
+import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -38,10 +39,12 @@ import 'package:uuid/uuid.dart';
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
 
   static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
-  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.content_attributes.changed";
+  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.attributes.changed";
+  static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
 
-  static const String _contentAttributesCategory = "attributes";
+  static const String _attributesContentCategory = "attributes";
+  static const String _imagesContentCategory = "images";
   static const String _contentItemsCacheFileName = "contentItems.json";
 
   Directory? _appDocDir;
@@ -301,20 +304,23 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   void _onContentItemsChanged(Set<String> categoriesDiff) {
-    if (categoriesDiff.contains(contentAttributesCategory)) {
+    if (categoriesDiff.contains(attributesContentCategory)) {
       _onContentAttributesChanged();
+    }
+    if (categoriesDiff.contains(imagesContentCategory)) {
+      _onContentImagesChanged();
     }
     NotificationService().notify(notifyContentItemsChanged, categoriesDiff);
   }
 
-  // Content Attributes Items
+  // Attributes Content Items
 
   @protected
-  String get contentAttributesCategory =>
-    _contentAttributesCategory;
+  String get attributesContentCategory =>
+    _attributesContentCategory;
 
   Map<String, dynamic>? get _contentAttributesJson =>
-    contentMapItem(contentAttributesCategory);
+    contentMapItem(attributesContentCategory);
 
   ContentAttributes? contentAttributes(String scope) => (_contentAttributes != null) ?
       (_contentAttributesByScope[scope] ??= (ContentAttributes.fromOther(_contentAttributes, scope: scope) ?? ContentAttributes())) : null;
@@ -325,10 +331,30 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     NotificationService().notify(notifyContentAttributesChanged);
   }
 
+  // Images Content Items
+
+  @protected
+  String get imagesContentCategory =>
+    _imagesContentCategory;
+
+  Map<String, dynamic>? get contentImages =>
+    contentMapItem(imagesContentCategory);
+
+  String? randomImageUrl(String key) {
+    List<dynamic>? list = JsonUtils.listValue(MapPathKey.entry(contentImages, "random.$key"));
+    return ((list != null) && list.isNotEmpty) ? JsonUtils.stringValue(list[Random().nextInt(list.length)]) : null;
+  }
+
+  void _onContentImagesChanged() {
+  }
+
   // ContentItemCategoryClient
 
   @override
-  List<String> get contentItemCategory => <String>[contentAttributesCategory];
+  List<String> get contentItemCategory => <String>[
+    attributesContentCategory,
+    imagesContentCategory
+  ];
 
   // Implementation
 

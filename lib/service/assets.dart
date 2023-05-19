@@ -16,7 +16,6 @@
 
 import 'dart:core';
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -124,11 +123,6 @@ class Assets with Service implements NotificationsListener {
 
   dynamic operator [](dynamic key) {
     return MapPathKey.entry(_assets, key);
-  }
-
-  String? randomStringFromListWithKey(String key) {
-    List<dynamic>? list = JsonUtils.listValue(this[key]);
-    return ((list != null) && list.isNotEmpty) ? JsonUtils.stringValue(list[Random().nextInt(list.length)]) : null;
   }
 
   // Implementation
