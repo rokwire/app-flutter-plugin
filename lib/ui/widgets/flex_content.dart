@@ -18,7 +18,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rokwire_plugin/service/assets.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
@@ -41,16 +41,11 @@ import 'package:url_launcher/url_launcher_string.dart';
 */
 
 class FlexContent extends StatefulWidget {
-  final String? assetsKey;
-  final Map<String, dynamic>? jsonContent;
+  final String? contentKey;
+  final Map<String, dynamic>? contentJson;
   final void Function(BuildContext context)? onClose;
 
-  const FlexContent({Key? key, this.assetsKey, this.jsonContent, this.onClose}) : super(key: key);
-
-  static FlexContent? fromAssets(String assetsKey, { void Function(BuildContext context)? onClose }) {
-    Map<String, dynamic>? jsonContent = JsonUtils.mapValue(Assets()[assetsKey]);
-    return (jsonContent != null) ? FlexContent(assetsKey: assetsKey, jsonContent: jsonContent, onClose: onClose) : null;
-  }
+  const FlexContent({Key? key, this.contentKey, this.contentJson, this.onClose}) : super(key: key);
 
   @override
   FlexContentWidgetState createState() => FlexContentWidgetState();
@@ -68,16 +63,16 @@ class FlexContent extends StatefulWidget {
   Widget get topSplitter => Container(height: topSplitterHeight, color: topSplitterColor);
 
   @protected
-  Widget? buildContent(BuildContext context, Map<String, dynamic>? jsonContent) {
-    if (jsonContent != null) {
-      String? title = JsonUtils.stringValue(jsonContent['title']);
-      String? text = JsonUtils.stringValue(jsonContent['text']);
-      List<dynamic>? buttonsJsonContent = JsonUtils.listValue(jsonContent['buttons']);
+  Widget? buildContent(BuildContext context, Map<String, dynamic>? contentJson) {
+    if (contentJson != null) {
+      String? title = JsonUtils.stringValue(contentJson['title']);
+      String? text = JsonUtils.stringValue(contentJson['text']);
+      List<dynamic>? buttonsJson = JsonUtils.listValue(contentJson['buttons']);
       return Padding(padding: contentPadding, child:
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           buildTitle(title),
           buildText(text),
-          buildButtons(context, buttonsJsonContent)
+          buildButtons(context, buttonsJson)
         ],),
       );
     }
@@ -114,10 +109,10 @@ class FlexContent extends StatefulWidget {
   TextStyle get textTextStyle => TextStyle(color: Styles().colors?.textSurface, fontFamily: Styles().fontFamilies?.medium, fontSize: 16, );
 
   @protected
-  Widget buildButtons(BuildContext context, List<dynamic>? buttonsJsonContent) {
-    if (CollectionUtils.isNotEmpty(buttonsJsonContent)) {
+  Widget buildButtons(BuildContext context, List<dynamic>? buttonsJson) {
+    if (CollectionUtils.isNotEmpty(buttonsJson)) {
       List<Widget> buttons = [];
-      for (dynamic buttonsJsonEntry in buttonsJsonContent!) {
+      for (dynamic buttonsJsonEntry in buttonsJson!) {
         Widget? buttonEntry = buildButtonEntry(context, JsonUtils.mapValue(buttonsJsonEntry));
         if (buttonEntry != null) {
           buttons.add(buttonEntry);
@@ -169,7 +164,7 @@ class FlexContent extends StatefulWidget {
   }
 
   @protected
-  bool canClose(Map<String, dynamic>? jsonContent) => (jsonContent != null) && (jsonContent['can_close'] == true);
+  bool canClose(Map<String, dynamic>? contentJson) => (contentJson != null) && (contentJson['can_close'] == true);
 
   @protected
   String get closeButtonLabel => 'Close';
@@ -185,11 +180,11 @@ class FlexContent extends StatefulWidget {
 
   @protected
   void onTapButton(BuildContext context, Map<String, dynamic> button) {
-    Map<String, dynamic>? linkJsonContent = JsonUtils.mapValue(button['link']);
-    if (linkJsonContent != null) {
-      String? url = JsonUtils.stringValue(linkJsonContent['url']);
+    Map<String, dynamic>? linkJson = JsonUtils.mapValue(button['link']);
+    if (linkJson != null) {
+      String? url = JsonUtils.stringValue(linkJson['url']);
       if (StringUtils.isNotEmpty(url)) {
-        Map<String, dynamic>? options = JsonUtils.mapValue(linkJsonContent['options']);
+        Map<String, dynamic>? options = JsonUtils.mapValue(linkJson['options']);
         dynamic target = (options != null) ? options['target'] : 'internal';
         if (target is Map) {
           target = target[Platform.operatingSystem.toLowerCase()];
@@ -227,17 +222,16 @@ class FlexContent extends StatefulWidget {
 
 class FlexContentWidgetState extends State<FlexContent> implements NotificationsListener {
   bool _visible = true;
-  Map<String, dynamic>? _jsonContent;
+  Map<String, dynamic>? _contentJson;
 
   @override
   void initState() {
-    super.initState();
-    
-    _jsonContent = widget.jsonContent;  
-    if (widget.assetsKey != null) {
-      NotificationService().subscribe(this, Assets.notifyChanged);
-      _jsonContent ??= JsonUtils.mapValue(Assets()[widget.assetsKey]);
+    _contentJson = widget.contentJson;
+    if (widget.contentKey != null) {
+      _contentJson ??= Content().contentWidget(widget.contentKey!);
+      NotificationService().subscribe(this, Content.notifyContentWidgetsChanged);
     }
+    super.initState();
   }
 
   @override
@@ -250,14 +244,13 @@ class FlexContentWidgetState extends State<FlexContent> implements Notifications
 
   @override
   void onNotification(String name, dynamic param){
-    if (name == Assets.notifyChanged) {
-      if (widget.assetsKey != null) {
-        Map<String, dynamic>? jsonContent = JsonUtils.mapValue(Assets()[widget.assetsKey]);
-        if ((jsonContent != null) && !const DeepCollectionEquality().equals(jsonContent, _jsonContent)) {
-          setState(() { _jsonContent = jsonContent; });
-        }
-        else {
-          setState(() { _visible = false; });
+    if (name == Content.notifyContentWidgetsChanged) {
+      if (widget.contentKey != null) {
+        Map<String, dynamic>? contentJson = Content().contentWidget(widget.contentKey!);
+        if (!const DeepCollectionEquality().equals(contentJson, _contentJson)) {
+          setState(() {
+            _contentJson = contentJson;
+          });
         }
       }
     }
@@ -265,15 +258,15 @@ class FlexContentWidgetState extends State<FlexContent> implements Notifications
 
   @override
   Widget build(BuildContext context) {
-    return Visibility(visible: _visible, child:
+    return Visibility(visible: _visible && (_contentJson != null), child:
       Semantics(container: true, child:
         Container(color: widget.backgroundColor, child:
           Row(children: <Widget>[
             Expanded(child:
               Stack(children: <Widget>[
                 widget.topSplitter,
-                widget.buildContent(context, _jsonContent) ?? Container(),
-                Visibility(visible: widget.canClose(_jsonContent), child:
+                widget.buildContent(context, _contentJson) ?? Container(),
+                Visibility(visible: widget.canClose(_contentJson), child:
                   Container(alignment: Alignment.topRight, child:
                     widget.buildCloseButton(context, onTap: _onClose) ?? Container(height: widget.closeButtonSize.height)
                   ),
