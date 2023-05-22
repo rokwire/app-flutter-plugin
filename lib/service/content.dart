@@ -41,10 +41,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
   static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.attributes.changed";
   static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
+  static const String notifyContentWidgetsChanged         = "edu.illinois.rokwire.content.widgetss.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
 
   static const String _attributesContentCategory = "attributes";
   static const String _imagesContentCategory = "images";
+  static const String _widgetsContentCategory = "widgets";
   static const String _contentItemsCacheFileName = "contentItems.json";
 
   Directory? _appDocDir;
@@ -311,6 +313,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (categoriesDiff.contains(imagesContentCategory)) {
       _onContentImagesChanged();
     }
+    if (categoriesDiff.contains(widgetsContentCategory)) {
+      _onContentWidgetsChanged();
+    }
     NotificationService().notify(notifyContentItemsChanged, categoriesDiff);
   }
 
@@ -350,12 +355,29 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     NotificationService().notify(notifyContentImagesChanged);
   }
 
+  // Widgets Content Items
+
+  @protected
+  String get widgetsContentCategory =>
+    _widgetsContentCategory;
+
+  Map<String, dynamic>? get contentWidgets =>
+    contentMapItem(widgetsContentCategory);
+
+  Map<String, dynamic>? contentWidget(String key) =>
+    contentWidgets?[key];
+
+  void _onContentWidgetsChanged() {
+    NotificationService().notify(notifyContentWidgetsChanged);
+  }
+
   // ContentItemCategoryClient
 
   @override
   List<String> get contentItemCategory => <String>[
     attributesContentCategory,
     imagesContentCategory,
+    widgetsContentCategory,
   ];
 
   // Implementation
