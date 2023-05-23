@@ -192,7 +192,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     switch (actionType) {
       case ActionType.launchUri:
         //TODO: add more URI types (e.g., email?, sms?)
-        return {'phone': 'Phone Number', 'url': 'URL'};
+        return {'phone': 'Phone', 'url': 'Web Browser'};
       case ActionType.showSurvey:
         //TODO: get list of surveys that the creator may "link" to?
       case ActionType.showPanel:

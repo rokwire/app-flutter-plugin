@@ -87,7 +87,7 @@ class ActionData {
 
   static Map<String, String> get supportedTypes => const {
     // "none": "None",
-    "launchUri": "Launch URI",
+    "launchUri": "Open Application",
     "showSurvey": "Show Survey",
     // "showPanel": "Show Panel",
     // "dismiss": "Dismiss",
