@@ -349,9 +349,9 @@ class Rules {
 
   // Action
 
-  dynamic evaluateAction(RuleEngine engine, RuleAction action, {bool summarize = false}) {
+  dynamic evaluateAction(RuleEngine engine, RuleAction action, {bool summarize = false, bool immediate = false}) {
     if (summarize) {
-      return action.getSummary();
+      return action;
     }
     switch (action.action) {
       case "return":
@@ -368,10 +368,10 @@ class Rules {
       case "show_survey":
         //TODO: fix this (should use notification like alert)
       case "alert":
-        _alert(engine, action);
+        _alert(engine, action, immediate: immediate);
         return null;
       case "alert_result":
-        _alert(engine, action);
+        _alert(engine, action, immediate: immediate);
         _setResult(engine, action);
         return null;
       case "notify":
@@ -379,7 +379,7 @@ class Rules {
       case "save":
         return (engine is Survey) ? Surveys().createSurveyResponse(engine) : null;
       case "local_notify":
-        return _localNotify(engine, action);
+        return _localNotify(engine, action, immediate: immediate);
     }
     return null;
   }
@@ -414,10 +414,13 @@ class Rules {
     }
   }
 
-  void _alert(RuleEngine engine, RuleAction action) {
+  void _alert(RuleEngine engine, RuleAction action, {bool immediate = false}) {
     dynamic alertData = _getEngineValOrCollection(engine, action.data);
     if (alertData is SurveyDataResult) {
-      NotificationService().notify(Alerts.notifyAlert, Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions));
+      Alert alert = Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions);
+      alert.params ??= {};
+      alert.params!['immediate'] = immediate;
+      NotificationService().notify(Alerts.notifyAlert, alert);
     } else if (alertData is Alert) {
       NotificationService().notify(Alerts.notifyAlert, alertData);
     }
@@ -432,18 +435,21 @@ class Rules {
     return Future<bool>.value(false);
   }
 
-  Future<bool> _localNotify(RuleEngine engine, RuleAction action) {
+  Future<bool> _localNotify(RuleEngine engine, RuleAction action, {bool immediate = false}) {
     dynamic resolvedData = _getEngineValOrCollection(engine, action.data);
+    Alert? alert;
     if (resolvedData is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(resolvedData, engineId: engine.id);
-      if (alert.timeToAlert != null) {
-        return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-          title: alert.title,
-          message: alert.text,
-          payload: JsonUtils.encode(alert.actions),
-          dateTime: DateTime.now().add(alert.timeToAlert!)
-        );
-      }
+      alert = Alert.fromJson(resolvedData, engineId: engine.id);
+    } else if (resolvedData is Alert) {
+      alert = resolvedData;
+    }
+    if (alert?.timeToAlert != null || immediate) {
+      return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
+        title: alert!.title,
+        message: alert.text,
+        payload: JsonUtils.encode(alert.actions),
+        dateTime: immediate ? null : DateTime.now().add(alert.timeToAlert!)
+      );
     }
     
     return Future<bool>.value(false);

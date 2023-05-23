@@ -217,6 +217,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     List<Pair<String, bool>> sectionsList = List.generate(widget.sections.length, (index) =>
       Pair(widget.sections[index], _data.sections?.contains(widget.sections[index]) ?? (_data.section == widget.sections[index]))
     );
+    String sectionsLabel = 'Sections';
+    if (CollectionUtils.isNotEmpty(_data.sections)) {
+      sectionsLabel += ' (${_data.sections!.join(', ')})';
+    }
     List<Widget> baseContent = [
       // data type
       SurveyElementCreationWidget.buildDropdownWidget<String>(widget.mayChangeType ? SurveyData.supportedTypes : {"survey_data.action": "Action"}, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
@@ -226,7 +230,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
         child: Padding(padding: const EdgeInsets.only(top: 16), child: SurveyElementList(
           type: SurveyElementListType.checklist,
-          label: 'Sections',
+          label: sectionsLabel,
           dataList: sectionsList,
           surveyElement: SurveyElement.sections,
           onChanged: _onChangeSection,

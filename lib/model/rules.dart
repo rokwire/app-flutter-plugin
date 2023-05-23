@@ -460,13 +460,15 @@ class RuleAction extends RuleActionResult {
     // "sum": "Sum",
   };
 
+  static List<String> get supportedPreviews => const ["alert", "alert_result", "local_notify"];
+
   @override
   String getSummary({String? prefix, String? suffix}) {
     String summary = supportedActions[action] ?? '';
     if (data is Alert) {
-      summary += " (${data.title})";
+      summary += " ${data.title}";
     } else if (data is SurveyAlert) {
-      summary += " (${data.contactKey})";
+      summary += " ${data.contactKey}";
     } else if (data is String && data.startsWith('data.')) {
       summary += " ${data.substring(5)}";
     } else if (action == 'show' && data == null) {

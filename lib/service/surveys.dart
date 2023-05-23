@@ -103,26 +103,29 @@ class Surveys /* with Service */ {
     survey.stats = surveyStats;
 
     dynamic result;
-    List<String> resultSummaries = [];
+    List<RuleAction> resultActions = [];
     if (evalResultRules && CollectionUtils.isNotEmpty(survey.resultRules)) {
       Rules().clearDataCache(survey.id);
       for (RuleResult rule in survey.resultRules!) {
         dynamic ruleResult;
-        if (rule is Rule) {
-          ruleResult = Rules().evaluateRule(survey, rule, summarize: summarizeResultRules);
-          if (summarizeResultRules) {
-            resultSummaries.add(ruleResult);
-          }
-        } else if (rule is RuleAction) {
-          ruleResult = Rules().evaluateAction(survey, rule, summarize: summarizeResultRules);
-          if (summarizeResultRules) {
-            resultSummaries.add(ruleResult);
-          }
-        } else if (rule is RuleActionList) {
+        if (rule is RuleActionList) {
           for (RuleAction action in rule.actions) {
             ruleResult = Rules().evaluateAction(survey, action, summarize: summarizeResultRules);
             if (summarizeResultRules) {
-              resultSummaries.add(ruleResult);
+              resultActions.add(ruleResult);
+            }
+          }
+        } else {
+          ruleResult = Rules().evaluateRuleResult(survey, rule, summarize: summarizeResultRules);
+          if (summarizeResultRules) {
+            if (ruleResult is Iterable<dynamic>) {
+              for (dynamic result in ruleResult) {
+                if (result is RuleAction) {
+                  resultActions.add(result);
+                }
+              }
+            } else {
+              resultActions.add(ruleResult);
             }
           }
         }
@@ -134,7 +137,7 @@ class Surveys /* with Service */ {
         }
       }
     }
-    return summarizeResultRules ? resultSummaries : result;
+    return summarizeResultRules ? resultActions : result;
   }
 
   SurveyData? getFirstQuestion(Survey survey) {
