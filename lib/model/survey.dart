@@ -609,7 +609,7 @@ class SurveyQuestionDateTime extends SurveyData {
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionDateTime(
-      startTime: AppDateTime().dateTimeLocalFromJson(json['star_time']),
+      startTime: AppDateTime().dateTimeLocalFromJson(json['start_time']),
       endTime: AppDateTime().dateTimeLocalFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 

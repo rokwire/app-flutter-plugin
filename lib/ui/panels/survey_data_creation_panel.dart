@@ -161,7 +161,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["start_time"],
-        validator: _validateDate,
+        validator: (value) => _validateDate(value, format: format),
         padding: const EdgeInsets.symmetric(vertical: 16),
       ));
       // endTime (datetime picker?)
@@ -169,7 +169,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["end_time"],
-        validator: _validateDate,
+        validator: (value) => _validateDate(value, format: format),
         padding: EdgeInsets.zero,
       ));
     } else if (_data is SurveyQuestionNumeric) {
@@ -642,8 +642,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     });
   }
 
-  String? _validateDate(String? dateStr) {
-    String format = "MM-dd-yyyy";
+  String? _validateDate(String? dateStr, {String? format}) {
+    format ??= "MM-dd-yyyy";
     if (dateStr != null) {
       if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
         return "Invalid format: must be $format";

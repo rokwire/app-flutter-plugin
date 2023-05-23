@@ -92,6 +92,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   bool _loading = false;
   Survey? _survey;
   SurveyData? _mainSurveyData;
+  Map<String, TextEditingController>? _dateTimeTextControllers;
 
   @override
   void initState() {
@@ -113,6 +114,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         _setLoading(false);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _dateTimeTextControllers?.forEach((key, value) { value.dispose(); });
+    super.dispose();
   }
 
   @override
@@ -205,7 +212,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     } else if (survey is SurveyQuestionTrueFalse) {
       surveyWidget = _buildTrueFalseSurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyQuestionDateTime) {
-      surveyWidget = _buildDateEntrySurveySection(survey, enabled: widget.inputEnabled);
+      _dateTimeTextControllers ??= {survey.key: TextEditingController(text: survey.response?.toString())};
+      surveyWidget = _buildDateEntrySurveySection(survey, defaultIconKey: 'calendar', enabled: widget.inputEnabled);
     } else if (survey is SurveyQuestionNumeric) {
       surveyWidget = _buildNumericSurveySection(survey, enabled: widget.inputEnabled);
     } else if (survey is SurveyDataResult) {
@@ -469,74 +477,43 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildDateEntrySurveySection(SurveyQuestionDateTime? survey, {Widget? calendarIcon, String? defaultIconKey, bool enabled = true}) {
     if (survey == null) return null;
 
-    String? title = survey.text;
-
-    // TextEditingController dateTextController = TextEditingController(text: survey.response);
-
     String format = "MM-dd-yyyy";
-
     return SurveyDataWidget(Row(
       children: <Widget>[
         Expanded(
-          child: TextFormField(
-            style: const TextStyle(
-              fontSize: 16.0,
-              height: 1.0,
-            ),
-            maxLines: 1,
-            keyboardType: TextInputType.datetime,
-            autofocus: false,
-            // autovalidateMode: AutovalidateMode.onUserInteraction,
-            enabled: enabled,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.all(24.0),
-              labelText: title,
-              hintText: format,
-              filled: true,
-              fillColor: enabled ? Colors.white : Styles().colors?.disabledTextColor,
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  borderSide: const BorderSide(color: Colors.white)),
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)),
-            ),
-            initialValue: survey.response?.toString(),
-            // controller: dateTextController,
-            // validator: _validationFunctions[field.key],
-            // onFieldSubmitted: (value) {
-            //   _onChangeResponse(false);
-            // },
-            // onChanged: (value) {
-              // int select = dateTextController.value.selection.start;
-              // dateTextController.value = TextEditingValue(
-              //   text: value,
-              //   selection: TextSelection.fromPosition(
-              //     TextPosition(offset: select),
-              //   ),
-              // );
-            //   survey.response = value; //.trim();
-            // },
-            // onEditingComplete: () => _onChangeResponse(false),
-            // maxLength: 10,
-            // onSaved: (value) => _onChangeResponse(false),
+          child: FormFieldText('Response', hint: format, readOnly: !enabled, controller: _dateTimeTextControllers![survey.key], inputType: TextInputType.datetime,
+            validator: (value) => _validateDate(value, format: format), onChanged: (value) {
+              survey.response = value.trim();
+              _onChangeResponse(false);
+            }
           ),
         ),
-        // Visibility(
-        //   visible: enabled,
-        //   child: IconButton(
-        //     icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
-        //     tooltip: "Test hint",
-        //     onPressed: () => _selectDate(context: context, initialDate: _getInitialDate(dateTextController.text, format),
-        //         firstDate: survey.startTime, lastDate: survey.endTime, callback: (DateTime picked) {
-        //           String date = DateFormat(format).format(picked);
-        //           dateTextController.text = date;
-        //           survey.response = date;
-        //           _onChangeResponse(false);
-        //           // _formResults[currentKey] = DateFormat('MM-dd-yyyy').format(picked);
-        //         }),
-        //   ),
-        // ),
+        Visibility(
+          visible: enabled,
+          child: IconButton(
+            icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
+            tooltip: "Date picker",
+            alignment: Alignment.topCenter,
+            splashRadius: 24,
+            onPressed: () {
+              DateTime initialDate = _getInitialDate(survey.response?.toString() ?? '', format);
+              if (survey.startTime != null && initialDate.isBefore(survey.startTime!)) {
+                initialDate = survey.startTime!;
+              }
+              if (survey.endTime != null && initialDate.isAfter(survey.endTime!)) {
+                initialDate = survey.endTime!;
+              }
+              _selectDate(context: context, initialDate: initialDate, firstDate: survey.startTime,
+                lastDate: survey.endTime, callback: (DateTime picked) {
+                  String date = DateFormat(format).format(picked);
+                  survey.response = date;
+                  _dateTimeTextControllers![survey.key]!.text = date;
+                  _onChangeResponse(false);
+                }
+              );
+            },
+          ),
+        ),
       ],
     ));
   }
@@ -566,6 +543,16 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
   }
 
+  String? _validateDate(String? dateStr, {String? format}) {
+    format ??= "MM-dd-yyyy";
+    if (dateStr != null) {
+      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+        return "Invalid format: must be $format";
+      }
+    }
+    return null;
+  }
+
   SurveyDataWidget? _buildNumericSurveySection(SurveyQuestionNumeric? survey, {bool enabled = true}) {
     if (survey == null) return null;
 
@@ -578,7 +565,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       initialValue = survey.response.toString();
     }
 
-    Widget? numericText = _buildTextFormFieldWidget(survey.text, readOnly: !enabled, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
+    Widget? numericText = _buildTextFormFieldWidget('Response', readOnly: !enabled, initialValue: initialValue, inputType: TextInputType.number, textCapitalization: TextCapitalization.words, onChanged: (value) {
       num? val;
       if (survey.wholeNum) {
         val = int.tryParse(value);
@@ -674,12 +661,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     );
   }
 
-  SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator, TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
-    return SurveyDataWidget(Semantics(
-        label: field,
-        child: FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType,
-            onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
-            textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters)
+  SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint,
+    TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator,
+    TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
+    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType,
+      onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
+      textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters
     ));
   }
 
