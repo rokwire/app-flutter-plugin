@@ -534,26 +534,6 @@ class UrlUtils {
 
 class JsonUtils {
 
-  static List<dynamic> encodeList(List items) {
-    List<dynamic> result =  [];
-    if (items.isNotEmpty) {
-      for (dynamic item in items) {
-        result.add(item.toJson());
-      }
-    }
-    return result;
-  }
-
-  static Map<String, dynamic> encodeMap(Map items) {
-    Map<String, dynamic> result =  {};
-    if (items.isNotEmpty) {
-      for (MapEntry entry in items.entries) {
-        result[entry.key] = entry.value.toJson();
-      }
-    }
-    return result;
-  }
-
   static String? encode(dynamic value, { bool? prettify }) {
     String? result;
     if (value != null) {

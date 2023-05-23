@@ -879,7 +879,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
@@ -901,7 +901,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().put(url, auth: Auth2(),body: body);
