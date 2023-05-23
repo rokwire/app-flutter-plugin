@@ -21,7 +21,7 @@ dependencies:
   asn1lib: ^1.0.3
   pointycastle: ^3.5.0
   encrypt: ^5.0.1
-  intl: ^0.17.0
+  intl: ^0.18.0
   http: ^0.13.3
   timezone: ^0.8.0
   flutter_native_timezone: ^2.0.0
@@ -38,7 +38,7 @@ dependencies:
   image_picker: ^0.8.5+3
   mime_type: ^1.0.0
   uuid: ^3.0.5
-  flutter_html: ^2.2.0
+  flutter_html: ^3.0.0-alpha.6
   webview_flutter: ^2.0.13
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.2.1
