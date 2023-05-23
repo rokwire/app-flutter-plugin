@@ -18,6 +18,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
@@ -178,6 +179,21 @@ class CollectionUtils {
   static int length(Iterable<dynamic>? collection) {
     return collection?.length ?? 0;
   }
+
+  static bool equals(dynamic e1, dynamic e2) =>
+    const DeepCollectionEquality().equals(e1, e2);
+
+  static Future<bool> equalsAsync(dynamic e1, dynamic e2) =>
+    compute(_equals, _EqualsParam(e1, e2));
+
+  static bool _equals(_EqualsParam param) =>
+    equals(param.e1, param.e2);
+}
+
+class _EqualsParam {
+  final dynamic e1;
+  final dynamic e2;
+  _EqualsParam(this.e1, this.e2);
 }
 
 class ListUtils {
