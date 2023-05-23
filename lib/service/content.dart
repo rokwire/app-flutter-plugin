@@ -190,13 +190,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   Future<Map<String, dynamic>?> loadContentItemsFromCache() async {
     File? contentItemsCacheFile = getContentItemsCacheFile();
     String? contentItemsString = (await contentItemsCacheFile?.exists() == true) ? await contentItemsCacheFile?.readAsString() : null;
-    return JsonUtils.decodeMap(contentItemsString);
+    return JsonUtils.decodeMapAsync(contentItemsString);
   }
 
   @protected
   Future<void> saveContentItemsToCache(Map<String, dynamic>? value) async {
     File? contentItemsCacheFile = getContentItemsCacheFile();
-    String? contentItemsString = JsonUtils.encode(value);
+    String? contentItemsString = await JsonUtils.encodeAsync(value);
     if (contentItemsString != null) {
       await contentItemsCacheFile?.writeAsString(contentItemsString, flush: true);
     }
@@ -213,7 +213,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     Map<String, dynamic>? result;
     if (Config().contentUrl != null) {
       Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': categories}), auth: Auth2());
-      List<dynamic>? responseList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body)  : null;
+      List<dynamic>? responseList = (response?.statusCode == 200) ? await JsonUtils.decodeListAsync(response?.body)  : null;
       if (responseList != null) {
         result = <String, dynamic>{};
         for (dynamic responseEntry in responseList) {
