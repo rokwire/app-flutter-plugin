@@ -18,6 +18,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
@@ -177,6 +179,21 @@ class CollectionUtils {
   static int length(Iterable<dynamic>? collection) {
     return collection?.length ?? 0;
   }
+
+  static bool equals(dynamic e1, dynamic e2) =>
+    const DeepCollectionEquality().equals(e1, e2);
+
+  static Future<bool> equalsAsync(dynamic e1, dynamic e2) =>
+    compute(_equals, _EqualsParam(e1, e2));
+
+  static bool _equals(_EqualsParam param) =>
+    equals(param.e1, param.e2);
+}
+
+class _EqualsParam {
+  final dynamic e1;
+  final dynamic e2;
+  _EqualsParam(this.e1, this.e2);
 }
 
 class ListUtils {
@@ -216,6 +233,21 @@ class ListUtils {
     }
     return list.contains(item);
   }
+
+  static void sort<T>(List<T> list, int Function(T a, T b)? compare) =>
+    list.sort(compare);
+
+  static void _sort<T>(_SortListParam<T> param) =>
+    param.list.sort(param.compare);
+
+  static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
+    compute(_sort, _SortListParam(list, compare));
+}
+
+class _SortListParam<T> {
+  final List<T> list;
+  final int Function(T a, T b)? compare;
+  _SortListParam(this.list, this.compare);
 }
 
 class SetUtils {
@@ -534,41 +566,22 @@ class UrlUtils {
 
 class JsonUtils {
 
-  static List<dynamic> encodeList(List items) {
-    List<dynamic> result =  [];
-    if (items.isNotEmpty) {
-      for (dynamic item in items) {
-        result.add(item.toJson());
-      }
-    }
-    return result;
+  static String? encode(dynamic value, { bool? prettify }) =>
+    ((prettify == true) ? _prettify : _encode)(value);
+
+  static Future<String?> encodeAsync(dynamic value, { bool? prettify }) =>
+    compute((prettify == true) ? _prettify : _encode, value);
+
+  static String? _encode(dynamic value) {
+    try { return (value != null) ? json.encode(value) : null; }
+    catch (e) { debugPrint(e.toString());}
+    return null;
   }
 
-  static Map<String, dynamic> encodeMap(Map items) {
-    Map<String, dynamic> result =  {};
-    if (items.isNotEmpty) {
-      for (MapEntry entry in items.entries) {
-        result[entry.key] = entry.value.toJson();
-      }
-    }
-    return result;
-  }
-
-  static String? encode(dynamic value, { bool? prettify }) {
-    String? result;
-    if (value != null) {
-      try {
-        if (prettify == true) {
-          result = const JsonEncoder.withIndent("  ").convert(value);
-        }
-        else {
-          result = json.encode(value);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return result;
+  static String? _prettify(dynamic value) {
+    try { return (value != null) ? const JsonEncoder.withIndent("  ").convert(value) : null; }
+    catch (e) { debugPrint(e.toString()); }
+    return null;
   }
 
   // TBD: Use everywhere decodeMap or decodeList to guard type cast
@@ -584,6 +597,9 @@ class JsonUtils {
     return jsonContent;
   }
 
+  static Future<dynamic> decodeAsync(String? jsonString) =>
+    compute(decode, jsonString);
+
   static List<dynamic>? decodeList(String? jsonString) {
     try {
       return (decode(jsonString) as List?)?.cast<dynamic>();
@@ -593,6 +609,9 @@ class JsonUtils {
     return null;
   }
 
+  static Future<List<dynamic>?> decodeListAsync(String? jsonString) =>
+    compute(decodeList, jsonString);
+
   static Map<String, dynamic>? decodeMap(String? jsonString) {
     try {
       return (decode(jsonString) as Map?)?.cast<String, dynamic>();
@@ -601,6 +620,9 @@ class JsonUtils {
     }
     return null;
   }
+
+  static Future<Map<String, dynamic>?> decodeMapAsync(String? jsonString) =>
+    compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
     if (value is String) {

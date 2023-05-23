@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
 - Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
 - Retire Assets service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
