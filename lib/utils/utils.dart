@@ -18,6 +18,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
@@ -534,21 +535,22 @@ class UrlUtils {
 
 class JsonUtils {
 
-  static String? encode(dynamic value, { bool? prettify }) {
-    String? result;
-    if (value != null) {
-      try {
-        if (prettify == true) {
-          result = const JsonEncoder.withIndent("  ").convert(value);
-        }
-        else {
-          result = json.encode(value);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return result;
+  static String? encode(dynamic value, { bool? prettify }) =>
+    ((prettify == true) ? _prettify : _encode)(value);
+
+  static Future<String?> encodeAsync(dynamic value, { bool? prettify }) =>
+    compute((prettify == true) ? _prettify : _encode, value);
+
+  static String? _encode(dynamic value) {
+    try { return (value != null) ? json.encode(value) : null; }
+    catch (e) { debugPrint(e.toString());}
+    return null;
+  }
+
+  static String? _prettify(dynamic value) {
+    try { return (value != null) ? const JsonEncoder.withIndent("  ").convert(value) : null; }
+    catch (e) { debugPrint(e.toString()); }
+    return null;
   }
 
   // TBD: Use everywhere decodeMap or decodeList to guard type cast
@@ -564,6 +566,9 @@ class JsonUtils {
     return jsonContent;
   }
 
+  static Future<dynamic> decodeAsync(String? jsonString) =>
+    compute(decode, jsonString);
+
   static List<dynamic>? decodeList(String? jsonString) {
     try {
       return (decode(jsonString) as List?)?.cast<dynamic>();
@@ -573,6 +578,9 @@ class JsonUtils {
     return null;
   }
 
+  static Future<List<dynamic>?> decodeListAsync(String? jsonString) =>
+    compute(decodeList, jsonString);
+
   static Map<String, dynamic>? decodeMap(String? jsonString) {
     try {
       return (decode(jsonString) as Map?)?.cast<String, dynamic>();
@@ -581,6 +589,9 @@ class JsonUtils {
     }
     return null;
   }
+
+  static Future<Map<String, dynamic>?> decodeMapAsync(String? jsonString) =>
+    compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
     if (value is String) {
