@@ -29,7 +29,6 @@ import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
-import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -153,13 +152,14 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Self-Score", (_data as SurveyQuestionMultipleChoice).selfScore, _onToggleSelfScore));
       }
     } else if (_data is SurveyQuestionDateTime) {
-      _textControllers["start_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).startTime, format: "MM-dd-yyyy"));
-      _textControllers["end_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).endTime, format: "MM-dd-yyyy"));
+      String format = "MM-dd-yyyy";
+      _textControllers["start_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).startTime, format: format));
+      _textControllers["end_time"] ??= TextEditingController(text: DateTimeUtils.localDateTimeToString((_data as SurveyQuestionDateTime).endTime, format: format));
 
       // startTime (datetime picker?)
       dataContent.add(FormFieldText('Start Date',
         inputType: TextInputType.datetime,
-        hint: "MM-dd-yyyy",
+        hint: format,
         controller: _textControllers["start_time"],
         validator: _validateDate,
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -167,7 +167,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // endTime (datetime picker?)
       dataContent.add(FormFieldText('End Date',
         inputType: TextInputType.datetime,
-        hint: "MM-dd-yyyy",
+        hint: format,
         controller: _textControllers["end_time"],
         validator: _validateDate,
         padding: EdgeInsets.zero,
@@ -214,6 +214,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     }
     // add SurveyDataPage and SurveyDataEntry later
 
+    List<Pair<String, bool>> sectionsList = List.generate(widget.sections.length, (index) =>
+      Pair(widget.sections[index], _data.sections?.contains(widget.sections[index]) ?? (_data.section == widget.sections[index]))
+    );
     List<Widget> baseContent = [
       // data type
       SurveyElementCreationWidget.buildDropdownWidget<String>(widget.mayChangeType ? SurveyData.supportedTypes : {"survey_data.action": "Action"}, "Type", _data.type, _onChangeType, margin: EdgeInsets.zero),
@@ -221,17 +224,19 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // sections
       Visibility(
         visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
-        child: MultiSelectionList(
-          selectionList: List.generate(widget.sections.length, (index) => OptionData(title: widget.sections[index])),
-          isChecked: List.generate(widget.sections.length, (index) => _data.sections?.contains(widget.sections[index]) ?? (_data.section == widget.sections[index])),
+        child: Padding(padding: const EdgeInsets.only(top: 16), child: SurveyElementList(
+          type: SurveyElementListType.checklist,
+          label: 'Sections',
+          dataList: sectionsList,
+          surveyElement: SurveyElement.sections,
           onChanged: _onChangeSection,
-        ),
+        )),
       ),
       // legacy section (set this to allow section scoring on survey in app version <5.0)
-      Visibility(
-        visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
-        child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(<String?>[null] + widget.sections, value: (v) => v ?? 'None'), "Legacy Section", _data.section, _onChangeLegacySection),
-      ),
+      // Visibility(
+      //   visible: widget.sections.isNotEmpty && _data is! SurveyDataResult,
+      //   child: SurveyElementCreationWidget.buildDropdownWidget<String>(Map.fromIterable(<String?>[null] + widget.sections, value: (v) => v ?? 'None'), "Legacy Section", _data.section, _onChangeLegacySection),
+      // ),
       
       // key*
       FormFieldText('Reference Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
@@ -575,19 +580,21 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     });
   }
 
-  void _onChangeSection(int sectionIndex) {
+  void _onChangeSection(int index, dynamic value) {
     setState(() {
-      String section = widget.sections[sectionIndex];
-      _data.sections ??= [];
-      _data.sections!.contains(widget.sections[sectionIndex]) ? _data.sections!.remove(section) : _data.sections!.add(section);
+      String section = widget.sections[index];
+      if (value is bool) {
+        _data.sections ??= [];
+        value ? _data.sections!.add(section) : _data.sections!.remove(section);
+      }
     });
   }
 
-  void _onChangeLegacySection(String? section) {
-    setState(() {
-      _data.section = section;
-    });
-  }
+  // void _onChangeLegacySection(String? section) {
+  //   setState(() {
+  //     _data.section = section;
+  //   });
+  // }
 
   void _onChangeStyle(String? style) {
     setState(() {
@@ -636,9 +643,10 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   }
 
   String? _validateDate(String? dateStr) {
+    String format = "MM-dd-yyyy";
     if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: "MM-dd-yyyy") == null) {
-        return "Invalid format: must be MM-dd-yyyy";
+      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+        return "Invalid format: must be $format";
       }
     }
     return null;
@@ -663,8 +671,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         }
       }
     } else if (_data is SurveyQuestionDateTime) {
-      (_data as SurveyQuestionDateTime).startTime = DateTimeUtils.dateTimeFromString(_textControllers["start_time"]!.text);
-      (_data as SurveyQuestionDateTime).endTime = DateTimeUtils.dateTimeFromString(_textControllers["end_time"]!.text);
+      (_data as SurveyQuestionDateTime).startTime = DateTimeUtils.parseDateTime(_textControllers["start_time"]!.text, format: "MM-dd-yyyy");
+      (_data as SurveyQuestionDateTime).endTime = DateTimeUtils.parseDateTime(_textControllers["end_time"]!.text, format: "MM-dd-yyyy");
     } else if (_data is SurveyQuestionNumeric) {
       (_data as SurveyQuestionNumeric).minimum = double.tryParse(_textControllers["minimum"]!.text);
       (_data as SurveyQuestionNumeric).maximum = double.tryParse(_textControllers["maximum"]!.text);

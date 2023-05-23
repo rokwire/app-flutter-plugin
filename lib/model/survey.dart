@@ -753,7 +753,7 @@ class SurveyQuestionText extends SurveyData {
   int? maxLength;
 
   SurveyQuestionText({required String text, this.minLength = 0, this.maxLength, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, RuleResult? defaultResponseRule, 
-    RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool scored = false, bool allowSkip = false, bool replace = false, num? maximumScore})
+    RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
       : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
@@ -766,7 +766,6 @@ class SurveyQuestionText extends SurveyData {
       key: key,
       section: JsonUtils.stringValue(json['section']),
       sections: JsonUtils.stringListValue(json['sections']),
-      scored: json['scored'],
       response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       replace: JsonUtils.boolValue(json['replace']) ?? false,

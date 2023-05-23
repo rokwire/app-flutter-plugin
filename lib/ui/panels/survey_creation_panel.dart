@@ -100,8 +100,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       for (SurveyData surveyData in widget.survey!.data.values) {
         if (surveyData.isAction) {
           _actionData.add(surveyData);
-        }
-        if (CollectionUtils.isNotEmpty(surveyData.sections)) {
+        } else if (CollectionUtils.isNotEmpty(surveyData.sections)) {
           for (String section in surveyData.sections!) {
             if (!sections.contains(section)) {
               sections.add(section);
@@ -111,6 +110,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         } else if (surveyData.section != null && !sections.contains(surveyData.section)) {
           sections.add(surveyData.section!);
           _sectionTextControllers.add(TextEditingController(text: surveyData.section!));
+          
+          int questionIndex = _questionData.indexWhere((element) => element.key == surveyData.key);
+          _questionData[questionIndex].sections = [surveyData.section!];
         }
       }
 
@@ -401,7 +403,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapEditQuestionData(int index) async {
     String oldKey = _questionData[index].key;
     SurveyData? updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
-      data: _questionData[index],
+      data: SurveyData.fromOther(_questionData[index]),
       dataKeys: List.generate(_questionData.length, (index) => _questionData[index].key),
       dataTypes: List.generate(_questionData.length, (index) => _questionData[index].type),
       sections: sections,
@@ -444,7 +446,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   void _onTapEditActionData(int index) async {
     SurveyData? updatedData = await Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyDataCreationPanel(
-      data: _actionData[index],
+      data: SurveyData.fromOther(_actionData[index]),
       dataKeys: List.generate(_questionData.length, (index) => _questionData[index].key),
       dataTypes: List.generate(_questionData.length, (index) => _questionData[index].type),
       sections: sections,
@@ -524,7 +526,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapEditRuleElement(RuleElement? element, SurveyElement surveyElement, {RuleElement? parentElement}) async {
     if (element != null) {
       RuleElement? ruleElement = await Navigator.push(context, CupertinoPageRoute(builder: (context) => RuleElementCreationPanel(
-        data: element,
+        data: RuleElement.fromOther(element),
         surveyElement: surveyElement,
         questionDataKeys: List.generate(_questionData.length, (index) => _questionData[index].key),
         questionDataTypes: List.generate(_questionData.length, (index) => _questionData[index].type),

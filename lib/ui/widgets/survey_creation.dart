@@ -29,7 +29,7 @@ typedef AddRemoveFunc = Function(int, SurveyElement, RuleElement?);
 typedef EditFunc = Function(int, SurveyElement, RuleElement?, RuleElement?);
 typedef SurveyElementWidgetBuilder = Widget Function(int, dynamic, SurveyElement, RuleElement?, int);
 
-enum SurveyElementListType { data, textEntry, rules, options, actions }
+enum SurveyElementListType { data, textEntry, checklist, rules, options, actions }
 
 class SurveyElementList extends StatefulWidget {
   final SurveyElementListType type;
@@ -43,6 +43,7 @@ class SurveyElementList extends StatefulWidget {
   final AddRemoveFunc? onAdd;
   final EditFunc? onEdit;
   final AddRemoveFunc? onRemove;
+  final Function(int, dynamic)? onChanged;
   final Function(int, int)? onDrag;
   final Function(GlobalKey?)? onScroll;
   final rokwire.ExpansionTileController? controller;
@@ -63,6 +64,7 @@ class SurveyElementList extends StatefulWidget {
     this.onAdd,
     this.onEdit,
     this.onRemove,
+    this.onChanged,
     this.onDrag,
     this.onScroll,
     this.controller,
@@ -100,6 +102,9 @@ class _SurveyElementListState extends State<SurveyElementList> {
         break;
       case SurveyElementListType.textEntry:
         listItemBuilder = _buildTextEntryWidget;
+        break;
+      case SurveyElementListType.checklist:
+        listItemBuilder = _buildChecklistWidget;
         break;
       case SurveyElementListType.rules:
         listItemBuilder = _buildRuleWidget;
@@ -210,6 +215,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       ));
     }
     Widget surveyDataText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
+    int numButtons = _numEntryManagementButtons(index);
     Widget displayEntry = Card(
       key: _handleScrolling ? (widget.targetWidgetKeys?[index]) : null,
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -218,8 +224,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
       child: InkWell(
         onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
         child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
-          Expanded(child: _buildEntryManagementOptions(index, surveyElement)),
+          Expanded(flex: _flexMax - 2 * numButtons - depth, child: Padding(padding: const EdgeInsets.only(left: 8), child: surveyDataText)),
+          Expanded(flex: 2 * numButtons, child: _buildEntryManagementOptions(index, surveyElement)),
         ],))
       )
     );
@@ -261,6 +267,17 @@ class _SurveyElementListState extends State<SurveyElementList> {
           Expanded(child: _buildEntryManagementOptions(index, surveyElement, editable: false)),
       ],))
     );
+  }
+  
+  Widget _buildChecklistWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
+    if (data is Pair<String, bool>) {
+      return Card(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        color: Styles().colors?.getColor('surface'),
+        child: SurveyElementCreationWidget.buildCheckboxWidget(data.left, data.right, widget.onChanged != null ? (value) => widget.onChanged!(index, value) : null, padding: EdgeInsets.zero)
+      );
+    }
+    return Container();
   }
 
   Widget _buildRuleWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
@@ -310,6 +327,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           textWidgets.add(Text(summary, style: Styles().textStyles?.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
         }
         Widget ruleText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
+        int numButtons = _numEntryManagementButtons(index, element: data, parentElement: parentElement, addRemove: addRemove);
         displayEntry = Card(
           key: _handleScrolling && parentElement == null && index > 0 ? (widget.targetWidgetKeys?[index - 1]) : null,
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -317,8 +335,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
           child: InkWell(
             onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, data, parentElement) : null,
             child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
-              Expanded(flex: 2, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
-              Expanded(child: _buildEntryManagementOptions(index, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),
+              Expanded(flex: _flexMax - 2 * numButtons - depth, child: Padding(padding: const EdgeInsets.only(left: 8), child: ruleText)),
+              Expanded(flex: 2 * numButtons, child: _buildEntryManagementOptions(index, surveyElement, element: data, parentElement: parentElement, addRemove: addRemove)),
             ],))
           )
         );
@@ -669,6 +687,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
       tileColor: Styles().colors?.getColor('surface'),
       checkColor: Styles().colors?.getColor('surface'),
       activeColor: Styles().colors?.getColor('fillColorPrimary'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       value: value,
       onChanged: onChanged,
     ),);

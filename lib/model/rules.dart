@@ -19,9 +19,17 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:uuid/uuid.dart';
 
 abstract class RuleElement {
-  String id = const Uuid().v4();
+  String id;
 
-  RuleElement();
+  RuleElement({String? id}) : id = id ?? const Uuid().v4();
+
+  factory RuleElement.fromOther(RuleElement other) {
+    if (other is RuleCondition) {
+      return RuleCondition.fromOther(other);
+    } else { // (other is RuleResult)
+      return RuleResult.fromOther(other as RuleResult);
+    }
+  }
 
   Map<String, dynamic> toJson();
 
@@ -51,7 +59,7 @@ abstract class RuleElement {
 
 abstract class RuleCondition extends RuleElement {
 
-  RuleCondition();
+  RuleCondition({String? id}) : super(id: id);
 
   factory RuleCondition.fromJson(Map<String, dynamic> json) {
     dynamic conditions = json["conditions"];
@@ -82,8 +90,8 @@ class RuleComparison extends RuleCondition {
   dynamic compareToParam;
   bool? defaultResult;
 
-  RuleComparison({required this.dataKey, required this.operator, this.dataParam,
-    required this.compareTo, this.compareToParam, this.defaultResult = false});
+  RuleComparison({String? id, required this.dataKey, required this.operator, this.dataParam,
+    required this.compareTo, this.compareToParam, this.defaultResult = false}) : super(id: id);
 
   factory RuleComparison.fromJson(Map<String, dynamic> json) {
     return RuleComparison(
@@ -98,6 +106,7 @@ class RuleComparison extends RuleCondition {
 
   factory RuleComparison.fromOther(RuleComparison other) {
     return RuleComparison(
+      id: other.id,
       operator: other.operator,
       dataKey: other.dataKey,
       dataParam: other.dataParam,
@@ -172,10 +181,10 @@ class RuleLogic extends RuleCondition {
   String operator;
   List<RuleCondition> conditions;
 
-  RuleLogic(this.operator, this.conditions);
+  RuleLogic(this.operator, this.conditions, {String? id}) : super(id: id);
 
   factory RuleLogic.fromOther(RuleLogic other) {
-    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList());
+    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList(), id: other.id);
   }
 
   @override
@@ -253,7 +262,7 @@ class RuleLogic extends RuleCondition {
 
 abstract class RuleResult extends RuleElement {
 
-  RuleResult();
+  RuleResult({String? id}) : super(id: id);
 
   factory RuleResult.fromJson(Map<String, dynamic> json) {
     dynamic ruleKey = json["rule_key"];
@@ -319,7 +328,7 @@ abstract class RuleResult extends RuleElement {
 abstract class RuleActionResult extends RuleResult {
   abstract final int? priority;
 
-  RuleActionResult();
+  RuleActionResult({String? id}) : super(id: id);
 
   factory RuleActionResult.fromJson(Map<String, dynamic> json) {
     dynamic actions = json["actions"];
@@ -337,10 +346,10 @@ abstract class RuleActionResult extends RuleResult {
 class RuleReference extends RuleResult {
   String ruleKey;
 
-  RuleReference(this.ruleKey);
+  RuleReference(this.ruleKey, {String? id}) : super(id: id);
 
   factory RuleReference.fromOther(RuleReference other) {
-    return RuleReference(other.ruleKey);
+    return RuleReference(other.ruleKey, id: other.id);
   }
 
   @override
@@ -381,7 +390,7 @@ class RuleAction extends RuleActionResult {
   String? dataKey;
   @override int? priority;
 
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority});
+  RuleAction({String? id, required this.action, required this.data, this.dataKey, this.priority}) : super(id: id);
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
     dynamic data = json["data"];
@@ -401,6 +410,7 @@ class RuleAction extends RuleActionResult {
 
   factory RuleAction.fromOther(RuleAction other) {
     return RuleAction(
+      id: other.id,
       action: other.action,
       data: other.data,
       dataKey: other.dataKey,
@@ -497,10 +507,11 @@ class RuleActionList extends RuleActionResult {
   List<RuleAction> actions;
   @override int? priority;
 
-  RuleActionList({required this.actions, this.priority});
+  RuleActionList({String? id, required this.actions, this.priority}) : super(id: id);
 
   factory RuleActionList.fromOther(RuleActionList other) {
     return RuleActionList(
+      id: other.id,
       actions: other.actions.map((e) => RuleAction.fromOther(e)).toList()
     );
   }
@@ -574,7 +585,7 @@ class Rule extends RuleResult {
   RuleResult? trueResult;
   RuleResult? falseResult;
 
-  Rule({this.condition, this.trueResult, this.falseResult});
+  Rule({String? id, this.condition, this.trueResult, this.falseResult}) : super(id: id);
 
   factory Rule.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? condition = json["condition"];
@@ -589,6 +600,7 @@ class Rule extends RuleResult {
 
   factory Rule.fromOther(Rule other) {
     return Rule(
+      id: other.id,
       condition: other.condition != null ? RuleCondition.fromOther(other.condition!) : null,
       trueResult: other.trueResult != null ? RuleResult.fromOther(other.trueResult!) : null,
       falseResult: other.falseResult != null ? RuleResult.fromOther(other.falseResult!) : null,
@@ -710,10 +722,11 @@ class Rule extends RuleResult {
 class RuleCases extends RuleResult {
   List<Rule> cases;
 
-  RuleCases({required this.cases});
+  RuleCases({String? id, required this.cases}) : super(id: id);
 
   factory RuleCases.fromOther(RuleCases other) {
     return RuleCases(
+      id: other.id,
       cases: other.cases.map((e) => Rule.fromOther(e)).toList()
     );
   }

@@ -113,7 +113,14 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
     widget.controller?.expand = _expand;
     widget.controller?.collapse = _collapse;
 
-    _controller = AnimationController(duration: _kExpand, vsync: this);
+    _controller = AnimationController(duration: _kExpand, vsync: this)..addStatusListener((status) {
+      if (status == AnimationStatus.completed && widget.controller?.target?.currentContext != null) {
+        //TODO: this does not finish scrolling to where it should for some reason
+        Scrollable.ensureVisible(widget.controller!.target!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5).then((_) {
+          widget.controller!.target = null;
+        });
+      }
+    });
     _heightFactor = _controller.drive(_easeInTween);
     _iconTurns = _controller.drive(_halfTween.chain(_easeInTween));
     _border = _controller.drive(_borderTween.chain(_easeOutTween));
@@ -275,16 +282,7 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
   }
 
   @override
-  Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.controller?.target?.currentContext != null) {
-        //TODO: this does not finish scrolling to where it should for some reason
-        Scrollable.ensureVisible(widget.controller!.target!.currentContext!, duration: const Duration(seconds: 1), alignment: 0.5).then((_) {
-          widget.controller!.target = null;
-        });
-      }
-    });
-    
+  Widget build(BuildContext context) {    
     final ExpansionTileThemeData expansionTileTheme = ExpansionTileTheme.of(context);
     final bool closed = !_isExpanded && _controller.isDismissed;
     final bool shouldRemoveChildren = closed && !widget.maintainState;
