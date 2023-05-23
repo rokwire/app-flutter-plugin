@@ -276,7 +276,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
-    return SurveyDataWidget(_buildTextFormFieldWidget("Response", readOnly: readOnly, multipleLines: true, initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
+    return SurveyDataWidget(_buildTextFormFieldWidget("Response", readOnly: readOnly, maxLength: survey.maxLength, multipleLines: true,
+      initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
       survey.response = value;
       _onChangeResponse(false);
     }).widget);
@@ -661,11 +662,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     );
   }
 
-  SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, bool multipleLines = false, String? initialValue, String? hint,
+  SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, int? maxLength, bool multipleLines = false, String? initialValue, String? hint,
     TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator,
     TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
-    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, multipleLines: multipleLines, inputType: inputType,
-      onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
+    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, maxLength: maxLength, multipleLines: multipleLines,
+      inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
       textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters
     ));
   }
