@@ -5,7 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next build on `develop` should refer to version 1.4.0 -->
+<!-- The next build on `develop` should refer to version 1.5.0 -->
+### Changed
+- Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Retire Assets service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
+
+### Fixed
+- Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
+
+## [1.4.0] - 2023-05-12
 ### Fixed
 - Handle exceptions that Geolocator.getCurrentPosition could throw. 
 - Fixed processing analyticsUrl when sending notifyHttpResponse notification for Analytics [#266](https://github.com/rokwire/app-flutter-plugin/issues/266).

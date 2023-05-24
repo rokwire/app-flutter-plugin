@@ -879,7 +879,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
@@ -901,7 +901,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().put(url, auth: Auth2(),body: body);
@@ -1094,29 +1094,19 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
-    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
-    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
-    if (templatesContentItem is! Map) {
-      return null;
-    }
-    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
-    dynamic templatesJson = templatesItem['data'];
-    if (templatesJson is! List) {
-      return null;
-    }
-    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
-    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
-    List<GroupPostNudge>? groupNudges;
+    const String templatesCategory = 'gies_post_templates';
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(JsonUtils.listValue(await Content().loadContentItem(templatesCategory)));
     if (CollectionUtils.isNotEmpty(allTemplates)) {
-      groupNudges = <GroupPostNudge>[];
+      List<GroupPostNudge> groupNudges = <GroupPostNudge>[];
       for (GroupPostNudge template in allTemplates!) {
         GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
         if (nudge != null) {
           groupNudges.add(nudge);
         }
       }
+      return groupNudges;
     }
-    return groupNudges;
+    return null;
   }
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
