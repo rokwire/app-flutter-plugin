@@ -589,7 +589,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return _survey = Survey(
       id: widget.survey != null ? widget.survey!.id : '',
       data: data,
-      type: 'user',
+      type: widget.survey?.type ?? 'user',
       scored: _scored,
       title: (_textControllers["title"]?.text.isNotEmpty ?? false) ? _textControllers["title"]!.text : 'New Survey',
       moreInfo: _textControllers["more_info"]?.text,
