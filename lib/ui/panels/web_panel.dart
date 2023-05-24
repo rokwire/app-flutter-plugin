@@ -87,7 +87,7 @@ class WebPanel extends StatefulWidget {
     
     if (title != null) {
       contentList.add(flutter_html.Html(data: title,
-          onLinkTap: (url, context, attributes, element) => onTapStatusLink(url),
+          onLinkTap: (url, context, element) => onTapStatusLink(url),
           style: { "body": flutter_html.Style(color: Styles().colors!.fillColorPrimary,
               fontFamily: Styles().fontFamilies!.bold, fontSize: flutter_html.FontSize(32),
               textAlign: TextAlign.center, padding: EdgeInsets.zero, margin: flutter_html.Margins.zero), },),
@@ -100,7 +100,7 @@ class WebPanel extends StatefulWidget {
 
     if ((message != null)) {
       contentList.add(flutter_html.Html(data: message,
-        onLinkTap: (url, context, attributes, element) => onTapStatusLink(url),
+        onLinkTap: (url, context, element) => onTapStatusLink(url),
         style: { "body": flutter_html.Style(color: Styles().colors!.fillColorPrimary,
             fontFamily: Styles().fontFamilies!.regular, fontSize: flutter_html.FontSize(20),
             textAlign: TextAlign.left, padding: EdgeInsets.zero, margin: flutter_html.Margins.zero), },),
