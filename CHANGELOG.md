@@ -5,7 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next build on `develop` should refer to version 1.4.0 -->
+<!-- The next build on `develop` should refer to version 1.5.0 -->
+### Changed
+- Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Retire Assets service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
+
+## [1.4.0] - 2023-05-12
 ### Fixed
 - Handle exceptions that Geolocator.getCurrentPosition could throw. 
 - Fixed processing analyticsUrl when sending notifyHttpResponse notification for Analytics [#266](https://github.com/rokwire/app-flutter-plugin/issues/266).
@@ -14,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Content attributes prepared for multiple scopes support [#265](https://github.com/rokwire/app-flutter-plugin/issues/265).
 - Use Core Url host to test online status in web panel [#271](https://github.com/rokwire/app-flutter-plugin/issues/271).
 - UrlUtis.isHostAvailable exposed to public [#3052](https://github.com/rokwire/illinois-app/issues/3052).
+- Updated TZDateTimeUtils [#3225](https://github.com/rokwire/illinois-app/issues/3225).
+- Always post "research_group" POST paramter in v2/groups and v2/user/groups API calls [#275](https://github.com/rokwire/app-flutter-plugin/issues/275).
 ### Added
 - Added footer widget in ExpandableText [#3055](https://github.com/rokwire/illinois-app/issues/3055).
 - Added Uri fix utility [#3112](https://github.com/rokwire/illinois-app/issues/3112).

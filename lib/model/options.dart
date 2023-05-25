@@ -29,6 +29,17 @@ class OptionData {
     return list;
   }
 
+  static List<dynamic>? listToJson(List<OptionData>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (OptionData? value in values) {
+        json.add(value?.toJson());
+      }
+    }
+    return json;
+  }
+
   @override
   String toString() {
     return title;

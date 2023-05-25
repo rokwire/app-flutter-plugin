@@ -114,17 +114,9 @@ class Survey extends RuleEngine {
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
-    Map<String, SurveyData> dataMap = {};
-    Map<String, dynamic> surveyDataMap = JsonUtils.mapValue(json['data']) ?? {};
-    surveyDataMap.forEach((key, value) {
-      if (value is Map<String, dynamic>) {
-        dataMap[key] = SurveyData.fromJson(key, value);
-      }
-    });
-
     return Survey(
       id: json['id'],
-      data: dataMap,
+      data: SurveyData.mapFromJson(JsonUtils.mapValue(json['data']) ?? {}),
       type: JsonUtils.stringValue(json['type']) ?? '',
       scored: JsonUtils.boolValue(json['scored']) ?? true,
       title: JsonUtils.stringValue(json['title']) ?? 'Survey',
@@ -146,7 +138,7 @@ class Survey extends RuleEngine {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'data': JsonUtils.encodeMap(data),
+      'data': SurveyData.mapToJson(data),
       'type': type,
       'scored': scored,
       'title': title,
@@ -489,6 +481,24 @@ abstract class SurveyData {
     };
   }
 
+  static Map<String, SurveyData> mapFromJson(Map<String, dynamic> jsonMap) {
+    Map<String, SurveyData> valueMap = <String, SurveyData>{};
+    jsonMap.forEach((String key, dynamic value) {
+      if (value is Map<String, dynamic>) {
+        valueMap[key] = SurveyData.fromJson(key, value);
+      }
+    });
+    return valueMap;
+  }
+
+  static Map<String, dynamic> mapToJson(Map<String, SurveyData> valueMap) {
+    Map<String, dynamic> jsonMap = <String, dynamic>{};
+    valueMap.forEach((String key, SurveyData value) {
+      jsonMap[key] = value.toJson();
+    });
+    return valueMap;
+  }
+
   dynamic getProperty(RuleKey? key, Survey survey) {
     switch (key?.key) {
       case null:
@@ -700,7 +710,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['options'] = JsonUtils.encodeList(options);
+    json['options'] = OptionData.listToJson(options);
     json['correct_answers'] = correctAnswers;
     json['allow_multiple'] = allowMultiple;
     json['self_score'] = selfScore;
