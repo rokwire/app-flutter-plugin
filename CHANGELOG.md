@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263)
 
+### Fixed
+- Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
+
 ## [1.4.0] - 2023-05-12
 ### Fixed
 - Handle exceptions that Geolocator.getCurrentPosition could throw. 
@@ -37,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created TZDateTimeUtils [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
+- Username authentication [#273](https://github.com/rokwire/app-flutter-plugin/issues/273)
 
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).

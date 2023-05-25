@@ -71,7 +71,7 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, phoneTwilio, oidc, oidcIllinois }
+enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
@@ -79,6 +79,7 @@ String? auth2LoginTypeToString(Auth2LoginType value) {
     case Auth2LoginType.apiKey: return 'api_key';
     case Auth2LoginType.email: return 'email';
     case Auth2LoginType.phone: return 'phone';
+    case Auth2LoginType.username: return 'username';
     case Auth2LoginType.phoneTwilio: return 'twilio_phone';
     case Auth2LoginType.oidc: return 'oidc';
     case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
@@ -98,6 +99,9 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   else if (value == 'phone') {
     return Auth2LoginType.phone;
   }
+  else if (value == 'username') {
+    return Auth2LoginType.username;
+  }
   else if (value == 'twilio_phone') {
     return Auth2LoginType.phoneTwilio;
   }
@@ -115,6 +119,7 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
 
 class Auth2Account {
   final String? id;
+  final String? username;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
   final List<Auth2StringEntry>? permissions;
@@ -123,11 +128,12 @@ class Auth2Account {
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
   
-  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
+  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
+      username: username ?? other?.username,
       profile: profile ?? other?.profile,
       prefs: prefs ?? other?.prefs,
       permissions: permissions ?? other?.permissions,
@@ -141,6 +147,7 @@ class Auth2Account {
   static Auth2Account? fromJson(Map<String, dynamic>? json, { Auth2UserPrefs? prefs, Auth2UserProfile? profile }) {
     return (json != null) ? Auth2Account(
       id: JsonUtils.stringValue(json['id']),
+      username: JsonUtils.stringValue(json['username']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
       permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
@@ -154,6 +161,7 @@ class Auth2Account {
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
+      'username' : username,
       'profile': profile,
       'preferences': prefs,
       'permissions': permissions,
@@ -168,6 +176,7 @@ class Auth2Account {
   bool operator ==(other) =>
     (other is Auth2Account) &&
       (other.id == id) &&
+      (other.username == username) &&
       (other.profile == profile) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
@@ -178,6 +187,7 @@ class Auth2Account {
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
+    (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
