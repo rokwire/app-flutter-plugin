@@ -26,7 +26,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class Event with Explore, Favorite {
   String? id;
   String? title;
-  String? subTitle;
   String? shortDescription;
   String? longDescription;
   String? imageURL;
@@ -90,7 +89,6 @@ class Event with Explore, Favorite {
       (other is Event) &&
       (other.id == id) &&
       (other.title == title) &&
-      (other.subTitle == subTitle) &&
       (other.shortDescription == shortDescription) &&
       (other.longDescription == longDescription) &&
       (other.imageURL == imageURL) &&
@@ -145,7 +143,6 @@ class Event with Explore, Favorite {
   int get hashCode =>
       (id?.hashCode ?? 0) ^
       (title?.hashCode ?? 0) ^
-      (subTitle?.hashCode ?? 0) ^
       (shortDescription?.hashCode ?? 0) ^
       (longDescription?.hashCode ?? 0) ^
       (imageURL?.hashCode ?? 0) ^
@@ -221,7 +218,6 @@ class Event with Explore, Favorite {
 
     id = json["id"];
     title = json['title'];
-    subTitle = json['subTitle'];
     shortDescription = json['shortDescription'];
     longDescription = json.containsKey("description") ? json["description"] : json['longDescription']; /*Back compatibility keep until we use longDescription */
     imageURL = json['imageURL'];
@@ -273,7 +269,6 @@ class Event with Explore, Favorite {
   void _initFromOther(Event? other) {
     id = other?.id;
     title = other?.title;
-    subTitle = other?.subTitle;
     shortDescription = other?.shortDescription;
     longDescription = other?.longDescription;
     imageURL = other?.imageURL;
@@ -329,7 +324,6 @@ class Event with Explore, Favorite {
     return {
       "id": id,
       "title": title,
-      "subTitle": subTitle,
       "shortDescription": shortDescription,
       "longDescription": longDescription,
       "imageURL": imageURL,
@@ -387,9 +381,6 @@ class Event with Explore, Favorite {
     }
     if(title!=null) {
       result["title"] = title;
-    }
-    if(subTitle!=null) {
-      result["subTitle"] = subTitle;
     }
     if(shortDescription!=null) {
       result["shortDescription"] = shortDescription;
@@ -708,7 +699,6 @@ class Event with Explore, Favorite {
   // Explore
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
-  @override String?   get exploreSubTitle         { return subTitle; }
   @override String?   get exploreShortDescription { return shortDescription; }
   @override String?   get exploreLongDescription  { return longDescription; }
   @override DateTime? get exploreStartDateUtc     { return startDateGmt; }
