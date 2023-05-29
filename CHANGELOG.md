@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
 - Retire Assets service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
 - Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
-- Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232)
+- Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232).
+- Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
 ### Added
-- Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263)
+- Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
