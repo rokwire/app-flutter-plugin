@@ -681,7 +681,7 @@ class Event with Explore, Favorite {
   // Explore
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
-  @override String?   get exploreLongDescription  { return description; }
+  @override String?   get exploreDescription      { return description; }
   @override DateTime? get exploreStartDateUtc     { return startDateGmt; }
   @override String?   get exploreImageURL         { return StringUtils.isNotEmpty(imageURL) ? imageURL : randomImageURL; }
   @override ExploreLocation? get exploreLocation  { return location; }
@@ -692,7 +692,7 @@ class Event with Explore, Favorite {
   // Favorite
   static const String favoriteKeyName = "eventIds";
   @override String get favoriteKey => favoriteKeyName;
-  @override String? get favoriteId => exploreId;
+  @override String? get favoriteId => id;
 }
 
 class Contact {
