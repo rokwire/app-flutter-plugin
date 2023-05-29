@@ -23,7 +23,6 @@ class Explore implements Comparable<Explore> {
 
   String?   get exploreId => null;
   String?   get exploreTitle => null;
-  String?   get exploreSubTitle => null;
   String?   get exploreShortDescription => null;
   String?   get exploreLongDescription => null;
   DateTime? get exploreStartDateUtc => null;
