@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 //////////////////////////////
 /// Explore
 
-class Explore implements Comparable<Explore> {
+abstract class Explore implements Comparable<Explore> {
 
   String?   get exploreId => null;
   String?   get exploreTitle => null;
