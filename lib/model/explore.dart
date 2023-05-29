@@ -24,14 +24,14 @@ class Explore implements Comparable<Explore> {
   String?   get exploreId => null;
   String?   get exploreTitle => null;
   String?   get exploreDescription => null;
-  DateTime? get exploreStartDateUtc => null;
+  DateTime? get exploreDateTimeUtc => null;
   String?   get exploreImageURL => null;
   ExploreLocation? get exploreLocation => null;
 
   @override
   int compareTo(Explore other) {
-    return ((exploreStartDateUtc != null) && (other.exploreStartDateUtc != null)) ?
-      SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc) :
+    return ((exploreDateTimeUtc != null) && (other.exploreDateTimeUtc != null)) ?
+      SortUtils.compare(exploreDateTimeUtc, other.exploreDateTimeUtc) :
       SortUtils.compare(exploreTitle, other.exploreTitle);
   }
 }
