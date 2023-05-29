@@ -26,8 +26,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class Event with Explore, Favorite {
   String? id;
   String? title;
-  String? shortDescription;
-  String? longDescription;
+  String? description;
   String? imageURL;
 
   ExploreLocation? location;
@@ -88,8 +87,7 @@ class Event with Explore, Favorite {
       (other is Event) &&
       (other.id == id) &&
       (other.title == title) &&
-      (other.shortDescription == shortDescription) &&
-      (other.longDescription == longDescription) &&
+      (other.description == description) &&
       (other.imageURL == imageURL) &&
 
       (other.location == location) &&
@@ -141,8 +139,7 @@ class Event with Explore, Favorite {
   int get hashCode =>
       (id?.hashCode ?? 0) ^
       (title?.hashCode ?? 0) ^
-      (shortDescription?.hashCode ?? 0) ^
-      (longDescription?.hashCode ?? 0) ^
+      (description?.hashCode ?? 0) ^
       (imageURL?.hashCode ?? 0) ^
 
       (location?.hashCode ?? 0) ^
@@ -215,8 +212,7 @@ class Event with Explore, Favorite {
 
     id = json["id"];
     title = json['title'];
-    shortDescription = json['shortDescription'];
-    longDescription = json.containsKey("description") ? json["description"] : json['longDescription']; /*Back compatibility keep until we use longDescription */
+    description = json['longDescription']; /*Back compatibility keep until we use longDescription */
     imageURL = json['imageURL'];
     location = ExploreLocation.fromJson(json['location']);
     eventId = json['eventId'];
@@ -265,8 +261,7 @@ class Event with Explore, Favorite {
   void _initFromOther(Event? other) {
     id = other?.id;
     title = other?.title;
-    shortDescription = other?.shortDescription;
-    longDescription = other?.longDescription;
+    description = other?.description;
     imageURL = other?.imageURL;
     location = other?.location;
     eventId = other?.eventId;
@@ -319,8 +314,7 @@ class Event with Explore, Favorite {
     return {
       "id": id,
       "title": title,
-      "shortDescription": shortDescription,
-      "longDescription": longDescription,
+      "longDescription": description,
       "imageURL": imageURL,
       "location": location?.toJson(),
 
@@ -376,11 +370,8 @@ class Event with Explore, Favorite {
     if(title!=null) {
       result["title"] = title;
     }
-    if(shortDescription!=null) {
-      result["shortDescription"] = shortDescription;
-    }
-    if(longDescription!=null) {
-      result["longDescription"] = longDescription;
+    if(description!=null) {
+      result["longDescription"] = description;
     }
     if(imageURL!=null) {
       result["imageURL"] = imageURL;
@@ -690,8 +681,7 @@ class Event with Explore, Favorite {
   // Explore
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
-  @override String?   get exploreShortDescription { return shortDescription; }
-  @override String?   get exploreLongDescription  { return longDescription; }
+  @override String?   get exploreLongDescription  { return description; }
   @override DateTime? get exploreStartDateUtc     { return startDateGmt; }
   @override String?   get exploreImageURL         { return StringUtils.isNotEmpty(imageURL) ? imageURL : randomImageURL; }
   @override ExploreLocation? get exploreLocation  { return location; }
