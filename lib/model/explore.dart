@@ -19,21 +19,25 @@ import 'package:rokwire_plugin/utils/utils.dart';
 //////////////////////////////
 /// Explore
 
-abstract class Explore implements Comparable<Explore> {
+class Explore implements Comparable<Explore> {
 
-  String?   get exploreId;
-  String?   get exploreTitle;
-  String?   get exploreSubTitle;
-  String?   get exploreShortDescription;
-  String?   get exploreLongDescription;
-  DateTime? get exploreStartDateUtc;
-  String?   get exploreImageURL;
-  String?   get explorePlaceId;
-  ExploreLocation? get exploreLocation;
+  String?   get exploreId => null;
+  String?   get exploreTitle => null;
+  String?   get exploreSubTitle => null;
+  String?   get exploreShortDescription => null;
+  String?   get exploreLongDescription => null;
+  DateTime? get exploreStartDateUtc => null;
+  String?   get exploreImageURL => null;
+  String?   get explorePlaceId => null;
+  ExploreLocation? get exploreLocation => null;
   String? get exploreLocationDescription => exploreLocation?.description;
 
   @override
-  int compareTo(Explore other) => SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc);
+  int compareTo(Explore other) {
+    return ((exploreStartDateUtc != null) && (other.exploreStartDateUtc != null)) ?
+      SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc) :
+      SortUtils.compare(exploreTitle, other.exploreTitle);
+  }
 }
 
 //////////////////////////////

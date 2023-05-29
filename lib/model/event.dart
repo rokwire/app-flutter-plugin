@@ -610,8 +610,9 @@ class Event with Explore, Favorite {
 
   @override
   int compareTo(Explore other) {
-    int result = (other is Event) ? SortUtils.compare(convergeScore, other.convergeScore, descending: true) : 0; //Descending order by score
-    return (result != 0) ? result : super.compareTo(other);
+    return (other is Event) ?
+      SortUtils.compare(convergeScore, other.convergeScore, descending: true) : //Descending order by score
+      super.compareTo(other); 
   }
 
   bool get isGameEvent {
