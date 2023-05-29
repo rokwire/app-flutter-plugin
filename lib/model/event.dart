@@ -29,7 +29,6 @@ class Event with Explore, Favorite {
   String? shortDescription;
   String? longDescription;
   String? imageURL;
-  String? placeID;
 
   ExploreLocation? location;
   
@@ -92,7 +91,6 @@ class Event with Explore, Favorite {
       (other.shortDescription == shortDescription) &&
       (other.longDescription == longDescription) &&
       (other.imageURL == imageURL) &&
-      (other.placeID == placeID) &&
 
       (other.location == location) &&
 
@@ -146,7 +144,6 @@ class Event with Explore, Favorite {
       (shortDescription?.hashCode ?? 0) ^
       (longDescription?.hashCode ?? 0) ^
       (imageURL?.hashCode ?? 0) ^
-      (placeID?.hashCode ?? 0) ^
 
       (location?.hashCode ?? 0) ^
 
@@ -221,7 +218,6 @@ class Event with Explore, Favorite {
     shortDescription = json['shortDescription'];
     longDescription = json.containsKey("description") ? json["description"] : json['longDescription']; /*Back compatibility keep until we use longDescription */
     imageURL = json['imageURL'];
-    placeID = json['placeID'];
     location = ExploreLocation.fromJson(json['location']);
     eventId = json['eventId'];
     startDateString = json['startDate'];
@@ -272,7 +268,6 @@ class Event with Explore, Favorite {
     shortDescription = other?.shortDescription;
     longDescription = other?.longDescription;
     imageURL = other?.imageURL;
-    placeID = other?.placeID;
     location = other?.location;
     eventId = other?.eventId;
     startDateString = other?.startDateString;
@@ -327,7 +322,6 @@ class Event with Explore, Favorite {
       "shortDescription": shortDescription,
       "longDescription": longDescription,
       "imageURL": imageURL,
-      "placeID": placeID,
       "location": location?.toJson(),
 
       "eventId" : eventId,
@@ -390,9 +384,6 @@ class Event with Explore, Favorite {
     }
     if(imageURL!=null) {
       result["imageURL"] = imageURL;
-    }
-    if(placeID!=null) {
-      result["placeID"] = placeID;
     }
     if(location!=null) {
       Map<String, dynamic> locationJson = {};
@@ -703,7 +694,6 @@ class Event with Explore, Favorite {
   @override String?   get exploreLongDescription  { return longDescription; }
   @override DateTime? get exploreStartDateUtc     { return startDateGmt; }
   @override String?   get exploreImageURL         { return StringUtils.isNotEmpty(imageURL) ? imageURL : randomImageURL; }
-  @override String?   get explorePlaceId          { return placeID; }
   @override ExploreLocation? get exploreLocation  { return location; }
 
   DateTime? get startDateLocal     { return AppDateTime().getUniLocalTimeFromUtcTime(startDateGmt); }
