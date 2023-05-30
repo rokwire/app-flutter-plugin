@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Event2 {
+class Event2 with Explore {
   final String? id;
   final String? name;
   final String? description;
@@ -29,6 +29,8 @@ class Event2 {
   final String? sponsor;
   final String? speaker;
   final List<Contact>? contacts;
+
+  String? assignedImageUrl;
 
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl,
@@ -157,6 +159,14 @@ class Event2 {
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(contacts));
+
+  // Explore
+  @override String?   get exploreId               => id;
+  @override String?   get exploreTitle            => name;
+  @override String?   get exploreDescription      => description;
+  @override DateTime? get exploreDateTimeUtc      => startTimeUtc;
+  @override String?   get exploreImageURL         => StringUtils.isNotEmpty(imageUrl) ? imageUrl : assignedImageUrl;
+  @override ExploreLocation? get exploreLocation  { return location; }
 }
 
 ///////////////////////////////
