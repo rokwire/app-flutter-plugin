@@ -1,8 +1,9 @@
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Event2 with Explore {
+class Event2 with Explore, Favorite {
   final String? id;
   final String? name;
   final String? description;
@@ -167,6 +168,11 @@ class Event2 with Explore {
   @override DateTime? get exploreDateTimeUtc      => startTimeUtc;
   @override String?   get exploreImageURL         => StringUtils.isNotEmpty(imageUrl) ? imageUrl : assignedImageUrl;
   @override ExploreLocation? get exploreLocation  { return location; }
+
+  // Favorite
+  static const String favoriteKeyName = "event2Ids";
+  @override String get favoriteKey => favoriteKeyName;
+  @override String? get favoriteId => id;
 }
 
 ///////////////////////////////
