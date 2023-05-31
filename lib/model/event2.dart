@@ -161,6 +161,28 @@ class Event2 with Explore, Favorite {
     (speaker?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(contacts));
 
+  static List<Event2>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2>? result;
+    if (jsonList != null) {
+      result = <Event2>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Event2>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (Event2 contentEntry in contentList) {
+        jsonList.add(contentEntry.toJson());
+      }
+    }
+    return jsonList;
+  }
+
   // Explore
   @override String?   get exploreId               => id;
   @override String?   get exploreTitle            => name;
@@ -315,6 +337,168 @@ String? eventUserRoleToString(EventUserRole? value) {
   switch (value) {
     case EventUserRole.admin: return 'admin';
     case EventUserRole.participant: return 'participant';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// EventTimeFilter
+
+enum EventTimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, thisMonth, customRange }
+
+EventTimeFilter? eventTimeFilterFromString(String? value) {
+  if (value == 'upcoming') {
+    return EventTimeFilter.upcoming;
+  }
+  else if (value == 'today') {
+    return EventTimeFilter.today;
+  }
+  else if (value == 'tomorrow') {
+    return EventTimeFilter.tomorrow;
+  }
+  else if (value == 'this_week') {
+    return EventTimeFilter.thisWeek;
+  }
+  else if (value == 'this_weekend') {
+    return EventTimeFilter.thisWeekend;
+  }
+  else if (value == 'this_month') {
+    return EventTimeFilter.thisMonth;
+  }
+  else if (value == 'custom_range') {
+    return EventTimeFilter.customRange;
+  }
+  else {
+    return null;
+  }
+}
+
+String? eventTimeFilterToString(EventTimeFilter? value) {
+  switch (value) {
+    case EventTimeFilter.upcoming: return 'upcoming';
+    case EventTimeFilter.today: return 'today';
+    case EventTimeFilter.tomorrow: return 'tomorrow';
+    case EventTimeFilter.thisWeek: return 'this_week';
+    case EventTimeFilter.thisWeekend: return 'this_weekend';
+    case EventTimeFilter.thisMonth: return 'this_month';
+    case EventTimeFilter.customRange: return 'custom_range';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// EventTypeFilter
+
+enum EventTypeFilter { free, paid, inPerson, online, public, private, nearby }
+
+EventTypeFilter? eventTypeFilterFromString(String? value) {
+  if (value == 'free') {
+    return EventTypeFilter.free;
+  }
+  else if (value == 'paid') {
+    return EventTypeFilter.paid;
+  }
+  else if (value == 'inPerson') {
+    return EventTypeFilter.inPerson;
+  }
+  else if (value == 'online') {
+    return EventTypeFilter.online;
+  }
+  else if (value == 'public') {
+    return EventTypeFilter.public;
+  }
+  else if (value == 'private') {
+    return EventTypeFilter.private;
+  }
+  else if (value == 'nearby') {
+    return EventTypeFilter.nearby;
+  }
+  else {
+    return null;
+  }
+}
+
+String? eventTypeFilterToString(EventTypeFilter? value) {
+  switch (value) {
+    case EventTypeFilter.free: return 'free';
+    case EventTypeFilter.paid: return 'paid';
+    case EventTypeFilter.inPerson: return 'in_person';
+    case EventTypeFilter.online: return 'online';
+    case EventTypeFilter.public: return 'public';
+    case EventTypeFilter.private: return 'private';
+    case EventTypeFilter.nearby: return 'nearby';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// EventSortType
+
+enum EventSortType { dateTime, alphabetical, proximity }
+
+EventSortType? eventSortTypeFromString(String? value) {
+  if (value == 'date_time') {
+    return EventSortType.dateTime;
+  }
+  else if (value == 'alphabetical') {
+    return EventSortType.alphabetical;
+  }
+  else if (value == 'proximity') {
+    return EventSortType.proximity;
+  }
+  else {
+    return null;
+  }
+}
+
+String? eventSortTypeToString(EventSortType? value) {
+  switch (value) {
+    case EventSortType.dateTime: return 'date_time';
+    case EventSortType.alphabetical: return 'alphabetical';
+    case EventSortType.proximity: return 'proximity';
+    default: return null;
+  }
+}
+
+String? eventSortTypeToOption(EventSortType? value) {
+  // sort_by: name, start_time, end_time, proximity. Default: start_time 
+  switch (value) {
+    case EventSortType.dateTime: return 'start_time';
+    case EventSortType.alphabetical: return 'name';
+    case EventSortType.proximity: return 'proximity';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// EventSortOrder
+
+enum EventSortOrder { ascending, descending }
+
+EventSortOrder? eventSortOrderFromString(String? value) {
+  if (value == 'ascending') {
+    return EventSortOrder.ascending;
+  }
+  else if (value == 'descending') {
+    return EventSortOrder.descending;
+  }
+  else {
+    return null;
+  }
+}
+
+String? eventSortOrderToString(EventSortOrder? value) {
+  switch (value) {
+    case EventSortOrder.ascending: return 'ascending';
+    case EventSortOrder.descending: return 'descending';
+    default: return null;
+  }
+}
+
+String? eventSortOrderToOption(EventSortOrder? value) {
+  switch (value) {
+    case EventSortOrder.ascending: return 'asc';
+    case EventSortOrder.descending: return 'desc';
     default: return null;
   }
 }
