@@ -46,6 +46,7 @@ class ExploreLocation {
   final String? name;
   final String? description;
   final String? building;
+  final String? fullAddress;
   final String? address;
   final String? city;
   final String? state;
@@ -60,6 +61,7 @@ class ExploreLocation {
     this.name,
     this.description,
     this.building,
+    this.fullAddress,
     this.address,
     this.city,
     this.state,
@@ -76,6 +78,7 @@ class ExploreLocation {
       name: JsonUtils.stringValue(json['name']),
       description: JsonUtils.stringValue(json['description']),
       building: JsonUtils.stringValue(json['building']),
+      fullAddress: JsonUtils.stringValue(json['full_address']),
       address: JsonUtils.stringValue(json['address']),
       city: JsonUtils.stringValue(json['city']),
       state: JsonUtils.stringValue(json['state']),
@@ -93,6 +96,7 @@ class ExploreLocation {
       "name": name,
       "description": description,
       "building": building,
+      "fullAddress": fullAddress,
       "address": address,
       "city": city,
       "state": state,
@@ -109,6 +113,7 @@ class ExploreLocation {
     String? description,
     String? name,
     String? building,
+    String? fullAddress,
     String? address,
     String? city,
     String? state,
@@ -122,6 +127,7 @@ class ExploreLocation {
     name: name ?? other?.name,
     description: description ?? other?.description,
     building: building ?? other?.building,
+    fullAddress: fullAddress ?? other?.fullAddress,
     address: address ?? other?.address,
     city: city ?? other?.city,
     state: state ?? other?.state,
@@ -138,6 +144,7 @@ class ExploreLocation {
     (other.name == name) &&
     (other.description == description) &&
     (other.building == building) &&
+    (other.fullAddress == fullAddress) &&
     (other.address == address) &&
     (other.city == city) &&
     (other.state == state) &&
@@ -153,6 +160,7 @@ class ExploreLocation {
     (name?.hashCode ?? 0) ^
     (description?.hashCode ?? 0) ^
     (building?.hashCode ?? 0) ^
+    (fullAddress?.hashCode ?? 0) ^
     (address?.hashCode ?? 0) ^
     (city?.hashCode ?? 0) ^
     (state?.hashCode ?? 0) ^
@@ -163,6 +171,12 @@ class ExploreLocation {
   String? get analyticsValue {
     if ((name != null) && name!.isNotEmpty) {
       return name;
+    }
+    else if ((building != null) && building!.isNotEmpty) {
+      return building;
+    }
+    else if ((fullAddress != null) && fullAddress!.isNotEmpty) {
+      return fullAddress;
     }
     else if ((description != null) && description!.isNotEmpty) {
       return description;
