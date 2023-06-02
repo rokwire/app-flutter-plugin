@@ -25,6 +25,7 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 
 class StringUtils {
 
@@ -1244,6 +1245,21 @@ class TZDateTimeUtils {
 
   static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+class WebUtils {
+  static String getCookie(String name) {
+    String? cookie = html.document.cookie;
+    if (StringUtils.isNotEmpty(cookie)) {
+      for (String item in cookie!.split(";")) {
+        final split = item.split("=");
+        if (split[0].trim() == name) {
+          return split[1];
+        }
+      }
+    }
+    return "";
+  }
 }
 
 class Pair<L,R> {

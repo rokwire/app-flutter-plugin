@@ -33,6 +33,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/utils/crypt.dart';
+import 'package:universal_html/html.dart' as html;
 
 class Config with Service, NetworkAuthProvider, NotificationsListener {
 
@@ -306,7 +307,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _config = await loadFromFile(configFile);
 
     if (_config == null) {
-      _configAsset = await loadFromAssets();
+      if (!isReleaseWeb) {
+        _configAsset = await loadFromAssets();
+      }
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
@@ -363,7 +366,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   String? get appPlatformId {
-    if (_appPlatformId == null) {
+    if (kIsWeb) {
+      return '${html.window.location.origin}/$webServiceId';
+    } else if (_appPlatformId == null) {
       _appPlatformId = appId;
 
       String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
@@ -548,6 +553,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: secretKeys
   String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
+  String? get webServiceId => JsonUtils.stringValue(secretRokwire['web_service_id']);
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
@@ -559,6 +565,18 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
+  }
+
+  bool get isAdmin => false;
+  bool get isReleaseWeb => kIsWeb && !kDebugMode;
+  bool get bypassLogin => true; // Bypass login for testing web layouts
+  String? get authUrl {
+    if (isReleaseWeb) {
+      return '${html.window.location.origin}/$webServiceId';
+    } else if (isAdmin) {
+      return '$coreUrl/admin';
+    }
+    return '$coreUrl/services';
   }
 }
 
