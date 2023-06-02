@@ -35,8 +35,8 @@ class Storage with Service {
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
 
-  String? _encryptionKey;
-  String? _encryptionIV;
+  // String? _encryptionKey;
+  // String? _encryptionIV;
 
   // Singletone Factory
 
@@ -64,9 +64,9 @@ class Storage with Service {
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
 
-    _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
-    _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
-    
+    // _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
+    // _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
+
     if (_sharedPreferences == null) {
       throw ServiceError(
         source: this,
@@ -75,14 +75,14 @@ class Storage with Service {
         description: 'Failed to initialize application preferences storage.',
       );
     }
-    else if ((_encryptionKey == null) || (_encryptionIV == null)) {
-      throw ServiceError(
-        source: this,
-        severity: ServiceErrorSeverity.fatal,
-        title: 'Storage Initialization Failed',
-        description: 'Failed to initialize encryption keys.',
-      );
-    }
+    // else if ((_encryptionKey == null) || (_encryptionIV == null)) {
+    //   throw ServiceError(
+    //     source: this,
+    //     severity: ServiceErrorSeverity.fatal,
+    //     title: 'Storage Initialization Failed',
+    //     description: 'Failed to initialize encryption keys.',
+    //   );
+    // }
     else {
       await super.initService();
     }
@@ -90,11 +90,11 @@ class Storage with Service {
 
   // Encryption
 
-  String  get encryptionKeyId => _ecryptionKeyId;
-  String? get encryptionKey => _encryptionKey;
-  
-  String  get encryptionIVId => _encryptionIVId;
-  String? get encryptionIV => _encryptionIV;
+  // String  get encryptionKeyId => _ecryptionKeyId;
+  // String? get encryptionKey => _encryptionKey;
+  //
+  // String  get encryptionIVId => _encryptionIVId;
+  // String? get encryptionIV => _encryptionIV;
 
   // String? encrypt(String? value) {
   //   return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
