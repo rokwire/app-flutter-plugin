@@ -56,7 +56,7 @@ class SurveyBuilder {
             children: [
               Text(date ?? '', style: AppTextStyles.widgetDetailSmall),
               Container(width: 8.0),
-              Styles().images?.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
+              AppImages.chevronRight ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
             ],
           ),
@@ -92,7 +92,7 @@ class SurveyBuilder {
 
     return Material(
       borderRadius: BorderRadius.circular(30),
-      color: Styles().colors?.surface,
+      color: AppColors.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) =>

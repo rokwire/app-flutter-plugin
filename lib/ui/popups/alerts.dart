@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/alert.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -26,7 +27,7 @@ class Alerts {
     return Container(
       margin: margin,
       height: height,
-      color: Styles().colors?.dividerLine,
+      color: AppColors.dividerLine,
     );
   }
 }

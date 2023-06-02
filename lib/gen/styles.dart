@@ -12,7 +12,7 @@ class AppColors {
     static Color? get textAccent => Styles().colors?.getColor('textAccent');
     static Color? get textDark => Styles().colors?.getColor('textDark');
     static Color? get textMedium => Styles().colors?.getColor('textMedium');
-    static Color? get textLight => Styles().colors?.getColor('textLight');  
+    static Color? get textLight => Styles().colors?.getColor('textLight');
     static Color? get textDisabled => Styles().colors?.getColor('textDisabled');
     static Color? get iconPrimary => Styles().colors?.getColor('iconPrimary');
     static Color? get iconLight => Styles().colors?.getColor('iconLight');
@@ -23,6 +23,7 @@ class AppColors {
     static Color? get surfaceAccent => Styles().colors?.getColor('surfaceAccent');
     static Color? get background => Styles().colors?.getColor('background');
     static Color? get backgroundVariant => Styles().colors?.getColor('backgroundVariant');
+    static Color? get shadow => Styles().colors?.getColor('shadow');
     static Color? get gradientColorPrimary => Styles().colors?.getColor('gradientColorPrimary');
     static Color? get accentColor1 => Styles().colors?.getColor('accentColor1');
     static Color? get accentColor2 => Styles().colors?.getColor('accentColor2');
@@ -186,4 +187,5 @@ class AppImages {
     static Widget? get chevronLeft => Styles().images?.getImage('chevron-left');
     static Widget? get chevronRight => Styles().images?.getImage('chevron-right');
     static Widget? get close => Styles().images?.getImage('close');
+    static Widget? get retryMedium => Styles().images?.getImage('retry-medium');
 }

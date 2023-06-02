@@ -7,8 +7,8 @@ class ButtonBuilder {
   static Widget standardRoundedButton({String label = '', void Function()? onTap}) {
     return RoundedButton(
       label: label,
-      borderColor: Styles().colors?.fillColorSecondary,
-      backgroundColor: Styles().colors?.surface,
+      borderColor: AppColors.fillColorSecondary,
+      backgroundColor: AppColors.surface,
       textStyle: AppTextStyles.widgetDetailRegularBold,
       onTap: onTap,
     );

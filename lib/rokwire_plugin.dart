@@ -49,7 +49,9 @@ class RokwirePlugin {
       'identifier': identifier,
       'identifier2': identifier2
     }); }
-    catch(e) { debugPrint(e.toString()); }
+    catch(e) {
+      debugPrint(e.toString());
+    }
     return null;
   }
 

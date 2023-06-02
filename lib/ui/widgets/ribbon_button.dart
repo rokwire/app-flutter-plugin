@@ -81,7 +81,7 @@ class RibbonButton extends StatefulWidget {
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   @protected Color? get defaulttextColor => AppColors.textPrimary;
   @protected Color? get displayTextColor => textColor ?? defaulttextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => AppFontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
@@ -89,7 +89,7 @@ class RibbonButton extends StatefulWidget {
   @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
   @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;
 
-  @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
+  @protected Color? get defaultProgressColor => AppColors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
   @protected double get defaultStrokeWidth => 2.0;
   @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;

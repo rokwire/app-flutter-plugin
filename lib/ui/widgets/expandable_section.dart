@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 class ExpandableSection extends StatefulWidget {
@@ -34,8 +35,8 @@ class ExpandableSection extends StatefulWidget {
   @override
   ExpandableSectionState createState() => ExpandableSectionState();
 
-  @protected Color? get defaultTitleColor => Styles().colors?.textPrimary;
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected Color? get defaultTitleColor => AppColors.textPrimary;
+  @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected double? get defaultTitleSize => 18;
   @protected TextStyle get defaultTitleStyle => TextStyle(fontFamily: defaultTitleFontFamily,
       fontSize: defaultTitleSize, color: defaultTitleColor);
@@ -43,8 +44,8 @@ class ExpandableSection extends StatefulWidget {
   @protected Widget get defaultTitleWidget => Text(title ?? '', style: displayTitleStyle);
   @protected Widget get displayTitleWidget => titleWidget ?? defaultTitleWidget;
 
-  @protected Color? get defaultSubtitleColor => Styles().colors?.textDark;
-  @protected String? get defaultSubtitleFontFamily => Styles().fontFamilies?.bold;
+  @protected Color? get defaultSubtitleColor => AppColors.textDark;
+  @protected String? get defaultSubtitleFontFamily => AppFontFamilies.bold;
   @protected double? get defaultSubtitleSize => 16;
   @protected TextStyle get defaultSubtitleStyle => TextStyle(fontFamily: defaultSubtitleFontFamily,
       fontSize: defaultSubtitleSize, color: defaultSubtitleColor);
@@ -76,7 +77,7 @@ class ExpandableSectionState extends State<ExpandableSection> {
                 source: _expanded ? '0xf077' : '0xf078',
                 weight: 'solid',
                 size: 18,
-                color: Styles().colors?.fillColorSecondary
+                color: AppColors.fillColorSecondary
             )
           ),
           children: [widget.contents ?? Container(),],
