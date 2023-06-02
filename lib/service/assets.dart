@@ -145,7 +145,7 @@ class Assets with Service implements NotificationsListener {
   String get assetsKey => 'assets/$_assetsName';
 
   @protected
-  String get appAssetsKey => 'app/assets/$_assetsName';
+  String get appAssetsKey => kIsWeb ? _assetsName : 'app/assets/$_assetsName';
 
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {

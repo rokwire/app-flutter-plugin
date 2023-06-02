@@ -25,7 +25,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/service/Storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -97,8 +97,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
-    _appDocumentsDir = await getApplicationDocumentsDirectory();
-    Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
+    if (!kIsWeb) {
+      _appDocumentsDir = await getApplicationDocumentsDirectory();
+      Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
+    }
 
     await init();
     await super.initService();
@@ -304,7 +306,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       );
     }
 
-    _config = await loadFromFile(configFile);
+    if (!kIsWeb) {
+      _config = await loadFromFile(configFile);
+    }
 
     if (_config == null) {
       if (!isReleaseWeb) {
@@ -349,6 +353,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // App Id & Version
 
+  String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem;
+  String get localeName => kIsWeb ? 'unknown' : Platform.localeName;
+
   String? get appId {
     return _packageInfo?.packageName;
   }
@@ -357,7 +364,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appCanonicalId == null) {
       _appCanonicalId = appId;
       
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".${operatingSystem.toLowerCase()}";
       if ((_appCanonicalId != null) && _appCanonicalId!.endsWith(platformSuffix)) {
         _appCanonicalId = _appCanonicalId!.substring(0, _appCanonicalId!.length - platformSuffix.length);
       }
@@ -367,11 +374,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appPlatformId {
     if (kIsWeb) {
-      return '${html.window.location.origin}/$webServiceId';
+      return 'https://app-template-flutter.dev.api.rokmetro.com/app-template-flutter'; // '${html.window.location.origin}/$webServiceId';
     } else if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".${operatingSystem.toLowerCase()}";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }
@@ -392,11 +399,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   String? get appStoreId {
-    String? appStoreUrl = MapPathKey.entry(Config().upgradeInfo, 'url.ios');
+    String? appStoreUrl = MapPathKey.entry(upgradeInfo, 'url.ios');
     Uri? uri = (appStoreUrl != null) ? Uri.tryParse(appStoreUrl) : null;
     return ((uri != null) && uri.pathSegments.isNotEmpty) ? uri.pathSegments.last : null;
   }
 
+  String? get webServiceId => null;
 
   // Getters: Config Asset Acknowledgement
 
@@ -465,7 +473,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       return entry;
     }
     else if (entry is Map) {
-      dynamic value = entry[Platform.operatingSystem.toLowerCase()];
+      dynamic value = entry[operatingSystem.toLowerCase()];
       return (value is String) ? value : null;
     }
     else {
@@ -553,7 +561,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: secretKeys
   String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
-  String? get webServiceId => JsonUtils.stringValue(secretRokwire['web_service_id']);
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
@@ -570,7 +577,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   bool get isAdmin => false;
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
   bool get bypassLogin => true; // Bypass login for testing web layouts
-  String? get authUrl {
+  String? get authBaseUrl {
     if (isReleaseWeb) {
       return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {

@@ -40,13 +40,16 @@ class FirebaseCrashlytics with Service {
   @override
   Future<void> initService() async{
 
-    // Enable automatic data collection
-    google.FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-
     // Pass all uncaught errors to Firebase.Crashlytics.
     FlutterError.onError = handleFlutterError;
 
-    await super.initService();
+    // Enable automatic data collection
+    try {
+      google.FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      await super.initService();
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 
   void handleFlutterError(FlutterErrorDetails details) {
@@ -55,17 +58,23 @@ class FirebaseCrashlytics with Service {
   }
 
   void handleZoneError(dynamic exception, StackTrace stack) {
-    debugPrint(exception?.toString());
-    google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    if (isInitialized) {
+      debugPrint(exception?.toString());
+      google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    }
   }
 
   void recordError(dynamic exception, StackTrace? stack) {
-    debugPrint(exception?.toString());
-    google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    if (isInitialized) {
+      debugPrint(exception?.toString());
+      google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    }
   }
 
   void log(String message) {
-    google.FirebaseCrashlytics.instance.log(message);
+    if (isInitialized) {
+      google.FirebaseCrashlytics.instance.log(message);
+    }
   }
 
   @override

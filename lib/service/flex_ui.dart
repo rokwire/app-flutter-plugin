@@ -90,10 +90,12 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _assetsDir = await getAssetsDir();
     _defContentSource = await loadFromAssets(assetsKey);
     _appContentSource = await loadFromAssets(appAssetsKey);
-    _netContentSource = await loadFromCache(netCacheFileName);
+    if (!kIsWeb) {
+      _assetsDir = await getAssetsDir();
+      _netContentSource = await loadFromCache(netCacheFileName);
+    }
     build();
     if (_defaultContent != null) {
       updateFromNet();
@@ -161,10 +163,10 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  String get assetsKey => 'assets/$_assetsName';
+  String get assetsKey => kIsWeb ? _assetsName : 'assets/$_assetsName';
 
   @protected
-  String get appAssetsKey => 'app/assets/$_assetsName';
+  String get appAssetsKey => kIsWeb ? _assetsName : 'app/assets/$_assetsName';
 
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
@@ -643,7 +645,7 @@ class FlexUI with Service implements NotificationsListener {
         if (key is String) {
           String? target;
           if (key == 'os') {
-            target = Platform.operatingSystem;
+            target = Config().operatingSystem;
           }
           else if (key == 'environment') {
             target = configEnvToString(Config().configEnvironment);
