@@ -535,7 +535,7 @@ class UiImages {
         return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight,
             color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
       } else if (imageSpec is MaterialIconImageSpec && (weight is double || weight == null)) {
-        _getMaterialIcon(imageSpec, type: type, source: source, key: key, size: size, fill: fill, weight: weight,
+        return _getMaterialIcon(imageSpec, type: type, source: source, key: key, size: size, fill: fill, weight: weight,
             grade: grade, opticalSize: opticalSize, color: color, semanticLabel: semanticLabel, textDirection: textDirection,
             excludeFromSemantics: excludeFromSemantics, fontFamily: fontFamily, fontPackage: fontPackage, matchTextDirection: matchTextDirection);
       } else {
@@ -747,7 +747,7 @@ class UiImages {
     try {
       switch (type) {
         case 'material.icon':
-          IconData iconData = IconData(source, fontFamily: fontFamily,
+          IconData iconData = IconData(_ImageUtils.faCodePointValue(source) ?? 0, fontFamily: fontFamily,
               fontPackage: fontPackage, matchTextDirection: matchTextDirection);
           return ExcludeSemantics(
             excluding: excludeFromSemantics,
