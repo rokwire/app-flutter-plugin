@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.5.0 -->
+### Added
+- Add support for material icons to styles images
+
 ### Changed
 - Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
 - Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
