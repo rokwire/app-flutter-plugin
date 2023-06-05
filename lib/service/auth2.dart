@@ -147,7 +147,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
+    //TODO: try to do this without explicit web check
+    if (name == DeepLink.notifyUri && !kIsWeb) {
       onDeepLinkUri(param);
     }
     else if (name == Auth2UserProfile.notifyChanged) {
@@ -319,7 +320,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return false;
       }
       
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       if (responseJson != null) {
         Auth2Token? anonymousToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
@@ -556,7 +557,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PhoneRequestCodeResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return Auth2PhoneRequestCodeResult.succeeded;
       }
@@ -590,7 +591,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PhoneSendCodeResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(phoneLoginType, result);
@@ -635,7 +636,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailSignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(emailLoginType, result);
@@ -685,7 +686,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailSignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return Auth2EmailSignUpResult.succeeded;
       }
@@ -713,7 +714,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         //TBD: handle Auth2EmailAccountState.unverified
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2EmailAccountState.verified : Auth2EmailAccountState.nonExistent;
@@ -740,7 +741,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailForgotPasswordResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return Auth2EmailForgotPasswordResult.succeeded;
       }
@@ -775,7 +776,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return false;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       return (response?.statusCode == 200);
     }
     return false;
@@ -812,7 +813,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2UsernameSignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(usernameLoginType, result);
@@ -858,7 +859,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2UsernameSignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
         _notifyLogin(usernameLoginType, result);
@@ -888,7 +889,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         //TBD: handle Auth2EmailAccountState.unverified
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2UsernameAccountState.exists : Auth2UsernameAccountState.nonExistent;
@@ -925,7 +926,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }
@@ -950,7 +951,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }

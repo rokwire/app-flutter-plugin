@@ -30,7 +30,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 
 class Styles extends Service implements NotificationsListener{
@@ -156,7 +155,7 @@ class Styles extends Service implements NotificationsListener{
   String get assetsKey => 'assets/$_assetsName';
 
   @protected
-  String get appAssetsKey => kIsWeb ? _assetsName : 'app/assets/$_assetsName';
+  String get appAssetsKey => 'app/assets/$_assetsName';
 
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {

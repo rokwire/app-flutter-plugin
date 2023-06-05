@@ -311,9 +311,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
 
     if (_config == null) {
-      if (!isReleaseWeb) {
+      // if (!isReleaseWeb) {
         _configAsset = await loadFromAssets();
-      }
+      // }
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 

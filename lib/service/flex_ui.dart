@@ -163,10 +163,10 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  String get assetsKey => kIsWeb ? _assetsName : 'assets/$_assetsName';
+  String get assetsKey => 'assets/$_assetsName';
 
   @protected
-  String get appAssetsKey => kIsWeb ? _assetsName : 'app/assets/$_assetsName';
+  String get appAssetsKey => 'app/assets/$_assetsName';
 
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
@@ -225,14 +225,16 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Future<void> updateFromNet() async {
     String? netContentSourceString = await loadContentStringFromNet();
-    Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
-    if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
-        ((netContentSource == null) && (_netContentSource != null)))
-    {
-      _netContentSource = netContentSource;
-      await saveToCache(netCacheFileName, netContentSourceString);
-      build();
-      NotificationService().notify(notifyChanged, null);
+    if (netContentSourceString != null) {
+      Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
+      if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
+          ((netContentSource == null) && (_netContentSource != null)))
+      {
+        _netContentSource = netContentSource;
+        await saveToCache(netCacheFileName, netContentSourceString);
+        build();
+        NotificationService().notify(notifyChanged, null);
+      }
     }
   }
 

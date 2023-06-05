@@ -27,7 +27,6 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class Localization with Service implements NotificationsListener {
   
@@ -163,13 +162,7 @@ class Localization with Service implements NotificationsListener {
   }
 
   @protected
-  String getResourceAssetsKey(String language, { bool app = false }) {
-    String assetName = 'strings.$language.json';
-    if (kIsWeb) {
-      return assetName;
-    }
-    return app ? 'app/assets/strings.$language.json' : 'assets/strings.$language.json';
-  }
+  String getResourceAssetsKey(String language, { bool app = false }) => app ? 'app/assets/strings.$language.json' : 'assets/strings.$language.json';
 
   @protected
   Future<String?> loadResourceAssetsJsonString(String language, { bool app = false }) => rootBundle.loadString(getResourceAssetsKey(language, app: app));

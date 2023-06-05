@@ -139,9 +139,7 @@ class Onboarding with Service implements NotificationsListener {
           if ((nextPanel != null) && (nextPanel is Widget) && nextPanel.onboardingCanDisplay && await nextPanel.onboardingCanDisplayAsync) {
             return nextPanel as Widget;
           }
-          else {
-            nextPanelIndex++;
-          }
+          nextPanelIndex++;
         }
         return false;
       }
