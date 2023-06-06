@@ -359,15 +359,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
-        pubKeyRequest?.remove('allowCredentials');
-        pubKeyRequest?['userVerification'] = 'required';
-        pubKeyRequest = {
-          "challenge": "T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo",
-          // "allowCredentials": [],
-          "timeout": 1800000,
-          "userVerification": "required",
-          "rpId": "university.app.services.rokmetro.com"
-        };
+        // pubKeyRequest?.remove('allowCredentials');
+        // pubKeyRequest?['userVerification'] = 'required';
+        // pubKeyRequest?['allowCredentials'] = [];
+        // pubKeyRequest = {
+        //   "challenge": "T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo",
+        //   // "allowCredentials": [],
+        //   "timeout": 1800000,
+        //   "userVerification": "required",
+        //   "rpId": "university.app.services.rokmetro.com"
+        // };
         try {
           // await RokwirePlugin.getPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
           String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
@@ -459,6 +460,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
         try {
           // await RokwirePlugin.createPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+          // pubKeyRequest?['attestation'] = "none";
+          // pubKeyRequest?['excludeCredentials'] = [];
+          // pubKeyRequest?['authenticatorSelection']?['authenticatorAttachment'] = "platform";
+          // pubKeyRequest?['authenticatorSelection']?['requireResidentKey'] = true;
+          // pubKeyRequest?['authenticatorSelection']?['residentKey'] = 'required';
+          // pubKeyRequest?['authenticatorSelection']?['userVerification'] = 'required';
+
           String responseData = await flutterPasskeyPlugin.createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
           return _completeSignUpWithPasskey(username, responseData);
         } catch(error) {

@@ -224,7 +224,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) async {
+  Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) {
     Map<String, dynamic>? configJson = JsonUtils.decode(configJsonString);
     Map<String, dynamic>? configData = configJson?["data"];
     if (configData != null) {
@@ -235,7 +235,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Map<String, dynamic>? configFromJsonListString(String? configJsonString) {
+  Future<Map<String, dynamic>?> configFromJsonListString(String? configJsonString) async {
     List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
       
