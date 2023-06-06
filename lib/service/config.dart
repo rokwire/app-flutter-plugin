@@ -21,6 +21,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -209,12 +210,17 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Future<String?> loadAsStringFromCore() async {
     Map<String, dynamic> body = {
       'version': appVersion,
-      'app_type_identifier': appPlatformId,
-      'api_key': rokwireApiKey,
     };
-    String? bodyString =  JsonUtils.encode(body);
+    if (!isReleaseWeb) {
+      if (appPlatformId == null || rokwireApiKey == null) {
+        return null;
+      }
+      body['app_type_identifier'] = appPlatformId;
+      body['api_key'] = rokwireApiKey;
+    }
+
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: bodyString, headers: {'content-type': 'application/json'});
+      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: Auth2Csrf());
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -295,15 +301,16 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<void> init() async {
-    
-    _encryptionKeys = await loadEncryptionKeysFromAssets();
-    if (_encryptionKeys == null) {
-      throw ServiceError(
-        source: this,
-        severity: ServiceErrorSeverity.fatal,
-        title: 'Config Initialization Failed',
-        description: 'Failed to load config encryption keys.',
-      );
+    if (!isReleaseWeb) {
+      _encryptionKeys = await loadEncryptionKeysFromAssets();
+      if (_encryptionKeys == null) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Config Initialization Failed',
+          description: 'Failed to load config encryption keys.',
+        );
+      }
     }
 
     if (!kIsWeb) {
@@ -311,14 +318,15 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
 
     if (_config == null) {
-      // if (!isReleaseWeb) {
+      if (!isReleaseWeb) {
         _configAsset = await loadFromAssets();
-      // }
+      }
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
       _config = (configString != null) ? configFromJsonString(configString) : null;
-      if (_config != null && secretKeys.isNotEmpty) {
+      //TODO: decide how best to handle secret keys
+      if (_config != null) { // && secretKeys.isNotEmpty
         configFile.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
@@ -410,7 +418,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/application/configs" : null);
   } 
   
   String? get rokwireApiKey          {
@@ -557,10 +565,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
   // Getters: web
-  String get webOrigin => html.window.location.origin;
+  String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
     if (isReleaseWeb) {
-      return '$webOrigin/$webServiceId';
+      return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {
       return '$coreUrl/admin';
     }

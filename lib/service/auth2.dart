@@ -1460,13 +1460,18 @@ class Auth2Csrf with NetworkAuthProvider {
     if (Config().authBaseUrl?.contains("localhost") == false) {
       cookieName = '__Host-' + cookieName;
     }
-    Map<String, String> headers = { _csrfTokenName: WebUtils.getCookie(cookieName) };
 
-    if (StringUtils.isNotEmpty(token?.accessToken)) {
-      String tokenType = token!.tokenType ?? 'Bearer';
-      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+    String cookieValue = WebUtils.getCookie(cookieName);
+    if (cookieValue.isNotEmpty) {  
+      Map<String, String> headers = { _csrfTokenName: cookieValue };
+
+      if (StringUtils.isNotEmpty(token?.accessToken)) {
+        String tokenType = token!.tokenType ?? 'Bearer';
+        headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+      }
+      return headers;
     }
-    return headers;
+    return null;
   }
 
   @override
