@@ -374,7 +374,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appPlatformId {
     if (kIsWeb) {
-      return 'https://app-template-flutter.dev.api.rokmetro.com/app-template-flutter'; // '${html.window.location.origin}/$webServiceId';
+      return authBaseUrl;
     } else if (_appPlatformId == null) {
       _appPlatformId = appId;
 
@@ -556,6 +556,17 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
+  // Getters: web
+  String get webOrigin => html.window.location.origin;
+  String? get authBaseUrl {
+    if (isReleaseWeb) {
+      return '$webOrigin/$webServiceId';
+    } else if (isAdmin) {
+      return '$coreUrl/admin';
+    }
+    return '$coreUrl/services';
+  }
+
   // Getters: otherUniversityServices
   String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
 
@@ -575,16 +586,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   bool get isAdmin => false;
-  bool get isReleaseWeb => kIsWeb && !kDebugMode;
   bool get bypassLogin => true; // Bypass login for testing web layouts
-  String? get authBaseUrl {
-    if (isReleaseWeb) {
-      return '${html.window.location.origin}/$webServiceId';
-    } else if (isAdmin) {
-      return '$coreUrl/admin';
-    }
-    return '$coreUrl/services';
-  }
+  bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }
 
 enum ConfigEnvironment { production, test, dev }

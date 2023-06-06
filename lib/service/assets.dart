@@ -74,7 +74,7 @@ class Assets with Service implements NotificationsListener {
   Future<void> initService() async {
     _assetsDir = await getAssetsDir();
     _defAssets = await loadFromAssets(assetsKey);
-    _appAssets = await loadFromAssets(appAssetsKey);
+    _appAssets = kIsWeb ? null : await loadFromAssets(appAssetsKey);
     _netAssets = await loadFromCache(netCacheFileName);
 
     if ((_defAssets != null) || (_appAssets != null) || (_netAssets != null)) {
@@ -194,7 +194,7 @@ class Assets with Service implements NotificationsListener {
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }

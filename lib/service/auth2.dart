@@ -125,15 +125,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
     }
 
-    // if (kIsWeb && _token == null) {
-    //   refreshToken().then((token) {
-    //     if (token != null) {
-    //       debugPrint('refresh on init succeeded...');
-    //       NotificationService().notify(Auth2.notifyLoginSucceeded, null);
-    //     }
-    //   });
-    // }
-    _refreshAccount();
+    if (kIsWeb && _token == null) {
+      refreshToken(ignoreUnauthorized: true).then((token) {
+        if (token != null) {
+          _refreshAccount();
+          NotificationService().notify(Auth2.notifyLoginSucceeded, null);
+        }
+      });
+    } else {
+      _refreshAccount();
+    }
 
     await super.initService();
   }
@@ -451,8 +452,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null);
     await Storage().setAuth2AnonymousProfile(_anonymousProfile = null);
     if (!kIsWeb) {
-      await Storage().setAuth2Token(_token = token);
-      await Storage().setAuth2Account(_account = account);
+      await Storage().setAuth2Token(token);
+      await Storage().setAuth2Account(account);
     }
 
     if (prefsUpdated == true) {
@@ -1035,7 +1036,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return {
       'type': kIsWeb ? 'web' : 'mobile',
       'device_id': kIsWeb ? 'web' : _deviceId,
-      'os': kIsWeb ? 'web' : Config().operatingSystem,
+      'os': Config().operatingSystem,
     };
   }
 
@@ -1044,6 +1045,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> logout({ Auth2UserPrefs? prefs }) async {
     _log("Auth2: logout");
     _refreshTokenFailCounts.remove(_token?.refreshToken);
+
+    if (Config().authBaseUrl != null) {
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? body = JsonUtils.encode({
+        'all_sessions': false,
+      });
+      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf(token: token));
+    }
 
     await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty());
     await Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty());
@@ -1091,7 +1102,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Refresh
 
-  Future<Auth2Token?> refreshToken({Auth2Token? token}) async {
+  Future<Auth2Token?> refreshToken({Auth2Token? token, bool ignoreUnauthorized = false}) async {
     if (Config().authBaseUrl != null) {
       try {
         Future<Response?>? refreshTokenFuture = token?.refreshToken != null ? _refreshTokenFutures[token!.refreshToken] : null;
@@ -1137,7 +1148,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           if (token?.refreshToken != null) {
             refreshTokenFailCount += _refreshTokenFailCounts[token!.refreshToken!] ?? 0;
           }
-          if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
+          if (((response?.statusCode == 400) || (!ignoreUnauthorized && response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
             if (token == _token) {
               logout();
             }
@@ -1437,23 +1448,29 @@ class _OidcLogin {
 }
 
 class Auth2Csrf with NetworkAuthProvider {
+  Auth2Token? token;
+
+  Auth2Csrf({this.token});
+
   static const String _csrfTokenName = 'rokwire-csrf-token';
 
   @override
   Map<String, String>? get networkAuthHeaders {
-    if (kIsWeb) {
-      String cookieName = _csrfTokenName;
-      if (Config().authBaseUrl?.contains("localhost") == false) {
-        cookieName = '__Host-' + cookieName;
-      }
-      return {_csrfTokenName: WebUtils.getCookie(cookieName)};
+    String cookieName = _csrfTokenName;
+    if (Config().authBaseUrl?.contains("localhost") == false) {
+      cookieName = '__Host-' + cookieName;
     }
+    Map<String, String> headers = { _csrfTokenName: WebUtils.getCookie(cookieName) };
 
-    return null;
+    if (StringUtils.isNotEmpty(token?.accessToken)) {
+      String tokenType = token!.tokenType ?? 'Bearer';
+      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+    }
+    return headers;
   }
 
   @override
-  dynamic get networkAuthToken => null;
+  dynamic get networkAuthToken => token;
   
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {

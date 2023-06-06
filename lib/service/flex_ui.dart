@@ -91,7 +91,7 @@ class FlexUI with Service implements NotificationsListener {
   @override
   Future<void> initService() async {
     _defContentSource = await loadFromAssets(assetsKey);
-    _appContentSource = await loadFromAssets(appAssetsKey);
+    _appContentSource = kIsWeb ? null : await loadFromAssets(appAssetsKey);
     if (!kIsWeb) {
       _assetsDir = await getAssetsDir();
       _netContentSource = await loadFromCache(netCacheFileName);
@@ -215,7 +215,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }
