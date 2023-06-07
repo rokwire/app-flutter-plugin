@@ -415,15 +415,14 @@ abstract class SurveyData {
   num? get maximumScore {
     if (_maximumScore == null) {
       if (scoreRule != null) {
-        num maxScore = double.negativeInfinity;
+        num? maxScore;
         for (RuleAction scoreAction in scoreRule!.possibleActions) {
-          if (scoreAction.data is num && scoreAction.data > maxScore) {
+          if (scoreAction.data is num && (maxScore == null || scoreAction.data > maxScore)) {
             maxScore = scoreAction.data;
           }
         }
         return _maximumScore = maxScore;
       }
-      return _maximumScore = null;
     }
     return _maximumScore;
   }
@@ -585,13 +584,13 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   num? get maximumScore {
     num? scoreRuleMax = super.maximumScore;
     if (scoreRuleMax == null && selfScore) {
-      num maxScore = double.negativeInfinity;
+      num? maxScore;
       for (OptionData scoreOption in options) {
-        if (scoreOption.score is num && scoreOption.score! > maxScore) {
+        if (scoreOption.score is num && (maxScore == null || scoreOption.score! > maxScore)) {
           maxScore = scoreOption.score!;
         }
       }
-      return maxScore;
+      return _maximumScore = maxScore;
     }
     return scoreRuleMax;
   }
@@ -752,7 +751,7 @@ class SurveyQuestionNumeric extends SurveyData {
   num? get maximumScore {
     num? scoreRuleMax = super.maximumScore;
     if (scoreRuleMax == null && selfScore) {
-      return maximum;
+      return _maximumScore = maximum;
     }
     return scoreRuleMax;
   }
