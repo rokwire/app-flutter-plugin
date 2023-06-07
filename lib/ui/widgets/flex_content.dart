@@ -16,6 +16,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/assets.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -55,10 +56,10 @@ class FlexContent extends StatefulWidget {
   FlexContentWidgetState createState() => FlexContentWidgetState();
 
   @protected
-  Color? get backgroundColor => Styles().colors?.lightGray;
+  Color? get backgroundColor => AppColors.background;
 
   @protected
-  Color? get topSplitterColor => Styles().colors?.fillColorPrimaryVariant;
+  Color? get topSplitterColor => AppColors.fillColorPrimaryVariant;
 
   @protected
   double? get topSplitterHeight => 1;
@@ -97,7 +98,7 @@ class FlexContent extends StatefulWidget {
   EdgeInsetsGeometry get titlePadding => const EdgeInsets.only(top: 0);
 
   @protected
-  TextStyle get titleTextStyle => TextStyle(color: Styles().colors?.fillColorPrimary, fontFamily: Styles().fontFamilies?.extraBold, fontSize: 20, );
+  TextStyle get titleTextStyle => TextStyle(color: AppColors.fillColorPrimary, fontFamily: AppFontFamilies.extraBold, fontSize: 20, );
 
   @protected
   Widget buildText(String? text) => Visibility(visible: StringUtils.isNotEmpty(text), child:
@@ -110,7 +111,7 @@ class FlexContent extends StatefulWidget {
   EdgeInsetsGeometry get textPadding => const EdgeInsets.only(top: 10);
 
   @protected
-  TextStyle get textTextStyle => TextStyle(color: Styles().colors?.textSurface, fontFamily: Styles().fontFamilies?.medium, fontSize: 16, );
+  TextStyle get textTextStyle => TextStyle(color: AppColors.textDark, fontFamily: AppFontFamilies.medium, fontSize: 16, );
 
   @protected
   Widget buildButtons(BuildContext context, List<dynamic>? buttonsJsonContent) {
@@ -145,9 +146,9 @@ class FlexContent extends StatefulWidget {
   @protected
   Widget buildButton(BuildContext context, Map<String, dynamic> button) => RoundedButton(
     label: StringUtils.ensureNotEmpty(JsonUtils.stringValue(button['title'])),
-    textColor: Styles().colors!.fillColorPrimary,
-    borderColor: Styles().colors!.fillColorSecondary,
-    backgroundColor: Styles().colors!.white,
+    textColor: AppColors.fillColorPrimary,
+    borderColor: AppColors.fillColorSecondary,
+    backgroundColor: AppColors.surface,
     contentWeight: 0.0,
     onTap: () => onTapButton(context, button),
   );

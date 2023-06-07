@@ -16,6 +16,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
 class TileButton extends StatelessWidget {
@@ -25,7 +26,8 @@ class TileButton extends StatelessWidget {
   final double titleFontSize;
   final TextStyle? titleTextStyle;
 
-  final String? iconAsset;
+  final String? iconKey;
+  final Widget? icon;
 
   final Border? border;
   final BorderRadiusGeometry? borderRadius;
@@ -48,7 +50,8 @@ class TileButton extends StatelessWidget {
     this.titleFontSize = 20,
     this.titleTextStyle,
 
-    this.iconAsset, 
+    this.icon,
+    this.iconKey,
 
     this.border,
     this.borderRadius,
@@ -66,13 +69,16 @@ class TileButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> contentList = <Widget>[];
-    if (iconAsset != null) {
-      Widget? icon = Styles().images?.getImage(iconAsset!);
+    if (icon != null) {
+      contentList.add(icon!);
+    } else if (iconKey != null) {
+      Widget? icon = Styles().images?.getImage(iconKey!);
       if (icon != null) {
         contentList.add(icon);
       }
     }
-    if ((title != null) && (iconAsset != null)) {
+
+    if ((title != null) && ((icon != null) || (iconKey != null))) {
       contentList.add(Container(height: contentSpacing));
     } 
     if (title != null) {
@@ -92,16 +98,16 @@ class TileButton extends StatelessWidget {
     );
   }
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleTextColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamilly => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
 
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => AppColors.surface ?? const Color(0x00FFFFFF);
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -123,7 +129,8 @@ class TileWideButton extends StatelessWidget {
   final String? titleFontFamilly;
   final double titleFontSize;
   final TextStyle? titleTextStyle;
-  
+
+  final Widget? icon;
   final String? iconAsset;
 
   final Border? border;
@@ -146,6 +153,7 @@ class TileWideButton extends StatelessWidget {
     this.titleFontSize = 20,
     this.titleTextStyle,
 
+    this.icon,
     this.iconAsset,
     
     this.border,
@@ -160,16 +168,16 @@ class TileWideButton extends StatelessWidget {
     this.onTap
   }) : super(key: key);
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleTextColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamilly => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
 
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => AppColors.surface ?? const Color(0x00FFFFFF);
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -189,8 +197,10 @@ class TileWideButton extends StatelessWidget {
     List<Widget> contentList = <Widget>[];
     if (title != null) {
       contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle)));
-    } 
-    if (iconAsset != null) {
+    }
+    if (icon != null) {
+      contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon!])));
+    } else if (iconAsset != null) {
       Widget? icon = Styles().images?.getImage(iconAsset!);
       if (icon != null) {
         contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon])));
@@ -293,7 +303,7 @@ class TileToggleButton extends StatelessWidget {
   
   @protected Color? get displayBackgroundColor => selected ? selectedBackgroundColor : backgroundColor;
   
-  @protected Color get defaultSelectedBorderColor => Styles().colors?.fillColorPrimary ?? borderColor;
+  @protected Color get defaultSelectedBorderColor => AppColors.fillColorPrimary ?? borderColor;
   @protected Color get displaySelectedBorderColor => selectedBorderColor ?? defaultSelectedBorderColor;
   @protected Color get displayBorderColor => selected ? displaySelectedBorderColor : borderColor;
 
@@ -301,18 +311,18 @@ class TileToggleButton extends StatelessWidget {
   @protected BorderRadiusGeometry get displayBorderRadius => borderRadius ?? defaultBorderRadius;
   
   @protected BoxBorder get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
-  @protected BoxBorder get dislayBorder => defaultBorder;
+  @protected BoxBorder get displayBorder => defaultBorder;
 
-  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: AppColors.shadow ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
   @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
 
-  @protected Decoration get defaultDecoration => BoxDecoration(color: displayBackgroundColor, borderRadius: displayBorderRadius, border: dislayBorder, boxShadow: displayBorderShadow);
+  @protected Decoration get defaultDecoration => BoxDecoration(color: displayBackgroundColor, borderRadius: displayBorderRadius, border: displayBorder, boxShadow: displayBorderShadow);
   @protected Decoration get displayDecoration => defaultDecoration;
 
-  @protected Color? get defaultTitleColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleColor => (selected ? selectedTitleColor : titleColor) ?? defaultTitleColor;
 
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleColor);

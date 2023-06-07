@@ -17,6 +17,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
@@ -25,7 +26,6 @@ import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -60,7 +60,7 @@ class WebPanel extends StatefulWidget {
   @protected
   Widget buildInitializing(BuildContext context) {
     return Center(child:
-      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Styles().colors!.fillColorPrimary!),),
+      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(AppColors.fillColorPrimary!),),
     );
   }
 
@@ -88,7 +88,7 @@ class WebPanel extends StatefulWidget {
     if (title != null) {
       contentList.add(flutter_html.Html(data: title,
           onLinkTap: (url, context, element) => onTapStatusLink(url),
-          style: { "body": flutter_html.Style(color: Styles().colors!.fillColorPrimary, fontFamily: Styles().fontFamilies!.bold, fontSize: flutter_html.FontSize(32), textAlign: TextAlign.center, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
+          style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary, fontFamily: AppFontFamilies.bold, fontSize: flutter_html.FontSize(32), textAlign: TextAlign.center, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
       );
     }
 
@@ -99,7 +99,7 @@ class WebPanel extends StatefulWidget {
     if ((message != null)) {
       contentList.add(flutter_html.Html(data: message,
         onLinkTap: (url, context, element) => onTapStatusLink(url),
-        style: { "body": flutter_html.Style(color: Styles().colors!.fillColorPrimary, fontFamily: Styles().fontFamilies!.regular, fontSize: flutter_html.FontSize(20), textAlign: TextAlign.left, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
+        style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary, fontFamily: AppFontFamilies.regular, fontSize: flutter_html.FontSize(20), textAlign: TextAlign.left, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
       );
     }
 
@@ -189,7 +189,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
 
     return Scaffold(
       appBar: widget.headerBar ?? HeaderBar(title: widget.title),
-      backgroundColor: Styles().colors!.background,
+      backgroundColor: AppColors.background,
       body: Column(children: <Widget>[
         Expanded(child: contentWidget),
         widget.tabBar ?? Container()

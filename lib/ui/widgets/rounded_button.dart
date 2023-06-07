@@ -17,7 +17,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 class RoundedButton extends StatefulWidget {
   final String label;
@@ -102,19 +102,19 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors?.surface;
+  @protected Color? get defaultBackgroundColor => AppColors.surface;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
-  @protected Color? get defaultTextColor => Styles().colors?.textPrimary;
+  @protected Color? get defaultTextColor => AppColors.textPrimary;
   @protected Color? get displayTextColor => textColor ?? defaultTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => AppFontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
   @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
   @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
 
-  @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
+  @protected Color get defaultBorderColor => AppColors.fillColorSecondary ?? const Color(0xFF000000);
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected Border get displayBorder => border ?? defaultBorder;

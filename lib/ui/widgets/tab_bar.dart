@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -17,7 +18,7 @@ class TabBar extends StatefulWidget {
   _TabBarState createState() => _TabBarState();
 
   @protected
-  Color? get backgroundColor => Styles().colors?.surface ?? Colors.white;
+  Color? get backgroundColor => AppColors.surface ?? Colors.white;
 
   @protected
   BoxBorder? get border => null;
@@ -185,7 +186,7 @@ class TabWidget extends StatelessWidget {
   TextAlign get tabTextAlign => TextAlign.center;
 
   @protected
-  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium, fontSize: 12);
+  TextStyle get tabTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, color: selected ? AppColors.fillColorSecondary : AppColors.textMedium, fontSize: 12);
 
   @protected
   double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
@@ -205,7 +206,7 @@ class TabWidget extends StatelessWidget {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
     return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
-        color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium) ?? defaultIcon : defaultIcon;
+        color: selected ? AppColors.fillColorSecondary : AppColors.textMedium) ?? defaultIcon : defaultIcon;
   }
 
   @protected
@@ -220,7 +221,7 @@ class TabWidget extends StatelessWidget {
   double get selectedIndicatorHeight => 4;
 
   @protected
-  Color? get selectedIndicatorColor => Styles().colors?.fillColorSecondary;
+  Color? get selectedIndicatorColor => AppColors.fillColorSecondary;
 
 }
 

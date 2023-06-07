@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
@@ -61,8 +62,8 @@ class FilterListItem extends StatelessWidget {
     this.selectedIconPadding = const EdgeInsets.only(left: 10),
   }) : super(key: key);
 
-  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.medium, fontSize: 16, color: Styles().colors?.fillColorPrimary);
-  @protected TextStyle? get defaultSelectedTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
+  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: AppFontFamilies.medium, fontSize: 16, color: AppColors.fillColorPrimary);
+  @protected TextStyle? get defaultSelectedTitleTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, fontSize: 16, color: AppColors.fillColorPrimary);
   TextStyle? get _titleTextStyle => selected ? (selectedTitleTextStyle ?? defaultSelectedTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
   
   @protected TextStyle? get defaultDescriptionTextStyle         => defaultTitleTextStyle;
@@ -95,7 +96,7 @@ class FilterListItem extends StatelessWidget {
 
     return Semantics(label: title, button: true, selected: selected, excludeSemantics: true, child:
       InkWell(onTap: onTap, child:
-        Container(color: (selected ? Styles().colors?.background : Colors.white), child:
+        Container(color: (selected ? AppColors.background : Colors.white), child:
           Padding(padding: padding, child:
             Row(mainAxisSize: MainAxisSize.max, children: contentList),
           ),
@@ -145,8 +146,8 @@ class FilterSelector extends StatelessWidget {
 
   }) : super(key: key);
 
-  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
-  @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorSecondary);
+  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: AppFontFamilies.bold, fontSize: 16, color: AppColors.fillColorPrimary);
+  @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, fontSize: 16, color: AppColors.fillColorSecondary);
   TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
 
   Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;

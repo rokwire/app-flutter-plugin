@@ -78,8 +78,8 @@ class SurveyWidget extends StatefulWidget {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
       RoundedButton(
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
-          textColor: canContinue ? null : Styles().colors?.textDisabled,
-          borderColor: canContinue ? null : Styles().colors?.textDisabled,
+          textColor: canContinue ? null : AppColors.textDisabled,
+          borderColor: canContinue ? null : AppColors.textDisabled,
           enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
           progress: controller.saving),
@@ -127,7 +127,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         alignment: Alignment.center,
         child: Padding(
           padding: const EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary)),
+          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(AppColors.fillColorPrimary)),
         ),
       );
     }
@@ -386,10 +386,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           },
           enabled: enabled,
           textWidget: Text(option.title, style: AppTextStyles.widgetDetailSmall, textAlign: TextAlign.center),
-          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.surface),
-          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorPrimaryVariant),
-          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.fillColorSecondary)),
-          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors?.textDisabled)),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.textDisabled)),
         ),
       )));
     }
@@ -407,8 +407,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         survey.response = null;
       }
       return SurveyDataWidget(Checkbox(
-        checkColor: Styles().colors?.surface,
-        activeColor: Styles().colors?.fillColorPrimary,
+        checkColor: AppColors.surface,
+        activeColor: AppColors.fillColorPrimary,
         value: survey.response,
         onChanged: enabled ? (bool? value) {
           // if (survey.scored && survey.response != null) {
@@ -430,7 +430,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       }
       return SurveyDataWidget(Switch(
         value: survey.response,
-        activeColor: Styles().colors?.fillColorPrimary,
+        activeColor: AppColors.fillColorPrimary,
         onChanged: enabled ? (bool value) {
           // if (survey.scored && survey.response != null) {
           //   return;
@@ -499,13 +499,13 @@ class _SurveyWidgetState extends State<SurveyWidget> {
               labelText: title,
               hintText: "MM-dd-yyyy",
               filled: true,
-              fillColor: !enabled ? Styles().colors?.textDisabled : Styles().colors?.surface,
+              fillColor: !enabled ? AppColors.textDisabled : AppColors.surface,
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
                   borderSide: const BorderSide(color: Colors.white)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)),
+                  borderSide: BorderSide(width: 2, color: AppColors.fillColorPrimary ?? Colors.white)),
             ),
             controller: dateTextController,
             // validator: _validationFunctions[field.key],
@@ -626,12 +626,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     return SurveyDataWidget(Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Container(decoration: BoxDecoration(color: Styles().colors?.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
+        Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
           child: Text(label, style: Styles().textStyles?.getTextStyle('headline3')),
         )),
         Expanded(
-          child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors?.fillColorPrimary, onChanged: enabled ? (value) {
+          child: Slider(value: value, min: min, max: max, label: label, activeColor: AppColors.fillColorPrimary, onChanged: enabled ? (value) {
            survey.response = value;
            _onChangeResponse(false);
           } : null)
@@ -656,7 +656,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
        Text(i.toString(), style: Styles().textStyles?.getTextStyle('label')),
-       Radio(value: i, groupValue: value, activeColor: Styles().colors?.fillColorPrimary,
+       Radio(value: i, groupValue: value, activeColor: AppColors.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
            _onChangeResponse(false);
@@ -670,7 +670,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
         Padding(
           padding: const EdgeInsets.only(top: 24.0),
-          child: Container(height: 1, color: Styles().colors?.dividerLine),
+          child: Container(height: 1, color: AppColors.dividerLine),
         )
       ],
     );
@@ -913,9 +913,9 @@ class SingleSelectionList extends StatelessWidget {
                 child: RadioListTile(
                   title: Transform.translate(offset: const Offset(-15, 0),
                       child: Text(title, style: AppTextStyles.widgetTitleRegular ??
-                          TextStyle(fontFamily: Styles().fontFamilies?.regular,
-                              fontSize: 16, color: Styles().colors?.textPrimary))),
-                  activeColor: Styles().colors?.fillColorSecondary,
+                          TextStyle(fontFamily: AppFontFamilies.regular,
+                              fontSize: 16, color: AppColors.textPrimary))),
+                  activeColor: AppColors.fillColorSecondary,
                   value: title,
                   groupValue: selectedValue?.title,
                   onChanged: onChanged != null ? (_) => onChanged!(index) : null,
@@ -953,11 +953,11 @@ class MultiSelectionList extends StatelessWidget {
                       title: Transform.translate(offset: const Offset(-15, 0),
                           child: Text(selectionList[index].title,
                               style: AppTextStyles.widgetTitleRegular ??
-                                  TextStyle(fontFamily: Styles().fontFamilies?.regular,
-                                    fontSize: 16, color: Styles().colors?.textPrimary))),
+                                  TextStyle(fontFamily: AppFontFamilies.regular,
+                                    fontSize: 16, color: AppColors.textPrimary))),
                       leading: Checkbox(
                         checkColor: Colors.white,
-                        activeColor: Styles().colors?.fillColorSecondary,
+                        activeColor: AppColors.fillColorSecondary,
                         value: isChecked?[index],
                         onChanged: onChanged != null ? (_) => onChanged!(index) : null,
                       ),

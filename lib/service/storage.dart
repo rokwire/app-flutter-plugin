@@ -66,7 +66,6 @@ class Storage with Service {
 
     // _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     // _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
-    
     if (_sharedPreferences == null) {
       throw ServiceError(
         source: this,
@@ -92,7 +91,7 @@ class Storage with Service {
 
   // String  get encryptionKeyId => _ecryptionKeyId;
   // String? get encryptionKey => _encryptionKey;
-  
+  //
   // String  get encryptionIVId => _encryptionIVId;
   // String? get encryptionIV => _encryptionIV;
 

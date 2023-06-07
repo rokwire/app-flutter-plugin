@@ -14,7 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 class FormFieldText extends StatefulWidget {
   final String label;
@@ -51,7 +51,7 @@ class _FormFieldTextState extends State<FormFieldText> {
         label: widget.label,
         child: TextFormField(
           readOnly: widget.readOnly,
-          style: Styles().textStyles?.getTextStyle('body'),
+          style: AppTextStyles.widgetDetailRegular,
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
           keyboardType: widget.inputType,
@@ -72,7 +72,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)
+                  borderSide: BorderSide(width: 2, color: AppColors.fillColorPrimary ?? Colors.white)
               )
           ),
           controller: widget.controller,
