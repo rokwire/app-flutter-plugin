@@ -134,8 +134,6 @@ class Survey extends RuleEngine {
   }
 
   Map<String, dynamic> toJson() {
-    List<Map<String, dynamic>> resultRulesJson = RuleResult.listToJson(resultRules);
-    String? encodedJson = JsonUtils.encode(resultRulesJson);
     return {
       'id': id,
       'data': SurveyData.mapToJson(data),
@@ -145,7 +143,7 @@ class Survey extends RuleEngine {
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
-      'result_rules': encodedJson,
+      'result_rules': JsonUtils.encode(RuleResult.listToJson(resultRules)),
       'result_json': JsonUtils.encode(resultData),
       'response_keys': responseKeys,
       'constants': constants,
