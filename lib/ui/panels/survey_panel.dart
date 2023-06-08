@@ -19,6 +19,7 @@ import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/service/surveys.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -29,16 +30,15 @@ class SurveyPanel extends StatefulWidget {
   final bool inputEnabled;
   final DateTime? dateTaken;
   final bool showResult;
-  final Function(SurveyResponse?)? onComplete;
-  final bool showSummaryOnFinish;
-  final bool allowBack;
+  final Function(dynamic)? onComplete;
+  final bool summarizeResultRules;
   final int initPanelDepth;
   final Map<String, dynamic>? defaultResponses;
   final Widget? tabBar;
   final Widget? offlineWidget;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
-    this.showSummaryOnFinish = false, this.dateTaken, this.showResult = false, this.allowBack = true,
+    this.summarizeResultRules = false, this.dateTaken, this.showResult = false,
     this.onComplete, this.initPanelDepth = 0, this.defaultResponses, this.tabBar, this.offlineWidget}) : super(key: key);
 
   @override
@@ -48,6 +48,7 @@ class SurveyPanel extends StatefulWidget {
 class _SurveyPanelState extends State<SurveyPanel> {
   final bool _loading = false;
   Survey? _survey;
+  SurveyData? _mainSurveyData;
 
   GlobalKey? dataKey;
 
@@ -58,10 +59,10 @@ class _SurveyPanelState extends State<SurveyPanel> {
 
   @override
   void initState() {
-    _surveyController = SurveyWidgetController(beforeComplete: _beforeComplete, onComplete: widget.onComplete,
-        onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _setSurvey);
+    _surveyController = SurveyWidgetController(beforeComplete: widget.summarizeResultRules ? null : _beforeComplete, onComplete: widget.onComplete,
+        onChangeSurveyResponse: _onChangeSurveyResponse, onLoad: _onSurveyLoaded);
     if (widget.survey is Survey) {
-      _survey = widget.survey;
+      _setSurvey(widget.survey!);
     }
     super.initState();
   }
@@ -88,10 +89,12 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 dateTaken: widget.dateTaken,
                 showResult: widget.showResult,
                 surveyDataKey: widget.surveyDataKey,
+                mainSurveyData: _mainSurveyData,
                 internalContinueButton: false,
                 controller: _surveyController,
                 defaultResponses: widget.defaultResponses,
                 offlineWidget: widget.offlineWidget,
+                summarizeResultRules: widget.summarizeResultRules,
               ),
             ),
           )),
@@ -110,12 +113,21 @@ class _SurveyPanelState extends State<SurveyPanel> {
     Navigator.of(context).pop();
   }
 
-  void _setSurvey(Survey? survey) {
-    if (survey != null) {
+  void _onSurveyLoaded(Survey? survey) {
+    if (survey != null && mounted) {
       setState(() {
         _survey = survey;
       });
     }
+  }
+
+  void _setSurvey(Survey survey) {
+    _survey = widget.survey;
+    _surveyController.getSurvey = () => _survey;
+    _mainSurveyData = widget.surveyDataKey != null ? _survey!.data[widget.surveyDataKey] : Surveys().getFirstQuestion(_survey!);
+
+    Surveys().evaluateDefaultDataResponse(_survey!, _mainSurveyData, defaultResponses: widget.defaultResponses);
+    Surveys().evaluate(_survey!);
   }
 
   void _checkScroll(Duration duration) {

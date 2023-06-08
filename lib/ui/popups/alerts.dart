@@ -18,9 +18,14 @@ class Alerts {
         buttonActions.add(buttonAction);
       }
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        ActionsMessage.show(context: context, title: alert.title, message: alert.text,
-            buttons: ActionBuilder.actionButtons(buttonActions), buttonAxis: Axis.vertical));
+
+    if (alert.params?['immediate'] == true) {
+      ActionsMessage.show(context: context, title: alert.title, message: alert.text, buttons: ActionBuilder.actionButtons(buttonActions), buttonAxis: Axis.vertical);
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) =>
+          ActionsMessage.show(context: context, title: alert.title, message: alert.text,
+              buttons: ActionBuilder.actionButtons(buttonActions), buttonAxis: Axis.vertical));
+    }
   }
 
   static Widget buildDividerLine({double height = 1, EdgeInsetsGeometry? margin}) {

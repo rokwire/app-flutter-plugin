@@ -1,6 +1,6 @@
 name: rokwire_plugin
 description: Rokwire Flutter plugin
-version: 1.4.0
+version: 1.5.0
 homepage:
 
 environment:
@@ -39,15 +39,15 @@ dependencies:
   mime_type: ^1.0.0
   uuid: ^3.0.5
   flutter_html: ^3.0.0-beta.2
-  webview_flutter: ^2.0.4
+  webview_flutter: ^2.0.13
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.3.0
   flutter_secure_storage: ^8.0.0
 
   #Firebase
-  firebase_core: ^2.4.0
-  firebase_crashlytics: ^3.0.8
-  firebase_messaging: ^14.2.0
+  firebase_core: ^2.13.0
+  firebase_crashlytics: ^3.3.1
+  firebase_messaging: ^14.6.1
   #End Firebase
 
 dev_dependencies:

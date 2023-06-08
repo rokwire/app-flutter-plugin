@@ -26,7 +26,6 @@ import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:package_info/package_info.dart';
-import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/service/Storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -220,7 +219,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Map<String, dynamic>? configFromJsonString(String? configJsonString) {
+  Future<Map<String, dynamic>?> configFromJsonString(String? configJsonString) async {
     return configFromJsonObjectString(configJsonString);
   }
 
@@ -236,11 +235,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Map<String, dynamic>? configFromJsonListString(String? configJsonString) {
-    dynamic configJson =  JsonUtils.decode(configJsonString);
-    List<dynamic>? jsonList = (configJson is List) ? configJson : null;
+  Future<Map<String, dynamic>>? configFromJsonListString(String? configJsonString) async {
+    List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
-
       jsonList.sort((dynamic cfg1, dynamic cfg2) {
         return ((cfg1 is Map) && (cfg2 is Map)) ? AppVersion.compareVersions(cfg1['mobileAppVersion'], cfg2['mobileAppVersion']) : 0;
       });
@@ -310,7 +307,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
-      _config = (configString != null) ? configFromJsonString(configString) : null;
+      _config = (configString != null) ? await configFromJsonString(configString) : null;
       if (_config != null && secretKeys.isNotEmpty) {
         configFile.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
@@ -331,17 +328,16 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  void updateFromNet() {
-    loadAsStringFromNet().then((String? configString) {
-      Map<String, dynamic>? config = configFromJsonString(configString);
-      if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !const DeepCollectionEquality().equals(_config, config))  {
-        _config = config;
-        configFile.writeAsString(configString!, flush: true);
-        NotificationService().notify(notifyConfigChanged, null);
+  Future<void> updateFromNet() async {
+    String? configString = await loadAsStringFromNet();
+    Map<String, dynamic>? config = await configFromJsonString(configString);
+    if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !await CollectionUtils.equalsAsync(_config, config))  {
+      _config = config;
+      configFile.writeAsString(configString!, flush: true);
+      NotificationService().notify(notifyConfigChanged, null);
 
-        checkUpgrade();
-      }
-    });
+      checkUpgrade();
+    }
   }
 
   // App Id & Version

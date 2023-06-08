@@ -68,7 +68,7 @@ class SurveyBuilder {
     if (CollectionUtils.isNotEmpty(response.survey.responseKeys)) {
       Map<String, dynamic>? responses = response.survey.stats?.responseData;
 
-      for (String key in response.survey.responseKeys ?? []) {
+      for (String key in response.survey.responseKeys!) {
         //TODO: Handle string localization
         dynamic responseData = responses?[key];
         if (responseData != null) {
