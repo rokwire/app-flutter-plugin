@@ -235,7 +235,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Future<Map<String, dynamic>>? configFromJsonListString(String? configJsonString) async {
+  Future<Map<String, dynamic>?> configFromJsonListString(String? configJsonString) async {
     List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
       jsonList.sort((dynamic cfg1, dynamic cfg2) {
