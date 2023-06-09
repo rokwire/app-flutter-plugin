@@ -193,9 +193,9 @@ class DeviceCalendar with Service {
   }
 
   @protected
-  void storeEventId(String? eventId, String? calendarEventId) {
-    if ((_calendarEventIdTable != null) && (eventId != null) && (calendarEventId != null)) {
-      _calendarEventIdTable![eventId] = calendarEventId;
+  void storeEventId(String? exploreId, String? calendarEventId) {
+    if ((_calendarEventIdTable != null) && (exploreId != null) && (calendarEventId != null)) {
+      _calendarEventIdTable![exploreId] = calendarEventId;
       Storage().calendarEventsTable = _calendarEventIdTable;
     }
   }

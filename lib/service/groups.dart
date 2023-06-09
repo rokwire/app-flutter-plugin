@@ -375,8 +375,8 @@ class Groups with Service implements NotificationsListener {
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
         'limit': limit,
-        'research_group': false,
       });
+
 
       try {
         await _ensureLogin();
@@ -879,7 +879,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = Member.listToJson(toMembers);
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
@@ -901,7 +901,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = Member.listToJson(toMembers);
+          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().put(url, auth: Auth2(),body: body);
@@ -1094,19 +1094,29 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
-    const String templatesCategory = 'gies_post_templates';
-    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(JsonUtils.listValue(await Content().loadContentItem(templatesCategory)));
+    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
+    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
+    if (templatesContentItem is! Map) {
+      return null;
+    }
+    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
+    dynamic templatesJson = templatesItem['data'];
+    if (templatesJson is! List) {
+      return null;
+    }
+    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
+    List<GroupPostNudge>? groupNudges;
     if (CollectionUtils.isNotEmpty(allTemplates)) {
-      List<GroupPostNudge> groupNudges = <GroupPostNudge>[];
+      groupNudges = <GroupPostNudge>[];
       for (GroupPostNudge template in allTemplates!) {
         GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
         if (nudge != null) {
           groupNudges.add(nudge);
         }
       }
-      return groupNudges;
     }
-    return null;
+    return groupNudges;
   }
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
@@ -1284,11 +1294,7 @@ class Groups with Service implements NotificationsListener {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
       await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      String url = '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'research_group': false,
-      });
-      Response? response = await Network().get(url, body: post, auth: Auth2());
+      Response? response = await Network().get('${Config().groupsUrl}/v2/user/groups', auth: Auth2());
       if (response?.statusCode == 200) {
         return response?.body;
       }

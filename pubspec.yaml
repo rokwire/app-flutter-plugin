@@ -32,7 +32,7 @@ dependencies:
   device_info: ^2.0.3
   url_launcher: ^6.1.8
   sprintf: ^7.0.0
-  flutter_local_notifications: ^12.0.4
+  flutter_local_notifications: ^12.0.0
   sqflite: ^2.1.0
   device_calendar: ^4.3.1-4217521123
   image_picker: ^0.8.6+1
@@ -45,12 +45,11 @@ dependencies:
   flutter_secure_storage: ^8.0.0
   universal_html: ^2.2.3
   flutter_web_auth_2: ^2.1.4
-  flutter_passkey: ^1.0.3
 
   #Firebase
-  firebase_core: ^2.13.0
-  firebase_crashlytics: ^3.3.1
-  firebase_messaging: ^14.6.1
+  firebase_core: ^2.4.0
+  firebase_crashlytics: ^3.0.8
+  firebase_messaging: ^14.2.0
   #End Firebase
 
 dev_dependencies:

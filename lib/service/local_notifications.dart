@@ -201,20 +201,21 @@ class LocalNotifications with Service {
 
   ActionData? _getActionFromNotificationResponse(NotificationResponse? response) {
     if (response != null) {
-      List<ActionData>? actions = ActionData.listFromJson(JsonUtils.listValue(JsonUtils.decode(response.payload)));
+      List<ActionData> actions = ActionData.listFromJson(JsonUtils.listValue(JsonUtils.decode(response.payload)));
       if (CollectionUtils.isNotEmpty(actions)) {
         switch (response.notificationResponseType) {
           case NotificationResponseType.selectedNotification:
-            if (actions!.length > 1) {
+            if (actions.length > 1) {
               for (ActionData action in actions) {
-                if (action.isPrimaryForNotification == true) {
+                dynamic primary = action.params["primary"];
+                if (primary is bool && primary) {
                   return action;
                 }
               }
             }
             return actions[0];
           case NotificationResponseType.selectedNotificationAction:
-            for (ActionData action in actions!) {
+            for (ActionData action in actions) {
               dynamic actionId = action.params["action_id"];
               if (actionId is String && actionId == response.actionId) {
                 return action;

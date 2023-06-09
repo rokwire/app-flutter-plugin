@@ -47,7 +47,11 @@ class ActionBuilder {
       case ActionType.showPanel:
         return (action?.data is String) ? () => onTapShowPanel(context, action!.data, params: action.params, dismissContext: dismissContext) : null;
       case ActionType.launchUri:
-        return (action?.data is String) ? () => onTapLaunchUri(context, action!.data, internal: action.isInternalUri, dismissContext: dismissContext) : null;
+        if (action?.data is String) {
+          dynamic internal = action?.params['internal'];
+          return (internal is bool?) ? () => onTapLaunchUri(context, action!.data, internal: internal, dismissContext: dismissContext) : null;
+        }
+        return null;
       case ActionType.dismiss:
         return () => onTapDismiss(dismissContext: dismissContext);
       default:

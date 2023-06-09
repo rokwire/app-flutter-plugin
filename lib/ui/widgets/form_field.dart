@@ -15,19 +15,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
-import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class FormFieldText extends StatefulWidget {
   final String label;
   final EdgeInsets padding;
   final bool readOnly;
   final bool multipleLines;
-  final bool required;
-
+  
   final String? initialValue;
   final String? hint;
-  final int? maxLength;
   final TextInputType? inputType;
   final TextEditingController? controller;
   final Function(String)? onFieldSubmitted;
@@ -39,8 +35,8 @@ class FormFieldText extends StatefulWidget {
 
 
   const FormFieldText(this.label, {Key? key, this.padding = const EdgeInsets.only(bottom: 20), this.readOnly = false, this.multipleLines = false, 
-    this.required = false, this.initialValue, this.hint, this.maxLength, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved,
-    this.onChanged, this.validator, this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
+    this.initialValue, this.hint, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved, this.onChanged, this.validator, 
+    this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
 
   @override
   _FormFieldTextState createState() => _FormFieldTextState();
@@ -58,7 +54,6 @@ class _FormFieldTextState extends State<FormFieldText> {
           style: AppTextStyles.widgetDetailRegular,
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
-          maxLength: widget.maxLength,
           keyboardType: widget.inputType,
           inputFormatters: widget.inputFormatters,
           textCapitalization: widget.textCapitalization,
@@ -69,7 +64,6 @@ class _FormFieldTextState extends State<FormFieldText> {
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
               hintText: widget.hint,
-              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles?.getTextStyle('widget.error.regular.fat')) : null,
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
