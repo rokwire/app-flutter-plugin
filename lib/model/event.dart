@@ -26,11 +26,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 class Event with Explore, Favorite {
   String? id;
   String? title;
-  String? subTitle;
-  String? shortDescription;
-  String? longDescription;
+  String? description;
   String? imageURL;
-  String? placeID;
 
   ExploreLocation? location;
   
@@ -90,11 +87,8 @@ class Event with Explore, Favorite {
       (other is Event) &&
       (other.id == id) &&
       (other.title == title) &&
-      (other.subTitle == subTitle) &&
-      (other.shortDescription == shortDescription) &&
-      (other.longDescription == longDescription) &&
+      (other.description == description) &&
       (other.imageURL == imageURL) &&
-      (other.placeID == placeID) &&
 
       (other.location == location) &&
 
@@ -145,11 +139,8 @@ class Event with Explore, Favorite {
   int get hashCode =>
       (id?.hashCode ?? 0) ^
       (title?.hashCode ?? 0) ^
-      (subTitle?.hashCode ?? 0) ^
-      (shortDescription?.hashCode ?? 0) ^
-      (longDescription?.hashCode ?? 0) ^
+      (description?.hashCode ?? 0) ^
       (imageURL?.hashCode ?? 0) ^
-      (placeID?.hashCode ?? 0) ^
 
       (location?.hashCode ?? 0) ^
 
@@ -221,11 +212,8 @@ class Event with Explore, Favorite {
 
     id = json["id"];
     title = json['title'];
-    subTitle = json['subTitle'];
-    shortDescription = json['shortDescription'];
-    longDescription = json.containsKey("description") ? json["description"] : json['longDescription']; /*Back compatibility keep until we use longDescription */
+    description = json['longDescription']; /*Back compatibility keep until we use longDescription */
     imageURL = json['imageURL'];
-    placeID = json['placeID'];
     location = ExploreLocation.fromJson(json['location']);
     eventId = json['eventId'];
     startDateString = json['startDate'];
@@ -273,11 +261,8 @@ class Event with Explore, Favorite {
   void _initFromOther(Event? other) {
     id = other?.id;
     title = other?.title;
-    subTitle = other?.subTitle;
-    shortDescription = other?.shortDescription;
-    longDescription = other?.longDescription;
+    description = other?.description;
     imageURL = other?.imageURL;
-    placeID = other?.placeID;
     location = other?.location;
     eventId = other?.eventId;
     startDateString = other?.startDateString;
@@ -329,11 +314,8 @@ class Event with Explore, Favorite {
     return {
       "id": id,
       "title": title,
-      "subTitle": subTitle,
-      "shortDescription": shortDescription,
-      "longDescription": longDescription,
+      "longDescription": description,
       "imageURL": imageURL,
-      "placeID": placeID,
       "location": location?.toJson(),
 
       "eventId" : eventId,
@@ -388,20 +370,11 @@ class Event with Explore, Favorite {
     if(title!=null) {
       result["title"] = title;
     }
-    if(subTitle!=null) {
-      result["subTitle"] = subTitle;
-    }
-    if(shortDescription!=null) {
-      result["shortDescription"] = shortDescription;
-    }
-    if(longDescription!=null) {
-      result["longDescription"] = longDescription;
+    if(description!=null) {
+      result["longDescription"] = description;
     }
     if(imageURL!=null) {
       result["imageURL"] = imageURL;
-    }
-    if(placeID!=null) {
-      result["placeID"] = placeID;
     }
     if(location!=null) {
       Map<String, dynamic> locationJson = {};
@@ -610,8 +583,9 @@ class Event with Explore, Favorite {
 
   @override
   int compareTo(Explore other) {
-    int result = (other is Event) ? SortUtils.compare(convergeScore, other.convergeScore, descending: true) : 0; //Descending order by score
-    return (result != 0) ? result : super.compareTo(other);
+    return (other is Event) ?
+      SortUtils.compare(convergeScore, other.convergeScore, descending: true) : //Descending order by score
+      super.compareTo(other); 
   }
 
   bool get isGameEvent {
@@ -707,12 +681,9 @@ class Event with Explore, Favorite {
   // Explore
   @override String?   get exploreId               { return id ?? eventId; }
   @override String?   get exploreTitle            { return title; }
-  @override String?   get exploreSubTitle         { return subTitle; }
-  @override String?   get exploreShortDescription { return shortDescription; }
-  @override String?   get exploreLongDescription  { return longDescription; }
-  @override DateTime? get exploreStartDateUtc     { return startDateGmt; }
+  @override String?   get exploreDescription      { return description; }
+  @override DateTime? get exploreDateTimeUtc      { return startDateGmt; }
   @override String?   get exploreImageURL         { return StringUtils.isNotEmpty(imageURL) ? imageURL : randomImageURL; }
-  @override String?   get explorePlaceId          { return placeID; }
   @override ExploreLocation? get exploreLocation  { return location; }
 
   DateTime? get startDateLocal     { return AppDateTime().getUniLocalTimeFromUtcTime(startDateGmt); }
@@ -721,7 +692,7 @@ class Event with Explore, Favorite {
   // Favorite
   static const String favoriteKeyName = "eventIds";
   @override String get favoriteKey => favoriteKeyName;
-  @override String? get favoriteId => exploreId;
+  @override String? get favoriteId => id;
 }
 
 class Contact {

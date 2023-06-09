@@ -36,7 +36,8 @@ class PopupMessage extends StatelessWidget {
   final double messageFontSize;
   final TextAlign? messageTextAlign;
   final EdgeInsetsGeometry messagePadding;
-  
+  final Widget? messageWidget;
+
   final Widget? button;
   final String? buttonTitle;
   final EdgeInsetsGeometry buttonPadding;
@@ -62,7 +63,8 @@ class PopupMessage extends StatelessWidget {
     this.messageFontSize = 16.0,
     this.messageTextAlign,
     this.messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-    
+    this.messageWidget,
+
     this.button,
     this.buttonTitle,
     this.buttonPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -72,11 +74,11 @@ class PopupMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defautTitleBarColor => AppColors.fillColorPrimary;
-  @protected Color? get displayTitleBarColor => titleBarColor ?? defautTitleBarColor;
+  @protected Color? get defaultTitleBarColor => AppColors.fillColorPrimary;
+  @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defautTitleTextColor => AppColors.textLight;
-  @protected Color? get displayTitleTextColor => titleTextColor ?? defautTitleTextColor;
+  @protected Color? get defaultTitleTextColor => AppColors.textLight;
+  @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
   @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
@@ -84,8 +86,8 @@ class PopupMessage extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defautMessageTextColor => AppColors.fillColorPrimary;
-  @protected Color? get displayMessageTextColor => messageTextColor ?? defautMessageTextColor;
+  @protected Color? get defaultMessageTextColor => AppColors.fillColorPrimary;
+  @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
   @protected String? get defaultMessageFontFamily => AppFontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
@@ -96,11 +98,11 @@ class PopupMessage extends StatelessWidget {
   @protected Widget getDefaultButton(BuildContext context) => RoundedButton(label: buttonTitle ?? '', contentWeight: 0.75, onTap: () => _onTapButton(context),);
   @protected Widget getDisplayButton(BuildContext context) => button ?? getDefaultButton(context);
 
-  @protected BorderRadius get defautBorderRadius => const BorderRadius.all(Radius.circular(8));
-  @protected BorderRadius get displayBorderRadius => borderRadius ?? defautBorderRadius;
+  @protected BorderRadius get defaultBorderRadius => const BorderRadius.all(Radius.circular(8));
+  @protected BorderRadius get displayBorderRadius => borderRadius ?? defaultBorderRadius;
 
-  @protected ShapeBorder get defautBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
-  @protected ShapeBorder get displayBorder => border ?? defautBorder;
+  @protected ShapeBorder get defaultBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
+  @protected ShapeBorder get displayBorder => border ?? defaultBorder;
 
   static Future<void> show({
     String? title,
@@ -119,7 +121,8 @@ class PopupMessage extends StatelessWidget {
     double messageFontSize = 16.0,
     TextAlign? messageTextAlign,
     EdgeInsetsGeometry messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-    
+    Widget? messageWidget,
+
     Widget? button,
     String? buttonTitle,
     EdgeInsetsGeometry buttonPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -150,7 +153,8 @@ class PopupMessage extends StatelessWidget {
       messageFontSize: messageFontSize,
       messageTextAlign: messageTextAlign,
       messagePadding: messagePadding,
-  
+      messageWidget: messageWidget,
+
       button: button,
       buttonTitle: buttonTitle,
       buttonPadding: buttonPadding,
@@ -175,7 +179,7 @@ class PopupMessage extends StatelessWidget {
               ),
             ),
           ],),
-          Padding(padding: messagePadding, child:
+          messageWidget ?? Padding(padding: messagePadding, child:
             Text(message ?? '', textAlign: messageTextAlign, style: displayMessageTextStyle,),
           ),
           Padding(padding: buttonPadding, child:
@@ -253,11 +257,11 @@ class ActionsMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defautTitleBarColor => AppColors.fillColorPrimary;
-  @protected Color? get displayTitleBarColor => titleBarColor ?? defautTitleBarColor;
+  @protected Color? get defaultTitleBarColor => AppColors.fillColorPrimary;
+  @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defautTitleTextColor => AppColors.textLight;
-  @protected Color? get displayTitleTextColor => titleTextColor ?? defautTitleTextColor;
+  @protected Color? get defaultTitleTextColor => AppColors.textLight;
+  @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
   @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
@@ -265,8 +269,8 @@ class ActionsMessage extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defautMessageTextColor => AppColors.fillColorPrimary;
-  @protected Color? get displayMessageTextColor => messageTextColor ?? defautMessageTextColor;
+  @protected Color? get defaultMessageTextColor => AppColors.fillColorPrimary;
+  @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
   @protected String? get defaultMessageFontFamily => AppFontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
@@ -274,11 +278,11 @@ class ActionsMessage extends StatelessWidget {
   @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
   @protected TextStyle get displayMessageTextStyle => messageTextStyle ?? defaultMessageTextStyle;
 
-  @protected BorderRadius get defautBorderRadius => const BorderRadius.all(Radius.circular(8));
-  @protected BorderRadius get displayBorderRadius => borderRadius ?? defautBorderRadius;
+  @protected BorderRadius get defaultBorderRadius => const BorderRadius.all(Radius.circular(8));
+  @protected BorderRadius get displayBorderRadius => borderRadius ?? defaultBorderRadius;
 
-  @protected ShapeBorder get defautBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
-  @protected ShapeBorder get displayBorder => border ?? defautBorder;
+  @protected ShapeBorder get defaultBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
+  @protected ShapeBorder get displayBorder => border ?? defaultBorder;
 
   @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImage('close-circle-light', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: AppColors.surface));
   @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;

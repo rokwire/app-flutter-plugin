@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_passkey/flutter_passkey.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -21,20 +22,29 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
-  static const String notifyLoginStarted      = "edu.illinois.rokwire.auth2.login.started";
-  static const String notifyLoginSucceeded    = "edu.illinois.rokwire.auth2.login.succeeded";
-  static const String notifyLoginFailed       = "edu.illinois.rokwire.auth2.login.failed";
-  static const String notifyLoginChanged      = "edu.illinois.rokwire.auth2.login.changed";
-  static const String notifyLoginFinished     = "edu.illinois.rokwire.auth2.login.finished";
-  static const String notifyLogout            = "edu.illinois.rokwire.auth2.logout";
-  static const String notifyLinkChanged       = "edu.illinois.rokwire.auth2.link.changed";
-  static const String notifyAccountChanged    = "edu.illinois.rokwire.auth2.account.changed";
-  static const String notifyProfileChanged    = "edu.illinois.rokwire.auth2.profile.changed";
-  static const String notifyPrefsChanged      = "edu.illinois.rokwire.auth2.prefs.changed";
-  static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
-  static const String notifyPrepareUserDelete = "edu.illinois.rokwire.auth2.user.prepare.delete";
+  static const String notifyLoginStarted         = "edu.illinois.rokwire.auth2.login.started";
+  static const String notifyLoginSucceeded       = "edu.illinois.rokwire.auth2.login.succeeded";
+  static const String notifyLoginFailed          = "edu.illinois.rokwire.auth2.login.failed";
+  static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
+  static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
+  static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
+  static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
+  static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
+  static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
+  static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
+  static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
+
+  //TODO: Remove if not needed
+  static const String notifyGetPasskeySuccess    = "edu.illinois.rokwire.auth2.passkey.get.succeeded";
+  static const String notifyGetPasskeyFailed     = "edu.illinois.rokwire.auth2.passkey.get.failed";
+  static const String notifyCreatePasskeySuccess = "edu.illinois.rokwire.auth2.passkey.create.succeeded";
+  static const String notifyCreatePasskeyFailed  = "edu.illinois.rokwire.auth2.passkey.create.failed";
+  //
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
+
+  final flutterPasskeyPlugin = FlutterPasskey();
 
   _OidcLogin? _oidcLogin;
   bool? _oidcLink;
@@ -230,6 +240,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
   Auth2LoginType get emailLoginType => Auth2LoginType.email;
   Auth2LoginType get usernameLoginType => Auth2LoginType.username;
+  Auth2LoginType get passkeyLoginType => Auth2LoginType.passkey;
 
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
@@ -247,16 +258,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPhoneLoggedIn => (_account?.authType?.loginType == phoneLoginType);
   bool get isEmailLoggedIn => (_account?.authType?.loginType == emailLoginType);
   bool get isUsernameLoggedIn => (_account?.authType?.loginType == usernameLoginType);
+  bool get isPasskeyLoggedIn => (_account?.authType?.loginType == passkeyLoginType);
 
   bool get isOidcLinked => _account?.isAuthTypeLinked(oidcLoginType) ?? false;
   bool get isPhoneLinked => _account?.isAuthTypeLinked(phoneLoginType) ?? false;
   bool get isEmailLinked => _account?.isAuthTypeLinked(emailLoginType) ?? false;
   bool get isUsernameLinked => _account?.isAuthTypeLinked(usernameLoginType) ?? false;
+  bool get isPasskeyLinked => _account?.isAuthTypeLinked(passkeyLoginType) ?? false;
 
   List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcLoginType) ?? [];
   List<Auth2Type> get linkedPhone => _account?.getLinkedForAuthType(phoneLoginType) ?? [];
   List<Auth2Type> get linkedEmail => _account?.getLinkedForAuthType(emailLoginType) ?? [];
   List<Auth2Type> get linkedUsername => _account?.getLinkedForAuthType(usernameLoginType) ?? [];
+  List<Auth2Type> get linkedPasskey => _account?.getLinkedForAuthType(passkeyLoginType) ?? [];
 
   bool get hasUin => (0 < (uin?.length ?? 0));
   String? get uin => _account?.authType?.uiucUser?.uin;
@@ -338,6 +352,197 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       _log("Auth2: anonymous auth failed: ${response?.statusCode}\n${response?.body}");
     }
     return false;
+  }
+
+  // Passkey authentication
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? username) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
+      final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
+      if (!isPasskeySupported) {
+        return Auth2PasskeySignInResult.failedNotSupported;
+      }
+
+      String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          'username': username,
+        },
+        'params': {
+          'sign_up': false,
+        },
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response  != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        String? responseBody = response.body;
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
+        Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
+        Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
+        // pubKeyRequest?.remove('allowCredentials');
+        // pubKeyRequest?['userVerification'] = 'required';
+        // pubKeyRequest?['allowCredentials'] = [];
+        // pubKeyRequest = {
+        //   "challenge": "T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo",
+        //   // "allowCredentials": [],
+        //   "timeout": 1800000,
+        //   "userVerification": "required",
+        //   "rpId": "university.app.services.rokmetro.com"
+        // };
+        try {
+          // await RokwirePlugin.getPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+          String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+          return _completeSignInWithPasskey(username, responseData);
+        } catch(error) {
+          Log.e(error.toString());
+        }
+      }
+      else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'not-found') {
+        return Auth2PasskeySignInResult.failedNotFound;
+      }
+    }
+    return Auth2PasskeySignInResult.failed;
+  }
+
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String responseData) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+      String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          "username": username,
+          "response": responseData,
+        },
+        'device': deviceInfo,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response != null && response.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignInResult.succeeded;
+        }
+      }
+    }
+    return Auth2PasskeySignInResult.failed;
+  }
+
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
+      final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
+      if (!isPasskeySupported) {
+        return Auth2PasskeySignUpResult.failedNotSupported;
+      }
+
+      Auth2UserProfile? profile = _anonymousProfile;
+      List<String>? nameParts = displayName?.split(' ');
+      if (nameParts != null && nameParts.length >= 2) {
+        Auth2UserProfile nameData = Auth2UserProfile(firstName: nameParts[0], lastName: nameParts.skip(1).join(' '));
+        if (profile != null) {
+          profile.apply(nameData);
+        } else {
+          profile = nameData;
+        }
+      }
+
+      String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          'username': username,
+        },
+        'params': {
+          "display_name": displayName,
+        },
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
+        Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
+        Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
+        try {
+          // await RokwirePlugin.createPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+          // pubKeyRequest?['attestation'] = "none";
+          // pubKeyRequest?['excludeCredentials'] = [];
+          // pubKeyRequest?['authenticatorSelection']?['authenticatorAttachment'] = "platform";
+          // pubKeyRequest?['authenticatorSelection']?['requireResidentKey'] = true;
+          // pubKeyRequest?['authenticatorSelection']?['residentKey'] = 'required';
+          // pubKeyRequest?['authenticatorSelection']?['userVerification'] = 'required';
+
+          String? jsonRequest = JsonUtils.encode(pubKeyRequest) ?? '';
+          String responseData = await flutterPasskeyPlugin.createCredential(jsonRequest);
+          return _completeSignUpWithPasskey(username, responseData);
+        } catch(error) {
+          try {
+            String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
+            if (result == Auth2PasskeySignInResult.succeeded) {
+              return Auth2PasskeySignUpResult.succeeded;
+            }
+          } catch(error) {
+            Log.e(error.toString());
+          }
+        }
+      }
+      // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+      //   return Auth2PasskeySignUpResult.failedAccountExist;
+      // }
+    }
+    return Auth2PasskeySignUpResult.failed;
+  }
+
+  Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String responseData) async {
+    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+      String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          "username": username,
+          "response": responseData,
+        },
+        'device': deviceInfo,
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post);
+      if (response != null && response.statusCode == 200) {
+        return Auth2PasskeySignUpResult.succeeded;
+      }
+    }
+    return Auth2PasskeySignUpResult.failed;
   }
 
   // OIDC Authentication
@@ -1423,6 +1628,29 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     return params;
   }
+  
+  // Plugin
+
+  Future<dynamic> onPluginNotification(String? name, dynamic arguments) async {
+    switch (name) {
+      case 'onGetPasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeySuccess, responseJson);
+        break;
+      case 'onGetPasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeyFailed, error);
+        break;
+      case 'onCreatePasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeySuccess, responseJson);
+        break;
+      case 'onCreatePasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeyFailed, error);
+        break;
+    }
+  }
 }
 
 class _OidcLogin {
@@ -1484,6 +1712,30 @@ class Auth2Csrf with NetworkAuthProvider {
     }
     return false;
   }
+}
+
+// Auth2EmailAccountState
+
+enum Auth2PasskeyAccountState {
+  nonExistent,
+  exists,
+}
+
+// Auth2PasskeySignUpResult
+
+enum Auth2PasskeySignUpResult {
+  succeeded,
+  failed,
+  failedNotSupported,
+}
+
+// Auth2PasskeySignInResult
+
+enum Auth2PasskeySignInResult {
+  succeeded,
+  failed,
+  failedNotFound,
+  failedNotSupported,
 }
 
 // Auth2PhoneRequestCodeResult

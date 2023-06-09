@@ -606,6 +606,9 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'usernameLoggedIn') && (value is bool)) {
             result = result && (Auth2().isUsernameLoggedIn == value);
           }
+          else if ((key == 'passkeyLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isPasskeyLoggedIn == value);
+          }
           else if ((key == 'phoneOrEmailLoggedIn') && (value is bool)) {
             result = result && ((Auth2().isPhoneLoggedIn || Auth2().isEmailLoggedIn) == value) ;
           }
@@ -620,6 +623,9 @@ class FlexUI with Service implements NotificationsListener {
           }
           else if ((key == 'usernameLinked') && (value is bool)) {
             result = result && (Auth2().isUsernameLinked == value);
+          }
+          else if ((key == 'passkeyLinked') && (value is bool)) {
+            result = result && (Auth2().isPasskeyLinked == value);
           }
           else if ((key == 'accountRole') && (value is String)) {
             result = result && Auth2().hasRole(value);

@@ -71,7 +71,7 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois }
+enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois, passkey }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
@@ -83,6 +83,7 @@ String? auth2LoginTypeToString(Auth2LoginType value) {
     case Auth2LoginType.phoneTwilio: return 'twilio_phone';
     case Auth2LoginType.oidc: return 'oidc';
     case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
+    case Auth2LoginType.passkey: return 'webauthn';
   }
 }
 
@@ -110,6 +111,9 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   }
   else if (value == 'illinois_oidc') {
     return Auth2LoginType.oidcIllinois;
+  }
+  else if (value == 'webauthn') {
+    return Auth2LoginType.passkey;
   }
   return null;
 }
@@ -689,6 +693,43 @@ class Auth2Type {
     }
     return jsonList;
   }
+}
+
+
+////////////////////////////////
+// Auth2Message
+
+class Auth2Message {
+  final String? message;
+  final Map<String, dynamic>? params;
+
+  Auth2Message({this.message, this.params});
+
+  static Auth2Message? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Auth2Message(
+      message: JsonUtils.stringValue(json['message']),
+      params: JsonUtils.mapValue(json['params']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'message': message,
+      'params' : params,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Auth2Message) &&
+          (other.params == params) &&
+          (other.message == message);
+
+  @override
+  int get hashCode =>
+      (params?.hashCode ?? 0) ^
+      (message?.hashCode ?? 0);
+
 }
 
 ////////////////////////////////

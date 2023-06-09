@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
 
 class RokwirePlugin {
@@ -82,6 +83,26 @@ class RokwirePlugin {
     return false;
   }
 
+  static Future<void> getPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
+    try {
+      return await _channel.invokeMethod('getPasskey', {
+        'requestJson': requestJson,
+        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
+      });
+    } catch(e) { debugPrint(e.toString()); }
+  }
+
+  static Future<void> createPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
+    try {
+      return await _channel.invokeMethod('createPasskey', {
+        'requestJson': requestJson,
+        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
+      });
+    } catch(e) {
+      debugPrint(e.toString());
+    }
+  }
+
   // Compound APIs
 
   static Future<dynamic> locationServices(String method, [dynamic arguments]) async {
@@ -115,6 +136,9 @@ class RokwirePlugin {
 
     if (firstMethodComponent == 'geoFence') {
       GeoFence().onPluginNotification(nextMethodComponents, call.arguments);
+    }
+    else if (firstMethodComponent == 'passkey') {
+      Auth2().onPluginNotification(nextMethodComponents, call.arguments);
     }
   }
 }

@@ -1,3 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="edu.illinois.rokwire.rokwire_plugin">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>
