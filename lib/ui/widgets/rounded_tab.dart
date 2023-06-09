@@ -16,7 +16,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class RoundedTab extends StatefulWidget {
   final String? title;

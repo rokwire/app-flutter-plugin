@@ -18,10 +18,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
-import 'package:rokwire_plugin/rokwire_plugin.dart';
+// import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/utils/crypt.dart';
+// import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,8 +29,8 @@ class Storage with Service {
 
   static const String notifySettingChanged  = 'edu.illinois.rokwire.setting.changed';
   
-  static const String _ecryptionKeyId  = 'edu.illinois.rokwire.encryption.storage.key';
-  static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
+  // static const String _ecryptionKeyId  = 'edu.illinois.rokwire.encryption.storage.key';
+  // static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
@@ -66,7 +66,6 @@ class Storage with Service {
 
     // _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     // _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
-
     if (_sharedPreferences == null) {
       throw ServiceError(
         source: this,

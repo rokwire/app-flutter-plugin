@@ -18,7 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
