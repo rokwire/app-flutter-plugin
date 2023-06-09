@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -88,8 +89,8 @@ public class GeofenceMonitor implements BeaconConsumer {
     public void init() {
         Context activityContext = RokwirePlugin.getInstance().getActivity();
         if ((activityContext != null) &&
-            (ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
-            (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                (ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
+                (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
             Log.d(TAG, "Location Permissions Granted.");
             initGeofenceClient();
             initBeaconManager();
@@ -352,6 +353,10 @@ public class GeofenceMonitor implements BeaconConsumer {
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
         GeofencingRequest geofencingRequest = builder.build();
+        Context context = RokwirePlugin.getInstance().getActivity();
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
         geofencingClient.addGeofences(geofencingRequest, getGeofencePendingIntent()).
                 addOnSuccessListener(addGeofencesSuccessListener).
                 addOnFailureListener(addGeofencesFailureListener);
@@ -381,15 +386,15 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     private void notifyCurrentGeofencesUpdated() {
         //TBD
-        RokwirePlugin.getInstance().notifyGeoFence​("onCurrentRegionsChanged", getCurrentIds());
+        RokwirePlugin.getInstance().notifyGeoFence("onCurrentRegionsChanged", getCurrentIds());
     }
 
     private void notifyRegionEnter(String regionId) {
-        RokwirePlugin.getInstance().notifyGeoFence​("onEnterRegion", regionId);
+        RokwirePlugin.getInstance().notifyGeoFence("onEnterRegion", regionId);
     }
 
     private void notifyRegionExit(String regionId) {
-        RokwirePlugin.getInstance().notifyGeoFence​("onExitRegion", regionId);
+        RokwirePlugin.getInstance().notifyGeoFence("onExitRegion", regionId);
     }
 
     //region Add Geofences Listeners
@@ -539,7 +544,7 @@ public class GeofenceMonitor implements BeaconConsumer {
         HashMap<String, Object> parameters = new HashMap<>();
         parameters.put("regionId", regionId);
         parameters.put("beacons", beaconsList);
-        RokwirePlugin.getInstance().notifyGeoFence​("onBeaconsInRegionChanged", parameters);
+        RokwirePlugin.getInstance().notifyGeoFence("onBeaconsInRegionChanged", parameters);
     }
 
     @Override
