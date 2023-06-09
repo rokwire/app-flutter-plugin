@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
+- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
@@ -42,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
 - Username authentication [#273](https://github.com/rokwire/app-flutter-plugin/issues/273)
-- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).
