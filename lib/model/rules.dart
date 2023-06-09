@@ -14,20 +14,52 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/alert.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
-import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/local_notifications.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
-import 'package:rokwire_plugin/service/surveys.dart';
-import 'package:rokwire_plugin/ui/popups/alerts.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:uuid/uuid.dart';
 
-abstract class RuleCondition {
+abstract class RuleElement {
+  String id;
 
-  RuleCondition();
+  RuleElement({String? id}) : id = id ?? const Uuid().v4();
+
+  factory RuleElement.fromOther(RuleElement other) {
+    if (other is RuleCondition) {
+      return RuleCondition.fromOther(other);
+    } else { // (other is RuleResult)
+      return RuleResult.fromOther(other as RuleResult);
+    }
+  }
+
+  Map<String, dynamic> toJson();
+
+  String getSummary({String? prefix, String? suffix}) => "";
+
+  RuleElement? findElement(String id) {
+    return this.id == id ? this : null;
+  }
+
+  bool updateElement(RuleElement update) {
+    return id == update.id;
+  }
+
+  void updateDataKeys(String oldKey, String newKey);
+  void updateSupportedOption(String oldOption, String newOption);
+
+  Map<String, String> get supportedAlternatives => const {
+    "if": "If",
+    "and": "AND",
+    "or": "OR",
+    "cases": "Cases",
+    "action": "Action",
+    "actions": "Actions",
+    // "reference": "Reference",
+  };
+} 
+
+abstract class RuleCondition extends RuleElement {
+
+  RuleCondition({String? id}) : super(id: id);
 
   factory RuleCondition.fromJson(Map<String, dynamic> json) {
     dynamic conditions = json["conditions"];
@@ -41,21 +73,25 @@ abstract class RuleCondition {
     return RuleComparison.fromJson(json);
   }
 
-  Map<String, dynamic> toJson();
-
-  bool evaluate(RuleEngine engine);
-}
+  factory RuleCondition.fromOther(RuleCondition other) {
+    if (other is RuleComparison) {
+      return RuleComparison.fromOther(other);
+    } else {  // (other is RuleLogic)
+      return RuleLogic.fromOther(other as RuleLogic);
+    }
+  }
+}           
 
 class RuleComparison extends RuleCondition {
-  final String operator;
-  final String dataKey;
-  final dynamic dataParam;
-  final dynamic compareTo;
-  final dynamic compareToParam;
-  final bool defaultResult;
+  String operator;
+  String dataKey;
+  dynamic dataParam;
+  dynamic compareTo;
+  dynamic compareToParam;
+  bool? defaultResult;
 
-  RuleComparison({required this.dataKey, required this.operator, this.dataParam,
-    required this.compareTo, this.compareToParam, this.defaultResult = false});
+  RuleComparison({String? id, required this.dataKey, required this.operator, this.dataParam,
+    required this.compareTo, this.compareToParam, this.defaultResult = false}) : super(id: id);
 
   factory RuleComparison.fromJson(Map<String, dynamic> json) {
     return RuleComparison(
@@ -65,6 +101,18 @@ class RuleComparison extends RuleCondition {
       compareTo: json["compare_to"],
       compareToParam: json["compare_to_param"],
       defaultResult: json["default_result"] ?? false,
+    );
+  }
+
+  factory RuleComparison.fromOther(RuleComparison other) {
+    return RuleComparison(
+      id: other.id,
+      operator: other.operator,
+      dataKey: other.dataKey,
+      dataParam: other.dataParam,
+      compareTo: other.compareTo,
+      compareToParam: other.compareToParam,
+      defaultResult: other.defaultResult,
     );
   }
 
@@ -80,129 +128,207 @@ class RuleComparison extends RuleCondition {
     };
   }
 
+  static Map<String, String> get supportedOperators => const {
+    "<": "less than",
+    ">": "greater than",
+    "<=": "less than or equal to",
+    ">=": "greater than or equal to",
+    "==": "equal to",
+    "!=": "not equal to",
+    // "in_range": "in range", //TODO: implement
+    "any": "any of",
+    "all": "all of",
+  };
+
   @override
-  bool evaluate(RuleEngine engine) {
-    dynamic dataVal = engine.getVal(dataKey, dataParam);
-
-    dynamic compareToVal = compareTo;
-    if (compareToVal is String) {
-      compareToVal = engine.getVal(compareTo, compareToParam);
+  String getSummary({String? prefix, String? suffix}) {
+    String dataKeySummary = dataKey;
+    if (dataKey.startsWith('data.')) {
+      dataKeySummary = dataKey.substring(5);
     }
-    return compare(operator, dataVal, compareToVal, defaultResult: defaultResult);
+    dynamic compareToSummary = compareTo;
+    if (compareTo is String && compareTo.startsWith('data.')) {
+      compareToSummary = compareTo.substring(5);
+    }
+
+    String summary = "Is $dataKeySummary ${supportedOperators[operator]} $compareToSummary?";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
   }
 
-  bool compare(String operator, dynamic val, dynamic ruleVal, {bool defaultResult = false}) {
-    try {
-      switch (operator) {
-        case "<":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isBefore(ruleVal);
-          }
-          return val < ruleVal;
-        case ">":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAfter(ruleVal);
-          }
-          return ruleVal < val;
-        case "<=":
-          return val <= ruleVal;
-        case ">=":
-          return ruleVal <= val;
-        case "==":
-          if (val is DateTime && ruleVal is DateTime) {
-            return val.isAtSameMomentAs(ruleVal);
-          }
-          return val == ruleVal;
-        case "!=":
-          if (val is DateTime && ruleVal is DateTime) {
-            return !val.isAtSameMomentAs(ruleVal);
-          }
-          return val != ruleVal;
-        case "in_range":
-          //TODO: implement
-          return defaultResult;
-        case "any":
-          if (ruleVal is Iterable) {
-            return ListUtils.contains(ruleVal.toList(), val) ?? false;
-          }
-          if (val is Iterable) {
-            return ListUtils.contains(val.toList(), ruleVal) ?? false;
-          }
-          return val == ruleVal;
-        case "all":
-          if (ruleVal is Iterable) {
-            return ListUtils.contains(ruleVal.toList(), val, checkAll: true) ?? false;
-          }
-          if (val is Iterable) {
-            return ListUtils.contains(val.toList(), ruleVal, checkAll: true) ?? false;
-          }
-          return val == ruleVal;
-        default:
-          return defaultResult;
-      }
-    } catch(e) {
-      return defaultResult;
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    dataKey = dataKey.replaceAll(oldKey, newKey);
+    if (compareTo is String) {
+      compareTo = (compareTo as String).replaceAll(oldKey, newKey);
     }
   }
 
-  
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (operator == oldOption) {
+      operator = newOption;
+    }
+  }
 }
 
 class RuleLogic extends RuleCondition {
-  final String operator;
-  final List<RuleCondition> conditions;
+  String operator;
+  List<RuleCondition> conditions;
 
-  RuleLogic(this.operator, this.conditions);
+  RuleLogic(this.operator, this.conditions, {String? id}) : super(id: id);
+
+  factory RuleLogic.fromOther(RuleLogic other) {
+    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList(), id: other.id);
+  }
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'operator': operator,
-      'conditions': conditions.map((e) => e.toJson()),
+      'conditions': conditions.map((e) => e.toJson()).toList(),
     };
   }
 
+  static Map<String, String> get supportedOperators => const {
+    "or": "OR",
+    "and": "AND",
+  };
+
   @override
-  bool evaluate(RuleEngine engine) {
-    bool defaultResult = (operator == "and");
-    for (RuleCondition subCondition in conditions) {
-      if (operator == "and") {
-        if (!subCondition.evaluate(engine)) {
-          return false;
-        }
-      } else if (operator == "or") {
-        if (subCondition.evaluate(engine)) {
-          return true;
-        }
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = supportedOperators[operator] ?? 'Invalid operator';
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (RuleCondition condition in conditions) {
+      elem = condition.findElement(id);
+      if (elem != null) {
+        return elem;
       }
     }
-    return defaultResult;
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
+    for (int i = 0; i < conditions.length; i++) {
+      if (conditions[i].id == update.id && update is RuleCondition) {
+        conditions[i] = update;
+        return true;
+      }
+      if (conditions[i].updateElement(update)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < conditions.length; i++) {
+      conditions[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (operator == oldOption) {
+      operator = newOption;
+    }
+    for (int i = 0; i < conditions.length; i++) {
+      conditions[i].updateSupportedOption(oldOption, newOption);
+    }
   }
 }
 
-abstract class RuleResult {
+abstract class RuleResult extends RuleElement {
 
-  RuleResult();
+  RuleResult({String? id}) : super(id: id);
 
   factory RuleResult.fromJson(Map<String, dynamic> json) {
     dynamic ruleKey = json["rule_key"];
     if (ruleKey is String) {
       return RuleReference(ruleKey);
     }
-    dynamic condition = json["condition"];
-    if (condition != null) {
+    dynamic cases = json["cases"];
+    if (cases is List<dynamic>) {
+      List<Rule> caseList = [];
+      for (dynamic caseItem in cases) {
+        caseList.add(Rule.fromJson(caseItem));
+      }
+      return RuleCases(cases: caseList);
+    }
+    try {
+      return RuleActionResult.fromJson(json);
+    } catch (_) {
       return Rule.fromJson(json);
     }
-    return RuleActionResult.fromJson(json);
   }
 
-  Map<String, dynamic> toJson();
+  factory RuleResult.fromOther(RuleResult other) {
+    if (other is RuleAction) {
+      return RuleAction.fromOther(other);
+    } else if (other is RuleActionList) {
+      return RuleActionList.fromOther(other);
+    } else if (other is RuleReference) {
+      return RuleReference.fromOther(other);
+    } else if (other is Rule) {
+      return Rule.fromOther(other);
+    } else {  // (other is RuleCases)
+      return RuleCases.fromOther(other as RuleCases);
+    }
+  }
+
+  static List<RuleResult> listFromJson(List<dynamic>? jsonList) {
+    if (jsonList == null) {
+      return [];
+    }
+    List<RuleResult> ruleResults = [];
+    for (dynamic json in jsonList) {
+      if (json is Map<String, dynamic>) {
+        ruleResults.add(RuleResult.fromJson(json));
+      }
+    }
+    return ruleResults;
+  }
+
+  static List<Map<String, dynamic>> listToJson(List<RuleResult>? resultRules) {
+    if (resultRules == null) {
+      return [];
+    }
+    List<Map<String, dynamic>> resultsJson = [];
+    for (RuleResult ruleResult in resultRules) {
+      resultsJson.add(ruleResult.toJson());
+    }
+    return resultsJson;
+  }
+
+  List<RuleAction> get possibleActions => [];
 }
 
 abstract class RuleActionResult extends RuleResult {
   abstract final int? priority;
 
-  RuleActionResult();
+  RuleActionResult({String? id}) : super(id: id);
 
   factory RuleActionResult.fromJson(Map<String, dynamic> json) {
     dynamic actions = json["actions"];
@@ -215,15 +341,16 @@ abstract class RuleActionResult extends RuleResult {
     }
     return RuleAction.fromJson(json);
   }
-
-  @override
-  Map<String, dynamic> toJson();
 }
 
 class RuleReference extends RuleResult {
-  final String ruleKey;
+  String ruleKey;
 
-  RuleReference(this.ruleKey);
+  RuleReference(this.ruleKey, {String? id}) : super(id: id);
+
+  factory RuleReference.fromOther(RuleReference other) {
+    return RuleReference(other.ruleKey, id: other.id);
+  }
 
   @override
   Map<String, dynamic> toJson() {
@@ -231,22 +358,63 @@ class RuleReference extends RuleResult {
       'rule_key': ruleKey,
     };
   }
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Evaluate $ruleKey";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    ruleKey = ruleKey.replaceAll(oldKey, newKey);
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    ruleKey = ruleKey.replaceAll(oldOption, newOption);
+  }
 }
 
 class RuleAction extends RuleActionResult {
-  final String action;
-  final dynamic data;
-  final String? dataKey;
+  static const String endSurveySummary = 'END SURVEY';
+
+  String action;
+  dynamic data;
+  String? dataKey;
   @override int? priority;
 
-  RuleAction({required this.action, required this.data, this.dataKey, this.priority});
+  RuleAction({String? id, required this.action, required this.data, this.dataKey, this.priority}) : super(id: id);
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
+    dynamic data = json["data"];
+    String action = json["action"];
+    if (action == 'local_notify') {
+      data = Alert.fromJson(json["data"]);
+    } else if (action == 'notify') {
+      data = SurveyAlert.fromJson(json["data"]);
+    }
     return RuleAction(
-      action: json["action"],
-      data: json["data"],
+      action: action,
+      data: data,
       dataKey: JsonUtils.stringValue(json["data_key"]),
       priority: json["priority"],
+    );
+  }
+
+  factory RuleAction.fromOther(RuleAction other) {
+    return RuleAction(
+      id: other.id,
+      action: other.action,
+      data: other.data,
+      dataKey: other.dataKey,
+      priority: other.priority,
     );
   }
 
@@ -260,134 +428,166 @@ class RuleAction extends RuleActionResult {
     };
   }
 
-  dynamic evaluate(RuleEngine engine) {
-    switch (action) {
-      case "return":
-        return _return(engine);
-      case "sum":
-        return _sum(engine);
-      case "set_result":
-        _setResult(engine);
-        return null;
-      case "show_survey":
-        //TODO: fix this (should use notification like alert)
-      case "alert":
-        _alert(engine);
-        return null;
-      case "alert_result":
-        _alert(engine);
-        _setResult(engine);
-        return null;
-      case "notify":
-        return _notify(engine);
-      case "save":
-        return _save(engine);
-      case "local_notify":
-        return _localNotify(engine);
-    }
-    return null;
-  }
-
-  dynamic _return(RuleEngine engine) {
-    return engine.getValOrCollection(data);
-  }
-
-  dynamic _sum(RuleEngine engine) {
-    dynamic evaluatedData = engine.getValOrCollection(data);
-    if (data is List<dynamic>) {
-      num sum = 0;
-      for (dynamic item in evaluatedData) {
-        if (item is num) {
-          sum += item;
-        }
-      }
-      return sum;
-    } else if (data is num) {
-      return data;
-    }
-    return null;
-  }
-
-  void _setResult(RuleEngine engine) {
-    if (engine.resultData is Map && dataKey != null) {
-      engine.resultData[dataKey] = engine.getValOrCollection(data);
-    } else if (dataKey != null) {
-      engine.resultData = <String, dynamic>{dataKey!: engine.getValOrCollection(data)};
-    } else {
-      engine.resultData = engine.getValOrCollection(data);
+  static Map<String, String> getSupportedActionsForSurvey(SurveyElement surveyElement) {
+    switch (surveyElement) {
+      case SurveyElement.defaultResponseRule: return {"set_to": "Set To"};
+      case SurveyElement.scoreRule: return {"set_to": "Set To"};
+      case SurveyElement.followUpRules: return {"show": "Show"};
+      case SurveyElement.resultRules: return {
+        "set_result": "Save Data",
+        "alert": "Alert",
+        "alert_result": "Alert and Save Data",
+        "save": "Save",
+        "local_notify": "Schedule Notification",
+        // "notify": "Send Notification",
+        // "show_survey": "Show Survey",
+        // "sum": "Sum",
+      };
+      default: return {};
     }
   }
 
-  void _alert(RuleEngine engine) {
-    dynamic alertData = engine.getValOrCollection(data);
-    if (alertData is SurveyDataResult) {
-      NotificationService().notify(Alerts.notifyAlert, Alert(title: alertData.text, text: alertData.moreInfo, actions: alertData.actions));
-    } else if (alertData is Alert) {
-      NotificationService().notify(Alerts.notifyAlert, alertData);
+  static Map<String, String> get supportedActions => const {
+    "show": "Show",
+    "set_to": "Set To",
+    "set_result": "Save Data",
+    "alert": "Alert",
+    "alert_result": "Alert and Save Data",
+    "save": "Save",
+    "local_notify": "Schedule Notification",
+    // "notify": "Send Notification",
+    // "show_survey": "Show Survey",
+    // "sum": "Sum",
+  };
+
+  static List<String> get supportedPreviews => const ["alert", "alert_result", "local_notify"];
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = supportedActions[action] ?? '';
+    if (data is Alert) {
+      summary += " ${data.title}";
+    } else if (data is SurveyAlert) {
+      summary += " ${data.contactKey}";
+    } else if (data is String && data.startsWith('data.')) {
+      summary += " ${data.substring(5)}";
+    } else if (action == 'show' && data == null) {
+      summary = endSurveySummary;  
+    } else if (action != 'save') {
+      summary += " $data";
+    }
+
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    dataKey = dataKey?.replaceAll(oldKey, newKey);
+    if (data is String) {
+      data = (data as String).replaceAll(oldKey, newKey);
     }
   }
 
-  Future<bool> _notify(RuleEngine engine) {
-    dynamic notificationData = engine.getValOrCollection(data);
-    if (notificationData is Map<String, dynamic>) {
-      SurveyAlert alert = SurveyAlert.fromJson(notificationData);
-      return Surveys().createSurveyAlert(alert);
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    if (action == oldOption) {
+      action = newOption;
     }
-    return Future<bool>.value(false);
-  } 
-
-  Future<dynamic> _save(RuleEngine engine) {
-    return engine.save();
   }
 
-  Future<bool> _localNotify(RuleEngine engine) {
-    dynamic resolvedData = engine.getValOrCollection(data);
-    if (resolvedData is Map<String, dynamic>) {
-      Alert alert = Alert.fromJson(resolvedData);
-      switch (JsonUtils.stringValue(alert.params?["type"])) {
-        case "relative":
-          Duration? notifyWaitTime = JsonUtils.durationValue(alert.params?["schedule"]);
-          if (notifyWaitTime != null) {
-            return LocalNotifications().zonedSchedule("${engine.type}.${engine.id}",
-              title: alert.title,
-              message: alert.text,
-              payload: JsonUtils.encode(alert.actions),
-              dateTime: DateTime.now().add(notifyWaitTime)
-            );
-          }
-          break;
-        case "absolute":
-          //TODO: implement
-        case "cron":
-          //TODO: implement
-      }
-    }
-    
-    return Future<bool>.value(false);
-  }
+  @override
+  List<RuleAction> get possibleActions => [this];
 }
 
 class RuleActionList extends RuleActionResult {
-  final List<RuleAction> actions;
+  List<RuleAction> actions;
   @override int? priority;
 
-  RuleActionList({required this.actions, this.priority});
+  RuleActionList({String? id, required this.actions, this.priority}) : super(id: id);
+
+  factory RuleActionList.fromOther(RuleActionList other) {
+    return RuleActionList(
+      id: other.id,
+      actions: other.actions.map((e) => RuleAction.fromOther(e)).toList()
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() {
     return {
       'priority': priority,
-      'actions': actions.map((e) => e.toJson()),
+      'actions': actions.map((e) => e.toJson()).toList(),
     };
   }
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Actions";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (RuleAction action in actions) {
+      if (action.id == id) {
+        return action;
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
+    for (int i = 0; i < actions.length; i++) {
+      if (actions[i].id == update.id && update is RuleAction) {
+        actions[i] = update;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < actions.length; i++) {
+      actions[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    for (int i = 0; i < actions.length; i++) {
+      actions[i].updateSupportedOption(oldOption, newOption);
+    }
+  }
+
+  @override
+  List<RuleAction> get possibleActions => actions;
 }
 
 class Rule extends RuleResult {
-  final RuleCondition? condition;
-  final RuleResult? trueResult;
-  final RuleResult? falseResult;
+  RuleCondition? condition;
+  RuleResult? trueResult;
+  RuleResult? falseResult;
 
-  Rule({this.condition, this.trueResult, this.falseResult});
+  Rule({String? id, this.condition, this.trueResult, this.falseResult}) : super(id: id);
 
   factory Rule.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? condition = json["condition"];
@@ -397,6 +597,15 @@ class Rule extends RuleResult {
       condition: condition != null ? RuleCondition.fromJson(condition) : null,
       trueResult: trueResult != null ? RuleResult.fromJson(trueResult) : null,
       falseResult: falseResult != null ? RuleResult.fromJson(falseResult) : null,
+    );
+  }
+
+  factory Rule.fromOther(Rule other) {
+    return Rule(
+      id: other.id,
+      condition: other.condition != null ? RuleCondition.fromOther(other.condition!) : null,
+      trueResult: other.trueResult != null ? RuleResult.fromOther(other.trueResult!) : null,
+      falseResult: other.falseResult != null ? RuleResult.fromOther(other.falseResult!) : null,
     );
   }
 
@@ -433,32 +642,167 @@ class Rule extends RuleResult {
     return rulesJson;
   }
 
-  dynamic evaluate(RuleEngine engine) {
-    RuleResult? result;
-    if (condition == null || condition!.evaluate(engine)) {
-      result = trueResult;
-    } else {
-      result = falseResult;
+  @override
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
     }
 
-    if (result is RuleReference) {
-      Rule? subRule = engine.subRules[result.ruleKey];
-      if (subRule != null) {
-        return subRule.evaluate(engine);
-      }
-    } else if (result is Rule) {
-      return result.evaluate(engine);
-    } else if (result is RuleAction) {
-      return result.evaluate(engine);
-    } else if (result is RuleActionList) {
-      List<dynamic> actionResults = [];
-      for (RuleAction action in result.actions) {
-        actionResults.add(action.evaluate(engine));
-      }
-      return actionResults;
+    elem = condition?.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+    elem = trueResult?.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+    elem = falseResult?.findElement(id);
+    if (elem != null) {
+      return elem;
     }
 
     return null;
+  }
+  
+  @override
+  bool updateElement(RuleElement update) {
+    if (condition?.id == update.id && update is RuleCondition) {
+      condition = update;
+      return true;
+    }
+    if (condition?.updateElement(update) ?? false) {
+      return true;
+    }
+    
+    if (trueResult?.id == update.id && update is RuleResult) {
+      trueResult = update;
+      return true;
+    }
+    if (trueResult?.updateElement(update) ?? false) {
+      return true;
+    }
+
+    if (falseResult?.id == update.id && update is RuleResult) {
+      falseResult = update;
+      return true;
+    }
+    if (falseResult?.updateElement(update) ?? false) {
+      return true;
+    }
+
+    return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    condition?.updateDataKeys(oldKey, newKey);
+    trueResult?.updateDataKeys(oldKey, newKey);
+    falseResult?.updateDataKeys(oldKey, newKey);
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    condition?.updateSupportedOption(oldOption, newOption);
+    trueResult?.updateSupportedOption(oldOption, newOption);
+    falseResult?.updateSupportedOption(oldOption, newOption);
+  }
+
+  @override
+  List<RuleAction> get possibleActions {
+    List<RuleAction> actions = [];
+    if (trueResult != null) {
+      actions.addAll(trueResult!.possibleActions);
+    }
+    if (falseResult != null) {
+      actions.addAll(falseResult!.possibleActions);
+    }
+    return actions;
+  }
+}
+
+class RuleCases extends RuleResult {
+  List<Rule> cases;
+
+  RuleCases({String? id, required this.cases}) : super(id: id);
+
+  factory RuleCases.fromOther(RuleCases other) {
+    return RuleCases(
+      id: other.id,
+      cases: other.cases.map((e) => Rule.fromOther(e)).toList()
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'cases': cases.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  @override
+  String getSummary({String? prefix, String? suffix}) {
+    String summary = "Cases";
+    if (prefix != null) {
+      summary = "$prefix $summary";
+    }
+    if (suffix != null) {
+      summary = "$summary $suffix";
+    }
+    return summary;
+  }
+
+  @override
+  RuleElement? findElement(String id) {
+    RuleElement? elem = super.findElement(id);
+    if (elem != null) {
+      return elem;
+    }
+
+    for (Rule rule in cases) {
+      elem = rule.findElement(id);
+      if (elem != null) {
+        return elem;
+      }
+    }
+    return null;
+  }
+
+  @override
+  bool updateElement(RuleElement update) {
+    for (int i = 0; i < cases.length; i++) {
+      if (cases[i].id == update.id && update is Rule) {
+        cases[i] = update;
+        return true;
+      }
+      if (cases[i].updateElement(update)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  void updateDataKeys(String oldKey, String newKey) {
+    for (int i = 0; i < cases.length; i++) {
+      cases[i].updateDataKeys(oldKey, newKey);
+    }
+  }
+
+  @override
+  void updateSupportedOption(String oldOption, String newOption) {
+    for (int i = 0; i < cases.length; i++) {
+      cases[i].updateSupportedOption(oldOption, newOption);
+    }
+  }
+
+  @override
+  List<RuleAction> get possibleActions {
+    List<RuleAction> actions = [];
+    for (Rule ruleCase in cases) {
+      actions.addAll(ruleCase.possibleActions);
+    }
+    return actions;
   }
 }
 
@@ -471,8 +815,6 @@ abstract class RuleEngine {
   final Map<String, Rule> subRules;
   dynamic resultData;
 
-  final Map<String, List<RuleData>> _dataCache = {};
-
   RuleEngine({this.constants = const {}, this.strings = const {}, this.subRules = const {}, this.resultData});
 
   static Map<String, Rule> subRulesFromJson(Map<String, dynamic> json) {
@@ -484,6 +826,14 @@ abstract class RuleEngine {
       }
     }
     return subRules;
+  }
+
+  static Map<String, dynamic> subRulesToJson(Map<String, Rule> subRules) {
+    Map<String, dynamic> json = {};
+    for (MapEntry<String, Rule> entry in subRules.entries) {
+      json[entry.key] = entry.value.toJson();
+    }
+    return json;
   }
 
   static Map<String, Map<String, String>> stringsFromJson(Map<String, dynamic> json) {
@@ -514,319 +864,6 @@ abstract class RuleEngine {
       }
     }
     return constMap;
-  }
-
-  dynamic getProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "auth":
-        return _auth2GetProperty(key?.subRuleKey);
-    }
-    return key?.toString();
-  }
-
-  Future<dynamic> save();
-
-  void clearCache() {
-    _dataCache.clear();
-  }
-
-  void evaluateRules(List<Rule> rules, {bool clearCache = true}) {
-    if (clearCache) {
-      this.clearCache();
-    }
-    RuleActionResult? topAction;
-    for (Rule rule in rules) {
-      try {
-        RuleActionResult? action = rule.evaluate(this);
-        if (action != null && (topAction == null || (topAction.priority ?? 0) < (action.priority ?? 0))) {
-          topAction = action;
-        }
-      } catch(e) {
-        debugPrint(e.toString());
-      }
-    }
-
-    if (topAction is RuleAction) {
-      topAction.evaluate(this);
-    } else if (topAction is RuleActionList) {
-      for (RuleAction action in topAction.actions) {
-        action.evaluate(this);
-      }
-    }
-  }
-
-  String localeString(String key) {
-    String? currentLanguage = Localization().currentLocale?.languageCode;
-    Map<String, String>? currentLanguageStrings = (currentLanguage != null) ? strings[currentLanguage] : null;
-    dynamic currentResult = (currentLanguageStrings != null) ? currentLanguageStrings[key] : null;
-    if (currentResult != null) {
-      return currentResult;
-    }
-
-    String? defaultLanguage = Localization().defaultLocale?.languageCode;
-    Map<String, String>? defaultLanguageStrings = (defaultLanguage != null) ? strings[defaultLanguage] : null;
-    dynamic defaultResult = (defaultLanguageStrings != null) ? defaultLanguageStrings[key] : null;
-    if (defaultResult is String) {
-      return defaultResult;
-    }
-
-    return Localization().getString(key) ?? key;
-  }
-
-  String? stringValue(String? string) {
-    if (string == null) {
-      return null;
-    }
-
-    dynamic val = getVal(string, null);
-    if (val is String) {
-      return interpolateString(val);
-    }
-    return interpolateString(string);
-  }
-
-  String? interpolateString(String? string) {
-    if (string == null) {
-      return null;
-    }
-
-    RegExp regExp = RegExp(r"%{(.*?)}");
-    for (Match match in regExp.allMatches(string)) {
-      String? full = match.group(0);
-      String? key = match.group(1);
-
-      if (full != null && key != null){
-        List<String> parts = key.split(",");
-        String val;
-        if (parts.length == 2) {
-          val = getDisplayVal(parts[0], parts[1]);
-        } else {
-          val = getDisplayVal(key, null);
-        }
-        string = string?.replaceFirst(full, val);
-      }
-    }
-    return string;
-  }
-
-  String getDisplayVal(String key, String? param) {
-    dynamic val = getVal(key, param);
-    if (val is DateTime) {
-      return AppDateTime().getDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
-    }
-    return val.toString();
-  }
-
-  dynamic getValOrCollection(dynamic data) {
-    if (data is String) {
-      return getVal(data, null);
-    } else if (data is Map<String, dynamic>) {
-      Map<String, dynamic> out = {};
-      for (MapEntry<String, dynamic> entry in data.entries) {
-        if (entry.value is String) {
-          out[entry.key] = getVal(entry.value, null);
-        } else {
-          out[entry.key] = getValOrCollection(entry.value);
-        }
-      }
-      return out;
-    } else if (data is List<dynamic>) {
-      List<dynamic> out = [];
-      for (int i = 0; i < data.length; i++) {
-        if (data[i] is String) {
-          out.add(getVal(data[i], null));
-        } else {
-          out.add(getValOrCollection(data[i]));
-        }
-      }
-      return out;
-    }
-    return data;
-  }
-
-  dynamic getVal(String? key, dynamic param) {
-    if (key == null) {
-      return null;
-    }
-
-    List<RuleData> cached = _dataCache[key] ?? [];
-    for (RuleData data in cached.reversed) {
-      if (data.match(param)) {
-        return data.value;
-      }
-    }
-
-    // dynamic val = getValDirect(key, param);
-    // if (val != null) {
-    //   cached.add(RuleData(value: val, param: param));
-    //   _dataCache[key] = cached;
-    // }
-    return getValDirect(key, param);
-  }
-
-  dynamic getValDirect(String? key, dynamic param) {
-    if (key == null) {
-      return null;
-    }
-
-    param = getValOrCollection(param);
-
-    RuleKey ruleKey = RuleKey.fromKey(key);
-    switch (ruleKey.key) {
-      case "literal":
-        _dataCache[key]?.add(RuleData(value: ruleKey.subKey, param: param));
-        return ruleKey.subKey;
-      case "constants":
-        if (ruleKey.subKey != null) {
-          dynamic constVal = constants[ruleKey.subKey!];
-          _dataCache[key]?.add(RuleData(value: constVal, param: param));
-          return constVal;
-        }
-        return null;
-      case "strings":
-        if (ruleKey.subKey != null) {
-          String? stringVal = interpolateString(localeString(ruleKey.subKey!));
-          _dataCache[key]?.add(RuleData(value: stringVal, param: param));
-          return stringVal;
-        }
-        return null;
-      case "current_time":
-        return DateTime.now();
-      case "current_time_offset":
-        Duration offset = JsonUtils.durationValue(param) ?? const Duration();
-        return DateTime.now().subtract(offset);
-      default:
-        return getProperty(ruleKey);
-    }
-  }
-
-  // Property getters
-  dynamic _auth2GetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "uin":
-        return Auth2().uin;
-      case "net_id":
-        return Auth2().netId;
-      case "email":
-        return Auth2().email;
-      case "phone":
-        return Auth2().phone;
-      case "login_type":
-        return Auth2().loginType != null ? auth2LoginTypeToString(Auth2().loginType!) : null;
-      case "full_name":
-        return Auth2().fullName;
-      case "first_name":
-        return Auth2().firstName;
-      case "profile":
-        return _auth2UserProfileGetProperty(key?.subRuleKey);
-      case "preferences":
-        return _auth2UserPrefsGetProperty(key?.subRuleKey);
-      case "permissions":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.hasPermission(subKey);
-        }
-        return Auth2().account?.permissions;
-      case "roles":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.hasRole(subKey);
-        }
-        return Auth2().account?.roles;
-      case "groups":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.belongsToGroup(subKey);
-        }
-        return Auth2().account?.groups;
-      case "system_configs":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().account?.systemConfigs?[subKey];
-        }
-        return Auth2().account?.systemConfigs;
-      case "is_logged_in":
-        return Auth2().isLoggedIn;
-      case "is_oidc_logged_in":
-        return Auth2().isOidcLoggedIn;
-      case "is_email_logged_in":
-        return Auth2().isEmailLoggedIn;
-      case "is_phone_logged_in":
-        return Auth2().isPhoneLoggedIn;
-    }
-    return null;
-  }
-
-  dynamic _auth2UserProfileGetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "first_name":
-        return Auth2().profile?.firstName;
-      case "middle_name":
-        return Auth2().profile?.middleName;
-      case "last_name":
-        return Auth2().profile?.lastName;
-      case "birth_year":
-        return Auth2().profile?.birthYear;
-      case "photo_url":
-        return Auth2().profile?.photoUrl;
-      case "email":
-        return Auth2().profile?.email;
-      case "phone":
-        return Auth2().profile?.phone;
-      case "address":
-        return Auth2().profile?.address;
-      case "state":
-        return Auth2().profile?.state;
-      case "zip":
-        return Auth2().profile?.zip;
-      case "country":
-        return Auth2().profile?.country;
-      case "data":
-        return Auth2().profile?.data?[key?.subRuleKey];
-    }
-    return null;
-  }
-
-  dynamic _auth2UserPrefsGetProperty(RuleKey? key) {
-    switch (key?.key) {
-      case "privacy_level":
-        return Auth2().prefs?.privacyLevel;
-      case "roles":
-        return Auth2().prefs?.roles;
-      case "favorites":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getFavorites(subKey);
-        }
-        return null;
-      case "interests":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getInterestsFromCategory(subKey);
-        }
-        return null;
-      case "food_filters":
-        switch (key?.subRuleKey?.key) {
-          case "included":
-            return Auth2().prefs?.includedFoodTypes;
-          case "excluded":
-            return Auth2().prefs?.excludedFoodIngredients;
-        }
-        return null;
-      case "tags":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.hasTag(subKey);
-        }
-        return null;
-      case "settings":
-        String? subKey = key?.subRuleKey?.key;
-        if (subKey != null) {
-          return Auth2().prefs?.getSetting(subKey);
-        }
-        return null;
-    }
-    return null;
   }
 }
 

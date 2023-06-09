@@ -16,36 +16,26 @@
 
 import 'dart:collection';
 import 'dart:core';
-import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart';
 import 'package:collection/collection.dart';
 
 import 'package:rokwire_plugin/model/geo_fence.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
-import 'package:rokwire_plugin/service/config.dart';
-import 'package:rokwire_plugin/service/network.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
-class GeoFence with Service implements NotificationsListener {
+class GeoFence with Service implements NotificationsListener, ContentItemCategoryClient {
 
   static const String notifyRegionEnter            = "edu.illinois.rokwire.geofence.region.enter";
   static const String notifyRegionExit             = "edu.illinois.rokwire.geofence.region.exit";
   static const String notifyCurrentRegionsUpdated  = "edu.illinois.rokwire.geofence.regions.current.updated";
   static const String notifyCurrentBeaconsUpdated  = "edu.illinois.rokwire.geofence.beacons.current.updated";
   
-  static const String _geoFenceName                = "geoFence.json";
-
-  static const bool _useAssets = false;
+  static const String _regionContentCategory = "region";
 
   LinkedHashMap<String, GeoFenceRegion>? _regions;
   Map<String, bool> _regionOverrides = <String, bool>{};
@@ -53,10 +43,7 @@ class GeoFence with Service implements NotificationsListener {
   Set<String> _currentRegions = <String>{};
   final Map<String, Set<GeoFenceBeacon>> _insideBeacons = <String, Set<GeoFenceBeacon>>{};
   Map<String, Set<GeoFenceBeacon>> _currentBeacons = <String, Set<GeoFenceBeacon>>{};
-
-  File?      _cacheFile;
-  DateTime?  _pausedDateTime;
-  int?       _debugRegionRadius;
+  int? _debugRegionRadius;
 
   // Singletone Factory
 
@@ -77,7 +64,7 @@ class GeoFence with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
-      AppLifecycle.notifyStateChanged,
+      Content.notifyContentItemsChanged,
     ]);
   }
 
@@ -88,53 +75,35 @@ class GeoFence with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _cacheFile = await getCacheFile();
     _debugRegionRadius = Storage().debugGeoFenceRegionRadius;
     _regionOverrides = Storage().geoFenceRegionOverrides ?? <String, bool>{};
 
-    _regions = useAssets ? await loadRegionsFromAssets() : await loadRegionsFromCache();
-    if (_regions != null) {
-      updateRegions();
-    }
-    else {
-      String? jsonString = await loadRegionsStringFromNet();
-      _regions = GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(jsonString));
-      if (_regions != null) {
-        saveRegionsStringToCache(jsonString);
-      }      
-    }
+    _regions = GeoFenceRegion.mapFromJsonList(_regionsJson);
     
     _updateCurrentRegions(notify: false);
     _updateCurrentBeacons(notify: false);
+
     monitorRegions();
     await super.initService();
   }
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Storage(), Config(), Auth2()};
+    return {Storage(), Content()};
   }
 
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == AppLifecycle.notifyStateChanged) {
-      _onAppLifecycleStateChanged(param);
+    if (name == Content.notifyContentItemsChanged) {
+      _onContentItemsChanged(param);
     }
   }
 
-  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
-    if (state == AppLifecycleState.paused) {
-      _pausedDateTime = DateTime.now();
-    }
-    else if (state == AppLifecycleState.resumed) {
-      if (_pausedDateTime != null) {
-        Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
-        if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          updateRegions();
-        }
-      }
+  void _onContentItemsChanged(Set<String>? categoriesDiff) {
+    if (categoriesDiff?.contains(regionContentCategory) == true) {
+      _onRegionsChanged();
     }
   }
 
@@ -202,80 +171,28 @@ class GeoFence with Service implements NotificationsListener {
     }
   }
 
+  // Region Content Items
+
+  @protected
+  String get regionContentCategory =>
+    _regionContentCategory;
+
+  List<dynamic>? get _regionsJson =>
+    Content().contentListItem(regionContentCategory);
+
+  void _onRegionsChanged() {
+    _regions = GeoFenceRegion.mapFromJsonList(_regionsJson);
+    _updateCurrentRegions();
+    _updateCurrentBeacons();
+    monitorRegions();
+  }
+
+  // ContentItemCategoryClient
+
+  @override
+  List<String> get contentItemCategory => <String>[regionContentCategory];
+
   // Implementation
-
-  @protected
-  bool get useAssets => _useAssets;
-
-  @protected
-  Future<File> getCacheFile() async {
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String cacheFilePath = join(appDocDir.path, _geoFenceName);
-    return File(cacheFilePath);
-  }
-
-  @protected
-  Future<String?> loadRegionsStringFromCache() async {
-    return ((_cacheFile != null) && await _cacheFile!.exists()) ? await _cacheFile!.readAsString() : null;
-  }
-
-  @protected
-  Future<void> saveRegionsStringToCache(String? regionsString) async {
-    await _cacheFile?.writeAsString(regionsString ?? '', flush: true);
-  }
-
-  @protected
-  Future<LinkedHashMap<String, GeoFenceRegion>?> loadRegionsFromCache() async {
-    return GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(await loadRegionsStringFromCache()));
-  }
-
-  @protected
-  String get resourceAssetsKey => 'assets/$_geoFenceName';
-
-  @protected
-  Future<LinkedHashMap<String, GeoFenceRegion>?> loadRegionsFromAssets() async {
-    return GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(await rootBundle.loadString(resourceAssetsKey)));
-  }
-
-
-  @protected
-  Future<String?> loadRegionsStringFromNet() async {
-    if (_useAssets) {
-      return null;
-    }
-    else {
-      try {
-        List<dynamic> result;
-        Response? response = await Network().get("${Config().contentUrl}/content_items", auth: Auth2(), body: JsonUtils.encode({"categories":["region"]}));
-        List<dynamic>? responseList = (response?.statusCode == 200) ? JsonUtils.decodeList(response?.body)  : null;
-        if (responseList != null) {
-          result = [];
-          for (dynamic responseEntry in responseList) {
-            Map<String, dynamic>? responseMap = JsonUtils.mapValue(responseEntry);
-            List<dynamic>? responseData = (responseMap != null) ? JsonUtils.listValue(responseMap['data']) : null;
-            if (responseData != null) {
-              result.addAll(responseData);
-            }
-          }
-          return JsonUtils.encode(result);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-      return null;
-    }
-  }
-
-  @protected
-  Future<void> updateRegions() async {
-    String? jsonString = await loadRegionsStringFromNet();
-    LinkedHashMap<String, GeoFenceRegion>? regions = GeoFenceRegion.mapFromJsonList(JsonUtils.decodeList(jsonString));
-    if ((regions != null) && !const DeepCollectionEquality().equals(_regions, regions)) {
-      _regions = regions;
-      monitorRegions();
-      saveRegionsStringToCache(jsonString);
-    }
-  }
 
   // ignore: unused_element
   static Future<List<String>?> _currentRegionIds() async {
