@@ -367,7 +367,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response  != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
-        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
+        String? responseBody = response.body;
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
         // pubKeyRequest?.remove('allowCredentials');
@@ -484,10 +485,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         } catch(error) {
           try {
             String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
-             Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
-             if (result == Auth2PasskeySignInResult.succeeded) {
-               return Auth2PasskeySignUpResult.succeeded;
-             }
+            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
+            if (result == Auth2PasskeySignInResult.succeeded) {
+              return Auth2PasskeySignUpResult.succeeded;
+            }
           } catch(error) {
             Log.e(error.toString());
           }
