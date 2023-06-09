@@ -71,7 +71,7 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinoisoidcIllinois, passkey }
+enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois, passkey }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {

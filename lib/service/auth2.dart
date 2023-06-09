@@ -478,7 +478,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           // pubKeyRequest?['authenticatorSelection']?['residentKey'] = 'required';
           // pubKeyRequest?['authenticatorSelection']?['userVerification'] = 'required';
 
-          String responseData = await flutterPasskeyPlugin.createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+          String? jsonRequest = JsonUtils.encode(pubKeyRequest) ?? '';
+          String responseData = await flutterPasskeyPlugin.createCredential(jsonRequest);
           return _completeSignUpWithPasskey(username, responseData);
         } catch(error) {
           try {
@@ -519,11 +520,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response != null && response.statusCode == 200) {
-        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
-        bool success = await processLoginResponse(responseJson);
-        if (success) {
-          return Auth2PasskeySignUpResult.succeeded;
-        }
+        return Auth2PasskeySignUpResult.succeeded;
       }
     }
     return Auth2PasskeySignUpResult.failed;
