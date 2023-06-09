@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widget_builders/loading.dart';
 import 'package:rokwire_plugin/ui/widgets/scroll_pager.dart';
 

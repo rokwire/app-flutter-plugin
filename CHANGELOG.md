@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
+- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)

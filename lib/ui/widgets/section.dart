@@ -16,7 +16,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class VerticalTitleValueSection extends StatelessWidget {
   final String? title;

@@ -26,7 +26,6 @@ import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';

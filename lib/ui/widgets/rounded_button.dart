@@ -18,7 +18,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class RoundedButton extends StatefulWidget {
   final String label;

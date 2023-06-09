@@ -14,35 +14,37 @@ dependencies:
   logger: ^1.1.0
   connectivity: ^3.0.6
   uni_links: ^0.5.1
-  fluttertoast: ^8.0.8
+  fluttertoast: ^8.2.2
   path: ^1.8.2
   gallery_saver: ^2.3.2
-  path_provider: ^2.0.4
+  path_provider: ^2.0.12
   asn1lib: ^1.0.3
   pointycastle: ^3.5.0
   encrypt: ^5.0.1
   intl: ^0.18.0
-  http: ^0.13.3
+  http: ^0.13.5
   timezone: ^0.9.0
   flutter_native_timezone: ^2.0.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
-  shared_preferences: ^2.0.7
-  package_info: ^2.0.2
+  shared_preferences: ^2.0.17
+  package_info_plus: ^4.0.2
   device_info: ^2.0.3
-  url_launcher: ^6.0.10
+  url_launcher: ^6.1.8
   sprintf: ^7.0.0
   flutter_local_notifications: ^12.0.4
   sqflite: ^2.1.0
   device_calendar: ^4.3.1-4217521123
-  image_picker: ^0.8.5+3
+  image_picker: ^0.8.6+1
   mime_type: ^1.0.0
-  uuid: ^3.0.5
+  uuid: ^3.0.7
   flutter_html: ^3.0.0-beta.2
-  webview_flutter: ^2.0.13
+  webview_flutter: ^3.0.4
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.3.0
   flutter_secure_storage: ^8.0.0
+  universal_html: ^2.2.3
+  flutter_web_auth_2: ^2.1.4
   flutter_passkey: ^1.0.3
 
   #Firebase
@@ -74,8 +76,7 @@ flutter:
         pluginClass: RokwirePlugin
 
   # To add assets to your plugin package, add an assets section, like this:
-  assets:
-    - assets/
+  # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   #

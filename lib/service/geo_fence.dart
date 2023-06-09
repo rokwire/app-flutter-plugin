@@ -21,7 +21,6 @@ import 'package:collection/collection.dart';
 
 import 'package:rokwire_plugin/model/geo_fence.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';

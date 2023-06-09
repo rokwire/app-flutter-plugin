@@ -27,7 +27,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info/device_info.dart';
 
 

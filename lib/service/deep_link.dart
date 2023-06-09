@@ -50,11 +50,13 @@ class DeepLink with Service {
     });
 
     // 2. Updated uri
-    uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        NotificationService().notify(notifyUri, uri);
-      }
-    });
+    if (!kIsWeb) {
+      uriLinkStream.listen((Uri? uri) {
+        if (uri != null) {
+          NotificationService().notify(notifyUri, uri);
+        }
+      });
+    }
 
     await super.initService();
   }

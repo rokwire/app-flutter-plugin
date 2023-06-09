@@ -15,11 +15,11 @@
  */
  
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/inbox.dart';
 import 'package:rokwire_plugin/service/firebase_core.dart';
 import 'package:rokwire_plugin/service/log.dart';
@@ -93,7 +93,7 @@ class FirebaseMessaging with Service {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { FirebaseCore(), Storage(), };
+    return { FirebaseCore(), Storage(), Config() };
   }
 
   Future<NotificationsAuthorizationStatus> get authorizationStatus async {
@@ -105,7 +105,7 @@ class FirebaseMessaging with Service {
     firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
     firebase_messaging.AuthorizationStatus authorizationStatus = settings.authorizationStatus;
     // There is not "notDetermined" status for android. Treat "denied" in Android like "notDetermined" in iOS
-    if (Platform.isAndroid) {
+    if (Config().operatingSystem == "android") {
       return (authorizationStatus != firebase_messaging.AuthorizationStatus.denied);
     } else {
       return (authorizationStatus == firebase_messaging.AuthorizationStatus.notDetermined);
