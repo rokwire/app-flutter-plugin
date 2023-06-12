@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -417,6 +418,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String responseData) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
+      Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
+      // TODO: remove if statement once plugin is fixed
+      if (Config().operatingSystem == 'ios') {
+        String? userHandle = requestJson?['response']['userHandle'];
+        Codec<String, String> stringToBase64Url = utf8.fuse(base64Url);
+        requestJson?['response']['userHandle'] = stringToBase64Url.decode(userHandle ?? '');
+      }
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
@@ -427,7 +435,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'org_id': Config().coreOrgId,
         'creds': {
           "username": username,
-          "response": responseData,
+          "response": JsonUtils.encode(requestJson),
         },
         'device': deviceInfo,
       });
@@ -521,6 +529,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String responseData) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+      // Map<String, dynamic>? requestJson = JsonUtils.decode(responseData ?? '');
+      // String? userHandle = requestJson?['userHandle'];
+      // requestJson?['userHandle'] = base64Url.decode(userHandle ?? '');
+
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
