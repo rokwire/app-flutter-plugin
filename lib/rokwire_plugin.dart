@@ -4,8 +4,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
+
+import 'package:rokwire_plugin/platform_impl/stub.dart'
+    if (dart.library.io) 'package:rokwire_plugin/platform_impl/mobile.dart'
+    if (dart.library.html) 'package:rokwire_plugin/platform_impl/html.dart';
 
 class RokwirePlugin {
   static final MethodChannel _channel = _createChannel('edu.illinois.rokwire/plugin', _handleChannelCall);
@@ -14,6 +19,11 @@ class RokwirePlugin {
     MethodChannel channel = MethodChannel(name);
     channel.setMethodCallHandler(handler);
     return channel;
+  }
+
+  static void registerWith(Registrar registrar) {
+    final MethodChannel channel = MethodChannel('edu.illinois.rokwire/plugin', const StandardMethodCodec(), registrar);
+    channel.setMethodCallHandler(_handleChannelCall);
   }
 
   static Future<String?> get platformVersion async {
@@ -83,24 +93,22 @@ class RokwirePlugin {
     return false;
   }
 
-  static Future<void> getPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
-    try {
-      return await _channel.invokeMethod('getPasskey', {
-        'requestJson': requestJson,
-        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
-      });
-    } catch(e) { debugPrint(e.toString()); }
+  static Future<bool> arePasskeysSupported() async {
+    try { return await PasskeyImpl().arePasskeysSupported(); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  } 
+
+  static Future<String> getPasskey(String requestJson) async {
+    try { return await PasskeyImpl().getPasskey(requestJson); }
+    catch(e) { debugPrint(e.toString()); }
+    return '';
   }
 
-  static Future<void> createPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
-    try {
-      return await _channel.invokeMethod('createPasskey', {
-        'requestJson': requestJson,
-        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
-      });
-    } catch(e) {
-      debugPrint(e.toString());
-    }
+  static Future<String> createPasskey(String requestJson) async {
+    try { return await PasskeyImpl().createPasskey(requestJson); }
+    catch(e) { debugPrint(e.toString()); }
+    return '';
   }
 
   // Compound APIs

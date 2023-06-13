@@ -74,6 +74,9 @@ flutter:
         pluginClass: RokwirePlugin
       ios:
         pluginClass: RokwirePlugin
+      web:
+        pluginClass: RokwirePlugin
+        fileName: rokwire_plugin.dart
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:
