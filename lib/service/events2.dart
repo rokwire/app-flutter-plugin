@@ -304,7 +304,7 @@ class Events2Query {
 
   Events2Query({this.searchText,
     this.typeFilter, this.location,
-    this.timeFilter = EventTimeFilter.upcoming, this.startTimeUtc, this.endTimeUtc,
+    this.timeFilter /* TMP = EventTimeFilter.upcoming */, this.startTimeUtc, this.endTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = EventSortOrder.ascending,
     this.offset = 0, this.limit
