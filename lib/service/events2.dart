@@ -395,26 +395,26 @@ class Events2Query {
     TZDateTime nowUni = DateTimeUni.nowUniOrLocal();
     
     if (timeFilter == EventTimeFilter.upcoming) {
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.today) {
       TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year, nowUni.month, nowUni.day, 23, 59, 59);
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch / 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.tomorrow) {
       TZDateTime tomorrowUni = nowUni.add(const Duration(days: 1));
       TZDateTime startTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, tomorrowUni.year, tomorrowUni.month, tomorrowUni.day, 0, 0, 0);
       TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, tomorrowUni.year, tomorrowUni.month, tomorrowUni.day, 23, 59, 59);
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch / 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.thisWeek) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime endOfWeekUni = (nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni;
       TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfWeekUni.year, endOfWeekUni.month, endOfWeekUni.day, 23, 59, 59);
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch / 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.thisWeekend) {
       int nowWeekdayUni = nowUni.weekday;
@@ -430,22 +430,22 @@ class Events2Query {
       TZDateTime endOfWeekUni = (nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni;
       TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfWeekUni.year, endOfWeekUni.month, endOfWeekUni.day, 23, 59, 59);
 
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch / 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.thisMonth) {
       TZDateTime startOfNextMonth = (nowUni.month < 12) ? TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year, nowUni.month + 1, 1) : TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year + 1, 1, 1);
       TZDateTime endOfThisMonth = startOfNextMonth.subtract(const Duration(days: 1));
       TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfThisMonth.year, endOfThisMonth.month, endOfThisMonth.day, 23, 59, 59);
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch / 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch / 1000;
+      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.customRange) {
       if (startTimeUtc != null) {
-        options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch / 1000;
+        options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
       if (endTimeUtc != null) {
-        options['start_time_before'] = endTimeUtc.millisecondsSinceEpoch / 1000;
+        options['start_time_before'] = endTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
     }
   }
