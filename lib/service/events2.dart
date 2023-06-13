@@ -13,6 +13,7 @@ import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart';
 
@@ -76,7 +77,7 @@ class Events2 with Service implements NotificationsListener {
   // Implementation
 
   Future<List<Event2>?> loadEvents(Events2Query? query) async {
-    if (kDebugMode) {
+    if (Storage().debugUseSampleEvents2 == true) {
       return _sampleEvents;
     }
     else if (Config().calendarUrl != null) {
