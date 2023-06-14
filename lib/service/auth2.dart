@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -407,6 +408,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String responseData) async {
     if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
+      // TODO: remove if statement once plugin is fixed
+      if (Config().operatingSystem == 'ios') {
+        String? userHandle = requestJson?['response']['userHandle'];
+        Codec<String, String> stringToBase64Url = utf8.fuse(base64Url);
+        requestJson?['response']['userHandle'] = stringToBase64Url.decode(userHandle ?? '');
+      }
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
@@ -414,7 +422,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
           "username": username,
-          "response": responseData,
+          "response": JsonUtils.encode(requestJson),
         },
         'device': deviceInfo,
       };
