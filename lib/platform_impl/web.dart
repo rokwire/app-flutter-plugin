@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:html';
+import 'package:flutter/foundation.dart';
 
 import 'package:rokwire_plugin/platform_impl/base.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -24,14 +25,22 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String> getPasskey(Map<String, dynamic>? options) async {
+  Future<String?> getPasskey(Map<String, dynamic>? options) async {
     dynamic response = await window.navigator.credentials!.get(options);
-    return JsonUtils.stringValue(response) ?? '';
+    return JsonUtils.stringValue(response);
   }
 
   @override
-  Future<String> createPasskey(Map<String, dynamic>? options) async {
+  Future<String?> createPasskey(Map<String, dynamic>? options) async {
+    if (options?['publicKey']['challenge'] is String) {
+      String userId = options!['publicKey']['user']['id'];
+      String challenge = options['publicKey']['challenge'];
+      options['publicKey']['user']['id'] = Uint8List.fromList(userId.codeUnits);
+      options['publicKey']['challenge'] = Uint8List.fromList(challenge.codeUnits);
+    }
+    debugPrint(options?.toString());
     dynamic response = await window.navigator.credentials!.create(options);
-    return JsonUtils.stringValue(response) ?? '';
+    debugPrint(response?.toString());
+    return JsonUtils.stringValue(response);
   }
 }

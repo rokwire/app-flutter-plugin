@@ -383,16 +383,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PasskeySignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response  != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
         String? responseBody = response.body;
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
-        Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
-
         try {
-          String responseData = await RokwirePlugin.getPasskey(pubKeyRequest);
+          String? responseData = await RokwirePlugin.getPasskey(requestJson);
           return _completeSignInWithPasskey(username, responseData);
         } catch(error) {
           Log.e(error.toString());
@@ -405,8 +403,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult.failed;
   }
 
-  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String responseData) async {
-    if (Config().authBaseUrl != null) {
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String? responseData) async {
+    if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
       // TODO: remove if statement once plugin is fixed
@@ -433,7 +431,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PasskeySignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response != null && response.statusCode == 200) {
         Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
         bool success = await processLoginResponse(responseJson);
@@ -485,18 +483,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PasskeySignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
-        Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
         try {
-          String responseData = await RokwirePlugin.createPasskey(pubKeyRequest);
+          String? responseData = await RokwirePlugin.createPasskey(requestJson);
           return _completeSignUpWithPasskey(username, responseData);
         } catch(error) {
           try {
-            String responseData = await RokwirePlugin.getPasskey(pubKeyRequest);
+            String? responseData = await RokwirePlugin.getPasskey(requestJson);
             Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
             if (result == Auth2PasskeySignInResult.succeeded) {
               return Auth2PasskeySignUpResult.succeeded;
@@ -513,8 +510,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignUpResult.failed;
   }
 
-  Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String responseData) async {
-    if (Config().authBaseUrl != null) {
+  Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String? responseData) async {
+    if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
@@ -534,7 +531,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PasskeySignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response != null && response.statusCode == 200) {
         return Auth2PasskeySignUpResult.succeeded;
       }

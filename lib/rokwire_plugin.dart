@@ -10,7 +10,7 @@ import 'package:rokwire_plugin/service/geo_fence.dart';
 
 import 'package:rokwire_plugin/platform_impl/stub.dart'
     if (dart.library.io) 'package:rokwire_plugin/platform_impl/mobile.dart'
-    if (dart.library.html) 'package:rokwire_plugin/platform_impl/html.dart';
+    if (dart.library.html) 'package:rokwire_plugin/platform_impl/web.dart';
 
 class RokwirePlugin {
   static final MethodChannel _channel = _createChannel('edu.illinois.rokwire/plugin', _handleChannelCall);
@@ -99,16 +99,16 @@ class RokwirePlugin {
     return false;
   } 
 
-  static Future<String> getPasskey(Map<String, dynamic>? options) async {
+  static Future<String?> getPasskey(Map<String, dynamic>? options) async {
     try { return await PasskeyImpl().getPasskey(options); }
     catch(e) { debugPrint(e.toString()); }
-    return '';
+    return null;
   }
 
-  static Future<String> createPasskey(Map<String, dynamic>? options) async {
+  static Future<String?> createPasskey(Map<String, dynamic>? options) async {
     try { return await PasskeyImpl().createPasskey(options); }
     catch(e) { debugPrint(e.toString()); }
-    return '';
+    return null;
   }
 
   // Compound APIs
