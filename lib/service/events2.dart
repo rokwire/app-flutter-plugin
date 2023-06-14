@@ -291,7 +291,7 @@ class Events2Query {
   static const double nearbyDistanceInMiles = 1.0;
 
   final String? searchText;
-  final Set<EventTypeFilter>? typeFilter;
+  final Set<EventTypeFilter>? types;
   final Position? location;
   final EventTimeFilter? timeFilter;
   final DateTime? startTimeUtc;
@@ -303,7 +303,7 @@ class Events2Query {
   final int? limit;
 
   Events2Query({this.searchText,
-    this.typeFilter, this.location,
+    this.types, this.location,
     this.timeFilter /* TMP = EventTimeFilter.upcoming */, this.startTimeUtc, this.endTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = EventSortOrder.ascending,
@@ -317,8 +317,8 @@ class Events2Query {
       options['name'] = searchText;
     }
 
-    if (typeFilter != null) {
-      _buildTypeLoadOptions(options, typeFilter!, location: location);
+    if (types != null) {
+      _buildTypeLoadOptions(options, types!, location: location);
     }
 
     if (timeFilter != null) {
@@ -354,29 +354,29 @@ class Events2Query {
   }
 
 
-  void _buildTypeLoadOptions(Map<String, dynamic> options, Set<EventTypeFilter> typeFilter, { Position? location }) {
-    if (typeFilter.contains(EventTypeFilter.free)) {
+  void _buildTypeLoadOptions(Map<String, dynamic> options, Set<EventTypeFilter> types, { Position? location }) {
+    if (types.contains(EventTypeFilter.free)) {
       options['free'] = true;
     }
-    else if (typeFilter.contains(EventTypeFilter.paid)) {
+    else if (types.contains(EventTypeFilter.paid)) {
       options['free'] = false;
     }
     
-    if (typeFilter.contains(EventTypeFilter.inPerson)) {
+    if (types.contains(EventTypeFilter.inPerson)) {
       options['online'] = false;
     }
-    else if (typeFilter.contains(EventTypeFilter.online)) {
+    else if (types.contains(EventTypeFilter.online)) {
       options['online'] = true;
     }
 
-    if (typeFilter.contains(EventTypeFilter.public)) {
+    if (types.contains(EventTypeFilter.public)) {
       options['private'] = false;
     }
-    else if (typeFilter.contains(EventTypeFilter.private)) {
+    else if (types.contains(EventTypeFilter.private)) {
       options['private'] = true;
     }
 
-    if (typeFilter.contains(EventTypeFilter.nearby) && (location != null)) {
+    if (types.contains(EventTypeFilter.nearby) && (location != null)) {
       Map<String, dynamic>? locationParam = JsonUtils.mapValue(options['location']);
       if (locationParam != null) {
         locationParam['distance_in_miles'] = nearbyDistanceInMiles;
