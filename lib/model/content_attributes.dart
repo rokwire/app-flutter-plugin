@@ -77,7 +77,7 @@ class ContentAttributes {
       }
       else if (value is List) {
         selection ??= <String, LinkedHashSet<String>>{};
-        selection![attributeId] = LinkedHashSet<String>.from(JsonUtils.listStringsValue(value)?.reversed ?? <String>[]);
+        selection![attributeId] = LinkedHashSet<String>.from(JsonUtils.listStringsValue(value) ?? <String>[]);
       }
     });
     return selection;
@@ -92,7 +92,7 @@ class ContentAttributes {
       }
       else if (values.length > 1) {
         attributesSelection ??= <String, dynamic>{};
-        attributesSelection![attributeId] = List.from(List.from(values).reversed);
+        attributesSelection![attributeId] = List.from(List.from(values));
       }
     });
     return attributesSelection;
