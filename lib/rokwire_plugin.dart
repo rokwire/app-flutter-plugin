@@ -99,14 +99,14 @@ class RokwirePlugin {
     return false;
   } 
 
-  static Future<String> getPasskey(String requestJson) async {
-    try { return await PasskeyImpl().getPasskey(requestJson); }
+  static Future<String> getPasskey(Map<String, dynamic>? options) async {
+    try { return await PasskeyImpl().getPasskey(options); }
     catch(e) { debugPrint(e.toString()); }
     return '';
   }
 
-  static Future<String> createPasskey(String requestJson) async {
-    try { return await PasskeyImpl().createPasskey(requestJson); }
+  static Future<String> createPasskey(Map<String, dynamic>? options) async {
+    try { return await PasskeyImpl().createPasskey(options); }
     catch(e) { debugPrint(e.toString()); }
     return '';
   }

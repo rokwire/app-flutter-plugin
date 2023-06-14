@@ -21,12 +21,12 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String> getPasskey(String requestJson) {
+  Future<String> getPasskey(Map<String, dynamic>? options) {
     throw Exception("Unimplemented");
   }
 
   @override
-  Future<String> createPasskey(String requestJson) {
+  Future<String> createPasskey(Map<String, dynamic>? options) {
     throw Exception("Unimplemented");
   }
 }

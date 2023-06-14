@@ -15,6 +15,7 @@
 import 'dart:html';
 
 import 'package:rokwire_plugin/platform_impl/base.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class PasskeyImpl extends BasePasskey {
   @override
@@ -23,18 +24,14 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String> getPasskey(String requestJson) {
-    //TODO
-    return window.navigator.credentials.get({
-      publicKey: credentialRequestOptions.publicKey
-    });
+  Future<String> getPasskey(Map<String, dynamic>? options) async {
+    dynamic response = await window.navigator.credentials!.get(options);
+    return JsonUtils.stringValue(response) ?? '';
   }
 
   @override
-  Future<String> createPasskey(String requestJson) {
-    //TODO
-    return window.navigator.credentials.create({
-      publicKey: credentialCreationOptions.publicKey
-    });
+  Future<String> createPasskey(Map<String, dynamic>? options) async {
+    dynamic response = await window.navigator.credentials!.create(options);
+    return JsonUtils.stringValue(response) ?? '';
   }
 }

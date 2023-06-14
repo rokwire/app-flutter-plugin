@@ -14,6 +14,6 @@
 
 abstract class BasePasskey {
   Future<bool> arePasskeysSupported();
-  Future<String> getPasskey(String requestJson);
-  Future<String> createPasskey(String requestJson);
+  Future<String> getPasskey(Map<String, dynamic>? options);
+  Future<String> createPasskey(Map<String, dynamic>? options);
 }

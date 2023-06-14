@@ -389,19 +389,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
-        // pubKeyRequest?.remove('allowCredentials');
-        // pubKeyRequest?['userVerification'] = 'required';
-        // pubKeyRequest?['allowCredentials'] = [];
-        // pubKeyRequest = {
-        //   "challenge": "T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo",
-        //   // "allowCredentials": [],
-        //   "timeout": 1800000,
-        //   "userVerification": "required",
-        //   "rpId": "university.app.services.rokmetro.com"
-        // };
+
         try {
-          // await RokwirePlugin.getPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
-          String responseData = await RokwirePlugin.getPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+          String responseData = await RokwirePlugin.getPasskey(pubKeyRequest);
           return _completeSignInWithPasskey(username, responseData);
         } catch(error) {
           Log.e(error.toString());
@@ -494,20 +484,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         Map<String, dynamic>? pubKeyRequest = requestJson?['publicKey'];
         try {
-          // await RokwirePlugin.createPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
-          // pubKeyRequest?['attestation'] = "none";
-          // pubKeyRequest?['excludeCredentials'] = [];
-          // pubKeyRequest?['authenticatorSelection']?['authenticatorAttachment'] = "platform";
-          // pubKeyRequest?['authenticatorSelection']?['requireResidentKey'] = true;
-          // pubKeyRequest?['authenticatorSelection']?['residentKey'] = 'required';
-          // pubKeyRequest?['authenticatorSelection']?['userVerification'] = 'required';
-
-          String? jsonRequest = JsonUtils.encode(pubKeyRequest) ?? '';
-          String responseData = await RokwirePlugin.createPasskey(jsonRequest);
+          String responseData = await RokwirePlugin.createPasskey(pubKeyRequest);
           return _completeSignUpWithPasskey(username, responseData);
         } catch(error) {
           try {
-            String responseData = await RokwirePlugin.getPasskey(JsonUtils.encode(pubKeyRequest) ?? '');
+            String responseData = await RokwirePlugin.getPasskey(pubKeyRequest);
             Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
             if (result == Auth2PasskeySignInResult.succeeded) {
               return Auth2PasskeySignUpResult.succeeded;

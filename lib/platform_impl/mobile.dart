@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import 'package:rokwire_plugin/platform_impl/base.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
+
 import 'package:flutter_passkey/flutter_passkey.dart';
 
 class PasskeyImpl extends BasePasskey {
@@ -24,12 +26,12 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String> getPasskey(String requestJson) async {
-    return await flutterPasskeyPlugin.getCredential(requestJson);
+  Future<String> getPasskey(Map<String, dynamic>? options) async {
+    return await flutterPasskeyPlugin.getCredential(JsonUtils.encode(options) ?? '');
   }
 
   @override
-  Future<String> createPasskey(String requestJson) async {
-    return await flutterPasskeyPlugin.createCredential(requestJson);
+  Future<String> createPasskey(Map<String, dynamic>? options) async {
+    return await flutterPasskeyPlugin.createCredential(JsonUtils.encode(options) ?? '');
   }
 }
