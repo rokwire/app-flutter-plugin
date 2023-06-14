@@ -431,6 +431,34 @@ String? eventTypeFilterToString(EventTypeFilter? value) {
   }
 }
 
+List<EventTypeFilter>? eventTypeFilterListFromList(List<String>? values) {
+  if (values != null) {
+    List<EventTypeFilter> list = <EventTypeFilter>[];
+    for (String value in values) {
+      EventTypeFilter? entry = eventTypeFilterFromString(value);
+      if (entry != null) {
+        list.add(entry);
+      }
+    }
+    return list;
+  }
+  return null;
+}
+
+List<String>? eventTypeFilterListToList(List<EventTypeFilter>? values) {
+  if (values != null) {
+    List<String> list = <String>[];
+    for (EventTypeFilter value in values) {
+      String? entry = eventTypeFilterToString(value);
+      if (entry != null) {
+        list.add(entry);
+      }
+    }
+    return list;
+  }
+  return null;
+}
+
 ///////////////////////////////
 /// EventSortType
 
