@@ -273,6 +273,29 @@ class SetUtils {
   }
 }
 
+class LinkedHashSetUtils {
+  static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
+    return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
+  }
+
+  static void add<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      set.add(entry);
+    }
+  }
+
+  static void toggle<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
+    }
+  }
+}
+
 class MapUtils {
 
   static Map<K, T>? from<K, T>(Map<K, T>? other) {
@@ -672,14 +695,29 @@ class JsonUtils {
     return null;
   }
 
-  static List<dynamic>? listValue(dynamic value) {
+  static List<T>? listValue<T>(dynamic value) {
     try {
-      return (value is List) ? value.cast<dynamic>() : null;
+      return (value is List) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Set<T>? setValue<T>(dynamic value) {
+    try {
+      return (value is Set) ? value.cast<T>() : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
+    Set<T>? set = setValue(value);
+    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
