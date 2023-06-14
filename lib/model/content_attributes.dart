@@ -207,13 +207,14 @@ class ContentAttribute {
   final ContentAttributeUsage? usage;
   final ContentAttributeRequirements? requirements;
   final Set<String>? scope;
+  final int? sortOrder;
   final List<ContentAttributeValue>? values;
   final Map<String, dynamic>? translations;
 
   ContentAttribute({this.id, this.title, this.longTitle, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
     this.nullValue, this.widget, this.usage, this.requirements,
-    this.scope, this.values, this.translations});
+    this.scope, this.sortOrder, this.values, this.translations});
 
   // JSON serialization
 
@@ -233,6 +234,7 @@ class ContentAttribute {
       usage: contentAttributeUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributeRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
       scope: JsonUtils.setStringsValue(json['scope']),
+      sortOrder: JsonUtils.intValue(json['sort-order']),
       values: ContentAttributeValue.listFromJson(JsonUtils.listValue(json['values'])),
       translations: JsonUtils.mapValue(json['translations'])
     ) : null;
@@ -253,6 +255,7 @@ class ContentAttribute {
     'usage': contentAttributeUsageToString(usage),
     'requirements': requirements,
     'scope': JsonUtils.listStringsValue(scope),
+    'sort-order': sortOrder,
     'values': values,
     'translations': translations,
   };
@@ -275,6 +278,7 @@ class ContentAttribute {
     (widget == other.widget) &&
     (usage == other.usage) &&
     (requirements == other.requirements) &&
+    (sortOrder == other.sortOrder) &&
     const DeepCollectionEquality().equals(scope, other.scope) &&
     const DeepCollectionEquality().equals(values, other.values) &&
     const DeepCollectionEquality().equals(translations, other.translations);
@@ -294,9 +298,18 @@ class ContentAttribute {
     (widget?.hashCode ?? 0) ^
     (usage?.hashCode ?? 0) ^
     (requirements?.hashCode ?? 0) ^
+    (sortOrder?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(scope)) ^
     (const DeepCollectionEquality().hash(values)) ^
     (const DeepCollectionEquality().hash(translations));
+
+  // Comparison
+
+  int compareByTitle(ContentAttribute? other) =>
+    (displayTitle ?? '').compareTo(other?.displayTitle ?? '');
+
+  int compareBySortOrder(ContentAttribute? other) =>
+    (sortOrder ?? 0).compareTo(other?.sortOrder ?? 0);
 
   // Accessories
 
