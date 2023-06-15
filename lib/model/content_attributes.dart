@@ -351,8 +351,52 @@ class ContentAttribute {
     return true;
   }
 
-  bool isSatisfiedFromSelection(dynamic selection) =>
-    requirements?.isAttributeValuesSelectionValid(selection) ?? true;
+  bool isSatisfiedFromSelection(dynamic selection) {
+    if (requirements != null) {
+      Map<String?, LinkedHashSet<dynamic>> groupsSelection = _splitSelectionByGroups(selection);
+      for (LinkedHashSet<dynamic> groupSelection in groupsSelection.values) {
+        if (!requirements!.isAttributeValuesSelectionValid(groupSelection)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  void validateAttributeValuesSelection(LinkedHashSet<dynamic>? selection) {
+    int? maxSelectedCount = requirements?.maxSelectedCount;
+    if ((maxSelectedCount != null) && (0 <= maxSelectedCount) && (selection != null)) {
+      Map<String?, LinkedHashSet<dynamic>> groupsSelection = _splitSelectionByGroups(selection);
+      for (LinkedHashSet<dynamic> groupSelection in groupsSelection.values) {
+        while (maxSelectedCount < groupSelection.length) {
+          dynamic removeValue = groupSelection.first;
+          selection.remove(removeValue);
+          groupSelection.remove(removeValue);
+        }
+      }
+    }
+  }
+
+  Map<String?, LinkedHashSet<dynamic>> _splitSelectionByGroups(dynamic selection) {
+    Map<String?, LinkedHashSet<dynamic>> map = <String?, LinkedHashSet<dynamic>>{};
+    if ((selection is List) || (selection is Set)) {
+      for (dynamic entry in selection) {
+        _extendSelectionByGroups(map, findValue(value: entry));
+      }
+    }
+    else if (selection != null) {
+      _extendSelectionByGroups(map, findValue(value: selection));
+    }
+    return map;
+  }
+
+  void _extendSelectionByGroups(Map<String?, LinkedHashSet<dynamic>> map, ContentAttributeValue? attributeValue) {
+    if (attributeValue != null) {
+      // ignore: prefer_collection_literals
+      (map[attributeValue.group] ??= LinkedHashSet<dynamic>()).add(attributeValue.value);
+    }
+  }
+
 
   List<ContentAttributeValue>? attributeValuesFromSelection(Map<String, LinkedHashSet<dynamic>> selection) {
     List<ContentAttributeValue>? filteredAttributeValues;
@@ -495,9 +539,10 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 class ContentAttributeValue {
   final String? label;
   final dynamic _value;
+  final String? group;
   final Map<String, dynamic>? requirements;
 
-  ContentAttributeValue({this.label, dynamic value, this.requirements}) :
+  ContentAttributeValue({this.label, dynamic value, this.group, this.requirements}) :
     _value = value;
 
   // JSON serialization
@@ -512,6 +557,7 @@ class ContentAttributeValue {
       return ContentAttributeValue(
         label: JsonUtils.stringValue(json['label']),
         value: json['value'],
+        group: JsonUtils.stringValue(json['group']),
         requirements: JsonUtils.mapValue(json['requirements']),
       );
     }
@@ -523,6 +569,7 @@ class ContentAttributeValue {
   toJson() => {
     'label': label,
     'value': _value,
+    'group': group,
     'requirements': requirements,
   };
 
@@ -533,12 +580,14 @@ class ContentAttributeValue {
     (other is ContentAttributeValue) &&
     (label == other.label) &&
     (_value == other._value) &&
+    (group == other.group) &&
     const DeepCollectionEquality().equals(requirements, other.requirements);
 
   @override
   int get hashCode =>
     (label?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
+    (group?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
 
   // Accessories
@@ -625,8 +674,10 @@ class ContentAttributeRequirements {
   final int? minSelectedCount;
   final int? maxSelectedCount;
   final ContentAttributeRequirementsMode? mode;
+  final int? _scope;
 
-  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode});
+  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? scope}) :
+    _scope = scope;
 
   // JSON serialization
 
@@ -635,6 +686,7 @@ class ContentAttributeRequirements {
       minSelectedCount: JsonUtils.intValue(json['min-selected-count']),
       maxSelectedCount: JsonUtils.intValue(json['max-selected-count']),
       mode: contentAttributeRequirementsModeFromString(JsonUtils.stringValue(json['mode'])),
+      scope: contentAttributeRequirementsScopeFromString(JsonUtils.stringValue(json['scope'])),
     ) : null;
   }
 
@@ -642,6 +694,7 @@ class ContentAttributeRequirements {
     'min-selected-count' : minSelectedCount,
     'max-selected-count' : maxSelectedCount,
     'mode': contentAttributeRequirementsModeToString(mode),
+    'scope': contentAttributeRequirementsScopeToString(_scope),
   };
 
   // Equality
@@ -651,16 +704,24 @@ class ContentAttributeRequirements {
     (other is ContentAttributeRequirements) &&
     (minSelectedCount == other.minSelectedCount) &&
     (maxSelectedCount == other.maxSelectedCount) &&
-    (mode == other.mode);
+    (mode == other.mode) &&
+    (_scope == other._scope);
 
   @override
   int get hashCode =>
     (minSelectedCount?.hashCode ?? 0) ^
     (maxSelectedCount?.hashCode ?? 0) ^
-    (mode?.hashCode ?? 0);
+    (mode?.hashCode ?? 0) ^
+    (_scope?.hashCode ?? 0);
 
 
   // Accessories
+
+  int get scope => _scope ?? contentAttributeRequirementsScopeCreate; // the scope by default
+
+  bool get hasFilterScope => hasScope(contentAttributeRequirementsScopeFilter);
+  bool get hasCreateScope => hasScope(contentAttributeRequirementsScopeCreate);
+  bool hasScope(int scope) => (this.scope & scope) != 0;
 
   bool get hasRequired =>
     (0 < (minSelectedCount ?? 0));
@@ -698,16 +759,8 @@ class ContentAttributeRequirements {
            ((maxSelectedCount == null) || (maxSelectedCount! >= selectedCount));
   }
 
-  void validateAttributeValuesSelection(LinkedHashSet<dynamic>? selection) {
-    if ((maxSelectedCount != null) && (0 <= maxSelectedCount!) && (selection != null)) {
-      while (maxSelectedCount! < selection.length) {
-        selection.remove(selection.first);
-      }
-    }
-  }
-
   static int _selectedAttributesCount(dynamic selection) {
-    if (selection is List) {
+    if ((selection is List) || (selection is Set)) {
       return selection.length;
     }
     else if (selection != null) {
@@ -737,6 +790,34 @@ String? contentAttributeRequirementsModeToString(ContentAttributeRequirementsMod
   switch(value) {
     case ContentAttributeRequirementsMode.exclusive: return 'exclusive';
     case ContentAttributeRequirementsMode.inclusive: return 'inclusive';
+    default: return null;
+  }
+}
+
+/////////////////////////////////////
+// ContentAttributeRequirementsScope
+
+const int contentAttributeRequirementsScopeNone   = 0;
+const int contentAttributeRequirementsScopeCreate = 1;
+const int contentAttributeRequirementsScopeFilter = 2;
+const int contentAttributeRequirementsScopeAll    = 3;
+
+int? contentAttributeRequirementsScopeFromString(String? value) {
+  switch(value) {
+    case 'none': return contentAttributeRequirementsScopeNone;
+    case 'create': return contentAttributeRequirementsScopeCreate;
+    case 'filter': return contentAttributeRequirementsScopeFilter;
+    case 'all': return contentAttributeRequirementsScopeAll;
+    default: return null;
+  }
+}
+
+String? contentAttributeRequirementsScopeToString(int? value) {
+  switch(value) {
+    case contentAttributeRequirementsScopeNone: return 'none';
+    case contentAttributeRequirementsScopeCreate: return 'create';
+    case contentAttributeRequirementsScopeFilter: return 'filter';
+    case contentAttributeRequirementsScopeAll: return 'all';
     default: return null;
   }
 }

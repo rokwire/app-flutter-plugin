@@ -391,6 +391,16 @@ String? eventTimeFilterToString(EventTimeFilter? value) {
 
 enum EventTypeFilter { free, paid, inPerson, online, public, private, nearby }
 
+const Map<EventTypeFilter, String> eventTypeFilterGroups = <EventTypeFilter, String>{
+  EventTypeFilter.free: 'cost',
+  EventTypeFilter.paid: 'cost',
+  EventTypeFilter.inPerson: 'type',
+  EventTypeFilter.online: 'type',
+  EventTypeFilter.public: 'discoverability',
+  EventTypeFilter.private: 'discoverability',
+  EventTypeFilter.nearby: 'proximity',
+};
+
 EventTypeFilter? eventTypeFilterFromString(String? value) {
   if (value == 'free') {
     return EventTypeFilter.free;
