@@ -391,6 +391,16 @@ String? eventTimeFilterToString(EventTimeFilter? value) {
 
 enum EventTypeFilter { free, paid, inPerson, online, public, private, nearby }
 
+const Map<EventTypeFilter, String> eventTypeFilterGroups = <EventTypeFilter, String>{
+  EventTypeFilter.free: 'cost',
+  EventTypeFilter.paid: 'cost',
+  EventTypeFilter.inPerson: 'type',
+  EventTypeFilter.online: 'type',
+  EventTypeFilter.public: 'discoverability',
+  EventTypeFilter.private: 'discoverability',
+  EventTypeFilter.nearby: 'proximity',
+};
+
 EventTypeFilter? eventTypeFilterFromString(String? value) {
   if (value == 'free') {
     return EventTypeFilter.free;
@@ -430,6 +440,47 @@ String? eventTypeFilterToString(EventTypeFilter? value) {
     default: return null;
   }
 }
+
+List<EventTypeFilter>? eventTypeFilterListFromStringList(List<String>? values) {
+  if (values != null) {
+    List<EventTypeFilter> list = <EventTypeFilter>[];
+    for (String value in values) {
+      EventTypeFilter? entry = eventTypeFilterFromString(value);
+      if (entry != null) {
+        list.add(entry);
+      }
+    }
+    return list;
+  }
+  return null;
+}
+
+List<String>? eventTypeFilterListToStringList(List<EventTypeFilter>? values) {
+  if (values != null) {
+    List<String> list = <String>[];
+    for (EventTypeFilter value in values) {
+      String? entry = eventTypeFilterToString(value);
+      if (entry != null) {
+        list.add(entry);
+      }
+    }
+    return list;
+  }
+  return null;
+}
+
+List<EventTypeFilter>? eventTypeFilterListFromSelection(dynamic selection) {
+  if (selection is List) {
+    return JsonUtils.listValue<EventTypeFilter>(selection);
+  }
+  else if (selection is EventTypeFilter) {
+    return <EventTypeFilter>[selection];
+  }
+  else {
+    return null;
+  }
+}
+
 
 ///////////////////////////////
 /// EventSortType
