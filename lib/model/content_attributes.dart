@@ -67,38 +67,38 @@ class ContentAttributes {
     return null;
   }
 
-  static Map<String, LinkedHashSet<String>>? selectionFromAttributesSelection(Map<String, dynamic>? attributesSelection) {
-    Map<String, LinkedHashSet<String>>? selection;
-    attributesSelection?.forEach((String attributeId, dynamic value) {
-      if (value is String) {
-        selection ??= <String, LinkedHashSet<String>>{};
-        // ignore: prefer_collection_literals
-        selection![attributeId] = LinkedHashSet<String>.from(<String>[value]);
+  static Map<String, LinkedHashSet<dynamic>>? selectionFromAttributesSelection(Map<String, dynamic>? attributesSelection) {
+    Map<String, LinkedHashSet<dynamic>>? selection;
+    attributesSelection?.forEach((String attributeId, dynamic attributeRawValue) {
+      if (attributeRawValue is List) {
+        selection ??= <String, LinkedHashSet<dynamic>>{};
+        selection![attributeId] = LinkedHashSet<dynamic>.from(attributeRawValue);
       }
-      else if (value is List) {
-        selection ??= <String, LinkedHashSet<String>>{};
-        selection![attributeId] = LinkedHashSet<String>.from(JsonUtils.listStringsValue(value) ?? <String>[]);
+      else if (attributeRawValue != null) {
+        selection ??= <String, LinkedHashSet<dynamic>>{};
+        // ignore: prefer_collection_literals
+        selection![attributeId] = LinkedHashSet<dynamic>.from(<dynamic>[attributeRawValue]);
       }
     });
     return selection;
   }
 
-  static Map<String, dynamic>? selectionToAttributesSelection(Map<String, LinkedHashSet<String>>? selection) {
+  static Map<String, dynamic>? selectionToAttributesSelection(Map<String, LinkedHashSet<dynamic>>? selection) {
     Map<String, dynamic>? attributesSelection;
-    selection?.forEach((String attributeId, LinkedHashSet<String> values) {
-      if (values.length == 1) {
+    selection?.forEach((String attributeId, LinkedHashSet<dynamic> attributeRawValue) {
+      if (attributeRawValue.length == 1) {
         attributesSelection ??= <String, dynamic>{};
-        attributesSelection![attributeId] = values.first;
+        attributesSelection![attributeId] = attributeRawValue.first;
       }
-      else if (values.length > 1) {
+      else if (attributeRawValue.length > 1) {
         attributesSelection ??= <String, dynamic>{};
-        attributesSelection![attributeId] = List.from(List.from(values));
+        attributesSelection![attributeId] = List<dynamic>.from(attributeRawValue);
       }
     });
     return attributesSelection;
   }
 
-  void validateSelection(Map<String, LinkedHashSet<String>> selection) {
+  void validateSelection(Map<String, LinkedHashSet<dynamic>> selection) {
     bool modified;
     do {
       modified = false;
@@ -118,27 +118,25 @@ class ContentAttributes {
     while (modified);
   }
 
-  void extendSelection(Map<String, LinkedHashSet<String>> selection, String? attributeId ) {
+  void extendSelection(Map<String, LinkedHashSet<dynamic>> selection, String? attributeId ) {
     Queue<String> attributeIds = (attributeId != null) ? Queue<String>.from([attributeId]) : Queue<String>();
     while (attributeIds.isNotEmpty) {
       ContentAttribute? attribute = findAttribute(id: attributeIds.removeFirst());
       if (attribute?.requirements?.mode == ContentAttributeRequirementsMode.inclusive) {
-        LinkedHashSet<String>? attributeLabels = selection[attribute?.id];
-        if ((attributeLabels != null) && attributeLabels.isNotEmpty) {
-          for (String attributeLabel in attributeLabels) {
-            ContentAttributeValue? attributeValue = attribute?.findValue(label: attributeLabel);
-            attributeValue?.requirements?.forEach((String requirementAttributeId, dynamic requirementValue) {
-              if (requirementValue is String) {
-                LinkedHashSet<String>? selectedRequiremntAttributeLabels = selection[requirementAttributeId];
-                if (selectedRequiremntAttributeLabels == null) {
-                  // ignore: prefer_collection_literals
-                  selection[requirementAttributeId] = selectedRequiremntAttributeLabels = LinkedHashSet<String>();
-                }
-                if (selectedRequiremntAttributeLabels.isEmpty) {
-                  selectedRequiremntAttributeLabels.add(requirementValue);
-                  if (!attributeIds.contains(requirementValue)) {
-                    attributeIds.addLast(requirementValue);
-                  }
+        LinkedHashSet<dynamic>? attributeRawValues = selection[attribute?.id];
+        if ((attributeRawValues != null) && attributeRawValues.isNotEmpty) {
+          for (String attributeRawValue in attributeRawValues) {
+            ContentAttributeValue? attributeValue = attribute?.findValue(value: attributeRawValue);
+            attributeValue?.requirements?.forEach((String requirementAttributeId, dynamic requirementRawValue) {
+              LinkedHashSet<dynamic>? selectedRequiremntAttributeRawValues = selection[requirementAttributeId];
+              if (selectedRequiremntAttributeRawValues == null) {
+                // ignore: prefer_collection_literals
+                selection[requirementAttributeId] = selectedRequiremntAttributeRawValues = LinkedHashSet<dynamic>();
+              }
+              if (selectedRequiremntAttributeRawValues.isEmpty) {
+                selectedRequiremntAttributeRawValues.add(requirementRawValue);
+                if (!attributeIds.contains(requirementAttributeId)) { // ??? requirementRawValue
+                  attributeIds.addLast(requirementAttributeId);       // ??? requirementRawValue
                 }
               }
             });
@@ -160,7 +158,7 @@ class ContentAttributes {
     return true;
   }
 
-  bool isSelectionValid(Map<String, LinkedHashSet<String>>? selection) =>
+  bool isSelectionValid(Map<String, LinkedHashSet<dynamic>>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
   bool get hasRequiredAttributes {
@@ -176,12 +174,12 @@ class ContentAttributes {
 
   bool get hasRequired => hasRequiredAttributes || (requirements?.hasRequired ?? false);
 
-  List<String> displayAttributeValuesListFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
+  List<String> displayLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
     if ((attributes != null) && (selection != null)) {
       for (ContentAttribute attribute in attributes!) {
         if ((usage == null) || (attribute.usage == usage)) {
-          displayList.addAll(attribute.displayAttributeValuesListFromSelection(selection, complete: complete) ?? <String>[]);
+          displayList.addAll(attribute.displayLabelsFromSelection(selection, complete: complete) ?? <String>[]);
         }
       }
     }
@@ -336,16 +334,16 @@ class ContentAttribute {
 
   bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
 
-  ContentAttributeValue? findValue({String? label, dynamic value}) =>
-    ContentAttributeValue.findInList(values, label: label, value: value);
+  ContentAttributeValue? findValue({dynamic value}) =>
+    ContentAttributeValue.findInList(values, value: value);
 
-  bool validateSelection(Map<String, LinkedHashSet<String>> selection) {
-    LinkedHashSet<String>? attributeLabels = selection[id];
-    if (attributeLabels != null) {
-      for (String attributeLabel in attributeLabels) {
-        ContentAttributeValue? attributeValue = findValue(label: attributeLabel);
+  bool validateSelection(Map<String, LinkedHashSet<dynamic>> selection) {
+    LinkedHashSet<dynamic>? attributeRawValues = selection[id];
+    if (attributeRawValues != null) {
+      for (dynamic attributeRawValue in attributeRawValues) {
+        ContentAttributeValue? attributeValue = findValue(value: attributeRawValue);
         if ((attributeValue == null) || !attributeValue.fulfillsSelection(selection, requirementsMode: requirements?.mode)) {
-          attributeLabels.remove(attributeLabel);
+          attributeRawValues.remove(attributeRawValue);
           return false;
         }
       }
@@ -356,7 +354,7 @@ class ContentAttribute {
   bool isSatisfiedFromSelection(dynamic selection) =>
     requirements?.isAttributeValuesSelectionValid(selection) ?? true;
 
-  List<ContentAttributeValue>? attributeValuesFromSelection(Map<String, LinkedHashSet<String>> selection) {
+  List<ContentAttributeValue>? attributeValuesFromSelection(Map<String, LinkedHashSet<dynamic>> selection) {
     List<ContentAttributeValue>? filteredAttributeValues;
     if (values != null) {
       for (ContentAttributeValue attributeValue in values!) {
@@ -369,33 +367,35 @@ class ContentAttribute {
     return filteredAttributeValues;
   }
 
-  List<String>? displayAttributeValuesListFromSelection(Map<String, dynamic>? selection, { bool complete = false } ) {
-    dynamic value = (selection != null) ? selection[id] : null;
-    if (value is String) {
-      String? displayValue = displayAttributeValue(value, complete: complete);
-      if (displayValue != null) {
-        return <String>[displayValue];
-      }
-    }
-    else if (value is List) {
+  List<String>? displayLabelsFromSelection(Map<String, dynamic>? selection, { bool complete = false } ) {
+    dynamic rawValue = (selection != null) ? selection[id] : null;
+    return displayLabelsFromRawValue(rawValue, complete: complete);
+  }
+
+  List<String>? displayLabelsFromRawValue(dynamic rawValue, { bool complete = false } ) {
+    if ((rawValue is List) || (rawValue is Set)) {
       List<String> displayList = <String>[];
-      for (dynamic entry in value) {
-        if (entry is String) {
-          String? displayValue = displayAttributeValue(entry, complete: complete);
-          if (displayValue != null) {
-            displayList.add(displayValue);
-          }
+      for (dynamic rawEntry in rawValue) {
+        String? displayValue = displayLabel(rawEntry, complete: complete);
+        if (displayValue != null) {
+          displayList.add(displayValue);
         }
       }
       return displayList.isNotEmpty ? displayList : null;
     }
+    else if (rawValue != null) {
+      String? displayValue = displayLabel(rawValue, complete: complete);
+      if (displayValue != null) {
+        return <String>[displayValue];
+      }
+    }
     return null;
   }
 
-  String? displayAttributeValue(String attributeLabel, { bool complete = false }) {
-    String? displayValue = attributeLabel;
+  String? displayLabel(dynamic attributeRawValue, { bool complete = false }) {
+    ContentAttributeValue? attributeValue = findValue(value: attributeRawValue);
+    String? displayValue = attributeValue?.label;
     if ((complete != true) && (widget == ContentAttributeWidget.checkbox) && (usage == ContentAttributeUsage.label)) {
-      ContentAttributeValue? attributeValue = findValue(label: attributeLabel);
       displayValue = (attributeValue?.value == true) ? title : null;
     }
     return (displayValue != null) ? (displayString(displayValue) ?? displayValue) : null;
@@ -494,10 +494,11 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 
 class ContentAttributeValue {
   final String? label;
-  final dynamic value;
+  final dynamic _value;
   final Map<String, dynamic>? requirements;
 
-  ContentAttributeValue({this.label, this.value, this.requirements});
+  ContentAttributeValue({this.label, dynamic value, this.requirements}) :
+    _value = value;
 
   // JSON serialization
 
@@ -521,7 +522,7 @@ class ContentAttributeValue {
 
   toJson() => {
     'label': label,
-    'value': value,
+    'value': _value,
     'requirements': requirements,
   };
 
@@ -531,23 +532,23 @@ class ContentAttributeValue {
   bool operator==(dynamic other) =>
     (other is ContentAttributeValue) &&
     (label == other.label) &&
-    (value == other.value) &&
+    (_value == other._value) &&
     const DeepCollectionEquality().equals(requirements, other.requirements);
 
   @override
   int get hashCode =>
     (label?.hashCode ?? 0) ^
-    (value?.hashCode ?? 0) ^
+    (_value?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
 
   // Accessories
 
-  static ContentAttributeValue? findInList(List<ContentAttributeValue>? attributeValues, {String? label, dynamic value}) {
+  dynamic get value => _value ?? label;
+
+  static ContentAttributeValue? findInList(List<ContentAttributeValue>? attributeValues, { dynamic value }) {
     if (attributeValues != null) {
       for (ContentAttributeValue attributeValue in attributeValues) {
-        if (((label == null) || (attributeValue.label == label)) &&
-            ((value == null) || (attributeValue.value == value)))
-        {
+        if (attributeValue.value == value) {
           return attributeValue;
         }
       }
@@ -555,7 +556,7 @@ class ContentAttributeValue {
     return null;
   }
 
-  bool fulfillsSelection(Map<String, LinkedHashSet<String>>? selection, { ContentAttributeRequirementsMode? requirementsMode }) {
+  bool fulfillsSelection(Map<String, LinkedHashSet<dynamic>>? selection, { ContentAttributeRequirementsMode? requirementsMode }) {
     if ((requirements == null) || requirements!.isEmpty) {
       return true;
     }
@@ -569,15 +570,12 @@ class ContentAttributeValue {
     }
   }
 
-  bool _matchRequirement({ dynamic requirement, LinkedHashSet<String>? selection, ContentAttributeRequirementsMode? requirementsMode }) {
+  bool _matchRequirement({ dynamic requirement, LinkedHashSet<dynamic>? selection, ContentAttributeRequirementsMode? requirementsMode }) {
     if (requirement == null) {
       return true;
     }
     else if ((selection == null) || selection.isEmpty) {
       return (requirementsMode == ContentAttributeRequirementsMode.inclusive);
-    }
-    else if (requirement is String) {
-      return selection.contains(requirement);
     }
     else if (requirement is List) {
       for (dynamic requirementEntry in requirement) {
@@ -586,6 +584,9 @@ class ContentAttributeValue {
         }
       }
       return true;
+    }
+    else if (requirement != null) {
+      return selection.contains(requirement);
     }
     else {
       return false;
@@ -697,7 +698,7 @@ class ContentAttributeRequirements {
            ((maxSelectedCount == null) || (maxSelectedCount! >= selectedCount));
   }
 
-  void validateAttributeValuesSelection(LinkedHashSet<String>? selection) {
+  void validateAttributeValuesSelection(LinkedHashSet<dynamic>? selection) {
     if ((maxSelectedCount != null) && (0 <= maxSelectedCount!) && (selection != null)) {
       while (maxSelectedCount! < selection.length) {
         selection.remove(selection.first);
@@ -706,11 +707,11 @@ class ContentAttributeRequirements {
   }
 
   static int _selectedAttributesCount(dynamic selection) {
-    if (selection is String) {
-      return 1;
-    }
-    else if (selection is Iterable) {
+    if (selection is List) {
       return selection.length;
+    }
+    else if (selection != null) {
+      return 1;
     }
     else {
       return 0;

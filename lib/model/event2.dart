@@ -431,7 +431,7 @@ String? eventTypeFilterToString(EventTypeFilter? value) {
   }
 }
 
-List<EventTypeFilter>? eventTypeFilterListFromList(List<String>? values) {
+List<EventTypeFilter>? eventTypeFilterListFromStringList(List<String>? values) {
   if (values != null) {
     List<EventTypeFilter> list = <EventTypeFilter>[];
     for (String value in values) {
@@ -445,7 +445,7 @@ List<EventTypeFilter>? eventTypeFilterListFromList(List<String>? values) {
   return null;
 }
 
-List<String>? eventTypeFilterListToList(List<EventTypeFilter>? values) {
+List<String>? eventTypeFilterListToStringList(List<EventTypeFilter>? values) {
   if (values != null) {
     List<String> list = <String>[];
     for (EventTypeFilter value in values) {
@@ -458,6 +458,19 @@ List<String>? eventTypeFilterListToList(List<EventTypeFilter>? values) {
   }
   return null;
 }
+
+List<EventTypeFilter>? eventTypeFilterListFromSelection(dynamic selection) {
+  if (selection is List) {
+    return JsonUtils.listValue<EventTypeFilter>(selection);
+  }
+  else if (selection is EventTypeFilter) {
+    return <EventTypeFilter>[selection];
+  }
+  else {
+    return null;
+  }
+}
+
 
 ///////////////////////////////
 /// EventSortType
