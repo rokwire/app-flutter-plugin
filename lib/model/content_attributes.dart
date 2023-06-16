@@ -324,6 +324,7 @@ class ContentAttribute {
   bool isRequired(int scope) => requirementsForScope(scope)?.hasRequired ?? false;
   bool isMultipleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount != 1);
   bool isSingleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount == 1);
+  bool get hasMultipleValueGroups => (_collectValueGroups().length > 1);
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributeWidget.checkbox);
@@ -396,6 +397,16 @@ class ContentAttribute {
       // ignore: prefer_collection_literals
       (map[attributeValue.group] ??= LinkedHashSet<dynamic>()).add(attributeValue.value);
     }
+  }
+
+  LinkedHashSet<String?> _collectValueGroups() {
+    LinkedHashSet<String?> groups = LinkedHashSet<String?>();
+    if (values != null) {
+      for (ContentAttributeValue value in values!) {
+        groups.add(value.group);
+      }
+    }
+    return groups;
   }
 
 
