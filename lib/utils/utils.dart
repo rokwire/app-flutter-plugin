@@ -1278,8 +1278,17 @@ class DateTimeUtils {
 }
 
 class TZDateTimeUtils {
-  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day);
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location, bool inclusive = false }) =>
+    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day,
+      inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0
+    );
+
+  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) => (dateTime.month < 12) ?
+    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month + 1, 1) :
+    timezone.TZDateTime(location ?? dateTime.location, dateTime.year + 1, 1, 1);
+
+  static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+  dateOnly(startOfNextMonth(dateTime, location: location).subtract(const Duration(days: 1)), inclusive: true);
 
   static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
     (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;

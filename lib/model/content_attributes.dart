@@ -161,10 +161,10 @@ class ContentAttributes {
   bool isSelectionValid(Map<String, LinkedHashSet<dynamic>>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
-  bool get hasRequiredAttributes {
+  bool hasRequiredAttributes(int scope) {
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.isRequired) {
+        if (attribute.isRequired(scope)) {
           return true;
         }
       }
@@ -172,7 +172,7 @@ class ContentAttributes {
     return false;
   }
 
-  bool get hasRequired => hasRequiredAttributes || (requirements?.hasRequired ?? false);
+  bool hasRequired(int scope) => hasRequiredAttributes(scope) || (requirements?.hasRequired ?? false);
 
   List<String> displayLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
@@ -320,9 +320,11 @@ class ContentAttribute {
   String? get displaySemanticsHint => displayString(semanticsHint);
   String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
-  bool get isRequired => requirements?.hasRequired ?? false;
-  bool get isMultipleSelection => (requirements?.maxSelectedCount != 1);
-  bool get isSingleSelection => (requirements?.maxSelectedCount == 1);
+  ContentAttributeRequirements? requirementsForScope(int scope) => (((requirements?.scope ?? 0) & scope) != 0) ? requirements : null;
+  bool isRequired(int scope) => requirementsForScope(scope)?.hasRequired ?? false;
+  bool isMultipleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount != 1);
+  bool isSingleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount == 1);
+  bool get hasMultipleValueGroups => (_collectValueGroups().length > 1);
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributeWidget.checkbox);
@@ -395,6 +397,16 @@ class ContentAttribute {
       // ignore: prefer_collection_literals
       (map[attributeValue.group] ??= LinkedHashSet<dynamic>()).add(attributeValue.value);
     }
+  }
+
+  LinkedHashSet<String?> _collectValueGroups() {
+    LinkedHashSet<String?> groups = LinkedHashSet<String?>();
+    if (values != null) {
+      for (ContentAttributeValue value in values!) {
+        groups.add(value.group);
+      }
+    }
+    return groups;
   }
 
 
@@ -538,11 +550,12 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 
 class ContentAttributeValue {
   final String? label;
+  final String? info;
   final dynamic _value;
   final String? group;
   final Map<String, dynamic>? requirements;
 
-  ContentAttributeValue({this.label, dynamic value, this.group, this.requirements}) :
+  ContentAttributeValue({this.label, this.info, dynamic value, this.group, this.requirements}) :
     _value = value;
 
   // JSON serialization
@@ -556,6 +569,7 @@ class ContentAttributeValue {
     else if (json is Map) {
       return ContentAttributeValue(
         label: JsonUtils.stringValue(json['label']),
+        info: JsonUtils.stringValue(json['info']),
         value: json['value'],
         group: JsonUtils.stringValue(json['group']),
         requirements: JsonUtils.mapValue(json['requirements']),
@@ -566,12 +580,13 @@ class ContentAttributeValue {
     }
   }
 
-  toJson() => {
+  toJson() => ((info != null) || (value != null) && (group != null) && (requirements != null)) ? {
     'label': label,
+    'info': info,
     'value': _value,
     'group': group,
     'requirements': requirements,
-  };
+  } : label;
 
   // Equality
 
@@ -579,6 +594,7 @@ class ContentAttributeValue {
   bool operator==(dynamic other) =>
     (other is ContentAttributeValue) &&
     (label == other.label) &&
+    (info == other.info) &&
     (_value == other._value) &&
     (group == other.group) &&
     const DeepCollectionEquality().equals(requirements, other.requirements);
@@ -586,6 +602,7 @@ class ContentAttributeValue {
   @override
   int get hashCode =>
     (label?.hashCode ?? 0) ^
+    (info?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));

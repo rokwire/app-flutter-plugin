@@ -294,8 +294,8 @@ class Events2Query {
   final Set<EventTypeFilter>? types;
   final Position? location;
   final EventTimeFilter? timeFilter;
-  final DateTime? startTimeUtc;
-  final DateTime? endTimeUtc;
+  final DateTime? customStartTimeUtc;
+  final DateTime? customEndTimeUtc;
   final Map<String, dynamic>? attributes;
   final EventSortType? sortType;
   final EventSortOrder? sortOrder;
@@ -304,7 +304,7 @@ class Events2Query {
 
   Events2Query({this.searchText,
     this.types, this.location,
-    this.timeFilter /* TMP = EventTimeFilter.upcoming */, this.startTimeUtc, this.endTimeUtc,
+    this.timeFilter = EventTimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = EventSortOrder.ascending,
     this.offset = 0, this.limit
@@ -322,7 +322,7 @@ class Events2Query {
     }
 
     if (timeFilter != null) {
-      _buildTimeLoadOptions(options, timeFilter!, startTimeUtc: startTimeUtc, endTimeUtc: endTimeUtc);
+      buildTimeLoadOptions(options, timeFilter!, customStartTimeUtc: customStartTimeUtc, customEndTimeUtc: customEndTimeUtc);
     }
 
     if (attributes != null) {
@@ -391,61 +391,76 @@ class Events2Query {
     }
   }
 
-  void _buildTimeLoadOptions(Map<String, dynamic> options, EventTimeFilter timeFilter, { DateTime? startTimeUtc, DateTime? endTimeUtc }) {
+  static void buildTimeLoadOptions(Map<String, dynamic> options, EventTimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
     TZDateTime nowUni = DateTimeUni.nowUniOrLocal();
     
     if (timeFilter == EventTimeFilter.upcoming) {
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.today) {
-      TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year, nowUni.month, nowUni.day, 23, 59, 59);
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni, inclusive: true);
+      
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.tomorrow) {
       TZDateTime tomorrowUni = nowUni.add(const Duration(days: 1));
-      TZDateTime startTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, tomorrowUni.year, tomorrowUni.month, tomorrowUni.day, 0, 0, 0);
-      TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, tomorrowUni.year, tomorrowUni.month, tomorrowUni.day, 23, 59, 59);
+      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni);
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni, inclusive: true);
+      
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.thisWeek) {
       int nowWeekdayUni = nowUni.weekday;
-      TZDateTime endOfWeekUni = (nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni;
-      TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfWeekUni.year, endOfWeekUni.month, endOfWeekUni.day, 23, 59, 59);
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
+      
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == EventTimeFilter.thisWeekend) {
       int nowWeekdayUni = nowUni.weekday;
-      late TZDateTime startTimeUni;
-      if (nowWeekdayUni < 6) {
-        TZDateTime startOfWeekUni = nowUni.add(Duration(days: (6 - nowWeekdayUni)));
-        startTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, startOfWeekUni.year, startOfWeekUni.month, startOfWeekUni.day, 0, 0, 0);
-      }
-      else {
-        startTimeUni = nowUni;
-      }
-
-      TZDateTime endOfWeekUni = (nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni;
-      TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfWeekUni.year, endOfWeekUni.month, endOfWeekUni.day, 23, 59, 59);
+      TZDateTime startTimeUni = (nowWeekdayUni < 6) ? TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (6 - nowWeekdayUni)))) : nowUni;
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
 
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
+    else if (timeFilter == EventTimeFilter.nextWeek) {
+      int nowWeekdayUni = nowUni.weekday;
+      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (8 - nowWeekdayUni))));
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
+      
+      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+    }
+    else if (timeFilter == EventTimeFilter.nextWeekend) {
+      int nowWeekdayUni = nowUni.weekday;
+      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (13 - nowWeekdayUni))));
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
+      
+      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+    }
     else if (timeFilter == EventTimeFilter.thisMonth) {
-      TZDateTime startOfNextMonth = (nowUni.month < 12) ? TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year, nowUni.month + 1, 1) : TZDateTime(DateTimeUni.timezoneUniOrLocal, nowUni.year + 1, 1, 1);
-      TZDateTime endOfThisMonth = startOfNextMonth.subtract(const Duration(days: 1));
-      TZDateTime endTimeUni = TZDateTime(DateTimeUni.timezoneUniOrLocal, endOfThisMonth.year, endOfThisMonth.month, endOfThisMonth.day, 23, 59, 59);
+      TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(nowUni);
+
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
+    else if (timeFilter == EventTimeFilter.nextMonth) {
+      TZDateTime startTimeUni = TZDateTimeUtils.startOfNextMonth(nowUni);
+      TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(startTimeUni);
+
+      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+    }
     else if (timeFilter == EventTimeFilter.customRange) {
-      if (startTimeUtc != null) {
-        options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
+      if (customStartTimeUtc != null) {
+        options['end_time_after'] = customStartTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
-      if (endTimeUtc != null) {
-        options['start_time_before'] = endTimeUtc.millisecondsSinceEpoch ~/ 1000;
+      if (customEndTimeUtc != null) {
+        options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
     }
   }
