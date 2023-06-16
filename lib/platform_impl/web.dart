@@ -32,12 +32,15 @@ class PasskeyImpl extends BasePasskey {
 
   @override
   Future<String?> createPasskey(Map<String, dynamic>? options) async {
+    window.console.log(options?.toString());
     if (options?['publicKey']?['challenge'] is String) {
       String challenge = options!['publicKey']['challenge'];
+      //TODO: should this be base64UrlDecoded? how (length not multiple of 4)?
       options['publicKey']['challenge'] = Uint8List.fromList(challenge.codeUnits).buffer;
     }
     if (options?['publicKey']?['user']?['id'] is String) {
       String userId = options!['publicKey']['user']['id'];
+      //TODO: should this be base64UrlDecoded?
       options['publicKey']['user']['id'] = Uint8List.fromList(userId.codeUnits).buffer;
     }
 
@@ -45,9 +48,9 @@ class PasskeyImpl extends BasePasskey {
     PublicKeyCredential credential = await window.navigator.credentials!.create(options);
     AuthenticatorResponse? authResponse = credential.response;
     if (authResponse is AuthenticatorAttestationResponse) {
-      //TODO: how to read from this ByteBuffer?
+      //TODO: fix? (webauthn config EncodeUserIDAsString?)
       String rawId = StringUtils.base64UrlEncode(String.fromCharCodes(credential.rawId?.asUint8List() ?? []));
-      //TODO: how to read from this ByteBuffer?
+      //TODO: TagsMdError indicates found disallowed CBOR tags
       String attestationObject = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.attestationObject?.asUint8List() ?? []));
       // this works
       String clientDataJson = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.clientDataJson?.asUint8List() ?? []));
