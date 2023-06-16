@@ -161,10 +161,10 @@ class ContentAttributes {
   bool isSelectionValid(Map<String, LinkedHashSet<dynamic>>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
-  bool get hasRequiredAttributes {
+  bool hasRequiredAttributes(int scope) {
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.isRequired) {
+        if (attribute.isRequired(scope)) {
           return true;
         }
       }
@@ -172,7 +172,7 @@ class ContentAttributes {
     return false;
   }
 
-  bool get hasRequired => hasRequiredAttributes || (requirements?.hasRequired ?? false);
+  bool hasRequired(int scope) => hasRequiredAttributes(scope) || (requirements?.hasRequired ?? false);
 
   List<String> displayLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
@@ -320,9 +320,10 @@ class ContentAttribute {
   String? get displaySemanticsHint => displayString(semanticsHint);
   String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
-  bool get isRequired => requirements?.hasRequired ?? false;
-  bool get isMultipleSelection => (requirements?.maxSelectedCount != 1);
-  bool get isSingleSelection => (requirements?.maxSelectedCount == 1);
+  ContentAttributeRequirements? requirementsForScope(int scope) => (((requirements?.scope ?? 0) & scope) != 0) ? requirements : null;
+  bool isRequired(int scope) => requirementsForScope(scope)?.hasRequired ?? false;
+  bool isMultipleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount != 1);
+  bool isSingleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount == 1);
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributeWidget.checkbox);
