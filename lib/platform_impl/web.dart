@@ -13,10 +13,18 @@
 // limitations under the License.
 
 import 'dart:html';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 
 import 'package:rokwire_plugin/platform_impl/base.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+
+import 'package:js/js.dart';
+
+@JS('atob')
+external String atob(String value);
+
+@JS('btoa')
+external String btoa(String value);
 
 class PasskeyImpl extends BasePasskey {
   @override
@@ -26,44 +34,31 @@ class PasskeyImpl extends BasePasskey {
 
   @override
   Future<String?> getPasskey(Map<String, dynamic>? options) async {
-    dynamic response = await window.navigator.credentials!.get(options);
-    return JsonUtils.stringValue(response);
-  }
-
-  @override
-  Future<String?> createPasskey(Map<String, dynamic>? options) async {
-    window.console.log(options?.toString());
     if (options?['publicKey']?['challenge'] is String) {
       String challenge = options!['publicKey']['challenge'];
-      //TODO: should this be base64UrlDecoded? how (length not multiple of 4)?
-      options['publicKey']['challenge'] = Uint8List.fromList(challenge.codeUnits).buffer;
+      options['publicKey']['challenge'] = _encodedStringToBuffer(challenge);
     }
-    if (options?['publicKey']?['user']?['id'] is String) {
-      String userId = options!['publicKey']['user']['id'];
-      //TODO: should this be base64UrlDecoded?
-      options['publicKey']['user']['id'] = Uint8List.fromList(userId.codeUnits).buffer;
+    if (options?['publicKey']?['allowCredentials'] is Iterable) {
+      Iterable<dynamic> credentials = options!['publicKey']?['allowCredentials'];
+      for (int i = 0; i < credentials.length; i++) {
+        dynamic credential = credentials.elementAt(i);
+        if (credential is Map<String, dynamic> && credential['id'] is String) {
+          credentials.elementAt(i)['id'] = _encodedStringToBuffer(credential['id']);
+        }
+      }
     }
-
-    window.console.log(options?.toString());
-    PublicKeyCredential credential = await window.navigator.credentials!.create(options);
+    
+    PublicKeyCredential credential = await window.navigator.credentials!.get(options);
     AuthenticatorResponse? authResponse = credential.response;
-    if (authResponse is AuthenticatorAttestationResponse) {
-      //TODO: fix? (webauthn config EncodeUserIDAsString?)
-      String rawId = StringUtils.base64UrlEncode(String.fromCharCodes(credential.rawId?.asUint8List() ?? []));
-      //TODO: TagsMdError indicates found disallowed CBOR tags
-      String attestationObject = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.attestationObject?.asUint8List() ?? []));
-      // this works
-      String clientDataJson = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.clientDataJson?.asUint8List() ?? []));
-      window.console.log(rawId);
-      window.console.log(attestationObject);
-      window.console.log(clientDataJson);
+    if (authResponse is AuthenticatorAssertionResponse) {
       Map<String, dynamic> response = {
         'id': credential.id,
-        'rawId': rawId,
+        'rawId': _bufferToEncodedString(credential.rawId),
         'type': credential.type,
         'response': {
-          'attestationObject': attestationObject,
-          'clientDataJSON': clientDataJson,
+          'authenticatorData': _bufferToEncodedString(authResponse.authenticatorData),
+          'clientDataJSON': _bufferToEncodedString(authResponse.clientDataJson),
+          'signature': _bufferToEncodedString(authResponse.signature),
         }
       };
 
@@ -72,4 +67,38 @@ class PasskeyImpl extends BasePasskey {
     
     return null;
   }
+
+  @override
+  Future<String?> createPasskey(Map<String, dynamic>? options) async {
+    if (options?['publicKey']?['challenge'] is String) {
+      String challenge = options!['publicKey']['challenge'];
+      options['publicKey']['challenge'] = _encodedStringToBuffer(challenge);
+    }
+    if (options?['publicKey']?['user']?['id'] is String) {
+      String userId = options!['publicKey']['user']['id'];
+      options['publicKey']['user']['id'] = _encodedStringToBuffer(userId);
+    }
+
+    PublicKeyCredential credential = await window.navigator.credentials!.create(options);
+    AuthenticatorResponse? authResponse = credential.response;
+    if (authResponse is AuthenticatorAttestationResponse) {
+      Map<String, dynamic> response = {
+        'id': credential.id,
+        'rawId': _bufferToEncodedString(credential.rawId),
+        'type': credential.type,
+        'response': {
+          'attestationObject': _bufferToEncodedString(authResponse.attestationObject),
+          'clientDataJSON': _bufferToEncodedString(authResponse.clientDataJson),
+        }
+      };
+
+      return JsonUtils.encode(response);
+    }
+    
+    return null;
+  }
+
+  ByteBuffer _encodedStringToBuffer(String value) => Uint8List.fromList(atob(value.replaceAll('_', '/').replaceAll('-', '+')).codeUnits).buffer;
+
+  String _bufferToEncodedString(ByteBuffer? buffer) => btoa(String.fromCharCodes(buffer?.asUint8List() ?? [])).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }

@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
 
@@ -19,11 +18,6 @@ class RokwirePlugin {
     MethodChannel channel = MethodChannel(name);
     channel.setMethodCallHandler(handler);
     return channel;
-  }
-
-  static void registerWith(Registrar registrar) {
-    final MethodChannel channel = MethodChannel('edu.illinois.rokwire/plugin', const StandardMethodCodec(), registrar);
-    channel.setMethodCallHandler(_handleChannelCall);
   }
 
   static Future<String?> get platformVersion async {
