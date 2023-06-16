@@ -356,10 +356,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Passkey authentication
   Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? username) async {
+    String? errorMessage;
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
       final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
       if (!isPasskeySupported) {
-        return Auth2PasskeySignInResult.failedNotSupported;
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotSupported);
       }
 
       String url = "${Config().coreUrl}/services/auth/login";
@@ -404,14 +405,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
           return _completeSignInWithPasskey(username, responseData);
         } catch(error) {
-          Log.e(error.toString());
+          errorMessage = error.toString();
+          Log.e(errorMessage);
         }
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'not-found') {
-        return Auth2PasskeySignInResult.failedNotFound;
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
       }
     }
-    return Auth2PasskeySignInResult.failed;
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
   }
 
   Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String responseData) async {
@@ -437,18 +439,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
         bool success = await processLoginResponse(responseJson);
         if (success) {
-          return Auth2PasskeySignInResult.succeeded;
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.succeeded);
         }
       }
     }
-    return Auth2PasskeySignInResult.failed;
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
   Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName) async {
+    String? errorMessage;
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
       final isPasskeySupported = await flutterPasskeyPlugin.isSupported();
       if (!isPasskeySupported) {
-        return Auth2PasskeySignUpResult.failedNotSupported;
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotSupported);
       }
 
       Auth2UserProfile? profile = _anonymousProfile;
@@ -504,11 +507,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           try {
             String responseData = await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
             Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
-            if (result == Auth2PasskeySignInResult.succeeded) {
-              return Auth2PasskeySignUpResult.succeeded;
+            if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
+              return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
             }
           } catch(error) {
-            Log.e(error.toString());
+            errorMessage = error.toString();
+            Log.e(errorMessage);
           }
         }
       }
@@ -516,7 +520,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       //   return Auth2PasskeySignUpResult.failedAccountExist;
       // }
     }
-    return Auth2PasskeySignUpResult.failed;
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed, error: errorMessage);
   }
 
   Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String responseData) async {
@@ -539,10 +543,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response != null && response.statusCode == 200) {
-        return Auth2PasskeySignUpResult.succeeded;
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
       }
     }
-    return Auth2PasskeySignUpResult.failed;
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
   }
 
   // OIDC Authentication
@@ -1723,15 +1727,26 @@ enum Auth2PasskeyAccountState {
 
 // Auth2PasskeySignUpResult
 
-enum Auth2PasskeySignUpResult {
+class Auth2PasskeySignUpResult {
+  Auth2PasskeySignUpResultStatus status;
+  String? error;
+  Auth2PasskeySignUpResult(this.status, {this.error});
+}
+
+enum Auth2PasskeySignUpResultStatus {
   succeeded,
   failed,
   failedNotSupported,
 }
 
 // Auth2PasskeySignInResult
+class Auth2PasskeySignInResult {
+  Auth2PasskeySignInResultStatus status;
+  String? error;
+  Auth2PasskeySignInResult(this.status, {this.error});
+}
 
-enum Auth2PasskeySignInResult {
+enum Auth2PasskeySignInResultStatus {
   succeeded,
   failed,
   failedNotFound,
