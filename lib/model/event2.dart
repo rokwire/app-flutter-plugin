@@ -344,7 +344,7 @@ String? eventUserRoleToString(EventUserRole? value) {
 ///////////////////////////////
 /// EventTimeFilter
 
-enum EventTimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, thisMonth, customRange }
+enum EventTimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
 
 EventTimeFilter? eventTimeFilterFromString(String? value) {
   if (value == 'upcoming') {
@@ -362,8 +362,17 @@ EventTimeFilter? eventTimeFilterFromString(String? value) {
   else if (value == 'this_weekend') {
     return EventTimeFilter.thisWeekend;
   }
+  else if (value == 'next_week') {
+    return EventTimeFilter.nextWeek;
+  }
+  else if (value == 'next_weekend') {
+    return EventTimeFilter.nextWeekend;
+  }
   else if (value == 'this_month') {
     return EventTimeFilter.thisMonth;
+  }
+  else if (value == 'next_month') {
+    return EventTimeFilter.nextMonth;
   }
   else if (value == 'custom_range') {
     return EventTimeFilter.customRange;
@@ -380,10 +389,27 @@ String? eventTimeFilterToString(EventTimeFilter? value) {
     case EventTimeFilter.tomorrow: return 'tomorrow';
     case EventTimeFilter.thisWeek: return 'this_week';
     case EventTimeFilter.thisWeekend: return 'this_weekend';
+    case EventTimeFilter.nextWeek: return 'next_week';
+    case EventTimeFilter.nextWeekend: return 'next_weekend';
     case EventTimeFilter.thisMonth: return 'this_month';
+    case EventTimeFilter.nextMonth: return 'next_month';
     case EventTimeFilter.customRange: return 'custom_range';
     default: return null;
   }
+}
+
+EventTimeFilter? eventTimeFilterListFromSelection(dynamic selection) {
+  if (selection is List) {
+    for (dynamic entry in selection) {
+      if (entry is EventTimeFilter) {
+        return entry;
+      }
+    }
+  }
+  else if (selection is EventTimeFilter) {
+    return selection;
+  }
+  return null;
 }
 
 ///////////////////////////////
