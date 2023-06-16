@@ -323,7 +323,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       //TODO: decide how best to handle secret keys
-      if (_config != null && secretKeys.isNotEmpty) {
+      if (_config != null) { // && secretKeys.isNotEmpty) {
         configFile.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
