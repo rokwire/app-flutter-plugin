@@ -538,11 +538,12 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 
 class ContentAttributeValue {
   final String? label;
+  final String? info;
   final dynamic _value;
   final String? group;
   final Map<String, dynamic>? requirements;
 
-  ContentAttributeValue({this.label, dynamic value, this.group, this.requirements}) :
+  ContentAttributeValue({this.label, this.info, dynamic value, this.group, this.requirements}) :
     _value = value;
 
   // JSON serialization
@@ -556,6 +557,7 @@ class ContentAttributeValue {
     else if (json is Map) {
       return ContentAttributeValue(
         label: JsonUtils.stringValue(json['label']),
+        info: JsonUtils.stringValue(json['info']),
         value: json['value'],
         group: JsonUtils.stringValue(json['group']),
         requirements: JsonUtils.mapValue(json['requirements']),
@@ -566,12 +568,13 @@ class ContentAttributeValue {
     }
   }
 
-  toJson() => {
+  toJson() => ((info != null) || (value != null) && (group != null) && (requirements != null)) ? {
     'label': label,
+    'info': info,
     'value': _value,
     'group': group,
     'requirements': requirements,
-  };
+  } : label;
 
   // Equality
 
@@ -579,6 +582,7 @@ class ContentAttributeValue {
   bool operator==(dynamic other) =>
     (other is ContentAttributeValue) &&
     (label == other.label) &&
+    (info == other.info) &&
     (_value == other._value) &&
     (group == other.group) &&
     const DeepCollectionEquality().equals(requirements, other.requirements);
@@ -586,6 +590,7 @@ class ContentAttributeValue {
   @override
   int get hashCode =>
     (label?.hashCode ?? 0) ^
+    (info?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
