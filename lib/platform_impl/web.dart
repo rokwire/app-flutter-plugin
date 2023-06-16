@@ -32,15 +32,41 @@ class PasskeyImpl extends BasePasskey {
 
   @override
   Future<String?> createPasskey(Map<String, dynamic>? options) async {
-    if (options?['publicKey']['challenge'] is String) {
-      String userId = options!['publicKey']['user']['id'];
-      String challenge = options['publicKey']['challenge'];
-      options['publicKey']['user']['id'] = Uint8List.fromList(userId.codeUnits);
-      options['publicKey']['challenge'] = Uint8List.fromList(challenge.codeUnits);
+    if (options?['publicKey']?['challenge'] is String) {
+      String challenge = options!['publicKey']['challenge'];
+      options['publicKey']['challenge'] = Uint8List.fromList(challenge.codeUnits).buffer;
     }
-    debugPrint(options?.toString());
-    dynamic response = await window.navigator.credentials!.create(options);
-    debugPrint(response?.toString());
-    return JsonUtils.stringValue(response);
+    if (options?['publicKey']?['user']?['id'] is String) {
+      String userId = options!['publicKey']['user']['id'];
+      options['publicKey']['user']['id'] = Uint8List.fromList(userId.codeUnits).buffer;
+    }
+
+    window.console.log(options?.toString());
+    PublicKeyCredential credential = await window.navigator.credentials!.create(options);
+    AuthenticatorResponse? authResponse = credential.response;
+    if (authResponse is AuthenticatorAttestationResponse) {
+      //TODO: how to read from this ByteBuffer?
+      String rawId = StringUtils.base64UrlEncode(String.fromCharCodes(credential.rawId?.asUint8List() ?? []));
+      //TODO: how to read from this ByteBuffer?
+      String attestationObject = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.attestationObject?.asUint8List() ?? []));
+      // this works
+      String clientDataJson = StringUtils.base64UrlEncode(String.fromCharCodes(authResponse.clientDataJson?.asUint8List() ?? []));
+      window.console.log(rawId);
+      window.console.log(attestationObject);
+      window.console.log(clientDataJson);
+      Map<String, dynamic> response = {
+        'id': credential.id,
+        'rawId': rawId,
+        'type': credential.type,
+        'response': {
+          'attestationObject': attestationObject,
+          'clientDataJSON': clientDataJson,
+        }
+      };
+
+      return JsonUtils.encode(response);
+    }
+    
+    return null;
   }
 }

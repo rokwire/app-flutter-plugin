@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -410,8 +409,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       // TODO: remove if statement once plugin is fixed
       if (Config().operatingSystem == 'ios') {
         String? userHandle = requestJson?['response']['userHandle'];
-        Codec<String, String> stringToBase64Url = utf8.fuse(base64Url);
-        requestJson?['response']['userHandle'] = stringToBase64Url.decode(userHandle ?? '');
+        requestJson?['response']['userHandle'] = StringUtils.base64UrlDecode(userHandle ?? '');
       }
       Map<String, String> headers = {
         'Content-Type': 'application/json'
