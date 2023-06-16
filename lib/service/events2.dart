@@ -429,7 +429,7 @@ class Events2Query {
     else if (timeFilter == EventTimeFilter.nextWeek) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (8 - nowWeekdayUni))));
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (15 - nowWeekdayUni))), inclusive: true);
+      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
       
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
