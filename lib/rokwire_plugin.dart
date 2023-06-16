@@ -7,6 +7,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
 
+import 'package:rokwire_plugin/platform_impl/stub.dart'
+    if (dart.library.io) 'package:rokwire_plugin/platform_impl/mobile.dart'
+    if (dart.library.html) 'package:rokwire_plugin/platform_impl/web.dart';
+
 class RokwirePlugin {
   static final MethodChannel _channel = _createChannel('edu.illinois.rokwire/plugin', _handleChannelCall);
 
@@ -83,24 +87,22 @@ class RokwirePlugin {
     return false;
   }
 
-  static Future<void> getPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
-    try {
-      return await _channel.invokeMethod('getPasskey', {
-        'requestJson': requestJson,
-        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
-      });
-    } catch(e) { debugPrint(e.toString()); }
+  static Future<bool> arePasskeysSupported() async {
+    try { return await PasskeyImpl().arePasskeysSupported(); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  } 
+
+  static Future<String?> getPasskey(Map<String, dynamic>? options) async {
+    try { return await PasskeyImpl().getPasskey(options); }
+    catch(e) { debugPrint(e.toString()); }
+    return null;
   }
 
-  static Future<void> createPasskey(String requestJson, {bool preferImmediatelyAvailableCredentials = true}) async {
-    try {
-      return await _channel.invokeMethod('createPasskey', {
-        'requestJson': requestJson,
-        'preferImmediatelyAvailableCredentials': preferImmediatelyAvailableCredentials
-      });
-    } catch(e) {
-      debugPrint(e.toString());
-    }
+  static Future<String?> createPasskey(Map<String, dynamic>? options) async {
+    try { return await PasskeyImpl().createPasskey(options); }
+    catch(e) { debugPrint(e.toString()); }
+    return null;
   }
 
   // Compound APIs
