@@ -1304,9 +1304,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // Refresh
 
   Future<Auth2Token?> refreshToken({Auth2Token? token, bool ignoreUnauthorized = false}) async {
+    //TODO: validate that using CSRF token as futures and fail counts key works on web
+    String futureKey = token?.refreshToken ?? WebUtils.getCookie(Auth2Csrf.csrfTokenName);
     if (Config().authBaseUrl != null) {
       try {
-        Future<Response?>? refreshTokenFuture = token?.refreshToken != null ? _refreshTokenFutures[token!.refreshToken] : null;
+        Future<Response?>? refreshTokenFuture = futureKey.isNotEmpty ? _refreshTokenFutures[futureKey] : null;
 
         if (refreshTokenFuture != null) {
           _log("Auth2: will await refresh token:\nSource Token: ${token?.refreshToken}");
@@ -1320,18 +1322,18 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _log("Auth2: will refresh token:\nSource Token: ${token?.refreshToken}");
 
           refreshTokenFuture = _refreshToken(token?.refreshToken);
-          if (token?.refreshToken != null) {
-            _refreshTokenFutures[token!.refreshToken!] = refreshTokenFuture;
+          if (futureKey.isNotEmpty) {
+            _refreshTokenFutures[futureKey] = refreshTokenFuture;
           }
           Response? response = await refreshTokenFuture;
-          _refreshTokenFutures.remove(token?.refreshToken);
+          _refreshTokenFutures.remove(futureKey);
 
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           if (responseJson != null) {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
               _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token?.refreshToken}");
-              _refreshTokenFailCounts.remove(token?.refreshToken);
+              _refreshTokenFailCounts.remove(futureKey);
 
               if (token == _token) {
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
@@ -1346,8 +1348,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
           _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token?.refreshToken}");
           int refreshTokenFailCount = 1;
-          if (token?.refreshToken != null) {
-            refreshTokenFailCount += _refreshTokenFailCounts[token!.refreshToken!] ?? 0;
+          if (futureKey.isNotEmpty) {
+            refreshTokenFailCount += _refreshTokenFailCounts[futureKey] ?? 0;
           }
           if (((response?.statusCode == 400) || (!ignoreUnauthorized && response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
             if (token == _token) {
@@ -1357,14 +1359,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
               await authenticateAnonymously();
             }
           }
-          else if (token?.refreshToken != null) {
-            _refreshTokenFailCounts[token!.refreshToken!] = refreshTokenFailCount;
+          else if (futureKey.isNotEmpty) {
+            _refreshTokenFailCounts[futureKey] = refreshTokenFailCount;
           }
         }
       }
       catch(e) {
         debugPrint(e.toString());
-        _refreshTokenFutures.remove(token?.refreshToken); // make sure to clear this in case something went wrong.
+        _refreshTokenFutures.remove(futureKey); // make sure to clear this in case something went wrong.
       }
     }
     return null;
@@ -1676,11 +1678,11 @@ class Auth2Csrf with NetworkAuthProvider {
 
   Auth2Csrf({this.token});
 
-  static const String _csrfTokenName = 'rokwire-csrf-token';
+  static const String csrfTokenName = 'rokwire-csrf-token';
 
   @override
   Map<String, String>? get networkAuthHeaders {
-    String cookieName = _csrfTokenName;
+    String cookieName = csrfTokenName;
     if (Config().authBaseUrl?.contains("localhost") == false) {
       cookieName = '__Host-' + cookieName;
     }
@@ -1688,7 +1690,7 @@ class Auth2Csrf with NetworkAuthProvider {
     Map<String, String> headers = {};
     String cookieValue = WebUtils.getCookie(cookieName);
     if (cookieValue.isNotEmpty) {
-      headers[_csrfTokenName] = cookieValue;
+      headers[csrfTokenName] = cookieValue;
     }
 
     if (StringUtils.isNotEmpty(token?.accessToken)) {
