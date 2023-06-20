@@ -81,8 +81,11 @@ class Events2 with Service implements NotificationsListener {
       return _sampleEvents;
     }
     else if (Config().calendarUrl != null) {
-      Response? response = await Network().get("${Config().calendarUrl}/events/load", body: JsonUtils.encode(query?.toQueryJson()), auth: Auth2());
-      return (response?.statusCode == 200) ? Event2.listFromJson(JsonUtils.decodeList(response?.body)) : null;
+      String? body = JsonUtils.encode(query?.toQueryJson());
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
+      //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
+      return Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null));
     }
     return null;
   }
