@@ -328,7 +328,7 @@ class Events2Query {
       buildTimeLoadOptions(options, timeFilter!, customStartTimeUtc: customStartTimeUtc, customEndTimeUtc: customEndTimeUtc);
     }
 
-    if (attributes != null) {
+    if ((attributes != null) && attributes!.isNotEmpty) {
       // May need rework to backend attributes format:
       // "attribute": {
       //   "mode": "all" | "in" | null,   // optional
