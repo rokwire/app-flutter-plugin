@@ -174,12 +174,12 @@ class ContentAttributes {
 
   bool hasRequired(int scope) => hasRequiredAttributes(scope) || (requirements?.hasRequired ?? false);
 
-  List<String> displayLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
+  List<String> displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
     if ((attributes != null) && (selection != null)) {
       for (ContentAttribute attribute in attributes!) {
         if ((usage == null) || (attribute.usage == usage)) {
-          displayList.addAll(attribute.displayLabelsFromSelection(selection, complete: complete) ?? <String>[]);
+          displayList.addAll(attribute.displaySelectedLabelsFromSelection(selection, complete: complete) ?? <String>[]);
         }
       }
     }
@@ -423,16 +423,16 @@ class ContentAttribute {
     return filteredAttributeValues;
   }
 
-  List<String>? displayLabelsFromSelection(Map<String, dynamic>? selection, { bool complete = false } ) {
+  List<String>? displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { bool complete = false } ) {
     dynamic rawValue = (selection != null) ? selection[id] : null;
-    return displayLabelsFromRawValue(rawValue, complete: complete);
+    return displaySelectedLabelsFromRawValue(rawValue, complete: complete);
   }
 
-  List<String>? displayLabelsFromRawValue(dynamic rawValue, { bool complete = false } ) {
+  List<String>? displaySelectedLabelsFromRawValue(dynamic rawValue, { bool complete = false } ) {
     if ((rawValue is List) || (rawValue is Set)) {
       List<String> displayList = <String>[];
       for (dynamic rawEntry in rawValue) {
-        String? displayValue = displayLabel(rawEntry, complete: complete);
+        String? displayValue = displaySelectedLabel(rawEntry, complete: complete);
         if (displayValue != null) {
           displayList.add(displayValue);
         }
@@ -440,7 +440,7 @@ class ContentAttribute {
       return displayList.isNotEmpty ? displayList : null;
     }
     else if (rawValue != null) {
-      String? displayValue = displayLabel(rawValue, complete: complete);
+      String? displayValue = displaySelectedLabel(rawValue, complete: complete);
       if (displayValue != null) {
         return <String>[displayValue];
       }
@@ -448,9 +448,18 @@ class ContentAttribute {
     return null;
   }
 
-  String? displayLabel(dynamic attributeRawValue, { bool complete = false }) {
+  String? displaySelectedLabel(dynamic attributeRawValue, { bool complete = false }) {
     ContentAttributeValue? attributeValue = findValue(value: attributeRawValue);
-    String? displayValue = attributeValue?.label;
+    String? displayValue = attributeValue?.selectedLabel;
+    if ((complete != true) && (widget == ContentAttributeWidget.checkbox) && (usage == ContentAttributeUsage.label)) {
+      displayValue = (attributeValue?.value == true) ? title : null;
+    }
+    return (displayValue != null) ? (displayString(displayValue) ?? displayValue) : null;
+  }
+
+  String? displaySelectLabel(dynamic attributeRawValue, { bool complete = false }) {
+    ContentAttributeValue? attributeValue = findValue(value: attributeRawValue);
+    String? displayValue = attributeValue?.selectLabel;
     if ((complete != true) && (widget == ContentAttributeWidget.checkbox) && (usage == ContentAttributeUsage.label)) {
       displayValue = (attributeValue?.value == true) ? title : null;
     }
@@ -549,15 +558,17 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 // ContentAttributeValue
 
 class ContentAttributeValue {
-  final String? label;
+  final String? _label;
   final dynamic _value;
   final String? group;
   final Map<String, dynamic>? requirements;
   
+  // Mutable properties
   String? info;
   Map<String, dynamic>? customData;
 
-  ContentAttributeValue({this.label, this.info, dynamic value, this.group, this.requirements, this.customData }) :
+  ContentAttributeValue({String? label, dynamic value, this.group, this.requirements, this.info, this.customData }) :
+    _label = label,
     _value = value;
 
   // JSON serialization
@@ -582,36 +593,40 @@ class ContentAttributeValue {
   }
 
   toJson() => ((value != null) || (group != null) || (requirements != null)) ? {
-    'label': label,
+    'label': _label,
     'value': _value,
     'group': group,
     'requirements': requirements,
-  } : label;
+  } : _label;
 
   // Equality
 
   @override
   bool operator==(dynamic other) =>
     (other is ContentAttributeValue) &&
-    (label == other.label) &&
-    (info == other.info) &&
+    (_label == other._label) &&
     (_value == other._value) &&
     (group == other.group) &&
+    (info == other.info) &&
     (const DeepCollectionEquality().equals(requirements, other.requirements)) &&
     (const DeepCollectionEquality().equals(customData, other.customData));
 
   @override
   int get hashCode =>
-    (label?.hashCode ?? 0) ^
-    (info?.hashCode ?? 0) ^
+    (_label?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
+    (info?.hashCode ?? 0) ^
     (customData?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
 
   // Accessories
 
-  dynamic get value => _value ?? label;
+  String? get label => _label;
+  String? get selectLabel => _label;
+  String? get selectedLabel => _label;
+
+  dynamic get value => _value ?? _label;
 
   static ContentAttributeValue? findInList(List<ContentAttributeValue>? attributeValues, { dynamic value }) {
     if (attributeValues != null) {
