@@ -1321,7 +1321,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
           refreshTokenFuture = _refreshToken(token?.refreshToken);
           if (token?.refreshToken != null) {
-            _refreshTokenFutures[token!.refreshToken!];
+            _refreshTokenFutures[token!.refreshToken!] = refreshTokenFuture;
           }
           Response? response = await refreshTokenFuture;
           _refreshTokenFutures.remove(token?.refreshToken);
