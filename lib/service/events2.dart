@@ -78,7 +78,15 @@ class Events2 with Service implements NotificationsListener {
 
   Future<List<Event2>?> loadEvents(Events2Query? query) async {
     if (Storage().debugUseSampleEvents2 == true) {
-      return _sampleEvents;
+      int index = 0, limit = query?.limit ?? 0;
+      List<Event2> result = <Event2>[];
+      List<Event2> sampleEvents = _sampleEvents;
+      while (result.length < limit) {
+        result.add(sampleEvents[index]);
+        index = (index + 1) % sampleEvents.length;
+      }
+      await Future.delayed(const Duration(seconds: 1));
+      return result;
     }
     else if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode(query?.toQueryJson());
