@@ -167,20 +167,6 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
       case "geoFence":
         GeofenceMonitor.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
         break;
-      case "getPasskey":
-        String requestJson = call.argument("requestJson");
-        Boolean preferImmediatelyAvailableCredentials = call.argument("preferImmediatelyAvailableCredentials");
-        PasskeyManager manager = new PasskeyManager(getActivity());
-        manager.login(requestJson, preferImmediatelyAvailableCredentials);
-        result.success(null);
-        break;
-      case "createPasskey":
-        requestJson = call.argument("requestJson");
-        preferImmediatelyAvailableCredentials = call.argument("preferImmediatelyAvailableCredentials");
-        manager = new PasskeyManager(getActivity());
-        manager.createPasskey(requestJson, preferImmediatelyAvailableCredentials);
-        result.success(null);
-        break;
       default:
         result.notImplemented();
         break;
@@ -191,13 +177,6 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     Activity activity = getActivity();
     if ((activity != null) && (_channel != null)) {
       activity.runOnUiThread(() -> _channel.invokeMethod(String.format("geoFence.%s", event), arguments));
-    }
-  }
-
-  public void notifyPasskeyResult(String event, Object arguments) {
-    Activity activity = getActivity();
-    if ((activity != null) && (_channel != null)) {
-      activity.runOnUiThread(() -> _channel.invokeMethod(String.format("passkey.%s", event), arguments));
     }
   }
 
