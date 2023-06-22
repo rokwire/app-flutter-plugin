@@ -976,7 +976,7 @@ class Auth2UserPrefs {
       'tags': _tags,
       'settings': _settings,
       'voter': _voter,
-      'anonymous_ids': _anonymousIds,
+      'anonymous_ids': _anonymousIds?.toList(),
     };
   }
 
