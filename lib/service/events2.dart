@@ -302,22 +302,22 @@ class Events2Query {
   static const double nearbyDistanceInMiles = 1.0;
 
   final String? searchText;
-  final Set<EventTypeFilter>? types;
+  final Set<Event2TypeFilter>? types;
   final Position? location;
-  final EventTimeFilter? timeFilter;
+  final Event2TimeFilter? timeFilter;
   final DateTime? customStartTimeUtc;
   final DateTime? customEndTimeUtc;
   final Map<String, dynamic>? attributes;
-  final EventSortType? sortType;
-  final EventSortOrder? sortOrder;
+  final Event2SortType? sortType;
+  final Event2SortOrder? sortOrder;
   final int? offset;
   final int? limit;
 
   Events2Query({this.searchText,
     this.types, this.location,
-    this.timeFilter = EventTimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
+    this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
-    this.sortType, this.sortOrder = EventSortOrder.ascending,
+    this.sortType, this.sortOrder = Event2SortOrder.ascending,
     this.offset = 0, this.limit
   });
 
@@ -350,7 +350,7 @@ class Events2Query {
     }
 
     if (sortOrder != null) {
-      options['order'] = eventSortOrderToOption(sortOrder);
+      options['order'] = event2SortOrderToOption(sortOrder);
     }
 
     if (offset != null) {
@@ -365,29 +365,29 @@ class Events2Query {
   }
 
 
-  void _buildTypeLoadOptions(Map<String, dynamic> options, Set<EventTypeFilter> types, { Position? location }) {
-    if (types.contains(EventTypeFilter.free)) {
+  void _buildTypeLoadOptions(Map<String, dynamic> options, Set<Event2TypeFilter> types, { Position? location }) {
+    if (types.contains(Event2TypeFilter.free)) {
       options['free'] = true;
     }
-    else if (types.contains(EventTypeFilter.paid)) {
+    else if (types.contains(Event2TypeFilter.paid)) {
       options['free'] = false;
     }
     
-    if (types.contains(EventTypeFilter.inPerson)) {
+    if (types.contains(Event2TypeFilter.inPerson)) {
       options['online'] = false;
     }
-    else if (types.contains(EventTypeFilter.online)) {
+    else if (types.contains(Event2TypeFilter.online)) {
       options['online'] = true;
     }
 
-    if (types.contains(EventTypeFilter.public)) {
+    if (types.contains(Event2TypeFilter.public)) {
       options['private'] = false;
     }
-    else if (types.contains(EventTypeFilter.private)) {
+    else if (types.contains(Event2TypeFilter.private)) {
       options['private'] = true;
     }
 
-    if (types.contains(EventTypeFilter.nearby) && (location != null)) {
+    if (types.contains(Event2TypeFilter.nearby) && (location != null)) {
       Map<String, dynamic>? locationParam = JsonUtils.mapValue(options['location']);
       if (locationParam != null) {
         locationParam['distance_in_miles'] = nearbyDistanceInMiles;
@@ -402,19 +402,19 @@ class Events2Query {
     }
   }
 
-  static void buildTimeLoadOptions(Map<String, dynamic> options, EventTimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
+  static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
     TZDateTime nowUni = DateTimeUni.nowUniOrLocal();
     
-    if (timeFilter == EventTimeFilter.upcoming) {
+    if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.today) {
+    else if (timeFilter == Event2TimeFilter.today) {
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni, inclusive: true);
       
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.tomorrow) {
+    else if (timeFilter == Event2TimeFilter.tomorrow) {
       TZDateTime tomorrowUni = nowUni.add(const Duration(days: 1));
       TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni);
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni, inclusive: true);
@@ -422,14 +422,14 @@ class Events2Query {
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.thisWeek) {
+    else if (timeFilter == Event2TimeFilter.thisWeek) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
       
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.thisWeekend) {
+    else if (timeFilter == Event2TimeFilter.thisWeekend) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime startTimeUni = (nowWeekdayUni < 6) ? TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (6 - nowWeekdayUni)))) : nowUni;
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
@@ -437,7 +437,7 @@ class Events2Query {
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.nextWeek) {
+    else if (timeFilter == Event2TimeFilter.nextWeek) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (8 - nowWeekdayUni))));
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
@@ -445,7 +445,7 @@ class Events2Query {
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.nextWeekend) {
+    else if (timeFilter == Event2TimeFilter.nextWeekend) {
       int nowWeekdayUni = nowUni.weekday;
       TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (13 - nowWeekdayUni))));
       TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
@@ -453,20 +453,20 @@ class Events2Query {
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.thisMonth) {
+    else if (timeFilter == Event2TimeFilter.thisMonth) {
       TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(nowUni);
 
       options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.nextMonth) {
+    else if (timeFilter == Event2TimeFilter.nextMonth) {
       TZDateTime startTimeUni = TZDateTimeUtils.startOfNextMonth(nowUni);
       TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(startTimeUni);
 
       options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
-    else if (timeFilter == EventTimeFilter.customRange) {
+    else if (timeFilter == Event2TimeFilter.customRange) {
       if (customStartTimeUtc != null) {
         options['end_time_after'] = customStartTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
@@ -476,10 +476,10 @@ class Events2Query {
     }
   }
 
-  void _buildSortTypeOptions(Map<String, dynamic> options, EventSortType sortType, { Position? location }) {
+  void _buildSortTypeOptions(Map<String, dynamic> options, Event2SortType sortType, { Position? location }) {
     // sort_by: name, start_time, end_time, proximity. Default: start_time 
-    options['sort_by'] = eventSortTypeToOption(sortType);
-    if ((sortType == EventSortType.proximity) && (location != null)) {
+    options['sort_by'] = event2SortTypeToOption(sortType);
+    if ((sortType == Event2SortType.proximity) && (location != null)) {
       options['location'] ??= {
         'latitude': location.latitude,
         'longitude': location.longitude,
