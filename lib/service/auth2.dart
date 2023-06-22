@@ -246,6 +246,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2Account? get account => _account;
   String? get deviceId => _deviceId;
   
+  bool get associateAnonymousIds => false;
   String? get accountId => _account?.id ?? _anonymousId;
   Auth2UserPrefs? get prefs => _account?.prefs ?? _anonymousPrefs;
   Auth2UserProfile? get profile => _account?.profile ?? _anonymousProfile;
@@ -646,7 +647,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     _refreshTokenFailCounts.remove(_token?.refreshToken);
 
-    _anonymousPrefs?.addAnonymousId(_anonymousId);
+    if (associateAnonymousIds) {
+      _anonymousPrefs?.addAnonymousId(_anonymousId);
+    }
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile);
     _token = token;
