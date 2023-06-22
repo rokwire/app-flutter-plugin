@@ -16,7 +16,7 @@ class Event2 with Explore, Favorite {
 
   final Map<String, dynamic>? attributes;
   final ExploreLocation? location;
-  final EventUserRole? userRole;
+  final Event2UserRole? userRole;
 
   final bool? required;
   final bool? canceled;
@@ -56,7 +56,7 @@ class Event2 with Explore, Favorite {
 
       attributes: JsonUtils.mapValue(json['attributes']),
       location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
-      userRole: eventUserRoleFromString(JsonUtils.stringValue(json['role'])),
+      userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
 
       required: JsonUtils.boolValue(json['required']),
       canceled: JsonUtils.boolValue(json['canceled']),
@@ -86,7 +86,7 @@ class Event2 with Explore, Favorite {
 
     'attributes': attributes,
     'location': location?.toJson(),
-    'role': eventUserRoleToString(userRole),
+    'role': event2UserRoleToString(userRole),
 
     'required': required,
     'canceled': canceled,
@@ -317,161 +317,161 @@ class Contact {
 }
 
 ///////////////////////////////
-/// EventUserRole
+/// Event2UserRole
 
-enum EventUserRole { admin, participant }
+enum Event2UserRole { admin, participant }
 
-EventUserRole? eventUserRoleFromString(String? value) {
+Event2UserRole? event2UserRoleFromString(String? value) {
   if (value == 'admin') {
-    return EventUserRole.admin;
+    return Event2UserRole.admin;
   }
   else if (value == 'participant') {
-    return EventUserRole.participant;
+    return Event2UserRole.participant;
   }
   else {
     return null;
   }
 }
 
-String? eventUserRoleToString(EventUserRole? value) {
+String? event2UserRoleToString(Event2UserRole? value) {
   switch (value) {
-    case EventUserRole.admin: return 'admin';
-    case EventUserRole.participant: return 'participant';
+    case Event2UserRole.admin: return 'admin';
+    case Event2UserRole.participant: return 'participant';
     default: return null;
   }
 }
 
 ///////////////////////////////
-/// EventTimeFilter
+/// Event2TimeFilter
 
-enum EventTimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
+enum Event2TimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
 
-EventTimeFilter? eventTimeFilterFromString(String? value) {
+Event2TimeFilter? event2TimeFilterFromString(String? value) {
   if (value == 'upcoming') {
-    return EventTimeFilter.upcoming;
+    return Event2TimeFilter.upcoming;
   }
   else if (value == 'today') {
-    return EventTimeFilter.today;
+    return Event2TimeFilter.today;
   }
   else if (value == 'tomorrow') {
-    return EventTimeFilter.tomorrow;
+    return Event2TimeFilter.tomorrow;
   }
   else if (value == 'this_week') {
-    return EventTimeFilter.thisWeek;
+    return Event2TimeFilter.thisWeek;
   }
   else if (value == 'this_weekend') {
-    return EventTimeFilter.thisWeekend;
+    return Event2TimeFilter.thisWeekend;
   }
   else if (value == 'next_week') {
-    return EventTimeFilter.nextWeek;
+    return Event2TimeFilter.nextWeek;
   }
   else if (value == 'next_weekend') {
-    return EventTimeFilter.nextWeekend;
+    return Event2TimeFilter.nextWeekend;
   }
   else if (value == 'this_month') {
-    return EventTimeFilter.thisMonth;
+    return Event2TimeFilter.thisMonth;
   }
   else if (value == 'next_month') {
-    return EventTimeFilter.nextMonth;
+    return Event2TimeFilter.nextMonth;
   }
   else if (value == 'custom_range') {
-    return EventTimeFilter.customRange;
+    return Event2TimeFilter.customRange;
   }
   else {
     return null;
   }
 }
 
-String? eventTimeFilterToString(EventTimeFilter? value) {
+String? event2TimeFilterToString(Event2TimeFilter? value) {
   switch (value) {
-    case EventTimeFilter.upcoming: return 'upcoming';
-    case EventTimeFilter.today: return 'today';
-    case EventTimeFilter.tomorrow: return 'tomorrow';
-    case EventTimeFilter.thisWeek: return 'this_week';
-    case EventTimeFilter.thisWeekend: return 'this_weekend';
-    case EventTimeFilter.nextWeek: return 'next_week';
-    case EventTimeFilter.nextWeekend: return 'next_weekend';
-    case EventTimeFilter.thisMonth: return 'this_month';
-    case EventTimeFilter.nextMonth: return 'next_month';
-    case EventTimeFilter.customRange: return 'custom_range';
+    case Event2TimeFilter.upcoming: return 'upcoming';
+    case Event2TimeFilter.today: return 'today';
+    case Event2TimeFilter.tomorrow: return 'tomorrow';
+    case Event2TimeFilter.thisWeek: return 'this_week';
+    case Event2TimeFilter.thisWeekend: return 'this_weekend';
+    case Event2TimeFilter.nextWeek: return 'next_week';
+    case Event2TimeFilter.nextWeekend: return 'next_weekend';
+    case Event2TimeFilter.thisMonth: return 'this_month';
+    case Event2TimeFilter.nextMonth: return 'next_month';
+    case Event2TimeFilter.customRange: return 'custom_range';
     default: return null;
   }
 }
 
-EventTimeFilter? eventTimeFilterListFromSelection(dynamic selection) {
+Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
   if (selection is List) {
     for (dynamic entry in selection) {
-      if (entry is EventTimeFilter) {
+      if (entry is Event2TimeFilter) {
         return entry;
       }
     }
   }
-  else if (selection is EventTimeFilter) {
+  else if (selection is Event2TimeFilter) {
     return selection;
   }
   return null;
 }
 
 ///////////////////////////////
-/// EventTypeFilter
+/// Event2TypeFilter
 
-enum EventTypeFilter { free, paid, inPerson, online, public, private, nearby }
+enum Event2TypeFilter { free, paid, inPerson, online, public, private, nearby }
 
-const Map<EventTypeFilter, String> eventTypeFilterGroups = <EventTypeFilter, String>{
-  EventTypeFilter.free: 'cost',
-  EventTypeFilter.paid: 'cost',
-  EventTypeFilter.inPerson: 'type',
-  EventTypeFilter.online: 'type',
-  EventTypeFilter.public: 'discoverability',
-  EventTypeFilter.private: 'discoverability',
-  EventTypeFilter.nearby: 'proximity',
+const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
+  Event2TypeFilter.free: 'cost',
+  Event2TypeFilter.paid: 'cost',
+  Event2TypeFilter.inPerson: 'type',
+  Event2TypeFilter.online: 'type',
+  Event2TypeFilter.public: 'discoverability',
+  Event2TypeFilter.private: 'discoverability',
+  Event2TypeFilter.nearby: 'proximity',
 };
 
-EventTypeFilter? eventTypeFilterFromString(String? value) {
+Event2TypeFilter? event2TypeFilterFromString(String? value) {
   if (value == 'free') {
-    return EventTypeFilter.free;
+    return Event2TypeFilter.free;
   }
   else if (value == 'paid') {
-    return EventTypeFilter.paid;
+    return Event2TypeFilter.paid;
   }
   else if (value == 'inPerson') {
-    return EventTypeFilter.inPerson;
+    return Event2TypeFilter.inPerson;
   }
   else if (value == 'online') {
-    return EventTypeFilter.online;
+    return Event2TypeFilter.online;
   }
   else if (value == 'public') {
-    return EventTypeFilter.public;
+    return Event2TypeFilter.public;
   }
   else if (value == 'private') {
-    return EventTypeFilter.private;
+    return Event2TypeFilter.private;
   }
   else if (value == 'nearby') {
-    return EventTypeFilter.nearby;
+    return Event2TypeFilter.nearby;
   }
   else {
     return null;
   }
 }
 
-String? eventTypeFilterToString(EventTypeFilter? value) {
+String? event2TypeFilterToString(Event2TypeFilter? value) {
   switch (value) {
-    case EventTypeFilter.free: return 'free';
-    case EventTypeFilter.paid: return 'paid';
-    case EventTypeFilter.inPerson: return 'in_person';
-    case EventTypeFilter.online: return 'online';
-    case EventTypeFilter.public: return 'public';
-    case EventTypeFilter.private: return 'private';
-    case EventTypeFilter.nearby: return 'nearby';
+    case Event2TypeFilter.free: return 'free';
+    case Event2TypeFilter.paid: return 'paid';
+    case Event2TypeFilter.inPerson: return 'in_person';
+    case Event2TypeFilter.online: return 'online';
+    case Event2TypeFilter.public: return 'public';
+    case Event2TypeFilter.private: return 'private';
+    case Event2TypeFilter.nearby: return 'nearby';
     default: return null;
   }
 }
 
-List<EventTypeFilter>? eventTypeFilterListFromStringList(List<String>? values) {
+List<Event2TypeFilter>? event2TypeFilterListFromStringList(List<String>? values) {
   if (values != null) {
-    List<EventTypeFilter> list = <EventTypeFilter>[];
+    List<Event2TypeFilter> list = <Event2TypeFilter>[];
     for (String value in values) {
-      EventTypeFilter? entry = eventTypeFilterFromString(value);
+      Event2TypeFilter? entry = event2TypeFilterFromString(value);
       if (entry != null) {
         list.add(entry);
       }
@@ -481,11 +481,11 @@ List<EventTypeFilter>? eventTypeFilterListFromStringList(List<String>? values) {
   return null;
 }
 
-List<String>? eventTypeFilterListToStringList(List<EventTypeFilter>? values) {
+List<String>? event2TypeFilterListToStringList(List<Event2TypeFilter>? values) {
   if (values != null) {
     List<String> list = <String>[];
-    for (EventTypeFilter value in values) {
-      String? entry = eventTypeFilterToString(value);
+    for (Event2TypeFilter value in values) {
+      String? entry = event2TypeFilterToString(value);
       if (entry != null) {
         list.add(entry);
       }
@@ -495,12 +495,12 @@ List<String>? eventTypeFilterListToStringList(List<EventTypeFilter>? values) {
   return null;
 }
 
-List<EventTypeFilter>? eventTypeFilterListFromSelection(dynamic selection) {
+List<Event2TypeFilter>? event2TypeFilterListFromSelection(dynamic selection) {
   if (selection is List) {
-    return JsonUtils.listValue<EventTypeFilter>(selection);
+    return JsonUtils.listValue<Event2TypeFilter>(selection);
   }
-  else if (selection is EventTypeFilter) {
-    return <EventTypeFilter>[selection];
+  else if (selection is Event2TypeFilter) {
+    return <Event2TypeFilter>[selection];
   }
   else {
     return null;
@@ -509,73 +509,73 @@ List<EventTypeFilter>? eventTypeFilterListFromSelection(dynamic selection) {
 
 
 ///////////////////////////////
-/// EventSortType
+/// Event2SortType
 
-enum EventSortType { dateTime, alphabetical, proximity }
+enum Event2SortType { dateTime, alphabetical, proximity }
 
-EventSortType? eventSortTypeFromString(String? value) {
+Event2SortType? event2SortTypeFromString(String? value) {
   if (value == 'date_time') {
-    return EventSortType.dateTime;
+    return Event2SortType.dateTime;
   }
   else if (value == 'alphabetical') {
-    return EventSortType.alphabetical;
+    return Event2SortType.alphabetical;
   }
   else if (value == 'proximity') {
-    return EventSortType.proximity;
+    return Event2SortType.proximity;
   }
   else {
     return null;
   }
 }
 
-String? eventSortTypeToString(EventSortType? value) {
+String? event2SortTypeToString(Event2SortType? value) {
   switch (value) {
-    case EventSortType.dateTime: return 'date_time';
-    case EventSortType.alphabetical: return 'alphabetical';
-    case EventSortType.proximity: return 'proximity';
+    case Event2SortType.dateTime: return 'date_time';
+    case Event2SortType.alphabetical: return 'alphabetical';
+    case Event2SortType.proximity: return 'proximity';
     default: return null;
   }
 }
 
-String? eventSortTypeToOption(EventSortType? value) {
+String? event2SortTypeToOption(Event2SortType? value) {
   // sort_by: name, start_time, end_time, proximity. Default: start_time 
   switch (value) {
-    case EventSortType.dateTime: return 'start_time';
-    case EventSortType.alphabetical: return 'name';
-    case EventSortType.proximity: return 'proximity';
+    case Event2SortType.dateTime: return 'start_time';
+    case Event2SortType.alphabetical: return 'name';
+    case Event2SortType.proximity: return 'proximity';
     default: return null;
   }
 }
 
 ///////////////////////////////
-/// EventSortOrder
+/// Event2SortOrder
 
-enum EventSortOrder { ascending, descending }
+enum Event2SortOrder { ascending, descending }
 
-EventSortOrder? eventSortOrderFromString(String? value) {
+Event2SortOrder? event2SortOrderFromString(String? value) {
   if (value == 'ascending') {
-    return EventSortOrder.ascending;
+    return Event2SortOrder.ascending;
   }
   else if (value == 'descending') {
-    return EventSortOrder.descending;
+    return Event2SortOrder.descending;
   }
   else {
     return null;
   }
 }
 
-String? eventSortOrderToString(EventSortOrder? value) {
+String? event2SortOrderToString(Event2SortOrder? value) {
   switch (value) {
-    case EventSortOrder.ascending: return 'ascending';
-    case EventSortOrder.descending: return 'descending';
+    case Event2SortOrder.ascending: return 'ascending';
+    case Event2SortOrder.descending: return 'descending';
     default: return null;
   }
 }
 
-String? eventSortOrderToOption(EventSortOrder? value) {
+String? event2SortOrderToOption(Event2SortOrder? value) {
   switch (value) {
-    case EventSortOrder.ascending: return 'asc';
-    case EventSortOrder.descending: return 'desc';
+    case Event2SortOrder.ascending: return 'asc';
+    case Event2SortOrder.descending: return 'desc';
     default: return null;
   }
 }
