@@ -78,9 +78,9 @@ class Events2 with Service implements NotificationsListener {
 
   Future<List<Event2>?> loadEvents(Events2Query? query) async {
     if (Storage().debugUseSampleEvents2 == true) {
-      int index = 0, limit = query?.limit ?? 0;
-      List<Event2> result = <Event2>[];
       List<Event2> sampleEvents = _sampleEvents;
+      int index = 0, limit = query?.limit ?? _sampleEvents.length;
+      List<Event2> result = <Event2>[];
       while (result.length < limit) {
         result.add(sampleEvents[index]);
         index = (index + 1) % sampleEvents.length;
