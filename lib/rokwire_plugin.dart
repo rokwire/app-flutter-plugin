@@ -94,15 +94,11 @@ class RokwirePlugin {
   } 
 
   static Future<String?> getPasskey(Map<String, dynamic>? options) async {
-    try { return await PasskeyImpl().getPasskey(options); }
-    catch(e) { debugPrint(e.toString()); }
-    return null;
+    return await PasskeyImpl().getPasskey(options);
   }
 
   static Future<String?> createPasskey(Map<String, dynamic>? options) async {
-    try { return await PasskeyImpl().createPasskey(options); }
-    catch(e) { debugPrint(e.toString()); }
-    return null;
+    return await PasskeyImpl().createPasskey(options);
   }
 
   // Compound APIs
