@@ -877,6 +877,7 @@ class Auth2UserPrefs {
   static const String notifyFoodChanged          = "edu.illinois.rokwire.user.prefs.food.changed";
   static const String notifyTagsChanged          = "edu.illinois.rokwire.user.prefs.tags.changed";
   static const String notifySettingsChanged      = "edu.illinois.rokwire.user.prefs.settings.changed";
+  static const String notifyAnonymousIdsChanged  = "edu.illinois.rokwire.user.prefs.anonymous_ids.changed";
   static const String notifyVoterChanged         = "edu.illinois.rokwire.user.prefs.voter.changed";
   static const String notifyChanged              = "edu.illinois.rokwire.user.prefs.changed";
 
@@ -891,8 +892,9 @@ class Auth2UserPrefs {
   Map<String, bool>? _tags;
   Map<String, dynamic>? _settings;
   Auth2VoterPrefs? _voter;
+  Set<String>? _anonymousIds;
 
-  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter}) {
+  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter, Set<String>? anonymousIds}) {
     _privacyLevel = privacyLevel;
     _roles = roles;
     _favorites = favorites;
@@ -901,6 +903,7 @@ class Auth2UserPrefs {
     _tags = tags;
     _settings = settings;
     _voter = Auth2VoterPrefs.fromOther(voter, onChanged: _onVoterChanged);
+    _anonymousIds = anonymousIds;
   }
 
   static Auth2UserPrefs? fromJson(Map<String, dynamic>? json) {
@@ -914,6 +917,7 @@ class Auth2UserPrefs {
       answers: JsonUtils.mapValue(json['answers']),
       settings: JsonUtils.mapValue(json['settings']),
       voter: Auth2VoterPrefs.fromJson(JsonUtils.mapValue(json['voter'])),
+      anonymousIds: JsonUtils.stringListValue(json['anonymous_ids'])?.toSet(),
     ) : null;
   }
 
@@ -931,6 +935,7 @@ class Auth2UserPrefs {
       answers: <String, dynamic>{},
       settings: <String, dynamic>{},
       voter: Auth2VoterPrefs(),
+      anonymousIds: null,
     );
   }
 
@@ -942,6 +947,7 @@ class Auth2UserPrefs {
     Map<String, Set<String>>? interests = (profile != null) ? _interestsFromProfileList(JsonUtils.listValue(profile['interests'])) : null;
     Map<String, bool>? tags = (profile != null) ? _tagsFromProfileLists(positive: JsonUtils.listValue(profile['positiveInterestTags']), negative: JsonUtils.listValue(profile['negativeInterestTags'])) : null;
     Auth2VoterPrefs? voter = (profile != null) ? Auth2VoterPrefs.fromJson(profile) : null;
+    List<String>? anonymousIds = (profile != null) ? JsonUtils.stringListValue(profile['anonymous_ids']) : null;
 
     return Auth2UserPrefs(
       privacyLevel: privacyLevel,
@@ -956,6 +962,7 @@ class Auth2UserPrefs {
       answers: answers ?? <String, dynamic>{},
       settings: settings ?? <String, dynamic>{},
       voter: voter ?? Auth2VoterPrefs(),
+      anonymousIds: anonymousIds?.toSet(),
     );
   }
 
@@ -968,7 +975,8 @@ class Auth2UserPrefs {
       'food': JsonUtils.mapOfStringToSetOfStringsJsonValue(_foodFilters),
       'tags': _tags,
       'settings': _settings,
-      'voter': _voter
+      'voter': _voter,
+      'anonymous_ids': _anonymousIds?.toList(),
     };
   }
 
@@ -982,6 +990,7 @@ class Auth2UserPrefs {
       const DeepCollectionEquality().equals(other._foodFilters, _foodFilters) &&
       const DeepCollectionEquality().equals(other._tags, _tags) &&
       const DeepCollectionEquality().equals(other._settings, _settings) &&
+      const DeepCollectionEquality().equals(other._anonymousIds, _anonymousIds) &&
       (other._voter == _voter);
 
   @override
@@ -993,6 +1002,7 @@ class Auth2UserPrefs {
     (const DeepCollectionEquality().hash(_foodFilters)) ^
     (const DeepCollectionEquality().hash(_tags)) ^
     (const DeepCollectionEquality().hash(_settings)) ^
+    (const DeepCollectionEquality().hash(_anonymousIds)) ^
     (_voter?.hashCode ?? 0);
 
   bool apply(Auth2UserPrefs? prefs, { bool? notify }) {
@@ -1054,6 +1064,16 @@ class Auth2UserPrefs {
           NotificationService().notify(notifySettingsChanged);
         }
         modified = true;
+      }
+      
+      if (CollectionUtils.isNotEmpty(prefs._anonymousIds)) {
+        _anonymousIds ??= {};
+        for (String id in prefs._anonymousIds!) {
+          modified |= _anonymousIds!.add(id);
+        }
+        if (notify == true) {
+          NotificationService().notify(notifyAnonymousIdsChanged);
+        }
       }
       
       if ((prefs._voter != null) && prefs._voter!.isNotEmpty && (prefs._voter != _voter)) {
@@ -1588,6 +1608,17 @@ class Auth2UserPrefs {
   void _onVoterChanged() {
     NotificationService().notify(notifyVoterChanged);
     NotificationService().notify(notifyChanged, this);
+  }
+
+  // Anonymous IDs
+
+  Set<String>? get anonymousIds => _anonymousIds;
+
+  void addAnonymousId(String? id) {
+    if (id != null) {
+      _anonymousIds ??= {};
+      _anonymousIds!.add(id);
+    }
   }
 
   // Helpers
