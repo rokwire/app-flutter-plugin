@@ -1279,22 +1279,55 @@ class DateTimeUtils {
 
 class TZDateTimeUtils {
   static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location, bool inclusive = false }) =>
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day,
-      inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0
-    );
+    dateTime.dateOnly(location: location, inclusive: inclusive);
 
-  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) => (dateTime.month < 12) ?
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month + 1, 1) :
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year + 1, 1, 1);
+  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.startOfNextMonth(location: location);
 
   static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
-  dateOnly(startOfNextMonth(dateTime, location: location).subtract(const Duration(days: 1)), inclusive: true);
+    dateTime.endOfThisMonth(location: location);
+
+  static dynamic toJson(timezone.TZDateTime? dateTime) =>
+    dateTime?.toJson;
+
+  static timezone.TZDateTime? fromJson(dynamic json) =>
+    TZDateTimeExt.fromJson(json);
 
   static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
-    (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;
+    (time != null) ? timezone.TZDateTime.from(time, location) : null;
+
 
   static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+extension TZDateTimeExt on timezone.TZDateTime {
+  timezone.TZDateTime dateOnly({ timezone.Location? location, bool inclusive = false }) =>
+    timezone.TZDateTime(location ?? this.location, year, month, day, inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0);
+
+  timezone.TZDateTime startOfNextMonth({ timezone.Location? location }) => (month < 12) ?
+    timezone.TZDateTime(location ?? this.location, year, month + 1, 1) :
+    timezone.TZDateTime(location ?? this.location, year + 1, 1, 1);
+
+  timezone.TZDateTime endOfThisMonth({ timezone.Location? location }) =>
+    startOfNextMonth(location: location).subtract(const Duration(days: 1)).dateOnly(inclusive: true);
+
+  toJson() => {
+    'location': location.name,
+    'timestamp': millisecondsSinceEpoch
+  };
+
+  static timezone.TZDateTime? fromJson(dynamic json) {
+    if (json is Map) {
+      String? locationName = JsonUtils.stringValue(json['location']);
+      timezone.Location? location = (locationName != null) ? timezone.getLocation(locationName) : null;
+      int? timestamp = JsonUtils.intValue(json['timestamp']);
+      if ((location != null) && (timestamp != null)) {
+        return timezone.TZDateTime.fromMillisecondsSinceEpoch(location, timestamp);
+      }
+    }
+    return null;
+  }
 }
 
 class Pair<L,R> {
