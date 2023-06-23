@@ -134,24 +134,23 @@ class _RibbonButtonState extends State<RibbonButton> {
   Widget get _contentWidget {
     Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
     Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
-    return Material(color: Colors.transparent,
-      child: Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
-        InkWell(onTap: () => widget.onTapWidget(context), child:
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            Expanded(child:
-              Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
-                Padding(padding: widget.padding, child:
-                  Row(children: <Widget>[
-                    (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
-                    Expanded(child:
-                      widget.displayTextWidget
-                    ),
-                    (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
-                  ],),
+    return Container(key: _contentKey, decoration: BoxDecoration(border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow),
+      child: Material(color: widget.displayBackgroundColor ?? Colors.transparent,
+        borderRadius: widget.borderRadius,
+        child: Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
+          InkWell(
+            borderRadius: widget.borderRadius,
+            onTap: () => widget.onTapWidget(context), child:
+            Padding(padding: widget.padding, child:
+              Row(children: <Widget>[
+                (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
+                Expanded(child:
+                  widget.displayTextWidget
                 ),
-              )
+                (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
+              ],),
             ),
-          ],),
+          ),
         ),
       ),
     );
