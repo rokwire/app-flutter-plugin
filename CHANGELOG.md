@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 - Web app passkey support [#299](https://github.com/rokwire/app-flutter-plugin/issues/299)
 - Anonymous account association [#305](https://github.com/rokwire/app-flutter-plugin/issues/305)
+- Add timestamps to anonymous IDs [#309](https://github.com/rokwire/app-flutter-plugin/issues/309)
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
