@@ -15,13 +15,17 @@ class Event2 with Explore, Favorite {
   final bool? allDay;
 
   final Map<String, dynamic>? attributes;
-  final ExploreLocation? location;
+  final RegistrationDetails? registrationDetails;
   final Event2UserRole? userRole;
+  final Event2Type? _type;
 
   final bool? required;
   final bool? canceled;
   final bool? private;
   final bool? free;
+
+  final bool? inPerson;
+  final ExploreLocation? location;
 
   final bool? online;
   final OnlineDetails? onlineDetails;
@@ -36,11 +40,15 @@ class Event2 with Explore, Favorite {
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl,
     this.startTimeUtc, this.endTimeUtc, this.allDay,
-    this.attributes, this.location, this.userRole,
+    this.attributes, this.registrationDetails, this.userRole, Event2Type? type,
     this.required, this.canceled, this.private, this.free,
+    this.inPerson, this.location, 
     this.online, this.onlineDetails, this.registrationUrl, 
     this.sponsor, this.speaker, this.contacts
-  });
+  }) :
+  _type = type;
+
+  // JSON serialization
 
   static Event2? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2(
@@ -55,13 +63,17 @@ class Event2 with Explore, Favorite {
       allDay: JsonUtils.boolValue(json['all_day']),
 
       attributes: JsonUtils.mapValue(json['attributes']),
-      location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
+      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
+      type: event2TypeFromString(JsonUtils.stringValue(json['type'])),
 
       required: JsonUtils.boolValue(json['required']),
       canceled: JsonUtils.boolValue(json['canceled']),
       private: JsonUtils.boolValue(json['private']),
       free: JsonUtils.boolValue(json['free']),
+
+      inPerson: JsonUtils.boolValue(json['in_person']),
+      location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
 
       online: JsonUtils.boolValue(json['online']),
       onlineDetails: OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
@@ -85,13 +97,17 @@ class Event2 with Explore, Favorite {
     'all_day': allDay,
 
     'attributes': attributes,
-    'location': location?.toJson(),
+    'registration_details': registrationDetails?.toJson(),
     'role': event2UserRoleToString(userRole),
+    'type': event2TypeToString(_type),
 
     'required': required,
     'canceled': canceled,
     'private': private,
     'free': free,
+
+    'in_person': inPerson,
+    'location': location?.toJson(),
 
     'online': online,
     'online_details': onlineDetails?.toJson(),
@@ -101,6 +117,8 @@ class Event2 with Explore, Favorite {
     'speaker': speaker,
     'contacts': Contact.listToJson(contacts),
   };
+
+  // Equality
 
   @override
   bool operator==(dynamic other) =>
@@ -116,13 +134,17 @@ class Event2 with Explore, Favorite {
     (allDay == other.allDay) &&
 
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
-    (location == other.location) &&
+    (registrationDetails == other.registrationDetails) &&
     (userRole == other.userRole) &&
+    (_type == other._type) &&
 
     (required == other.required) &&
     (canceled == other.canceled) &&
     (private == other.private) &&
     (free == other.free) &&
+
+    (inPerson == other.inPerson) &&
+    (location == other.location) &&
 
     (online == other.online) &&
     (onlineDetails == other.onlineDetails) &&
@@ -145,13 +167,17 @@ class Event2 with Explore, Favorite {
     (allDay?.hashCode ?? 0) ^
 
     (const DeepCollectionEquality().hash(attributes)) ^
-    (location?.hashCode ?? 0) ^
+    (registrationDetails?.hashCode ?? 0) ^
     (userRole?.hashCode ?? 0) ^
+    (_type?.hashCode ?? 0) ^
 
     (required?.hashCode ?? 0) ^
     (canceled?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
     (free?.hashCode ?? 0) ^
+
+    (inPerson?.hashCode ?? 0) ^
+    (location?.hashCode ?? 0) ^
 
     (online?.hashCode ?? 0) ^
     (onlineDetails?.hashCode ?? 0) ^
@@ -160,6 +186,13 @@ class Event2 with Explore, Favorite {
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(contacts));
+
+  // Attributes
+
+  Event2Type? get type => _type ??
+    event2TypeFromFlags(inPerson: inPerson, online: online);
+
+  // JSON list searialization
 
   static List<Event2>? listFromJson(List<dynamic>? jsonList) {
     List<Event2>? result;
@@ -207,23 +240,18 @@ class OnlineDetails {
 
   OnlineDetails({this.url, this.meetingId, this.meetingPasscode});
 
-  Map<String, dynamic> toJson() {
-    return {
-      'url': url,
-      'meeting_id': meetingId,
-      'meeting_passcode': meetingPasscode
-    };
-  }
+  static OnlineDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? OnlineDetails(
+      url: JsonUtils.stringValue(json['url']),
+      meetingId: JsonUtils.stringValue(json['meeting_id']),
+      meetingPasscode: JsonUtils.stringValue(json['meeting_passcode'])
+    ) : null;
 
-  static OnlineDetails? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return OnlineDetails(
-        url: JsonUtils.stringValue(json['url']),
-        meetingId: JsonUtils.stringValue(json['meeting_id']),
-        meetingPasscode: JsonUtils.stringValue(json['meeting_passcode']));
-  }
+  Map<String, dynamic> toJson() => {
+    'url': url,
+    'meeting_id': meetingId,
+    'meeting_passcode': meetingPasscode
+  };
 
   @override
   bool operator==(dynamic other) =>
@@ -237,6 +265,33 @@ class OnlineDetails {
     (url?.hashCode ?? 0) ^
     (meetingId?.hashCode ?? 0) ^
     (meetingPasscode?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// RegistrationDetails
+
+class RegistrationDetails {
+  final String? externalLink;
+
+  RegistrationDetails({this.externalLink});
+
+  static RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? RegistrationDetails(
+      externalLink: JsonUtils.stringValue(json['external_link']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'external_link': externalLink,
+  };
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is RegistrationDetails) &&
+    (externalLink == other.externalLink);
+
+  @override
+  int get hashCode =>
+    (externalLink?.hashCode ?? 0);
 }
 
 ///////////////////////////////
@@ -338,6 +393,47 @@ String? event2UserRoleToString(Event2UserRole? value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
     default: return null;
+  }
+}
+
+///////////////////////////////
+/// Event2Type
+
+enum Event2Type { inPerson, online, hybrid }
+
+Event2Type? event2TypeFromString(String? value) {
+  if (value == 'in-person') {
+    return Event2Type.inPerson;
+  }
+  else if (value == 'online') {
+    return Event2Type.online;
+  }
+  else if (value == 'hybrid') {
+    return Event2Type.hybrid;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2TypeToString(Event2Type? value) {
+  switch (value) {
+    case Event2Type.inPerson: return 'in-person';
+    case Event2Type.online: return 'online';
+    case Event2Type.hybrid: return 'hybrid';
+    default: return null;
+  }
+}
+
+Event2Type? event2TypeFromFlags({ bool? inPerson, bool? online}) {
+  if (inPerson == true) {
+    return (online == true) ? Event2Type.hybrid : Event2Type.inPerson;
+  }
+  else if (online == true) {
+    return (inPerson == true) ? Event2Type.hybrid : Event2Type.online;
+  }
+  else {
+    return null;
   }
 }
 
