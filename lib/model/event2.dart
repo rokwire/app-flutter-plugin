@@ -21,7 +21,9 @@ class Event2 with Explore, Favorite {
   final bool? required;
   final bool? canceled;
   final bool? private;
+
   final bool? free;
+  final String? cost;
 
   final bool? requiresRegistration;
   final RegistrationDetails? registrationDetails;
@@ -43,7 +45,8 @@ class Event2 with Explore, Favorite {
     this.id, this.name, this.description, this.instructions, this.imageUrl,
     this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.attributes, this.userRole, Event2Type? type,
-    this.required, this.canceled, this.private, this.free,
+    this.required, this.canceled, this.private,
+    this.free, this.cost,
     this.requiresRegistration, this.registrationDetails,
     this.inPerson, this.location, 
     this.online, this.onlineDetails, this.registrationUrl, 
@@ -75,7 +78,9 @@ class Event2 with Explore, Favorite {
       required: JsonUtils.boolValue(json['required']),
       canceled: JsonUtils.boolValue(json['canceled']),
       private: JsonUtils.boolValue(json['private']),
+      
       free: JsonUtils.boolValue(json['free']),
+      cost: JsonUtils.stringValue(json['cost']),
 
       inPerson: JsonUtils.boolValue(json['in_person']),
       location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
@@ -108,7 +113,9 @@ class Event2 with Explore, Favorite {
     'required': required,
     'canceled': canceled,
     'private': private,
+
     'free': free,
+    'cost': cost,
 
     'require_registration': requiresRegistration,
     'registration_details': registrationDetails?.toJson(),
@@ -147,7 +154,9 @@ class Event2 with Explore, Favorite {
     (required == other.required) &&
     (canceled == other.canceled) &&
     (private == other.private) &&
+
     (free == other.free) &&
+    (cost == other.cost) &&
 
     (requiresRegistration == other.requiresRegistration) &&
     (registrationDetails == other.registrationDetails) &&
@@ -182,7 +191,9 @@ class Event2 with Explore, Favorite {
     (required?.hashCode ?? 0) ^
     (canceled?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
+
     (free?.hashCode ?? 0) ^
+    (cost?.hashCode ?? 0) ^
 
     (requiresRegistration?.hashCode ?? 0) ^
     (registrationDetails?.hashCode ?? 0) ^
