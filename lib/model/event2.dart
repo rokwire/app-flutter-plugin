@@ -19,7 +19,7 @@ class Event2 with Explore, Favorite {
   final Event2UserRole? userRole;
   final Event2Type? _type;
 
-  final bool? required;
+  final bool? attendanceRequired;
   final bool? canceled;
   final bool? private;
 
@@ -46,7 +46,7 @@ class Event2 with Explore, Favorite {
     this.id, this.name, this.description, this.instructions, this.imageUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.attributes, this.userRole, Event2Type? type,
-    this.required, this.canceled, this.private,
+    this.attendanceRequired, this.canceled, this.private,
     this.free, this.cost,
     this.requiresRegistration, this.registrationDetails,
     this.inPerson, this.location, 
@@ -77,7 +77,7 @@ class Event2 with Explore, Favorite {
       requiresRegistration: JsonUtils.boolValue(json['require_registration']),
       registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
 
-      required: JsonUtils.boolValue(json['required']),
+      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       canceled: JsonUtils.boolValue(json['canceled']),
       private: JsonUtils.boolValue(json['private']),
       
@@ -113,7 +113,7 @@ class Event2 with Explore, Favorite {
     'role': event2UserRoleToString(userRole),
     'type': event2TypeToString(_type),
 
-    'required': required,
+    'attendance_required': attendanceRequired,
     'canceled': canceled,
     'private': private,
 
@@ -155,7 +155,7 @@ class Event2 with Explore, Favorite {
     (userRole == other.userRole) &&
     (_type == other._type) &&
 
-    (required == other.required) &&
+    (attendanceRequired == other.attendanceRequired) &&
     (canceled == other.canceled) &&
     (private == other.private) &&
 
@@ -193,7 +193,7 @@ class Event2 with Explore, Favorite {
     (userRole?.hashCode ?? 0) ^
     (_type?.hashCode ?? 0) ^
 
-    (required?.hashCode ?? 0) ^
+    (attendanceRequired?.hashCode ?? 0) ^
     (canceled?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
 
