@@ -15,7 +15,6 @@ class Event2 with Explore, Favorite {
   final bool? allDay;
 
   final Map<String, dynamic>? attributes;
-  final RegistrationDetails? registrationDetails;
   final Event2UserRole? userRole;
   final Event2Type? _type;
 
@@ -23,6 +22,9 @@ class Event2 with Explore, Favorite {
   final bool? canceled;
   final bool? private;
   final bool? free;
+
+  final bool? requiresRegistration;
+  final RegistrationDetails? registrationDetails;
 
   final bool? inPerson;
   final ExploreLocation? location;
@@ -40,8 +42,9 @@ class Event2 with Explore, Favorite {
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl,
     this.startTimeUtc, this.endTimeUtc, this.allDay,
-    this.attributes, this.registrationDetails, this.userRole, Event2Type? type,
+    this.attributes, this.userRole, Event2Type? type,
     this.required, this.canceled, this.private, this.free,
+    this.requiresRegistration, this.registrationDetails,
     this.inPerson, this.location, 
     this.online, this.onlineDetails, this.registrationUrl, 
     this.sponsor, this.speaker, this.contacts
@@ -63,9 +66,11 @@ class Event2 with Explore, Favorite {
       allDay: JsonUtils.boolValue(json['all_day']),
 
       attributes: JsonUtils.mapValue(json['attributes']),
-      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
       type: event2TypeFromString(JsonUtils.stringValue(json['type'])),
+
+      requiresRegistration: JsonUtils.boolValue(json['require_registration']),
+      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
 
       required: JsonUtils.boolValue(json['required']),
       canceled: JsonUtils.boolValue(json['canceled']),
@@ -97,7 +102,6 @@ class Event2 with Explore, Favorite {
     'all_day': allDay,
 
     'attributes': attributes,
-    'registration_details': registrationDetails?.toJson(),
     'role': event2UserRoleToString(userRole),
     'type': event2TypeToString(_type),
 
@@ -105,6 +109,9 @@ class Event2 with Explore, Favorite {
     'canceled': canceled,
     'private': private,
     'free': free,
+
+    'require_registration': requiresRegistration,
+    'registration_details': registrationDetails?.toJson(),
 
     'in_person': inPerson,
     'location': location?.toJson(),
@@ -134,7 +141,6 @@ class Event2 with Explore, Favorite {
     (allDay == other.allDay) &&
 
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
-    (registrationDetails == other.registrationDetails) &&
     (userRole == other.userRole) &&
     (_type == other._type) &&
 
@@ -142,6 +148,9 @@ class Event2 with Explore, Favorite {
     (canceled == other.canceled) &&
     (private == other.private) &&
     (free == other.free) &&
+
+    (requiresRegistration == other.requiresRegistration) &&
+    (registrationDetails == other.registrationDetails) &&
 
     (inPerson == other.inPerson) &&
     (location == other.location) &&
@@ -167,7 +176,6 @@ class Event2 with Explore, Favorite {
     (allDay?.hashCode ?? 0) ^
 
     (const DeepCollectionEquality().hash(attributes)) ^
-    (registrationDetails?.hashCode ?? 0) ^
     (userRole?.hashCode ?? 0) ^
     (_type?.hashCode ?? 0) ^
 
@@ -175,6 +183,9 @@ class Event2 with Explore, Favorite {
     (canceled?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
     (free?.hashCode ?? 0) ^
+
+    (requiresRegistration?.hashCode ?? 0) ^
+    (registrationDetails?.hashCode ?? 0) ^
 
     (inPerson?.hashCode ?? 0) ^
     (location?.hashCode ?? 0) ^
@@ -271,26 +282,31 @@ class OnlineDetails {
 /// RegistrationDetails
 
 class RegistrationDetails {
+  final String? label;
   final String? externalLink;
 
-  RegistrationDetails({this.externalLink});
+  RegistrationDetails({this.label, this.externalLink});
 
   static RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? RegistrationDetails(
+      label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
+    'label': label,
     'external_link': externalLink,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is RegistrationDetails) &&
+    (label == other.label) &&
     (externalLink == other.externalLink);
 
   @override
   int get hashCode =>
+    (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0);
 }
 
