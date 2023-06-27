@@ -10,6 +10,7 @@ class Event2 with Explore, Favorite {
   final String? instructions;
   final String? imageUrl;
 
+  final String? timezone;
   final DateTime? startTimeUtc;
   final DateTime? endTimeUtc;
   final bool? allDay;
@@ -43,7 +44,7 @@ class Event2 with Explore, Favorite {
 
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl,
-    this.startTimeUtc, this.endTimeUtc, this.allDay,
+    this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.attributes, this.userRole, Event2Type? type,
     this.required, this.canceled, this.private,
     this.free, this.cost,
@@ -64,6 +65,7 @@ class Event2 with Explore, Favorite {
       instructions: JsonUtils.stringValue(json['instructions']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
 
+      timezone: JsonUtils.stringValue(json['timezone']),
       startTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start'])),
       endTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end'])),
       allDay: JsonUtils.boolValue(json['all_day']),
@@ -102,6 +104,7 @@ class Event2 with Explore, Favorite {
     'instructions': instructions,
     'image_url': imageUrl,
 
+    'timezone': timezone,
     'start': DateTimeUtils.utcDateTimeToString(startTimeUtc),
     'end': DateTimeUtils.utcDateTimeToString(endTimeUtc),
     'all_day': allDay,
@@ -143,6 +146,7 @@ class Event2 with Explore, Favorite {
     (instructions == other.instructions) &&
     (imageUrl == other.imageUrl) &&
     
+    (timezone == other.timezone) &&
     (startTimeUtc == other.startTimeUtc) &&
     (endTimeUtc == other.endTimeUtc) &&
     (allDay == other.allDay) &&
@@ -180,6 +184,7 @@ class Event2 with Explore, Favorite {
     (instructions?.hashCode ?? 0) ^
     (imageUrl?.hashCode ?? 0) ^
 
+    (timezone?.hashCode ?? 0) ^
     (startTimeUtc?.hashCode ?? 0) ^
     (endTimeUtc?.hashCode ?? 0) ^
     (allDay?.hashCode ?? 0) ^
