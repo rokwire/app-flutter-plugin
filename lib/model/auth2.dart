@@ -1684,12 +1684,14 @@ class Auth2UserPrefs {
 
   static Map<String, DateTime>? _anonymousIdsFromJson(Map<String, dynamic>? json) {
     Map<String, DateTime>? anonymousIds;
-    if (json is Map<String, String>) {
+    if (json is Map) {
       anonymousIds = {};
-      for (MapEntry<String, String> anonymousId in json.entries) {
-        DateTime? dateAdded = DateTimeUtils.parseDateTime(anonymousId.value, format: 'yyyy-MM-ddTHH:mm:ss.SSS', isUtc: true);
-        if (dateAdded != null) {
-          anonymousIds[anonymousId.key] = dateAdded;
+      for (MapEntry anonymousId in json!.entries) {
+        if (anonymousId.key is String && anonymousId.value is String) {
+          DateTime? dateAdded = DateTimeUtils.parseDateTime(anonymousId.value, format: 'yyyy-MM-ddTHH:mm:ss.SSS', isUtc: true);
+          if (dateAdded != null) {
+            anonymousIds[anonymousId.key] = dateAdded;
+          }
         }
       }
     }
