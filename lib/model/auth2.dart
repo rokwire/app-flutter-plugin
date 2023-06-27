@@ -1069,10 +1069,8 @@ class Auth2UserPrefs {
       if (prefs._anonymousIds?.isNotEmpty ?? false) {
         _anonymousIds ??= {};
         for (MapEntry<String, DateTime> id in prefs._anonymousIds!.entries) {
-          if (!_anonymousIds!.containsKey(id.key)) {
-            _anonymousIds![id.key] = id.value;
-            modified = true;
-          }
+          modified = !_anonymousIds!.containsKey(id.key);
+          _anonymousIds!.putIfAbsent(id.key, () => id.value);
         }
         if (notify == true) {
           NotificationService().notify(notifyAnonymousIdsChanged);
@@ -1620,7 +1618,7 @@ class Auth2UserPrefs {
   void addAnonymousId(String? id) {
     if (id != null) {
       _anonymousIds ??= {};
-      _anonymousIds![id] = DateTime.now().toUtc();
+      _anonymousIds!.putIfAbsent(id, () => DateTime.now().toUtc());
     }
   }
 
