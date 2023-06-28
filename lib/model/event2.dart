@@ -39,7 +39,6 @@ class Event2 with Explore, Favorite {
   final String? speaker;
   final List<Contact>? contacts;
 
-
   String? assignedImageUrl;
 
   Event2({
