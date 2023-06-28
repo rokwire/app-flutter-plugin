@@ -16,10 +16,14 @@ class Event2 with Explore, Favorite {
   final DateTime? endTimeUtc;
   final bool? allDay;
 
-  final Map<String, dynamic>? attributes;
-  final Event2UserRole? userRole;
-  final Event2Type? _type;
+  final Event2Type? eventType;
+  final ExploreLocation? location;
+  final OnlineDetails? onlineDetails;
 
+  final Event2Grouping? grouping;
+  final Map<String, dynamic>? attributes;
+  
+  final Event2UserRole? userRole;
   final bool? attendanceRequired;
   final bool? canceled;
   final bool? private;
@@ -27,34 +31,27 @@ class Event2 with Explore, Favorite {
   final bool? free;
   final String? cost;
 
-  final bool? requiresRegistration;
+  final bool? registrationRequired;
   final RegistrationDetails? registrationDetails;
-
-  final bool? inPerson;
-  final ExploreLocation? location;
-
-  final bool? online;
-  final OnlineDetails? onlineDetails;
-  final String? registrationUrl;
+  final int? maxEventCapacity;
 
   final String? sponsor;
   final String? speaker;
   final List<Contact>? contacts;
+
 
   String? assignedImageUrl;
 
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
-    this.attributes, this.userRole, Event2Type? type,
-    this.attendanceRequired, this.canceled, this.private,
+    this.eventType, this.location, this.onlineDetails, 
+    this.grouping, this.attributes,
+    this.userRole, this.attendanceRequired, this.canceled, this.private,
     this.free, this.cost,
-    this.requiresRegistration, this.registrationDetails,
-    this.inPerson, this.location, 
-    this.online, this.onlineDetails, this.registrationUrl, 
+    this.registrationRequired, this.registrationDetails, this.maxEventCapacity,
     this.sponsor, this.speaker, this.contacts
-  }) :
-  _type = type;
+  });
 
   // JSON serialization
 
@@ -72,27 +69,25 @@ class Event2 with Explore, Favorite {
       endTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end'])),
       allDay: JsonUtils.boolValue(json['all_day']),
 
+      eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
+      location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
+      onlineDetails: OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
+
+      grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
       attributes: JsonUtils.mapValue(json['attributes']),
+
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
-      type: event2TypeFromString(JsonUtils.stringValue(json['type'])),
-
-      requiresRegistration: JsonUtils.boolValue(json['require_registration']),
-      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
-
       attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       canceled: JsonUtils.boolValue(json['canceled']),
       private: JsonUtils.boolValue(json['private']),
-      
+
       free: JsonUtils.boolValue(json['free']),
       cost: JsonUtils.stringValue(json['cost']),
 
-      inPerson: JsonUtils.boolValue(json['in_person']),
-      location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
-
-      online: JsonUtils.boolValue(json['online']),
-      onlineDetails: OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
-      registrationUrl: JsonUtils.stringValue(json['registration_url']),
-
+      registrationRequired: JsonUtils.boolValue(json['require_registration']),
+      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
+      maxEventCapacity: JsonUtils.intValue(json['max_event_capacity']),
+      
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
       contacts: Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
@@ -112,10 +107,14 @@ class Event2 with Explore, Favorite {
     'end': DateTimeUtils.utcDateTimeToString(endTimeUtc),
     'all_day': allDay,
 
-    'attributes': attributes,
-    'role': event2UserRoleToString(userRole),
-    'type': event2TypeToString(_type),
+    'event_type': event2TypeToString(eventType),
+    'location': location?.toJson(),
+    'online_details': onlineDetails?.toJson(),
 
+    'grouping': grouping?.toJson(),
+    'attributes': attributes,
+    
+    'role': event2UserRoleToString(userRole),
     'attendance_required': attendanceRequired,
     'canceled': canceled,
     'private': private,
@@ -123,15 +122,9 @@ class Event2 with Explore, Favorite {
     'free': free,
     'cost': cost,
 
-    'require_registration': requiresRegistration,
+    'require_registration': registrationRequired,
     'registration_details': registrationDetails?.toJson(),
-
-    'in_person': inPerson,
-    'location': location?.toJson(),
-
-    'online': online,
-    'online_details': onlineDetails?.toJson(),
-    'registration_url': registrationUrl,
+    'max_event_capacity': maxEventCapacity,
 
     'sponsor': sponsor,
     'speaker': speaker,
@@ -155,10 +148,14 @@ class Event2 with Explore, Favorite {
     (endTimeUtc == other.endTimeUtc) &&
     (allDay == other.allDay) &&
 
-    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
-    (userRole == other.userRole) &&
-    (_type == other._type) &&
+    (eventType == other.eventType) &&
+    (location == other.location) &&
+    (onlineDetails == other.onlineDetails) &&
 
+    (grouping == other.grouping) &&
+    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
+    
+    (userRole == other.userRole) &&
     (attendanceRequired == other.attendanceRequired) &&
     (canceled == other.canceled) &&
     (private == other.private) &&
@@ -166,15 +163,9 @@ class Event2 with Explore, Favorite {
     (free == other.free) &&
     (cost == other.cost) &&
 
-    (requiresRegistration == other.requiresRegistration) &&
+    (registrationRequired == other.registrationRequired) &&
     (registrationDetails == other.registrationDetails) &&
-
-    (inPerson == other.inPerson) &&
-    (location == other.location) &&
-
-    (online == other.online) &&
-    (onlineDetails == other.onlineDetails) &&
-    (registrationUrl == other.registrationUrl) &&
+    (maxEventCapacity == other.maxEventCapacity) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -194,10 +185,14 @@ class Event2 with Explore, Favorite {
     (endTimeUtc?.hashCode ?? 0) ^
     (allDay?.hashCode ?? 0) ^
 
-    (const DeepCollectionEquality().hash(attributes)) ^
-    (userRole?.hashCode ?? 0) ^
-    (_type?.hashCode ?? 0) ^
+    (eventType?.hashCode ?? 0) ^
+    (location?.hashCode ?? 0) ^
+    (onlineDetails?.hashCode ?? 0) ^
 
+    (grouping?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(attributes)) ^
+
+    (userRole?.hashCode ?? 0) ^
     (attendanceRequired?.hashCode ?? 0) ^
     (canceled?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
@@ -205,15 +200,9 @@ class Event2 with Explore, Favorite {
     (free?.hashCode ?? 0) ^
     (cost?.hashCode ?? 0) ^
 
-    (requiresRegistration?.hashCode ?? 0) ^
+    (registrationRequired?.hashCode ?? 0) ^
     (registrationDetails?.hashCode ?? 0) ^
-
-    (inPerson?.hashCode ?? 0) ^
-    (location?.hashCode ?? 0) ^
-
-    (online?.hashCode ?? 0) ^
-    (onlineDetails?.hashCode ?? 0) ^
-    (registrationUrl?.hashCode ?? 0) ^
+    (maxEventCapacity?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -221,8 +210,8 @@ class Event2 with Explore, Favorite {
 
   // Attributes
 
-  Event2Type? get type => _type ??
-    event2TypeFromFlags(inPerson: inPerson, online: online);
+  bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
+  bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
 
   // JSON list searialization
 
@@ -329,6 +318,38 @@ class RegistrationDetails {
   int get hashCode =>
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2Grouping
+
+class Event2Grouping {
+  final Event2GroupingType? type;
+  final String? superEventId;
+
+  Event2Grouping({this.type, this.superEventId});
+
+  static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? Event2Grouping(
+      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['type'])) ,
+      superEventId: JsonUtils.stringValue(json['super-event']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'type': event2GroupingTypeToString(type),
+    'super-event': superEventId,
+  };
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is Event2Grouping) &&
+    (type == other.type) &&
+    (superEventId == other.superEventId);
+
+  @override
+  int get hashCode =>
+    (type?.hashCode ?? 0) ^
+    (superEventId?.hashCode ?? 0);
 }
 
 ///////////////////////////////
@@ -459,18 +480,6 @@ String? event2TypeToString(Event2Type? value) {
     case Event2Type.online: return 'online';
     case Event2Type.hybrid: return 'hybrid';
     default: return null;
-  }
-}
-
-Event2Type? event2TypeFromFlags({ bool? inPerson, bool? online}) {
-  if (inPerson == true) {
-    return (online == true) ? Event2Type.hybrid : Event2Type.inPerson;
-  }
-  else if (online == true) {
-    return (inPerson == true) ? Event2Type.hybrid : Event2Type.online;
-  }
-  else {
-    return null;
   }
 }
 
@@ -712,3 +721,29 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
     default: return null;
   }
 }
+
+///////////////////////////////
+/// Event2GroupingType
+
+enum Event2GroupingType { superEvent, recurring }
+
+Event2GroupingType? event2GroupingTypeFromString(String? value) {
+  if (value == 'super-event') {
+    return Event2GroupingType.superEvent;
+  }
+  else if (value == 'recurring') {
+    return Event2GroupingType.recurring;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2GroupingTypeToString(Event2GroupingType? value) {
+  switch (value) {
+    case Event2GroupingType.superEvent: return 'super-event';
+    case Event2GroupingType.recurring: return 'recurring';
+    default: return null;
+  }
+}
+
