@@ -389,10 +389,13 @@ class Events2Query {
     }
     
     if (types.contains(Event2TypeFilter.inPerson)) {
-      options['online'] = false;
+      options['type'] = event2TypeToString(Event2Type.inPerson);
     }
     else if (types.contains(Event2TypeFilter.online)) {
-      options['online'] = true;
+      options['type'] = event2TypeToString(Event2Type.online);
+    }
+    else if (types.contains(Event2TypeFilter.hybrid)) {
+      options['type'] = event2TypeToString(Event2Type.hybrid);
     }
 
     if (types.contains(Event2TypeFilter.public)) {

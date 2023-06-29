@@ -556,13 +556,14 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 ///////////////////////////////
 /// Event2TypeFilter
 
-enum Event2TypeFilter { free, paid, inPerson, online, public, private, nearby }
+enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby }
 
 const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
   Event2TypeFilter.free: 'cost',
   Event2TypeFilter.paid: 'cost',
   Event2TypeFilter.inPerson: 'type',
   Event2TypeFilter.online: 'type',
+  Event2TypeFilter.hybrid: 'type',
   Event2TypeFilter.public: 'discoverability',
   Event2TypeFilter.private: 'discoverability',
   Event2TypeFilter.nearby: 'proximity',
@@ -575,11 +576,14 @@ Event2TypeFilter? event2TypeFilterFromString(String? value) {
   else if (value == 'paid') {
     return Event2TypeFilter.paid;
   }
-  else if (value == 'inPerson') {
+  else if (value == 'in-person') {
     return Event2TypeFilter.inPerson;
   }
   else if (value == 'online') {
     return Event2TypeFilter.online;
+  }
+  else if (value == 'hybrid') {
+    return Event2TypeFilter.hybrid;
   }
   else if (value == 'public') {
     return Event2TypeFilter.public;
@@ -599,8 +603,9 @@ String? event2TypeFilterToString(Event2TypeFilter? value) {
   switch (value) {
     case Event2TypeFilter.free: return 'free';
     case Event2TypeFilter.paid: return 'paid';
-    case Event2TypeFilter.inPerson: return 'in_person';
+    case Event2TypeFilter.inPerson: return 'in-person';
     case Event2TypeFilter.online: return 'online';
+    case Event2TypeFilter.hybrid: return 'hybrid';
     case Event2TypeFilter.public: return 'public';
     case Event2TypeFilter.private: return 'private';
     case Event2TypeFilter.nearby: return 'nearby';
