@@ -258,6 +258,24 @@ class Events2 with Service implements NotificationsListener {
     ),
   ];
 
+  // Returns Event2 in case of success, String description in case of error
+  Future<dynamic> createEvent(Event2? source) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode(source?.toJson());
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/event", body: body, headers: headers, auth: Auth2());
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      if (response?.statusCode == 200) {
+        return Event2.fromJson(responseJson);
+      }
+      else {
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
+
 
   // DeepLinks
 
