@@ -158,7 +158,7 @@ class ContentAttributes {
     return true;
   }
 
-  bool isSelectionValid(Map<String, LinkedHashSet<dynamic>>? selection) =>
+  bool isSelectionValid(Map<String, dynamic>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
   bool hasRequiredAttributes(int scope) {
