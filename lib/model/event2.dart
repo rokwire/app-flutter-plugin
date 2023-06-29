@@ -23,9 +23,10 @@ class Event2 with Explore, Favorite {
   final Event2Grouping? grouping;
   final Map<String, dynamic>? attributes;
   
-  final Event2UserRole? userRole;
-  final bool? attendanceRequired;
   final bool? canceled;
+  final Event2UserRole? userRole;
+
+  final bool? attendanceRequired;
   final bool? private;
 
   final bool? free;
@@ -46,7 +47,8 @@ class Event2 with Explore, Favorite {
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.eventType, this.location, this.onlineDetails, 
     this.grouping, this.attributes,
-    this.userRole, this.attendanceRequired, this.canceled, this.private,
+    this.canceled, this.userRole,
+    this.attendanceRequired, this.private,
     this.free, this.cost,
     this.registrationRequired, this.registrationDetails, this.maxEventCapacity,
     this.sponsor, this.speaker, this.contacts
@@ -75,9 +77,10 @@ class Event2 with Explore, Favorite {
       grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
       attributes: JsonUtils.mapValue(json['attributes']),
 
-      userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
-      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       canceled: JsonUtils.boolValue(json['canceled']),
+      userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
+
+      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       private: JsonUtils.boolValue(json['private']),
 
       free: JsonUtils.boolValue(json['free']),
@@ -113,9 +116,10 @@ class Event2 with Explore, Favorite {
     'grouping': grouping?.toJson(),
     'attributes': attributes,
     
-    'role': event2UserRoleToString(userRole),
-    'attendance_required': attendanceRequired,
     'canceled': canceled,
+    'role': event2UserRoleToString(userRole),
+
+    'attendance_required': attendanceRequired,
     'private': private,
 
     'free': free,
@@ -154,9 +158,10 @@ class Event2 with Explore, Favorite {
     (grouping == other.grouping) &&
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
     
-    (userRole == other.userRole) &&
-    (attendanceRequired == other.attendanceRequired) &&
     (canceled == other.canceled) &&
+    (userRole == other.userRole) &&
+
+    (attendanceRequired == other.attendanceRequired) &&
     (private == other.private) &&
 
     (free == other.free) &&
@@ -191,9 +196,10 @@ class Event2 with Explore, Favorite {
     (grouping?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes)) ^
 
-    (userRole?.hashCode ?? 0) ^
-    (attendanceRequired?.hashCode ?? 0) ^
     (canceled?.hashCode ?? 0) ^
+    (userRole?.hashCode ?? 0) ^
+
+    (attendanceRequired?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
 
     (free?.hashCode ?? 0) ^
