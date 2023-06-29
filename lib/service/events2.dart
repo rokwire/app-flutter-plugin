@@ -104,6 +104,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p>Illinois Computer Science hosts a chapter of Girls Who Code (girlswhocode.com), a club that allows middle school and high school girls to explore coding in a fun and friendly environment. The goal is to inspire, educate, and equip girls with the computing skills to pursue 21st century opportunities. The Illinois Computer Science Girls Who Code club is full for the 2022-23 school year.</p>",
       instructions: 'Take it easy',
       imageUrl: 'https://rokwire-images.s3.us-east-2.amazonaws.com/event/tout/088b5d28-de44-11eb-9bf2-0a58a9feac02.webp',
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-07T16:30:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-07T18:30:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -112,11 +113,12 @@ class Events2 with Service implements NotificationsListener {
         'college': 'Liberal Arts & Sciences',
         'department': 'Astronomy',
       },
+      eventType: Event2Type.inPerson,
       location: ExploreLocation(building: 'Davenport Hall', room: '206A',
         fullAddress: '607 S Mathews Ave  Urbana, IL 61801',
         latitude: 40.1072, longitude: -88.2262,
       ),
-      required: false, canceled: false, private: false, free: true, online: false,
+      attendanceRequired: false, canceled: false, private: false, free: true,
       sponsor: 'Computer Science',
       speaker: 'Dr. Hong Hao',
       contacts: <Contact>[
@@ -128,6 +130,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p id=\"isPasted\"><span style=\"font-size: inherit; background-color: transparent;\">The Russian-Ukrainian war of the 21st century aimed not only to physically destroy Ukraine but also to expand the linguistic borders of the \u201cRussian world,\u201d denationalize Ukraine, and reestablish the cultural dominance of Russia over the Ukrainian people. The war that began in 2014 and intensified in the last year's invasion has led to a cultural and linguistic shift from Russian to Ukrainian among much of the Ukrainian population. On April 19, 21, and 26, 2023, the University of Illinois at Urbana-Champaign will host a virtual symposium titled \"Away from the Empire: The Linguistic and Cultural Shift in Ukraine in the Wake of the Russian Invasion\" that will explore this topic. The symposium will feature seven Ukrainian scholars (linguists, sociologists, literary scholars, ethnologists, and political scientists) and practitioners (front-line interpreters embedded with the Ukrainian Armed Forces). We kindly invite you to this exciting event. The symposium is supported by the Center for Global Studies and the Russian, East European, and Eurasian Center at the University of Illinois. For a full lineup of the symposium, please see the attached flyer.</span></p><p id=\"isPasted\"><strong>April 21:</strong><strong style=\"font-size: inherit; background-color: transparent;\">&nbsp;</strong></p><p><span style=\"background-color: transparent;\"><strong style=\"font-size: inherit;\">11:00 AM CT:</strong> Yaryna Zakalska: \"The Ukrainian Language as an Effective Weapon of Bloggers, Volunteers, and Actors in the Right Against the Enemy.\" (Assistant Professor in the Department of Folklore Studies at the Taras Shevchenko National University of Kyiv)</span></p><p><span style=\"background-color: transparent;\"><strong>12:00 PM CT:&nbsp;</strong>Serhii Yanchuk: \"Russia's War on Ukraine: Developments on the Language Front\" (Associate Professor, Institute of Philology, Taras Shevchenko National University of Kyiv, Currently&nbsp;Serving&nbsp;on the Front Lines of Ukraine)</span></p><p>For the program, registration link, and other information, please see the symposium webpage:<br id=\"isPasted\"><a data-auth=\"NotApplicable\" data-linkindex=\"0\" data-ogsc=\"\" data-safelink=\"true\" href=\"https://cgs.illinois.edu/spotlight/global-intersections-project/symposium-ukrainian-cultural-and-linguistic-shift\" id=\"LPlnk108020\" rel=\"noopener noreferrer\" target=\"_blank\">https://cgs.illinois.edu/spotlight/global-intersections-project/symposium-ukrainian-cultural-and-linguistic-shift</a>.</p>",
       instructions: 'Viva Ukraina!',
       imageUrl: 'https://api-dev.rokwire.illinois.edu/events/642ff8e73b037c000961c6c3/images/6447b33d3b037c000a2b1a5e',
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-08T17:00:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-08T18:00:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -136,10 +139,11 @@ class Events2 with Service implements NotificationsListener {
         'college': 'Medicine at UIUC',
         'department': 'Internal Medicine',
       },
+      eventType: Event2Type.inPerson,
       location: ExploreLocation(building: 'College of Fine and Applied Arts Performing Arts Annex', room: '120',
         fullAddress: '1301 S Goodwin Ave  Urbana, IL 61801',
         latitude: 40.102062, longitude: -88.224815),
-      required: true, canceled: false, private: false, free: true, online: false,
+      attendanceRequired: true, canceled: false, private: false, free: true,
       sponsor: 'Center for Global Studies; Russian, East European, and Eurasian Center',
       speaker: 'Yaryna Zakalaska (Assistant Professor in the Department of Folklore Studies at the Taras Shevchenko National University of Kyiv); Serhii Yanchuk (Associate Professor, Institute of Philology, Taras Shevchenko National University of Kyiv, Currently Serving on the Front Lines of Ukraine)',
       contacts: <Contact>[
@@ -151,6 +155,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p class=\"_04xlpA direction-ltr align-center para-style-body\" id=\"isPasted\"><span class=\"S1PPyQ\">Interested in Migration,</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span><span class=\"S1PPyQ\">Development, Social Justice,</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span><span class=\"S1PPyQ\">Urban Studies</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span>and Sustainability?</p><p class=\"_04xlpA direction-ltr align-center para-style-body\">This Short-term faculty-led GLBL 298 course on Migrations and Development Dilemmas in Costa Rica could be the perfect fit for you! Join LAS International Programs and Professor Nikolai Alvarado as we go over course/program specifics such as coursework, program objectives, brief background into La Carpio, San Jose, &nbsp;program dates, application requirements/expectations, and more!</p><p class=\"_04xlpA direction-ltr align-center para-style-body\">You won't want to miss out on this great opportunity!</p>",
       instructions: 'Hurry slowly',
       imageUrl: 'https://api-dev.rokwire.illinois.edu/events/642810183b037c000961c5cf/images/6447b33e3b037c0007363c02',
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-09T19:30:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-09T23:00:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -159,11 +164,12 @@ class Events2 with Service implements NotificationsListener {
         'college': 'University Library',
         'department': 'Library Research & Publication',
       },
+      eventType: Event2Type.inPerson,
       location: ExploreLocation(building: 'La Casa Cultural Latina', room: '104 (Living Room)',
         fullAddress: '1203 W Nevada St, Urbana, IL 61801',
         latitude: 40.1057519, longitude: -88.2243409,
       ),
-      required: false, canceled: false, private: false, free: true, online: false,
+      attendanceRequired: false, canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
       contacts: <Contact>[
@@ -175,6 +181,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p class=\"_04xlpA direction-ltr align-center para-style-body\" id=\"isPasted\"><span class=\"S1PPyQ\">Interested in Migration,</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span><span class=\"S1PPyQ\">Development, Social Justice,</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span><span class=\"S1PPyQ\">Urban Studies</span><span class=\"S1PPyQ white-space-prewrap\">&nbsp;</span>and Sustainability?</p><p class=\"_04xlpA direction-ltr align-center para-style-body\">This Short-term faculty-led GLBL 298 course on Migrations and Development Dilemmas in Costa Rica could be the perfect fit for you! Join LAS International Programs and Professor Nikolai Alvarado as we go over course/program specifics such as coursework, program objectives, brief background into La Carpio, San Jose, &nbsp;program dates, application requirements/expectations, and more!</p><p class=\"_04xlpA direction-ltr align-center para-style-body\">You won't want to miss out on this great opportunity!</p>",
       instructions: 'Hurry slowly',
       imageUrl: 'https://api-dev.rokwire.illinois.edu/events/642810183b037c000961c5cf/images/6447b33e3b037c0007363c02',
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-09T19:30:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-09T23:00:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -183,11 +190,12 @@ class Events2 with Service implements NotificationsListener {
         'college': 'University Library',
         'department': 'Library Research & Publication',
       },
+      eventType: Event2Type.inPerson,
       location: ExploreLocation(building: 'La Casa Cultural Latina', room: '104 (Living Room)',
         fullAddress: '1203 W Nevada St, Urbana, IL 61801',
         latitude: 40.1057519, longitude: -88.2243409,
       ),
-      required: false, canceled: false, private: false, free: true, online: false,
+      attendanceRequired: false, canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
       contacts: <Contact>[
@@ -199,6 +207,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p>The theory of General Relativity has successfully passed a large number of observational tests. The theory has been extensively tested in the weak-field regime with experiments in the Solar System and observations of binary pulsars. The past 6-7 years have seen significant advancements in the study of the strong-field regime, which can now be tested with gravitational waves, X-ray data, and mm Very Long Baseline Interferometry observations. In my talk, I will summarize the state-of-the-art of the tests of General Relativity with black hole X-ray data, discussing its recent progress and future developments.</p>",
       instructions: 'Freedom or Death!',
       imageUrl: null,
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-14T22:00:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-14T23:30:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -207,11 +216,12 @@ class Events2 with Service implements NotificationsListener {
         'college': 'Auxiliary Units',
         'department': 'Parking Department',
       },
+      eventType: Event2Type.inPerson,
       location: ExploreLocation(building: 'Parking Structure, Lot C7', room: null,
         fullAddress: '517 E John St  Champaign, IL 61820',
         latitude: 40.108772, longitude: -88.23081,
       ),
-      required: false, canceled: false, private: false, free: true, online: false,
+      attendanceRequired: false, canceled: false, private: false, free: true,
       sponsor: 'Department of Physics',
       speaker: 'Cosimo Bambi',
       contacts: <Contact>[
@@ -223,6 +233,7 @@ class Events2 with Service implements NotificationsListener {
       description: "<p><strong>Instructor(s): Jason Bane</strong></p><hr><p><strong>&nbsp;Course Prerequisites:</strong><br><a href=\"https://www.obfs.uillinois.edu/training/materials/intro-banner-finance\" rel=\"noopener noreferrer\" target=\"_blank\"><strong>FN 101: Introduction to Banner and Finance I</strong></a> (online)<br><strong><a href=\"https://www.obfs.uillinois.edu/cms/One.aspx?portalId=77176&pageId=91714#advancedc-foapal\" rel=\"noopener noreferrer\" target=\"_blank\">FN 102: Introduction to Banner and Finance II</a></strong></p><hr><p><strong>&nbsp;Course Description:</strong><br>This course is fundamental for users that enter Journal Vouchers. Users will practice creating Journal Vouchers using the entry forms in Banner, as well as learn how to determine if completed documents are successfully posted. Other topics include deleting incomplete journal vouchers, completing incomplete journal vouchers, copying journal vouchers, and performing queries for journal vouchers in Banner. Participants will need their Net ID and password.</p><hr><p><strong>Bring to Session (Required):</strong><br>Printed copy of <strong><a href=\"https://www.obfs.uillinois.edu/common/pages/DisplayFile.aspx?itemId=96013\" rel=\"noopener noreferrer\" target=\"_blank\">GL 101 Participant Guide</a></strong><br>Net ID and password</p><hr><p><strong>Bring to Session (Optional):</strong><br>Job Aid: <strong><a href=\"https://www.obfs.uillinois.edu/common/pages/DisplayFile.aspx?itemId=95870\" rel=\"noopener noreferrer\" target=\"_blank\">Creating a Journal Voucher with FGAJVCD and FGAJVCQ</a></strong><br>Handout: <strong><a href=\"https://www.obfs.uillinois.edu/common/pages/DisplayFile.aspx?itemId=95856\" rel=\"noopener noreferrer\" target=\"_blank\">Approval Process for Journal Vouchers Involving Grant Funds</a></strong></p><hr><p><strong>CPE Statement:</strong><br>The Office of Business and Financial Services is an Illinois Public Accountant Continuing Professional Education (CPE) sponsor and can offer CPE credit to Certified Public Accountant (CPA) participants in this course.</p>",
       instructions: 'Venceremos!',
       imageUrl: null,
+      timezone: 'America/Chicago',
       startTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-15T22:00:00Z', isUtc: true),
       endTimeUtc: DateTimeUtils.dateTimeFromString('2023-06-15T23:30:00Z', isUtc: true),
       attributes: <String, dynamic>{
@@ -231,17 +242,39 @@ class Events2 with Service implements NotificationsListener {
         'college': 'Auxiliary Units',
         'department': 'Parking Department',
       },
-      location: null,
-      required: false, canceled: false, private: false, free: true, online: true,
-      registrationUrl: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
+      eventType: Event2Type.online,
       onlineDetails: OnlineDetails(
         url: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
         meetingId: '78FPU395',
         meetingPasscode: 'mv7@ntys0_34'
       ),
+      attendanceRequired: false, canceled: false, private: false, free: true,
+      registrationRequired: true,
+      registrationDetails: RegistrationDetails(
+        label: 'Please register to attend the event.',
+        externalLink: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
+      ),
       sponsor: 'Learning Systems Support',
     ),
   ];
+
+  // Returns Event2 in case of success, String description in case of error
+  Future<dynamic> createEvent(Event2? source) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode(source?.toJson());
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/event", body: body, headers: headers, auth: Auth2());
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      if (response?.statusCode == 200) {
+        return Event2.fromJson(responseJson);
+      }
+      else {
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
 
 
   // DeepLinks
@@ -374,10 +407,13 @@ class Events2Query {
     }
     
     if (types.contains(Event2TypeFilter.inPerson)) {
-      options['online'] = false;
+      options['type'] = event2TypeToString(Event2Type.inPerson);
     }
     else if (types.contains(Event2TypeFilter.online)) {
-      options['online'] = true;
+      options['type'] = event2TypeToString(Event2Type.online);
+    }
+    else if (types.contains(Event2TypeFilter.hybrid)) {
+      options['type'] = event2TypeToString(Event2Type.hybrid);
     }
 
     if (types.contains(Event2TypeFilter.public)) {

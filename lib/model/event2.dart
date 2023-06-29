@@ -9,27 +9,32 @@ class Event2 with Explore, Favorite {
   final String? description;
   final String? instructions;
   final String? imageUrl;
+  final String? eventUrl;
 
+  final String? timezone;
   final DateTime? startTimeUtc;
   final DateTime? endTimeUtc;
   final bool? allDay;
 
-  final Map<String, dynamic>? attributes;
-  final RegistrationDetails? registrationDetails;
-  final Event2UserRole? userRole;
-  final Event2Type? _type;
-
-  final bool? required;
-  final bool? canceled;
-  final bool? private;
-  final bool? free;
-
-  final bool? inPerson;
+  final Event2Type? eventType;
   final ExploreLocation? location;
-
-  final bool? online;
   final OnlineDetails? onlineDetails;
-  final String? registrationUrl;
+
+  final Event2Grouping? grouping;
+  final Map<String, dynamic>? attributes;
+  
+  final bool? canceled;
+  final Event2UserRole? userRole;
+
+  final bool? attendanceRequired;
+  final bool? private;
+
+  final bool? free;
+  final String? cost;
+
+  final bool? registrationRequired;
+  final RegistrationDetails? registrationDetails;
+  final int? maxEventCapacity;
 
   final String? sponsor;
   final String? speaker;
@@ -38,15 +43,16 @@ class Event2 with Explore, Favorite {
   String? assignedImageUrl;
 
   Event2({
-    this.id, this.name, this.description, this.instructions, this.imageUrl,
-    this.startTimeUtc, this.endTimeUtc, this.allDay,
-    this.attributes, this.registrationDetails, this.userRole, Event2Type? type,
-    this.required, this.canceled, this.private, this.free,
-    this.inPerson, this.location, 
-    this.online, this.onlineDetails, this.registrationUrl, 
+    this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
+    this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
+    this.eventType, this.location, this.onlineDetails, 
+    this.grouping, this.attributes,
+    this.canceled, this.userRole,
+    this.attendanceRequired, this.private,
+    this.free, this.cost,
+    this.registrationRequired, this.registrationDetails, this.maxEventCapacity,
     this.sponsor, this.speaker, this.contacts
-  }) :
-  _type = type;
+  });
 
   // JSON serialization
 
@@ -57,28 +63,33 @@ class Event2 with Explore, Favorite {
       description: JsonUtils.stringValue(json['description']),
       instructions: JsonUtils.stringValue(json['instructions']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
+      eventUrl: JsonUtils.stringValue(json['event_url']),
 
+      timezone: JsonUtils.stringValue(json['timezone']),
       startTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start'])),
       endTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end'])),
       allDay: JsonUtils.boolValue(json['all_day']),
 
-      attributes: JsonUtils.mapValue(json['attributes']),
-      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
-      userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
-      type: event2TypeFromString(JsonUtils.stringValue(json['type'])),
-
-      required: JsonUtils.boolValue(json['required']),
-      canceled: JsonUtils.boolValue(json['canceled']),
-      private: JsonUtils.boolValue(json['private']),
-      free: JsonUtils.boolValue(json['free']),
-
-      inPerson: JsonUtils.boolValue(json['in_person']),
+      eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
       location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
-
-      online: JsonUtils.boolValue(json['online']),
       onlineDetails: OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
-      registrationUrl: JsonUtils.stringValue(json['registration_url']),
 
+      grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
+      attributes: JsonUtils.mapValue(json['attributes']),
+
+      canceled: JsonUtils.boolValue(json['canceled']),
+      userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
+
+      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
+      private: JsonUtils.boolValue(json['private']),
+
+      free: JsonUtils.boolValue(json['free']),
+      cost: JsonUtils.stringValue(json['cost']),
+
+      registrationRequired: JsonUtils.boolValue(json['require_registration']),
+      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
+      maxEventCapacity: JsonUtils.intValue(json['max_event_capacity']),
+      
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
       contacts: Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
@@ -91,27 +102,32 @@ class Event2 with Explore, Favorite {
     'description': description,
     'instructions': instructions,
     'image_url': imageUrl,
+    'event_url': eventUrl,
 
+    'timezone': timezone,
     'start': DateTimeUtils.utcDateTimeToString(startTimeUtc),
     'end': DateTimeUtils.utcDateTimeToString(endTimeUtc),
     'all_day': allDay,
 
-    'attributes': attributes,
-    'registration_details': registrationDetails?.toJson(),
-    'role': event2UserRoleToString(userRole),
-    'type': event2TypeToString(_type),
-
-    'required': required,
-    'canceled': canceled,
-    'private': private,
-    'free': free,
-
-    'in_person': inPerson,
+    'event_type': event2TypeToString(eventType),
     'location': location?.toJson(),
-
-    'online': online,
     'online_details': onlineDetails?.toJson(),
-    'registration_url': registrationUrl,
+
+    'grouping': grouping?.toJson(),
+    'attributes': attributes,
+    
+    'canceled': canceled,
+    'role': event2UserRoleToString(userRole),
+
+    'attendance_required': attendanceRequired,
+    'private': private,
+
+    'free': free,
+    'cost': cost,
+
+    'require_registration': registrationRequired,
+    'registration_details': registrationDetails?.toJson(),
+    'max_event_capacity': maxEventCapacity,
 
     'sponsor': sponsor,
     'speaker': speaker,
@@ -128,27 +144,32 @@ class Event2 with Explore, Favorite {
     (description == other.description) &&
     (instructions == other.instructions) &&
     (imageUrl == other.imageUrl) &&
+    (eventUrl == other.eventUrl) &&
     
+    (timezone == other.timezone) &&
     (startTimeUtc == other.startTimeUtc) &&
     (endTimeUtc == other.endTimeUtc) &&
     (allDay == other.allDay) &&
 
-    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
-    (registrationDetails == other.registrationDetails) &&
-    (userRole == other.userRole) &&
-    (_type == other._type) &&
-
-    (required == other.required) &&
-    (canceled == other.canceled) &&
-    (private == other.private) &&
-    (free == other.free) &&
-
-    (inPerson == other.inPerson) &&
+    (eventType == other.eventType) &&
     (location == other.location) &&
-
-    (online == other.online) &&
     (onlineDetails == other.onlineDetails) &&
-    (registrationUrl == other.registrationUrl) &&
+
+    (grouping == other.grouping) &&
+    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
+    
+    (canceled == other.canceled) &&
+    (userRole == other.userRole) &&
+
+    (attendanceRequired == other.attendanceRequired) &&
+    (private == other.private) &&
+
+    (free == other.free) &&
+    (cost == other.cost) &&
+
+    (registrationRequired == other.registrationRequired) &&
+    (registrationDetails == other.registrationDetails) &&
+    (maxEventCapacity == other.maxEventCapacity) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -161,27 +182,32 @@ class Event2 with Explore, Favorite {
     (description?.hashCode ?? 0) ^
     (instructions?.hashCode ?? 0) ^
     (imageUrl?.hashCode ?? 0) ^
+    (eventUrl?.hashCode ?? 0) ^
 
+    (timezone?.hashCode ?? 0) ^
     (startTimeUtc?.hashCode ?? 0) ^
     (endTimeUtc?.hashCode ?? 0) ^
     (allDay?.hashCode ?? 0) ^
 
-    (const DeepCollectionEquality().hash(attributes)) ^
-    (registrationDetails?.hashCode ?? 0) ^
-    (userRole?.hashCode ?? 0) ^
-    (_type?.hashCode ?? 0) ^
-
-    (required?.hashCode ?? 0) ^
-    (canceled?.hashCode ?? 0) ^
-    (private?.hashCode ?? 0) ^
-    (free?.hashCode ?? 0) ^
-
-    (inPerson?.hashCode ?? 0) ^
+    (eventType?.hashCode ?? 0) ^
     (location?.hashCode ?? 0) ^
-
-    (online?.hashCode ?? 0) ^
     (onlineDetails?.hashCode ?? 0) ^
-    (registrationUrl?.hashCode ?? 0) ^
+
+    (grouping?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(attributes)) ^
+
+    (canceled?.hashCode ?? 0) ^
+    (userRole?.hashCode ?? 0) ^
+
+    (attendanceRequired?.hashCode ?? 0) ^
+    (private?.hashCode ?? 0) ^
+
+    (free?.hashCode ?? 0) ^
+    (cost?.hashCode ?? 0) ^
+
+    (registrationRequired?.hashCode ?? 0) ^
+    (registrationDetails?.hashCode ?? 0) ^
+    (maxEventCapacity?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -189,8 +215,8 @@ class Event2 with Explore, Favorite {
 
   // Attributes
 
-  Event2Type? get type => _type ??
-    event2TypeFromFlags(inPerson: inPerson, online: online);
+  bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
+  bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
 
   // JSON list searialization
 
@@ -271,27 +297,64 @@ class OnlineDetails {
 /// RegistrationDetails
 
 class RegistrationDetails {
+  final String? label;
   final String? externalLink;
 
-  RegistrationDetails({this.externalLink});
+  RegistrationDetails({this.label, this.externalLink});
 
   static RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? RegistrationDetails(
+      label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
+    'label': label,
     'external_link': externalLink,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is RegistrationDetails) &&
+    (label == other.label) &&
     (externalLink == other.externalLink);
 
   @override
   int get hashCode =>
+    (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2Grouping
+
+class Event2Grouping {
+  final Event2GroupingType? type;
+  final String? superEventId;
+
+  Event2Grouping({this.type, this.superEventId});
+
+  static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? Event2Grouping(
+      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['type'])) ,
+      superEventId: JsonUtils.stringValue(json['super-event']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'type': event2GroupingTypeToString(type),
+    'super-event': superEventId,
+  };
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is Event2Grouping) &&
+    (type == other.type) &&
+    (superEventId == other.superEventId);
+
+  @override
+  int get hashCode =>
+    (type?.hashCode ?? 0) ^
+    (superEventId?.hashCode ?? 0);
 }
 
 ///////////////////////////////
@@ -425,18 +488,6 @@ String? event2TypeToString(Event2Type? value) {
   }
 }
 
-Event2Type? event2TypeFromFlags({ bool? inPerson, bool? online}) {
-  if (inPerson == true) {
-    return (online == true) ? Event2Type.hybrid : Event2Type.inPerson;
-  }
-  else if (online == true) {
-    return (inPerson == true) ? Event2Type.hybrid : Event2Type.online;
-  }
-  else {
-    return null;
-  }
-}
-
 ///////////////////////////////
 /// Event2TimeFilter
 
@@ -511,13 +562,14 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 ///////////////////////////////
 /// Event2TypeFilter
 
-enum Event2TypeFilter { free, paid, inPerson, online, public, private, nearby }
+enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby }
 
 const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
   Event2TypeFilter.free: 'cost',
   Event2TypeFilter.paid: 'cost',
   Event2TypeFilter.inPerson: 'type',
   Event2TypeFilter.online: 'type',
+  Event2TypeFilter.hybrid: 'type',
   Event2TypeFilter.public: 'discoverability',
   Event2TypeFilter.private: 'discoverability',
   Event2TypeFilter.nearby: 'proximity',
@@ -530,11 +582,14 @@ Event2TypeFilter? event2TypeFilterFromString(String? value) {
   else if (value == 'paid') {
     return Event2TypeFilter.paid;
   }
-  else if (value == 'inPerson') {
+  else if (value == 'in-person') {
     return Event2TypeFilter.inPerson;
   }
   else if (value == 'online') {
     return Event2TypeFilter.online;
+  }
+  else if (value == 'hybrid') {
+    return Event2TypeFilter.hybrid;
   }
   else if (value == 'public') {
     return Event2TypeFilter.public;
@@ -554,8 +609,9 @@ String? event2TypeFilterToString(Event2TypeFilter? value) {
   switch (value) {
     case Event2TypeFilter.free: return 'free';
     case Event2TypeFilter.paid: return 'paid';
-    case Event2TypeFilter.inPerson: return 'in_person';
+    case Event2TypeFilter.inPerson: return 'in-person';
     case Event2TypeFilter.online: return 'online';
+    case Event2TypeFilter.hybrid: return 'hybrid';
     case Event2TypeFilter.public: return 'public';
     case Event2TypeFilter.private: return 'private';
     case Event2TypeFilter.nearby: return 'nearby';
@@ -675,3 +731,29 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
     default: return null;
   }
 }
+
+///////////////////////////////
+/// Event2GroupingType
+
+enum Event2GroupingType { superEvent, recurring }
+
+Event2GroupingType? event2GroupingTypeFromString(String? value) {
+  if (value == 'super-event') {
+    return Event2GroupingType.superEvent;
+  }
+  else if (value == 'recurring') {
+    return Event2GroupingType.recurring;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2GroupingTypeToString(Event2GroupingType? value) {
+  switch (value) {
+    case Event2GroupingType.superEvent: return 'super-event';
+    case Event2GroupingType.recurring: return 'recurring';
+    default: return null;
+  }
+}
+
