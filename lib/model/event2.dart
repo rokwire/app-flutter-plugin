@@ -34,7 +34,7 @@ class Event2 with Explore, Favorite {
 
   final bool? registrationRequired;
   final RegistrationDetails? registrationDetails;
-  final int? maxEventCapacity;
+  final int? eventCapacity;
 
   final String? sponsor;
   final String? speaker;
@@ -50,7 +50,7 @@ class Event2 with Explore, Favorite {
     this.canceled, this.userRole,
     this.attendanceRequired, this.private,
     this.free, this.cost,
-    this.registrationRequired, this.registrationDetails, this.maxEventCapacity,
+    this.registrationRequired, this.registrationDetails, this.eventCapacity,
     this.sponsor, this.speaker, this.contacts
   });
 
@@ -88,7 +88,7 @@ class Event2 with Explore, Favorite {
 
       registrationRequired: JsonUtils.boolValue(json['require_registration']),
       registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
-      maxEventCapacity: JsonUtils.intValue(json['max_event_capacity']),
+      eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
       
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
@@ -127,7 +127,7 @@ class Event2 with Explore, Favorite {
 
     'require_registration': registrationRequired,
     'registration_details': registrationDetails?.toJson(),
-    'max_event_capacity': maxEventCapacity,
+    'max_event_capacity': eventCapacity,
 
     'sponsor': sponsor,
     'speaker': speaker,
@@ -169,7 +169,7 @@ class Event2 with Explore, Favorite {
 
     (registrationRequired == other.registrationRequired) &&
     (registrationDetails == other.registrationDetails) &&
-    (maxEventCapacity == other.maxEventCapacity) &&
+    (eventCapacity == other.eventCapacity) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -207,7 +207,7 @@ class Event2 with Explore, Favorite {
 
     (registrationRequired?.hashCode ?? 0) ^
     (registrationDetails?.hashCode ?? 0) ^
-    (maxEventCapacity?.hashCode ?? 0) ^
+    (eventCapacity?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -301,6 +301,12 @@ class RegistrationDetails {
   final String? externalLink;
 
   RegistrationDetails({this.label, this.externalLink});
+
+  static RegistrationDetails? fromOther(RegistrationDetails? other, { String? label, String? externalLink}) =>
+    (other != null) ? RegistrationDetails(
+      label: label ?? other.label,
+      externalLink: externalLink ?? other.externalLink,
+    ) : null;
 
   static RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? RegistrationDetails(
