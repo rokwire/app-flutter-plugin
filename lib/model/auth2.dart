@@ -226,6 +226,10 @@ class Auth2Account {
     return linkedTypes;
   }
 
+  bool get isCalendarAdmin {
+    return hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
+  }
+
   bool get isManagedGroupAdmin {
     return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
