@@ -1688,7 +1688,7 @@ class Auth2UserPrefs {
       anonymousIds = {};
       for (MapEntry anonymousId in json!.entries) {
         if (anonymousId.key is String && anonymousId.value is String) {
-          DateTime? dateAdded = DateTimeUtils.parseDateTime(anonymousId.value, format: 'yyyy-MM-ddTHH:mm:ss.SSS', isUtc: true);
+          DateTime? dateAdded = DateTimeUtils.parseDateTime(anonymousId.value, format: DateTimeUtils.defaultDateTimeFormat, isUtc: true);
           if (dateAdded != null) {
             anonymousIds[anonymousId.key] = dateAdded;
           }
