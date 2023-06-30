@@ -1083,6 +1083,8 @@ DayPart? dayPartFromString(String? value) {
 }
 
 class DateTimeUtils {
+
+  static const String defaultDateTimeFormat = 'yyyy-MM-ddTHH:mm:ss.SSS';
   
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
@@ -1100,11 +1102,11 @@ class DateTimeUtils {
     return dateTime;
   }
 
-  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+  static String? utcDateTimeToString(DateTime? dateTime, { String format =  defaultDateTimeFormat }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
   }
 
-  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+  static String? localDateTimeToString(DateTime? dateTime, { String format = defaultDateTimeFormat }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 

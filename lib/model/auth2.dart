@@ -892,9 +892,9 @@ class Auth2UserPrefs {
   Map<String, bool>? _tags;
   Map<String, dynamic>? _settings;
   Auth2VoterPrefs? _voter;
-  Set<String>? _anonymousIds;
+  Map<String, DateTime>? _anonymousIds;
 
-  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter, Set<String>? anonymousIds}) {
+  Auth2UserPrefs({int? privacyLevel, Set<UserRole>? roles, Map<String, LinkedHashSet<String>>? favorites, Map<String, Set<String>>? interests, Map<String, Set<String>>? foodFilters, Map<String, bool>? tags, Map<String, dynamic>? answers, Map<String, dynamic>? settings, Auth2VoterPrefs? voter, Map<String, DateTime>? anonymousIds}) {
     _privacyLevel = privacyLevel;
     _roles = roles;
     _favorites = favorites;
@@ -917,7 +917,7 @@ class Auth2UserPrefs {
       answers: JsonUtils.mapValue(json['answers']),
       settings: JsonUtils.mapValue(json['settings']),
       voter: Auth2VoterPrefs.fromJson(JsonUtils.mapValue(json['voter'])),
-      anonymousIds: JsonUtils.stringListValue(json['anonymous_ids'])?.toSet(),
+      anonymousIds: _anonymousIdsFromJson(JsonUtils.mapValue(json['anonymous_ids'])),
     ) : null;
   }
 
@@ -947,7 +947,7 @@ class Auth2UserPrefs {
     Map<String, Set<String>>? interests = (profile != null) ? _interestsFromProfileList(JsonUtils.listValue(profile['interests'])) : null;
     Map<String, bool>? tags = (profile != null) ? _tagsFromProfileLists(positive: JsonUtils.listValue(profile['positiveInterestTags']), negative: JsonUtils.listValue(profile['negativeInterestTags'])) : null;
     Auth2VoterPrefs? voter = (profile != null) ? Auth2VoterPrefs.fromJson(profile) : null;
-    List<String>? anonymousIds = (profile != null) ? JsonUtils.stringListValue(profile['anonymous_ids']) : null;
+    Map<String, DateTime>? anonymousIds = (profile != null) ? _anonymousIdsFromJson(JsonUtils.mapValue(profile['anonymous_ids'])) : null;
 
     return Auth2UserPrefs(
       privacyLevel: privacyLevel,
@@ -962,7 +962,7 @@ class Auth2UserPrefs {
       answers: answers ?? <String, dynamic>{},
       settings: settings ?? <String, dynamic>{},
       voter: voter ?? Auth2VoterPrefs(),
-      anonymousIds: anonymousIds?.toSet(),
+      anonymousIds: anonymousIds,
     );
   }
 
@@ -976,7 +976,7 @@ class Auth2UserPrefs {
       'tags': _tags,
       'settings': _settings,
       'voter': _voter,
-      'anonymous_ids': _anonymousIds?.toList(),
+      'anonymous_ids': _anonymousIdsToJson(),
     };
   }
 
@@ -1066,10 +1066,11 @@ class Auth2UserPrefs {
         modified = true;
       }
       
-      if (CollectionUtils.isNotEmpty(prefs._anonymousIds)) {
+      if (prefs._anonymousIds?.isNotEmpty ?? false) {
         _anonymousIds ??= {};
-        for (String id in prefs._anonymousIds!) {
-          modified |= _anonymousIds!.add(id);
+        for (MapEntry<String, DateTime> id in prefs._anonymousIds!.entries) {
+          modified = !_anonymousIds!.containsKey(id.key);
+          _anonymousIds!.putIfAbsent(id.key, () => id.value);
         }
         if (notify == true) {
           NotificationService().notify(notifyAnonymousIdsChanged);
@@ -1612,13 +1613,27 @@ class Auth2UserPrefs {
 
   // Anonymous IDs
 
-  Set<String>? get anonymousIds => _anonymousIds;
+  Map<String, DateTime>? get anonymousIds => _anonymousIds;
 
   void addAnonymousId(String? id) {
     if (id != null) {
       _anonymousIds ??= {};
-      _anonymousIds!.add(id);
+      _anonymousIds!.putIfAbsent(id, () => DateTime.now().toUtc());
     }
+  }
+
+  Map<String, String>? _anonymousIdsToJson() {
+    Map<String, String>? json;
+    if (_anonymousIds?.isNotEmpty ?? false) {
+      json = {};
+      for (MapEntry<String, DateTime> anonymousId in _anonymousIds!.entries) {
+        String? dateAdded = DateTimeUtils.utcDateTimeToString(anonymousId.value);
+        if (dateAdded != null) {
+          json[anonymousId.key] = dateAdded;
+        }
+      }
+    }
+    return json;
   }
 
   // Helpers
@@ -1665,6 +1680,22 @@ class Auth2UserPrefs {
       }
     }
     return result;
+  }
+
+  static Map<String, DateTime>? _anonymousIdsFromJson(Map<String, dynamic>? json) {
+    Map<String, DateTime>? anonymousIds;
+    if (json is Map) {
+      anonymousIds = {};
+      for (MapEntry anonymousId in json!.entries) {
+        if (anonymousId.key is String && anonymousId.value is String) {
+          DateTime? dateAdded = DateTimeUtils.parseDateTime(anonymousId.value, format: DateTimeUtils.defaultDateTimeFormat, isUtc: true);
+          if (dateAdded != null) {
+            anonymousIds[anonymousId.key] = dateAdded;
+          }
+        }
+      }
+    }
+    return anonymousIds;
   }
 }
 
