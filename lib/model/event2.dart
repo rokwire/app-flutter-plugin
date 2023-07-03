@@ -66,8 +66,8 @@ class Event2 with Explore, Favorite {
       eventUrl: JsonUtils.stringValue(json['event_url']),
 
       timezone: JsonUtils.stringValue(json['timezone']),
-      startTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start'])),
-      endTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end'])),
+      startTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start'])),
+      endTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end'])),
       allDay: JsonUtils.boolValue(json['all_day']),
 
       eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
@@ -105,8 +105,8 @@ class Event2 with Explore, Favorite {
     'event_url': eventUrl,
 
     'timezone': timezone,
-    'start': DateTimeUtils.utcDateTimeToString(startTimeUtc),
-    'end': DateTimeUtils.utcDateTimeToString(endTimeUtc),
+    'start': DateTimeUtils.dateTimeToSecondsSinceEpoch(startTimeUtc),
+    'end': DateTimeUtils.dateTimeToSecondsSinceEpoch(endTimeUtc),
     'all_day': allDay,
 
     'event_type': event2TypeToString(eventType),

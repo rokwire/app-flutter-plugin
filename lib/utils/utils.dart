@@ -1141,6 +1141,13 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
+  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
+    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
+  
+  static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
+    (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
+
+
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
       case "monday"   : return 1;
