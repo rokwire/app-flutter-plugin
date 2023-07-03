@@ -34,6 +34,7 @@ class Event2 with Explore, Favorite {
   final RegistrationDetails? registrationDetails;
   final int? eventCapacity;
 
+  final bool? attendanceRequired;
   final AttendanceDetails? attendanceDetails;
 
   final String? sponsor;
@@ -50,7 +51,7 @@ class Event2 with Explore, Favorite {
     this.canceled, this.userRole,
     this.free, this.cost,
     this.registrationRequired, this.registrationDetails, this.eventCapacity,
-    this.attendanceDetails,
+    this.attendanceRequired, this.attendanceDetails,
     this.sponsor, this.speaker, this.contacts
   });
 
@@ -88,6 +89,7 @@ class Event2 with Explore, Favorite {
       registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
       
+      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       attendanceDetails: AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
 
       sponsor: JsonUtils.stringValue(json['sponsor']),
@@ -127,6 +129,7 @@ class Event2 with Explore, Favorite {
     'registration_details': registrationDetails?.toJson(),
     'max_event_capacity': eventCapacity,
 
+    'attendance_required': attendanceRequired,
     'attendance_details': attendanceDetails?.toJson(),
 
     'sponsor': sponsor,
@@ -169,6 +172,7 @@ class Event2 with Explore, Favorite {
     (registrationDetails == other.registrationDetails) &&
     (eventCapacity == other.eventCapacity) &&
 
+    (attendanceRequired == other.attendanceRequired) &&
     (attendanceDetails == other.attendanceDetails) &&
 
     (sponsor == other.sponsor) &&
@@ -207,6 +211,7 @@ class Event2 with Explore, Favorite {
     (registrationDetails?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
 
+    (attendanceRequired?.hashCode ?? 0) ^
     (attendanceDetails?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
