@@ -22,12 +22,10 @@ class Event2 with Explore, Favorite {
 
   final Event2Grouping? grouping;
   final Map<String, dynamic>? attributes;
+  final bool? private;
   
   final bool? canceled;
   final Event2UserRole? userRole;
-
-  final bool? attendanceRequired;
-  final bool? private;
 
   final bool? free;
   final String? cost;
@@ -35,6 +33,8 @@ class Event2 with Explore, Favorite {
   final bool? registrationRequired;
   final RegistrationDetails? registrationDetails;
   final int? eventCapacity;
+
+  final AttendanceDetails? attendanceDetails;
 
   final String? sponsor;
   final String? speaker;
@@ -46,11 +46,11 @@ class Event2 with Explore, Favorite {
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.eventType, this.location, this.onlineDetails, 
-    this.grouping, this.attributes,
+    this.grouping, this.attributes, this.private,
     this.canceled, this.userRole,
-    this.attendanceRequired, this.private,
     this.free, this.cost,
     this.registrationRequired, this.registrationDetails, this.eventCapacity,
+    this.attendanceDetails,
     this.sponsor, this.speaker, this.contacts
   });
 
@@ -76,12 +76,10 @@ class Event2 with Explore, Favorite {
 
       grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
       attributes: JsonUtils.mapValue(json['attributes']),
+      private: JsonUtils.boolValue(json['private']),
 
       canceled: JsonUtils.boolValue(json['canceled']),
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
-
-      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
-      private: JsonUtils.boolValue(json['private']),
 
       free: JsonUtils.boolValue(json['free']),
       cost: JsonUtils.stringValue(json['cost']),
@@ -90,6 +88,8 @@ class Event2 with Explore, Favorite {
       registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
       
+      attendanceDetails: AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
+
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
       contacts: Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
@@ -115,12 +115,10 @@ class Event2 with Explore, Favorite {
 
     'grouping': grouping?.toJson(),
     'attributes': attributes,
+    'private': private,
     
     'canceled': canceled,
     'role': event2UserRoleToString(userRole),
-
-    'attendance_required': attendanceRequired,
-    'private': private,
 
     'free': free,
     'cost': cost,
@@ -128,6 +126,8 @@ class Event2 with Explore, Favorite {
     'require_registration': registrationRequired,
     'registration_details': registrationDetails?.toJson(),
     'max_event_capacity': eventCapacity,
+
+    'attendance_details': attendanceDetails?.toJson(),
 
     'sponsor': sponsor,
     'speaker': speaker,
@@ -157,12 +157,10 @@ class Event2 with Explore, Favorite {
 
     (grouping == other.grouping) &&
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
+    (private == other.private) &&
     
     (canceled == other.canceled) &&
     (userRole == other.userRole) &&
-
-    (attendanceRequired == other.attendanceRequired) &&
-    (private == other.private) &&
 
     (free == other.free) &&
     (cost == other.cost) &&
@@ -170,6 +168,8 @@ class Event2 with Explore, Favorite {
     (registrationRequired == other.registrationRequired) &&
     (registrationDetails == other.registrationDetails) &&
     (eventCapacity == other.eventCapacity) &&
+
+    (attendanceDetails == other.attendanceDetails) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -195,12 +195,10 @@ class Event2 with Explore, Favorite {
 
     (grouping?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes)) ^
+    (private?.hashCode ?? 0) ^
 
     (canceled?.hashCode ?? 0) ^
     (userRole?.hashCode ?? 0) ^
-
-    (attendanceRequired?.hashCode ?? 0) ^
-    (private?.hashCode ?? 0) ^
 
     (free?.hashCode ?? 0) ^
     (cost?.hashCode ?? 0) ^
@@ -208,6 +206,8 @@ class Event2 with Explore, Favorite {
     (registrationRequired?.hashCode ?? 0) ^
     (registrationDetails?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
+
+    (attendanceDetails?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -329,6 +329,64 @@ class RegistrationDetails {
   int get hashCode =>
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// AttendanceDetails
+
+class AttendanceDetails {
+  final bool? attendanceRequired;
+  final bool? takeAttendanceViaAppEnabled;
+  final bool? scanningEnabled;
+  final bool? manualCheckEnabled;
+
+  AttendanceDetails({this.attendanceRequired, this.takeAttendanceViaAppEnabled, this.scanningEnabled, this.manualCheckEnabled});
+
+  static AttendanceDetails? fromOther(AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
+    (other != null) ? AttendanceDetails(
+      attendanceRequired: attendanceRequired ?? other.attendanceRequired,
+      takeAttendanceViaAppEnabled: takeAttendanceViaAppEnabled ?? other.takeAttendanceViaAppEnabled,
+      scanningEnabled: scanningEnabled ?? other.scanningEnabled,
+      manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
+    ) : null;
+
+  static AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? AttendanceDetails(
+      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
+      takeAttendanceViaAppEnabled: JsonUtils.boolValue(json['is_app_attendance_taking_enabled']),
+      scanningEnabled: JsonUtils.boolValue(json['is_ID_scanning_enabled']),
+      manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'attendance_required': attendanceRequired,
+    'is_app_attendance_taking_enabled': takeAttendanceViaAppEnabled,
+    'is_ID_scanning_enabled': scanningEnabled,
+    'is_manual_attendance_check_enabled': manualCheckEnabled,
+  };
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is AttendanceDetails) &&
+    (attendanceRequired == other.attendanceRequired) &&
+    (takeAttendanceViaAppEnabled == other.takeAttendanceViaAppEnabled) &&
+    (scanningEnabled == other.scanningEnabled) &&
+    (manualCheckEnabled == other.manualCheckEnabled);
+
+  @override
+  int get hashCode =>
+    (attendanceRequired?.hashCode ?? 0) ^
+    (takeAttendanceViaAppEnabled?.hashCode ?? 0) ^
+    (scanningEnabled?.hashCode ?? 0) ^
+    (manualCheckEnabled?.hashCode ?? 0);
+
+  bool get isEmpty =>
+    (attendanceRequired != true) &&
+    (takeAttendanceViaAppEnabled != true) && 
+    (scanningEnabled != true) && 
+    (manualCheckEnabled != true);
+
+  bool get isNotEmpty => !isEmpty;
 }
 
 ///////////////////////////////
