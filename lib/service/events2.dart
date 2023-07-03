@@ -118,7 +118,7 @@ class Events2 with Service implements NotificationsListener {
         fullAddress: '607 S Mathews Ave  Urbana, IL 61801',
         latitude: 40.1072, longitude: -88.2262,
       ),
-      attendanceRequired: false, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       sponsor: 'Computer Science',
       speaker: 'Dr. Hong Hao',
       contacts: <Contact>[
@@ -143,7 +143,7 @@ class Events2 with Service implements NotificationsListener {
       location: ExploreLocation(building: 'College of Fine and Applied Arts Performing Arts Annex', room: '120',
         fullAddress: '1301 S Goodwin Ave  Urbana, IL 61801',
         latitude: 40.102062, longitude: -88.224815),
-      attendanceRequired: true, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       sponsor: 'Center for Global Studies; Russian, East European, and Eurasian Center',
       speaker: 'Yaryna Zakalaska (Assistant Professor in the Department of Folklore Studies at the Taras Shevchenko National University of Kyiv); Serhii Yanchuk (Associate Professor, Institute of Philology, Taras Shevchenko National University of Kyiv, Currently Serving on the Front Lines of Ukraine)',
       contacts: <Contact>[
@@ -169,7 +169,7 @@ class Events2 with Service implements NotificationsListener {
         fullAddress: '1203 W Nevada St, Urbana, IL 61801',
         latitude: 40.1057519, longitude: -88.2243409,
       ),
-      attendanceRequired: false, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
       contacts: <Contact>[
@@ -195,7 +195,7 @@ class Events2 with Service implements NotificationsListener {
         fullAddress: '1203 W Nevada St, Urbana, IL 61801',
         latitude: 40.1057519, longitude: -88.2243409,
       ),
-      attendanceRequired: false, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
       contacts: <Contact>[
@@ -221,7 +221,7 @@ class Events2 with Service implements NotificationsListener {
         fullAddress: '517 E John St  Champaign, IL 61820',
         latitude: 40.108772, longitude: -88.23081,
       ),
-      attendanceRequired: false, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       sponsor: 'Department of Physics',
       speaker: 'Cosimo Bambi',
       contacts: <Contact>[
@@ -248,7 +248,7 @@ class Events2 with Service implements NotificationsListener {
         meetingId: '78FPU395',
         meetingPasscode: 'mv7@ntys0_34'
       ),
-      attendanceRequired: false, canceled: false, private: false, free: true,
+      canceled: false, private: false, free: true,
       registrationRequired: true,
       registrationDetails: RegistrationDetails(
         label: 'Please register to attend the event.',

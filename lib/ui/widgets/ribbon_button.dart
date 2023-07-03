@@ -5,9 +5,10 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class RibbonButton extends StatefulWidget {
   final String? label;
+  final String? description;
   final void Function()? onTap;
   final Color? backgroundColor;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
 
   final Widget? textWidget;
   final TextStyle? textStyle;
@@ -15,6 +16,14 @@ class RibbonButton extends StatefulWidget {
   final String? fontFamily;
   final double fontSize;
   final TextAlign textAlign;
+
+  final Widget? descriptionWidget;
+  final TextStyle? descriptionTextStyle;
+  final Color? descriptionTextColor;
+  final String? descriptionFontFamily;
+  final double descriptionFontSize;
+  final TextAlign descriptionTextAlign;
+  final EdgeInsetsGeometry descriptionPadding;
 
   final Widget? leftIcon;
   final String? leftIconKey;
@@ -41,9 +50,10 @@ class RibbonButton extends StatefulWidget {
 
   const RibbonButton({Key? key,
     this.label,
+    this.description,
     this.onTap,
     this.backgroundColor,      //= Styles().colors.white
-    this.padding                 = const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    this.padding,
 
     this.textWidget,
     this.textStyle,
@@ -51,6 +61,14 @@ class RibbonButton extends StatefulWidget {
     this.fontFamily,           //= Styles().fontFamilies.bold
     this.fontSize                = 16.0,
     this.textAlign               = TextAlign.left,
+
+    this.descriptionWidget,
+    this.descriptionTextStyle,
+    this.descriptionTextColor,  //= Styles().colors.textSurface
+    this.descriptionFontFamily, //= Styles().fontFamilies.regular
+    this.descriptionFontSize    = 14.0,
+    this.descriptionTextAlign   = TextAlign.left,
+    this.descriptionPadding     = const EdgeInsets.only(top: 2),
 
     this.leftIcon,
     this.leftIconKey,
@@ -78,12 +96,25 @@ class RibbonButton extends StatefulWidget {
 
   @protected Color? get defaultBackgroundColor => Styles().colors?.white;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
-  @protected Color? get defaulttextColor => Styles().colors?.fillColorPrimary;
-  @protected Color? get displayTextColor => textColor ?? defaulttextColor;
+
+  @protected EdgeInsetsGeometry get displayPadding => padding ?? (hasDescription ? complexPadding : simplePadding);
+  @protected EdgeInsetsGeometry get simplePadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
+  @protected EdgeInsetsGeometry get complexPadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+
+  @protected Color? get defaultTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get displayTextColor => textColor ?? defaultTextColor;
   @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
+
+  @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
+  @protected Color? get defaultDescriptionTextColor => Styles().colors?.textSurface;
+  @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
+  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
+  @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
+  @protected Widget get displayDescriptionWidget => descriptionWidget ?? Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,);
 
   @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
   @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;
@@ -133,16 +164,21 @@ class _RibbonButtonState extends State<RibbonButton> {
   Widget get _contentWidget {
     Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
     Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
+    Widget textContentWidget = widget.hasDescription ?
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        widget.displayTextWidget,
+        widget.displayDescriptionWidget,
+      ],) : widget.displayTextWidget;
     return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
       GestureDetector(onTap: () => widget.onTapWidget(context), child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
             Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
-              Padding(padding: widget.padding, child:
+              Padding(padding: widget.displayPadding, child:
                 Row(children: <Widget>[
                   (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
-                    widget.displayTextWidget
+                    textContentWidget
                   ),
                   (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
@@ -196,9 +232,10 @@ class ToggleRibbonButton extends RibbonButton {
   const ToggleRibbonButton({
     Key? key,
     String? label,
+    String? description,
     void Function()? onTap,
     Color? backgroundColor,
-    EdgeInsetsGeometry padding          = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    EdgeInsetsGeometry? padding,
 
     Widget? textWidget,
     TextStyle? textStyle,
@@ -206,6 +243,14 @@ class ToggleRibbonButton extends RibbonButton {
     String? fontFamily,
     double fontSize                     = 16.0,
     TextAlign textAlign                 = TextAlign.left,
+
+    Widget? descriptionWidget,
+    TextStyle? descriptionTextStyle,
+    Color? descriptionTextColor,
+    String? descriptionFontFamily,
+    double descriptionFontSize = 14,
+    TextAlign descriptionTextAlign = TextAlign.left,
+    EdgeInsetsGeometry descriptionPadding = const EdgeInsets.only(top: 2),
 
     Widget? leftIcon,
     String? leftIconKey,
@@ -234,6 +279,7 @@ class ToggleRibbonButton extends RibbonButton {
   }): super(
     key: key,
     label: label,
+    description: description,
     onTap: onTap,
     backgroundColor: backgroundColor,
     padding: padding,
@@ -244,6 +290,14 @@ class ToggleRibbonButton extends RibbonButton {
     fontFamily: fontFamily,
     fontSize: fontSize,
     textAlign: textAlign,
+
+    descriptionWidget: descriptionWidget,
+    descriptionTextStyle: descriptionTextStyle,
+    descriptionTextColor: descriptionTextColor,
+    descriptionFontFamily: descriptionFontFamily,
+    descriptionFontSize: descriptionFontSize,
+    descriptionTextAlign: descriptionTextAlign,
+    descriptionPadding: descriptionPadding,
 
     leftIcon: leftIcon,
     leftIconKey: leftIconKey,
