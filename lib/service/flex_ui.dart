@@ -38,7 +38,7 @@ class FlexUI with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.flexui.changed";
 
   static const String _assetsName   = "flexUI.json";
-  static const String _defaultContentSourceKey   = "";
+
 
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
@@ -48,8 +48,8 @@ class FlexUI with Service implements NotificationsListener {
   Map<String, dynamic>? _netContentSource;
   Map<String, dynamic>? _contentSource;
 
-  Map<String, dynamic>? _defaultContent;
-  Set<dynamic>?         _defaultFeatures;
+  Map<String, dynamic>? _content;
+  Set<dynamic>?         _features;
 
   // Singletone Factory
 
@@ -95,7 +95,7 @@ class FlexUI with Service implements NotificationsListener {
     _appContentSource = await loadFromAssets(appAssetsKey);
     _netContentSource = await loadFromCache(netCacheFileName);
     build();
-    if (_defaultContent != null) {
+    if (_content != null) {
       updateFromNet();
       await super.initService();
     }
@@ -244,31 +244,18 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  Map<String, dynamic>? contentSourceEntry(String key) {
-    return JsonUtils.mapValue(MapPathKey.entry(_contentSource, key));
-  }
-
-  @protected
-  String get defaultContentSourceKey => _defaultContentSourceKey;
-
-  @protected
-  Map<String, dynamic>? get defaultContentSourceEntry {
-    return contentSourceEntry(defaultContentSourceKey);
-  }
-
-  @protected
   void build() {
     _contentSource = buildContentSource();
-    _defaultContent = buildContent(defaultContentSourceEntry);
-    _defaultFeatures = buildFeatures(_defaultContent);
+    _content = buildContent(_contentSource);
+    _features = buildFeatures(_content);
   }
 
   @protected
   void updateContent() {
-    Map<String, dynamic>? defaultContent = buildContent(defaultContentSourceEntry);
-    if ((defaultContent != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, defaultContent))) {
-      _defaultContent = defaultContent;
-      _defaultFeatures = buildFeatures(_defaultContent);
+    Map<String, dynamic>? content = buildContent(_contentSource);
+    if ((content != null) && ((_content == null) || !const DeepCollectionEquality().equals(_content, content))) {
+      _content = content;
+      _features = buildFeatures(_content);
       NotificationService().notify(notifyChanged, null);
     }
   }
@@ -281,33 +268,24 @@ class FlexUI with Service implements NotificationsListener {
 
   // Content
 
-  Map<String, dynamic>? content(String key) {
-    if (key == defaultContentSourceKey) {
-      return _defaultContent;
-    }
-    else {
-      return buildContent(contentSourceEntry(key));
-    }
-  }
-
-  Map<String, dynamic>? get defaultContent {
-    return _defaultContent;
+  Map<String, dynamic>? get content {
+    return _content;
   }
 
   List<dynamic>? operator [](dynamic key) {
-    return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
+    return (_content != null) ? JsonUtils.listValue(_content![key]) : null;
   }
 
-  Map<String, dynamic> get defaultRules {
-    return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
+  Map<String, dynamic> get rules {
+    return JsonUtils.mapValue(_contentSource?['rules']) ?? <String, dynamic>{};
   }
 
-  Set<dynamic>? get defaultFeatures {
-    return _defaultFeatures;
+  Set<dynamic>? get features {
+    return _features;
   }
 
   bool hasFeature(String feature) {
-    return (_defaultFeatures != null) && _defaultFeatures!.contains(feature);
+    return (_features != null) && _features!.contains(feature);
   }
 
   Future<void> update() async {
