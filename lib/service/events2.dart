@@ -277,6 +277,42 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  Future<dynamic> registerToEvent(String eventId) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode({
+        'event_id': eventId,
+      });
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/event-person/register", body: body, headers: headers, auth: Auth2());
+      if (response?.statusCode == 200) {
+        return "";
+      }
+      else {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
+
+  Future<dynamic> unregisterFromEvent(String eventId) async {
+    if (Config().calendarUrl != null) {
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      String url = "${Config().calendarUrl}/event-person/register/$eventId";
+      Response? response = await Network().delete(url, headers: headers, auth: Auth2());
+      if (response?.statusCode == 200) {
+        return "";
+      }
+      else {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
+
 
   // DeepLinks
 
