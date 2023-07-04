@@ -1041,59 +1041,56 @@ class Auth2UserPrefs {
         modified = true;
     }
 
-    if ((_roles != null) && _roles!.isNotEmpty) {
-      _roles = <UserRole>{};
+    if (_roles != null) {
+      _roles = null;
       if (notify == true) {
         NotificationService().notify(notifyRolesChanged);
       }
       modified = true;
     }
 
-    if (favoritesNotEmpty(_favorites)) {
-      _favorites = <String, LinkedHashSet<String>>{};
+    if (_favorites != null) {
+      _favorites = null;
       if (notify == true) {
         NotificationService().notify(notifyFavoritesChanged);
       }
       modified = true;
     }
       
-    if ((_interests != null) && _interests!.isNotEmpty) {
-      _interests = <String, Set<String>>{};
+    if (_interests != null) {
+      _interests = null;
       if (notify == true) {
         NotificationService().notify(notifyInterestsChanged);
       }
       modified = true;
     }
       
-    if (foodFiltersNotEmpty(_foodFilters)) {
-      _foodFilters = {
-        _foodIncludedTypes : <String>{},
-        _foodExcludedIngredients : <String>{},
-      };
+    if (_foodFilters != null) {
+      _foodFilters = null;
       if (notify == true) {
         NotificationService().notify(notifyInterestsChanged);
       }
       modified = true;
     }
 
-    if ((_tags != null) && _tags!.isNotEmpty) {
-      _tags = <String, bool>{};
+    if (_tags != null) {
+      _tags = null;
       if (notify == true) {
         NotificationService().notify(notifyTagsChanged);
       }
       modified = true;
     }
     
-    if ((_settings != null) && _settings!.isNotEmpty) {
-      _settings = <String, dynamic>{};
+    if (_settings != null) {
+      _settings = null;
       if (notify == true) {
         NotificationService().notify(notifySettingsChanged);
       }
       modified = true;
     }
     
-    if ((_voter != null) && _voter!.isNotEmpty) {
-      _voter = Auth2VoterPrefs();
+    if (_voter != null) {
+      _voter = null;
       if (notify == true) {
         NotificationService().notify(notifyVoterChanged);
       }
