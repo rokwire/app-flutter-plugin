@@ -249,10 +249,11 @@ class Events2 with Service implements NotificationsListener {
         meetingPasscode: 'mv7@ntys0_34'
       ),
       canceled: false, private: false, free: true,
-      registrationRequired: true,
       registrationDetails: Event2RegistrationDetails(
+        type: Event2RegistrationType.external,
         label: 'Please register to attend the event.',
         externalLink: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
+        eventCapacity: 50,
       ),
       sponsor: 'Learning Systems Support',
     ),

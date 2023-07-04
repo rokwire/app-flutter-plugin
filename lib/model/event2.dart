@@ -30,11 +30,7 @@ class Event2 with Explore, Favorite {
   final bool? free;
   final String? cost;
 
-  final bool? registrationRequired;
   final Event2RegistrationDetails? registrationDetails;
-  final int? eventCapacity;
-
-  final bool? attendanceRequired;
   final Event2AttendanceDetails? attendanceDetails;
 
   final String? sponsor;
@@ -50,8 +46,7 @@ class Event2 with Explore, Favorite {
     this.grouping, this.attributes, this.private,
     this.canceled, this.userRole,
     this.free, this.cost,
-    this.registrationRequired, this.registrationDetails, this.eventCapacity,
-    this.attendanceRequired, this.attendanceDetails,
+    this.registrationDetails, this.attendanceDetails,
     this.sponsor, this.speaker, this.contacts
   });
 
@@ -85,11 +80,7 @@ class Event2 with Explore, Favorite {
       free: JsonUtils.boolValue(json['free']),
       cost: JsonUtils.stringValue(json['cost']),
 
-      registrationRequired: JsonUtils.boolValue(json['require_registration']),
       registrationDetails: Event2RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
-      eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
-      
-      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       attendanceDetails: Event2AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
 
       sponsor: JsonUtils.stringValue(json['sponsor']),
@@ -125,11 +116,7 @@ class Event2 with Explore, Favorite {
     'free': free,
     'cost': cost,
 
-    'require_registration': registrationRequired,
     'registration_details': registrationDetails?.toJson(),
-    'max_event_capacity': eventCapacity,
-
-    'attendance_required': attendanceRequired,
     'attendance_details': attendanceDetails?.toJson(),
 
     'sponsor': sponsor,
@@ -168,11 +155,7 @@ class Event2 with Explore, Favorite {
     (free == other.free) &&
     (cost == other.cost) &&
 
-    (registrationRequired == other.registrationRequired) &&
     (registrationDetails == other.registrationDetails) &&
-    (eventCapacity == other.eventCapacity) &&
-
-    (attendanceRequired == other.attendanceRequired) &&
     (attendanceDetails == other.attendanceDetails) &&
 
     (sponsor == other.sponsor) &&
@@ -207,11 +190,7 @@ class Event2 with Explore, Favorite {
     (free?.hashCode ?? 0) ^
     (cost?.hashCode ?? 0) ^
 
-    (registrationRequired?.hashCode ?? 0) ^
     (registrationDetails?.hashCode ?? 0) ^
-    (eventCapacity?.hashCode ?? 0) ^
-
-    (attendanceRequired?.hashCode ?? 0) ^
     (attendanceDetails?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
@@ -302,38 +281,86 @@ class Event2OnlineDetails {
 /// Event2RegistrationDetails
 
 class Event2RegistrationDetails {
+  final Event2RegistrationType? type;
   final String? label;
   final String? externalLink;
+  final int? eventCapacity;
 
-  Event2RegistrationDetails({this.label, this.externalLink});
+  Event2RegistrationDetails({this.type, this.label, this.externalLink, this.eventCapacity});
 
-  static Event2RegistrationDetails? fromOther(Event2RegistrationDetails? other, { String? label, String? externalLink}) =>
+  factory Event2RegistrationDetails.empty() => Event2RegistrationDetails(type: Event2RegistrationType.none);
+
+  static Event2RegistrationDetails? fromOther(Event2RegistrationDetails? other, {
+    Event2RegistrationType? type,
+    String? label, String? externalLink,
+    int? eventCapacity,
+  }) =>
     (other != null) ? Event2RegistrationDetails(
+      type: type ?? other.type,
       label: label ?? other.label,
       externalLink: externalLink ?? other.externalLink,
+      eventCapacity: eventCapacity ?? other.eventCapacity,
     ) : null;
 
   static Event2RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2RegistrationDetails(
+      type: event2RegistrationTypeFromString(JsonUtils.stringValue(json['type'])),
       label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
+      eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
+    'type': event2RegistrationTypeToString(type),
     'label': label,
     'external_link': externalLink,
+    'max_event_capacity': eventCapacity,
+
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is Event2RegistrationDetails) &&
+    (type == other.type) &&
     (label == other.label) &&
-    (externalLink == other.externalLink);
+    (externalLink == other.externalLink) &&
+    (eventCapacity == other.eventCapacity);
 
   @override
   int get hashCode =>
+    (type?.hashCode ?? 0) ^
     (label?.hashCode ?? 0) ^
-    (externalLink?.hashCode ?? 0);
+    (externalLink?.hashCode ?? 0) ^
+    (eventCapacity?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2RegistrationType
+
+enum Event2RegistrationType { none, internal, external }
+
+Event2RegistrationType? event2RegistrationTypeFromString(String? value) {
+  if (value == 'none') {
+    return Event2RegistrationType.none;
+  }
+  else if (value == 'internal') {
+    return Event2RegistrationType.internal;
+  }
+  else if (value == 'external') {
+    return Event2RegistrationType.external;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2RegistrationTypeToString(Event2RegistrationType? value) {
+  switch (value) {
+    case Event2RegistrationType.none: return 'none';
+    case Event2RegistrationType.internal: return 'internal';
+    case Event2RegistrationType.external: return 'external';
+    default: return null;
+  }
 }
 
 ///////////////////////////////
