@@ -18,7 +18,7 @@ class Event2 with Explore, Favorite {
 
   final Event2Type? eventType;
   final ExploreLocation? location;
-  final OnlineDetails? onlineDetails;
+  final Event2OnlineDetails? onlineDetails;
 
   final Event2Grouping? grouping;
   final Map<String, dynamic>? attributes;
@@ -31,15 +31,15 @@ class Event2 with Explore, Favorite {
   final String? cost;
 
   final bool? registrationRequired;
-  final RegistrationDetails? registrationDetails;
+  final Event2RegistrationDetails? registrationDetails;
   final int? eventCapacity;
 
   final bool? attendanceRequired;
-  final AttendanceDetails? attendanceDetails;
+  final Event2AttendanceDetails? attendanceDetails;
 
   final String? sponsor;
   final String? speaker;
-  final List<Contact>? contacts;
+  final List<Event2Contact>? contacts;
 
   String? assignedImageUrl;
 
@@ -73,7 +73,7 @@ class Event2 with Explore, Favorite {
 
       eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
       location: ExploreLocation.fromJson(JsonUtils.mapValue(json['location'])),
-      onlineDetails: OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
+      onlineDetails: Event2OnlineDetails.fromJson(JsonUtils.mapValue(json['online_details'])),
 
       grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
       attributes: JsonUtils.mapValue(json['attributes']),
@@ -86,15 +86,15 @@ class Event2 with Explore, Favorite {
       cost: JsonUtils.stringValue(json['cost']),
 
       registrationRequired: JsonUtils.boolValue(json['require_registration']),
-      registrationDetails: RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
+      registrationDetails: Event2RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
       
       attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
-      attendanceDetails: AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
+      attendanceDetails: Event2AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
 
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
-      contacts: Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
+      contacts: Event2Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
 
     ) : null;
 
@@ -134,7 +134,7 @@ class Event2 with Explore, Favorite {
 
     'sponsor': sponsor,
     'speaker': speaker,
-    'contacts': Contact.listToJson(contacts),
+    'contacts': Event2Contact.listToJson(contacts),
   };
 
   // Equality
@@ -262,17 +262,17 @@ class Event2 with Explore, Favorite {
 }
 
 ///////////////////////////////
-/// OnlineDetails
+/// Event2OnlineDetails
 
-class OnlineDetails {
+class Event2OnlineDetails {
   final String? url;
   final String? meetingId;
   final String? meetingPasscode;
 
-  OnlineDetails({this.url, this.meetingId, this.meetingPasscode});
+  Event2OnlineDetails({this.url, this.meetingId, this.meetingPasscode});
 
-  static OnlineDetails? fromJson(Map<String, dynamic>? json) =>
-    (json != null) ? OnlineDetails(
+  static Event2OnlineDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? Event2OnlineDetails(
       url: JsonUtils.stringValue(json['url']),
       meetingId: JsonUtils.stringValue(json['meeting_id']),
       meetingPasscode: JsonUtils.stringValue(json['meeting_passcode'])
@@ -286,7 +286,7 @@ class OnlineDetails {
 
   @override
   bool operator==(dynamic other) =>
-    (other is OnlineDetails) &&
+    (other is Event2OnlineDetails) &&
     (url == other.url) &&
     (meetingId == other.meetingId) &&
     (meetingPasscode == other.meetingPasscode);
@@ -299,22 +299,22 @@ class OnlineDetails {
 }
 
 ///////////////////////////////
-/// RegistrationDetails
+/// Event2RegistrationDetails
 
-class RegistrationDetails {
+class Event2RegistrationDetails {
   final String? label;
   final String? externalLink;
 
-  RegistrationDetails({this.label, this.externalLink});
+  Event2RegistrationDetails({this.label, this.externalLink});
 
-  static RegistrationDetails? fromOther(RegistrationDetails? other, { String? label, String? externalLink}) =>
-    (other != null) ? RegistrationDetails(
+  static Event2RegistrationDetails? fromOther(Event2RegistrationDetails? other, { String? label, String? externalLink}) =>
+    (other != null) ? Event2RegistrationDetails(
       label: label ?? other.label,
       externalLink: externalLink ?? other.externalLink,
     ) : null;
 
-  static RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
-    (json != null) ? RegistrationDetails(
+  static Event2RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? Event2RegistrationDetails(
       label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
     ) : null;
@@ -326,7 +326,7 @@ class RegistrationDetails {
 
   @override
   bool operator==(dynamic other) =>
-    (other is RegistrationDetails) &&
+    (other is Event2RegistrationDetails) &&
     (label == other.label) &&
     (externalLink == other.externalLink);
 
@@ -337,26 +337,26 @@ class RegistrationDetails {
 }
 
 ///////////////////////////////
-/// AttendanceDetails
+/// Event2AttendanceDetails
 
-class AttendanceDetails {
+class Event2AttendanceDetails {
   final bool? attendanceRequired;
   final bool? takeAttendanceViaAppEnabled;
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
 
-  AttendanceDetails({this.attendanceRequired, this.takeAttendanceViaAppEnabled, this.scanningEnabled, this.manualCheckEnabled});
+  Event2AttendanceDetails({this.attendanceRequired, this.takeAttendanceViaAppEnabled, this.scanningEnabled, this.manualCheckEnabled});
 
-  static AttendanceDetails? fromOther(AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
-    (other != null) ? AttendanceDetails(
+  static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
+    (other != null) ? Event2AttendanceDetails(
       attendanceRequired: attendanceRequired ?? other.attendanceRequired,
       takeAttendanceViaAppEnabled: takeAttendanceViaAppEnabled ?? other.takeAttendanceViaAppEnabled,
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
     ) : null;
 
-  static AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
-    (json != null) ? AttendanceDetails(
+  static Event2AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
+    (json != null) ? Event2AttendanceDetails(
       attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
       takeAttendanceViaAppEnabled: JsonUtils.boolValue(json['is_app_attendance_taking_enabled']),
       scanningEnabled: JsonUtils.boolValue(json['is_ID_scanning_enabled']),
@@ -372,7 +372,7 @@ class AttendanceDetails {
 
   @override
   bool operator==(dynamic other) =>
-    (other is AttendanceDetails) &&
+    (other is Event2AttendanceDetails) &&
     (attendanceRequired == other.attendanceRequired) &&
     (takeAttendanceViaAppEnabled == other.takeAttendanceViaAppEnabled) &&
     (scanningEnabled == other.scanningEnabled) &&
@@ -427,24 +427,24 @@ class Event2Grouping {
 }
 
 ///////////////////////////////
-/// Contact
+/// Event2Contact
 
-class Contact {
+class Event2Contact {
   String? firstName;
   String? lastName;
   String? email;
   String? phone;
   String? organization;
 
-  Contact({
+  Event2Contact({
     this.firstName,
     this.lastName,
     this.email,
     this.phone,
     this.organization});
 
-  static Contact? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? Contact(
+  static Event2Contact? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2Contact(
       firstName: JsonUtils.stringValue(json['first_name']),
       lastName: JsonUtils.stringValue(json['last_name']),
       email: JsonUtils.stringValue(json['email']),
@@ -465,7 +465,7 @@ class Contact {
 
   @override
   bool operator ==(other) =>
-      (other is Contact) &&
+      (other is Event2Contact) &&
       (other.firstName == firstName) &&
       (other.lastName == lastName) &&
       (other.email == email) &&
@@ -480,18 +480,18 @@ class Contact {
       (phone?.hashCode ?? 0) ^
       (organization?.hashCode ?? 0);
 
-  static List<Contact>? listFromJson(List<dynamic>? jsonList) {
-    List<Contact>? result;
+  static List<Event2Contact>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2Contact>? result;
     if (jsonList != null) {
-      result = <Contact>[];
+      result = <Event2Contact>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(result, Contact.fromJson(JsonUtils.mapValue(jsonEntry)));
+        ListUtils.add(result, Event2Contact.fromJson(JsonUtils.mapValue(jsonEntry)));
       }
     }
     return result;
   }
 
-  static List<dynamic>? listToJson(List<Contact>? contentList) {
+  static List<dynamic>? listToJson(List<Event2Contact>? contentList) {
     List<dynamic>? jsonList;
     if (contentList != null) {
       jsonList = <dynamic>[];

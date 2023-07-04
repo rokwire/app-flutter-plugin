@@ -121,8 +121,8 @@ class Events2 with Service implements NotificationsListener {
       canceled: false, private: false, free: true,
       sponsor: 'Computer Science',
       speaker: 'Dr. Hong Hao',
-      contacts: <Contact>[
-        Contact(firstName: 'Cynthia', lastName: 'Coleman', email: 'ccoleman@illinois.edu'),
+      contacts: <Event2Contact>[
+        Event2Contact(firstName: 'Cynthia', lastName: 'Coleman', email: 'ccoleman@illinois.edu'),
       ],
     ),
     Event2(id: '2',
@@ -146,8 +146,8 @@ class Events2 with Service implements NotificationsListener {
       canceled: false, private: false, free: true,
       sponsor: 'Center for Global Studies; Russian, East European, and Eurasian Center',
       speaker: 'Yaryna Zakalaska (Assistant Professor in the Department of Folklore Studies at the Taras Shevchenko National University of Kyiv); Serhii Yanchuk (Associate Professor, Institute of Philology, Taras Shevchenko National University of Kyiv, Currently Serving on the Front Lines of Ukraine)',
-      contacts: <Contact>[
-        Contact(firstName: 'REEEC', lastName: null, email: 'reeec@illinois.edu'),
+      contacts: <Event2Contact>[
+        Event2Contact(firstName: 'REEEC', lastName: null, email: 'reeec@illinois.edu'),
       ],
     ),
     Event2(id: '3',
@@ -172,8 +172,8 @@ class Events2 with Service implements NotificationsListener {
       canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
-      contacts: <Contact>[
-        Contact(firstName: 'LAS', lastName: 'International', email: 'las-studyabroad@illinois'),
+      contacts: <Event2Contact>[
+        Event2Contact(firstName: 'LAS', lastName: 'International', email: 'las-studyabroad@illinois'),
       ],
     ),
     Event2(id: '4',
@@ -198,8 +198,8 @@ class Events2 with Service implements NotificationsListener {
       canceled: false, private: false, free: true,
       sponsor: 'LAS International Programs',
       speaker: 'Nikolai Alvarado',
-      contacts: <Contact>[
-        Contact(firstName: 'LAS', lastName: 'International', email: 'las-studyabroad@illinois'),
+      contacts: <Event2Contact>[
+        Event2Contact(firstName: 'LAS', lastName: 'International', email: 'las-studyabroad@illinois'),
       ],
     ),
     Event2(id: '5',
@@ -224,8 +224,8 @@ class Events2 with Service implements NotificationsListener {
       canceled: false, private: false, free: true,
       sponsor: 'Department of Physics',
       speaker: 'Cosimo Bambi',
-      contacts: <Contact>[
-        Contact(firstName: 'Brandy', lastName: 'Koebbe', email: 'bkoebbe@illinois.edu'),
+      contacts: <Event2Contact>[
+        Event2Contact(firstName: 'Brandy', lastName: 'Koebbe', email: 'bkoebbe@illinois.edu'),
       ],
     ),
     Event2(id: '6',
@@ -243,14 +243,14 @@ class Events2 with Service implements NotificationsListener {
         'department': 'Parking Department',
       },
       eventType: Event2Type.online,
-      onlineDetails: OnlineDetails(
+      onlineDetails: Event2OnlineDetails(
         url: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
         meetingId: '78FPU395',
         meetingPasscode: 'mv7@ntys0_34'
       ),
       canceled: false, private: false, free: true,
       registrationRequired: true,
-      registrationDetails: RegistrationDetails(
+      registrationDetails: Event2RegistrationDetails(
         label: 'Please register to attend the event.',
         externalLink: 'https://uillinois.abilitylms.com/UIllinois/LearnerWeb_PTM.php?ActionID=Module&SegmentID=CourseHomePage&CourseID=UAFR_JVP_S3_ONLINE',
       ),
