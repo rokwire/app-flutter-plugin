@@ -382,13 +382,15 @@ class Events2Query {
   final Event2SortOrder? sortOrder;
   final int? offset;
   final int? limit;
+  final Set<String>? ids;
 
   Events2Query({this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
-    this.offset = 0, this.limit
+    this.offset = 0, this.limit,
+    this.ids
   });
 
   Map<String, dynamic> toQueryJson() {
@@ -429,6 +431,10 @@ class Events2Query {
 
     if (limit != null) {
       options['limit'] = limit;
+    }
+
+    if (ids != null) {
+      options['ids'] = ids;
     }
 
     return options;
