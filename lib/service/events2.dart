@@ -259,6 +259,17 @@ class Events2 with Service implements NotificationsListener {
     ),
   ];
 
+  Future<Event2?> loadEvent(String eventId) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode({
+        "ids":[eventId]
+      });
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
+      return  Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null))?.firstOrNull;
+    }
+    return null;
+  }
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2? source) async {
     if (Config().calendarUrl != null) {
@@ -382,15 +393,13 @@ class Events2Query {
   final Event2SortOrder? sortOrder;
   final int? offset;
   final int? limit;
-  final Set<String>? ids;
 
   Events2Query({this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
-    this.offset = 0, this.limit,
-    this.ids
+    this.offset = 0, this.limit
   });
 
   Map<String, dynamic> toQueryJson() {
@@ -431,10 +440,6 @@ class Events2Query {
 
     if (limit != null) {
       options['limit'] = limit;
-    }
-
-    if (ids != null) {
-      options['ids'] = ids;
     }
 
     return options;
