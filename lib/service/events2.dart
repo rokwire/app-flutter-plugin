@@ -266,7 +266,8 @@ class Events2 with Service implements NotificationsListener {
       });
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
       Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
-      return  Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null))?.firstOrNull;
+      List<Event2>? resultList = Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null));
+      return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
     }
     return null;
   }
