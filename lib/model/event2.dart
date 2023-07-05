@@ -32,6 +32,7 @@ class Event2 with Explore, Favorite {
 
   final Event2RegistrationDetails? registrationDetails;
   final Event2AttendanceDetails? attendanceDetails;
+  final Event2SurveyDetails? surveyDetails;
 
   final String? sponsor;
   final String? speaker;
@@ -46,7 +47,7 @@ class Event2 with Explore, Favorite {
     this.grouping, this.attributes, this.private,
     this.canceled, this.userRole,
     this.free, this.cost,
-    this.registrationDetails, this.attendanceDetails,
+    this.registrationDetails, this.attendanceDetails, this.surveyDetails,
     this.sponsor, this.speaker, this.contacts
   });
 
@@ -82,6 +83,7 @@ class Event2 with Explore, Favorite {
 
       registrationDetails: Event2RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       attendanceDetails: Event2AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
+      surveyDetails: Event2SurveyDetails.fromJson(JsonUtils.mapValue(json['survey_details'])),
 
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
@@ -118,6 +120,7 @@ class Event2 with Explore, Favorite {
 
     'registration_details': registrationDetails?.toJson(),
     'attendance_details': attendanceDetails?.toJson(),
+    'survey_details': surveyDetails?.toJson(),
 
     'sponsor': sponsor,
     'speaker': speaker,
@@ -157,6 +160,7 @@ class Event2 with Explore, Favorite {
 
     (registrationDetails == other.registrationDetails) &&
     (attendanceDetails == other.attendanceDetails) &&
+    (surveyDetails == other.surveyDetails) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -192,6 +196,7 @@ class Event2 with Explore, Favorite {
 
     (registrationDetails?.hashCode ?? 0) ^
     (attendanceDetails?.hashCode ?? 0) ^
+    (surveyDetails?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -420,6 +425,45 @@ class Event2AttendanceDetails {
 
   bool get isNotEmpty => !isEmpty;
 }
+
+///////////////////////////////
+/// Event2SurveyDetails
+
+class Event2SurveyDetails {
+  final bool? hasSurvey;
+  final int? hoursAfterEvent;
+
+  Event2SurveyDetails({this.hasSurvey, this.hoursAfterEvent});
+
+  static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {bool? hasSurvey, int? hoursAfterEvent}) =>
+      (other != null) ? Event2SurveyDetails(
+        hasSurvey: hasSurvey ?? other.hasSurvey,
+        hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
+      ) : null;
+
+  static Event2SurveyDetails? fromJson(Map<String, dynamic>? json) =>
+      (json != null) ? Event2SurveyDetails(
+        hasSurvey: JsonUtils.boolValue(json['has_follow_up_survey']),
+        hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
+      ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'has_follow_up_survey': hasSurvey,
+    'hours_after_event': hoursAfterEvent,
+  };
+
+  @override
+  bool operator==(dynamic other) =>
+      (other is Event2SurveyDetails) &&
+          (hasSurvey == other.hasSurvey) &&
+          (hoursAfterEvent == other.hoursAfterEvent);
+
+  @override
+  int get hashCode =>
+      (hasSurvey?.hashCode ?? 0) ^
+      (hoursAfterEvent?.hashCode ?? 0);
+}
+
 
 ///////////////////////////////
 /// Event2Grouping
