@@ -20,6 +20,7 @@ import 'package:timezone/timezone.dart';
 class Events2 with Service implements NotificationsListener {
 
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch_detail";
+  static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
 
@@ -279,6 +280,7 @@ class Events2 with Service implements NotificationsListener {
       Response? response = await Network().post("${Config().calendarUrl}/event", body: body, headers: headers, auth: Auth2());
       Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
       if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
         return Event2.fromJson(responseJson);
       }
       else {
