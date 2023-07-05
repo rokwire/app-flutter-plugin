@@ -20,6 +20,7 @@ import 'package:timezone/timezone.dart';
 class Events2 with Service implements NotificationsListener {
 
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch_detail";
+  static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
 
@@ -259,6 +260,18 @@ class Events2 with Service implements NotificationsListener {
     ),
   ];
 
+  Future<Event2?> loadEvent(String eventId) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode({
+        "ids":[eventId]
+      });
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
+      List<Event2>? resultList = Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null));
+      return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
+    }
+    return null;
+  }
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2? source) async {
     if (Config().calendarUrl != null) {
@@ -267,6 +280,7 @@ class Events2 with Service implements NotificationsListener {
       Response? response = await Network().post("${Config().calendarUrl}/event", body: body, headers: headers, auth: Auth2());
       Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
       if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
         return Event2.fromJson(responseJson);
       }
       else {
@@ -382,15 +396,13 @@ class Events2Query {
   final Event2SortOrder? sortOrder;
   final int? offset;
   final int? limit;
-  final Set<String>? ids;
 
   Events2Query({this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
-    this.offset = 0, this.limit,
-    this.ids
+    this.offset = 0, this.limit
   });
 
   Map<String, dynamic> toQueryJson() {
@@ -431,10 +443,6 @@ class Events2Query {
 
     if (limit != null) {
       options['limit'] = limit;
-    }
-
-    if (ids != null) {
-      options['ids'] = ids;
     }
 
     return options;
