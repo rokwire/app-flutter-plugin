@@ -520,6 +520,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
+  String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
   // Getters: otherUniversityServices

@@ -226,6 +226,10 @@ class Auth2Account {
     return linkedTypes;
   }
 
+  bool get isCalendarAdmin {
+    return hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
+  }
+
   bool get isManagedGroupAdmin {
     return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
@@ -1026,6 +1030,80 @@ class Auth2UserPrefs {
     return modified;
   }
 
+  bool clear({ bool? notify }) {
+    bool modified = true; //TMP
+
+    if (_privacyLevel != null) {
+        _privacyLevel = null;
+        if (notify == true) {
+          NotificationService().notify(notifyPrivacyLevelChanged);
+        }
+        modified = true;
+    }
+
+    if (_roles != null) {
+      _roles = null;
+      if (notify == true) {
+        NotificationService().notify(notifyRolesChanged);
+      }
+      modified = true;
+    }
+
+    if (_favorites != null) {
+      _favorites = null;
+      if (notify == true) {
+        NotificationService().notify(notifyFavoritesChanged);
+      }
+      modified = true;
+    }
+      
+    if (_interests != null) {
+      _interests = null;
+      if (notify == true) {
+        NotificationService().notify(notifyInterestsChanged);
+      }
+      modified = true;
+    }
+      
+    if (_foodFilters != null) {
+      _foodFilters = null;
+      if (notify == true) {
+        NotificationService().notify(notifyInterestsChanged);
+      }
+      modified = true;
+    }
+
+    if (_tags != null) {
+      _tags = null;
+      if (notify == true) {
+        NotificationService().notify(notifyTagsChanged);
+      }
+      modified = true;
+    }
+    
+    if (_settings != null) {
+      _settings = null;
+      if (notify == true) {
+        NotificationService().notify(notifySettingsChanged);
+      }
+      modified = true;
+    }
+    
+    if (_voter != null) {
+      _voter = null;
+      if (notify == true) {
+        NotificationService().notify(notifyVoterChanged);
+      }
+      modified = true;
+    }
+
+    if (modified) {
+      NotificationService().notify(notifyChanged, this);
+    }
+
+    return modified;
+  }
+  
   // Privacy
 
   int? get privacyLevel {
@@ -1211,8 +1289,12 @@ class Auth2UserPrefs {
   }
 
   bool get hasFavorites {
+    return favoritesNotEmpty(_favorites);
+  }
+
+  static bool favoritesNotEmpty(Map<String, LinkedHashSet<String>>? favorites) {
     bool result = false;
-    _favorites?.forEach((String key, LinkedHashSet<String> values) {
+    favorites?.forEach((String key, LinkedHashSet<String> values) {
       if (values.isNotEmpty) {
         result = true;
       }
@@ -1425,7 +1507,11 @@ class Auth2UserPrefs {
   }
 
   bool get hasFoodFilters {
-    return (includedFoodTypes?.isNotEmpty ?? false) || (excludedFoodIngredients?.isNotEmpty ?? false);
+    return foodFiltersNotEmpty(_foodFilters);
+  }
+
+  static bool foodFiltersNotEmpty(Map<String, Set<String>>? foodFilters) {
+    return (foodFilters?[_foodIncludedTypes]?.isNotEmpty ?? false) || (foodFilters?[_foodExcludedIngredients]?.isNotEmpty ?? false);
   }
 
   void clearFoodFilters() {
