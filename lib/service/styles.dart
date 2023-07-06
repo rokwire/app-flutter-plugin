@@ -358,6 +358,7 @@ class UiColors {
   Color? get disabledTextColor          => colorMap['disabledTextColor'];
   Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
   Color? get dividerLine                => colorMap['dividerLine'];
+  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
 
   Color? get mango                      => colorMap['mango'];
 
