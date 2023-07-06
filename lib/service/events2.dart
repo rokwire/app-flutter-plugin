@@ -554,9 +554,8 @@ class Events2Query {
       options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
-      if (customStartTimeUtc != null) {
-        options['end_time_after'] = customStartTimeUtc.millisecondsSinceEpoch ~/ 1000;
-      }
+      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowUni)) ? customStartTimeUtc : nowUni;
+      options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
