@@ -77,7 +77,7 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<List<Event2>?> loadEvents(Events2LoadQuery? query) async {
+  Future<List<Event2>?> loadEvents(Events2Query? query) async {
     if (Storage().debugUseSampleEvents2 == true) {
       List<Event2> sampleEvents = _sampleEvents;
       int index = 0, limit = query?.limit ?? _sampleEvents.length;
@@ -405,7 +405,7 @@ class Events2 with Service implements NotificationsListener {
   }
 }
 
-class Events2LoadQuery {
+class Events2Query {
   static const double nearbyDistanceInMiles = 1.0;
 
   final String? searchText;
@@ -420,7 +420,7 @@ class Events2LoadQuery {
   final int? offset;
   final int? limit;
 
-  Events2LoadQuery({this.searchText,
+  Events2Query({this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
