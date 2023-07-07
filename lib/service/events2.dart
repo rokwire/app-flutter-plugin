@@ -294,8 +294,18 @@ class Events2 with Service implements NotificationsListener {
 
   //Return error message, null if successful
   Future<dynamic> deleteEvent(String eventId) async{
-    if (Config().calendarUrl != null) {
-
+    if (Config().calendarUrl != null) { //TBD this is deprecated API. Hook to the new one when available
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().delete("${Config().calendarUrl}/event/$eventId", headers: headers, auth: Auth2());
+      if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
+        return null;
+      }
+      else {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
     }
     return "Missing calendar url";
   }
