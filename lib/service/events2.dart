@@ -77,7 +77,7 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<List<Event2>?> loadEvents(Events2Query? query) async {
+  Future<Events2ListResult?> loadEvents(Events2Query? query) async {
     if (Storage().debugUseSampleEvents2 == true) {
       List<Event2> sampleEvents = _sampleEvents;
       int index = 0, limit = query?.limit ?? _sampleEvents.length;
@@ -87,14 +87,26 @@ class Events2 with Service implements NotificationsListener {
         index = (index + 1) % sampleEvents.length;
       }
       await Future.delayed(const Duration(seconds: 1));
-      return result;
+      return Events2ListResult(
+        events: result,
+        totalCount: result.length
+      );
     }
     else if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode(query?.toQueryJson());
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
       Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
-      return Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null));
+      dynamic responseJson = JsonUtils.decode((response?.statusCode == 200) ? response?.body : null);
+      if (responseJson is Map) {
+        return Events2ListResult.fromJson(JsonUtils.mapValue(responseJson));
+      }
+      else if (responseJson is List) {
+        return Events2ListResult(events: Event2.listFromJson(JsonUtils.listValue(responseJson)));
+      }
+      else {
+        return null;
+      }
     }
     return null;
   }
@@ -267,7 +279,14 @@ class Events2 with Service implements NotificationsListener {
       });
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
       Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
-      List<Event2>? resultList = Event2.listFromJson(JsonUtils.decodeList((response?.statusCode == 200) ? response?.body : null));
+      List<Event2>? resultList;
+      dynamic responseJson = JsonUtils.decode((response?.statusCode == 200) ? response?.body : null);
+      if (responseJson is Map) {
+        resultList = Events2ListResult.fromJson(JsonUtils.mapValue(responseJson))?.events;
+      }
+      else if (responseJson is List) {
+        resultList = Event2.listFromJson(JsonUtils.listValue(responseJson));
+      }
       return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
     }
     return null;

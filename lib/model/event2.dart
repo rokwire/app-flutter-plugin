@@ -53,8 +53,7 @@ class Event2 with Explore, Favorite {
 
   // JSON serialization
 
-  static Event2? fromJson(Map<String, dynamic>? json) =>
-    (json != null) ? Event2(
+  static Event2? fromJson(Map<String, dynamic>? json) => (json != null) ? Event2(
       id: JsonUtils.stringValue(json['id']),
       name: JsonUtils.stringValue(json['name']),
       description: JsonUtils.stringValue(json['description']),
@@ -883,3 +882,35 @@ String? event2GroupingTypeToString(Event2GroupingType? value) {
   }
 }
 
+///////////////////////////////
+/// Events2ListResult
+
+class Events2ListResult {
+  final List<Event2>? events;
+  final int? totalCount;
+  
+  Events2ListResult({this.events, this.totalCount});
+
+  static Events2ListResult? fromJson(Map<String, dynamic>? json) => (json != null) ? Events2ListResult(
+    events: Event2.listFromJson(JsonUtils.listValue(json['result'])),
+    totalCount: JsonUtils.intValue(json['total_count']),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'result': Event2.listToJson(events),
+    'total_count': totalCount,
+  };
+
+  // Equality
+
+  @override
+  bool operator==(dynamic other) =>
+    (other is Events2ListResult) &&
+    (const DeepCollectionEquality().equals(events, other.events)) &&
+    (totalCount == other.totalCount);
+
+  @override
+  int get hashCode =>
+    (const DeepCollectionEquality().hash(events)) ^
+    (totalCount?.hashCode ?? 0);
+}
