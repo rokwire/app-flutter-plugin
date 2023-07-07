@@ -372,32 +372,24 @@ String? event2RegistrationTypeToString(Event2RegistrationType? value) {
 /// Event2AttendanceDetails
 
 class Event2AttendanceDetails {
-  final bool? attendanceRequired;
-  final bool? takeAttendanceViaAppEnabled;
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
 
-  Event2AttendanceDetails({this.attendanceRequired, this.takeAttendanceViaAppEnabled, this.scanningEnabled, this.manualCheckEnabled});
+  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled});
 
   static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
     (other != null) ? Event2AttendanceDetails(
-      attendanceRequired: attendanceRequired ?? other.attendanceRequired,
-      takeAttendanceViaAppEnabled: takeAttendanceViaAppEnabled ?? other.takeAttendanceViaAppEnabled,
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
     ) : null;
 
   static Event2AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2AttendanceDetails(
-      attendanceRequired: JsonUtils.boolValue(json['attendance_required']),
-      takeAttendanceViaAppEnabled: JsonUtils.boolValue(json['is_app_attendance_taking_enabled']),
       scanningEnabled: JsonUtils.boolValue(json['is_ID_scanning_enabled']),
       manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
-    'attendance_required': attendanceRequired,
-    'is_app_attendance_taking_enabled': takeAttendanceViaAppEnabled,
     'is_ID_scanning_enabled': scanningEnabled,
     'is_manual_attendance_check_enabled': manualCheckEnabled,
   };
@@ -405,25 +397,19 @@ class Event2AttendanceDetails {
   @override
   bool operator==(dynamic other) =>
     (other is Event2AttendanceDetails) &&
-    (attendanceRequired == other.attendanceRequired) &&
-    (takeAttendanceViaAppEnabled == other.takeAttendanceViaAppEnabled) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled);
 
   @override
   int get hashCode =>
-    (attendanceRequired?.hashCode ?? 0) ^
-    (takeAttendanceViaAppEnabled?.hashCode ?? 0) ^
     (scanningEnabled?.hashCode ?? 0) ^
     (manualCheckEnabled?.hashCode ?? 0);
 
-  bool get isEmpty =>
-    (attendanceRequired != true) &&
-    (takeAttendanceViaAppEnabled != true) && 
-    (scanningEnabled != true) && 
-    (manualCheckEnabled != true);
+  bool get isEmpty => !isNotEmpty;
 
-  bool get isNotEmpty => !isEmpty;
+  bool get isNotEmpty =>
+    (scanningEnabled == true) || 
+    (manualCheckEnabled == true);
 }
 
 ///////////////////////////////
