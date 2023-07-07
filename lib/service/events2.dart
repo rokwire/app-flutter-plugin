@@ -319,6 +319,7 @@ class Events2 with Service implements NotificationsListener {
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
       Response? response = await Network().post("${Config().calendarUrl}/event-person/register", body: body, headers: headers, auth: Auth2());
       if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
         return null;
       }
       else {
@@ -337,6 +338,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/event-person/unregister/$eventId";
       Response? response = await Network().delete(url, headers: headers, auth: Auth2());
       if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
         return null;
       }
       else {
