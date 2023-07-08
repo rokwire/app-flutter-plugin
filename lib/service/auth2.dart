@@ -444,7 +444,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
-  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName) async {
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName, {bool? public = false}) async {
     String? errorMessage;
     if ((Config().authBaseUrl != null) && (username != null)) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
@@ -473,6 +473,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         },
         'params': {
           "display_name": displayName,
+        },
+        'privacy': {
+          'public': public,
         },
         'profile': profile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
@@ -739,7 +742,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Phone Authentication
 
-  Future<Auth2PhoneRequestCodeResult> authenticateWithPhone(String? phoneNumber) async {
+  Future<Auth2PhoneRequestCodeResult> authenticateWithPhone(String? phoneNumber, {bool? public = false}) async {
     if ((Config().authBaseUrl != null) && (phoneNumber != null)) {
       NotificationService().notify(notifyLoginStarted, phoneLoginType);
 
@@ -751,6 +754,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'auth_type': auth2LoginTypeToString(phoneLoginType),
         'creds': {
           "phone": phoneNumber,
+        },
+        'privacy': {
+          'public': public,
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
@@ -865,7 +871,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2EmailSignInResult.failed;
   }
 
-  Future<Auth2EmailSignUpResult> signUpWithEmail(String? email, String? password) async {
+  Future<Auth2EmailSignUpResult> signUpWithEmail(String? email, String? password, {bool? public = false}) async {
     if ((Config().authBaseUrl != null) && (email != null) && (password != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -880,6 +886,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'params': {
           "sign_up": true,
           "confirm_password": password
+        },
+        'privacy': {
+          'public': public,
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
@@ -1038,7 +1047,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2UsernameSignInResult.failed;
   }
 
-  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password) async {
+  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password, {bool? public = false}) async {
     if ((Config().authBaseUrl != null) && (username != null) && (password != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -1053,6 +1062,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'params': {
           "sign_up": true,
           "confirm_password": password
+        },
+        'privacy': {
+          'public': public,
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),

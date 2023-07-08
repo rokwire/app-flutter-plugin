@@ -567,6 +567,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
     if (isReleaseWeb) {
+      print(kDebugMode);
       return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {
       return '$coreUrl/admin';
@@ -593,7 +594,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   bool get isAdmin => false;
-  bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }
 
