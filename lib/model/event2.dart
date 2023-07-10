@@ -562,7 +562,7 @@ class Event2Contact {
 ///////////////////////////////
 /// Event2UserRole
 
-enum Event2UserRole { admin, participant, attendance_taker }
+enum Event2UserRole { admin, participant, attendanceTaker }
 
 Event2UserRole? event2UserRoleFromString(String? value) {
   if (value == 'admin') {
@@ -572,7 +572,7 @@ Event2UserRole? event2UserRoleFromString(String? value) {
     return Event2UserRole.participant;
   }
   else if (value == 'attendance_taker') {
-    return Event2UserRole.attendance_taker;
+    return Event2UserRole.attendanceTaker;
   }
   else {
     return null;
@@ -583,7 +583,7 @@ String? event2UserRoleToString(Event2UserRole? value) {
   switch (value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
-    case Event2UserRole.attendance_taker: return 'attendance_taker';
+    case Event2UserRole.attendanceTaker: return 'attendance_taker';
     default: return null;
   }
 }
