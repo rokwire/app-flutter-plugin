@@ -95,6 +95,9 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
+    (await loadEvents(query))?.events;
+
   Future<Event2?> loadEvent(String eventId) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode({
