@@ -413,7 +413,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: Config Asset Acknowledgement
 
   String? get appConfigUrl {
-    if (kIsWeb) {
+    if (isReleaseWeb) {
       return "$authBaseUrl/application/configs";
     }
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
@@ -566,8 +566,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
-    if (isReleaseWeb) {
-      return '${html.window.location.origin}/$webServiceId';
+    if (kIsWeb) {
+      return 'https://vogue.dev.api.rokmetro.com/$webServiceId';
     } else if (isAdmin) {
       return '$coreUrl/admin';
     }
