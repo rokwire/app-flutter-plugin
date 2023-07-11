@@ -157,7 +157,7 @@ class _RoundedButtonState extends State<RoundedButton> {
   @override
   Widget build(BuildContext context) {
     return (widget.progress == true)
-      ? Stack(children: [ _outerContent, _progressContent, ],)
+      ? Stack(alignment: Alignment.center, children: [ _outerContent, _progressContent, ],)
       : _outerContent;
   }
 

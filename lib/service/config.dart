@@ -561,13 +561,14 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
+  String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
     if (kIsWeb) {
-      return 'https://vogue.dev.api.rokmetro.com/$webServiceId';
+      return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {
       return '$coreUrl/admin';
     }
@@ -593,7 +594,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   bool get isAdmin => false;
-  bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }
 

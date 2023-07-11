@@ -378,8 +378,8 @@ class Event with Explore, Favorite {
     }
     if(location!=null) {
       Map<String, dynamic> locationJson = {};
-      if(location!.locationId!=null) {
-        locationJson["locationId"] = location!.locationId;
+      if(location!.id!=null) {
+        locationJson["id"] = location!.id;
       }
       if(location!.name!=null) {
         locationJson["name"] = location!.name;

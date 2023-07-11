@@ -278,6 +278,29 @@ class SetUtils {
   }
 }
 
+class LinkedHashSetUtils {
+  static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
+    return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
+  }
+
+  static void add<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      set.add(entry);
+    }
+  }
+
+  static void toggle<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
+    }
+  }
+}
+
 class MapUtils {
 
   static Map<K, T>? from<K, T>(Map<K, T>? other) {
@@ -677,14 +700,29 @@ class JsonUtils {
     return null;
   }
 
-  static List<dynamic>? listValue(dynamic value) {
+  static List<T>? listValue<T>(dynamic value) {
     try {
-      return (value is List) ? value.cast<dynamic>() : null;
+      return (value is List) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Set<T>? setValue<T>(dynamic value) {
+    try {
+      return (value is Set) ? value.cast<T>() : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
+    Set<T>? set = setValue(value);
+    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
@@ -1085,7 +1123,7 @@ DayPart? dayPartFromString(String? value) {
 class DateTimeUtils {
 
   static const String defaultDateTimeFormat = 'yyyy-MM-ddTHH:mm:ss.SSS';
-  
+
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
       return null;
@@ -1109,6 +1147,13 @@ class DateTimeUtils {
   static String? localDateTimeToString(DateTime? dateTime, { String format = defaultDateTimeFormat }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
+
+  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
+    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
+
+  static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
+    (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
+
 
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
@@ -1265,14 +1310,56 @@ class DateTimeUtils {
 }
 
 class TZDateTimeUtils {
-  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day);
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location, bool inclusive = false }) =>
+    dateTime.dateOnly(location: location, inclusive: inclusive);
+
+  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.startOfNextMonth(location: location);
+
+  static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.endOfThisMonth(location: location);
+
+  static dynamic toJson(timezone.TZDateTime? dateTime) =>
+    dateTime?.toJson;
+
+  static timezone.TZDateTime? fromJson(dynamic json) =>
+    TZDateTimeExt.fromJson(json);
 
   static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
-    (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;
+    (time != null) ? timezone.TZDateTime.from(time, location) : null;
+
 
   static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+extension TZDateTimeExt on timezone.TZDateTime {
+  timezone.TZDateTime dateOnly({ timezone.Location? location, bool inclusive = false }) =>
+    timezone.TZDateTime(location ?? this.location, year, month, day, inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0);
+
+  timezone.TZDateTime startOfNextMonth({ timezone.Location? location }) => (month < 12) ?
+    timezone.TZDateTime(location ?? this.location, year, month + 1, 1) :
+    timezone.TZDateTime(location ?? this.location, year + 1, 1, 1);
+
+  timezone.TZDateTime endOfThisMonth({ timezone.Location? location }) =>
+    startOfNextMonth(location: location).subtract(const Duration(days: 1)).dateOnly(inclusive: true);
+
+  toJson() => {
+    'location': location.name,
+    'timestamp': millisecondsSinceEpoch
+  };
+
+  static timezone.TZDateTime? fromJson(dynamic json) {
+    if (json is Map) {
+      String? locationName = JsonUtils.stringValue(json['location']);
+      timezone.Location? location = (locationName != null) ? timezone.getLocation(locationName) : null;
+      int? timestamp = JsonUtils.intValue(json['timestamp']);
+      if ((location != null) && (timestamp != null)) {
+        return timezone.TZDateTime.fromMillisecondsSinceEpoch(location, timestamp);
+      }
+    }
+    return null;
+  }
 }
 
 class WebUtils {

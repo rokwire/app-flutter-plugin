@@ -342,6 +342,25 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<List<Survey>?> loadSurveys() async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/surveys';
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+        if (responseList != null) {
+          List<Survey>? surveys = Survey.listFromJson(responseList);
+          return surveys;
+        }
+      } else {
+        debugPrint('Failed to load surveys. Reason: $responseCode, $responseBody');
+      }
+    }
+    return null;
+  }
+
   Future<Survey?> loadSurvey(String id) async {
     if (enabled) {
       String url = '${Config().surveysUrl}/surveys/$id';
