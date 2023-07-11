@@ -91,17 +91,19 @@ class NotificationService {
     }
   }
 
-  void notify(String name, [dynamic param]) {
-    Set<NotificationsListener>? listenersForName = _listeners[name];
-    if (listenersForName != null) {
-      for (NotificationsListener listener in listenersForName) {
-        listener.onNotification(name, param);
+  Set<NotificationsListener>? subscribers(String name) =>
+    _listeners[name];
+
+  void notify(String name, [dynamic param]) =>
+    notifySubscribers(subscribers(name), name, param);
+
+  void notifySubscribers(Set<NotificationsListener>? subscribers, String name, [dynamic param]) {
+    if (subscribers != null) {
+      for (NotificationsListener subscriber in subscribers) {
+        subscriber.onNotification(name, param);
       }
     }
   }
-
-  Set<NotificationsListener>? subscribers(String name) =>
-    _listeners[name];
 
 }
 

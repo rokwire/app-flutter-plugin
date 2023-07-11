@@ -19,9 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web app passkey support [#299](https://github.com/rokwire/app-flutter-plugin/issues/299)
 - Anonymous account association [#305](https://github.com/rokwire/app-flutter-plugin/issues/305)
 - Add timestamps to anonymous IDs [#309](https://github.com/rokwire/app-flutter-plugin/issues/309)
+- Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
+- Events2 model and service, work in progress [#288](https://github.com/rokwire/app-flutter-plugin/issues/288).
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
+- Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
