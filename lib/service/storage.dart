@@ -332,10 +332,6 @@ class Storage with Service {
   int? get debugGeoFenceRegionRadius => getIntWithName(debugGeoFenceRegionRadiusKey);
   set debugGeoFenceRegionRadius(int? value) => setIntWithName(debugGeoFenceRegionRadiusKey, value);
 
-  static const String debugUseSampleEvents2Key  = 'edu.illinois.rokwire.debug.events2.use_sample';
-  bool? get debugUseSampleEvents2 => getBoolWithName(debugUseSampleEvents2Key);
-  set debugUseSampleEvents2(bool? value) => setBoolWithName(debugUseSampleEvents2Key, value);
-
   // Polls
   String get activePollsKey  => 'edu.illinois.rokwire.polls.active_polls';
   String? get activePolls => getStringWithName(activePollsKey);
