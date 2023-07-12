@@ -227,7 +227,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token)) {
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
       return (await refreshToken(token: token) != null);
     }
     return false;
@@ -444,7 +445,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
-  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName, {bool? public = false}) async {
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName, {bool? public = false, bool verifyIdentifier = false}) async {
     String? errorMessage;
     if ((Config().authBaseUrl != null) && (username != null)) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
@@ -493,9 +494,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         // Obtain creationOptions from the server
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
+        if (verifyIdentifier) {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: requestJson);
+        }
         try {
           String? responseData = await RokwirePlugin.createPasskey(requestJson);
-          return _completeSignUpWithPasskey(username, responseData);
+          return completeSignUpWithPasskey(username, responseData);
         } catch(error) {
           try {
             String? responseData = await RokwirePlugin.getPasskey(requestJson);
@@ -516,7 +520,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignUpResult> _completeSignUpWithPasskey(String username, String? responseData) async {
+  Future<Auth2PasskeySignUpResult> completeSignUpWithPasskey(String username, String? responseData) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -1197,29 +1201,31 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response?.statusCode == 200) {
         Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
         List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        // Map<String, dynamic>? requestJson = JsonUtils.decode(message ?? '');
         if (authTypes != null) {
           await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, authTypes: authTypes));
           NotificationService().notify(notifyLinkChanged);
-          return Auth2LinkResult.succeeded;
+          return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
         }
       }
       else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'verification-expired') {
-          return Auth2LinkResult.failedActivationExpired;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedActivationExpired);
         }
         else if (error?.status == 'unverified') {
-          return Auth2LinkResult.failedNotActivated;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedNotActivated);
         }
         else if (error?.status == 'already-exists') {
-          return Auth2LinkResult.failedAccountExist;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedAccountExist);
         }
         else if (error?.status == 'invalid') {
-          return Auth2LinkResult.failedInvalid;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedInvalid);
         }
       } 
     }
-    return Auth2LinkResult.failed;
+    return Auth2LinkResult(Auth2LinkResultStatus.failed);
   }
 
   Future<bool> unlinkAccountAuthType(Auth2LoginType? loginType, String identifier) async {
@@ -1721,7 +1727,8 @@ class Auth2Csrf with NetworkAuthProvider {
 
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token)) {
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
       return (await Auth2().refreshToken(token: token) != null);
     }
     return false;
@@ -1740,7 +1747,8 @@ enum Auth2PasskeyAccountState {
 class Auth2PasskeySignUpResult {
   Auth2PasskeySignUpResultStatus status;
   String? error;
-  Auth2PasskeySignUpResult(this.status, {this.error});
+  Map<String, dynamic>? creationOptions;
+  Auth2PasskeySignUpResult(this.status, {this.error, this.creationOptions});
 }
 
 enum Auth2PasskeySignUpResultStatus {
@@ -1772,9 +1780,9 @@ enum Auth2PhoneRequestCodeResult {
 }
 
 Auth2PhoneRequestCodeResult auth2PhoneRequestCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2PhoneRequestCodeResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2PhoneRequestCodeResult.failedAccountExist;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2PhoneRequestCodeResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2PhoneRequestCodeResult.failedAccountExist;
     default: return Auth2PhoneRequestCodeResult.failed;
   }
 }
@@ -1788,9 +1796,9 @@ enum Auth2PhoneSendCodeResult {
 }
 
 Auth2PhoneSendCodeResult auth2PhoneSendCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2PhoneSendCodeResult.succeeded;
-    case Auth2LinkResult.failedInvalid: return Auth2PhoneSendCodeResult.failedInvalid;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2PhoneSendCodeResult.succeeded;
+    case Auth2LinkResultStatus.failedInvalid: return Auth2PhoneSendCodeResult.failedInvalid;
     default: return Auth2PhoneSendCodeResult.failed;
   }
 }
@@ -1812,9 +1820,9 @@ enum Auth2EmailSignUpResult {
 }
 
 Auth2EmailSignUpResult auth2EmailSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2EmailSignUpResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2EmailSignUpResult.failedAccountExist;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2EmailSignUpResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2EmailSignUpResult.failedAccountExist;
     default: return Auth2EmailSignUpResult.failed;
   }
 }
@@ -1830,11 +1838,11 @@ enum Auth2EmailSignInResult {
 }
 
 Auth2EmailSignInResult auth2EmailSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2EmailSignInResult.succeeded;
-    case Auth2LinkResult.failedNotActivated: return Auth2EmailSignInResult.failedNotActivated;
-    case Auth2LinkResult.failedActivationExpired: return Auth2EmailSignInResult.failedActivationExpired;
-    case Auth2LinkResult.failedInvalid: return Auth2EmailSignInResult.failedInvalid;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2EmailSignInResult.succeeded;
+    case Auth2LinkResultStatus.failedNotActivated: return Auth2EmailSignInResult.failedNotActivated;
+    case Auth2LinkResultStatus.failedActivationExpired: return Auth2EmailSignInResult.failedActivationExpired;
+    case Auth2LinkResultStatus.failedInvalid: return Auth2EmailSignInResult.failedInvalid;
     default: return Auth2EmailSignInResult.failed;
   }
 }
@@ -1857,9 +1865,9 @@ enum Auth2OidcAuthenticateResult {
 }
 
 Auth2OidcAuthenticateResult auth2OidcAuthenticateResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2OidcAuthenticateResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2OidcAuthenticateResult.failedAccountExist;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2OidcAuthenticateResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2OidcAuthenticateResult.failedAccountExist;
     default: return Auth2OidcAuthenticateResult.failed;
   }
 }
@@ -1880,9 +1888,9 @@ enum Auth2UsernameSignUpResult {
 }
 
 Auth2UsernameSignUpResult auth2UsernameSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2UsernameSignUpResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2UsernameSignUpResult.failedAccountExist;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2UsernameSignUpResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2UsernameSignUpResult.failedAccountExist;
     default: return Auth2UsernameSignUpResult.failed;
   }
 }
@@ -1897,16 +1905,22 @@ enum Auth2UsernameSignInResult {
 }
 
 Auth2UsernameSignInResult auth2UsernameSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2UsernameSignInResult.succeeded;
-    case Auth2LinkResult.failedInvalid: return Auth2UsernameSignInResult.failedInvalid;
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2UsernameSignInResult.succeeded;
+    case Auth2LinkResultStatus.failedInvalid: return Auth2UsernameSignInResult.failedInvalid;
     default: return Auth2UsernameSignInResult.failed;
   }
 }
 
 // Auth2LinkResult
 
-enum Auth2LinkResult {
+class Auth2LinkResult {
+  Auth2LinkResultStatus status;
+  String? message;
+  Auth2LinkResult(this.status, {this.message});
+}
+
+enum Auth2LinkResultStatus {
   succeeded,
   failed,
   failedActivationExpired,
