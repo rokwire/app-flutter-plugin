@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 - Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
 - Events2 model and service, work in progress [#288](https://github.com/rokwire/app-flutter-plugin/issues/288).
+- Added client parameter to Events2.loadEvents and Network.post APIs [#3401](https://github.com/rokwire/illinois-app/issues/3401).
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)

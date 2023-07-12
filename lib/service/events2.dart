@@ -75,11 +75,11 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<Events2ListResult?> loadEvents(Events2Query? query) async {
+  Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode(query?.toQueryJson());
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
+      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, client: client, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
       dynamic responseJson = JsonUtils.decode((response?.statusCode == 200) ? response?.body : null);
       if (responseJson is Map) {

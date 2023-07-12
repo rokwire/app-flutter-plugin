@@ -164,11 +164,15 @@ class Network  {
     return response;
   }
 
-  Future<http.Response?> _post(url, { Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout}) async{
+  Future<http.Response?> _post(url, { Object? body, Encoding? encoding, Map<String, String?>? headers, http.Client? client, NetworkAuthProvider? auth, int? timeout}) async{
     if (Connectivity().isNotOffline) {
       try {
         Uri? uri = _uriFromUrlString(url);
-        Future<http.Response?>? response = (uri != null) ? http.post(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) : null;
+        Future<http.Response?>? response = (uri != null) ?
+          ((client != null) ?
+            client.post(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) :
+            http.post(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding)
+          ) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
         Log.d(e.toString());
@@ -178,15 +182,15 @@ class Network  {
     return null;
   }
 
-  Future<http.Response?> post(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async{
+  Future<http.Response?> post(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, http.Client? client, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async{
     http.Response? response;
     
     try {
       dynamic token = auth?.networkAuthToken;
-      response = await _post(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
+      response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       
       if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
-        response = await _post(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
+        response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       }
     } catch (e) {
       Log.d(e.toString());
@@ -209,11 +213,9 @@ class Network  {
         Future<http.Response?>? response = (uri != null) ?
           ((client != null) ?
             client.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) :
-              http.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding)) :
-            null;
-
+              http.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding)
+          ) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
-
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
