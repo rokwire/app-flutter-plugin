@@ -567,7 +567,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
-    if (kIsWeb) {
+    if (isReleaseWeb) {
       return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {
       return '$coreUrl/admin';

@@ -1404,7 +1404,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post;
-      if (!kIsWeb) {
+      if (!Config().isReleaseWeb) {
         if (refreshToken == null) {
           return null;
         }
