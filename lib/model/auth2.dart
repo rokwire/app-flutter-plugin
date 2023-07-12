@@ -69,6 +69,36 @@ class Auth2Token {
 }
 
 ////////////////////////////////
+// Auth2IdentifierType
+
+enum Auth2IdentifierType { email, phone, username, phoneTwilio }
+
+String? auth2IdentifierTypeToString(Auth2IdentifierType value) {
+  switch (value) {
+    case Auth2IdentifierType.email: return 'email';
+    case Auth2IdentifierType.phone: return 'phone';
+    case Auth2IdentifierType.username: return 'username';
+    case Auth2IdentifierType.phoneTwilio: return 'twilio_phone';
+  }
+}
+
+Auth2IdentifierType? auth2IdentifierTypeFromString(String? value) {
+  if (value == 'email') {
+    return Auth2IdentifierType.email;
+  }
+  else if (value == 'phone') {
+    return Auth2IdentifierType.phone;
+  }
+  else if (value == 'username') {
+    return Auth2IdentifierType.username;
+  }
+  else if (value == 'twilio_phone') {
+    return Auth2IdentifierType.phoneTwilio;
+  }
+  return null;
+}
+
+////////////////////////////////
 // Auth2LoginType
 
 enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois, passkey }

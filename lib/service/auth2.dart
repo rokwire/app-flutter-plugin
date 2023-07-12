@@ -355,9 +355,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   // Passkey authentication
-  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? username) async {
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
     String? errorMessage;
-    if ((Config().authBaseUrl != null) && (username != null)) {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
         return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotSupported);
       }
@@ -369,7 +369,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          'username': username,
+          '${auth2IdentifierTypeToString(identifierType)}': '$identifier-${Config().operatingSystem}',
         },
         'params': {
           'sign_up': false,
@@ -393,7 +393,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         try {
           String? responseData = await RokwirePlugin.getPasskey(requestJson);
-          return _completeSignInWithPasskey(username, responseData);
+          return _completeSignInWithPasskey(identifier, responseData);
         } catch(error) {
           errorMessage = error.toString();
           Log.e(errorMessage);
@@ -406,7 +406,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String username, String? responseData) async {
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
@@ -421,7 +421,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          "username": username,
+          "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
           "response": JsonUtils.encode(requestJson),
         },
         'device': deviceInfo,
@@ -445,9 +445,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
-  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? username, String? displayName, {bool? public = false, bool verifyIdentifier = false}) async {
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? identifier, String? displayName, {Auth2IdentifierType identifierType = Auth2IdentifierType.username, bool? public = false, bool verifyIdentifier = false}) async {
     String? errorMessage;
-    if ((Config().authBaseUrl != null) && (username != null)) {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
         return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotSupported);
       }
@@ -470,7 +470,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          'username': username,
+          '${auth2IdentifierTypeToString(identifierType)}': '$identifier-${Config().operatingSystem}',
         },
         'params': {
           "display_name": displayName,
@@ -478,6 +478,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'privacy': {
           'public': public,
         },
+        'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'profile': profile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
@@ -499,11 +500,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
         try {
           String? responseData = await RokwirePlugin.createPasskey(requestJson);
-          return completeSignUpWithPasskey(username, responseData);
+          return completeSignUpWithPasskey(identifier, responseData);
         } catch(error) {
           try {
             String? responseData = await RokwirePlugin.getPasskey(requestJson);
-            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(username, responseData);
+            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(identifier, responseData);
             if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
               return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
             }
@@ -520,7 +521,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignUpResult> completeSignUpWithPasskey(String username, String? responseData) async {
+  Future<Auth2PasskeySignUpResult> completeSignUpWithPasskey(String identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -529,7 +530,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          "username": username,
+          "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
           "response": responseData,
         },
         'device': deviceInfo,
