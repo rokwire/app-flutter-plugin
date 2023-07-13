@@ -389,7 +389,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         // Obtain creationOptions from the server
         String? responseBody = response.body;
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
-        Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
+        dynamic requestJson = JsonUtils.decode(message?.message ?? '');
+        if (requestJson == null || requestJson is! Map) {
+          if (message?.params?['auth_types'] is Iterable) {
+            List<Auth2Type>? signInOptions = Auth2Type.listFromJson(message?.params?['auth_types']);
+            signInOptions?.removeWhere((element) => element.loginType == Auth2LoginType.passkey);
+            return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound, signInOptions: signInOptions);
+          }
+        }
         try {
           String? responseData = await RokwirePlugin.getPasskey(requestJson);
           return _completeSignInWithPasskey(identifier, responseData);
@@ -1760,7 +1767,8 @@ enum Auth2PasskeySignUpResultStatus {
 class Auth2PasskeySignInResult {
   Auth2PasskeySignInResultStatus status;
   String? error;
-  Auth2PasskeySignInResult(this.status, {this.error});
+  List<Auth2Type>? signInOptions;
+  Auth2PasskeySignInResult(this.status, {this.error, this.signInOptions});
 }
 
 enum Auth2PasskeySignInResultStatus {
