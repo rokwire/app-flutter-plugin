@@ -395,7 +395,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         if (requestJson == null || requestJson is! Map) {
           if (message?.params?['auth_types'] is Iterable) {
             List<Auth2Type>? signInOptions = Auth2Type.listFromJson(message?.params?['auth_types']);
-            signInOptions?.removeWhere((element) => element.loginType == Auth2LoginType.passkey);
+            signInOptions?.removeWhere((element) => element.code == auth2LoginTypeToString(Auth2LoginType.passkey));
             return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound, signInOptions: signInOptions);
           }
         }
