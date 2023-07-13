@@ -227,7 +227,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token)) {
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
       return (await refreshToken(token: token) != null);
     }
     return false;
@@ -1734,7 +1735,8 @@ class Auth2Csrf with NetworkAuthProvider {
 
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token)) {
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
       return (await Auth2().refreshToken(token: token) != null);
     }
     return false;
