@@ -374,6 +374,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'params': {
           'sign_up': false,
         },
+        'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'profile': profile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
@@ -431,6 +432,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
           "response": JsonUtils.encode(requestJson),
         },
+        'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'device': deviceInfo,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
@@ -540,6 +542,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
           "response": responseData,
         },
+        'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'device': deviceInfo,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
