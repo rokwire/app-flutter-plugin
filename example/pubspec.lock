@@ -345,10 +345,9 @@ packages:
   flutter_passkey:
     dependency: transitive
     description:
-      name: flutter_passkey
-      sha256: "4a7e9085ab9602c7ee472d3650367b2ee4bc5e3ba15142e38dd32a732e763530"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../flutter_passkey"
+      relative: true
+    source: path
     version: "1.0.3"
   flutter_plugin_android_lifecycle:
     dependency: transitive

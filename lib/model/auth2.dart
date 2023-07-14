@@ -71,14 +71,13 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2IdentifierType
 
-enum Auth2IdentifierType { email, phone, username, phoneTwilio }
+enum Auth2IdentifierType { email, phone, username }
 
 String? auth2IdentifierTypeToString(Auth2IdentifierType value) {
   switch (value) {
     case Auth2IdentifierType.email: return 'email';
     case Auth2IdentifierType.phone: return 'phone';
     case Auth2IdentifierType.username: return 'username';
-    case Auth2IdentifierType.phoneTwilio: return 'twilio_phone';
   }
 }
 
@@ -92,16 +91,13 @@ Auth2IdentifierType? auth2IdentifierTypeFromString(String? value) {
   else if (value == 'username') {
     return Auth2IdentifierType.username;
   }
-  else if (value == 'twilio_phone') {
-    return Auth2IdentifierType.phoneTwilio;
-  }
   return null;
 }
 
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois, passkey }
+enum Auth2LoginType { anonymous, apiKey, email, phone, username, oidc, oidcIllinois, passkey }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
@@ -110,7 +106,6 @@ String? auth2LoginTypeToString(Auth2LoginType value) {
     case Auth2LoginType.email: return 'email';
     case Auth2LoginType.phone: return 'phone';
     case Auth2LoginType.username: return 'username';
-    case Auth2LoginType.phoneTwilio: return 'twilio_phone';
     case Auth2LoginType.oidc: return 'oidc';
     case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
     case Auth2LoginType.passkey: return 'webauthn';
@@ -132,9 +127,6 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   }
   else if (value == 'username') {
     return Auth2LoginType.username;
-  }
-  else if (value == 'twilio_phone') {
-    return Auth2LoginType.phoneTwilio;
   }
   else if (value == 'oidc') {
     return Auth2LoginType.oidc;
@@ -699,7 +691,7 @@ class Auth2Type {
   }
 
   String? get phone {
-    return (loginType == Auth2LoginType.phoneTwilio) ? identifier : null;
+    return (loginType == Auth2LoginType.phone) ? identifier : null;
   }
 
   String? get email {

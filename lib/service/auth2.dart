@@ -236,7 +236,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Getters
   Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
-  Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
+  Auth2LoginType get phoneLoginType => Auth2LoginType.phone;
   Auth2LoginType get emailLoginType => Auth2LoginType.email;
   Auth2LoginType get usernameLoginType => Auth2LoginType.username;
   Auth2LoginType get passkeyLoginType => Auth2LoginType.passkey;
