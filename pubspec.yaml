@@ -27,7 +27,7 @@ dependencies:
   flutter_native_timezone: ^2.0.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
-  shared_preferences: ^2.0.17
+  shared_preferences: ^2.2.0
   package_info_plus: ^4.0.2
   device_info: ^2.0.3
   url_launcher: ^6.1.8
