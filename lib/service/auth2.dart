@@ -35,6 +35,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
   _OidcLogin? _oidcLogin;
+  Auth2AccountScope? _oidcScope;
   bool? _oidcLink;
   List<Completer<Auth2OidcAuthenticateResult?>>? _oidcAuthenticationCompleters;
   bool? _processingOidcAuthentication;
@@ -324,7 +325,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope, bool? link}) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
 
       if (_oidcAuthenticationCompleters == null) {
@@ -334,6 +335,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _OidcLogin? oidcLogin = await getOidcData();
         if (oidcLogin?.loginUrl != null) {
           _oidcLogin = oidcLogin;
+          _oidcScope = scope;
           _oidcLink = link;
           await _launchUrl(_oidcLogin?.loginUrl);
         }
@@ -363,7 +365,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (_oidcLink == true) {
       Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params);
       result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
-    } else {
+    }
+    else {
       bool processResult = await processOidcAuthentication(uri);
       result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
     }
@@ -396,7 +399,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Response? response = await Network().post(url, headers: headers, body: post);
       Log.d("Login: ${response?.statusCode}, ${response?.body}", lineLength: 512);
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-      bool result = await processLoginResponse(responseJson);
+      bool result = await processLoginResponse(responseJson, scope: _oidcScope);
+      _oidcScope = null;
       _log(result ? "Auth2: login succeeded: ${response?.statusCode}\n${response?.body}" : "Auth2: login failed: ${response?.statusCode}\n${response?.body}");
       return result;
     }
@@ -404,7 +408,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson) async {
+  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope }) async {
     if (responseJson != null) {
       Auth2Token? token = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
       Auth2Account? account = Auth2Account.fromJson(JsonUtils.mapValue(responseJson['account']),
@@ -412,7 +416,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         profile: _anonymousProfile ?? Auth2UserProfile.empty());
 
       if ((token != null) && token.isValid && (account != null) && account.isValid) {
-        await applyLogin(account, token, params: JsonUtils.mapValue(responseJson['params']));
+        await applyLogin(account, token, scope: scope, params: JsonUtils.mapValue(responseJson['params']));
         return true;
       }
     }
@@ -420,12 +424,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Map<String, dynamic>? params }) async {
+  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope, Map<String, dynamic>? params }) async {
 
     _refreshTonenFailCounts.remove(_token?.refreshToken);
 
-    bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs);
-    bool? profileUpdated = account.profile?.apply(_anonymousProfile);
+    bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs, scope: scope?.prefs);
+    bool? profileUpdated = account.profile?.apply(_anonymousProfile, scope: scope?.profile);
     Storage().auth2Token = _token = token;
     Storage().auth2Account = _account = account;
     Storage().auth2AnonymousPrefs = _anonymousPrefs = null;
@@ -492,6 +496,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _notifyLogin(oidcLoginType, result == Auth2OidcAuthenticateResult.succeeded);
 
     _oidcLogin = null;
+    _oidcScope = null;
     _oidcLink = null;
 
     if (_oidcAuthenticationCompleters != null) {
@@ -538,7 +543,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PhoneRequestCodeResult.failed;
   }
 
-  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code) async {
+  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code, { Auth2AccountScope? scope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null) && (code != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -560,7 +565,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(phoneLoginType, result);
         return result ? Auth2PhoneSendCodeResult.succeeded : Auth2PhoneSendCodeResult.failed;
       }
@@ -577,7 +582,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Email Authentication
 
-  Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password) async {
+  Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password, { Auth2AccountScope? scope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null) && (password != null)) {
       
       NotificationService().notify(notifyLoginStarted, emailLoginType);
@@ -602,7 +607,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(emailLoginType, result);
         return result ? Auth2EmailSignInResult.succeeded : Auth2EmailSignInResult.failed;
       }
@@ -736,7 +741,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Username Authentication
 
-  Future<Auth2UsernameSignInResult> authenticateWithUsername(String? username, String? password) async {
+  Future<Auth2UsernameSignInResult> authenticateWithUsername(String? username, String? password, { Auth2AccountScope? scope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
 
       NotificationService().notify(notifyLoginStarted, usernameLoginType);
@@ -764,7 +769,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(usernameLoginType, result);
         return result ? Auth2UsernameSignInResult.succeeded : Auth2UsernameSignInResult.failed;
       }
@@ -781,7 +786,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2UsernameSignInResult.failed;
   }
 
-  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password) async {
+  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password, { Auth2AccountScope? scope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -807,7 +812,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: post);
       if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body));
+        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(usernameLoginType, result);
         return result ? Auth2UsernameSignUpResult.succeeded : Auth2UsernameSignUpResult.failed;
       }
