@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
 - Events2 model and service, work in progress [#288](https://github.com/rokwire/app-flutter-plugin/issues/288).
 - Added client parameter to Events2.loadEvents and Network.post APIs [#3401](https://github.com/rokwire/illinois-app/issues/3401).
-
+- Defined scopes for profile & prefs for transfer anonymous data to existing user account [#332](https://github.com/rokwire/app-flutter-plugin/issues/332).
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
