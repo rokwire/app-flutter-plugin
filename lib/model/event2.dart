@@ -323,7 +323,7 @@ class Event2RegistrationDetails {
     'label': label,
     'external_link': externalLink,
     'max_event_capacity': eventCapacity,
-
+    'registrants_external_ids': registrants,
   };
 
   @override
@@ -332,14 +332,16 @@ class Event2RegistrationDetails {
     (type == other.type) &&
     (label == other.label) &&
     (externalLink == other.externalLink) &&
-    (eventCapacity == other.eventCapacity);
+    (eventCapacity == other.eventCapacity) &&
+    const DeepCollectionEquality().equals(registrants, other.registrants);
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0) ^
-    (eventCapacity?.hashCode ?? 0);
+    (eventCapacity?.hashCode ?? 0) ^
+    const DeepCollectionEquality().hash(registrants);
 }
 
 ///////////////////////////////
