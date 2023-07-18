@@ -289,8 +289,9 @@ class Event2RegistrationDetails {
   final String? label;
   final String? externalLink;
   final int? eventCapacity;
+  final List<String>? registrants; // external IDs
 
-  Event2RegistrationDetails({this.type, this.label, this.externalLink, this.eventCapacity});
+  Event2RegistrationDetails({this.type, this.label, this.externalLink, this.eventCapacity, this.registrants });
 
   factory Event2RegistrationDetails.empty() => Event2RegistrationDetails(type: Event2RegistrationType.none);
 
@@ -298,12 +299,14 @@ class Event2RegistrationDetails {
     Event2RegistrationType? type,
     String? label, String? externalLink,
     int? eventCapacity,
+    final List<String>? registrants,
   }) =>
     (other != null) ? Event2RegistrationDetails(
       type: type ?? other.type,
       label: label ?? other.label,
       externalLink: externalLink ?? other.externalLink,
       eventCapacity: eventCapacity ?? other.eventCapacity,
+      registrants: registrants ?? other.registrants,
     ) : null;
 
   static Event2RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
@@ -312,6 +315,7 @@ class Event2RegistrationDetails {
       label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
       eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
+      registrants: JsonUtils.listStringsValue(json['registrants_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
@@ -319,7 +323,7 @@ class Event2RegistrationDetails {
     'label': label,
     'external_link': externalLink,
     'max_event_capacity': eventCapacity,
-
+    'registrants_external_ids': registrants,
   };
 
   @override
@@ -328,14 +332,16 @@ class Event2RegistrationDetails {
     (type == other.type) &&
     (label == other.label) &&
     (externalLink == other.externalLink) &&
-    (eventCapacity == other.eventCapacity);
+    (eventCapacity == other.eventCapacity) &&
+    const DeepCollectionEquality().equals(registrants, other.registrants);
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0) ^
-    (eventCapacity?.hashCode ?? 0);
+    (eventCapacity?.hashCode ?? 0) ^
+    const DeepCollectionEquality().hash(registrants);
 }
 
 ///////////////////////////////
