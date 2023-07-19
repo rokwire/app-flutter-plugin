@@ -175,7 +175,7 @@ class Events2 with Service implements NotificationsListener {
   }
 
   //Return error message, Event2 if successful
-  Future<dynamic> updateEventRegistration(String eventId, Event2RegistrationDetails? registrationDetails) async {
+  Future<dynamic> updateEventRegistrationDetails(String eventId, Event2RegistrationDetails? registrationDetails) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode({ 'registration_details' : registrationDetails?.toJson()});
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
@@ -193,6 +193,25 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
   
+  //Return error message, Event2 if successful
+  Future<dynamic> updateEventAttendanceDetails(String eventId, Event2AttendanceDetails? attendanceDetails) async {
+    if (Config().calendarUrl != null) {
+      String? body = JsonUtils.encode({ 'attendance_details' : attendanceDetails?.toJson()});
+      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+      Response? response = await Network().put("${Config().calendarUrl}/event/$eventId/attendance", body: body, headers: headers, auth: Auth2());
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      if (response?.statusCode == 200) {
+        NotificationService().notify(notifyChanged);
+        return Event2.fromJson(responseJson);
+      }
+      else {
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
+
   //Return error message, null if successful
   Future<dynamic> registerToEvent(String eventId) async {
     if (Config().calendarUrl != null) {

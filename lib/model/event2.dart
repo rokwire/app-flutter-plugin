@@ -299,7 +299,7 @@ class Event2RegistrationDetails {
     Event2RegistrationType? type,
     String? label, String? externalLink,
     int? eventCapacity,
-    final List<String>? registrants,
+    List<String>? registrants,
   }) =>
     (other != null) ? Event2RegistrationDetails(
       type: type ?? other.type,
@@ -333,7 +333,7 @@ class Event2RegistrationDetails {
     (label == other.label) &&
     (externalLink == other.externalLink) &&
     (eventCapacity == other.eventCapacity) &&
-    const DeepCollectionEquality().equals(registrants, other.registrants);
+    (const DeepCollectionEquality().equals(registrants, other.registrants));
 
   @override
   int get hashCode =>
@@ -341,7 +341,7 @@ class Event2RegistrationDetails {
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
-    const DeepCollectionEquality().hash(registrants);
+    (const DeepCollectionEquality().hash(registrants));
 }
 
 ///////////////////////////////
@@ -379,42 +379,53 @@ String? event2RegistrationTypeToString(Event2RegistrationType? value) {
 class Event2AttendanceDetails {
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
+  final List<String>? attendanceTakers; // external IDs
 
-  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled});
+  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.attendanceTakers});
 
-  static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
+  static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {
+    bool? scanningEnabled,
+    bool? manualCheckEnabled,
+    List<String>? attendanceTakers,
+  }) =>
     (other != null) ? Event2AttendanceDetails(
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
+      attendanceTakers: attendanceTakers ?? other.attendanceTakers,
     ) : null;
 
   static Event2AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2AttendanceDetails(
-      scanningEnabled: JsonUtils.boolValue(json['is_ID_scanning_enabled']),
+      scanningEnabled: JsonUtils.boolValue(json['is_id_scanning_enabled']),
       manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
+      attendanceTakers: JsonUtils.listStringsValue(json['attendance_takers_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
-    'is_ID_scanning_enabled': scanningEnabled,
+    'is_id_scanning_enabled': scanningEnabled,
     'is_manual_attendance_check_enabled': manualCheckEnabled,
+    'attendance_takers_external_ids': attendanceTakers,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
-    (manualCheckEnabled == other.manualCheckEnabled);
+    (manualCheckEnabled == other.manualCheckEnabled) &&
+    (const DeepCollectionEquality().equals(attendanceTakers, other.attendanceTakers));
 
   @override
   int get hashCode =>
     (scanningEnabled?.hashCode ?? 0) ^
-    (manualCheckEnabled?.hashCode ?? 0);
+    (manualCheckEnabled?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(attendanceTakers));
 
   bool get isEmpty => !isNotEmpty;
 
   bool get isNotEmpty =>
     (scanningEnabled == true) || 
-    (manualCheckEnabled == true);
+    (manualCheckEnabled == true) ||
+    ((attendanceTakers?.length ?? 0) > 0);
 }
 
 ///////////////////////////////
@@ -426,7 +437,10 @@ class Event2SurveyDetails {
 
   Event2SurveyDetails({this.hasSurvey, this.hoursAfterEvent});
 
-  static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {bool? hasSurvey, int? hoursAfterEvent}) =>
+  static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {
+    bool? hasSurvey,
+    int? hoursAfterEvent
+  }) =>
       (other != null) ? Event2SurveyDetails(
         hasSurvey: hasSurvey ?? other.hasSurvey,
         hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
