@@ -215,6 +215,10 @@ class ListUtils {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
   }
 
+  static List<T>? notEmpty<T>(List<T>? list) {
+    return ((list?.length ?? 0) > 0) ? list : null;
+  }
+
   static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
     if (list == null) {
       return null;
