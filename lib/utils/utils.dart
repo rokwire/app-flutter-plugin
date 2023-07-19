@@ -246,6 +246,17 @@ class ListUtils {
 
   static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
     compute(_sort, _SortListParam(list, compare));
+
+  static List<String>? stripEmptyStrings(List<String>? list) {
+    if (list != null) {
+      for (int index = list.length - 1; index >= 0; index--) {
+        if (list[index].isEmpty) {
+          list.removeAt(index);
+        }
+      }
+    }
+    return ((list?.length ?? 0) > 0) ? list : null;
+  }
 }
 
 class _SortListParam<T> {
