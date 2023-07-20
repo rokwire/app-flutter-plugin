@@ -156,7 +156,7 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  //Return error message, null if successful
+  // Returns error message, null if successful
   Future<dynamic> deleteEvent(String eventId) async{
     if (Config().calendarUrl != null) { //TBD this is deprecated API. Hook to the new one when available
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
@@ -174,7 +174,7 @@ class Events2 with Service implements NotificationsListener {
     return "Missing calendar url";
   }
 
-  //Return error message, Event2 if successful
+  // Returns error message, Event2 if successful
   Future<dynamic> updateEventRegistrationDetails(String eventId, Event2RegistrationDetails? registrationDetails) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode({ 'registration_details' : registrationDetails?.toJson()});
@@ -193,7 +193,7 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
   
-  //Return error message, Event2 if successful
+  // Returns error message, Event2 if successful
   Future<dynamic> updateEventAttendanceDetails(String eventId, Event2AttendanceDetails? attendanceDetails) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode({ 'attendance_details' : attendanceDetails?.toJson()});
@@ -212,7 +212,7 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  //Return error message, null if successful
+  // Returns error message, null if successful
   Future<dynamic> registerToEvent(String eventId) async {
     if (Config().calendarUrl != null) {
       String? body = JsonUtils.encode({
@@ -233,7 +233,7 @@ class Events2 with Service implements NotificationsListener {
     return  "Missing calendar url";
   }
 
-  //Return error message, null if successful
+  // Returns error message, null if successful
   Future<dynamic> unregisterFromEvent(String eventId) async {
     if (Config().calendarUrl != null) {
       Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
@@ -252,6 +252,21 @@ class Events2 with Service implements NotificationsListener {
     return "Missing calendar url";
   }
 
+  // Returns error message, Event2PersonsResult if successful
+  Future<dynamic> loadEventPeople(String eventId) async {
+    if (Config().calendarUrl != null) {
+      Response? response = await Network().get("${Config().calendarUrl}/event/$eventId/users", auth: Auth2());
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      if (response?.statusCode == 200) {
+        return Event2PersonsResult.fromJson(responseJson);
+      }
+      else {
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        return message ?? response?.body;
+      }
+    }
+    return null;
+  }
 
   // DeepLinks
 
@@ -501,5 +516,19 @@ class Events2Query {
         'longitude': location.longitude,
       };
     }
+  }
+}
+
+class Event2PersonsResult {
+  final List<Event2Person>? registrants;
+  final List<Event2Person>? attendees;
+  
+  Event2PersonsResult({this.registrants, this.attendees});
+
+  static Event2PersonsResult? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2PersonsResult(
+      registrants: Event2Person.listFromJson(JsonUtils.listValue(json['people'])),
+      attendees: Event2Person.listFromJson(JsonUtils.listValue(json['attendees'])),
+    ) : null;
   }
 }
