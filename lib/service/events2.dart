@@ -269,29 +269,30 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns error message, Event2Person if successful
-  Future<dynamic> registrantAttendsEvent(String eventId, Event2Person registrant) async {
+  Future<dynamic> attendEvent(String eventId, { Event2Person? person, String? uin }) async {
     await Future.delayed(const Duration(seconds: 1));
-    return Event2Person(
-      identifier: registrant.identifier,
-      time: DateTime.now().millisecondsSinceEpoch * 1000
-    );
+
+    if (person != null) {
+      return Event2Person(
+        identifier: person.identifier,
+        time: DateTime.now().millisecondsSinceEpoch * 1000,
+      );
+    }
+    else if (uin != null) {
+      return Event2Person(
+        identifier: Event2PersonIdentifier(exteralId: uin),
+        time: DateTime.now().millisecondsSinceEpoch * 1000,
+      );
+    }
+    else {
+      return 'Invalid parameter';
+    }
   }
 
   // Returns error message, true if successful
-  Future<dynamic> registrantUnattendsEvent(String eventId, Event2Person registrant) async {
+  Future<dynamic> unattendEvent(String eventId, { Event2Person? person }) async {
     await Future.delayed(const Duration(seconds: 1));
     return true;
-  }
-
-  // Returns error message, Event2Person if successful
-  Future<dynamic> personAttendsEvent(String eventId, String uin) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return Event2Person(
-      identifier: Event2PersonIdentifier(
-        exteralId: uin
-      ),
-      time: DateTime.now().millisecondsSinceEpoch * 1000
-    );
   }
 
   // DeepLinks

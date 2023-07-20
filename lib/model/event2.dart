@@ -707,17 +707,19 @@ class Event2Person {
     return result;
   }
 
-  static bool removeInList(List<Event2Person>? contentList, { String? netId }) {
-    int contentLength = contentList?.length ?? 0;
+  static int? findInList(List<Event2Person>? contentList, { String? netId }) {
     if (contentList != null) {
-      for (int index = contentLength - 1; index >= 0; index--) {
+      for (int index = 0; index < contentList.length; index++) {
         if ((netId != null) && (contentList[index].identifier?.netId == netId)) {
-          contentList.removeAt(index);
+          return index;
         }
       }
     }
-    return (contentList?.length ?? 0) < contentLength;
+    return null;
   }
+
+  static bool containsInList(List<Event2Person>? contentList, { String? netId }) =>
+    (findInList(contentList, netId: netId) != null);
 }
 
 ///////////////////////////////
