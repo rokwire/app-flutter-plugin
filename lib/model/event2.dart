@@ -580,6 +580,149 @@ class Event2Contact {
 }
 
 ///////////////////////////////
+/// Event2PersonIdentifier
+
+class Event2PersonIdentifier {
+  final String? accountId;
+  final String? exteralId;
+
+  Event2PersonIdentifier({
+    this.accountId,
+    this.exteralId,});
+
+  String? get netId => exteralId;
+
+  static Event2PersonIdentifier? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2PersonIdentifier(
+      accountId: JsonUtils.stringValue(json['account_id']),
+      exteralId: JsonUtils.stringValue(json['external_id']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "account_id": accountId,
+      "external_id": exteralId,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2PersonIdentifier) &&
+      (other.accountId == accountId) &&
+      (other.exteralId == exteralId);
+
+  @override
+  int get hashCode =>
+      (accountId?.hashCode ?? 0) ^
+      (exteralId?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2Person - registrant or attendee
+
+class Event2Person {
+  final String? id;
+  final Event2PersonIdentifier? identifier;
+  final Event2UserRole? role;
+  final Event2UserRegistrationType? registrationType;
+  final int? time;
+
+  Event2Person({
+    this.id,
+    this.identifier,
+    this.role,
+    this.registrationType,
+    this.time});
+
+  static Event2Person? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2Person(
+      id: JsonUtils.stringValue(json['id']),
+      identifier: Event2PersonIdentifier.fromJson(JsonUtils.mapValue(json['identifier'])),
+      role: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
+      registrationType: event2UserRegistrationTypeFromString(JsonUtils.stringValue(json['registration_type'])),
+      time: JsonUtils.intValue(json['time']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "identifier": identifier?.toJson(),
+      "role": event2UserRoleToString(role),
+      "registration_type": event2UserRegistrationTypeToString(registrationType),
+      "time": time
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2Person) &&
+      (other.id == id) &&
+      (other.identifier == identifier) &&
+      (other.role == role) &&
+      (other.registrationType == registrationType) &&
+      (other.time == time);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (identifier?.hashCode ?? 0) ^
+      (role?.hashCode ?? 0) ^
+      (registrationType?.hashCode ?? 0) ^
+      (time?.hashCode ?? 0);
+
+  static List<Event2Person>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2Person>? result;
+    if (jsonList != null) {
+      result = <Event2Person>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2Person.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Event2Person>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static Set<String>? netIdsFromList(List<Event2Person>? contentList) {
+    Set<String>? result;
+    if (contentList != null) {
+      result = <String>{};
+      for (Event2Person contentEntry in contentList) {
+        if (contentEntry.identifier?.netId != null) {
+          result.add(contentEntry.identifier!.netId!);
+        }
+      }
+    }
+    return result;
+  }
+
+  static int? findInList(List<Event2Person>? contentList, { String? netId }) {
+    if (contentList != null) {
+      for (int index = 0; index < contentList.length; index++) {
+        if ((netId != null) && (contentList[index].identifier?.netId == netId)) {
+          return index;
+        }
+      }
+    }
+    return null;
+  }
+
+  static bool containsInList(List<Event2Person>? contentList, { String? netId }) =>
+    (findInList(contentList, netId: netId) != null);
+}
+
+///////////////////////////////
 /// Event2UserRole
 
 enum Event2UserRole { admin, participant, attendanceTaker }
@@ -604,6 +747,35 @@ String? event2UserRoleToString(Event2UserRole? value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
     case Event2UserRole.attendanceTaker: return 'attendance_taker';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// Event2UserRegistrationType
+
+enum Event2UserRegistrationType { self, registrants, creator }
+
+Event2UserRegistrationType? event2UserRegistrationTypeFromString(String? value) {
+  if (value == 'self') {
+    return Event2UserRegistrationType.self;
+  }
+  else if (value == 'registrants-list') {
+    return Event2UserRegistrationType.registrants;
+  }
+  else if (value == 'creator') {
+    return Event2UserRegistrationType.creator;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2UserRegistrationTypeToString(Event2UserRegistrationType? value) {
+  switch (value) {
+    case Event2UserRegistrationType.self: return 'self';
+    case Event2UserRegistrationType.registrants: return 'registrants-list';
+    case Event2UserRegistrationType.creator: return 'creator';
     default: return null;
   }
 }
