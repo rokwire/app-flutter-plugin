@@ -268,6 +268,32 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  // Returns error message, Event2Person if successful
+  Future<dynamic> registrantAttendsEvent(String eventId, Event2Person registrant) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return Event2Person(
+      identifier: registrant.identifier,
+      time: DateTime.now().millisecondsSinceEpoch * 1000
+    );
+  }
+
+  // Returns error message, true if successful
+  Future<dynamic> registrantUnattendsEvent(String eventId, Event2Person registrant) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return true;
+  }
+
+  // Returns error message, Event2Person if successful
+  Future<dynamic> personAttendsEvent(String eventId, String uin) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return Event2Person(
+      identifier: Event2PersonIdentifier(
+        exteralId: uin
+      ),
+      time: DateTime.now().millisecondsSinceEpoch * 1000
+    );
+  }
+
   // DeepLinks
 
   String get eventDetailUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail

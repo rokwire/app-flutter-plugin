@@ -706,6 +706,18 @@ class Event2Person {
     }
     return result;
   }
+
+  static bool removeInList(List<Event2Person>? contentList, { String? netId }) {
+    int contentLength = contentList?.length ?? 0;
+    if (contentList != null) {
+      for (int index = contentLength - 1; index >= 0; index--) {
+        if ((netId != null) && (contentList[index].identifier?.netId == netId)) {
+          contentList.removeAt(index);
+        }
+      }
+    }
+    return (contentList?.length ?? 0) < contentLength;
+  }
 }
 
 ///////////////////////////////
