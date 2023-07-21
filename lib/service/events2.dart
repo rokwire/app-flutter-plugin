@@ -21,6 +21,7 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
+  final bool _useAttendShortcuts = false;
 
   // Singletone Factory
 
@@ -269,30 +270,80 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns error message, Event2Person if successful
-  Future<dynamic> attendEvent(String eventId, { Event2Person? person, String? uin }) async {
-    await Future.delayed(const Duration(seconds: 1));
+  Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
-    if (person != null) {
-      return Event2Person(
-        identifier: person.identifier,
-        time: DateTime.now().millisecondsSinceEpoch * 1000,
-      );
-    }
-    else if (uin != null) {
-      return Event2Person(
-        identifier: Event2PersonIdentifier(exteralId: uin),
-        time: DateTime.now().millisecondsSinceEpoch * 1000,
-      );
+    if (!_useAttendShortcuts) {
+      if (Config().calendarUrl != null) {
+        Map<String, dynamic>? postData;
+        if (personIdentifier != null) {
+          postData = {'identifier': personIdentifier.toJson()};
+        }
+        else if (uin != null) {
+          postData = {'uin': uin };
+        }
+        if (postData != null) {
+          String url = "${Config().calendarUrl}/event/$eventId/attendees";
+          Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+          String? body = JsonUtils.encode(postData);
+
+          Response? response = await Network().put(url, headers: headers, body: body, auth: Auth2());
+          Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+          if (response?.statusCode == 200) {
+            return Event2Person.fromJson(responseJson);
+          }
+          else {
+            String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+            return message ?? response?.body;
+          }
+        }
+      }
+      return "Internal error occured";
     }
     else {
-      return 'Invalid parameter';
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (personIdentifier != null) {
+        return Event2Person(
+          identifier: personIdentifier,
+          time: DateTime.now().millisecondsSinceEpoch * 1000,
+        );
+      }
+      else if (uin != null) {
+        return Event2Person(
+          identifier: Event2PersonIdentifier(exteralId: uin),
+          time: DateTime.now().millisecondsSinceEpoch * 1000,
+        );
+      }
+      else {
+        return 'Internal error occured';
+      }
     }
   }
 
   // Returns error message, true if successful
-  Future<dynamic> unattendEvent(String eventId, { Event2Person? person }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+  Future<dynamic> unattendEvent(String eventId, { Event2PersonIdentifier? personIdentifier }) async {
+    if (!_useAttendShortcuts) {
+      if (Config().calendarUrl != null) {
+        String url = "${Config().calendarUrl}/event/$eventId/attendees";
+        Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
+        String? body = JsonUtils.encode({'identifier': personIdentifier?.toJson()});
+
+        Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        if (response?.statusCode == 200) {
+          return true;
+        }
+        else {
+          String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+          return message ?? response?.body;
+        }
+      }
+      return "Internal error occured";
+    }
+    else {
+      await Future.delayed(const Duration(seconds: 1));
+      return true;
+    }
   }
 
   // DeepLinks
