@@ -21,6 +21,7 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
+  final bool useAttendShortcuts = true;
 
   // Singletone Factory
 
@@ -73,24 +74,16 @@ class Events2 with Service implements NotificationsListener {
 
   ContentAttributes? get contentAttributes => Content().contentAttributes('events');
 
+
   // Implementation
 
   Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
     if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/events/load";
       String? body = JsonUtils.encode(query?.toQueryJson());
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, client: client, auth: Auth2());
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: client, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
-      dynamic responseJson = JsonUtils.decode((response?.statusCode == 200) ? response?.body : null);
-      if (responseJson is Map) {
-        return Events2ListResult.fromJson(JsonUtils.mapValue(responseJson));
-      }
-      else if (responseJson is List) {
-        return Events2ListResult(events: Event2.listFromJson(JsonUtils.listValue(responseJson)));
-      }
-      else {
-        return null;
-      }
+      return Events2ListResult.fromResponseJson(JsonUtils.decode((response?.statusCode == 200) ? response?.body : null));
     }
     return null;
   }
@@ -100,19 +93,10 @@ class Events2 with Service implements NotificationsListener {
 
   Future<Event2?> loadEvent(String eventId) async {
     if (Config().calendarUrl != null) {
-      String? body = JsonUtils.encode({
-        "ids":[eventId]
-      });
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().post("${Config().calendarUrl}/events/load", body: body, headers: headers, auth: Auth2());
-      List<Event2>? resultList;
-      dynamic responseJson = JsonUtils.decode((response?.statusCode == 200) ? response?.body : null);
-      if (responseJson is Map) {
-        resultList = Events2ListResult.fromJson(JsonUtils.mapValue(responseJson))?.events;
-      }
-      else if (responseJson is List) {
-        resultList = Event2.listFromJson(JsonUtils.listValue(responseJson));
-      }
+      String url = "${Config().calendarUrl}/events/load";
+      String? body = JsonUtils.encode({"ids":[eventId]});
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      List<Event2>? resultList = Events2ListResult.listFromResponseJson(JsonUtils.decode((response?.statusCode == 200) ? response?.body : null));
       return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
     }
     return null;
@@ -121,17 +105,15 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event";
       String? body = JsonUtils.encode(source.toJson());
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().post("${Config().calendarUrl}/event", body: body, headers: headers, auth: Auth2());
-      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
-        return Event2.fromJson(responseJson);
+        return Event2.fromJson(JsonUtils.decodeMap(response?.body));
       }
       else {
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
+        return response?.errorText;
       }
     }
     return null;
@@ -140,55 +122,43 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> updateEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/${source.id}";
       String? body = JsonUtils.encode(source.toJson());
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().put("${Config().calendarUrl}/event/${source.id}", body: body, headers: headers, auth: Auth2());
-      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
-        return Event2.fromJson(responseJson);
+        return Event2.fromJson(JsonUtils.decodeMap(response?.body));
       }
       else {
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
+        return response?.errorText;
       }
     }
     return null;
   }
 
-  // Returns error message, null if successful
+  // Returns error message, true if successful
   Future<dynamic> deleteEvent(String eventId) async{
     if (Config().calendarUrl != null) { //TBD this is deprecated API. Hook to the new one when available
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().delete("${Config().calendarUrl}/event/$eventId", headers: headers, auth: Auth2());
+      String url = "${Config().calendarUrl}/event/$eventId";
+      Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
-        return null;
+        return true;
       }
       else {
-        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
+        return response?.errorText;
       }
     }
-    return "Missing calendar url";
+    return null;
   }
 
   // Returns error message, Event2 if successful
   Future<dynamic> updateEventRegistrationDetails(String eventId, Event2RegistrationDetails? registrationDetails) async {
     if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/registration";
       String? body = JsonUtils.encode({ 'registration_details' : registrationDetails?.toJson()});
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().put("${Config().calendarUrl}/event/$eventId/registration", body: body, headers: headers, auth: Auth2());
-      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-      if (response?.statusCode == 200) {
-        NotificationService().notify(notifyChanged);
-        return Event2.fromJson(responseJson);
-      }
-      else {
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
-      }
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
     }
     return null;
   }
@@ -196,104 +166,109 @@ class Events2 with Service implements NotificationsListener {
   // Returns error message, Event2 if successful
   Future<dynamic> updateEventAttendanceDetails(String eventId, Event2AttendanceDetails? attendanceDetails) async {
     if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/attendance";
       String? body = JsonUtils.encode({ 'attendance_details' : attendanceDetails?.toJson()});
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().put("${Config().calendarUrl}/event/$eventId/attendance", body: body, headers: headers, auth: Auth2());
-      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-      if (response?.statusCode == 200) {
-        NotificationService().notify(notifyChanged);
-        return Event2.fromJson(responseJson);
-      }
-      else {
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
-      }
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
     }
     return null;
   }
 
-  // Returns error message, null if successful
+  // Returns error message, true if successful
   Future<dynamic> registerToEvent(String eventId) async {
     if (Config().calendarUrl != null) {
-      String? body = JsonUtils.encode({
-        'event_id': eventId,
-      });
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
-      Response? response = await Network().post("${Config().calendarUrl}/event-person/register", body: body, headers: headers, auth: Auth2());
-      if (response?.statusCode == 200) {
-        NotificationService().notify(notifyChanged);
-        return null;
-      }
-      else {
-        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
-      }
+      String url = "${Config().calendarUrl}/event-person/register";
+      String? body = JsonUtils.encode({'event_id': eventId,});
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? true : response?.errorText;
     }
-    return  "Missing calendar url";
+    return null;
   }
 
-  // Returns error message, null if successful
+  // Returns error message, true if successful
   Future<dynamic> unregisterFromEvent(String eventId) async {
     if (Config().calendarUrl != null) {
-      Map<String, String?> headers = {"Accept": "application/json", "Content-type": "application/json"};
       String url = "${Config().calendarUrl}/event-person/unregister/$eventId";
-      Response? response = await Network().delete(url, headers: headers, auth: Auth2());
-      if (response?.statusCode == 200) {
-        NotificationService().notify(notifyChanged);
-        return null;
-      }
-      else {
-        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
-      }
+      Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? true : response?.errorText;
     }
-    return "Missing calendar url";
+    return null;
   }
 
   // Returns error message, Event2PersonsResult if successful
   Future<dynamic> loadEventPeople(String eventId) async {
     if (Config().calendarUrl != null) {
-      Response? response = await Network().get("${Config().calendarUrl}/event/$eventId/users", auth: Auth2());
-      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
-      if (response?.statusCode == 200) {
-        return Event2PersonsResult.fromJson(responseJson);
-      }
-      else {
-        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
-        return message ?? response?.body;
-      }
+      String url = "${Config().calendarUrl}/event/$eventId/users";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2PersonsResult.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
     }
     return null;
   }
 
   // Returns error message, Event2Person if successful
-  Future<dynamic> attendEvent(String eventId, { Event2Person? person, String? uin }) async {
-    await Future.delayed(const Duration(seconds: 1));
+  Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
-    if (person != null) {
-      return Event2Person(
-        identifier: person.identifier,
-        time: DateTime.now().millisecondsSinceEpoch * 1000,
-      );
-    }
-    else if (uin != null) {
-      return Event2Person(
-        identifier: Event2PersonIdentifier(exteralId: uin),
-        time: DateTime.now().millisecondsSinceEpoch * 1000,
-      );
+    if (!useAttendShortcuts) {
+      if (Config().calendarUrl != null) {
+        Map<String, dynamic>? postData;
+        if (personIdentifier != null) {
+          postData = {'identifier': personIdentifier.toJson()};
+        }
+        else if (uin != null) {
+          postData = {'uin': uin };
+        }
+        if (postData != null) {
+          String url = "${Config().calendarUrl}/event/$eventId/attendees";
+          String? body = JsonUtils.encode(postData);
+
+          Response? response = await Network().put(url, headers: _jsonHeaders, body: body, auth: Auth2());
+          return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
+        }
+      }
+      return null;
     }
     else {
-      return 'Invalid parameter';
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (personIdentifier != null) {
+        return Event2Person(
+          identifier: personIdentifier,
+          time: DateTime.now().millisecondsSinceEpoch * 1000,
+        );
+      }
+      else if (uin != null) {
+        return Event2Person(
+          identifier: Event2PersonIdentifier(exteralId: uin),
+          time: DateTime.now().millisecondsSinceEpoch * 1000,
+        );
+      }
+      else {
+        return null;
+      }
     }
   }
 
   // Returns error message, true if successful
-  Future<dynamic> unattendEvent(String eventId, { Event2Person? person }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return true;
+  Future<dynamic> unattendEvent(String eventId, { Event2PersonIdentifier? personIdentifier }) async {
+    if (!useAttendShortcuts) {
+      if (Config().calendarUrl != null) {
+        String url = "${Config().calendarUrl}/event/$eventId/attendees";
+        String? body = JsonUtils.encode({'identifier': personIdentifier?.toJson()});
+
+        Response? response = await Network().delete(url, headers: _jsonHeaders, body: body, auth: Auth2());
+        return (response?.statusCode == 200) ? true : response?.errorText;
+      }
+      return null;
+    }
+    else {
+      await Future.delayed(const Duration(seconds: 1));
+      return true;
+    }
   }
+
+  // Helpers
+
+  Map<String, String?> get _jsonHeaders => {"Accept": "application/json", "Content-type": "application/json"};
 
   // DeepLinks
 
@@ -557,5 +532,23 @@ class Event2PersonsResult {
       registrants: Event2Person.listFromJson(JsonUtils.listValue(json['people'])),
       attendees: Event2Person.listFromJson(JsonUtils.listValue(json['attendees'])),
     ) : null;
+  }
+}
+
+extension _ResponseExt on Response {
+  String? get errorText {
+    String? responseBody = body;
+    Map<String, dynamic>? responseJson = JsonUtils.decodeMap(responseBody);
+    String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+    if (StringUtils.isNotEmpty(message)) {
+      return message;
+    }
+    else if (StringUtils.isNotEmpty(responseBody)) {
+      return responseBody;
+    }
+    else {
+      return StringUtils.isNotEmpty(reasonPhrase) ? "$statusCode $reasonPhrase" : "$statusCode";
+    }
+
   }
 }
