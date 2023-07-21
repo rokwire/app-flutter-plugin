@@ -30,20 +30,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
-  static bool isEmpty(String? stringToCheck) {
-    return (stringToCheck == null || stringToCheck.isEmpty);
-  }
+  static bool isNotEmpty(String? stringToCheck) =>
+    (stringToCheck != null && stringToCheck.isNotEmpty);
 
-  static bool isNotEmpty(String? stringToCheck) {
-    return !isEmpty(stringToCheck);
-  }
+  static bool isNotEmptyString(dynamic value) =>
+    (value is String) && value.isNotEmpty;
 
-  static String ensureNotEmpty(String? value, {String defaultValue = ''}) {
-    if (isEmpty(value)) {
-      return defaultValue;
-    }
-    return value!;
-  }
+  static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
+    ((value != null) && value.isNotEmpty) ? value : defaultValue; 
+
+  static bool isEmpty(String? stringToCheck) =>
+    !isNotEmpty(stringToCheck);
 
   static String wrapRange(String s, String firstValue, String secondValue, int startPosition, int endPosition) {
     String word = s.substring(startPosition, endPosition);
