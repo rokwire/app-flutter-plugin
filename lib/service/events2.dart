@@ -21,7 +21,7 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
-  final bool _useAttendShortcuts = false;
+  final bool useAttendShortcuts = true;
 
   // Singletone Factory
 
@@ -208,7 +208,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
-    if (!_useAttendShortcuts) {
+    if (!useAttendShortcuts) {
       if (Config().calendarUrl != null) {
         Map<String, dynamic>? postData;
         if (personIdentifier != null) {
@@ -243,14 +243,14 @@ class Events2 with Service implements NotificationsListener {
         );
       }
       else {
-        return 'Internal error occured';
+        return null;
       }
     }
   }
 
   // Returns error message, true if successful
   Future<dynamic> unattendEvent(String eventId, { Event2PersonIdentifier? personIdentifier }) async {
-    if (!_useAttendShortcuts) {
+    if (!useAttendShortcuts) {
       if (Config().calendarUrl != null) {
         String url = "${Config().calendarUrl}/event/$eventId/attendees";
         String? body = JsonUtils.encode({'identifier': personIdentifier?.toJson()});
