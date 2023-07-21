@@ -1097,6 +1097,31 @@ class Events2ListResult {
     'total_count': totalCount,
   };
 
+  static Events2ListResult? fromResponseJson(dynamic json) {
+    if (json is Map) {
+      return Events2ListResult.fromJson(JsonUtils.mapValue(json));
+    }
+    else if (json is List) {
+      return Events2ListResult(events: Event2.listFromJson(JsonUtils.listValue(json)));
+    }
+    else {
+      return null;
+    }
+  }
+
+  static List<Event2>? listFromResponseJson(dynamic json) {
+    if (json is Map) {
+      return Events2ListResult.fromJson(JsonUtils.mapValue(json))?.events;
+    }
+    else if (json is List) {
+      return Event2.listFromJson(JsonUtils.listValue(json));
+    }
+    else {
+      return null;
+    }
+  }
+
+
   // Equality
 
   @override
