@@ -467,6 +467,13 @@ class Event2SurveyDetails {
   int get hashCode =>
       (hasSurvey?.hashCode ?? 0) ^
       (hoursAfterEvent?.hashCode ?? 0);
+
+  bool get isEmpty => !isNotEmpty;
+
+  bool get isNotEmpty =>
+    (hasSurvey == true) && 
+    (hoursAfterEvent != null) &&
+    ((hoursAfterEvent ?? 0) >= 0);
 }
 
 

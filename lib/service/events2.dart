@@ -21,7 +21,6 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
 
   List<Map<String, dynamic>>? _eventDetailsCache;
-  final bool useAttendShortcuts = true;
 
   // Singletone Factory
 
@@ -174,6 +173,17 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  // Returns error message, Event2 if successful
+  Future<dynamic> updateEventSurveyDetails(String eventId, Event2SurveyDetails? surveyDetails) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/survey";
+      String? body = JsonUtils.encode({ 'survey_details' : surveyDetails?.toJson()});
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
   // Returns error message, true if successful
   Future<dynamic> registerToEvent(String eventId) async {
     if (Config().calendarUrl != null) {
@@ -208,62 +218,34 @@ class Events2 with Service implements NotificationsListener {
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
-    if (!useAttendShortcuts) {
-      if (Config().calendarUrl != null) {
-        Map<String, dynamic>? postData;
-        if (personIdentifier != null) {
-          postData = {'identifier': personIdentifier.toJson()};
-        }
-        else if (uin != null) {
-          postData = {'uin': uin };
-        }
-        if (postData != null) {
-          String url = "${Config().calendarUrl}/event/$eventId/attendees";
-          String? body = JsonUtils.encode(postData);
-
-          Response? response = await Network().put(url, headers: _jsonHeaders, body: body, auth: Auth2());
-          return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
-        }
-      }
-      return null;
-    }
-    else {
-      await Future.delayed(const Duration(seconds: 1));
-      
+    if (Config().calendarUrl != null) {
+      String? url, body;
       if (personIdentifier != null) {
-        return Event2Person(
-          identifier: personIdentifier,
-          time: DateTime.now().millisecondsSinceEpoch * 1000,
-        );
+        url = "${Config().calendarUrl}/event/$eventId/manual-attendee/add";
+        body = JsonUtils.encode({'identifier': personIdentifier.toJson()});
       }
       else if (uin != null) {
-        return Event2Person(
-          identifier: Event2PersonIdentifier(exteralId: uin),
-          time: DateTime.now().millisecondsSinceEpoch * 1000,
-        );
+        url = "${Config().calendarUrl}/event/$eventId/attendee";
+        body = JsonUtils.encode({'uin': uin });
       }
-      else {
-        return null;
+      if ((url != null) && (body != null)) {
+        Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2());
+        return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
       }
     }
+    return null;
   }
 
   // Returns error message, true if successful
   Future<dynamic> unattendEvent(String eventId, { Event2PersonIdentifier? personIdentifier }) async {
-    if (!useAttendShortcuts) {
-      if (Config().calendarUrl != null) {
-        String url = "${Config().calendarUrl}/event/$eventId/attendees";
-        String? body = JsonUtils.encode({'identifier': personIdentifier?.toJson()});
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/manual-attendee/remove";
+      String? body = JsonUtils.encode({'identifier': personIdentifier?.toJson()});
 
-        Response? response = await Network().delete(url, headers: _jsonHeaders, body: body, auth: Auth2());
-        return (response?.statusCode == 200) ? true : response?.errorText;
-      }
-      return null;
+      Response? response = await Network().delete(url, headers: _jsonHeaders, body: body, auth: Auth2());
+      return (response?.statusCode == 200) ? true : response?.errorText;
     }
-    else {
-      await Future.delayed(const Duration(seconds: 1));
-      return true;
-    }
+    return null;
   }
 
   // Helpers
