@@ -173,6 +173,17 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  // Returns error message, Event2 if successful
+  Future<dynamic> updateEventSurveyDetails(String eventId, Event2SurveyDetails? surveyDetails) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/survey";
+      String? body = JsonUtils.encode({ 'survey_details' : surveyDetails?.toJson()});
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
   // Returns error message, true if successful
   Future<dynamic> registerToEvent(String eventId) async {
     if (Config().calendarUrl != null) {
