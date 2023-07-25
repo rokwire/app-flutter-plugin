@@ -194,6 +194,17 @@ class Survey extends RuleEngine {
     }
     return result;
   }
+
+  static Survey? findInList(List<Survey>? contentList, { String? id }) {
+    if (contentList != null) {
+      for (Survey survey in contentList) {
+        if ((id != null) && (survey.id == id)) {
+          return survey;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 class SurveyStats {
