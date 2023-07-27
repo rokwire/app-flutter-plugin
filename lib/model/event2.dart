@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/explore.dart';
+import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Event2 with Explore, Favorite {
@@ -436,12 +437,12 @@ class Event2AttendanceDetails {
 
 class Event2SurveyDetails {
   //TODO: remove survey ID from calendar BB
+  Survey? survey;
   final int? hoursAfterEvent;
 
-  Event2SurveyDetails({this.hoursAfterEvent});
+  Event2SurveyDetails({this.survey, this.hoursAfterEvent});
 
   static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {
-    String? surveyId,
     int? hoursAfterEvent
   }) =>
       (other != null) ? Event2SurveyDetails(

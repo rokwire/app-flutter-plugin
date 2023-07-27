@@ -93,14 +93,13 @@ class SurveyAlert {
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
   static const String templateSurveyPrefix = "template.";
-  static const String generatedSurveyPrefix = "generated.";
 
   @override final String id;
   @override final String type;
   final Map<String, SurveyData> data;
   final bool scored;
-  final String title;
-  final String? moreInfo;
+  String title;
+  String? moreInfo;
   final String? defaultDataKey;
   final RuleResult? defaultDataKeyRule;
   final List<RuleResult>? resultRules;
@@ -213,21 +212,16 @@ class Survey extends RuleEngine {
     return null;
   }
 
-  bool wasGeneratedFrom(Survey other) {
-    List<String> templateTypeParts = other.type.split('.');
-    List<String> generatedTypeParts = type.split('.');
-    
-    if (templateTypeParts.length > 1 && generatedTypeParts.length > 1) {
-      if (
-        templateTypeParts[0] == templateSurveyPrefix &&
-        generatedTypeParts[0] == generatedSurveyPrefix &&
-        templateTypeParts.sublist(1).join('.') == generatedTypeParts.sublist(1).join('.')
-      ) {
-        //TODO
-      }
+  void replaceKey(String key, String? replace) {
+    if (replace != null) {
+      String pattern = '{{$key}}';
+      title = title.replaceAll(pattern, replace);
+      moreInfo = moreInfo?.replaceAll(pattern, replace);
+      data.forEach((_, value) {
+        value.text = value.text.replaceAll(pattern, replace);
+        value.moreInfo = value.moreInfo?.replaceAll(pattern, replace);
+      });
     }
-
-    return false;
   }
 }
 
