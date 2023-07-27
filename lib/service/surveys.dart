@@ -342,14 +342,14 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<Survey>?> loadSurveys({List<String>? surveyIDs, List<String>? surveyTypes, String? calendarEventID, int? limit, int? offset}) async {
+  Future<List<Survey>?> loadSurveys({List<String>? ids, List<String>? types, String? calendarEventID, int? limit, int? offset}) async {
     if (enabled) {
       Map<String, String> queryParams = {};
-      if (CollectionUtils.isNotEmpty(surveyIDs)) {
-        queryParams['ids'] = surveyIDs!.join(',');
+      if (CollectionUtils.isNotEmpty(ids)) {
+        queryParams['ids'] = ids!.join(',');
       }
-      if (CollectionUtils.isNotEmpty(surveyTypes)) {
-        queryParams['types'] = surveyTypes!.join(',');
+      if (CollectionUtils.isNotEmpty(types)) {
+        queryParams['types'] = types!.join(',');
       }
       if (calendarEventID != null) {
         queryParams['calendar_event_id'] = calendarEventID;
@@ -360,7 +360,7 @@ class Surveys /* with Service */ {
       if (offset != null) {
         queryParams['offset'] = offset.toString();
       }
-      
+
       String url = '${Config().surveysUrl}/surveys';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
