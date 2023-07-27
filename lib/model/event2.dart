@@ -432,47 +432,40 @@ class Event2AttendanceDetails {
 /// Event2SurveyDetails
 
 class Event2SurveyDetails {
-  final String? surveyId;
+  //TODO: remove survey ID from calendar BB
   final int? hoursAfterEvent;
 
-  Event2SurveyDetails({this.surveyId, this.hoursAfterEvent});
+  Event2SurveyDetails({this.hoursAfterEvent});
 
   static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {
     String? surveyId,
     int? hoursAfterEvent
   }) =>
       (other != null) ? Event2SurveyDetails(
-        surveyId: surveyId ?? other.surveyId,
         hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
       ) : null;
 
   static Event2SurveyDetails? fromJson(Map<String, dynamic>? json) =>
       (json != null) ? Event2SurveyDetails(
-        surveyId: JsonUtils.stringValue(json['survey_id']),
         hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
       ) : null;
 
   Map<String, dynamic> toJson() => {
-    'survey_id': surveyId,
     'hours_after_event': hoursAfterEvent,
   };
 
   @override
   bool operator==(dynamic other) =>
       (other is Event2SurveyDetails) &&
-          (surveyId == other.surveyId) &&
           (hoursAfterEvent == other.hoursAfterEvent);
 
   @override
   int get hashCode =>
-      (surveyId?.hashCode ?? 0) ^
       (hoursAfterEvent?.hashCode ?? 0);
 
   bool get isEmpty => !isNotEmpty;
 
   bool get isNotEmpty =>
-    (surveyId != null) && 
-    ((surveyId?.length ?? 0) > 0) && 
     (hoursAfterEvent != null) &&
     ((hoursAfterEvent ?? 0) >= 0);
 }
