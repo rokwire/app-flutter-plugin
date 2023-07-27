@@ -107,8 +107,10 @@ class Survey extends RuleEngine {
   DateTime? dateUpdated;
   SurveyStats? stats;
 
+  String? calendarEventId;
+
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
-    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, this.calendarEventId, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
@@ -130,6 +132,7 @@ class Survey extends RuleEngine {
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
       stats: JsonUtils.mapOrNull((json) => SurveyStats.fromJson(json), json['stats']),
+      calendarEventId: JsonUtils.stringValue(json['calendar_event_id']),
     );
   }
 
@@ -152,6 +155,7 @@ class Survey extends RuleEngine {
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
+      'calendar_event_id': calendarEventId,
     };
   }
 
@@ -178,6 +182,7 @@ class Survey extends RuleEngine {
       strings: Map.of(other.strings),
       subRules: Map.of(other.subRules),
       stats: other.stats != null ? SurveyStats.fromOther(other.stats!) : null,
+      calendarEventId: other.calendarEventId,
     );
   }
 
@@ -195,10 +200,10 @@ class Survey extends RuleEngine {
     return result;
   }
 
-  static Survey? findInList(List<Survey>? contentList, { String? id }) {
+  static Survey? findInList(List<Survey>? contentList, { String? id, String? calendarEventId }) {
     if (contentList != null) {
       for (Survey survey in contentList) {
-        if ((id != null) && (survey.id == id)) {
+        if ((id != null && survey.id == id) || (calendarEventId != null && survey.calendarEventId == calendarEventId)) {
           return survey;
         }
       }
