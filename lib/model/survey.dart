@@ -92,6 +92,8 @@ class SurveyAlert {
 // TODO: Add localization support
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
+  static const String templateSurveyPrefix = "template.";
+  static const String generatedSurveyPrefix = "generated.";
 
   @override final String id;
   @override final String type;
@@ -209,6 +211,23 @@ class Survey extends RuleEngine {
       }
     }
     return null;
+  }
+
+  bool wasGeneratedFrom(Survey other) {
+    List<String> templateTypeParts = other.type.split('.');
+    List<String> generatedTypeParts = type.split('.');
+    
+    if (templateTypeParts.length > 1 && generatedTypeParts.length > 1) {
+      if (
+        templateTypeParts[0] == templateSurveyPrefix &&
+        generatedTypeParts[0] == generatedSurveyPrefix &&
+        templateTypeParts.sublist(1).join('.') == generatedTypeParts.sublist(1).join('.')
+      ) {
+        //TODO
+      }
+    }
+
+    return false;
   }
 }
 

@@ -242,6 +242,9 @@ class Event2 with Explore, Favorite {
   static const String favoriteKeyName = "event2Ids";
   @override String get favoriteKey => favoriteKeyName;
   @override String? get favoriteId => id;
+
+  // Survey
+  static const String followUpSurveyType = "event_follow_up";
 }
 
 ///////////////////////////////
