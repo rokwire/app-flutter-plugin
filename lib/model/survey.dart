@@ -201,10 +201,13 @@ class Survey extends RuleEngine {
     return result;
   }
 
-  static Survey? findInList(List<Survey>? contentList, { String? id, String? calendarEventId }) {
+  static Survey? findInList(List<Survey>? contentList, { String? id, String? calendarEventId, String? title }) {
     if (contentList != null) {
       for (Survey survey in contentList) {
-        if ((id != null && survey.id == id) || (calendarEventId != null && survey.calendarEventId == calendarEventId)) {
+        if ((id != null && survey.id == id) ||
+            (calendarEventId != null && survey.calendarEventId == calendarEventId) ||
+            (title != null && survey.title == title)
+        ) {
           return survey;
         }
       }
