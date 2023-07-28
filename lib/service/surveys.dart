@@ -429,6 +429,21 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<bool?> deleteSurvey(String surveyId) async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/surveys/$surveyId';
+      Response? response = await Network().delete(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        return true;
+      }
+      String? responseBody = response?.body;
+      debugPrint(responseBody);
+      return false;
+    }
+    return null;
+  }
+
   Future<SurveyResponse?> createSurveyResponse(Survey survey) async {
     if (enabled && Storage().assessmentsSaveResultsMap?[survey.type] != false) {
       String? body = JsonUtils.encode(survey.toJson());
