@@ -15,7 +15,6 @@
  */
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/rules.dart';
@@ -71,7 +70,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   final List<RuleResult> _followUpRules = [];
   List<RuleResult> _resultRules = [];
-  Survey? _survey;
+  //Survey? _survey;
 
   // final Map<String, String> _constants = {};
   // final Map<String, Map<String, String>> _strings = {};
@@ -586,7 +585,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
 
     Map<String, SurveyData> data = <String, SurveyData>{for (var data in _questionData + _actionData) data.key: SurveyData.fromOther(data)};
-    return _survey = Survey(
+    return /*_survey =*/ Survey(
       id: widget.survey != null ? widget.survey!.id : '',
       data: data,
       type: widget.survey?.type ?? 'user',
