@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/explore.dart';
-import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Event2 with Explore, Favorite {
@@ -437,22 +436,20 @@ class Event2AttendanceDetails {
 
 class Event2SurveyDetails {
   //TODO: remove survey ID from calendar BB
-  Survey? survey;
   final int? hoursAfterEvent;
 
-  Event2SurveyDetails({this.survey, this.hoursAfterEvent});
+  Event2SurveyDetails({this.hoursAfterEvent});
 
   static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {
     int? hoursAfterEvent
-  }) =>
-      (other != null) ? Event2SurveyDetails(
-        hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
-      ) : null;
+  }) => (other != null) ? Event2SurveyDetails(
+    hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
+  ) : null;
 
   static Event2SurveyDetails? fromJson(Map<String, dynamic>? json) =>
-      (json != null) ? Event2SurveyDetails(
-        hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
-      ) : null;
+    (json != null) ? Event2SurveyDetails(
+      hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
+    ) : null;
 
   Map<String, dynamic> toJson() => {
     'hours_after_event': hoursAfterEvent,
@@ -460,12 +457,12 @@ class Event2SurveyDetails {
 
   @override
   bool operator==(dynamic other) =>
-      (other is Event2SurveyDetails) &&
-          (hoursAfterEvent == other.hoursAfterEvent);
+    (other is Event2SurveyDetails) &&
+    (hoursAfterEvent == other.hoursAfterEvent);
 
   @override
   int get hashCode =>
-      (hoursAfterEvent?.hashCode ?? 0);
+    (hoursAfterEvent?.hashCode ?? 0);
 
   bool get isEmpty => !isNotEmpty;
 
