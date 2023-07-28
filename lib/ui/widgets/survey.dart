@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/options.dart';
+import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
+import 'package:rokwire_plugin/service/rules.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
+import 'package:rokwire_plugin/ui/popups/popup_message.dart';
 import 'package:rokwire_plugin/ui/widget_builders/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
@@ -76,7 +80,7 @@ class SurveyWidget extends StatefulWidget {
     if (totalQuestions != null && completedQuestions != null) {
       questionProgress = " ($completedQuestions/$totalQuestions)";
     }
-    return Column(mainAxisAlignment: MainAxisAlignment.end, children: <Widget>[
+    return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
       RoundedButton(
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
           textColor: canContinue ? null : Styles().colors?.disabledTextColor,
@@ -101,9 +105,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.continueSurvey = _onTapContinue;
     widget.controller.getSurvey = () => _survey;
 
+    initSurvey();
+  }
+
+  void initSurvey() {
     if (widget.survey is Survey) {
       _survey = widget.survey;
       _mainSurveyData = widget.mainSurveyData;
+      _mainSurveyData ??= Surveys().getFirstQuestion(_survey!);
     } else if (widget.survey is String) {
       _setLoading(true);
       Surveys().loadSurvey(widget.survey).then((survey) {
@@ -112,6 +121,16 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           widget.controller.onLoad?.call(survey);
         }
         _setLoading(false);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(SurveyWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.survey != oldWidget.survey) {
+      setState(() {
+        initSurvey();
       });
     }
   }
@@ -717,7 +736,49 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       }
       widget.controller.onComplete?.call(result);
       _setSaving(false);
+      if (widget.summarizeResultRules) {
+        _onPreviewContinue(result);
+      }
     });
+  }
+
+  void _onPreviewContinue(dynamic result) {
+    if (result is List<RuleAction>) {
+      List<InlineSpan> textSpans = [TextSpan(
+        text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
+        style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+      )];
+      for (RuleAction action in result) {
+        if (RuleAction.supportedPreviews.contains(action.action)) {
+          textSpans.add(TextSpan(
+            text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+          ));
+          textSpans.add(TextSpan(
+            text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
+            style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+            recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),
+          ));
+          textSpans.add(TextSpan(
+            text: '\n',
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+          ));
+        } else {
+          textSpans.add(TextSpan(
+            text: '\u2022 ${action.getSummary()}\n',
+            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+          ));
+        }
+      }
+      PopupMessage.show(context: context,
+        title: "Actions",
+        messageWidget: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8), child: Text.rich(TextSpan(children: textSpans))),
+        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
+        onTapButton: (context) {
+          Navigator.pop(context);
+        },
+      );
+    }
   }
 
   void _setLoading(bool loading) {
