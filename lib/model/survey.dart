@@ -160,13 +160,13 @@ class Survey extends RuleEngine {
     };
   }
 
-  factory Survey.fromOther(Survey other) {
+  factory Survey.fromOther(Survey other, {String? id}) {
     Map<String, SurveyData> data = {};
     for (MapEntry<String, SurveyData> surveyData in other.data.entries){
       data[surveyData.key] = (SurveyData.fromOther(surveyData.value));
     }
     return Survey(
-      id: other.id,
+      id: id ?? other.id,
       data: data,
       type: other.type,
       scored: other.scored,
