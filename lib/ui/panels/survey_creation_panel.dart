@@ -15,7 +15,6 @@
  */
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/rules.dart';
@@ -71,7 +70,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
 
   final List<RuleResult> _followUpRules = [];
   List<RuleResult> _resultRules = [];
-  Survey? _survey;
+  //Survey? _survey;
 
   // final Map<String, String> _constants = {};
   // final Map<String, Map<String, String>> _strings = {};
@@ -586,7 +585,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
 
     Map<String, SurveyData> data = <String, SurveyData>{for (var data in _questionData + _actionData) data.key: SurveyData.fromOther(data)};
-    return _survey = Survey(
+    return /*_survey =*/ Survey(
       id: widget.survey != null ? widget.survey!.id : '',
       data: data,
       type: widget.survey?.type ?? 'user',
@@ -606,49 +605,9 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   void _onTapPreview() {
     Navigator.push(context, CupertinoPageRoute(builder: (context) => SurveyPanel(
       survey: _buildSurvey(),
-      onComplete: _onPreviewContinue,
       summarizeResultRules: true,
       tabBar: widget.tabBar
     )));
-  }
-
-  void _onPreviewContinue(dynamic result) {
-    if (result is List<RuleAction>) {
-      List<InlineSpan> textSpans = [TextSpan(
-        text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
-        style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
-      )];
-      for (RuleAction action in result) {
-        if (RuleAction.supportedPreviews.contains(action.action)) {
-          textSpans.add(TextSpan(
-            text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
-          ));
-          textSpans.add(TextSpan(
-            text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
-            style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
-            recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),  
-          ));
-          textSpans.add(TextSpan(
-            text: '\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
-          ));
-        } else {
-          textSpans.add(TextSpan(
-            text: '\u2022 ${action.getSummary()}\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
-          ));
-        }
-      }
-      PopupMessage.show(context: context,
-        title: "Actions",
-        messageWidget: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8), child: Text.rich(TextSpan(children: textSpans))),
-        buttonTitle: Localization().getStringEx("dialog.ok.title", "OK"),
-        onTapButton: (context) {
-          Navigator.pop(context);
-        },
-      );
-    }
   }
 
   void _onTapSave() {
