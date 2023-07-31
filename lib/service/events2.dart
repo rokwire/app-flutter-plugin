@@ -76,29 +76,45 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
+  // Returns Events2ListResult in case of success, String description in case of error
+  Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/events/load";
       String? body = JsonUtils.encode(query?.toQueryJson());
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: client, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
-      return Events2ListResult.fromResponseJson(JsonUtils.decode((response?.statusCode == 200) ? response?.body : null));
+      return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
     }
     return null;
+  }
+
+  Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
+    dynamic result = await loadEventsEx(query);
+    return (result is Events2ListResult) ? result : null;
   }
 
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;
 
-  Future<Event2?> loadEvent(String eventId) async {
+  Future<dynamic> loadEventEx(String eventId) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/events/load";
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      List<Event2>? resultList = Events2ListResult.listFromResponseJson(JsonUtils.decode((response?.statusCode == 200) ? response?.body : null));
-      return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
+      if (response?.statusCode == 200) {
+        List<Event2>? resultList = Events2ListResult.listFromResponseJson(JsonUtils.decode(response?.body));
+        return ((resultList != null) && resultList.isNotEmpty) ? resultList.first : null;
+      }
+      else {
+        return response?.errorText;
+      }
     }
     return null;
+  }
+
+  Future<Event2?> loadEvent(String eventId) async {
+    dynamic result = await loadEventEx(eventId);
+    return (result is Event2) ? result : null;
   }
 
   // Returns Event2 in case of success, String description in case of error
