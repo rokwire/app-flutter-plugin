@@ -42,10 +42,10 @@ class GraphQL with Service {
     await super.initService();
   }
 
-  ValueNotifier<GraphQLClient> getClient(String url) {
+  ValueNotifier<GraphQLClient> getClient(String url, {Map<String, Set<String>> possibleTypes = const {}}) {
     ValueNotifier<GraphQLClient> client = ValueNotifier(GraphQLClient(
       link: HttpLink(url, defaultHeaders: {}),
-      cache: GraphQLCache(store: HiveStore()),
+      cache: GraphQLCache(store: HiveStore(), possibleTypes: possibleTypes),
     ));
     return client;
   }
