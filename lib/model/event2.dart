@@ -230,6 +230,25 @@ class Event2 with Explore, Favorite {
     return jsonList;
   }
 
+  // List lookup
+
+  static int? indexInList(List<Event2>? contentList, { String? id}) {
+    if (contentList != null) {
+      for (int index = 0; index < contentList.length; index++) {
+        Event2 contentEntry = contentList[index];
+        if ((id != null) && (contentEntry.id == id)) {
+          return index;
+        }
+      }
+    }
+    return null;
+  }
+
+  static Event2? findInList(List<Event2>? contentList, { String? id}) {
+    int? index = indexInList(contentList, id: id);
+    return ((contentList != null) && (index != null)) ? contentList[index] : null;
+  }
+
   // Explore
   @override String?   get exploreId               => id;
   @override String?   get exploreTitle            => name;
