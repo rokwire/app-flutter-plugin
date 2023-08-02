@@ -6,46 +6,43 @@ import 'package:rokwire_plugin/ui/widget_builders/scroll_pager.dart';
 class ScrollPager extends StatelessWidget {
   final Widget? child;
   final Axis scrollDirection;
-  final bool? reverse;
+  final bool reverse;
   final EdgeInsets? padding;
   final bool? primary;
   final ScrollPhysics? physics;
-  late final ScrollController controller;
-  late final ScrollPagerController pagerController;
+  final ScrollPagerController controller;
   final DragStartBehavior dragStartBehavior;
   final Clip clipBehavior;
   final String? restorationId;
   final ScrollViewKeyboardDismissBehavior keyboardDismissBehavior;
 
-  ScrollPager({Key? key,
+  const ScrollPager({Key? key,
     this.scrollDirection = Axis.vertical,
     this.reverse = false,
     this.padding,
     this.primary,
     this.physics,
-    ScrollController? controller,
-    required this.pagerController,
+    required this.controller,
     this.child,
     this.dragStartBehavior = DragStartBehavior.start,
     this.clipBehavior = Clip.hardEdge,
     this.restorationId,
     this.keyboardDismissBehavior = ScrollViewKeyboardDismissBehavior.manual,
-  }) : super(key: key) {
-    this.controller = controller ?? ScrollController();
-    pagerController.registerScrollController(controller!);
-  }
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(key: key, scrollDirection: scrollDirection, reverse: true, padding: padding,
-        primary: primary, physics: physics, controller: controller, child: child, dragStartBehavior: dragStartBehavior,
-        clipBehavior: clipBehavior, restorationId: restorationId, keyboardDismissBehavior: keyboardDismissBehavior);
+    return RefreshIndicator(onRefresh: controller.reset,
+      child: SingleChildScrollView(key: key, scrollDirection: scrollDirection, reverse: reverse, padding: padding,
+          primary: primary, physics: physics, controller: controller.scrollController, child: buildChild(), dragStartBehavior: dragStartBehavior,
+          clipBehavior: clipBehavior, restorationId: restorationId, keyboardDismissBehavior: keyboardDismissBehavior),
+    );
   }
 
   Widget buildChild() {
     return Column(children: [
       child ?? Container(),
-      ScrollPagerBuilder.buildScrollPagerFooter(pagerController) ?? Container(),
+      ScrollPagerBuilder.buildScrollPagerFooter(controller) ?? Container(),
     ]);
   }
 }
@@ -56,6 +53,7 @@ class ScrollPagerController {
 
   Future<int> Function({required int offset, required int limit}) onPage;
   void Function()? onStateChanged;
+  void Function()? onReset;
 
   bool _isLoading = false;
   bool _end = false;
@@ -67,13 +65,19 @@ class ScrollPagerController {
 
   ScrollController? _scrollController;
 
-  ScrollPagerController({required this.limit, required this.onPage, this.onStateChanged});
+  ScrollController? get scrollController => _scrollController;
 
-  void reset() {
+  ScrollPagerController({required this.limit, required this.onPage, this.onStateChanged, this.onReset, ScrollController? controller}) {
+    controller ??= ScrollController();
+    registerScrollController(controller);
+  }
+
+  Future<void> reset() async {
     _offset = 0;
     _end = false;
     _error = false;
-    loadPage();
+    onReset?.call();
+    await loadPage();
   }
 
   void registerScrollController(ScrollController controller) {
@@ -91,23 +95,22 @@ class ScrollPagerController {
     }
   }
 
-  void loadPage({bool retry = false}) {
+  Future<void> loadPage({bool retry = false}) async {
     if (!_isLoading && !_end && (!_error || retry)) {
       _isLoading = true;
       onStateChanged?.call();
-      onPage(offset: _offset, limit: limit).then((value) {
-        if (value >= 0) {
-          _error = false;
-          _offset += value;
-          if (value < limit) {
-            _end = true;
-          }
-        } else {
-          _error = true;
+      int value = await onPage(offset: _offset, limit: limit);
+      if (value >= 0) {
+        _error = false;
+        _offset += value;
+        if (value < limit) {
+          _end = true;
         }
-        _isLoading = false;
-        onStateChanged?.call();
-      });
+      } else {
+        _error = true;
+      }
+      _isLoading = false;
+      onStateChanged?.call();
     }
   }
 
