@@ -446,8 +446,7 @@ class Event2AttendanceDetails {
 
   bool get isNotEmpty =>
     (scanningEnabled == true) || 
-    (manualCheckEnabled == true) ||
-    ((attendanceTakers?.length ?? 0) > 0);
+    (manualCheckEnabled == true);
 }
 
 ///////////////////////////////
