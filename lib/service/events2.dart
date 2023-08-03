@@ -176,12 +176,12 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/event/$eventId/registration";
       String? body = JsonUtils.encode({ 'registration_details' : registrationDetails?.toJson()});
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      return _processUpdateDetailResponse(response);
+      return _processEventUpdateResponse(response);
     }
     return null;
   }
 
-  dynamic _processUpdateDetailResponse(Response? response) {
+  dynamic _processEventUpdateResponse(Response? response) {
     if (response?.statusCode == 200) {
       Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
       NotificationService().notify(notifyUpdated, event);
@@ -198,7 +198,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/event/$eventId/attendance";
       String? body = JsonUtils.encode({ 'attendance_details' : attendanceDetails?.toJson()});
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      return _processUpdateDetailResponse(response);
+      return _processEventUpdateResponse(response);
     }
     return null;
   }
@@ -209,7 +209,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/event/$eventId/survey";
       String? body = JsonUtils.encode({'survey_details': surveyDetails?.toJson()});
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      return _processUpdateDetailResponse(response);
+      return _processEventUpdateResponse(response);
     }
     return null;
   }
@@ -220,7 +220,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/event-person/register";
       String? body = JsonUtils.encode({'event_id': eventId,});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      return (response?.statusCode == 200) ? true : response?.errorText;
+      return _processEventUpdateResponse(response);
     }
     return null;
   }
@@ -230,7 +230,7 @@ class Events2 with Service implements NotificationsListener {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event-person/unregister/$eventId";
       Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
-      return (response?.statusCode == 200) ? true : response?.errorText;
+      return _processEventUpdateResponse(response);
     }
     return null;
   }
