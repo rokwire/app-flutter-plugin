@@ -236,13 +236,18 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns error message, Event2PersonsResult if successful
-  Future<dynamic> loadEventPeople(String eventId) async {
+  Future<dynamic> loadEventPeopleEx(String eventId) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/users";
       Response? response = await Network().get(url, auth: Auth2());
       return (response?.statusCode == 200) ? Event2PersonsResult.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
     }
     return null;
+  }
+
+  Future<dynamic> loadEventPeople(String eventId) async {
+    dynamic result = loadEventPeopleEx(eventId);
+    return (result is Event2PersonsResult) ? result : null;
   }
 
   // Returns error message, Event2Person if successful
