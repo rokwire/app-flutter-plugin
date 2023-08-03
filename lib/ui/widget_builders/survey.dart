@@ -34,7 +34,7 @@ class SurveyBuilder {
     return ActionBuilder.actionButtons(ActionBuilder.actionTypeButtonActions(context, survey?.actions, dismissContext: context));
   }
 
-  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {bool showTimeOnly = false}) {
+  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, bool showTimeOnly = false}) {
     List<Widget> widgets = [];
 
     String? date;
@@ -49,7 +49,7 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat'))),
+          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -61,7 +61,6 @@ class SurveyBuilder {
           ),
         ],
       ),
-      Container(height: 8),
     ]);
 
     if (CollectionUtils.isNotEmpty(response.survey.responseKeys)) {
@@ -71,6 +70,7 @@ class SurveyBuilder {
         //TODO: Handle string localization
         dynamic responseData = responses?[key];
         if (responseData != null) {
+          widgets.add(Container(height: 8));
           widgets.add(Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -99,6 +99,7 @@ class SurveyBuilder {
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: widgets,
             )

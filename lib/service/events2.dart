@@ -207,7 +207,7 @@ class Events2 with Service implements NotificationsListener {
   Future<dynamic> updateEventSurveyDetails(String eventId, Event2SurveyDetails? surveyDetails) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/survey";
-      String? body = JsonUtils.encode(surveyDetails?.toJson());
+      String? body = JsonUtils.encode({'survey_details': surveyDetails?.toJson()});
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       return _processUpdateDetailResponse(response);
     }
