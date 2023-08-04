@@ -246,7 +246,7 @@ class Events2 with Service implements NotificationsListener {
   }
 
   Future<dynamic> loadEventPeople(String eventId) async {
-    dynamic result = loadEventPeopleEx(eventId);
+    dynamic result = await loadEventPeopleEx(eventId);
     return (result is Event2PersonsResult) ? result : null;
   }
 
