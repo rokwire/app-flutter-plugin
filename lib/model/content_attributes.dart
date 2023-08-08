@@ -320,10 +320,10 @@ class ContentAttribute {
   String? get displaySemanticsHint => displayString(semanticsHint);
   String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
-  ContentAttributeRequirements? requirementsForScope(int scope) => (((requirements?.scope ?? 0) & scope) != 0) ? requirements : null;
-  bool isRequired(int scope) => requirementsForScope(scope)?.hasRequired ?? false;
-  bool isMultipleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount != 1);
-  bool isSingleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount == 1);
+  ContentAttributeRequirements? requirementsForFunctionalScope(int functionalScope) => (((requirements?.functionalScope ?? 0) & functionalScope) != 0) ? requirements : null;
+  bool isRequired(int functionalScope) => requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false;
+  bool isMultipleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount != 1);
+  bool isSingleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount == 1);
   bool get hasMultipleValueGroups => (_collectValueGroups().length > 1);
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
@@ -708,10 +708,10 @@ class ContentAttributeRequirements {
   final int? minSelectedCount;
   final int? maxSelectedCount;
   final ContentAttributeRequirementsMode? mode;
-  final int? _scope;
+  final int? _functionalScope;
 
-  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? scope}) :
-    _scope = scope;
+  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? functionalScope}) :
+    _functionalScope = functionalScope;
 
   // JSON serialization
 
@@ -720,7 +720,7 @@ class ContentAttributeRequirements {
       minSelectedCount: JsonUtils.intValue(json['min-selected-count']),
       maxSelectedCount: JsonUtils.intValue(json['max-selected-count']),
       mode: contentAttributeRequirementsModeFromString(JsonUtils.stringValue(json['mode'])),
-      scope: contentAttributeRequirementsScopeFromString(JsonUtils.stringValue(json['scope'])),
+      functionalScope: contentAttributeRequirementsFunctionalScopeFromString(JsonUtils.stringValue(json['functional-scope'])),
     ) : null;
   }
 
@@ -728,7 +728,7 @@ class ContentAttributeRequirements {
     'min-selected-count' : minSelectedCount,
     'max-selected-count' : maxSelectedCount,
     'mode': contentAttributeRequirementsModeToString(mode),
-    'scope': contentAttributeRequirementsScopeToString(_scope),
+    'functional-scope': contentAttributeRequirementsFunctionalScopeToString(_functionalScope),
   };
 
   // Equality
@@ -739,23 +739,23 @@ class ContentAttributeRequirements {
     (minSelectedCount == other.minSelectedCount) &&
     (maxSelectedCount == other.maxSelectedCount) &&
     (mode == other.mode) &&
-    (_scope == other._scope);
+    (_functionalScope == other._functionalScope);
 
   @override
   int get hashCode =>
     (minSelectedCount?.hashCode ?? 0) ^
     (maxSelectedCount?.hashCode ?? 0) ^
     (mode?.hashCode ?? 0) ^
-    (_scope?.hashCode ?? 0);
+    (_functionalScope?.hashCode ?? 0);
 
 
   // Accessories
 
-  int get scope => _scope ?? contentAttributeRequirementsScopeCreate; // the scope by default
+  int get functionalScope => _functionalScope ?? contentAttributeRequirementsFunctionalScopeCreate; // the scope by default
 
-  bool get hasFilterScope => hasScope(contentAttributeRequirementsScopeFilter);
-  bool get hasCreateScope => hasScope(contentAttributeRequirementsScopeCreate);
-  bool hasScope(int scope) => (this.scope & scope) != 0;
+  bool get hasFilterScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeFilter);
+  bool get hasCreateScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeCreate);
+  bool hasFunctionalScope(int functionalScope) => (this.functionalScope & functionalScope) != 0;
 
   bool get hasRequired =>
     (0 < (minSelectedCount ?? 0));
@@ -828,30 +828,30 @@ String? contentAttributeRequirementsModeToString(ContentAttributeRequirementsMod
   }
 }
 
-/////////////////////////////////////
-// ContentAttributeRequirementsScope
+////////////////////////////////////////////////
+// ContentAttributeRequirementsFunctionalScope
 
-const int contentAttributeRequirementsScopeNone   = 0;
-const int contentAttributeRequirementsScopeCreate = 1;
-const int contentAttributeRequirementsScopeFilter = 2;
-const int contentAttributeRequirementsScopeAll    = 3;
+const int contentAttributeRequirementsFunctionalScopeNone   = 0;
+const int contentAttributeRequirementsFunctionalScopeCreate = 1;
+const int contentAttributeRequirementsFunctionalScopeFilter = 2;
+const int contentAttributeRequirementsFunctionalScopeAll    = 3;
 
-int? contentAttributeRequirementsScopeFromString(String? value) {
+int? contentAttributeRequirementsFunctionalScopeFromString(String? value) {
   switch(value) {
-    case 'none': return contentAttributeRequirementsScopeNone;
-    case 'create': return contentAttributeRequirementsScopeCreate;
-    case 'filter': return contentAttributeRequirementsScopeFilter;
-    case 'all': return contentAttributeRequirementsScopeAll;
+    case 'none': return contentAttributeRequirementsFunctionalScopeNone;
+    case 'create': return contentAttributeRequirementsFunctionalScopeCreate;
+    case 'filter': return contentAttributeRequirementsFunctionalScopeFilter;
+    case 'all': return contentAttributeRequirementsFunctionalScopeAll;
     default: return null;
   }
 }
 
-String? contentAttributeRequirementsScopeToString(int? value) {
+String? contentAttributeRequirementsFunctionalScopeToString(int? value) {
   switch(value) {
-    case contentAttributeRequirementsScopeNone: return 'none';
-    case contentAttributeRequirementsScopeCreate: return 'create';
-    case contentAttributeRequirementsScopeFilter: return 'filter';
-    case contentAttributeRequirementsScopeAll: return 'all';
+    case contentAttributeRequirementsFunctionalScopeNone: return 'none';
+    case contentAttributeRequirementsFunctionalScopeCreate: return 'create';
+    case contentAttributeRequirementsFunctionalScopeFilter: return 'filter';
+    case contentAttributeRequirementsFunctionalScopeAll: return 'all';
     default: return null;
   }
 }
