@@ -161,10 +161,10 @@ class ContentAttributes {
   bool isSelectionValid(Map<String, dynamic>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
-  bool hasRequiredAttributes(int scope) {
+  bool hasRequiredAttributes(int functionalScope) {
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.isRequired(scope)) {
+        if (attribute.isRequired(functionalScope)) {
           return true;
         }
       }
@@ -172,7 +172,7 @@ class ContentAttributes {
     return false;
   }
 
-  bool hasRequired(int scope) => hasRequiredAttributes(scope) || (requirements?.hasRequired ?? false);
+  bool hasRequired(int functionalScope) => hasRequiredAttributes(functionalScope) || (requirements?.hasRequired ?? false);
 
   List<String> displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
