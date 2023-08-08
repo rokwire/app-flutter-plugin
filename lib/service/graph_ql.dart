@@ -45,7 +45,8 @@ class GraphQL with Service {
   ValueNotifier<GraphQLClient> getClient(String url, {Map<String, Set<String>> possibleTypes = const {}}) {
     ValueNotifier<GraphQLClient> client = ValueNotifier(GraphQLClient(
       link: HttpLink(url, defaultHeaders: {}),
-      cache: GraphQLCache(store: HiveStore(), possibleTypes: possibleTypes),
+      defaultPolicies: DefaultPolicies(query: Policies(error: ErrorPolicy.all)),
+      cache: GraphQLCache(store: HiveStore(), possibleTypes: possibleTypes, partialDataPolicy: PartialDataCachePolicy.accept),
     ));
     return client;
   }
