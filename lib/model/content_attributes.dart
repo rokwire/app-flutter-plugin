@@ -10,22 +10,23 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class ContentAttributes {
   final List<ContentAttribute>? attributes;
-  final ContentAttributeRequirements? requirements;
+  final List<ContentAttributeRequirements>? _requirements;
 
-  ContentAttributes({this.attributes, this.requirements});
+  ContentAttributes({this.attributes, List<ContentAttributeRequirements>? requirements}) :
+    _requirements = requirements;
 
   // JSON serialization
 
   static ContentAttributes? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ContentAttributes(
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['attributes'])) ,
-      requirements: ContentAttributeRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
+      requirements: ContentAttributeRequirements.listFromJson(JsonUtils.listValue(json['requirements'])),
     ) : null;
   }
 
   toJson() => {
-    'attributes': attributes,
-    'requirements': requirements,
+    'attributes': ContentAttribute.listToJson(attributes),
+    'requirements': ContentAttributeRequirements.listToJson(_requirements),
   };
 
   // Equality
@@ -33,24 +34,26 @@ class ContentAttributes {
   @override
   bool operator==(dynamic other) =>
     (other is ContentAttributes) &&
-    (requirements == other.requirements) &&
-    const DeepCollectionEquality().equals(attributes, other.attributes);
+    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
+    (const DeepCollectionEquality().equals(_requirements, other._requirements));
 
   @override
   int get hashCode =>
-    (requirements?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(attributes));
+    (const DeepCollectionEquality().hash(attributes)) ^
+    (const DeepCollectionEquality().hash(_requirements));
 
   // Copy
 
   static ContentAttributes? fromOther(ContentAttributes? other, { String? scope }) {
     return (other != null) ? ContentAttributes(
       attributes: ContentAttribute.listFromOther(other.attributes, scope: scope),
-      requirements: other.requirements,
+      requirements: ContentAttributeRequirements.listFromOther(other._requirements, scope: scope) ,
     ) : null;
   }
 
   // Accessories
+
+  ContentAttributeRequirements? get requirements => ListUtils.first(_requirements);
 
   bool get isEmpty => attributes?.isEmpty ?? true;
   bool get isNotEmpty => !isEmpty;
@@ -709,8 +712,9 @@ class ContentAttributeRequirements {
   final int? maxSelectedCount;
   final ContentAttributeRequirementsMode? mode;
   final int? _functionalScope;
+  final Set<String>? scope;
 
-  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? functionalScope}) :
+  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? functionalScope, this.scope}) :
     _functionalScope = functionalScope;
 
   // JSON serialization
@@ -721,6 +725,7 @@ class ContentAttributeRequirements {
       maxSelectedCount: JsonUtils.intValue(json['max-selected-count']),
       mode: contentAttributeRequirementsModeFromString(JsonUtils.stringValue(json['mode'])),
       functionalScope: contentAttributeRequirementsFunctionalScopeFromString(JsonUtils.stringValue(json['functional-scope'])),
+      scope: JsonUtils.setStringsValue(json['scope']),
     ) : null;
   }
 
@@ -729,6 +734,7 @@ class ContentAttributeRequirements {
     'max-selected-count' : maxSelectedCount,
     'mode': contentAttributeRequirementsModeToString(mode),
     'functional-scope': contentAttributeRequirementsFunctionalScopeToString(_functionalScope),
+    'scope': JsonUtils.listStringsValue(scope),
   };
 
   // Equality
@@ -739,15 +745,16 @@ class ContentAttributeRequirements {
     (minSelectedCount == other.minSelectedCount) &&
     (maxSelectedCount == other.maxSelectedCount) &&
     (mode == other.mode) &&
-    (_functionalScope == other._functionalScope);
+    (_functionalScope == other._functionalScope) &&
+    const DeepCollectionEquality().equals(scope, other.scope);
 
   @override
   int get hashCode =>
     (minSelectedCount?.hashCode ?? 0) ^
     (maxSelectedCount?.hashCode ?? 0) ^
     (mode?.hashCode ?? 0) ^
-    (_functionalScope?.hashCode ?? 0);
-
+    (_functionalScope?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(scope));
 
   // Accessories
 
@@ -756,6 +763,8 @@ class ContentAttributeRequirements {
   bool get hasFilterScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeFilter);
   bool get hasCreateScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeCreate);
   bool hasFunctionalScope(int functionalScope) => (this.functionalScope & functionalScope) != 0;
+
+  bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
 
   bool get hasRequired =>
     (0 < (minSelectedCount ?? 0));
@@ -805,6 +814,32 @@ class ContentAttributeRequirements {
     }
   }
 
+  // List<ContentAttributeRequirements> JSON Serialization
+
+  static List<ContentAttributeRequirements>? listFromJson(List<dynamic>? jsonList) {
+    List<ContentAttributeRequirements>? values;
+    if (jsonList != null) {
+      values = <ContentAttributeRequirements>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(values, ContentAttributeRequirements.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<ContentAttributeRequirements>? values) {
+    List<dynamic>? jsonList;
+    if (values != null) {
+      jsonList = <dynamic>[];
+      for (ContentAttributeRequirements value in values) {
+        ListUtils.add(jsonList, value.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static List<ContentAttributeRequirements>? listFromOther(List<ContentAttributeRequirements>? otherList, { String? scope }) =>
+    (otherList != null) ? List<ContentAttributeRequirements>.from((scope != null) ? otherList.where((ContentAttributeRequirements requirements) => requirements.inScope(scope)) : otherList) : null;
 }
 
 /////////////////////////////////////
