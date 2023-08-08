@@ -208,6 +208,10 @@ class ListUtils {
     }
   }
 
+  static T? first<T>(List<T>? list) {
+    return ((list != null) && list.isNotEmpty) ? list.first : null;
+  }
+
   static T? entry<T>(List<T>? list, int index) {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
   }

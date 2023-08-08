@@ -10,22 +10,23 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class ContentAttributes {
   final List<ContentAttribute>? attributes;
-  final ContentAttributeRequirements? requirements;
+  final List<ContentAttributeRequirements>? _requirements;
 
-  ContentAttributes({this.attributes, this.requirements});
+  ContentAttributes({this.attributes, List<ContentAttributeRequirements>? requirements}) :
+    _requirements = requirements;
 
   // JSON serialization
 
   static ContentAttributes? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ContentAttributes(
       attributes: ContentAttribute.listFromJson(JsonUtils.listValue(json['attributes'])) ,
-      requirements: ContentAttributeRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
+      requirements: ContentAttributeRequirements.listFromJson(JsonUtils.listValue(json['requirements'])),
     ) : null;
   }
 
   toJson() => {
-    'attributes': attributes,
-    'requirements': requirements,
+    'attributes': ContentAttribute.listToJson(attributes),
+    'requirements': ContentAttributeRequirements.listToJson(_requirements),
   };
 
   // Equality
@@ -33,24 +34,26 @@ class ContentAttributes {
   @override
   bool operator==(dynamic other) =>
     (other is ContentAttributes) &&
-    (requirements == other.requirements) &&
-    const DeepCollectionEquality().equals(attributes, other.attributes);
+    (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
+    (const DeepCollectionEquality().equals(_requirements, other._requirements));
 
   @override
   int get hashCode =>
-    (requirements?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(attributes));
+    (const DeepCollectionEquality().hash(attributes)) ^
+    (const DeepCollectionEquality().hash(_requirements));
 
   // Copy
 
   static ContentAttributes? fromOther(ContentAttributes? other, { String? scope }) {
     return (other != null) ? ContentAttributes(
       attributes: ContentAttribute.listFromOther(other.attributes, scope: scope),
-      requirements: other.requirements,
+      requirements: ContentAttributeRequirements.listFromOther(other._requirements, scope: scope) ,
     ) : null;
   }
 
   // Accessories
+
+  ContentAttributeRequirements? get requirements => ListUtils.first(_requirements);
 
   bool get isEmpty => attributes?.isEmpty ?? true;
   bool get isNotEmpty => !isEmpty;
@@ -161,10 +164,10 @@ class ContentAttributes {
   bool isSelectionValid(Map<String, dynamic>? selection) =>
     isAttributesSelectionValid(selection) && (requirements?.isAttributesSelectionValid(selection) ?? true);
 
-  bool hasRequiredAttributes(int scope) {
+  bool hasRequiredAttributes(int functionalScope) {
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.isRequired(scope)) {
+        if (attribute.isRequired(functionalScope)) {
           return true;
         }
       }
@@ -172,7 +175,7 @@ class ContentAttributes {
     return false;
   }
 
-  bool hasRequired(int scope) => hasRequiredAttributes(scope) || (requirements?.hasRequired ?? false);
+  bool hasRequired(int functionalScope) => hasRequiredAttributes(functionalScope) || (requirements?.hasRequired ?? false);
 
   List<String> displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
     List<String> displayList = <String>[];
@@ -320,10 +323,10 @@ class ContentAttribute {
   String? get displaySemanticsHint => displayString(semanticsHint);
   String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
-  ContentAttributeRequirements? requirementsForScope(int scope) => (((requirements?.scope ?? 0) & scope) != 0) ? requirements : null;
-  bool isRequired(int scope) => requirementsForScope(scope)?.hasRequired ?? false;
-  bool isMultipleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount != 1);
-  bool isSingleSelection(int scope) => (requirementsForScope(scope)?.maxSelectedCount == 1);
+  ContentAttributeRequirements? requirementsForFunctionalScope(int functionalScope) => (((requirements?.functionalScope ?? 0) & functionalScope) != 0) ? requirements : null;
+  bool isRequired(int functionalScope) => requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false;
+  bool isMultipleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount != 1);
+  bool isSingleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount == 1);
   bool get hasMultipleValueGroups => (_collectValueGroups().length > 1);
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
@@ -708,10 +711,11 @@ class ContentAttributeRequirements {
   final int? minSelectedCount;
   final int? maxSelectedCount;
   final ContentAttributeRequirementsMode? mode;
-  final int? _scope;
+  final int? _functionalScope;
+  final Set<String>? scope;
 
-  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? scope}) :
-    _scope = scope;
+  ContentAttributeRequirements({this.minSelectedCount, this.maxSelectedCount, this.mode, int? functionalScope, this.scope}) :
+    _functionalScope = functionalScope;
 
   // JSON serialization
 
@@ -720,7 +724,8 @@ class ContentAttributeRequirements {
       minSelectedCount: JsonUtils.intValue(json['min-selected-count']),
       maxSelectedCount: JsonUtils.intValue(json['max-selected-count']),
       mode: contentAttributeRequirementsModeFromString(JsonUtils.stringValue(json['mode'])),
-      scope: contentAttributeRequirementsScopeFromString(JsonUtils.stringValue(json['scope'])),
+      functionalScope: contentAttributeRequirementsFunctionalScopeFromString(JsonUtils.stringValue(json['functional-scope'])),
+      scope: JsonUtils.setStringsValue(json['scope']),
     ) : null;
   }
 
@@ -728,7 +733,8 @@ class ContentAttributeRequirements {
     'min-selected-count' : minSelectedCount,
     'max-selected-count' : maxSelectedCount,
     'mode': contentAttributeRequirementsModeToString(mode),
-    'scope': contentAttributeRequirementsScopeToString(_scope),
+    'functional-scope': contentAttributeRequirementsFunctionalScopeToString(_functionalScope),
+    'scope': JsonUtils.listStringsValue(scope),
   };
 
   // Equality
@@ -739,23 +745,26 @@ class ContentAttributeRequirements {
     (minSelectedCount == other.minSelectedCount) &&
     (maxSelectedCount == other.maxSelectedCount) &&
     (mode == other.mode) &&
-    (_scope == other._scope);
+    (_functionalScope == other._functionalScope) &&
+    const DeepCollectionEquality().equals(scope, other.scope);
 
   @override
   int get hashCode =>
     (minSelectedCount?.hashCode ?? 0) ^
     (maxSelectedCount?.hashCode ?? 0) ^
     (mode?.hashCode ?? 0) ^
-    (_scope?.hashCode ?? 0);
-
+    (_functionalScope?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(scope));
 
   // Accessories
 
-  int get scope => _scope ?? contentAttributeRequirementsScopeCreate; // the scope by default
+  int get functionalScope => _functionalScope ?? contentAttributeRequirementsFunctionalScopeCreate; // the scope by default
 
-  bool get hasFilterScope => hasScope(contentAttributeRequirementsScopeFilter);
-  bool get hasCreateScope => hasScope(contentAttributeRequirementsScopeCreate);
-  bool hasScope(int scope) => (this.scope & scope) != 0;
+  bool get hasFilterScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeFilter);
+  bool get hasCreateScope => hasFunctionalScope(contentAttributeRequirementsFunctionalScopeCreate);
+  bool hasFunctionalScope(int functionalScope) => (this.functionalScope & functionalScope) != 0;
+
+  bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
 
   bool get hasRequired =>
     (0 < (minSelectedCount ?? 0));
@@ -805,6 +814,32 @@ class ContentAttributeRequirements {
     }
   }
 
+  // List<ContentAttributeRequirements> JSON Serialization
+
+  static List<ContentAttributeRequirements>? listFromJson(List<dynamic>? jsonList) {
+    List<ContentAttributeRequirements>? values;
+    if (jsonList != null) {
+      values = <ContentAttributeRequirements>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(values, ContentAttributeRequirements.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<ContentAttributeRequirements>? values) {
+    List<dynamic>? jsonList;
+    if (values != null) {
+      jsonList = <dynamic>[];
+      for (ContentAttributeRequirements value in values) {
+        ListUtils.add(jsonList, value.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static List<ContentAttributeRequirements>? listFromOther(List<ContentAttributeRequirements>? otherList, { String? scope }) =>
+    (otherList != null) ? List<ContentAttributeRequirements>.from((scope != null) ? otherList.where((ContentAttributeRequirements requirements) => requirements.inScope(scope)) : otherList) : null;
 }
 
 /////////////////////////////////////
@@ -828,30 +863,30 @@ String? contentAttributeRequirementsModeToString(ContentAttributeRequirementsMod
   }
 }
 
-/////////////////////////////////////
-// ContentAttributeRequirementsScope
+////////////////////////////////////////////////
+// ContentAttributeRequirementsFunctionalScope
 
-const int contentAttributeRequirementsScopeNone   = 0;
-const int contentAttributeRequirementsScopeCreate = 1;
-const int contentAttributeRequirementsScopeFilter = 2;
-const int contentAttributeRequirementsScopeAll    = 3;
+const int contentAttributeRequirementsFunctionalScopeNone   = 0;
+const int contentAttributeRequirementsFunctionalScopeCreate = 1;
+const int contentAttributeRequirementsFunctionalScopeFilter = 2;
+const int contentAttributeRequirementsFunctionalScopeAll    = 3;
 
-int? contentAttributeRequirementsScopeFromString(String? value) {
+int? contentAttributeRequirementsFunctionalScopeFromString(String? value) {
   switch(value) {
-    case 'none': return contentAttributeRequirementsScopeNone;
-    case 'create': return contentAttributeRequirementsScopeCreate;
-    case 'filter': return contentAttributeRequirementsScopeFilter;
-    case 'all': return contentAttributeRequirementsScopeAll;
+    case 'none': return contentAttributeRequirementsFunctionalScopeNone;
+    case 'create': return contentAttributeRequirementsFunctionalScopeCreate;
+    case 'filter': return contentAttributeRequirementsFunctionalScopeFilter;
+    case 'all': return contentAttributeRequirementsFunctionalScopeAll;
     default: return null;
   }
 }
 
-String? contentAttributeRequirementsScopeToString(int? value) {
+String? contentAttributeRequirementsFunctionalScopeToString(int? value) {
   switch(value) {
-    case contentAttributeRequirementsScopeNone: return 'none';
-    case contentAttributeRequirementsScopeCreate: return 'create';
-    case contentAttributeRequirementsScopeFilter: return 'filter';
-    case contentAttributeRequirementsScopeAll: return 'all';
+    case contentAttributeRequirementsFunctionalScopeNone: return 'none';
+    case contentAttributeRequirementsFunctionalScopeCreate: return 'create';
+    case contentAttributeRequirementsFunctionalScopeFilter: return 'filter';
+    case contentAttributeRequirementsFunctionalScopeAll: return 'all';
     default: return null;
   }
 }
