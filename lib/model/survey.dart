@@ -47,18 +47,15 @@ class SurveyResponse {
     };
   }
 
-  static List<SurveyResponse>? listFromJson(List<dynamic>? jsonList) {
-    List<SurveyResponse>? result;
-    if (jsonList != null) {
-      result = <SurveyResponse>[];
-      for (dynamic jsonEntry in jsonList) {
-        Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
-        if (mapVal != null) {
-          try {
-            ListUtils.add(result, SurveyResponse.fromJson(mapVal));
-          } catch (e) {
-            debugPrint(e.toString());
-          }
+  static List<SurveyResponse> listFromJson(List<dynamic>? jsonList) {
+    List<SurveyResponse> result = [];
+    for (dynamic jsonEntry in jsonList ?? []) {
+      Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
+      if (mapVal != null) {
+        try {
+          ListUtils.add(result, SurveyResponse.fromJson(mapVal));
+        } catch (e) {
+          debugPrint(e.toString());
         }
       }
     }

@@ -499,11 +499,7 @@ class Surveys /* with Service */ {
       String? responseBody = response?.body;
       if (responseCode == 200) {
         List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
-        if (responseMap != null) {
-          List<SurveyResponse>? surveys = SurveyResponse.listFromJson(
-              responseMap);
-          return surveys;
-        }
+        return SurveyResponse.listFromJson(responseMap);
       }
     }
     return null;
