@@ -345,6 +345,7 @@ class Events2Query {
   static const double nearbyDistanceInMiles = 1.0;
 
   final Iterable<String>? ids;
+  final Event2Grouping? grouping;
   final String? searchText;
   final Set<Event2TypeFilter>? types;
   final Position? location;
@@ -357,7 +358,7 @@ class Events2Query {
   final int? offset;
   final int? limit;
 
-  Events2Query({this.ids, this.searchText,
+  Events2Query({this.ids, this.grouping, this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
@@ -370,6 +371,10 @@ class Events2Query {
 
     if (ids != null) {
       options['ids'] = List<String>.from(ids!);
+    }
+
+    if (grouping != null) {
+      options['grouping'] = grouping?.toJson();
     }
 
     if (searchText != null) {
