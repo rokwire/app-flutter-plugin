@@ -203,8 +203,12 @@ class Event2 with Explore, Favorite {
 
   // Attributes
 
-  bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
-  bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
+  bool get isOnline => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
+  bool get isInPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
+
+  bool get isSuperEvent => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId == null) && (id != null);
+  bool get isSuperEventChild => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId != null);
+  bool get isRecurring => (grouping?.type == Event2GroupingType.recurrence) && (grouping?.recurrenceId != null);
 
   // JSON list searialization
 
@@ -498,30 +502,45 @@ class Event2SurveyDetails {
 class Event2Grouping {
   final Event2GroupingType? type;
   final String? superEventId;
+  final String? recurrenceId;
 
-  Event2Grouping({this.type, this.superEventId});
+  Event2Grouping({this.type, this.superEventId, this.recurrenceId});
+
+  factory Event2Grouping.superEvent(String? id) => Event2Grouping(
+    type: Event2GroupingType.superEvent,
+    superEventId: id,
+  );
+
+  factory Event2Grouping.recurrence(String? id) => Event2Grouping(
+    type: Event2GroupingType.recurrence,
+    recurrenceId: id,
+  );
 
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2Grouping(
-      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['type'])) ,
-      superEventId: JsonUtils.stringValue(json['super-event']),
+      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['grouping_type'])) ,
+      superEventId: JsonUtils.stringValue(json['super_event_id']),
+      recurrenceId: JsonUtils.stringValue(json['group_id']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
-    'type': event2GroupingTypeToString(type),
-    'super-event': superEventId,
+    'grouping_type': event2GroupingTypeToString(type),
+    'super_event_id': superEventId,
+    'group_id': recurrenceId,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is Event2Grouping) &&
     (type == other.type) &&
-    (superEventId == other.superEventId);
+    (superEventId == other.superEventId) &&
+    (recurrenceId == other.recurrenceId);
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
-    (superEventId?.hashCode ?? 0);
+    (superEventId?.hashCode ?? 0) ^
+    (recurrenceId?.hashCode ?? 0);
 }
 
 ///////////////////////////////
@@ -1078,14 +1097,14 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
 ///////////////////////////////
 /// Event2GroupingType
 
-enum Event2GroupingType { superEvent, recurring }
+enum Event2GroupingType { superEvent, recurrence }
 
 Event2GroupingType? event2GroupingTypeFromString(String? value) {
-  if (value == 'super-event') {
+  if (value == 'super_events') {
     return Event2GroupingType.superEvent;
   }
-  else if (value == 'recurring') {
-    return Event2GroupingType.recurring;
+  else if (value == 'repeatable') {
+    return Event2GroupingType.recurrence;
   }
   else {
     return null;
@@ -1094,8 +1113,8 @@ Event2GroupingType? event2GroupingTypeFromString(String? value) {
 
 String? event2GroupingTypeToString(Event2GroupingType? value) {
   switch (value) {
-    case Event2GroupingType.superEvent: return 'super-event';
-    case Event2GroupingType.recurring: return 'recurring';
+    case Event2GroupingType.superEvent: return 'super_events';
+    case Event2GroupingType.recurrence: return 'repeatable';
     default: return null;
   }
 }
