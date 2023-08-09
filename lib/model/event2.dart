@@ -206,6 +206,9 @@ class Event2 with Explore, Favorite {
   bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
   bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
 
+  bool get isSuperEvent => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId == id);
+  bool get isRecurring => (grouping?.type == Event2GroupingType.recurring);
+
   // JSON list searialization
 
   static List<Event2>? listFromJson(List<dynamic>? jsonList) {
