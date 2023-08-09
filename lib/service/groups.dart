@@ -25,6 +25,7 @@ import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
+import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
@@ -33,6 +34,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
+import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -845,15 +847,16 @@ class Groups with Service implements NotificationsListener {
   /// 
   /// value - events (limited or not)
   ///
-  Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
+  Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
-      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(eventIds) : null;
+      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsByIds(eventIds) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
-        List<Event> currentUserEvents = [];
+        List<Event2> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;
-        for (Event event in allEvents!) {
-          bool isPrivate = event.isGroupPrivate!;
+        for (Event2 event in allEvents!) {
+          // bool isPrivate = event.isGroupPrivate!; TBD check if it is the same
+          bool isPrivate = event.private == true;  //It was: From CreateEventPanel ->  event.isGroupPrivate = _isPrivateEvent; -> _selectedPrivacy == eventPrivacyPrivate;
           if (!isPrivate || isCurrentUserMemberOrAdmin) {
             currentUserEvents.add(event);
           }
@@ -861,9 +864,9 @@ class Groups with Service implements NotificationsListener {
         int eventsCount = currentUserEvents.length;
         SortUtils.sort(currentUserEvents);
         //limit the result count // limit available events
-        List<Event> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
-        List<Event> groupEvents = <Event>[];
-        for (Event event in visibleEvents) {
+        List<Event2> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
+        List<Event2> groupEvents = <Event2>[];
+        for (Event2 event in visibleEvents) {
           ListUtils.add(groupEvents, Event.fromJson(event.toJson()));
         }
         return {eventsCount: groupEvents};
@@ -968,20 +971,21 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  Future<String?> updateGroupEvents(Event event) async {
-    String? id = await Events().updateEvent(event);
+  Future<String?> updateGroupEvents(Event2 event) async {
+    String? id = await Events2().updateEvent(event);
     if (StringUtils.isNotEmpty(id)) {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
     return id;
   }
 
-  Future<bool?> deleteEventFromGroup({String? groupId, required Event event}) async {
+  Future<bool?> deleteEventFromGroup({String? groupId, required Event2 event}) async {
     bool? deleteResult = false;
     if (await removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
-      String? creatorGroupId = event.createdByGroupId;
-      if(creatorGroupId!=null){
-        Group? creatorGroup = await loadGroup(creatorGroupId);
+      // String? creatorGroupId = event.createdByGroupId;
+      // if(creatorGroupId!=null){
+      if(event.userRole == Event2UserRole.admin){ //event.canUserDelete
+        Group? creatorGroup = await loadGroup(groupId);
         if(creatorGroup!=null && creatorGroup.currentUserIsAdmin){
           deleteResult = await Events().deleteEvent(event.id);
         }
