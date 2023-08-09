@@ -504,12 +504,12 @@ class Event2Grouping {
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2Grouping(
       type: event2GroupingTypeFromString(JsonUtils.stringValue(json['type'])) ,
-      superEventId: JsonUtils.stringValue(json['super-event']),
+      superEventId: JsonUtils.stringValue(json['super_event']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
     'type': event2GroupingTypeToString(type),
-    'super-event': superEventId,
+    'super_event': superEventId,
   };
 
   @override
@@ -1081,7 +1081,7 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
 enum Event2GroupingType { superEvent, recurring }
 
 Event2GroupingType? event2GroupingTypeFromString(String? value) {
-  if (value == 'super-event') {
+  if (value == 'super_event') {
     return Event2GroupingType.superEvent;
   }
   else if (value == 'recurring') {
@@ -1094,7 +1094,7 @@ Event2GroupingType? event2GroupingTypeFromString(String? value) {
 
 String? event2GroupingTypeToString(Event2GroupingType? value) {
   switch (value) {
-    case Event2GroupingType.superEvent: return 'super-event';
+    case Event2GroupingType.superEvent: return 'super_event';
     case Event2GroupingType.recurring: return 'recurring';
     default: return null;
   }
