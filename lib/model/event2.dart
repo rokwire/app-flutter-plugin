@@ -203,8 +203,8 @@ class Event2 with Explore, Favorite {
 
   // Attributes
 
-  bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
-  bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
+  bool get isOnline => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
+  bool get isInPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
 
   bool get isSuperEvent => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId == null);
   bool get isSuperEventChild => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId != null);
