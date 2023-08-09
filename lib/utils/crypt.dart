@@ -22,6 +22,8 @@ import "package:asn1lib/asn1lib.dart";
 import "package:pointycastle/export.dart";
 import 'package:encrypt/encrypt.dart' as encrypt_package;
 
+// ignore_for_file: unnecessary_non_null_assertion
+
 class AESCrypt {
 
   static const int kCCBlockSizeAES128 = 16;
@@ -175,13 +177,13 @@ class RsaKeyHelper {
     } else {
       var publicKeyBitString = topLevelSeq.elements[1];
 
-      var publicKeyAsn = ASN1Parser(publicKeyBitString.contentBytes());
+      var publicKeyAsn = ASN1Parser(publicKeyBitString.contentBytes()!);
       ASN1Sequence publicKeySeq = publicKeyAsn.nextObject() as ASN1Sequence;
       modulus = publicKeySeq.elements[0] as ASN1Integer;
       exponent = publicKeySeq.elements[1] as ASN1Integer;
     }
 
-    RSAPublicKey rsaPublicKey = RSAPublicKey(modulus.valueAsBigInteger, exponent.valueAsBigInteger);
+    RSAPublicKey rsaPublicKey = RSAPublicKey(modulus.valueAsBigInteger!, exponent.valueAsBigInteger!);
 
     return rsaPublicKey;
   }
@@ -221,7 +223,7 @@ class RsaKeyHelper {
     if (topLevelSeq.elements.length == 3) {
       var privateKey = topLevelSeq.elements[2];
 
-      asn1Parser = ASN1Parser(privateKey.contentBytes());
+      asn1Parser = ASN1Parser(privateKey.contentBytes()!);
       var pkSeq = asn1Parser.nextObject() as ASN1Sequence;
 
       modulus = pkSeq.elements[1] as ASN1Integer;
@@ -236,8 +238,8 @@ class RsaKeyHelper {
     }
 
     RSAPrivateKey rsaPrivateKey = RSAPrivateKey(
-        modulus.valueAsBigInteger,
-        privateExponent.valueAsBigInteger,
+        modulus.valueAsBigInteger!,
+        privateExponent.valueAsBigInteger!,
         p.valueAsBigInteger,
         q.valueAsBigInteger);
 
