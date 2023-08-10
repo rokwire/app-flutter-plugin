@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More dynamic survey response cards [#344](https://github.com/rokwire/app-flutter-plugin/issues/344).
 - Added scope to content attributes global requirements [#349](https://github.com/rokwire/app-flutter-plugin/issues/349).
 - Initial handling of super and recurring events [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
+- Added progress to SectionSlantHeader [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
