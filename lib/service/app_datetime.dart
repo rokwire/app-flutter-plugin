@@ -171,19 +171,19 @@ class AppDateTime with Service {
       timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
 
       if (DateTimeUtils.isToday(dateTimeToCompare, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.time.today', 'Today');
+        displayDay = Localization().getStringEx('model.explore.date_time.today', 'Today');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isTomorrow(dateTimeToCompare, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Tomorrow');
+        displayDay = Localization().getStringEx('model.explore.date_time.tomorrow', 'Tomorrow');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isYesterday(dateTimeToCompare, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
         displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
