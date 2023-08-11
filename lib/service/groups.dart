@@ -27,7 +27,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/model/group.dart';
-import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -867,7 +866,7 @@ class Groups with Service implements NotificationsListener {
         List<Event2> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
         List<Event2> groupEvents = <Event2>[];
         for (Event2 event in visibleEvents) {
-          ListUtils.add(groupEvents, Event.fromJson(event.toJson()));
+          ListUtils.add(groupEvents, Event2.fromJson(event.toJson()));
         }
         return {eventsCount: groupEvents};
       }
