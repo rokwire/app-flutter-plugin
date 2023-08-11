@@ -238,7 +238,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     } else if (survey is SurveyDataResult) {
       surveyWidget = _buildResultSurveySection(survey);
     } else if (survey is SurveyQuestionText) {
-      surveyWidget = _buildTextSurveySection(survey);
+      surveyWidget = _buildTextSurveySection(survey, readOnly: !widget.inputEnabled);
     }
     // else if (survey is SurveyDataPage) {
     //   surveyWidget = _buildPageWidget(survey);
