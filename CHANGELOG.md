@@ -24,7 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added scope to content attributes global requirements [#349](https://github.com/rokwire/app-flutter-plugin/issues/349).
 - Initial handling of super and recurring events [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
 - Added progress to SectionSlantHeader [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
-- Add get all survey responses request [#354](https://github.com/rokwire/app-flutter-plugin/issues/354).
+- Added get all survey responses request [#354](https://github.com/rokwire/app-flutter-plugin/issues/354).
+- Added "Multi-person" event type [#356](https://github.com/rokwire/app-flutter-plugin/issues/356).
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
