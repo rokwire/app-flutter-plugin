@@ -464,6 +464,10 @@ class Events2Query {
       options['private'] = true;
     }
 
+    if (types.contains(Event2TypeFilter.superEvent)) {
+      options['grouping'] = Event2Grouping.superEvent(null).toJson();
+    }
+
     if (types.contains(Event2TypeFilter.nearby) && (location != null)) {
       Map<String, dynamic>? locationParam = JsonUtils.mapValue(options['location']);
       if (locationParam != null) {
