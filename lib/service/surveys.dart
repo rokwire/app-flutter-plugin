@@ -463,7 +463,41 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<SurveyResponse>?> loadSurveyResponses(
+  Future<List<SurveyResponse>?> loadAllSurveyResponses(String surveyId, {DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+    if (enabled) {
+      Map<String, String> queryParams = {};
+      if (startDate != null) {
+        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(
+            startDate);
+        queryParams['start_date'] = startDateFormatted!;
+      }
+      if (endDate != null) {
+        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        queryParams['end_date'] = endDateFormatted!;
+      }
+      if (limit != null) {
+        queryParams['limit'] = limit.toString();
+      }
+      if (offset != null) {
+        queryParams['offset'] = offset.toString();
+      }
+
+      String url = '${Config().surveysUrl}/surveys/$surveyId/responses';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
+        return SurveyResponse.listFromJson(responseMap);
+      }
+    }
+    return null;
+  }
+
+  Future<List<SurveyResponse>?> loadUserSurveyResponses(
       {List<String>? surveyIDs, List<
           String>? surveyTypes, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
     if (enabled) {
