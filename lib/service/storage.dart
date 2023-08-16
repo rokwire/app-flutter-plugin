@@ -353,6 +353,10 @@ class Storage with Service {
   }
   set calendarEventsTable(Map<String, String>? table) => setStringWithName(calendarEventsTableKey, JsonUtils.encode(table));
 
+  String get calendarEnableAutoSaveKey => 'edu.illinois.rokwire.calendar.auto_save_enabled';
+  bool? get calendarEnabledToAutoSave => getBoolWithName(calendarEnableAutoSaveKey, defaultValue: false);
+  set calendarEnabledToAutoSave(bool? value) => setBoolWithName(calendarEnableAutoSaveKey, value);
+
   String get calendarEnableSaveKey => 'edu.illinois.rokwire.calendar.save_enabled';
   bool? get calendarEnabledToSave => getBoolWithName(calendarEnableSaveKey, defaultValue: true);
   set calendarEnabledToSave(bool? value) => setBoolWithName(calendarEnableSaveKey, value);
