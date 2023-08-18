@@ -285,9 +285,13 @@ class Storage with Service {
   set httpProxyPort(String? value) => setStringWithName(httpProxyPortKey, value);
 
   // Language
-  String get currentLanguageKey => 'edu.illinois.rokwire.current_language';
-  String? get currentLanguage => getStringWithName(currentLanguageKey);
-  set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
+  String get systemLanguageKey => 'edu.illinois.rokwire.language.system';
+  String? get systemLanguage => getStringWithName(systemLanguageKey);
+  set systemLanguage(String? value) => setStringWithName(systemLanguageKey, value);
+
+  String get selectedLanguageKey => 'edu.illinois.rokwire.language.selected';
+  String? get selectedLanguage => getStringWithName(selectedLanguageKey);
+  set selectedLanguage(String? value) => setStringWithName(selectedLanguageKey, value);
 
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
