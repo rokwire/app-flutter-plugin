@@ -31,12 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledge new event2 model for sport events [#363](https://github.com/rokwire/app-flutter-plugin/issues/363).
 - Added HEAD request in Network service [#3580](https://github.com/rokwire/illinois-app/issues/3580).
 - Added UrlUtils.fixUriAsync helper [#3580](https://github.com/rokwire/illinois-app/issues/3580).
-
-
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
 - Only return null on unsuccessful survey responses request [#349](https://github.com/rokwire/app-flutter-plugin/issues/349)
+- Local notifications repeating weekly [#365](https://github.com/rokwire/app-flutter-plugin/issues/365)
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
