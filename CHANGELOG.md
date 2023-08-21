@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added language selection capability to Localization service [#361](https://github.com/rokwire/app-flutter-plugin/issues/361).
 - Acknowledge new event2 model for sport events [#363](https://github.com/rokwire/app-flutter-plugin/issues/363).
 - Added HEAD request in Network service [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+- Added UrlUtils.fixUriAsync helper [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)

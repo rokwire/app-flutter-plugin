@@ -20,11 +20,13 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -575,17 +577,51 @@ class UrlUtils {
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? fixUri(Uri uri) {
-    return uri.scheme.isEmpty ? Uri(
-      scheme: 'http',
-      userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
-      host: uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null),
-      port: (0 < uri.port) ? uri.port : null,
-      path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
-      //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
-      query: uri.query.isNotEmpty ? uri.query : null,
-      //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
-      fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
+  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? _buildUri(uri, scheme: 'http') : null;
+
+  static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
+    if (uri.scheme.isEmpty) {
+      final List<String> schemes = ['https', 'http'];
+      for (String scheme in schemes) {
+        Uri? schemeUri = _buildUri(uri, scheme: scheme);
+        Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+        if (schemeResponse?.statusCode == 200) {
+          return schemeUri;
+        }
+      }
+
+      final String www = 'www.';
+      String? host = uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null);
+      if ((host != null) && !host.startsWith(www)) {
+        for (String scheme in schemes) {
+          Uri? schemeUri = _buildUri(uri, scheme: scheme, host: www + host);
+          Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+          if (schemeResponse?.statusCode == 200) {
+            return schemeUri;
+          }
+        }
+      }
+
+    }
+    return null;
+  }
+
+  static Uri? _buildUri(Uri uri, { String? scheme, String? host }) {
+    try {
+      return Uri(
+        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
+        userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+        host: (host != null) ? host : (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)),
+        port: (0 < uri.port) ? uri.port : null,
+        path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
+        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+        query: uri.query.isNotEmpty ? uri.query : null,
+        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+        fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+    }
+    catch(e) {
+      return null;
+    }
   }
 
   static Future<bool> isHostAvailable(String? url) async {
