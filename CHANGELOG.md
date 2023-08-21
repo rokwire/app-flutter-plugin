@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added get all survey responses request [#354](https://github.com/rokwire/app-flutter-plugin/issues/354).
 - Added "Multi-person" event type [#356](https://github.com/rokwire/app-flutter-plugin/issues/356).
 - Added language selection capability to Localization service [#361](https://github.com/rokwire/app-flutter-plugin/issues/361).
+- Acknowledge new event2 model for sport events [#363](https://github.com/rokwire/app-flutter-plugin/issues/363).
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
