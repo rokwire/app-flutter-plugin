@@ -40,6 +40,9 @@ class Event2 with Explore, Favorite {
 
   String? assignedImageUrl;
 
+  final Event2Source? source;
+  final Map<String, dynamic>? data;
+
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
@@ -48,7 +51,8 @@ class Event2 with Explore, Favorite {
     this.canceled, this.userRole,
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
-    this.sponsor, this.speaker, this.contacts
+    this.sponsor, this.speaker, this.contacts,
+    this.data, this.source
   });
 
   // JSON serialization
@@ -88,6 +92,9 @@ class Event2 with Explore, Favorite {
       speaker: JsonUtils.stringValue(json['speaker']),
       contacts: Event2Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
 
+      source: event2SourceFromString(JsonUtils.stringValue(json['source'])),
+      data: JsonUtils.mapValue(json['data']),
+
     ) : null;
 
   Map<String, dynamic> toJson() => {
@@ -124,6 +131,9 @@ class Event2 with Explore, Favorite {
     'sponsor': sponsor,
     'speaker': speaker,
     'contacts': Event2Contact.listToJson(contacts),
+
+    'source': event2SourceToString(source),
+    'data': data,
   };
 
   // Equality
@@ -163,7 +173,9 @@ class Event2 with Explore, Favorite {
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
-    (const DeepCollectionEquality().equals(contacts, other.contacts));
+    (const DeepCollectionEquality().equals(contacts, other.contacts)) &&
+    (source == other.source) &&
+    (data == other.data);
 
   @override
   int get hashCode =>
@@ -199,7 +211,10 @@ class Event2 with Explore, Favorite {
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(contacts));
+    (const DeepCollectionEquality().hash(contacts)) ^
+
+    (source?.hashCode ?? 0) ^
+    (data?.hashCode ?? 0);
 
   // Attributes
 
@@ -209,6 +224,8 @@ class Event2 with Explore, Favorite {
   bool get isSuperEvent => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId == null) && (id != null);
   bool get isSuperEventChild => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId != null);
   bool get isRecurring => (grouping?.type == Event2GroupingType.recurrence) && (grouping?.recurrenceId != null);
+
+  bool get isSportEvent => (source == Event2Source.sports_bb);
 
   // JSON list searialization
 
@@ -1120,6 +1137,31 @@ String? event2GroupingTypeToString(Event2GroupingType? value) {
   switch (value) {
     case Event2GroupingType.superEvent: return 'super_events';
     case Event2GroupingType.recurrence: return 'repeatable';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// Event2Source
+
+enum Event2Source { events_bb, sports_bb }
+
+Event2Source? event2SourceFromString(String? value) {
+  if (value == 'events_bb') {
+    return Event2Source.events_bb;
+  }
+  else if (value == 'sports_bb') {
+    return Event2Source.sports_bb;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2SourceToString(Event2Source? value) {
+  switch (value) {
+    case Event2Source.events_bb: return 'events_bb';
+    case Event2Source.sports_bb: return 'sports_bb';
     default: return null;
   }
 }
