@@ -420,6 +420,44 @@ class Network  {
     return null;
   }
 
+  Future<http.Response?> _head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async {
+    if (Connectivity().isNotOffline) {
+      try {
+        Uri? uri = _uriFromUrlString(url);
+        Future<http.Response?>? response = (uri != null) ? http.head(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
+        return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
+      } catch (e) {
+        Log.d(e.toString());
+        FirebaseCrashlytics().recordError(e, null);
+      }
+    }
+    return null;
+  }
+
+  Future<http.Response?> head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async {
+    http.Response? response;
+    
+    try {    
+      dynamic token = auth?.networkAuthToken;
+      response = await _head(url, headers: headers, auth: auth, timeout: timeout);
+      
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+        response = await _head(url, headers: headers, auth: auth, timeout: timeout);
+      }
+    } catch (e) {
+      Log.d(e.toString());
+      FirebaseCrashlytics().recordError(e, null);
+    }
+
+    if (sendAnalytics) {
+      NotificationService().notify(notifyHttpResponse, _notifyHttpResponseParam(response, analyticsUrl: analyticsUrl));
+    }
+
+    _saveCookiesFromResponse(_urlStringFromUri(url), response);
+
+    return response;
+  }
+
   // NetworkAuth
 
   Future<Map<String, String>?> _prepareHeaders(Map<String, String?>? headers, NetworkAuthProvider? auth, Uri? uri) async {
@@ -539,5 +577,9 @@ class Network  {
       uri = Uri.tryParse(url.toString());
     }
     return uri;
+  }
+
+  static String? _urlStringFromUri(dynamic uri) {
+    return (uri is String) ? uri : uri.toString();
   }
 }
