@@ -26,7 +26,7 @@ import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:package_info/package_info.dart';
-import 'package:rokwire_plugin/service/Storage.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
