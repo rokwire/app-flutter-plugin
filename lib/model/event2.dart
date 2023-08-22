@@ -1,10 +1,9 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/model/display_datetime.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Event2 with Explore, Favorite, DisplayDateTime {
+class Event2 with Explore, Favorite {
   final String? id;
   final String? name;
   final String? description;
@@ -283,11 +282,6 @@ class Event2 with Explore, Favorite, DisplayDateTime {
   static const String favoriteKeyName = "event2Ids";
   @override String get favoriteKey => favoriteKeyName;
   @override String? get favoriteId => id;
-
-  // DisplayDate
-  @override DateTime? get startDateTimeUtcValue => startTimeUtc;
-  @override DateTime? get endDateTimeUtcValue => endTimeUtc;
-  @override bool? get isAllDay => allDay;
 
   // Survey
   static const String followUpSurveyType = "event_follow_up";
