@@ -25,6 +25,7 @@ class Event2 with Explore, Favorite {
   final bool? private;
   
   final bool? canceled;
+  final bool? published;
   final Event2UserRole? userRole;
 
   final bool? free;
@@ -48,7 +49,7 @@ class Event2 with Explore, Favorite {
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.eventType, this.location, this.onlineDetails, 
     this.grouping, this.attributes, this.private,
-    this.canceled, this.userRole,
+    this.canceled, this.published, this.userRole,
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
     this.sponsor, this.speaker, this.contacts,
@@ -79,6 +80,7 @@ class Event2 with Explore, Favorite {
       private: JsonUtils.boolValue(json['private']),
 
       canceled: JsonUtils.boolValue(json['canceled']),
+      published: JsonUtils.boolValue(json['published']),
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
 
       free: JsonUtils.boolValue(json['free']),
@@ -119,6 +121,7 @@ class Event2 with Explore, Favorite {
     'private': private,
     
     'canceled': canceled,
+    'published': published,
     'role': event2UserRoleToString(userRole),
 
     'free': free,
@@ -162,6 +165,7 @@ class Event2 with Explore, Favorite {
     (private == other.private) &&
     
     (canceled == other.canceled) &&
+    (published == other.published) &&
     (userRole == other.userRole) &&
 
     (free == other.free) &&
@@ -200,6 +204,7 @@ class Event2 with Explore, Favorite {
     (private?.hashCode ?? 0) ^
 
     (canceled?.hashCode ?? 0) ^
+    (published?.hashCode ?? 0) ^
     (userRole?.hashCode ?? 0) ^
 
     (free?.hashCode ?? 0) ^
