@@ -506,39 +506,16 @@ class AppVersion {
 }
 
 class UrlUtils {  
-  static String? getScheme(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      return (uri != null) ? uri.scheme : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
-
-  static String? getHost(String? url) {
-    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
-    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
-  }
-
-  static String? getExt(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      String? path = (uri != null) ? uri.path : null;
-      return (path != null) ? path_package.extension(path) : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
 
   static bool isPdf(String? url) {
-    return (getExt(url) == '.pdf');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
+    return (ext == '.pdf');
   }
 
   static bool isWebScheme(String? url) {
-    String? scheme = getScheme(url);
-    return (scheme == 'http') || (scheme == 'https');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
   static bool launchInternal(String? url) {
@@ -571,19 +548,78 @@ class UrlUtils {
     return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
   }
 
+  static Uri? parseUri(String? url) {
+    if (url != null) {
+      Uri? uri = Uri.tryParse(url);
+      if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
+        List<String> pathComponents = uri.path.split('/');
+        if (0 < pathComponents.length) {
+          String host = pathComponents.first;
+          String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
+          try {
+            return Uri(
+              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
+              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+              host: host,
+              port: (0 < uri.port) ? uri.port : null,
+              path: path,
+              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+              query: uri.query.isNotEmpty ? uri.query : null,
+              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+          }
+          catch(e) {
+          }
+        }
+      }
+      return uri;
+    }
+    return null;
+  }
+
+  static Uri? buildUri(Uri uri, { String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
+    
+    String sourceHost = uri.host;
+    String sourcePath = uri.path;
+    if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
+      List<String> sourcePathComponents = sourcePath.split('/');
+      if (0 < sourcePathComponents.length) {
+        sourceHost = sourcePathComponents.first;
+        sourcePath = (1 < sourcePathComponents.length) ? sourcePathComponents.slice(1).join('/') : "";
+      }
+    }
+
+    try {
+      return Uri(
+        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
+        userInfo: (userInfo != null) ? userInfo : (uri.userInfo.isNotEmpty ? uri.userInfo : null),
+        host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
+        port: (port != null) ? port : ((0 < uri.port) ? uri.port : null),
+        path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
+        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+        query: (query != null) ? query : (uri.query.isNotEmpty ? uri.query : null),
+        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+        fragment: (fragment != null) ? fragment : (uri.fragment.isNotEmpty ? uri.fragment : null)
+      );
+    }
+    catch(e) {
+      return null;
+    }
+  }
+
   static String? fixUrl(String url) {
-    Uri? uri = Uri.tryParse(url);
+    Uri? uri = parseUri(url);
     Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? _buildUri(uri, scheme: 'http') : null;
+  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? buildUri(uri, scheme: 'http') : null;
 
   static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
     if (uri.scheme.isEmpty) {
       final List<String> schemes = ['https', 'http'];
       for (String scheme in schemes) {
-        Uri? schemeUri = _buildUri(uri, scheme: scheme);
+        Uri? schemeUri = buildUri(uri, scheme: scheme);
         Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
         if (schemeResponse?.statusCode == 200) {
           return schemeUri;
@@ -594,7 +630,7 @@ class UrlUtils {
       String? host = uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null);
       if ((host != null) && !host.startsWith(www)) {
         for (String scheme in schemes) {
-          Uri? schemeUri = _buildUri(uri, scheme: scheme, host: www + host);
+          Uri? schemeUri = buildUri(uri, scheme: scheme, host: www + host);
           Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
           if (schemeResponse?.statusCode == 200) {
             return schemeUri;
@@ -606,27 +642,9 @@ class UrlUtils {
     return null;
   }
 
-  static Uri? _buildUri(Uri uri, { String? scheme, String? host }) {
-    try {
-      return Uri(
-        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
-        userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
-        host: (host != null) ? host : (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)),
-        port: (0 < uri.port) ? uri.port : null,
-        path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
-        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
-        query: uri.query.isNotEmpty ? uri.query : null,
-        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
-        fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
-    }
-    catch(e) {
-      return null;
-    }
-  }
-
   static Future<bool> isHostAvailable(String? url) async {
     List<InternetAddress>? result;
-    String? host = getHost(url);
+    String? host = parseUri(url)?.host;
     try {
       result = (host != null) ? await InternetAddress.lookup(host) : null;
     }
