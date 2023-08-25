@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:pinch_zoom/pinch_zoom.dart';
 
 class ModalImagePanel extends StatelessWidget {
   final String? imageUrl;
@@ -80,15 +81,17 @@ class ModalImagePanel extends StatelessWidget {
     }
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:
-        InkWell(onTap: () => _onDismiss(context), child:
-          Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Expanded(child:
-              Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget),) : Container()
+        _buildPinchZoomControl(child:
+          InkWell(onTap: () => _onDismiss(context), child:
+            Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                    Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget)) : Container()
+                    ),
+                  ],)
                 ),
-              ],)
-            ),
-          ],),
+            ],)
+          ),
         ),
       ),
     );
@@ -129,6 +132,15 @@ class ModalImagePanel extends StatelessWidget {
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
+
+  Widget _buildPinchZoomControl({required Widget child}) =>
+      PinchZoom(
+        child: child,
+        resetDuration: const Duration(milliseconds: 100),
+        maxScale: 4,
+        onZoomStart: (){print('Start zooming');},
+        onZoomEnd: (){print('Stop zooming');},
+      );
 
   void _onClose(BuildContext context) {
     if (onClose != null) {
