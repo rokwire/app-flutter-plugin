@@ -118,27 +118,6 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2) ? result : null;
   }
 
-  Future<dynamic> loadEventsByIdsEx(List<String>? eventIds) async {
-    if (Config().calendarUrl != null && CollectionUtils.isNotEmpty(eventIds)) {
-      String url = "${Config().calendarUrl}/events/load";
-      String? body = JsonUtils.encode({"ids":eventIds});
-      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
-      if (response?.statusCode == 200) {
-        List<Event2>? resultList = Events2ListResult.listFromResponseJson(JsonUtils.decode(response?.body));
-        return resultList;
-      }
-      else {
-        return response?.errorText;
-      }
-    }
-    return null;
-  }
-
-  Future<List<Event2>?> loadEventsByIds(List<String>? eventIds) async {
-    dynamic result = await loadEventsByIdsEx(eventIds);
-    return (result is List<Event2>) ? result : null;
-  }
-
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
