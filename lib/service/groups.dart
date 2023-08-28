@@ -849,12 +849,11 @@ class Groups with Service implements NotificationsListener {
   Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
-      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsByIds(eventIds) : null;
+      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsList(Events2Query(ids: eventIds)) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
         List<Event2> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;
         for (Event2 event in allEvents!) {
-          // bool isPrivate = event.isGroupPrivate!; TBD check if it is the same
           bool isPrivate = event.private == true;  //It was: From CreateEventPanel ->  event.isGroupPrivate = _isPrivateEvent; -> _selectedPrivacy == eventPrivacyPrivate;
           if (!isPrivate || isCurrentUserMemberOrAdmin) {
             currentUserEvents.add(event);
