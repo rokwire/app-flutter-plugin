@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UrlUtils.fixUriAsync helper [#3580](https://github.com/rokwire/illinois-app/issues/3580).
 - Added published flag to event [#369](https://github.com/rokwire/app-flutter-plugin/issues/369).
 - Added Pinch Zoom support for ModalImagePanel [#3305](https://github.com/rokwire/illinois-app/issues/3305).
+- Override survey action summary [#373](https://github.com/rokwire/app-flutter-plugin/issues/373)
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)

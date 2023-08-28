@@ -58,12 +58,13 @@ class SurveyWidget extends StatefulWidget {
   final Map<String, dynamic>? defaultResponses;
   final Widget? offlineWidget;
   final bool summarizeResultRules;
+  final Widget? summarizeResultRulesWidget;
 
   late final SurveyWidgetController controller;
 
   SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, this.internalContinueButton = true,
-    this.surveyDataKey, this.mainSurveyData, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, SurveyWidgetController? controller}) :
-        super(key: key) {
+    this.surveyDataKey, this.mainSurveyData, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, this.summarizeResultRulesWidget,
+    SurveyWidgetController? controller}) : super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
   }
 
@@ -743,7 +744,9 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   void _onPreviewContinue(dynamic result) {
-    if (result is List<RuleAction>) {
+    if (widget.summarizeResultRulesWidget != null) {
+      showDialog(context: context, builder: (BuildContext context) => widget.summarizeResultRulesWidget!);
+    } else if (result is List<RuleAction>) {
       List<InlineSpan> textSpans = [TextSpan(
         text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
         style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
@@ -770,6 +773,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
           ));
         }
       }
+
       PopupMessage.show(context: context,
         title: "Actions",
         messageWidget: Padding(padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8), child: Text.rich(TextSpan(children: textSpans))),
