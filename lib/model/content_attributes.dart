@@ -359,10 +359,14 @@ class ContentAttribute {
   bool isSatisfiedFromSelection(dynamic selection) {
     if (requirements != null) {
       Map<String?, LinkedHashSet<dynamic>> groupsSelection = _splitSelectionByGroups(selection);
-      for (LinkedHashSet<dynamic> groupSelection in groupsSelection.values) {
-        if (!requirements!.isAttributeValuesSelectionValid(groupSelection)) {
-          return false;
+      if(groupsSelection.isNotEmpty) {
+        for (LinkedHashSet<dynamic> groupSelection in groupsSelection.values) {
+          if (!requirements!.isAttributeValuesSelectionValid(groupSelection)) {
+            return false;
+          }
         }
+      } else { //Check does empty selection satisfies the requirements. Otherwise the min-selection requirement is not checked
+        return requirements!.isAttributeValuesSelectionValid(null);
       }
     }
     return true;
