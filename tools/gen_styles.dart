@@ -13,10 +13,10 @@ Map<String, String> classMap = {
 };
 
 Map<String, String> typesMap = {
-  'color': 'Color?',
-  'text_style': 'TextStyle?',
-  'font_family': 'String?',
-  'image': 'Widget?',
+  'color': 'Color',
+  'text_style': 'TextStyle',
+  'font_family': 'String',
+  'image': 'Widget',
 };
 
 Map<String, String> refsMap = {
@@ -24,6 +24,28 @@ Map<String, String> refsMap = {
   'text_style': 'Styles().textStyles?.getTextStyle(%key)',
   'font_family': 'Styles().fontFamilies?.fromCode(%key)',
   'image': 'Styles().images?.getImage(%key)',
+};
+
+Map<String, Function(String, MapEntry<String, dynamic>)> defaultFuncs = {
+  'color': _buildDefaultColor,
+  'text_style': (name, json) => _buildDefaultClass(name, json, classFields: textStyleFields),
+  'font_family': _buildDefaultString,
+  'image': _buildDefaultContainer,
+};
+
+Map<String, String> textStyleFields = {
+  'color': 'color',
+  'decoration_color': 'decorationColor:AppColors',
+  'size': 'fontSize',
+  'height': 'height',
+  'font_family': 'fontFamily',
+  'letter_spacing': 'letterSpacing',
+  'word_spacing': 'wordSpacing',
+  'decoration_thickness': 'decorationThickness',
+  'decoration': 'decoration:TextDecoration',
+  'overflow': 'overflow:TextOverflow',
+  'decoration_style': 'decorationStyle:TextDecorationStyle',
+  'font_weight': 'fontWeight:FontWeight',
 };
 
 String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
@@ -168,11 +190,79 @@ String? _buildClass(String name, Map<String, dynamic> json) {
   for (MapEntry<String, dynamic> entry in json.entries) {
     String varName = camelCase(entry.key);
     String varRef = ref.replaceAll("%key", "'${entry.key}'");
-    classString += "    static $type get $varName => $varRef;\n";
+    String? defaultObj = defaultFuncs[name]?.call(name, entry);
+    String defaultObjString = defaultObj != null ? ' ?? $defaultObj' : '';
+    classString += "    static $type get $varName => $varRef$defaultObjString;\n";
     replacements[varRef] = '$className.$varName';
   }
   classString += "}\n";
   return classString;
+}
+
+String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<String, String>? classFields}) {
+  String? type = typesMap[name];
+  if (type == null) {
+    return null;
+  }
+
+  dynamic value = entry.value;
+  if (value is Map<String, dynamic>) {
+    String params = '';
+    for (MapEntry<String, dynamic> entry in value.entries) {
+      if (params.isNotEmpty) {
+        params += ', ';
+      }
+
+      String enumType = '';
+      if (classFields != null) {
+        String? field = classFields[entry.key];
+        if (field != null) {
+          List<String> fields = field.split(':');
+          if (fields.length == 2) {
+            params += fields[0];
+            enumType = '${fields[1]}.';
+          } else {
+            params += field;
+          }
+        } else {
+          continue;
+        }
+      } else {
+        params += camelCase(entry.key);
+      }
+      String? styleClass = classMap[entry.key];
+      if (styleClass != null) {
+        params += ': $styleClass.${entry.value}';
+      } else {
+        params += ': $enumType${entry.value}';
+      }
+    }
+    return "$type($params)";
+  }
+  return null;
+}
+
+String? _buildDefaultColor(String name, MapEntry<String, dynamic> entry) {
+  dynamic value = entry.value;
+  if (value is String ) {
+    value = value.replaceFirst('#', '');
+    if (value.length == 6) {
+      value = 'FF' + value;
+    }
+    return 'const Color(0x$value)';
+  }
+  return null;
+}
+
+String? _buildDefaultString(String name, MapEntry<String, dynamic> entry) {
+  if (entry.value is String) {
+    return "'${entry.value}'";
+  }
+  return null;
+}
+
+String? _buildDefaultContainer(String name, MapEntry<String, dynamic> entry) {
+  return 'Container()';
 }
 
 String _buildFile(List<String> classStrings) {

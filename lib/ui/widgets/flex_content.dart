@@ -17,6 +17,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
+import 'package:rokwire_plugin/service/assets.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -46,6 +47,11 @@ class FlexContent extends StatefulWidget {
   final void Function(BuildContext context)? onClose;
 
   const FlexContent({Key? key, this.contentKey, this.contentJson, this.onClose}) : super(key: key);
+
+  static FlexContent? fromAssets(String contentKey, { void Function(BuildContext context)? onClose }) {
+    Map<String, dynamic>? jsonContent = JsonUtils.mapValue(Assets()[contentKey]);
+    return (jsonContent != null) ? FlexContent(contentKey: contentKey, contentJson: jsonContent, onClose: onClose) : null;
+  }
 
   @override
   FlexContentWidgetState createState() => FlexContentWidgetState();
