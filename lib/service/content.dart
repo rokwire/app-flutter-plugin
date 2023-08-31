@@ -131,11 +131,11 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   @override
   void onNotification(String name, dynamic param) {
     if (name == AppLifecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+      _onAppLifecycleStateChanged(param);
     }
   }
 
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
