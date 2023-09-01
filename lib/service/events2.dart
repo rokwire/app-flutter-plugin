@@ -118,10 +118,31 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2) ? result : null;
   }
 
-  Future<dynamic> loadEventsByIdsEx(List<String>? eventIds) async {
+  Future<dynamic> loadEventsByIdsEx({List<String>? eventIds, Event2SortType? sortType,
+    Event2TimeFilter? timeFilter, Event2SortOrder? sortOrder, int? offset, int? limit}) async {
     if (Config().calendarUrl != null && CollectionUtils.isNotEmpty(eventIds)) {
-      String url = "${Config().calendarUrl}/events/load";
-      String? body = JsonUtils.encode({"ids":eventIds});
+      Map<String, dynamic> options = <String, dynamic>{};
+      if (eventIds != null) {
+        options['ids'] = List<String>.from(eventIds);
+      }
+      if (timeFilter != null) {
+        Events2Query.buildTimeLoadOptions(options, timeFilter);
+      }
+      if (sortType != null) {
+        options['sort_by'] = event2SortTypeToOption(sortType);
+      }
+      if (sortOrder != null) {
+        options['order'] = event2SortOrderToOption(sortOrder);
+      }
+      if (offset != null) {
+        options['offset'] = offset;
+      }
+      if (limit != null) {
+        options['limit'] = limit;
+      }
+
+      String url = "${Config().calendarUrl}/events/lite";
+      String? body = JsonUtils.encode(options);
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         List<Event2>? resultList = Events2ListResult.listFromResponseJson(JsonUtils.decode(response?.body));
@@ -134,8 +155,12 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Event2>?> loadEventsByIds(List<String>? eventIds) async {
-    dynamic result = await loadEventsByIdsEx(eventIds);
+  Future<List<Event2>?> loadEventsByIds({List<String>? eventIds,
+    Event2SortType? sortType = Event2SortType.dateTime,
+    Event2TimeFilter timeFilter = Event2TimeFilter.upcoming,
+    Event2SortOrder sortOrder = Event2SortOrder.ascending,
+    int offset = 0, int? limit}) async {
+    dynamic result = await loadEventsByIdsEx(eventIds: eventIds, sortType: sortType, sortOrder: sortOrder, timeFilter: timeFilter);
     return (result is List<Event2>) ? result : null;
   }
 

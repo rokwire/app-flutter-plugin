@@ -849,7 +849,7 @@ class Groups with Service implements NotificationsListener {
   Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
-      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsList(Events2Query(ids: eventIds)) : null;
+      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsByIds(eventIds: eventIds) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
         List<Event2> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;
