@@ -1247,6 +1247,14 @@ class Groups with Service implements NotificationsListener {
 
   Set<String>? get userGroupNames => _userGroupNames;
 
+  ///
+  /// Returns the groups that current user is admin of without the current group
+  ///
+  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const []}) async {
+    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my);
+    return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
+  }
+
   File? _getUserGroupsCacheFile()  =>
     (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
