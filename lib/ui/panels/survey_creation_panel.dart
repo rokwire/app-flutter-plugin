@@ -17,6 +17,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
@@ -183,7 +184,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Scaffold(
       appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: AppColors?.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
     );
   }
@@ -272,24 +273,24 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         )),
       ],));
     }
-    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles?.getTextStyle('widget.error.regular.fat'));
+    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: AppTextStyles.widgetErrorRegularBold);
   }
 
   Widget _buildPreviewAndSave() {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
-        borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
-        backgroundColor: Styles().colors?.surface,
-        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        borderColor: AppColors.fillColorPrimaryVariant,
+        backgroundColor: AppColors.surface,
+        textStyle: AppTextStyles.widgetDetailLargeBold,
         onTap: _onTapPreview,
       ))),
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         RoundedButton(
           label: 'Save',
-          borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
-          backgroundColor: Styles().colors?.surface,
-          textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+          borderColor: AppColors.fillColorPrimaryVariant,
+          backgroundColor: AppColors.surface,
+          textStyle: AppTextStyles.widgetDetailLargeBold,
           onTap: _onTapSave,
           enabled: !_loading
         ),
@@ -616,27 +617,27 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (result is List<RuleAction>) {
       List<InlineSpan> textSpans = [TextSpan(
         text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
-        style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+        style: AppTextStyles.widgetDetailRegularBold,
       )];
       for (RuleAction action in result) {
         if (RuleAction.supportedPreviews.contains(action.action)) {
           textSpans.add(TextSpan(
             text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: AppTextStyles.widgetDetailRegularBold,
           ));
           textSpans.add(TextSpan(
             text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
-            style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+            style: AppTextStyles.widgetButtonTitleMediumUnderline,
             recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),  
           ));
           textSpans.add(TextSpan(
             text: '\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: AppTextStyles.widgetDetailRegularBold,
           ));
         } else {
           textSpans.add(TextSpan(
             text: '\u2022 ${action.getSummary()}\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: AppTextStyles.widgetDetailRegularBold,
           ));
         }
       }

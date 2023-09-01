@@ -43,13 +43,13 @@ class RibbonButton extends StatefulWidget {
   const RibbonButton({Key? key,
     this.label,
     this.onTap,
-    this.backgroundColor,      //= Styles().colors.white
+    this.backgroundColor,      //= AppColors.white
     this.padding                 = const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
 
     this.textWidget,
     this.textStyle,
-    this.textColor,            //= Styles().colors.fillColorPrimary
-    this.fontFamily,           //= Styles().fontFamilies.bold
+    this.textColor,            //= AppColors.fillColorPrimary
+    this.fontFamily,           //= AppFontFamilies.bold
     this.fontSize                = 16.0,
     this.textAlign               = TextAlign.left,
 
