@@ -27,6 +27,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/ui/widgets/ui_image.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
@@ -552,13 +553,12 @@ class UiImages {
   final UiColors? colors;
   final String Function(Uri uri)? assetPathResolver;
 
-
   UiImages(this.imageMap, { this.colors, this.assetPathResolver});
 
   static UiImages fromCreationParam(_UiImagesCreationParam param) =>
     UiImages(param.imageMap, colors: param.colors, assetPathResolver: param.assetPathResolver);
 
-  Widget? getImage(String? imageKey, {ImageSpec? defaultSpec, Key? key, String? type, dynamic source, double? scale, double? size,
+  UiImage? getImage(String? imageKey, {ImageSpec? defaultSpec, Widget? defaultWidget, Key? key, dynamic source, double? scale, double? size,
     double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
@@ -571,37 +571,29 @@ class UiImages {
     Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
     ImageSpec? imageSpec = ImageSpec.fromJson(imageJson) ?? defaultSpec;
     if (imageSpec != null) {
-      if (imageSpec is FlutterImageSpec) {
-        return _getFlutterImage(imageSpec, type: type, source: source, key: key,
-            scale: scale, size: size, width: width, height: height, color: color,
-            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      } else if (imageSpec is FontAwesomeImageSpec) {
-        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight,
-            color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
-      } else {
-        return null;
+      imageSpec = ImageSpec.fromOther(imageSpec, source: source,
+        scale: scale, size: size, width: width, height: height, weight: weight,
+        color: color, semanticLabel: semanticLabel, isAntiAlias: isAntiAlias,
+        matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+        alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
+        filterQuality: filterQuality, repeat: repeat, textDirection: textDirection,
+      );
+    } else if (imageKey != null) {
+      // If no image definition for that key - try with asset name / network source
+      Uri? uri = Uri.tryParse(imageKey);
+      if (uri != null) {
+        imageSpec = _getDefaultFlutterImageSpec(uri,
+          scale: scale, width: width ?? size, height: height ?? size, color: color,
+          semanticLabel: semanticLabel, isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection,
+          gaplessPlayback: gaplessPlayback, alignment: alignment,colorBlendMode: colorBlendMode,
+          fit: fit, filterQuality: filterQuality, repeat: repeat
+        );
       }
     }
 
-    // If no image definition for that key - try with asset name / network source
-    if (imageKey != null) {
-      Uri? uri = Uri.tryParse(imageKey);
-      if (uri != null) {
-        return _getDefaultFlutterImage(uri, key: key,
-            scale: scale, width: width ?? size, height: height ?? size, color: color,
-            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      }
-    }
-    
-    return null;
+    return UiImage(key: key, spec: imageSpec, defaultWidget: defaultWidget, excludeFromSemantics: excludeFromSemantics,
+        opacity: opacity, repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+        frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
   }
 
   /* Example:
@@ -619,14 +611,13 @@ class UiImages {
       "repeat":"noRepeat"
     }
   */
-
-  Image? _getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
+  Image? getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel,
     bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
-    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
-    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality,
+    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
-  ) {
+      ) {
     type ??= imageSpec.type;
     source ??= imageSpec.source;
 
@@ -642,7 +633,7 @@ class UiImages {
     fit ??= imageSpec.fit;
     filterQuality ??= imageSpec.filterQuality ?? FilterQuality.low;
     repeat ??= imageSpec.repeat ?? ImageRepeat.noRepeat;
-    
+
     try { switch (type) {
       case 'flutter.asset':
         String? assetString = JsonUtils.stringValue(source);
@@ -651,29 +642,29 @@ class UiImages {
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
         ) : null;
-      
+
       case 'flutter.file':
         File? sourceFile = _ImageUtils.fileValue(source);
         return (sourceFile != null) ? Image.file(sourceFile,
           key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality, 
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
         ) : null;
-      
+
       case 'flutter.network':
         String? urlString = JsonUtils.stringValue(source);
         return (urlString != null) ? Image.network(urlString,
-          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-          headers: networkHeaders
+            key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+            headers: networkHeaders
         ) : null;
-      
+
       case 'flutter.memory':
         Uint8List? bytes = _ImageUtils.bytesValue(source);
         return (bytes != null) ? Image.memory(bytes, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
+            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
         ) : null;
     }}
     catch(e) {
@@ -693,7 +684,7 @@ class UiImages {
     }
   */
 
-  Widget? _getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
+  Widget? getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
     Key? key, double? size, String? weight, Color? color, TextDirection? textDirection,
     String? semanticLabel, bool excludeFromSemantics = false}) {
     type ??= imageSpec.type;
@@ -709,7 +700,7 @@ class UiImages {
       case 'fa.icon':
         IconData? iconData = _ImageUtils.faIconDataValue(weight, codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
-          FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
+        FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
         ) : null;
     }}
     catch (e) {
@@ -718,35 +709,35 @@ class UiImages {
     return null;
   }
 
-  Image? _getDefaultFlutterImage(Uri uri, { Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel,
-    bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
-    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
-    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
+  FlutterImageSpec? _getDefaultFlutterImageSpec(Uri uri, { double? scale, double? width, double? height, Color? color, String? semanticLabel,
+    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
+    AlignmentGeometry? alignment, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality,
+    ImageRepeat? repeat }
   ) {
     try {
       scale ??= 1.0;
       alignment ??= Alignment.center;
       repeat ??= ImageRepeat.noRepeat;
       filterQuality ??= FilterQuality.low;
+      String? type;
+      String? source;
 
       if (uri.scheme.isNotEmpty) {
-        return Image.network(uri.toString(),
-          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-          headers: networkHeaders
-        );
+        type = 'flutter.network';
+        source = uri.toString();
       }
       else if (uri.path.isNotEmpty) {
-        return Image.asset((assetPathResolver != null) ? assetPathResolver!(uri) : uri.path,
-          key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-        );
+        type = 'flutter.asset';
+        source = assetPathResolver?.call(uri) ?? uri.path;
       }
-      else {
-        return null;
+
+      if (type != null && source != null) {
+        return FlutterImageSpec(type: 'flutter.network', source: uri.toString(),
+          semanticLabel: semanticLabel, scale: scale, width: width, height: height,
+          color: color, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment,
+          repeat: repeat, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+        );
       }
     }
     catch(e) {
@@ -793,6 +784,43 @@ abstract class ImageSpec {
       color: color,
       semanticLabel: JsonUtils.stringValue(json['semantic_label']),
     );
+  }
+
+  factory ImageSpec.fromOther(ImageSpec spec, {dynamic source, double? scale, double? size,
+    double? width, double? height, String? weight, Color? color, String? semanticLabel,
+    bool? isAntiAlias, bool? matchTextDirection, bool? gaplessPlayback, AlignmentGeometry? alignment,
+    BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
+    TextDirection? textDirection}) {
+    ImageSpec imageSpec = spec;
+    String type = imageSpec.type;
+    source ??= imageSpec.source;
+    size ??= imageSpec.size;
+    color ??= imageSpec.color;
+
+    if (imageSpec is FlutterImageSpec) {
+      scale ??= imageSpec.scale;
+      width ??= imageSpec.width;
+      height ??= imageSpec.height;
+      alignment ??= imageSpec.alignment;
+      colorBlendMode ??= imageSpec.colorBlendMode;
+      fit ??= imageSpec.fit;
+      filterQuality ??= imageSpec.filterQuality;
+      repeat ??= imageSpec.repeat;
+
+      imageSpec = FlutterImageSpec(type: type, source: source, size: size, color: color,
+          scale: scale, width: width, height: height, isAntiAlias: isAntiAlias,
+          matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
+          filterQuality: filterQuality, repeat: repeat);
+    } else if (imageSpec is FontAwesomeImageSpec) {
+      weight ??= imageSpec.weight;
+      textDirection ??= imageSpec.textDirection;
+      semanticLabel ??= imageSpec.semanticLabel;
+
+      imageSpec = FontAwesomeImageSpec(type: type, source: source, size: size, color: color,
+          semanticLabel: semanticLabel, weight: weight, textDirection: textDirection);
+    }
+    return imageSpec;
   }
 }
 
@@ -864,7 +892,7 @@ class FontAwesomeImageSpec extends ImageSpec {
 }
 
 class _ImageUtils {
-  
+
   static File? fileValue(dynamic value) {
     if (value is File) {
       return value;
