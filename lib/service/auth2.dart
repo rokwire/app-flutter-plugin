@@ -357,7 +357,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // Passkey authentication
   Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
     String? errorMessage;
-    if ((Config().authBaseUrl != null) && (identifier != null)) {
+    if (Config().authBaseUrl != null) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
         return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotSupported);
       }
@@ -366,11 +366,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
+      Map<String, dynamic> creds = {};
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = '$identifier-${Config().operatingSystem}';
+      }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
-        'creds': {
-          '${auth2IdentifierTypeToString(identifierType)}': '$identifier-${Config().operatingSystem}',
-        },
+        'creds': creds,
         'params': {
           'sign_up': false,
         },
@@ -414,7 +416,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
@@ -426,12 +428,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
+      Map<String, dynamic> creds = {
+        "response": JsonUtils.encode(requestJson),
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = '$identifier-${Config().operatingSystem}';
+      }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
-        'creds': {
-          "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
-          "response": JsonUtils.encode(requestJson),
-        },
+        'creds': creds,
         'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'device': deviceInfo,
       };
@@ -454,9 +459,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
-  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String? identifier, String? displayName, {Auth2IdentifierType identifierType = Auth2IdentifierType.username, bool? public = false, bool verifyIdentifier = false}) async {
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String identifier, String? displayName, {Auth2IdentifierType identifierType = Auth2IdentifierType.username, bool? public = false, bool verifyIdentifier = false}) async {
     String? errorMessage;
-    if ((Config().authBaseUrl != null) && (identifier != null)) {
+    if (Config().authBaseUrl != null) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
         return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotSupported);
       }
@@ -554,7 +559,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response != null && response.statusCode == 200) {
-        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+        }
       }
     }
     return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
