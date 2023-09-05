@@ -390,8 +390,6 @@ class Event2RegistrationDetails {
     (externalLink?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(registrants));
-
-  bool get requiresRegistration => (type == Event2RegistrationType.external) || (type == Event2RegistrationType.internal);
 }
 
 ///////////////////////////////
