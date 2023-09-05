@@ -569,7 +569,7 @@ class UiImages {
   ) {
 
     Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
-    ImageSpec? imageSpec = ImageSpec.fromJson(imageJson) ?? defaultSpec;
+    ImageSpec? imageSpec = ImageSpec.fromJson(imageJson, colors: colors) ?? defaultSpec;
     if (imageSpec != null) {
       imageSpec = ImageSpec.fromOther(imageSpec, source: source,
         scale: scale, size: size, width: width, height: height, weight: weight,
@@ -763,20 +763,20 @@ abstract class ImageSpec {
 
   const ImageSpec({required this.type, this.source, this.size, this.color, this.semanticLabel});
 
-  static ImageSpec? fromJson(Map<String, dynamic> json) {
+  static ImageSpec? fromJson(Map<String, dynamic> json, {UiColors? colors}) {
     String? type = JsonUtils.stringValue(json['type']);
     if (type == null) {
       return null;
     } else if (type.startsWith('flutter.')) {
-      return FlutterImageSpec.fromJson(json);
+      return FlutterImageSpec.fromJson(json, colors: colors);
     } else if (type.startsWith('fa.')) {
-      return FontAwesomeImageSpec.fromJson(json);
+      return FontAwesomeImageSpec.fromJson(json, colors: colors);
     }
     return null;
   }
 
-  factory ImageSpec.baseFromJson(Map<String, dynamic> json) {
-    Color? color = _ImageUtils.colorValue(JsonUtils.stringValue(json['color']), colors: Styles().colors);
+  factory ImageSpec.baseFromJson(Map<String, dynamic> json, {UiColors? colors}) {
+    Color? color = _ImageUtils.colorValue(JsonUtils.stringValue(json['color']), colors: colors ?? Styles().colors);
     return _BaseImageSpec(
       type: JsonUtils.stringValue(json['type']) ?? '',
       source: json['src'],
@@ -852,7 +852,7 @@ class FlutterImageSpec extends ImageSpec {
       this.alignment, this.colorBlendMode, this.fit, this.filterQuality, this.repeat}) :
         super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
 
-  factory FlutterImageSpec.fromJson(Map<String, dynamic> json) {
+  factory FlutterImageSpec.fromJson(Map<String, dynamic> json, {UiColors? colors}) {
     ImageSpec base = ImageSpec.baseFromJson(json);
     return FlutterImageSpec.fromBase(base,
       scale: JsonUtils.doubleValue(json['scale']),
@@ -881,8 +881,8 @@ class FontAwesomeImageSpec extends ImageSpec {
   FontAwesomeImageSpec.fromBase(ImageSpec base, {this.weight, this.textDirection}) :
         super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
 
-  factory FontAwesomeImageSpec.fromJson(Map<String, dynamic> json) {
-    ImageSpec base = ImageSpec.baseFromJson(json);
+  factory FontAwesomeImageSpec.fromJson(Map<String, dynamic> json, {UiColors? colors}) {
+    ImageSpec base = ImageSpec.baseFromJson(json, colors: colors);
     TextDirection? textDirection = _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction']));
     return FontAwesomeImageSpec.fromBase(base,
       weight: JsonUtils.stringValue(json['weight']),
