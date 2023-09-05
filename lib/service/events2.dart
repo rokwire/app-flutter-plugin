@@ -291,7 +291,7 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  Future<dynamic> loadEventPeople(String eventId) async {
+  Future<Event2PersonsResult?> loadEventPeople(String eventId) async {
     dynamic result = await loadEventPeopleEx(eventId);
     return (result is Event2PersonsResult) ? result : null;
   }
@@ -596,13 +596,15 @@ class Events2Query {
 class Event2PersonsResult {
   final List<Event2Person>? registrants;
   final List<Event2Person>? attendees;
+  final int? registrationOccupancy;
   
-  Event2PersonsResult({this.registrants, this.attendees});
+  Event2PersonsResult({this.registrants, this.attendees, this.registrationOccupancy});
 
   static Event2PersonsResult? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Event2PersonsResult(
       registrants: Event2Person.listFromJson(JsonUtils.listValue(json['people'])),
       attendees: Event2Person.listFromJson(JsonUtils.listValue(json['attendees'])),
+      registrationOccupancy: JsonUtils.intValue(json['registration_occupancy']),
     ) : null;
   }
 }
