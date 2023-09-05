@@ -615,7 +615,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       children: [
         Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-          child: Text(label, style: Styles().textStyles?.getTextStyle('headline3')),
+          child: Text(label, style: AppTextStyles.widgetHeadingRegular),
         )),
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: AppColors.fillColorPrimary, onChanged: enabled ? (value) {
@@ -642,7 +642,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Text(i.toString(), style: Styles().textStyles?.getTextStyle('label')),
+       Text(i.toString(), style: AppTextStyles.widgetDetailRegular),
        Radio(value: i, groupValue: value, activeColor: AppColors.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
@@ -821,7 +821,7 @@ class CustomIconSelectionList extends StatelessWidget {
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
                       child: ListTile(
-                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? Styles().textStyles?.getTextStyle('labelSelected') : Styles().textStyles?.getTextStyle('label'))),
+                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? AppTextStyles.widgetDetailRegularBold : AppTextStyles.widgetDetailRegular)),
                         leading:
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -844,11 +844,11 @@ class CustomIconSelectionList extends StatelessWidget {
                   Text(
                       "Correct Answer: ",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles?.getTextStyle('headline2')),
+                      style: AppTextStyles.widgetHeadingLarge),
                   Text(
                       correctAnswer ?? "",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles?.getTextStyle('body'))
+                      style: AppTextStyles.widgetDescriptionRegular)
                 ],
               ),
         )),
@@ -937,7 +937,7 @@ class MultiSelectionList extends StatelessWidget {
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: CheckboxListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.headlineText))),
+                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: AppTextStyles.widgetDetailRegular)),
                       checkColor: Colors.white,
                       activeColor: AppColors.fillColorSecondary,
                       value: isChecked?[index],
