@@ -770,6 +770,21 @@ class Event2Person {
     return result;
   }
 
+  static int? countInList(List<Event2Person>? contentList, { Event2UserRole? role, Event2UserRegistrationType? registrationType}) {
+    if (contentList != null) {
+      int count = 0;
+      for (Event2Person contentEntry in contentList) {
+        if (((role == null) || (contentEntry.role == role)) &&
+            ((registrationType == null) || (contentEntry.registrationType == registrationType))
+           ) {
+          count = count + 1;
+        }
+      }
+      return count;
+    }
+    return null;
+  }
+
   static int? findInList(List<Event2Person>? contentList, { String? netId }) {
     if (contentList != null) {
       for (int index = 0; index < contentList.length; index++) {
