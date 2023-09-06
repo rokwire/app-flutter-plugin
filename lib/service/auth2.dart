@@ -393,19 +393,18 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         // Obtain creationOptions from the server
         String? responseBody = response.body;
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
-        dynamic requestJson = JsonUtils.decode(message?.message ?? '');
-        if (requestJson == null || requestJson is! Map) {
-          if (message?.params?['auth_types'] is Iterable) {
-            List<Auth2Type>? signInOptions = Auth2Type.listFromJson(message?.params?['auth_types']);
-            signInOptions?.removeWhere((element) => element.code == auth2LoginTypeToString(Auth2LoginType.passkey));
-            return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound, signInOptions: signInOptions);
-          }
+        if (message?.params?['auth_types'] is Iterable) {
+          List<Auth2Type>? signInOptions = Auth2Type.listFromJson(message?.params?['auth_types']);
+          signInOptions?.removeWhere((element) => element.code == auth2LoginTypeToString(Auth2LoginType.passkey));
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound, signInOptions: signInOptions);
         }
         try {
-          String? responseData = await RokwirePlugin.getPasskey(requestJson);
+          String? responseData = await RokwirePlugin.getPasskey(message?.message);
+          debugPrint(responseData);
           return _completeSignInWithPasskey(identifier, responseData);
         } catch(error) {
           errorMessage = error.toString();
+          debugPrint(errorMessage);
           Log.e(errorMessage);
         }
       }
@@ -508,16 +507,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
-        Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
         if (verifyIdentifier) {
+          Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
           return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: requestJson);
         }
         try {
-          String? responseData = await RokwirePlugin.createPasskey(requestJson);
+          String? responseData = await RokwirePlugin.createPasskey(message?.message);
           return completeSignUpWithPasskey(identifier, responseData);
         } catch(error) {
           try {
-            String? responseData = await RokwirePlugin.getPasskey(requestJson);
+            String? responseData = await RokwirePlugin.getPasskey(message?.message);
             Auth2PasskeySignInResult result = await _completeSignInWithPasskey(identifier, responseData);
             if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
               return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);

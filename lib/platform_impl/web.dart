@@ -12,93 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:html';
-import 'dart:typed_data';
-
-import 'package:rokwire_plugin/platform_impl/base.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
+// import 'dart:js';
 
 import 'package:js/js.dart';
+import 'package:js/js_util.dart';
+import 'package:rokwire_plugin/platform_impl/base.dart';
 
-@JS('atob')
-external String atob(String value);
+@JS('isSupported')
+external bool isSupported();
 
-@JS('btoa')
-external String btoa(String value);
+@JS('getPasskey')
+external dynamic getPasskeyJS(String? optionsJson);
+
+@JS('createPasskey')
+external dynamic createPasskeyJS(String? optionsJson);
 
 class PasskeyImpl extends BasePasskey {
   @override
   Future<bool> arePasskeysSupported() {
-    return Future.value(window.navigator.credentials != null);
+    return Future.value(isSupported());
   }
 
   @override
-  Future<String?> getPasskey(Map<String, dynamic>? options) async {
-    if (options?['publicKey']?['challenge'] is String) {
-      String challenge = options!['publicKey']['challenge'];
-      options['publicKey']['challenge'] = _encodedStringToBuffer(challenge);
-    }
-    if (options?['publicKey']?['allowCredentials'] is Iterable) {
-      Iterable<dynamic> credentials = options!['publicKey']?['allowCredentials'];
-      for (int i = 0; i < credentials.length; i++) {
-        dynamic credential = credentials.elementAt(i);
-        if (credential is Map<String, dynamic> && credential['id'] is String) {
-          credentials.elementAt(i)['id'] = _encodedStringToBuffer(credential['id']);
-        }
-      }
-    }
-    
-    PublicKeyCredential credential = await window.navigator.credentials!.get(options);
-    AuthenticatorResponse? authResponse = credential.response;
-    if (authResponse is AuthenticatorAssertionResponse) {
-      Map<String, dynamic> response = {
-        'id': credential.id,
-        'rawId': _bufferToEncodedString(credential.rawId),
-        'type': credential.type,
-        'response': {
-          'authenticatorData': _bufferToEncodedString(authResponse.authenticatorData),
-          'clientDataJSON': _bufferToEncodedString(authResponse.clientDataJson),
-          'signature': _bufferToEncodedString(authResponse.signature),
-        }
-      };
-
-      return JsonUtils.encode(response);
-    }
-    
-    return null;
+  Future<String?> getPasskey(String? optionsJson) {
+    // return promiseToFuture<String?>(callMethod('', 'getPasskey', [JsObject.jsify(options ?? {})]));
+    return promiseToFuture<String?>(getPasskeyJS(optionsJson));
   }
 
   @override
-  Future<String?> createPasskey(Map<String, dynamic>? options) async {
-    if (options?['publicKey']?['challenge'] is String) {
-      String challenge = options!['publicKey']['challenge'];
-      options['publicKey']['challenge'] = _encodedStringToBuffer(challenge);
-    }
-    if (options?['publicKey']?['user']?['id'] is String) {
-      String userId = options!['publicKey']['user']['id'];
-      options['publicKey']['user']['id'] = _encodedStringToBuffer(userId);
-    }
-
-    PublicKeyCredential credential = await window.navigator.credentials!.create(options);
-    AuthenticatorResponse? authResponse = credential.response;
-    if (authResponse is AuthenticatorAttestationResponse) {
-      Map<String, dynamic> response = {
-        'id': credential.id,
-        'rawId': _bufferToEncodedString(credential.rawId),
-        'type': credential.type,
-        'response': {
-          'attestationObject': _bufferToEncodedString(authResponse.attestationObject),
-          'clientDataJSON': _bufferToEncodedString(authResponse.clientDataJson),
-        }
-      };
-
-      return JsonUtils.encode(response);
-    }
-    
-    return null;
+  Future<String?> createPasskey(String? optionsJson) {
+    // return promiseToFuture<String?>(callMethod('', 'createPasskey', [JsObject.jsify(options ?? {})]));
+    return promiseToFuture<String?>(createPasskeyJS(optionsJson));
   }
-
-  ByteBuffer _encodedStringToBuffer(String value) => Uint8List.fromList(atob(value.replaceAll('_', '/').replaceAll('-', '+')).codeUnits).buffer;
-
-  String _bufferToEncodedString(ByteBuffer? buffer) => btoa(String.fromCharCodes(buffer?.asUint8List() ?? [])).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }

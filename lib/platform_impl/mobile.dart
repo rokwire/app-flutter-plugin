@@ -26,14 +26,24 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String?> getPasskey(Map<String, dynamic>? options) async {
-    Map<String, dynamic>? pubKeyRequest = options?['publicKey'];
-    return await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+  Future<String?> getPasskey(String? optionsJson) async {
+    dynamic options = JsonUtils.decode(optionsJson ?? '');
+    if (options is Map) {
+      Map<String, dynamic>? pubKeyRequest = options['publicKey'];
+      return await flutterPasskeyPlugin.getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+    }
+
+    return null;
   }
 
   @override
-  Future<String?> createPasskey(Map<String, dynamic>? options) async {
-    Map<String, dynamic>? pubKeyRequest = options?['publicKey'];
-    return await flutterPasskeyPlugin.createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+  Future<String?> createPasskey(String? optionsJson) async {
+    dynamic options = JsonUtils.decode(optionsJson ?? '');
+    if (options is Map) {
+      Map<String, dynamic>? pubKeyRequest = options['publicKey'];
+      return await flutterPasskeyPlugin.createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+    }
+
+    return null;
   }
 }
