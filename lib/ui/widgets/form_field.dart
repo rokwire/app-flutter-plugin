@@ -69,7 +69,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
               hintText: widget.hint,
-              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles?.getTextStyle('widget.error.regular.fat')) : null,
+              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: AppTextStyles.widgetErrorRegularBold) : null,
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
