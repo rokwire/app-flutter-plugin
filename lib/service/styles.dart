@@ -561,10 +561,10 @@ class UiImages {
 
   UiImage? getImage(String? imageKey, {ImageSpec? defaultSpec, Widget? defaultWidget, Key? key, dynamic source, double? scale, double? size,
     double? width, double? height, dynamic weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
-    double? fill, double? grade, double? opticalSize,
+    double? fill, double? grade, double? opticalSize, String? fontFamily, String? fontPackage,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
-    Rect? centerSlice, String? fontFamily, String? fontPackage, TextDirection? textDirection, Map<String, String>? networkHeaders,
+    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
@@ -573,8 +573,10 @@ class UiImages {
     Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
     ImageSpec? imageSpec = ImageSpec.fromJson(imageJson, colors: colors) ?? defaultSpec;
     if (imageSpec != null) {
-      imageSpec = ImageSpec.fromOther(imageSpec, source: source,
-        scale: scale, size: size, width: width, height: height, weight: weight,
+      imageSpec = ImageSpec.fromOther(imageSpec, source: source, scale: scale, size: size,
+        width: width, height: height, weight: weight,
+        fill: fill, grade: grade, opticalSize: opticalSize,
+        fontFamily: fontFamily, fontPackage: fontPackage,
         color: color, semanticLabel: semanticLabel, isAntiAlias: isAntiAlias,
         matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
         alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
@@ -827,7 +829,8 @@ abstract class ImageSpec {
   }
 
   factory ImageSpec.fromOther(ImageSpec spec, {dynamic source, double? scale, double? size,
-    double? width, double? height, String? weight, Color? color, String? semanticLabel,
+    double? width, double? height, dynamic weight, Color? color, String? semanticLabel,
+    double? fill, double? grade, double? opticalSize, String? fontFamily, String? fontPackage,
     bool? isAntiAlias, bool? matchTextDirection, bool? gaplessPlayback, AlignmentGeometry? alignment,
     BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
     TextDirection? textDirection}) {
@@ -846,6 +849,7 @@ abstract class ImageSpec {
       fit ??= imageSpec.fit;
       filterQuality ??= imageSpec.filterQuality;
       repeat ??= imageSpec.repeat;
+      matchTextDirection ?? imageSpec.matchTextDirection;
 
       imageSpec = FlutterImageSpec(type: type, source: source, size: size, color: color,
           scale: scale, width: width, height: height, isAntiAlias: isAntiAlias,
@@ -856,6 +860,18 @@ abstract class ImageSpec {
       weight ??= imageSpec.weight;
       textDirection ??= imageSpec.textDirection;
       semanticLabel ??= imageSpec.semanticLabel;
+
+      imageSpec = FontAwesomeImageSpec(type: type, source: source, size: size, color: color,
+          semanticLabel: semanticLabel, weight: weight, textDirection: textDirection);
+    } else if (imageSpec is MaterialIconImageSpec) {
+      weight ??= imageSpec.weight;
+      textDirection ??= imageSpec.textDirection;
+      matchTextDirection ?? imageSpec.matchTextDirection;
+      fill ??= imageSpec.fill;
+      grade ??= imageSpec.grade;
+      opticalSize ??= imageSpec.opticalSize;
+      fontFamily ??= imageSpec.fontFamily;
+      fontPackage ??= imageSpec.fontPackage;
 
       imageSpec = FontAwesomeImageSpec(type: type, source: source, size: size, color: color,
           semanticLabel: semanticLabel, weight: weight, textDirection: textDirection);

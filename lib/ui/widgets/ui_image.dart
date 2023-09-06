@@ -18,6 +18,7 @@ class UiImage extends StatelessWidget {
 
   UiImage apply({Key? key, Widget? defaultWidget, dynamic source, double? scale, double? size,
     double? width, double? height, String? weight, Color? color, String? semanticLabel, bool? excludeFromSemantics,
+    double? fill, double? grade, double? opticalSize, String? fontFamily, String? fontPackage,
     bool? isAntiAlias, bool? matchTextDirection, bool? gaplessPlayback, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
     Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
@@ -30,8 +31,10 @@ class UiImage extends StatelessWidget {
       return const UiImage();
     }
 
-    imageSpec = ImageSpec.fromOther(imageSpec, source: source,
-      scale: scale, size: size, width: width, height: height, weight: weight,
+    imageSpec = ImageSpec.fromOther(imageSpec, source: source, scale: scale, size: size,
+      width: width, height: height, weight: weight,
+      fill: fill, grade: grade, opticalSize: opticalSize,
+      fontFamily: fontFamily, fontPackage: fontPackage,
       color: color, semanticLabel: semanticLabel, isAntiAlias: isAntiAlias,
       matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
       alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
@@ -57,6 +60,8 @@ class UiImage extends StatelessWidget {
           image = Styles().images?.getFlutterImage(imageSpec);
         } else if (imageSpec is FontAwesomeImageSpec) {
           image = Styles().images?.getFaIcon(imageSpec);
+        } else if (imageSpec is MaterialIconImageSpec) {
+          image = Styles().images?.getMaterialIcon(imageSpec);
         }
       } catch(e) {
         debugPrint(e.toString());
