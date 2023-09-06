@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -236,9 +237,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Getters
   Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
-  Auth2LoginType get phoneLoginType => Auth2LoginType.phone;
-  Auth2LoginType get emailLoginType => Auth2LoginType.email;
-  Auth2LoginType get usernameLoginType => Auth2LoginType.username;
+  Auth2LoginType get codeLoginType => Auth2LoginType.code;
+  Auth2LoginType get passwordLoginType => Auth2LoginType.password;
   Auth2LoginType get passkeyLoginType => Auth2LoginType.passkey;
 
   Auth2Token? get token => _token ?? _anonymousToken;
@@ -403,6 +403,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           debugPrint(responseData);
           return _completeSignInWithPasskey(identifier, responseData);
         } catch(error) {
+          if (error is PlatformException) {
+            switch (error.code) {
+              // no credentials found
+              case "NoCredentialException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNoCredentials);
+              // user cancelled on device auth
+              case "GetPublicKeyCredentialDomException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+              // user cancelled on select passkey
+              case "GetCredentialCancellationException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+            }
+          }
           errorMessage = error.toString();
           debugPrint(errorMessage);
           Log.e(errorMessage);
@@ -1200,6 +1210,34 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
+  // Sign in options
+
+  Future<bool?> signInOptions(String? identifier, Auth2LoginType loginType) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/account/sign-in-options";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      Map<String, dynamic> postData = {
+        'identifier': {
+          auth2LoginTypeToString(loginType): identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return null;
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response?.statusCode == 200) {
+        return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
+      }
+    }
+    return null;
+  }
+
   // Account Linking
 
   Future<Auth2LinkResult> linkAccountAuthType(Auth2LoginType? loginType, dynamic creds, Map<String, dynamic>? params) async {
@@ -1780,8 +1818,9 @@ enum Auth2PasskeySignUpResultStatus {
 class Auth2PasskeySignInResult {
   Auth2PasskeySignInResultStatus status;
   String? error;
-  List<Auth2Type>? signInOptions;
-  Auth2PasskeySignInResult(this.status, {this.error, this.signInOptions});
+  List<Auth2IdentifierType>? identifierOptions;
+  List<Auth2Type>? authTypeOptions;
+  Auth2PasskeySignInResult(this.status, {this.error, this.identifierOptions, this.authTypeOptions});
 }
 
 enum Auth2PasskeySignInResultStatus {
@@ -1789,6 +1828,8 @@ enum Auth2PasskeySignInResultStatus {
   failed,
   failedNotFound,
   failedNotSupported,
+  failedNoCredentials,
+  failedCancelled,
 }
 
 // Auth2PhoneRequestCodeResult

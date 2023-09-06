@@ -71,13 +71,14 @@ class Auth2Token {
 ////////////////////////////////
 // Auth2IdentifierType
 
-enum Auth2IdentifierType { email, phone, username }
+enum Auth2IdentifierType { email, phone, username, oidcIllinois }
 
 String? auth2IdentifierTypeToString(Auth2IdentifierType value) {
   switch (value) {
     case Auth2IdentifierType.email: return 'email';
     case Auth2IdentifierType.phone: return 'phone';
     case Auth2IdentifierType.username: return 'username';
+    case Auth2IdentifierType.oidcIllinois: return 'uin';
   }
 }
 
@@ -91,21 +92,23 @@ Auth2IdentifierType? auth2IdentifierTypeFromString(String? value) {
   else if (value == 'username') {
     return Auth2IdentifierType.username;
   }
+  else if (value == 'uin' || value == 'net_id') {
+    return Auth2IdentifierType.oidcIllinois;
+  }
   return null;
 }
 
 ////////////////////////////////
 // Auth2LoginType
 
-enum Auth2LoginType { anonymous, apiKey, email, phone, username, oidc, oidcIllinois, passkey }
+enum Auth2LoginType { anonymous, apiKey, password, code, oidc, oidcIllinois, passkey }
 
 String? auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
     case Auth2LoginType.anonymous: return 'anonymous';
     case Auth2LoginType.apiKey: return 'api_key';
-    case Auth2LoginType.email: return 'email';
-    case Auth2LoginType.phone: return 'phone';
-    case Auth2LoginType.username: return 'username';
+    case Auth2LoginType.password: return 'password';
+    case Auth2LoginType.code: return 'code';
     case Auth2LoginType.oidc: return 'oidc';
     case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
     case Auth2LoginType.passkey: return 'webauthn';
@@ -119,14 +122,11 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   else if (value == 'api_key') {
     return Auth2LoginType.apiKey;
   }
-  else if (value == 'email') {
-    return Auth2LoginType.email;
+  else if (value == 'password') {
+    return Auth2LoginType.password;
   }
-  else if (value == 'phone') {
-    return Auth2LoginType.phone;
-  }
-  else if (value == 'username') {
-    return Auth2LoginType.username;
+  else if (value == 'code') {
+    return Auth2LoginType.code;
   }
   else if (value == 'oidc') {
     return Auth2LoginType.oidc;
@@ -623,32 +623,122 @@ class Auth2StringEntry {
 }
 
 ////////////////////////////////
+// Auth2Identifier
+
+class Auth2Identifier {
+  final String? id;
+  final String? code;
+  final String? identifier;
+  final bool? verified;
+  final bool? linked;
+  final String? accountAuthTypeId;
+  
+  final Auth2IdentifierType? identifierType;
+
+  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.accountAuthTypeId}) :
+    identifierType = auth2IdentifierTypeFromString(code);
+
+  static Auth2Identifier? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Auth2Identifier(
+      id: JsonUtils.stringValue(json['id']),
+      code: JsonUtils.stringValue(json['code']),
+      identifier: JsonUtils.stringValue(json['identifier']),
+      verified: JsonUtils.boolValue(json['verified']),
+      linked: JsonUtils.boolValue(json['linked']),
+      accountAuthTypeId: JsonUtils.stringValue(json['account_auth_type_id']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id' : id,
+      'code': code,
+      'identifier': identifier,
+      'verified': verified,
+      'linked': linked,
+      'account_auth_type_id': accountAuthTypeId,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2Identifier) &&
+      (other.id == id) &&
+      (other.code == code) &&
+      (other.identifier == identifier) &&
+      (other.verified == verified) &&
+      (other.linked == linked) &&
+      (other.accountAuthTypeId == accountAuthTypeId);
+
+  @override
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (identifier?.hashCode ?? 0) ^
+    (code?.hashCode ?? 0) ^
+    (verified?.hashCode ?? 0) ^
+    (linked?.hashCode ?? 0) ^
+    (accountAuthTypeId?.hashCode ?? 0);
+
+  String? get uin {
+    return (identifierType == Auth2IdentifierType.oidcIllinois) ? identifier : null;
+  }
+
+  String? get phone {
+    return (identifierType == Auth2IdentifierType.phone) ? identifier : null;
+  }
+
+  String? get email {
+    return (identifierType == Auth2IdentifierType.email) ? identifier : null;
+  }
+
+  String? get username {
+    return (identifierType == Auth2IdentifierType.username) ? identifier : null;
+  }
+
+  static List<Auth2Identifier>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Identifier>? result;
+    if (jsonList != null) {
+      result = <Auth2Identifier>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Auth2Identifier.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2Identifier>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+}
+
+////////////////////////////////
 // Auth2Type
 
 class Auth2Type {
   final String? id;
-  final String? identifier;
-  final bool? active;
-  final bool? active2fa;
-  final bool? unverified;
   final String? code;
+  final bool? active;
   final Map<String, dynamic>? params;
   
   final Auth2UiucUser? uiucUser;
   final Auth2LoginType? loginType;
   
-  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.unverified, this.code, this.params}) :
+  Auth2Type({this.id, this.code, this.active, this.params}) :
     uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null,
     loginType = auth2LoginTypeFromString(code);
 
   static Auth2Type? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2Type(
       id: JsonUtils.stringValue(json['id']),
-      identifier: JsonUtils.stringValue(json['identifier']),
-      active: JsonUtils.boolValue(json['active']),
-      active2fa: JsonUtils.boolValue(json['active_2fa']),
-      unverified: JsonUtils.boolValue(json['unverified']),
       code: JsonUtils.stringValue(json['code']),
+      active: JsonUtils.boolValue(json['active']),
       params: JsonUtils.mapValue(json['params']),
     ) : null;
   }
@@ -656,11 +746,8 @@ class Auth2Type {
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
-      'identifier': identifier,
-      'active': active,
-      'active_2fa': active2fa,
-      'unverified': unverified,
       'code': code,
+      'active': active,
       'params': params,
     };
   }
@@ -669,34 +756,16 @@ class Auth2Type {
   bool operator ==(other) =>
     (other is Auth2Type) &&
       (other.id == id) &&
-      (other.identifier == identifier) &&
-      (other.active == active) &&
-      (other.active2fa == active2fa) &&
-      (other.unverified == unverified) &&
       (other.code == code) &&
+      (other.active == active) &&
       const DeepCollectionEquality().equals(other.params, params);
 
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
-    (identifier?.hashCode ?? 0) ^
-    (active?.hashCode ?? 0) ^
-    (active2fa?.hashCode ?? 0) ^
-    (unverified?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
+    (active?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(params));
-
-  String? get uin {
-    return (loginType == Auth2LoginType.oidcIllinois) ? identifier : null;
-  }
-
-  String? get phone {
-    return (loginType == Auth2LoginType.phone) ? identifier : null;
-  }
-
-  String? get email {
-    return (loginType == Auth2LoginType.email) ? identifier : null;
-  }
 
   static List<Auth2Type>? listFromJson(List<dynamic>? jsonList) {
     List<Auth2Type>? result;

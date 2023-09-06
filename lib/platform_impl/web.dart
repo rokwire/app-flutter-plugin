@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// import 'dart:js';
-
 import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'package:rokwire_plugin/platform_impl/base.dart';
@@ -35,13 +33,11 @@ class PasskeyImpl extends BasePasskey {
 
   @override
   Future<String?> getPasskey(String? optionsJson) {
-    // return promiseToFuture<String?>(callMethod('', 'getPasskey', [JsObject.jsify(options ?? {})]));
     return promiseToFuture<String?>(getPasskeyJS(optionsJson));
   }
 
   @override
   Future<String?> createPasskey(String? optionsJson) {
-    // return promiseToFuture<String?>(callMethod('', 'createPasskey', [JsObject.jsify(options ?? {})]));
     return promiseToFuture<String?>(createPasskeyJS(optionsJson));
   }
 }
