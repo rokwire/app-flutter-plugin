@@ -259,10 +259,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPasswordLoggedIn => (_account?.authType?.loginType == passwordLoginType);
   bool get isPasskeyLoggedIn => (_account?.authType?.loginType == passkeyLoginType);
 
+  bool get isEmailLinked => _account?.isIdentifierLinked(Auth2IdentifierType.email) ?? false;
+  bool get isPhoneLinked => _account?.isIdentifierLinked(Auth2IdentifierType.phone) ?? false;
+  bool get isUsernameLinked => _account?.isIdentifierLinked(Auth2IdentifierType.username) ?? false;
+
   bool get isOidcLinked => _account?.isAuthTypeLinked(oidcLoginType) ?? false;
   bool get isCodeLinked => _account?.isAuthTypeLinked(codeLoginType) ?? false;
   bool get isPasswordLinked => _account?.isAuthTypeLinked(passwordLoginType) ?? false;
   bool get isPasskeyLinked => _account?.isAuthTypeLinked(passkeyLoginType) ?? false;
+
+  List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifier(Auth2IdentifierType.email) ?? [];
+  List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifier(Auth2IdentifierType.phone) ?? [];
+  List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifier(Auth2IdentifierType.username) ?? [];
+  List<Auth2Identifier> get linkedOidcIdentifiers => _account?.getLinkedForIdentifier(Auth2IdentifierType.oidcIllinois) ?? [];
 
   List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcLoginType) ?? [];
   List<Auth2Type> get linkedCode => _account?.getLinkedForAuthType(codeLoginType) ?? [];
@@ -275,8 +284,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
   String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
-  String? get email => StringUtils.ensureNotEmpty(profile?.email, defaultValue: _account?.authType?.uiucUser?.email ?? '');
-  String? get phone => StringUtils.ensureNotEmpty(profile?.phone);
+  String? get email => StringUtils.ensureNotEmpty(profile?.email, defaultValue: (_account?.identifier?.identifierType == Auth2IdentifierType.email ? _account?.identifier?.identifier : _account?.authType?.uiucUser?.email) ?? '');
+  String? get phone => StringUtils.ensureNotEmpty(profile?.phone, defaultValue: (_account?.identifier?.identifierType == Auth2IdentifierType.phone ? _account?.identifier?.identifier : '') ?? '');
   String? get username => _account?.username;
 
   bool get isEventEditor => hasRole("event approvers");
@@ -391,11 +400,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         // Obtain creationOptions from the server
         String? responseBody = response.body;
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
-        if (message?.params?['auth_types'] is Iterable) {
-          List<Auth2Type>? authTypeOptions = Auth2Type.listFromJson(message?.params?['auth_types']);
-          authTypeOptions?.removeWhere((element) => element.code == auth2LoginTypeToString(Auth2LoginType.passkey));
-          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound, authTypeOptions: authTypeOptions);
-        }
         try {
           String? responseData = await RokwirePlugin.getPasskey(message?.message);
           debugPrint(responseData);
@@ -891,6 +895,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         if (error?.status == 'unverified') {
           return Auth2PasswordSignInResult.failedNotActivated;
         }
+        else if (error?.status == 'not-found') {
+          return Auth2PasswordSignInResult.failedNotFound;
+        }
         else if (error?.status == 'verification-expired') {
           return Auth2PasswordSignInResult.failedActivationExpired;
         }
@@ -1095,7 +1102,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Sign in options
 
-  Future<bool?> signInOptions(String? identifier, Auth2IdentifierType identifierType) async {
+  Future<Auth2SignInOptionsResult?> signInOptions(String? identifier, Auth2IdentifierType identifierType) async {
     if ((Config().authBaseUrl != null) && (identifier != null)) {
       String url = "${Config().authBaseUrl}/auth/account/sign-in-options";
       Map<String, String> headers = {
@@ -1115,7 +1122,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
-        return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+        List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
+        return Auth2SignInOptionsResult(identifierOptions: identifiers, authTypeOptions: authTypes);
       }
     }
     return null;
@@ -1738,13 +1748,6 @@ class Auth2Csrf with NetworkAuthProvider {
   }
 }
 
-// Auth2AccountState
-
-enum Auth2PasskeyAccountState {
-  nonExistent,
-  exists,
-}
-
 // Auth2PasskeySignUpResult
 
 class Auth2PasskeySignUpResult {
@@ -1818,6 +1821,13 @@ enum Auth2AccountState {
   verified,
 }
 
+// Auth2SignInOptionsResult
+class Auth2SignInOptionsResult {
+  List<Auth2Identifier>? identifierOptions;
+  List<Auth2Type>? authTypeOptions;
+  Auth2SignInOptionsResult({this.identifierOptions, this.authTypeOptions});
+}
+
 // Auth2PasswordSignUpResult
 
 enum Auth2PasswordSignUpResult {
@@ -1839,6 +1849,7 @@ Auth2PasswordSignUpResult auth2PasswordSignUpResultFromAuth2LinkResult(Auth2Link
 enum Auth2PasswordSignInResult {
   succeeded,
   failed,
+  failedNotFound,
   failedActivationExpired,
   failedNotActivated,
   failedInvalid,
