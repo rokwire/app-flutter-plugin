@@ -56,7 +56,7 @@ class SurveyBuilder {
               Text(date ?? '', style: AppTextStyles.widgetDetailSmall),
               Container(width: 8.0),
               AppImages.chevronRight ?? Container()
-              // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
+              // UIIcon(IconAssets.chevronRight, size: 14.0, color: AppColors.headlineText),
             ],
           ),
         ],
