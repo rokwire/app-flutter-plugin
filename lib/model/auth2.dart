@@ -151,12 +151,14 @@ class Auth2Account {
   final List<Auth2StringEntry>? permissions;
   final List<Auth2StringEntry>? roles;
   final List<Auth2StringEntry>? groups;
+  final List<Auth2Identifier>? identifiers;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
   
-  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
+  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions,
+    List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       username: username ?? other?.username,
@@ -165,6 +167,7 @@ class Auth2Account {
       permissions: permissions ?? other?.permissions,
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
+      identifiers: identifiers ?? other?.identifiers,
       authTypes: authTypes ?? other?.authTypes,
       systemConfigs: systemConfigs ?? other?.systemConfigs,
     );
@@ -179,6 +182,7 @@ class Auth2Account {
       permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
       roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
+      identifiers: Auth2Identifier.listFromJson(JsonUtils.listValue(json['identifiers'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
     ) : null;
@@ -193,6 +197,7 @@ class Auth2Account {
       'permissions': permissions,
       'roles': roles,
       'groups': groups,
+      'identifiers': identifiers,
       'auth_types': authTypes,
       'system_configs': systemConfigs,
     };
@@ -207,6 +212,7 @@ class Auth2Account {
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
+      const DeepCollectionEquality().equals(other.identifiers, identifiers) &&
       const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
       const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
 
@@ -218,11 +224,39 @@ class Auth2Account {
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
+    (const DeepCollectionEquality().hash(identifiers)) ^
     (const DeepCollectionEquality().hash(authTypes)) ^
     (const DeepCollectionEquality().hash(systemConfigs));
 
   bool get isValid {
     return (id != null) && id!.isNotEmpty /* && (profile != null) && profile.isValid*/;
+  }
+
+  Auth2Identifier? get identifier {
+    return ((identifiers != null) && identifiers!.isNotEmpty) ? identifiers?.first : null;
+  }
+
+  bool isIdentifierLinked(Auth2IdentifierType identifierType) {
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.identifierType == identifierType) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  List<Auth2Identifier> getLinkedForIdentifier(Auth2IdentifierType identifierType) {
+    List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.identifierType == identifierType) {
+          linkedTypes.add(identifier);
+        }
+      }
+    }
+    return linkedTypes;
   }
 
   Auth2Type? get authType {

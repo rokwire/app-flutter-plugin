@@ -1008,7 +1008,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<bool> resendIdentifierVerification(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.email}) async {
     if ((Config().authBaseUrl != null) && (identifier != null)) {
-      String url = "${Config().authBaseUrl}/auth/credential/send-verify";
+      String url = "${Config().authBaseUrl}/auth/identifier/send-verify";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
@@ -1041,15 +1041,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Account Checks
 
-  Future<bool?> canSignIn(String? identifier, Auth2LoginType loginType) async {
+  Future<bool?> canSignIn(String? identifier, Auth2IdentifierType identifierType) async {
     if ((Config().authBaseUrl != null) && (identifier != null)) {
       String url = "${Config().authBaseUrl}/auth/account/can-sign-in";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       Map<String, dynamic> postData = {
-        'auth_type': auth2LoginTypeToString(loginType),
-        'user_identifier': identifier,
+        'identifier': {
+          "${auth2IdentifierTypeToString(identifierType)}": identifier,
+        },
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -1066,15 +1067,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool?> canLink(String? identifier, Auth2LoginType loginType) async {
+  Future<bool?> canLink(String? identifier, Auth2IdentifierType identifierType) async {
     if ((Config().authBaseUrl != null) && (identifier != null)) {
       String url = "${Config().authBaseUrl}/auth/account/can-link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       Map<String, dynamic> postData = {
-        'auth_type': auth2LoginTypeToString(loginType),
-        'user_identifier': identifier,
+        'identifier': {
+          "${auth2IdentifierTypeToString(identifierType)}": identifier,
+        },
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -1093,7 +1095,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Sign in options
 
-  Future<bool?> signInOptions(String? identifier, Auth2LoginType loginType) async {
+  Future<bool?> signInOptions(String? identifier, Auth2IdentifierType identifierType) async {
     if ((Config().authBaseUrl != null) && (identifier != null)) {
       String url = "${Config().authBaseUrl}/auth/account/sign-in-options";
       Map<String, String> headers = {
@@ -1101,7 +1103,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       Map<String, dynamic> postData = {
         'identifier': {
-          auth2LoginTypeToString(loginType): identifier,
+          auth2IdentifierTypeToString(identifierType): identifier,
         },
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
@@ -1119,17 +1121,82 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  // Account Linking
+  // Account Identifier Linking
+
+  Future<Auth2LinkResult> linkAccountIdentifier(String? identifier, Auth2IdentifierType identifierType) async {
+    if ((Config().coreUrl != null) && (identifier != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/identifier/link";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'identifier': {
+          auth2IdentifierTypeToString(identifierType): identifier,
+        },
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
+      if (response?.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        if (identifiers != null) {
+          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+          NotificationService().notify(notifyLinkChanged);
+          return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
+        }
+      }
+      else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'verification-expired') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedActivationExpired);
+        }
+        else if (error?.status == 'unverified') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'already-exists') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedAccountExist);
+        }
+        else if (error?.status == 'invalid') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedInvalid);
+        }
+      } 
+    }
+    return Auth2LinkResult(Auth2LinkResultStatus.failed);
+  }
+
+  Future<bool> unlinkAccountIdentifier(String? id) async {
+    if ((Config().coreUrl != null) && (id != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/identifier/link";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? body = JsonUtils.encode({
+        'id': id
+      });
+
+      Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
+      Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+      List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+      if (identifiers != null) {
+        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+        NotificationService().notify(notifyLinkChanged);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Account Auth Type Linking
 
   Future<Auth2LinkResult> linkAccountAuthType(Auth2LoginType? loginType, dynamic creds, Map<String, dynamic>? params) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (loginType != null)) {
+    if ((Config().coreUrl != null) && (loginType != null)) {
       String url = "${Config().coreUrl}/services/auth/account/auth-type/link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
         'auth_type': auth2LoginTypeToString(loginType),
-        'app_type_identifier': Config().appPlatformId,
         'creds': creds,
         'params': params,
       });
@@ -1166,16 +1233,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2LinkResult(Auth2LinkResultStatus.failed);
   }
 
-  Future<bool> unlinkAccountAuthType(Auth2LoginType? loginType, String identifier) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (loginType != null)) {
+  Future<bool> unlinkAccountAuthType(String? id) async {
+    if ((Config().coreUrl != null) && (id != null)) {
       String url = "${Config().coreUrl}/services/auth/account/auth-type/link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? body = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(loginType),
-        'app_type_identifier': Config().appPlatformId,
-        'identifier': identifier,
+        'id': id
       });
 
       Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
