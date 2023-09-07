@@ -598,31 +598,31 @@ class FlexUI with Service implements NotificationsListener {
             result = result && (Auth2().isOidcLoggedIn == value);
           }
           else if ((key == 'phoneLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isPhoneLoggedIn == value);
+            result = result && (Auth2().isCodeLoggedIn == value);
           }
           else if ((key == 'emailLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isEmailLoggedIn == value);
+            result = result && (Auth2().isPasswordLoggedIn == value);
           }
           else if ((key == 'usernameLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isUsernameLoggedIn == value);
+            result = result && (Auth2().isPasswordLoggedIn == value);
           }
           else if ((key == 'passkeyLoggedIn') && (value is bool)) {
             result = result && (Auth2().isPasskeyLoggedIn == value);
           }
           else if ((key == 'phoneOrEmailLoggedIn') && (value is bool)) {
-            result = result && ((Auth2().isPhoneLoggedIn || Auth2().isEmailLoggedIn) == value) ;
+            result = result && ((Auth2().isCodeLoggedIn || Auth2().isPasswordLoggedIn) == value) ;
           }
           else if ((key == 'shibbolethLinked') && (value is bool)) {
             result = result && (Auth2().isOidcLinked == value);
           }
           else if ((key == 'phoneLinked') && (value is bool)) {
-            result = result && (Auth2().isPhoneLinked == value);
+            result = result && (Auth2().isCodeLinked == value);
           }
           else if ((key == 'emailLinked') && (value is bool)) {
-            result = result && (Auth2().isEmailLinked == value);
+            result = result && (Auth2().isPasswordLinked == value);
           }
           else if ((key == 'usernameLinked') && (value is bool)) {
-            result = result && (Auth2().isUsernameLinked == value);
+            result = result && (Auth2().isPasswordLinked == value);
           }
           else if ((key == 'passkeyLinked') && (value is bool)) {
             result = result && (Auth2().isPasskeyLinked == value);

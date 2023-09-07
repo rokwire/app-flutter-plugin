@@ -530,9 +530,9 @@ class Rules {
       case "is_oidc_logged_in":
         return Auth2().isOidcLoggedIn;
       case "is_email_logged_in":
-        return Auth2().isEmailLoggedIn;
+        return Auth2().isPasswordLoggedIn;
       case "is_phone_logged_in":
-        return Auth2().isPhoneLoggedIn;
+        return Auth2().isCodeLoggedIn;
     }
     return null;
   }
