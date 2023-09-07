@@ -401,9 +401,11 @@ packages:
   flutter_passkey:
     dependency: transitive
     description:
-      path: "../../flutter_passkey-rokmetro"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: f44af5d1905242ff7090317af9c59ff7f111d7b2
+      url: "https://github.com/rokmetro/flutter_passkey.git"
+    source: git
     version: "1.0.3"
   flutter_plugin_android_lifecycle:
     dependency: transitive
