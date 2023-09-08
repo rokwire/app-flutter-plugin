@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
@@ -509,71 +508,71 @@ class Events2Query {
   }
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
-    TZDateTime nowUni = DateTimeUni.nowUniOrLocal();
+    TZDateTime nowLocal = TZDateTime.now(local);
     
     if (timeFilter == Event2TimeFilter.upcoming) {
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.today) {
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni, inclusive: true);
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal, inclusive: true);
       
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.tomorrow) {
-      TZDateTime tomorrowUni = nowUni.add(const Duration(days: 1));
-      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni);
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(tomorrowUni, inclusive: true);
+      TZDateTime tomorrowLocal = nowLocal.add(const Duration(days: 1));
+      TZDateTime startTimeLocal = TZDateTimeUtils.dateOnly(tomorrowLocal);
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(tomorrowLocal, inclusive: true);
       
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisWeek) {
-      int nowWeekdayUni = nowUni.weekday;
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
+      int nowWeekdayLocal = nowLocal.weekday;
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly((nowWeekdayLocal < 7) ? nowLocal.add(Duration(days: (7 - nowWeekdayLocal))) :  nowLocal, inclusive: true);
       
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisWeekend) {
-      int nowWeekdayUni = nowUni.weekday;
-      TZDateTime startTimeUni = (nowWeekdayUni < 6) ? TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (6 - nowWeekdayUni)))) : nowUni;
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly((nowWeekdayUni < 7) ? nowUni.add(Duration(days: (7 - nowWeekdayUni))) :  nowUni, inclusive: true);
+      int nowWeekdayLocal = nowLocal.weekday;
+      TZDateTime startTimeLocal = (nowWeekdayLocal < 6) ? TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (6 - nowWeekdayLocal)))) : nowLocal;
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly((nowWeekdayLocal < 7) ? nowLocal.add(Duration(days: (7 - nowWeekdayLocal))) :  nowLocal, inclusive: true);
 
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextWeek) {
-      int nowWeekdayUni = nowUni.weekday;
-      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (8 - nowWeekdayUni))));
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
+      int nowWeekdayLocal = nowLocal.weekday;
+      TZDateTime startTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (8 - nowWeekdayLocal))));
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (14 - nowWeekdayLocal))), inclusive: true);
       
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextWeekend) {
-      int nowWeekdayUni = nowUni.weekday;
-      TZDateTime startTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (13 - nowWeekdayUni))));
-      TZDateTime endTimeUni = TZDateTimeUtils.dateOnly(nowUni.add(Duration(days: (14 - nowWeekdayUni))), inclusive: true);
+      int nowWeekdayLocal = nowLocal.weekday;
+      TZDateTime startTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (13 - nowWeekdayLocal))));
+      TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (14 - nowWeekdayLocal))), inclusive: true);
       
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisMonth) {
-      TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(nowUni);
+      TZDateTime endTimeLocal = TZDateTimeUtils.endOfThisMonth(nowLocal);
 
-      options['end_time_after'] = nowUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextMonth) {
-      TZDateTime startTimeUni = TZDateTimeUtils.startOfNextMonth(nowUni);
-      TZDateTime endTimeUni = TZDateTimeUtils.endOfThisMonth(startTimeUni);
+      TZDateTime startTimeLocal = TZDateTimeUtils.startOfNextMonth(nowLocal);
+      TZDateTime endTimeLocal = TZDateTimeUtils.endOfThisMonth(startTimeLocal);
 
-      options['end_time_after'] = startTimeUni.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_before'] = endTimeUni.millisecondsSinceEpoch ~/ 1000;
+      options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
-      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowUni)) ? customStartTimeUtc : nowUni;
+      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowLocal)) ? customStartTimeUtc : nowLocal;
       options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
