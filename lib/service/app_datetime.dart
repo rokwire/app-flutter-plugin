@@ -135,6 +135,7 @@ class AppDateTime with Service {
           timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
           formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
       }
+      formattedDateTime = formattedDateTime?.toLowerCase();
       if (showTzSuffix && (formattedDateTime != null)) {
         formattedDateTime = '$formattedDateTime CT';
       }
