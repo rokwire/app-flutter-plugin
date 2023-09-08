@@ -135,6 +135,7 @@ class AppDateTime with Service {
           timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
           formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
       }
+      formattedDateTime = formattedDateTime?.toLowerCase();
       if (showTzSuffix && (formattedDateTime != null)) {
         formattedDateTime = '$formattedDateTime CT';
       }
@@ -226,4 +227,11 @@ extension DateTimeUni on DateTime {
   timezone.TZDateTime  toUniOrLocal() => timezone.TZDateTime.from(this, timezoneUniOrLocal);
   static timezone.TZDateTime  nowUniOrLocal() => timezone.TZDateTime.from(DateTime.now(), timezoneUniOrLocal);
   static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? timezone.local;
+}
+
+extension DateTimeLocal on DateTime {
+
+  timezone.TZDateTime  toLocalTZ() => timezone.TZDateTime.from(this.toLocal(), timezoneLocal);
+  static timezone.TZDateTime  nowLocalTZ() => timezone.TZDateTime.from(DateTime.now(), timezoneLocal);
+  static timezone.Location get timezoneLocal => timezone.local;
 }
