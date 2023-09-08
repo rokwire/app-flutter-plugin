@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232).
 - Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
 - Load again content attributes JSON from content service [#359](https://github.com/rokwire/app-flutter-plugin/issues/359).
+- Build event time filters in local timezone [#377](https://github.com/rokwire/app-flutter-plugin/issues/377).
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 - Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
