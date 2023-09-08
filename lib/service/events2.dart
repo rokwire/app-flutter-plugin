@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
@@ -508,7 +509,7 @@ class Events2Query {
   }
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
-    TZDateTime nowLocal = TZDateTime.now(local);
+    TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
     
     if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;

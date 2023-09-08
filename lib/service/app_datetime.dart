@@ -228,3 +228,10 @@ extension DateTimeUni on DateTime {
   static timezone.TZDateTime  nowUniOrLocal() => timezone.TZDateTime.from(DateTime.now(), timezoneUniOrLocal);
   static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? timezone.local;
 }
+
+extension DateTimeLocal on DateTime {
+
+  timezone.TZDateTime  toLocalTZ() => timezone.TZDateTime.from(this.toLocal(), timezoneLocal);
+  static timezone.TZDateTime  nowLocalTZ() => timezone.TZDateTime.from(DateTime.now(), timezoneLocal);
+  static timezone.Location get timezoneLocal => timezone.local;
+}
