@@ -362,7 +362,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Passkey authentication
 
-  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.username, String? identifierId}) async {
     String? errorMessage;
     if (Config().authBaseUrl != null) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
@@ -375,7 +375,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       Map<String, dynamic> creds = {};
       if (StringUtils.isNotEmpty(identifier)) {
-        creds["${auth2IdentifierTypeToString(identifierType)}"] = '$identifier-${Config().operatingSystem}';
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = identifier;
       }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
@@ -387,6 +387,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'profile': profile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
+        'account_identifier_id': identifierId,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -427,7 +428,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username}) async {
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? identifier, String? responseData, {Auth2IdentifierType identifierType = Auth2IdentifierType.username, String? identifierId}) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
@@ -443,13 +444,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         "response": JsonUtils.encode(requestJson),
       };
       if (StringUtils.isNotEmpty(identifier)) {
-        creds["${auth2IdentifierTypeToString(identifierType)}"] = '$identifier-${Config().operatingSystem}';
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = identifier;
       }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': creds,
         'username': identifierType == Auth2IdentifierType.username ? identifier : null,
         'device': deviceInfo,
+        'account_identifier_id': identifierId,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -495,7 +497,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          '${auth2IdentifierTypeToString(identifierType)}': '$identifier-${Config().operatingSystem}',
+          '${auth2IdentifierTypeToString(identifierType)}': identifier,
         },
         'params': {
           "display_name": displayName,
@@ -555,7 +557,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passkeyLoginType),
         'creds': {
-          "${auth2IdentifierTypeToString(identifierType)}": '$identifier-${Config().operatingSystem}',
+          "${auth2IdentifierTypeToString(identifierType)}": identifier,
           "response": responseData,
         },
         'username': identifierType == Auth2IdentifierType.username ? identifier : null,
@@ -777,25 +779,28 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Code Authentication
 
-  Future<Auth2RequestCodeResult> authenticateWithCode(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.phone, bool? public = false}) async {
-    if ((Config().authBaseUrl != null) && (identifier != null)) {
+  Future<Auth2RequestCodeResult> authenticateWithCode(String? identifier, {Auth2IdentifierType identifierType = Auth2IdentifierType.phone, bool? public = false, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null)) {
       NotificationService().notify(notifyLoginStarted, codeLoginType);
 
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
+      Map<String, dynamic> creds = {};
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = identifier;
+      }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(codeLoginType),
-        'creds': {
-          "${auth2IdentifierTypeToString(identifierType)}": identifier,
-        },
+        'creds': creds,
         'privacy': {
           'public': public,
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
+        'account_identifier_id': identifierId,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -815,21 +820,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2RequestCodeResult.failed;
   }
 
-  Future<Auth2SendCodeResult> handleCodeAuthentication(String? identifier, String? code, {Auth2IdentifierType identifierType = Auth2IdentifierType.phone}) async {
-    if ((Config().authBaseUrl != null) && (identifier != null) && (code != null)) {
+  Future<Auth2SendCodeResult> handleCodeAuthentication(String? identifier, String? code, {Auth2IdentifierType identifierType = Auth2IdentifierType.phone, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (code != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
+      Map<String, dynamic> creds = {
+        "code": code,
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = identifier;
+      }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(codeLoginType),
-        'creds': {
-          "${auth2IdentifierTypeToString(identifierType)}": identifier,
-          "code": code,
-        },
+        'creds': creds,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
+        'account_identifier_id': identifierId,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
@@ -857,8 +866,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Password Authentication
 
-  Future<Auth2PasswordSignInResult> authenticateWithPassword(String? identifier, String? password, {Auth2IdentifierType identifierType = Auth2IdentifierType.email}) async {
-    if ((Config().authBaseUrl != null) && (identifier != null) && (password != null)) {
+  Future<Auth2PasswordSignInResult> authenticateWithPassword(String? identifier, String? password, {Auth2IdentifierType identifierType = Auth2IdentifierType.email, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (password != null)) {
       
       NotificationService().notify(notifyLoginStarted, passwordLoginType);
 
@@ -866,15 +875,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
+      Map<String, dynamic> creds = {
+        "password": password,
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds["${auth2IdentifierTypeToString(identifierType)}"] = identifier;
+      }
       Map<String, dynamic> postData = {
         'auth_type': auth2LoginTypeToString(passwordLoginType),
-        'creds': {
-          "${auth2IdentifierTypeToString(identifierType)}": identifier,
-          "password": password
-        },
+        'creds': creds,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
+        'account_identifier_id': identifierId,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
