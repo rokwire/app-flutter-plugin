@@ -254,7 +254,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2LoginType? get loginType => _account?.authType?.loginType;
 
   bool get isLoggedIn => (_account?.id != null);
-  bool get isOidcLoggedIn => (_account?.authType?.loginType == oidcLoginType);
+  bool get isOidcLoggedIn => (_account?.authType?.loginType == oidcLoginType || _account?.authType?.loginType == Auth2LoginType.oidc);
   bool get isPhoneLoggedIn => (_account?.authType?.loginType == phoneLoginType);
   bool get isEmailLoggedIn => (_account?.authType?.loginType == emailLoginType);
   bool get isUsernameLoggedIn => (_account?.authType?.loginType == usernameLoginType);
@@ -303,6 +303,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get votePlace => prefs?.voter?.votePlace;
   
   // Overrides
+  @protected
+  String? get oidcAuthType => auth2LoginTypeToString(oidcLoginType);
 
   @protected
   Auth2UserPrefs get defaultAnonymousPrefs => Auth2UserPrefs.empty();
@@ -619,7 +621,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       Map<String, dynamic> postData = {
-        'auth_type': auth2LoginTypeToString(oidcLoginType),
+        'auth_type': oidcAuthType,
         'creds': uri?.toString(),
         'params': _oidcLogin?.params,
         'profile': _anonymousProfile?.toJson(),
@@ -701,7 +703,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       Map<String, dynamic> postData = {
-        'auth_type': auth2LoginTypeToString(oidcLoginType),
+        'auth_type': oidcAuthType,
       };
       Map<String, dynamic>? additionalParams = _getConfigParams(postData);
       if (additionalParams != null) {
