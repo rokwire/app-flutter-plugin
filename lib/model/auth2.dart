@@ -137,6 +137,9 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
   else if (value == 'webauthn') {
     return Auth2LoginType.passkey;
   }
+  else if (value?.contains('oidc') ?? false) {
+    return Auth2LoginType.oidc;
+  }
   return null;
 }
 
