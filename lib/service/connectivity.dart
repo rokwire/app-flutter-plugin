@@ -16,7 +16,7 @@
 
 import 'dart:async';
 
-import 'package:connectivity/connectivity.dart' as connectivity;
+import 'package:connectivity_plus/connectivity_plus.dart' as connectivity;
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
