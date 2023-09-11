@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
 - Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232).
 - Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
+- Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
