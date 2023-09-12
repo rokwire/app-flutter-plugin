@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
 - Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232).
 - Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
+- Load again content attributes JSON from content service [#359](https://github.com/rokwire/app-flutter-plugin/issues/359).
+- Build event time filters in local timezone [#377](https://github.com/rokwire/app-flutter-plugin/issues/377).
+- Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
 - Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
@@ -22,11 +25,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add timestamps to anonymous IDs [#309](https://github.com/rokwire/app-flutter-plugin/issues/309)
 - Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
 - Events2 model and service, work in progress [#288](https://github.com/rokwire/app-flutter-plugin/issues/288).
+- Added client parameter to Events2.loadEvents and Network.post APIs [#3401](https://github.com/rokwire/illinois-app/issues/3401).
+- Defined scopes for profile & prefs for transfer anonymous data to existing user account [#332](https://github.com/rokwire/app-flutter-plugin/issues/332).
+- Add query params to load surveys [#340](https://github.com/rokwire/app-flutter-plugin/issues/340).
+- More dynamic survey response cards [#344](https://github.com/rokwire/app-flutter-plugin/issues/344).
+- Added scope to content attributes global requirements [#349](https://github.com/rokwire/app-flutter-plugin/issues/349).
+- Initial handling of super and recurring events [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
+- Added progress to SectionSlantHeader [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
+- Added get all survey responses request [#354](https://github.com/rokwire/app-flutter-plugin/issues/354).
+- Added "Multi-person" event type [#356](https://github.com/rokwire/app-flutter-plugin/issues/356).
+- Added language selection capability to Localization service [#361](https://github.com/rokwire/app-flutter-plugin/issues/361).
+- Acknowledge new event2 model for sport events [#363](https://github.com/rokwire/app-flutter-plugin/issues/363).
+- Added HEAD request in Network service [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+- Added UrlUtils.fixUriAsync helper [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+- Added published flag to event [#369](https://github.com/rokwire/app-flutter-plugin/issues/369).
+- Added Pinch Zoom support for ModalImagePanel [#3305](https://github.com/rokwire/illinois-app/issues/3305).
+- Override survey action summary [#373](https://github.com/rokwire/app-flutter-plugin/issues/373)
+- Added registrationOccupancy to Event2PersonsResult and relevant utility methods [#375](https://github.com/rokwire/app-flutter-plugin/issues/375).
+- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 - Handle more identifiers using passkeys and linking [#330](https://github.com/rokwire/app-flutter-plugin/issues/330)
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
 - Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
+- Only return null on unsuccessful survey responses request [#349](https://github.com/rokwire/app-flutter-plugin/issues/349)
+- Local notifications repeating weekly [#365](https://github.com/rokwire/app-flutter-plugin/issues/365)
+- Groups load upcoming events [#3645](https://github.com/rokwire/illinois-app/issues/3645).
 
 ## [1.4.0] - 2023-05-12
 ### Fixed

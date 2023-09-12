@@ -22,6 +22,8 @@ import "package:asn1lib/asn1lib.dart";
 import "package:pointycastle/export.dart";
 import 'package:encrypt/encrypt.dart' as encrypt_package;
 
+// ignore_for_file: unnecessary_non_null_assertion
+
 class AESCrypt {
 
   static const int kCCBlockSizeAES128 = 16;
