@@ -335,6 +335,7 @@ class UiColors {
   Color? get accentColor4               => colorMap['accentColor4'];
 
   Color? get dividerLine                => colorMap['dividerLine'];
+  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
 
   Color? get success                    => colorMap['success'];
   Color? get alert                      => colorMap['alert'];
@@ -393,10 +394,6 @@ class UiColors {
   Color? get mediumGray2                => colorMap['mediumGray2'];
   @Deprecated("Color style names should meaningfully reflect intended usage")
   Color? get lightGray                  => colorMap['lightGray'];
-  Color? get disabledTextColor          => colorMap['disabledTextColor'];
-  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
-  Color? get dividerLine                => colorMap['dividerLine'];
-  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
 
   @Deprecated("Color style names should meaningfully reflect intended usage")
   Color? get mango                      => colorMap['mango'];
