@@ -27,7 +27,8 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/Storage.dart';
+import 'package:package_info/package_info.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
@@ -558,6 +559,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
+  String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
   // Getters: web

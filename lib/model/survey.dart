@@ -47,18 +47,15 @@ class SurveyResponse {
     };
   }
 
-  static List<SurveyResponse>? listFromJson(List<dynamic>? jsonList) {
-    List<SurveyResponse>? result;
-    if (jsonList != null) {
-      result = <SurveyResponse>[];
-      for (dynamic jsonEntry in jsonList) {
-        Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
-        if (mapVal != null) {
-          try {
-            ListUtils.add(result, SurveyResponse.fromJson(mapVal));
-          } catch (e) {
-            debugPrint(e.toString());
-          }
+  static List<SurveyResponse> listFromJson(List<dynamic>? jsonList) {
+    List<SurveyResponse> result = [];
+    for (dynamic jsonEntry in jsonList ?? []) {
+      Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
+      if (mapVal != null) {
+        try {
+          ListUtils.add(result, SurveyResponse.fromJson(mapVal));
+        } catch (e) {
+          debugPrint(e.toString());
         }
       }
     }
@@ -92,13 +89,14 @@ class SurveyAlert {
 // TODO: Add localization support
 class Survey extends RuleEngine {
   static const String defaultQuestionKey = 'default';
+  static const String templateSurveyPrefix = "template.";
 
   @override final String id;
   @override final String type;
   final Map<String, SurveyData> data;
   final bool scored;
-  final String title;
-  final String? moreInfo;
+  String title;
+  String? moreInfo;
   final String? defaultDataKey;
   final RuleResult? defaultDataKeyRule;
   final List<RuleResult>? resultRules;
@@ -107,8 +105,10 @@ class Survey extends RuleEngine {
   DateTime? dateUpdated;
   SurveyStats? stats;
 
+  String? calendarEventId;
+
   Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
-    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, this.calendarEventId, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
@@ -130,12 +130,11 @@ class Survey extends RuleEngine {
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
       stats: JsonUtils.mapOrNull((json) => SurveyStats.fromJson(json), json['stats']),
+      calendarEventId: JsonUtils.stringValue(json['calendar_event_id']),
     );
   }
 
   Map<String, dynamic> toJson() {
-    List<Map<String, dynamic>> resultRulesJson = RuleResult.listToJson(resultRules);
-    String? encodedJson = JsonUtils.encode(resultRulesJson);
     return {
       'id': id,
       'data': SurveyData.mapToJson(data),
@@ -145,7 +144,7 @@ class Survey extends RuleEngine {
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
       'default_data_key_rule': defaultDataKeyRule,
-      'result_rules': encodedJson,
+      'result_rules': JsonUtils.encode(RuleResult.listToJson(resultRules)),
       'result_json': JsonUtils.encode(resultData),
       'response_keys': responseKeys,
       'constants': constants,
@@ -154,16 +153,17 @@ class Survey extends RuleEngine {
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
+      'calendar_event_id': calendarEventId,
     };
   }
 
-  factory Survey.fromOther(Survey other) {
+  factory Survey.fromOther(Survey other, {String? id}) {
     Map<String, SurveyData> data = {};
     for (MapEntry<String, SurveyData> surveyData in other.data.entries){
       data[surveyData.key] = (SurveyData.fromOther(surveyData.value));
     }
     return Survey(
-      id: other.id,
+      id: id ?? other.id,
       data: data,
       type: other.type,
       scored: other.scored,
@@ -180,6 +180,7 @@ class Survey extends RuleEngine {
       strings: Map.of(other.strings),
       subRules: Map.of(other.subRules),
       stats: other.stats != null ? SurveyStats.fromOther(other.stats!) : null,
+      calendarEventId: other.calendarEventId,
     );
   }
 
@@ -195,6 +196,32 @@ class Survey extends RuleEngine {
       }
     }
     return result;
+  }
+
+  static Survey? findInList(List<Survey>? contentList, { String? id, String? calendarEventId, String? title }) {
+    if (contentList != null) {
+      for (Survey survey in contentList) {
+        if ((id != null && survey.id == id) ||
+            (calendarEventId != null && survey.calendarEventId == calendarEventId) ||
+            (title != null && survey.title == title)
+        ) {
+          return survey;
+        }
+      }
+    }
+    return null;
+  }
+
+  void replaceKey(String key, String? replace) {
+    if (replace != null) {
+      String pattern = '{{$key}}';
+      title = title.replaceAll(pattern, replace);
+      moreInfo = moreInfo?.replaceAll(pattern, replace);
+      data.forEach((_, value) {
+        value.text = value.text.replaceAll(pattern, replace);
+        value.moreInfo = value.moreInfo?.replaceAll(pattern, replace);
+      });
+    }
   }
 }
 
@@ -415,15 +442,14 @@ abstract class SurveyData {
   num? get maximumScore {
     if (_maximumScore == null) {
       if (scoreRule != null) {
-        num maxScore = double.negativeInfinity;
+        num? maxScore;
         for (RuleAction scoreAction in scoreRule!.possibleActions) {
-          if (scoreAction.data is num && scoreAction.data > maxScore) {
+          if (scoreAction.data is num && (maxScore == null || scoreAction.data > maxScore)) {
             maxScore = scoreAction.data;
           }
         }
         return _maximumScore = maxScore;
       }
-      return _maximumScore = null;
     }
     return _maximumScore;
   }
@@ -585,13 +611,13 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   num? get maximumScore {
     num? scoreRuleMax = super.maximumScore;
     if (scoreRuleMax == null && selfScore) {
-      num maxScore = double.negativeInfinity;
+      num? maxScore;
       for (OptionData scoreOption in options) {
-        if (scoreOption.score is num && scoreOption.score! > maxScore) {
+        if (scoreOption.score is num && (maxScore == null || scoreOption.score! > maxScore)) {
           maxScore = scoreOption.score!;
         }
       }
-      return maxScore;
+      return _maximumScore = maxScore;
     }
     return scoreRuleMax;
   }
@@ -752,7 +778,7 @@ class SurveyQuestionNumeric extends SurveyData {
   num? get maximumScore {
     num? scoreRuleMax = super.maximumScore;
     if (scoreRuleMax == null && selfScore) {
-      return maximum;
+      return _maximumScore = maximum;
     }
     return scoreRuleMax;
   }

@@ -226,6 +226,10 @@ class Auth2Account {
     return linkedTypes;
   }
 
+  bool get isCalendarAdmin {
+    return hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
+  }
+
   bool get isManagedGroupAdmin {
     return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
@@ -238,6 +242,13 @@ class Auth2Account {
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
+}
+
+class Auth2AccountScope {
+  final Set<Auth2UserPrefsScope>? prefs;
+  final Set<Auth2UserProfileScope>? profile;
+
+  Auth2AccountScope({this.prefs, this.profile});
 }
 
 ////////////////////////////////
@@ -402,61 +413,97 @@ class Auth2UserProfile {
 
     (const DeepCollectionEquality().hash(_data));
 
-  bool apply(Auth2UserProfile? profile) {
+  bool apply(Auth2UserProfile? profile, { Set<Auth2UserProfileScope>? scope }) {
     bool modified = false;
     if (profile != null) {
-      if ((profile._id != null) && (profile._id != _id)) {
+      /*if ((profile._id != _id) && (profile._id?.isNotEmpty ?? false)) {
         _id = profile._id;
         modified = true;
-      }
-      if ((profile._firstName != null) && (profile._firstName != _firstName)) {
+      }*/
+      if ((profile._firstName != _firstName) && (
+          (scope?.contains(Auth2UserProfileScope.firstName) ?? false) ||
+          ((profile._firstName?.isNotEmpty ?? false) && (_firstName?.isEmpty ?? true))
+      )) {
         _firstName = profile._firstName;
         modified = true;
       }
-      if ((profile._middleName != null) && (profile._middleName != _middleName)) {
+      if ((profile._middleName != _middleName) && (
+          (scope?.contains(Auth2UserProfileScope.middleName) ?? false) ||
+          ((profile._middleName?.isNotEmpty ?? false) && (_middleName?.isEmpty ?? true))
+      )) {
         _middleName = profile._middleName;
         modified = true;
       }
-      if ((profile._lastName != null) && (profile._lastName != _lastName)) {
+      if ((profile._lastName != _lastName) && (
+          (scope?.contains(Auth2UserProfileScope.lastName) ?? false) ||
+          ((profile._lastName?.isNotEmpty ?? false) && (_lastName?.isEmpty ?? true))
+      )) {
         _lastName = profile._lastName;
         modified = true;
       }
       
-      if ((profile._birthYear != null) && (profile._birthYear != _birthYear)) {
+      if ((profile._birthYear != _birthYear) && (
+          (scope?.contains(Auth2UserProfileScope.birthYear) ?? false) ||
+          (((profile._birthYear ?? 0) != 0) && ((_birthYear ?? 0) == 0))
+      )) {
         _birthYear = profile._birthYear;
         modified = true;
       }
-      if ((profile._photoUrl != null) && (profile._photoUrl != _photoUrl)) {
+      if ((profile._photoUrl != _photoUrl) && (
+          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
+          ((profile._photoUrl?.isNotEmpty ?? false) && (_photoUrl?.isEmpty ?? true))
+      )) {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
-      if ((profile._email != null) && (profile._email != _email)) {
+      if ((profile._email != _email) && (
+          (scope?.contains(Auth2UserProfileScope.email) ?? false) ||
+          ((profile._email?.isNotEmpty ?? false) && (_email?.isEmpty ?? true))
+      )) {
         _email = profile._email;
         modified = true;
       }
-      if ((profile._phone != null) && (profile._phone != _phone)) {
+      if ((profile._phone != _phone) && (
+          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
+          ((profile._phone?.isNotEmpty ?? false) && (_phone?.isEmpty ?? true))
+      )) {
         _phone = profile._phone;
         modified = true;
       }
 
-      if ((profile._address != null) && (profile._address != _address)) {
+      if ((profile._address != _address) && (
+          (scope?.contains(Auth2UserProfileScope.address) ?? false) ||
+          ((profile._address?.isNotEmpty ?? false) && (_address?.isEmpty ?? true))
+      )) {
         _address = profile._address;
         modified = true;
       }
-      if ((profile._state != null) && (profile._state != _state)) {
+      if ((profile._state != _state) && (
+          (scope?.contains(Auth2UserProfileScope.state) ?? false) ||
+          ((profile._state?.isNotEmpty ?? false) && (_state?.isEmpty ?? true))
+      )) {
         _state = profile._state;
         modified = true;
       }
-      if ((profile._zip != null) && (profile._zip != _zip)) {
+      if ((profile._zip != _zip) && (
+          (scope?.contains(Auth2UserProfileScope.zip) ?? false) ||
+          ((profile._zip?.isNotEmpty ?? false) && (_zip?.isEmpty ?? true))
+      )) {
         _zip = profile._zip;
         modified = true;
       }
-      if ((profile._country != null) && (profile._country != _country)) {
+      if ((profile._country != _country) && (
+          (scope?.contains(Auth2UserProfileScope.country) ?? false) ||
+          ((profile._country?.isNotEmpty ?? false) && (_country?.isEmpty ?? true))
+      )) {
         _country = profile._country;
         modified = true;
       }
 
-      if ((profile._data != null) && (!const DeepCollectionEquality().equals(profile._data, _data))) {
+      if (!const DeepCollectionEquality().equals(profile._data, _data) && (
+          (scope?.contains(Auth2UserProfileScope.data) ?? false) ||
+          ((profile._data?.isNotEmpty ?? false) && (_data?.isEmpty ?? true))
+      )) {
         _data = MapUtils.combine(_data, profile._data);
         modified = true;
       }
@@ -591,6 +638,8 @@ class Auth2StringEntry {
     return null;
   }
 }
+
+enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, data }
 
 ////////////////////////////////
 // Auth2Type
@@ -954,78 +1003,151 @@ class Auth2UserPrefs {
     (const DeepCollectionEquality().hash(_settings)) ^
     (_voter?.hashCode ?? 0);
 
-  bool apply(Auth2UserPrefs? prefs, { bool? notify }) {
+  bool apply(Auth2UserPrefs? prefs, { Set<Auth2UserPrefsScope>? scope }) {
     bool modified = false;
-
     if (prefs != null) {
       
-      if ((prefs.privacyLevel != null) && (prefs.privacyLevel! > 0) && (prefs.privacyLevel != _privacyLevel)) {
+      if ((prefs.privacyLevel != _privacyLevel) && (
+            (scope?.contains(Auth2UserPrefsScope.privacyLevel) ?? false) ||
+            (((prefs.privacyLevel ?? 0) > 0) && ((_privacyLevel ?? 0) == 0))
+      )) {
         _privacyLevel = prefs._privacyLevel;
-        if (notify == true) {
-          NotificationService().notify(notifyPrivacyLevelChanged);
-        }
         modified = true;
       }
       
-      if ((prefs.roles != null) && prefs.roles!.isNotEmpty && !const DeepCollectionEquality().equals(prefs.roles, _roles)) {
+      if (!const DeepCollectionEquality().equals(prefs.roles, _roles) && (
+            (scope?.contains(Auth2UserPrefsScope.roles) ?? false) ||
+            ((prefs.roles?.isNotEmpty ?? false) && (_roles?.isEmpty ?? true))
+      )) {
         _roles = prefs._roles;
-        if (notify == true) {
-          NotificationService().notify(notifyRolesChanged);
-        }
         modified = true;
       }
       
-      if ((prefs._favorites != null) && prefs.hasFavorites && !const DeepCollectionEquality().equals(prefs._favorites, _favorites)) {
+      if (!const DeepCollectionEquality().equals(prefs._favorites, _favorites) && (
+          (scope?.contains(Auth2UserPrefsScope.favorites) ?? false) ||
+          (prefs.hasFavorites && !hasFavorites)
+      )) {
         _favorites = prefs._favorites;
-        if (notify == true) {
-          NotificationService().notify(notifyFavoritesChanged);
-        }
         modified = true;
       }
       
-      if ((prefs._interests != null) && prefs._interests!.isNotEmpty && !const DeepCollectionEquality().equals(prefs._interests, _interests)) {
+      if (!const DeepCollectionEquality().equals(prefs._interests, _interests) && (
+        (scope?.contains(Auth2UserPrefsScope.interests) ?? false) ||
+        ((prefs._interests?.isNotEmpty ?? false) && (_interests?.isEmpty ?? true))
+      )) {
         _interests = prefs._interests;
-        if (notify == true) {
-          NotificationService().notify(notifyInterestsChanged);
-        }
         modified = true;
       }
       
-      if ((prefs._foodFilters != null) && prefs.hasFoodFilters && !const DeepCollectionEquality().equals(prefs._foodFilters, _foodFilters)) {
+      if (!const DeepCollectionEquality().equals(prefs._foodFilters, _foodFilters) && (
+          (scope?.contains(Auth2UserPrefsScope.foodFilters) ?? false) ||
+          (prefs.hasFoodFilters && !hasFoodFilters)
+      )) {
         _foodFilters = prefs._foodFilters;
-        if (notify == true) {
-          NotificationService().notify(notifyInterestsChanged);
-        }
         modified = true;
       }
 
-      if ((prefs._tags != null) && prefs._tags!.isNotEmpty && !const DeepCollectionEquality().equals(prefs._tags, _tags)) {
+      if (!const DeepCollectionEquality().equals(prefs._tags, _tags) && (
+          (scope?.contains(Auth2UserPrefsScope.tags) ?? false) ||
+          ((prefs._tags?.isNotEmpty ?? false) &&  (_tags?.isEmpty ?? true))
+      )) {
         _tags = prefs._tags;
-        if (notify == true) {
-          NotificationService().notify(notifyTagsChanged);
-        }
         modified = true;
       }
       
-      if ((prefs._settings != null) && prefs._settings!.isNotEmpty && !const DeepCollectionEquality().equals(prefs._settings, _settings)) {
+      if (!const DeepCollectionEquality().equals(prefs._settings, _settings) && (
+          (scope?.contains(Auth2UserPrefsScope.settings) ?? false) ||
+          ((prefs._settings?.isNotEmpty ?? false) &&  (_settings?.isEmpty ?? true))
+      )) {
         _settings = prefs._settings;
-        if (notify == true) {
-          NotificationService().notify(notifySettingsChanged);
-        }
         modified = true;
       }
       
-      if ((prefs._voter != null) && prefs._voter!.isNotEmpty && (prefs._voter != _voter)) {
+      if ((prefs._voter != _voter) &&  (
+          (scope?.contains(Auth2UserPrefsScope.voter) ?? false) ||
+          ((prefs._voter?.isNotEmpty ?? false) && (_voter?.isEmpty ?? true))
+        )) {
         _voter = Auth2VoterPrefs.fromOther(prefs._voter, onChanged: _onVoterChanged);
-        if (notify == true) {
-          NotificationService().notify(notifyVoterChanged);
-        }
         modified = true;
       }
     }
     return modified;
   }
 
+  bool clear({ bool? notify }) {
+    bool modified = false;
+
+    if (_privacyLevel != null) {
+        _privacyLevel = null;
+        if (notify == true) {
+          NotificationService().notify(notifyPrivacyLevelChanged);
+        }
+        modified = true;
+    }
+
+    if (_roles != null) {
+      _roles = null;
+      if (notify == true) {
+        NotificationService().notify(notifyRolesChanged);
+      }
+      modified = true;
+    }
+
+    if (_favorites != null) {
+      _favorites = null;
+      if (notify == true) {
+        NotificationService().notify(notifyFavoritesChanged);
+      }
+      modified = true;
+    }
+      
+    if (_interests != null) {
+      _interests = null;
+      if (notify == true) {
+        NotificationService().notify(notifyInterestsChanged);
+      }
+      modified = true;
+    }
+      
+    if (_foodFilters != null) {
+      _foodFilters = null;
+      if (notify == true) {
+        NotificationService().notify(notifyInterestsChanged);
+      }
+      modified = true;
+    }
+
+    if (_tags != null) {
+      _tags = null;
+      if (notify == true) {
+        NotificationService().notify(notifyTagsChanged);
+      }
+      modified = true;
+    }
+    
+    if (_settings != null) {
+      _settings = null;
+      if (notify == true) {
+        NotificationService().notify(notifySettingsChanged);
+      }
+      modified = true;
+    }
+    
+    if (_voter != null) {
+      _voter = null;
+      if (notify == true) {
+        NotificationService().notify(notifyVoterChanged);
+      }
+      modified = true;
+    }
+
+    if (modified) {
+      NotificationService().notify(notifyChanged, this);
+    }
+
+    return modified;
+  }
+  
   // Privacy
 
   int? get privacyLevel {
@@ -1211,8 +1333,12 @@ class Auth2UserPrefs {
   }
 
   bool get hasFavorites {
+    return favoritesNotEmpty(_favorites);
+  }
+
+  static bool favoritesNotEmpty(Map<String, LinkedHashSet<String>>? favorites) {
     bool result = false;
-    _favorites?.forEach((String key, LinkedHashSet<String> values) {
+    favorites?.forEach((String key, LinkedHashSet<String> values) {
       if (values.isNotEmpty) {
         result = true;
       }
@@ -1425,7 +1551,11 @@ class Auth2UserPrefs {
   }
 
   bool get hasFoodFilters {
-    return (includedFoodTypes?.isNotEmpty ?? false) || (excludedFoodIngredients?.isNotEmpty ?? false);
+    return foodFiltersNotEmpty(_foodFilters);
+  }
+
+  static bool foodFiltersNotEmpty(Map<String, Set<String>>? foodFilters) {
+    return (foodFilters?[_foodIncludedTypes]?.isNotEmpty ?? false) || (foodFilters?[_foodExcludedIngredients]?.isNotEmpty ?? false);
   }
 
   void clearFoodFilters() {
@@ -1595,6 +1725,8 @@ class Auth2UserPrefs {
     return result;
   }
 }
+
+enum Auth2UserPrefsScope { privacyLevel, roles, favorites, interests, foodFilters, tags, settings, voter }
 
 class Auth2VoterPrefs {
   bool? _registeredVoter;

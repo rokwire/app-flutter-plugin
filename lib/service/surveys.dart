@@ -342,6 +342,45 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<List<Survey>?> loadSurveys({List<String>? ids, List<String>? types, String? calendarEventID, int? limit, int? offset}) async {
+    if (enabled) {
+      Map<String, String> queryParams = {};
+      if (CollectionUtils.isNotEmpty(ids)) {
+        queryParams['ids'] = ids!.join(',');
+      }
+      if (CollectionUtils.isNotEmpty(types)) {
+        queryParams['types'] = types!.join(',');
+      }
+      if (calendarEventID != null) {
+        queryParams['calendar_event_id'] = calendarEventID;
+      }
+      if (limit != null) {
+        queryParams['limit'] = limit.toString();
+      }
+      if (offset != null) {
+        queryParams['offset'] = offset.toString();
+      }
+
+      String url = '${Config().surveysUrl}/surveys';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+        if (responseList != null) {
+          List<Survey>? surveys = Survey.listFromJson(responseList);
+          return surveys;
+        }
+      } else {
+        debugPrint('Failed to load surveys. Reason: $responseCode, $responseBody');
+      }
+    }
+    return null;
+  }
+
   Future<Survey?> loadSurvey(String id) async {
     if (enabled) {
       String url = '${Config().surveysUrl}/surveys/$id';
@@ -390,6 +429,21 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<bool?> deleteSurvey(String surveyId) async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/surveys/$surveyId';
+      Response? response = await Network().delete(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      if (responseCode == 200) {
+        return true;
+      }
+      String? responseBody = response?.body;
+      debugPrint(responseBody);
+      return false;
+    }
+    return null;
+  }
+
   Future<SurveyResponse?> createSurveyResponse(Survey survey) async {
     if (enabled && Storage().assessmentsSaveResultsMap?[survey.type] != false) {
       String? body = JsonUtils.encode(survey.toJson());
@@ -409,7 +463,41 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<SurveyResponse>?> loadSurveyResponses(
+  Future<List<SurveyResponse>?> loadAllSurveyResponses(String surveyId, {DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+    if (enabled) {
+      Map<String, String> queryParams = {};
+      if (startDate != null) {
+        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(
+            startDate);
+        queryParams['start_date'] = startDateFormatted!;
+      }
+      if (endDate != null) {
+        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        queryParams['end_date'] = endDateFormatted!;
+      }
+      if (limit != null) {
+        queryParams['limit'] = limit.toString();
+      }
+      if (offset != null) {
+        queryParams['offset'] = offset.toString();
+      }
+
+      String url = '${Config().surveysUrl}/surveys/$surveyId/responses';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
+        return SurveyResponse.listFromJson(responseMap);
+      }
+    }
+    return null;
+  }
+
+  Future<List<SurveyResponse>?> loadUserSurveyResponses(
       {List<String>? surveyIDs, List<
           String>? surveyTypes, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
     if (enabled) {
@@ -445,11 +533,7 @@ class Surveys /* with Service */ {
       String? responseBody = response?.body;
       if (responseCode == 200) {
         List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
-        if (responseMap != null) {
-          List<SurveyResponse>? surveys = SurveyResponse.listFromJson(
-              responseMap);
-          return surveys;
-        }
+        return SurveyResponse.listFromJson(responseMap);
       }
     }
     return null;

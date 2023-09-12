@@ -20,31 +20,30 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
 
 class StringUtils {
 
-  static bool isEmpty(String? stringToCheck) {
-    return (stringToCheck == null || stringToCheck.isEmpty);
-  }
+  static bool isNotEmpty(String? stringToCheck) =>
+    (stringToCheck != null && stringToCheck.isNotEmpty);
 
-  static bool isNotEmpty(String? stringToCheck) {
-    return !isEmpty(stringToCheck);
-  }
+  static bool isNotEmptyString(dynamic value) =>
+    (value is String) && value.isNotEmpty;
 
-  static String ensureNotEmpty(String? value, {String defaultValue = ''}) {
-    if (isEmpty(value)) {
-      return defaultValue;
-    }
-    return value!;
-  }
+  static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
+    ((value != null) && value.isNotEmpty) ? value : defaultValue;
+
+  static bool isEmpty(String? stringToCheck) =>
+    !isNotEmpty(stringToCheck);
 
   static String wrapRange(String s, String firstValue, String secondValue, int startPosition, int endPosition) {
     String word = s.substring(startPosition, endPosition);
@@ -212,8 +211,16 @@ class ListUtils {
     }
   }
 
+  static T? first<T>(List<T>? list) {
+    return ((list != null) && list.isNotEmpty) ? list.first : null;
+  }
+
   static T? entry<T>(List<T>? list, int index) {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
+  }
+
+  static List<T>? notEmpty<T>(List<T>? list) {
+    return ((list?.length ?? 0) > 0) ? list : null;
   }
 
   static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
@@ -243,6 +250,17 @@ class ListUtils {
 
   static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
     compute(_sort, _SortListParam(list, compare));
+
+  static List<String>? stripEmptyStrings(List<String>? list) {
+    if (list != null) {
+      for (int index = list.length - 1; index >= 0; index--) {
+        if (list[index].isEmpty) {
+          list.removeAt(index);
+        }
+      }
+    }
+    return ((list?.length ?? 0) > 0) ? list : null;
+  }
 }
 
 class _SortListParam<T> {
@@ -263,6 +281,29 @@ class SetUtils {
   }
 
   static void toggle<T>(Set<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
+    }
+  }
+}
+
+class LinkedHashSetUtils {
+  static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
+    return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
+  }
+
+  static void add<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      set.add(entry);
+    }
+  }
+
+  static void toggle<T>(LinkedHashSet<T>? set, T? entry) {
     if ((set != null) && (entry != null)) {
       if (set.contains(entry)) {
         set.remove(entry);
@@ -466,39 +507,16 @@ class AppVersion {
 }
 
 class UrlUtils {  
-  static String? getScheme(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      return (uri != null) ? uri.scheme : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
-
-  static String? getHost(String? url) {
-    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
-    return (uri != null) ? (uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null)) : null;
-  }
-
-  static String? getExt(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      String? path = (uri != null) ? uri.path : null;
-      return (path != null) ? path_package.extension(path) : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
 
   static bool isPdf(String? url) {
-    return (getExt(url) == '.pdf');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
+    return (ext == '.pdf');
   }
 
   static bool isWebScheme(String? url) {
-    String? scheme = getScheme(url);
-    return (scheme == 'http') || (scheme == 'https');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
   static bool launchInternal(String? url) {
@@ -531,28 +549,103 @@ class UrlUtils {
     return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
   }
 
+  static Uri? parseUri(String? url) {
+    if (url != null) {
+      Uri? uri = Uri.tryParse(url);
+      if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
+        List<String> pathComponents = uri.path.split('/');
+        if (0 < pathComponents.length) {
+          String host = pathComponents.first;
+          String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
+          try {
+            return Uri(
+              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
+              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+              host: host,
+              port: (0 < uri.port) ? uri.port : null,
+              path: path,
+              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+              query: uri.query.isNotEmpty ? uri.query : null,
+              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+          }
+          catch(e) {
+          }
+        }
+      }
+      return uri;
+    }
+    return null;
+  }
+
+  static Uri? buildUri(Uri uri, { String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
+
+    String sourceHost = uri.host;
+    String sourcePath = uri.path;
+    if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
+      List<String> sourcePathComponents = sourcePath.split('/');
+      if (0 < sourcePathComponents.length) {
+        sourceHost = sourcePathComponents.first;
+        sourcePath = (1 < sourcePathComponents.length) ? sourcePathComponents.slice(1).join('/') : "";
+      }
+    }
+
+    try {
+      return Uri(
+        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
+        userInfo: (userInfo != null) ? userInfo : (uri.userInfo.isNotEmpty ? uri.userInfo : null),
+        host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
+        port: (port != null) ? port : ((0 < uri.port) ? uri.port : null),
+        path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
+        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+        query: (query != null) ? query : (uri.query.isNotEmpty ? uri.query : null),
+        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+        fragment: (fragment != null) ? fragment : (uri.fragment.isNotEmpty ? uri.fragment : null)
+      );
+    }
+    catch(e) {
+      return null;
+    }
+  }
+
   static String? fixUrl(String url) {
-    Uri? uri = Uri.tryParse(url);
+    Uri? uri = parseUri(url);
     Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? fixUri(Uri uri) {
-    return uri.scheme.isEmpty ? Uri(
-      scheme: 'http',
-      userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
-      host: uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null),
-      port: (0 < uri.port) ? uri.port : null,
-      path: (uri.host.isNotEmpty && uri.path.isNotEmpty) ? uri.path : null,
-      //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
-      query: uri.query.isNotEmpty ? uri.query : null,
-      //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
-      fragment: uri.fragment.isNotEmpty ? uri.fragment : null) : null;
+  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? buildUri(uri, scheme: 'http') : null;
+
+  static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
+    if (uri.scheme.isEmpty) {
+      final List<String> schemes = ['https', 'http'];
+      for (String scheme in schemes) {
+        Uri? schemeUri = buildUri(uri, scheme: scheme);
+        Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+        if (schemeResponse?.statusCode == 200) {
+          return schemeUri;
+        }
+      }
+
+      final String www = 'www.';
+      String? host = uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null);
+      if ((host != null) && !host.startsWith(www)) {
+        for (String scheme in schemes) {
+          Uri? schemeUri = buildUri(uri, scheme: scheme, host: www + host);
+          Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+          if (schemeResponse?.statusCode == 200) {
+            return schemeUri;
+          }
+        }
+      }
+
+    }
+    return null;
   }
 
   static Future<bool> isHostAvailable(String? url) async {
     List<InternetAddress>? result;
-    String? host = getHost(url);
+    String? host = parseUri(url)?.host;
     try {
       result = (host != null) ? await InternetAddress.lookup(host) : null;
     }
@@ -673,14 +766,29 @@ class JsonUtils {
     return null;
   }
 
-  static List<dynamic>? listValue(dynamic value) {
+  static List<T>? listValue<T>(dynamic value) {
     try {
-      return (value is List) ? value.cast<dynamic>() : null;
+      return (value is List) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Set<T>? setValue<T>(dynamic value) {
+    try {
+      return (value is Set) ? value.cast<T>() : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
+    Set<T>? set = setValue(value);
+    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
@@ -1104,6 +1212,13 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
+  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
+    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
+
+  static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
+    (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
+
+
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
       case "monday"   : return 1;
@@ -1259,14 +1374,56 @@ class DateTimeUtils {
 }
 
 class TZDateTimeUtils {
-  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
-    timezone.TZDateTime(location ?? dateTime.location, dateTime.year, dateTime.month, dateTime.day);
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location, bool inclusive = false }) =>
+    dateTime.dateOnly(location: location, inclusive: inclusive);
+
+  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.startOfNextMonth(location: location);
+
+  static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.endOfThisMonth(location: location);
+
+  static dynamic toJson(timezone.TZDateTime? dateTime) =>
+    dateTime?.toJson;
+
+  static timezone.TZDateTime? fromJson(dynamic json) =>
+    TZDateTimeExt.fromJson(json);
 
   static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
-    (time != null) ? timezone.TZDateTime(location, time.year, time.month, time.day, time.hour, time.minute, time.second, time.microsecond, time.millisecond) : null;
+    (time != null) ? timezone.TZDateTime.from(time, location) : null;
+
 
   static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+extension TZDateTimeExt on timezone.TZDateTime {
+  timezone.TZDateTime dateOnly({ timezone.Location? location, bool inclusive = false }) =>
+    timezone.TZDateTime(location ?? this.location, year, month, day, inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0);
+
+  timezone.TZDateTime startOfNextMonth({ timezone.Location? location }) => (month < 12) ?
+    timezone.TZDateTime(location ?? this.location, year, month + 1, 1) :
+    timezone.TZDateTime(location ?? this.location, year + 1, 1, 1);
+
+  timezone.TZDateTime endOfThisMonth({ timezone.Location? location }) =>
+    startOfNextMonth(location: location).subtract(const Duration(days: 1)).dateOnly(inclusive: true);
+
+  toJson() => {
+    'location': location.name,
+    'timestamp': millisecondsSinceEpoch
+  };
+
+  static timezone.TZDateTime? fromJson(dynamic json) {
+    if (json is Map) {
+      String? locationName = JsonUtils.stringValue(json['location']);
+      timezone.Location? location = (locationName != null) ? timezone.getLocation(locationName) : null;
+      int? timestamp = JsonUtils.intValue(json['timestamp']);
+      if ((location != null) && (timestamp != null)) {
+        return timezone.TZDateTime.fromMillisecondsSinceEpoch(location, timestamp);
+      }
+    }
+    return null;
+  }
 }
 
 class WebUtils {
