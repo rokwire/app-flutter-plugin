@@ -59,6 +59,7 @@ class SectionSlantHeader extends StatelessWidget {
 
   final Widget? headerWidget;
   final Widget? headerChild;
+  final Widget? progressWidget;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
   final CrossAxisAlignment childrenAlignment;
@@ -104,6 +105,7 @@ class SectionSlantHeader extends StatelessWidget {
     
     this.headerWidget,
     this.headerChild,
+    this.progressWidget,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
     this.childrenAlignment = CrossAxisAlignment.center,
@@ -136,23 +138,31 @@ class SectionSlantHeader extends StatelessWidget {
     // Slant
     List<Widget> slantList = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageKey)) {
+      Widget slantContentWidget = Row(children:[ Expanded(child:
+        SizedBox(height: slantImageHeight, child:
+          Styles().images?.getImage(slantImageKey, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+        ),
+      )]);
       slantList.addAll([
         Container(color: _slantColor, height: slantImageHeadingHeight,),
-        Row(children:[Expanded(child:
-          SizedBox(height: slantImageHeight, child:
-            Styles().images?.getImage(slantImageKey, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
-          ),
-        )]),
+        (progressWidget != null) ? Stack(children: [
+          slantContentWidget,
+          Positioned.fill(child: Align(alignment: Alignment.topCenter, child: progressWidget,))
+        ],) : slantContentWidget,
       ]);
     }
     else {
+      Widget slantContentWidget = Container(color: _slantColor, child:
+        CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? AppColors.background, horzDir: TriangleHorzDirection.rightToLeft), child:
+          Container(height: slantPainterHeight,),
+        ),
+      );
       slantList.addAll([
         Container(color: _slantColor, height: slantPainterHeadingHeight,),
-        Container(color: _slantColor, child:
-          CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? AppColors.background, horzDir: TriangleHorzDirection.rightToLeft), child:
-            Container(height: slantPainterHeight,),
-          ),
-        ),
+        (progressWidget != null) ? Stack(children: [
+          slantContentWidget,
+          Positioned.fill(child: Align(alignment: Alignment.topCenter, child: progressWidget,))
+        ],) : slantContentWidget
       ]);
     }
 

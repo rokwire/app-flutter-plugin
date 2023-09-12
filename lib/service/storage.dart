@@ -294,9 +294,13 @@ class Storage with Service {
   set httpProxyPort(String? value) => setStringWithName(httpProxyPortKey, value);
 
   // Language
-  String get currentLanguageKey => 'edu.illinois.rokwire.current_language';
-  String? get currentLanguage => getStringWithName(currentLanguageKey);
-  set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
+  String get systemLanguageKey => 'edu.illinois.rokwire.language.system';
+  String? get systemLanguage => getStringWithName(systemLanguageKey);
+  set systemLanguage(String? value) => setStringWithName(systemLanguageKey, value);
+
+  String get selectedLanguageKey => 'edu.illinois.rokwire.language.selected';
+  String? get selectedLanguage => getStringWithName(selectedLanguageKey);
+  set selectedLanguage(String? value) => setStringWithName(selectedLanguageKey, value);
 
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
@@ -361,6 +365,10 @@ class Storage with Service {
     catch(e) { debugPrint(e.toString()); return null; }
   }
   set calendarEventsTable(Map<String, String>? table) => setStringWithName(calendarEventsTableKey, JsonUtils.encode(table));
+
+  String get calendarEnableAutoSaveKey => 'edu.illinois.rokwire.calendar.auto_save_enabled';
+  bool? get calendarEnabledToAutoSave => getBoolWithName(calendarEnableAutoSaveKey, defaultValue: false);
+  set calendarEnabledToAutoSave(bool? value) => setBoolWithName(calendarEnableAutoSaveKey, value);
 
   String get calendarEnableSaveKey => 'edu.illinois.rokwire.calendar.save_enabled';
   bool? get calendarEnabledToSave => getBoolWithName(calendarEnableSaveKey, defaultValue: true);

@@ -90,7 +90,7 @@ class WebPanel extends StatefulWidget {
           onLinkTap: (url, context, element) => onTapStatusLink(url),
           style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary,
               fontFamily: AppFontFamilies.bold, fontSize: flutter_html.FontSize(32),
-              textAlign: TextAlign.center, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
+              textAlign: TextAlign.center, padding: null /* EdgeInsets.zero, const flutter_html.HtmlPaddings() */, margin: flutter_html.Margins.zero), },),
       );
     }
 
@@ -103,7 +103,7 @@ class WebPanel extends StatefulWidget {
         onLinkTap: (url, context, element) => onTapStatusLink(url),
         style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary,
             fontFamily: AppFontFamilies.regular, fontSize: flutter_html.FontSize(20),
-            textAlign: TextAlign.left, padding: flutter_html.HtmlPaddings.zero, margin: flutter_html.Margins.zero), },),
+            textAlign: TextAlign.left, padding: null /* EdgeInsets.zero, const flutter_html.HtmlPaddings() */, margin: flutter_html.Margins.zero), },),
       );
     }
 
