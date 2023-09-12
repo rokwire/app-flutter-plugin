@@ -1054,7 +1054,7 @@ class Auth2UserPrefs {
     (const DeepCollectionEquality().hash(_anonymousIds)) ^
     (_voter?.hashCode ?? 0);
 
-  bool apply(Auth2UserPrefs? prefs, { Set<Auth2UserPrefsScope>? scope }) {
+  bool apply(Auth2UserPrefs? prefs, { bool? notify, Set<Auth2UserPrefsScope>? scope }) {
     bool modified = false;
     if (prefs != null) {
       
