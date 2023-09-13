@@ -810,7 +810,7 @@ Event2UserRole? event2UserRoleFromString(String? value) {
   else if (value == 'participant') {
     return Event2UserRole.participant;
   }
-  else if (value == 'attendance_taker') {
+  else if (value == 'attendance-taker') {
     return Event2UserRole.attendanceTaker;
   }
   else {
@@ -822,7 +822,7 @@ String? event2UserRoleToString(Event2UserRole? value) {
   switch (value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
-    case Event2UserRole.attendanceTaker: return 'attendance_taker';
+    case Event2UserRole.attendanceTaker: return 'attendance-taker';
     default: return null;
   }
 }
