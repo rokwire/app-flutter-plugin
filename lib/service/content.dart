@@ -102,9 +102,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
     }
 
-    //TMP: Temporarly load attributes content from app assets
-    //_contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
-    _contentAttributes = ContentAttributes.fromJson(JsonUtils.decodeMap(await AppBundle.loadString('assets/content.attributes.json')));
+    _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
 
     if (_contentItems != null) {
       await super.initService();
@@ -327,7 +325,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   String get attributesContentCategory =>
     _attributesContentCategory;
 
-  // ignore: unused_element
   Map<String, dynamic>? get _contentAttributesJson =>
     contentMapItem(attributesContentCategory);
 
@@ -335,10 +332,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       (_contentAttributesByScope[scope] ??= (ContentAttributes.fromOther(_contentAttributes, scope: scope) ?? ContentAttributes())) : null;
 
   void _onContentAttributesChanged() {
-    /*TMP: Temporarly load attributes content from app assets
     _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
     _contentAttributesByScope.clear();
-    NotificationService().notify(notifyContentAttributesChanged);*/
+    NotificationService().notify(notifyContentAttributesChanged);
   }
 
   // Images Content Items

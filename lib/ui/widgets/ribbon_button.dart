@@ -278,6 +278,15 @@ class ToggleRibbonButton extends RibbonButton {
     this.rightIconKeys,
 
     this.semanticsValues,
+
+    bool? progress,
+    Color? progressColor,
+    double? progressSize,
+    double? progressStrokeWidth,
+    EdgeInsetsGeometry progressPadding = const EdgeInsets.symmetric(horizontal: 12),
+    AlignmentGeometry progressAlignment = Alignment.centerRight,
+    bool progressHidesIcon = true,
+
   }): super(
     key: key,
     label: label,
@@ -315,6 +324,14 @@ class ToggleRibbonButton extends RibbonButton {
 
     hint: hint,
     semanticsValue: semanticsValue,
+
+    progress: progress,
+    progressColor: progressColor,
+    progressSize: progressSize,
+    progressStrokeWidth: progressStrokeWidth,
+    progressPadding: progressPadding,
+    progressAlignment: progressAlignment,
+    progressHidesIcon: progressHidesIcon,
   );
 
   Widget? get _leftIcon => (leftIcons != null) ? leftIcons![toggled] : null;

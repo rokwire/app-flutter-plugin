@@ -25,6 +25,7 @@ class Event2 with Explore, Favorite {
   final bool? private;
   
   final bool? canceled;
+  final bool? published;
   final Event2UserRole? userRole;
 
   final bool? free;
@@ -40,15 +41,19 @@ class Event2 with Explore, Favorite {
 
   String? assignedImageUrl;
 
+  final Event2Source? source;
+  final Map<String, dynamic>? data;
+
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.eventType, this.location, this.onlineDetails, 
     this.grouping, this.attributes, this.private,
-    this.canceled, this.userRole,
+    this.canceled, this.published, this.userRole,
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
-    this.sponsor, this.speaker, this.contacts
+    this.sponsor, this.speaker, this.contacts,
+    this.data, this.source
   });
 
   // JSON serialization
@@ -75,6 +80,7 @@ class Event2 with Explore, Favorite {
       private: JsonUtils.boolValue(json['private']),
 
       canceled: JsonUtils.boolValue(json['canceled']),
+      published: JsonUtils.boolValue(json['published']),
       userRole: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
 
       free: JsonUtils.boolValue(json['free']),
@@ -87,6 +93,9 @@ class Event2 with Explore, Favorite {
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
       contacts: Event2Contact.listFromJson(JsonUtils.listValue(json['contacts'])),
+
+      source: event2SourceFromString(JsonUtils.stringValue(json['source'])),
+      data: JsonUtils.mapValue(json['data']),
 
     ) : null;
 
@@ -112,6 +121,7 @@ class Event2 with Explore, Favorite {
     'private': private,
     
     'canceled': canceled,
+    'published': published,
     'role': event2UserRoleToString(userRole),
 
     'free': free,
@@ -124,6 +134,9 @@ class Event2 with Explore, Favorite {
     'sponsor': sponsor,
     'speaker': speaker,
     'contacts': Event2Contact.listToJson(contacts),
+
+    'source': event2SourceToString(source),
+    'data': data,
   };
 
   // Equality
@@ -152,6 +165,7 @@ class Event2 with Explore, Favorite {
     (private == other.private) &&
     
     (canceled == other.canceled) &&
+    (published == other.published) &&
     (userRole == other.userRole) &&
 
     (free == other.free) &&
@@ -163,7 +177,9 @@ class Event2 with Explore, Favorite {
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
-    (const DeepCollectionEquality().equals(contacts, other.contacts));
+    (const DeepCollectionEquality().equals(contacts, other.contacts)) &&
+    (source == other.source) &&
+    (data == other.data);
 
   @override
   int get hashCode =>
@@ -188,6 +204,7 @@ class Event2 with Explore, Favorite {
     (private?.hashCode ?? 0) ^
 
     (canceled?.hashCode ?? 0) ^
+    (published?.hashCode ?? 0) ^
     (userRole?.hashCode ?? 0) ^
 
     (free?.hashCode ?? 0) ^
@@ -199,12 +216,21 @@ class Event2 with Explore, Favorite {
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
-    (const DeepCollectionEquality().hash(contacts));
+    (const DeepCollectionEquality().hash(contacts)) ^
+
+    (source?.hashCode ?? 0) ^
+    (data?.hashCode ?? 0);
 
   // Attributes
 
-  bool get online => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
-  bool get inPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
+  bool get isOnline => ((eventType == Event2Type.online) || (eventType == Event2Type.hybrid));
+  bool get isInPerson => ((eventType == Event2Type.inPerson) || (eventType == Event2Type.hybrid));
+
+  bool get isSuperEvent => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId == null) && (id != null);
+  bool get isSuperEventChild => (grouping?.type == Event2GroupingType.superEvent) && (grouping?.superEventId != null);
+  bool get isRecurring => (grouping?.type == Event2GroupingType.recurrence) && (grouping?.recurrenceId != null);
+
+  bool get isSportEvent => (source == Event2Source.sports_bb);
 
   // JSON list searialization
 
@@ -230,6 +256,25 @@ class Event2 with Explore, Favorite {
     return jsonList;
   }
 
+  // List lookup
+
+  static int? indexInList(List<Event2>? contentList, { String? id}) {
+    if (contentList != null) {
+      for (int index = 0; index < contentList.length; index++) {
+        Event2 contentEntry = contentList[index];
+        if ((id != null) && (contentEntry.id == id)) {
+          return index;
+        }
+      }
+    }
+    return null;
+  }
+
+  static Event2? findInList(List<Event2>? contentList, { String? id}) {
+    int? index = indexInList(contentList, id: id);
+    return ((contentList != null) && (index != null)) ? contentList[index] : null;
+  }
+
   // Explore
   @override String?   get exploreId               => id;
   @override String?   get exploreTitle            => name;
@@ -242,6 +287,9 @@ class Event2 with Explore, Favorite {
   static const String favoriteKeyName = "event2Ids";
   @override String get favoriteKey => favoriteKeyName;
   @override String? get favoriteId => id;
+
+  // Survey
+  static const String followUpSurveyType = "event_follow_up";
 }
 
 ///////////////////////////////
@@ -289,8 +337,9 @@ class Event2RegistrationDetails {
   final String? label;
   final String? externalLink;
   final int? eventCapacity;
+  final List<String>? registrants; // external IDs
 
-  Event2RegistrationDetails({this.type, this.label, this.externalLink, this.eventCapacity});
+  Event2RegistrationDetails({this.type, this.label, this.externalLink, this.eventCapacity, this.registrants });
 
   factory Event2RegistrationDetails.empty() => Event2RegistrationDetails(type: Event2RegistrationType.none);
 
@@ -298,12 +347,14 @@ class Event2RegistrationDetails {
     Event2RegistrationType? type,
     String? label, String? externalLink,
     int? eventCapacity,
+    List<String>? registrants,
   }) =>
     (other != null) ? Event2RegistrationDetails(
       type: type ?? other.type,
       label: label ?? other.label,
       externalLink: externalLink ?? other.externalLink,
       eventCapacity: eventCapacity ?? other.eventCapacity,
+      registrants: registrants ?? other.registrants,
     ) : null;
 
   static Event2RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
@@ -312,6 +363,7 @@ class Event2RegistrationDetails {
       label: JsonUtils.stringValue(json['label']),
       externalLink: JsonUtils.stringValue(json['external_link']),
       eventCapacity: JsonUtils.intValue(json['max_event_capacity']),
+      registrants: JsonUtils.listStringsValue(json['registrants_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
@@ -319,7 +371,7 @@ class Event2RegistrationDetails {
     'label': label,
     'external_link': externalLink,
     'max_event_capacity': eventCapacity,
-
+    'registrants_external_ids': registrants,
   };
 
   @override
@@ -328,14 +380,16 @@ class Event2RegistrationDetails {
     (type == other.type) &&
     (label == other.label) &&
     (externalLink == other.externalLink) &&
-    (eventCapacity == other.eventCapacity);
+    (eventCapacity == other.eventCapacity) &&
+    (const DeepCollectionEquality().equals(registrants, other.registrants));
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
     (label?.hashCode ?? 0) ^
     (externalLink?.hashCode ?? 0) ^
-    (eventCapacity?.hashCode ?? 0);
+    (eventCapacity?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(registrants));
 }
 
 ///////////////////////////////
@@ -373,36 +427,46 @@ String? event2RegistrationTypeToString(Event2RegistrationType? value) {
 class Event2AttendanceDetails {
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
+  final List<String>? attendanceTakers; // external IDs
 
-  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled});
+  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.attendanceTakers});
 
-  static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {bool? attendanceRequired, bool? takeAttendanceViaAppEnabled, bool? scanningEnabled, bool? manualCheckEnabled}) =>
+  static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {
+    bool? scanningEnabled,
+    bool? manualCheckEnabled,
+    List<String>? attendanceTakers,
+  }) =>
     (other != null) ? Event2AttendanceDetails(
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
+      attendanceTakers: attendanceTakers ?? other.attendanceTakers,
     ) : null;
 
   static Event2AttendanceDetails? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2AttendanceDetails(
-      scanningEnabled: JsonUtils.boolValue(json['is_ID_scanning_enabled']),
+      scanningEnabled: JsonUtils.boolValue(json['is_id_scanning_enabled']),
       manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
+      attendanceTakers: JsonUtils.listStringsValue(json['attendance_takers_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
-    'is_ID_scanning_enabled': scanningEnabled,
+    'is_id_scanning_enabled': scanningEnabled,
     'is_manual_attendance_check_enabled': manualCheckEnabled,
+    'attendance_takers_external_ids': attendanceTakers,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
-    (manualCheckEnabled == other.manualCheckEnabled);
+    (manualCheckEnabled == other.manualCheckEnabled) &&
+    (const DeepCollectionEquality().equals(attendanceTakers, other.attendanceTakers));
 
   @override
   int get hashCode =>
     (scanningEnabled?.hashCode ?? 0) ^
-    (manualCheckEnabled?.hashCode ?? 0);
+    (manualCheckEnabled?.hashCode ?? 0) ^
+    (const DeepCollectionEquality().hash(attendanceTakers));
 
   bool get isEmpty => !isNotEmpty;
 
@@ -415,38 +479,40 @@ class Event2AttendanceDetails {
 /// Event2SurveyDetails
 
 class Event2SurveyDetails {
-  final bool? hasSurvey;
+  //TODO: remove survey ID from calendar BB
   final int? hoursAfterEvent;
 
-  Event2SurveyDetails({this.hasSurvey, this.hoursAfterEvent});
+  Event2SurveyDetails({this.hoursAfterEvent});
 
-  static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {bool? hasSurvey, int? hoursAfterEvent}) =>
-      (other != null) ? Event2SurveyDetails(
-        hasSurvey: hasSurvey ?? other.hasSurvey,
-        hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
-      ) : null;
+  static Event2SurveyDetails? fromOther(Event2SurveyDetails? other, {
+    int? hoursAfterEvent
+  }) => (other != null) ? Event2SurveyDetails(
+    hoursAfterEvent: hoursAfterEvent ?? other.hoursAfterEvent,
+  ) : null;
 
   static Event2SurveyDetails? fromJson(Map<String, dynamic>? json) =>
-      (json != null) ? Event2SurveyDetails(
-        hasSurvey: JsonUtils.boolValue(json['has_follow_up_survey']),
-        hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
-      ) : null;
+    (json != null) ? Event2SurveyDetails(
+      hoursAfterEvent: JsonUtils.intValue(json['hours_after_event']),
+    ) : null;
 
   Map<String, dynamic> toJson() => {
-    'has_follow_up_survey': hasSurvey,
     'hours_after_event': hoursAfterEvent,
   };
 
   @override
   bool operator==(dynamic other) =>
-      (other is Event2SurveyDetails) &&
-          (hasSurvey == other.hasSurvey) &&
-          (hoursAfterEvent == other.hoursAfterEvent);
+    (other is Event2SurveyDetails) &&
+    (hoursAfterEvent == other.hoursAfterEvent);
 
   @override
   int get hashCode =>
-      (hasSurvey?.hashCode ?? 0) ^
-      (hoursAfterEvent?.hashCode ?? 0);
+    (hoursAfterEvent?.hashCode ?? 0);
+
+  bool get isEmpty => !isNotEmpty;
+
+  bool get isNotEmpty =>
+    (hoursAfterEvent != null) &&
+    ((hoursAfterEvent ?? 0) >= 0);
 }
 
 
@@ -456,30 +522,45 @@ class Event2SurveyDetails {
 class Event2Grouping {
   final Event2GroupingType? type;
   final String? superEventId;
+  final String? recurrenceId;
 
-  Event2Grouping({this.type, this.superEventId});
+  Event2Grouping({this.type, this.superEventId, this.recurrenceId});
+
+  factory Event2Grouping.superEvent(String? id) => Event2Grouping(
+    type: Event2GroupingType.superEvent,
+    superEventId: id,
+  );
+
+  factory Event2Grouping.recurrence(String? id) => Event2Grouping(
+    type: Event2GroupingType.recurrence,
+    recurrenceId: id,
+  );
 
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2Grouping(
-      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['type'])) ,
-      superEventId: JsonUtils.stringValue(json['super-event']),
+      type: event2GroupingTypeFromString(JsonUtils.stringValue(json['grouping_type'])) ,
+      superEventId: JsonUtils.stringValue(json['super_event_id']),
+      recurrenceId: JsonUtils.stringValue(json['group_id']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
-    'type': event2GroupingTypeToString(type),
-    'super-event': superEventId,
+    'grouping_type': event2GroupingTypeToString(type),
+    'super_event_id': superEventId,
+    'group_id': recurrenceId,
   };
 
   @override
   bool operator==(dynamic other) =>
     (other is Event2Grouping) &&
     (type == other.type) &&
-    (superEventId == other.superEventId);
+    (superEventId == other.superEventId) &&
+    (recurrenceId == other.recurrenceId);
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
-    (superEventId?.hashCode ?? 0);
+    (superEventId?.hashCode ?? 0) ^
+    (recurrenceId?.hashCode ?? 0);
 }
 
 ///////////////////////////////
@@ -560,6 +641,164 @@ class Event2Contact {
 }
 
 ///////////////////////////////
+/// Event2PersonIdentifier
+
+class Event2PersonIdentifier {
+  final String? accountId;
+  final String? exteralId;
+
+  Event2PersonIdentifier({
+    this.accountId,
+    this.exteralId,});
+
+  String? get netId => exteralId;
+
+  static Event2PersonIdentifier? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2PersonIdentifier(
+      accountId: JsonUtils.stringValue(json['account_id']),
+      exteralId: JsonUtils.stringValue(json['external_id']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "account_id": accountId,
+      "external_id": exteralId,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2PersonIdentifier) &&
+      (other.accountId == accountId) &&
+      (other.exteralId == exteralId);
+
+  @override
+  int get hashCode =>
+      (accountId?.hashCode ?? 0) ^
+      (exteralId?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2Person - registrant or attendee
+
+class Event2Person {
+  final String? id;
+  final Event2PersonIdentifier? identifier;
+  final Event2UserRole? role;
+  final Event2UserRegistrationType? registrationType;
+  final int? time;
+
+  Event2Person({
+    this.id,
+    this.identifier,
+    this.role,
+    this.registrationType,
+    this.time});
+
+  static Event2Person? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Event2Person(
+      id: JsonUtils.stringValue(json['id']),
+      identifier: Event2PersonIdentifier.fromJson(JsonUtils.mapValue(json['identifier'])),
+      role: event2UserRoleFromString(JsonUtils.stringValue(json['role'])),
+      registrationType: event2UserRegistrationTypeFromString(JsonUtils.stringValue(json['registration_type'])),
+      time: JsonUtils.intValue(json['time']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "identifier": identifier?.toJson(),
+      "role": event2UserRoleToString(role),
+      "registration_type": event2UserRegistrationTypeToString(registrationType),
+      "time": time
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2Person) &&
+      (other.id == id) &&
+      (other.identifier == identifier) &&
+      (other.role == role) &&
+      (other.registrationType == registrationType) &&
+      (other.time == time);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (identifier?.hashCode ?? 0) ^
+      (role?.hashCode ?? 0) ^
+      (registrationType?.hashCode ?? 0) ^
+      (time?.hashCode ?? 0);
+
+  static List<Event2Person>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2Person>? result;
+    if (jsonList != null) {
+      result = <Event2Person>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2Person.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Event2Person>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static Set<String>? netIdsFromList(List<Event2Person>? contentList) {
+    Set<String>? result;
+    if (contentList != null) {
+      result = <String>{};
+      for (Event2Person contentEntry in contentList) {
+        if (contentEntry.identifier?.netId != null) {
+          result.add(contentEntry.identifier!.netId!);
+        }
+      }
+    }
+    return result;
+  }
+
+  static int? countInList(List<Event2Person>? contentList, { Event2UserRole? role, Event2UserRegistrationType? registrationType}) {
+    if (contentList != null) {
+      int count = 0;
+      for (Event2Person contentEntry in contentList) {
+        if (((role == null) || (contentEntry.role == role)) &&
+            ((registrationType == null) || (contentEntry.registrationType == registrationType))
+           ) {
+          count = count + 1;
+        }
+      }
+      return count;
+    }
+    return null;
+  }
+
+  static int? findInList(List<Event2Person>? contentList, { String? netId }) {
+    if (contentList != null) {
+      for (int index = 0; index < contentList.length; index++) {
+        if ((netId != null) && (contentList[index].identifier?.netId == netId)) {
+          return index;
+        }
+      }
+    }
+    return null;
+  }
+
+  static bool containsInList(List<Event2Person>? contentList, { String? netId }) =>
+    (findInList(contentList, netId: netId) != null);
+}
+
+///////////////////////////////
 /// Event2UserRole
 
 enum Event2UserRole { admin, participant, attendanceTaker }
@@ -584,6 +823,35 @@ String? event2UserRoleToString(Event2UserRole? value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
     case Event2UserRole.attendanceTaker: return 'attendance_taker';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// Event2UserRegistrationType
+
+enum Event2UserRegistrationType { self, registrants, creator }
+
+Event2UserRegistrationType? event2UserRegistrationTypeFromString(String? value) {
+  if (value == 'self') {
+    return Event2UserRegistrationType.self;
+  }
+  else if (value == 'registrants-list') {
+    return Event2UserRegistrationType.registrants;
+  }
+  else if (value == 'creator') {
+    return Event2UserRegistrationType.creator;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2UserRegistrationTypeToString(Event2UserRegistrationType? value) {
+  switch (value) {
+    case Event2UserRegistrationType.self: return 'self';
+    case Event2UserRegistrationType.registrants: return 'registrants-list';
+    case Event2UserRegistrationType.creator: return 'creator';
     default: return null;
   }
 }
@@ -691,7 +959,7 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 ///////////////////////////////
 /// Event2TypeFilter
 
-enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby }
+enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent }
 
 const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
   Event2TypeFilter.free: 'cost',
@@ -702,6 +970,7 @@ const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, S
   Event2TypeFilter.public: 'discoverability',
   Event2TypeFilter.private: 'discoverability',
   Event2TypeFilter.nearby: 'proximity',
+  Event2TypeFilter.superEvent: 'composite',
 };
 
 Event2TypeFilter? event2TypeFilterFromString(String? value) {
@@ -729,6 +998,9 @@ Event2TypeFilter? event2TypeFilterFromString(String? value) {
   else if (value == 'nearby') {
     return Event2TypeFilter.nearby;
   }
+  else if (value == 'super-event') {
+    return Event2TypeFilter.superEvent;
+  }
   else {
     return null;
   }
@@ -744,6 +1016,7 @@ String? event2TypeFilterToString(Event2TypeFilter? value) {
     case Event2TypeFilter.public: return 'public';
     case Event2TypeFilter.private: return 'private';
     case Event2TypeFilter.nearby: return 'nearby';
+    case Event2TypeFilter.superEvent: return 'super-event';
     default: return null;
   }
 }
@@ -864,14 +1137,14 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
 ///////////////////////////////
 /// Event2GroupingType
 
-enum Event2GroupingType { superEvent, recurring }
+enum Event2GroupingType { superEvent, recurrence }
 
 Event2GroupingType? event2GroupingTypeFromString(String? value) {
-  if (value == 'super-event') {
+  if (value == 'super_events') {
     return Event2GroupingType.superEvent;
   }
-  else if (value == 'recurring') {
-    return Event2GroupingType.recurring;
+  else if (value == 'repeatable') {
+    return Event2GroupingType.recurrence;
   }
   else {
     return null;
@@ -880,8 +1153,33 @@ Event2GroupingType? event2GroupingTypeFromString(String? value) {
 
 String? event2GroupingTypeToString(Event2GroupingType? value) {
   switch (value) {
-    case Event2GroupingType.superEvent: return 'super-event';
-    case Event2GroupingType.recurring: return 'recurring';
+    case Event2GroupingType.superEvent: return 'super_events';
+    case Event2GroupingType.recurrence: return 'repeatable';
+    default: return null;
+  }
+}
+
+///////////////////////////////
+/// Event2Source
+
+enum Event2Source { events_bb, sports_bb }
+
+Event2Source? event2SourceFromString(String? value) {
+  if (value == 'events_bb') {
+    return Event2Source.events_bb;
+  }
+  else if (value == 'sports_bb') {
+    return Event2Source.sports_bb;
+  }
+  else {
+    return null;
+  }
+}
+
+String? event2SourceToString(Event2Source? value) {
+  switch (value) {
+    case Event2Source.events_bb: return 'events_bb';
+    case Event2Source.sports_bb: return 'sports_bb';
     default: return null;
   }
 }
@@ -904,6 +1202,31 @@ class Events2ListResult {
     'result': Event2.listToJson(events),
     'total_count': totalCount,
   };
+
+  static Events2ListResult? fromResponseJson(dynamic json) {
+    if (json is Map) {
+      return Events2ListResult.fromJson(JsonUtils.mapValue(json));
+    }
+    else if (json is List) {
+      return Events2ListResult(events: Event2.listFromJson(JsonUtils.listValue(json)));
+    }
+    else {
+      return null;
+    }
+  }
+
+  static List<Event2>? listFromResponseJson(dynamic json) {
+    if (json is Map) {
+      return Events2ListResult.fromJson(JsonUtils.mapValue(json))?.events;
+    }
+    else if (json is List) {
+      return Event2.listFromJson(JsonUtils.listValue(json));
+    }
+    else {
+      return null;
+    }
+  }
+
 
   // Equality
 
