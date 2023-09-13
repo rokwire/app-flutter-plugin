@@ -69,81 +69,6 @@ class Auth2Token {
 }
 
 ////////////////////////////////
-// Auth2IdentifierType
-
-enum Auth2IdentifierType { email, phone, username, oidcIllinois }
-
-String? auth2IdentifierTypeToString(Auth2IdentifierType value) {
-  switch (value) {
-    case Auth2IdentifierType.email: return 'email';
-    case Auth2IdentifierType.phone: return 'phone';
-    case Auth2IdentifierType.username: return 'username';
-    case Auth2IdentifierType.oidcIllinois: return 'uin';
-  }
-}
-
-Auth2IdentifierType? auth2IdentifierTypeFromString(String? value) {
-  if (value == 'email') {
-    return Auth2IdentifierType.email;
-  }
-  else if (value == 'phone') {
-    return Auth2IdentifierType.phone;
-  }
-  else if (value == 'username') {
-    return Auth2IdentifierType.username;
-  }
-  else if (value == 'uin' || value == 'net_id') {
-    return Auth2IdentifierType.oidcIllinois;
-  }
-  return null;
-}
-
-////////////////////////////////
-// Auth2LoginType
-
-enum Auth2LoginType { anonymous, apiKey, password, code, oidc, oidcIllinois, passkey }
-
-String? auth2LoginTypeToString(Auth2LoginType value) {
-  switch (value) {
-    case Auth2LoginType.anonymous: return 'anonymous';
-    case Auth2LoginType.apiKey: return 'api_key';
-    case Auth2LoginType.password: return 'password';
-    case Auth2LoginType.code: return 'code';
-    case Auth2LoginType.oidc: return 'oidc';
-    case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
-    case Auth2LoginType.passkey: return 'webauthn';
-  }
-}
-
-Auth2LoginType? auth2LoginTypeFromString(String? value) {
-  if (value == 'anonymous') {
-    return Auth2LoginType.anonymous;
-  }
-  else if (value == 'api_key') {
-    return Auth2LoginType.apiKey;
-  }
-  else if (value == 'password') {
-    return Auth2LoginType.password;
-  }
-  else if (value == 'code') {
-    return Auth2LoginType.code;
-  }
-  else if (value == 'oidc') {
-    return Auth2LoginType.oidc;
-  }
-  else if (value == 'illinois_oidc') {
-    return Auth2LoginType.oidcIllinois;
-  }
-  else if (value == 'webauthn') {
-    return Auth2LoginType.passkey;
-  }
-  else if (value?.contains('oidc') ?? false) {
-    return Auth2LoginType.oidc;
-  }
-  return null;
-}
-
-////////////////////////////////
 // Auth2Account
 
 class Auth2Account {
@@ -239,10 +164,10 @@ class Auth2Account {
     return ((identifiers != null) && identifiers!.isNotEmpty) ? identifiers?.first : null;
   }
 
-  bool isIdentifierLinked(Auth2IdentifierType identifierType) {
+  bool isIdentifierLinked(String code) {
     if (identifiers != null) {
       for (Auth2Identifier identifier in identifiers!) {
-        if (identifier.identifierType == identifierType) {
+        if (identifier.code == code) {
           return true;
         }
       }
@@ -250,11 +175,11 @@ class Auth2Account {
     return false;
   }
 
-  List<Auth2Identifier> getLinkedForIdentifier(Auth2IdentifierType identifierType) {
+  List<Auth2Identifier> getLinkedForIdentifier(String code) {
     List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
     if (identifiers != null) {
       for (Auth2Identifier identifier in identifiers!) {
-        if (identifier.identifierType == identifierType) {
+        if (identifier.code == code) {
           linkedTypes.add(identifier);
         }
       }
@@ -266,10 +191,10 @@ class Auth2Account {
     return ((authTypes != null) && authTypes!.isNotEmpty) ? authTypes?.first : null;
   }
 
-  bool isAuthTypeLinked(Auth2LoginType loginType) {
+  bool isAuthTypeLinked(String code) {
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType) {
+        if (authType.code == code) {
           return true;
         }
       }
@@ -277,11 +202,11 @@ class Auth2Account {
     return false;
   }
 
-  List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
+  List<Auth2Type> getLinkedForAuthType(String code) {
     List<Auth2Type> linkedTypes = <Auth2Type>[];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType) {
+        if (authType.code == code) {
           linkedTypes.add(authType);
         }
       }
@@ -708,6 +633,12 @@ enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUr
 // Auth2Identifier
 
 class Auth2Identifier {
+  static const String typeEmail = 'email';
+  static const String typePhone = 'phone';
+  static const String typeUsername = 'username';
+  static const String typeUin = 'uin';
+  static const String typeNetId = 'net_id';
+
   final String? id;
   final String? code;
   final String? identifier;
@@ -715,10 +646,7 @@ class Auth2Identifier {
   final bool? linked;
   final String? accountAuthTypeId;
   
-  final Auth2IdentifierType? identifierType;
-
-  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.accountAuthTypeId}) :
-    identifierType = auth2IdentifierTypeFromString(code);
+  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.accountAuthTypeId});
 
   static Auth2Identifier? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2Identifier(
@@ -762,19 +690,19 @@ class Auth2Identifier {
     (accountAuthTypeId?.hashCode ?? 0);
 
   String? get uin {
-    return (identifierType == Auth2IdentifierType.oidcIllinois) ? identifier : null;
+    return (code == typeUin) ? identifier : null;
   }
 
   String? get phone {
-    return (identifierType == Auth2IdentifierType.phone) ? identifier : null;
+    return (code == typePhone) ? identifier : null;
   }
 
   String? get email {
-    return (identifierType == Auth2IdentifierType.email) ? identifier : null;
+    return (code == typeEmail) ? identifier : null;
   }
 
   String? get username {
-    return (identifierType == Auth2IdentifierType.username) ? identifier : null;
+    return (code == typeUsername) ? identifier : null;
   }
 
   static List<Auth2Identifier>? listFromJson(List<dynamic>? jsonList) {
@@ -804,17 +732,23 @@ class Auth2Identifier {
 // Auth2Type
 
 class Auth2Type {
+  static const String typeAnonymous = 'anonymous';
+  static const String typeApiKey = 'api_key';
+  static const String typePassword = 'password';
+  static const String typeCode = 'code';
+  static const String typeOidc = 'oidc';
+  static const String typeOidcIllinois = 'illinois_oidc';
+  static const String typePasskey = 'webauthn';
+
   final String? id;
   final String? code;
   final bool? active;
   final Map<String, dynamic>? params;
   
   final Auth2UiucUser? uiucUser;
-  final Auth2LoginType? loginType;
   
   Auth2Type({this.id, this.code, this.active, this.params}) :
-    uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null,
-    loginType = auth2LoginTypeFromString(code);
+    uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null;
 
   static Auth2Type? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2Type(

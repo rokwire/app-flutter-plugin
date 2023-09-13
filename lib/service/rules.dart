@@ -15,7 +15,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/alert.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
@@ -492,7 +491,7 @@ class Rules {
       case "phone":
         return Auth2().phone;
       case "login_type":
-        return Auth2().loginType != null ? auth2LoginTypeToString(Auth2().loginType!) : null;
+        return Auth2().loginType;
       case "full_name":
         return Auth2().fullName;
       case "first_name":
