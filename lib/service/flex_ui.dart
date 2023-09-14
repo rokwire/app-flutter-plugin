@@ -597,32 +597,26 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'shibbolethLoggedIn') && (value is bool)) {
             result = result && (Auth2().isOidcLoggedIn == value);
           }
-          else if ((key == 'phoneLoggedIn') && (value is bool)) {
+          else if ((key == 'codeLoggedIn') && (value is bool)) {
             result = result && (Auth2().isCodeLoggedIn == value);
           }
-          else if ((key == 'emailLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isPasswordLoggedIn == value);
-          }
-          else if ((key == 'usernameLoggedIn') && (value is bool)) {
+          else if ((key == 'passwordLoggedIn') && (value is bool)) {
             result = result && (Auth2().isPasswordLoggedIn == value);
           }
           else if ((key == 'passkeyLoggedIn') && (value is bool)) {
             result = result && (Auth2().isPasskeyLoggedIn == value);
           }
-          else if ((key == 'phoneOrEmailLoggedIn') && (value is bool)) {
-            result = result && ((Auth2().isCodeLoggedIn || Auth2().isPasswordLoggedIn) == value) ;
-          }
           else if ((key == 'shibbolethLinked') && (value is bool)) {
             result = result && (Auth2().isOidcLinked == value);
           }
           else if ((key == 'phoneLinked') && (value is bool)) {
-            result = result && (Auth2().isCodeLinked == value);
+            result = result && (Auth2().isPhoneLinked == value);
           }
           else if ((key == 'emailLinked') && (value is bool)) {
-            result = result && (Auth2().isPasswordLinked == value);
+            result = result && (Auth2().isEmailLinked == value);
           }
           else if ((key == 'usernameLinked') && (value is bool)) {
-            result = result && (Auth2().isPasswordLinked == value);
+            result = result && (Auth2().isUsernameLinked == value);
           }
           else if ((key == 'passkeyLinked') && (value is bool)) {
             result = result && (Auth2().isPasskeyLinked == value);
