@@ -1602,6 +1602,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
+  Future<bool> updateUsername(String username) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+      String url = "${Config().coreUrl}/services/account/username";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      Map<String, String> body = {
+        'username': username.toLowerCase().trim(),
+      };
+      String? bodyJson = JsonUtils.encode(body);
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: bodyJson);
+      if (response?.statusCode == 200) {
+        _refreshAccount();
+        return true;
+      }
+    }
+    return false;
+  }
+
   /*Future<void> _refreshAccountUserProfile() async {
     Auth2UserProfile? profile = await _loadAccountUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
