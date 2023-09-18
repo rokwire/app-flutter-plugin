@@ -461,7 +461,7 @@ class ContentAttribute {
     if ((complete != true) && (widget == ContentAttributeWidget.checkbox) && (usage == ContentAttributeUsage.label)) {
       displayValue = (attributeValue?.value == true) ? title : null;
     }
-    return (displayValue != null) ? (displayString(displayValue) ?? displayValue) : null;
+    return (displayValue != null) ? (displayString(displayValue) ?? displayValue) : attributeRawValue?.toString();
   }
 
   String? displaySelectLabel(dynamic attributeRawValue, { bool complete = false }) {

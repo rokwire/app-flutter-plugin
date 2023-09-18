@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local notifications repeating weekly [#365](https://github.com/rokwire/app-flutter-plugin/issues/365)
 - Groups load upcoming events [#3645](https://github.com/rokwire/illinois-app/issues/3645).
 - String representation for "Attendance taker" event user role [#3656](https://github.com/rokwire/illinois-app/issues/3656).
+- Display raw attribute value as it is if it does not persist as content attribite value [#3743](https://github.com/rokwire/illinois-app/issues/3743).
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
