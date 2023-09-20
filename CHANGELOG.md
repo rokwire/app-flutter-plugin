@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.5.0 -->
+### Changed
+- Acknowledge 'time' field for inbox messages [#381](https://github.com/rokwire/app-flutter-plugin/issues/381).
+
 ## [1.5.0] - 2023-09-19
 ### Changed
 - Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
