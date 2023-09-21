@@ -220,37 +220,41 @@ class AppDateTime with Service {
   }
 
   String getRelativeDisplayTime(DateTime time) {
-    DateTime now = DateTime.now();
-    if (time.compareTo(now) < 0) {
-      Duration difference = DateTime.now().difference(time);
-      if (difference.inSeconds < 60) {
-        return Localization().getStringEx('model.explore.date_time.now', 'just now');
-      }
-      else if (difference.inMinutes < 60) {
-        return difference.inMinutes.toString() +
-            Localization().getStringEx('model.explore.date_time.m_ago', 'm ago');
-      }
-      else if (difference.inHours < 24) {
-        return difference.inHours.toString() +
-            Localization().getStringEx('model.explore.date_time.h_ago', 'h ago');
-      }
-      else if (difference.inDays < 30) {
-        return difference.inDays.toString() +
-            Localization().getStringEx('model.explore.date_time.d_ago', 'd ago');
-      }
-      else {
-        int differenceInMonths = difference.inDays ~/ 30;
-        if (differenceInMonths < 12) {
-          return differenceInMonths.toString() +
-              Localization().getStringEx('model.explore.date_time.m_ago', 'mo ago');
-        } else {
-          int differenceInYears = difference.inDays ~/ 360;
-          return differenceInYears.toString() +
-              Localization().getStringEx('model.explore.date_time.m_ago', 'y ago');
-        }
-      }
-      // return DateFormat("MMM dd, yyyy").format(deviceDateTime);
+    Duration difference = DateTime.now().difference(time);
+
+    String suffix = Localization().getStringEx('model.explore.date_time.ago', ' ago');
+    if (difference.inSeconds < 0) {
+      difference *= -1;
+      suffix = Localization().getStringEx('model.explore.date_time.left', ' left');
     }
+
+    if (difference.inSeconds < 60) {
+      return Localization().getStringEx('model.explore.date_time.now', 'just now');
+    }
+    else if (difference.inMinutes < 60) {
+      return difference.inMinutes.toString() +
+          Localization().getStringEx('model.explore.date_time.minutes', 'm') + suffix;
+    }
+    else if (difference.inHours < 24) {
+      return difference.inHours.toString() +
+          Localization().getStringEx('model.explore.date_time.hours', 'h') + suffix;
+    }
+    else if (difference.inDays < 30) {
+      return difference.inDays.toString() +
+          Localization().getStringEx('model.explore.date_time.days', 'd') + suffix;
+    }
+    else {
+      int differenceInMonths = difference.inDays ~/ 30;
+      if (differenceInMonths < 12) {
+        return differenceInMonths.toString() +
+            Localization().getStringEx('model.explore.date_time.months', 'mo') + suffix;
+      } else {
+        int differenceInYears = difference.inDays ~/ 360;
+        return differenceInYears.toString() +
+            Localization().getStringEx('model.explore.date_time.years', 'y') + suffix;
+      }
+    }
+    // return DateFormat("MMM dd, yyyy").format(deviceDateTime);
     return '';
   }
 
