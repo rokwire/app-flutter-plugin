@@ -817,7 +817,8 @@ class Groups with Service implements NotificationsListener {
   }
 
 // Events
-  Future<List<String>?> loadEventIds(String? groupId) async{
+  
+  /*Future<List<String>?> loadEventIds(String? groupId) async{
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
@@ -835,7 +836,7 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null; // fail
-  }
+  }*/
 
   /// 
   /// Loads group events based on the current user membership
@@ -846,7 +847,7 @@ class Groups with Service implements NotificationsListener {
   /// 
   /// value - events (limited or not)
   ///
-  Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
+  /*Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
       List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsByIds(eventIds: eventIds) : null;
@@ -871,8 +872,9 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null;
-  }
+  }*/
 
+  /* This API is not actually used but persists because some old Events UI refers to it */
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
@@ -895,7 +897,7 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
+  /*Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
@@ -915,9 +917,9 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false; // fail
-  }
+  }*/
 
-  Future<bool> removeEventFromGroup({String? groupId, String? eventId}) async {
+  Future<bool> _removeEventFromGroup({String? groupId, String? eventId}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/event/$eventId';
       try {
@@ -945,7 +947,7 @@ class Groups with Service implements NotificationsListener {
         if (responseCode == 200) {
           List<dynamic>? groupEventLinkSettingsJson = (responseBody != null) ? JsonUtils.decodeList(responseBody) : null; //List of settings for all events //Probbably can pass paramether to backend
           if(groupEventLinkSettingsJson?.isNotEmpty ?? false) { //Find settings for this event
-            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhere((element) {
+            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhereOrNull((element) {
                 if (element is Map<String, dynamic>) {
                   String? id = JsonUtils.stringValue(element["event_id"]);
                   if( id != null && id == eventId){
@@ -969,17 +971,17 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  Future<String?> updateGroupEvents(Event2 event) async {
+  /*Future<String?> updateGroupEvents(Event2 event) async {
     String? id = await Events2().updateEvent(event);
     if (StringUtils.isNotEmpty(id)) {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
     return id;
-  }
+  }*/
 
-  Future<bool?> deleteEventFromGroup({String? groupId, required Event2 event}) async {
+  /*Future<bool?> deleteEventFromGroup({String? groupId, required Event2 event}) async {
     bool? deleteResult = false;
-    if (await removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
+    if (await _removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
       // String? creatorGroupId = event.createdByGroupId;
       // if(creatorGroupId!=null){
       if(event.userRole == Event2UserRole.admin){ //event.canUserDelete
@@ -991,7 +993,130 @@ class Groups with Service implements NotificationsListener {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
     return deleteResult;
+  }*/
+
+  // Events V3
+
+  Future<Events2ListResult?> loadEventsV3 (String? groupId, {
+    Event2TimeFilter timeFilter = Event2TimeFilter.upcoming,
+    Event2SortType? sortType = Event2SortType.dateTime,
+    Event2SortOrder sortOrder = Event2SortOrder.ascending,
+    int offset = 0, int? limit
+  }) async {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3/load';
+      String? body = JsonUtils.encode(Events2Query(
+        timeFilter: timeFilter,
+        sortType: sortType,
+        sortOrder: sortOrder,
+        offset: offset,
+        limit: limit
+      ));
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: body, auth: Auth2());
+        return (response?.statusCode  == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null; // fail
   }
+
+  /*List<Event2>? _buildEventsV3(List<Event2>? sourceEvents) {
+    if (sourceEvents != null) {
+
+      // Filter
+      List<Event2> events = <Event2>[];
+      DateTime nowUtc = DateTime.now().toUtc();
+      for (Event2 event in sourceEvents) {
+        DateTime? eventEndTime = event.endTimeUtc ?? event.startTimeUtc;
+        if ((eventEndTime != null) && nowUtc.isBefore(eventEndTime)) {
+          events.add(event);
+        }
+      }
+      
+      // Sort
+      events.sort((Event2 event1, Event2 event2) =>
+        SortUtils.compare(event1.startTimeUtc, event2.startTimeUtc)
+      );
+      return events;
+    }
+    return null;
+  }*/
+
+  Future<dynamic> createEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
+    if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3';
+      String? body = JsonUtils.encode({
+        'event': event.toJson(),
+        'to_members': Member.listToJson(toMembers)
+      });
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, auth: Auth2(), body: body);
+        if (response?.statusCode == 200) {
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<dynamic> createEventForGroupsV3(Event2? event, { List<String>? groupIds }) async {
+    if ((Config().groupsUrl != null) && (groupIds != null) && groupIds.isNotEmpty && (event != null)) {
+      String url = '${Config().groupsUrl}/group/events/v3';
+      String? body = JsonUtils.encode(CreateEventForGroupsV3Param(event: event, groupIds: groupIds).toJson());
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, auth: Auth2(), body: body);
+        CreateEventForGroupsV3Param? responseParam = (response?.statusCode == 200) ? CreateEventForGroupsV3Param.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+        if (responseParam?.event != null) {
+          responseParam?.groupIds?.forEach((String groupId) => NotificationService().notify(notifyGroupUpdated, groupId));
+          return responseParam;
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<dynamic> updateEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
+    if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3';
+      String? body = JsonUtils.encode({
+        'event': event.toJson(),
+        'to_members': Member.listToJson(toMembers)
+      });
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        if (response?.statusCode == 200) {
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<bool> deleteEventForGroupV3({String? groupId, String? eventId}) =>
+    _removeEventFromGroup(groupId: groupId, eventId: eventId);
 
   // Group Posts and Replies
 
@@ -1523,5 +1648,40 @@ String? groupSortOrderToString(GroupSortOrder? value) {
     case GroupSortOrder.desc: return 'desc';
     default: return null;
   }
+}
+
+extension _ResponseExt on Response {
+  String? get errorText {
+    String? responseBody = body;
+    Map<String, dynamic>? responseJson = JsonUtils.decodeMap(responseBody);
+    String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+    if (StringUtils.isNotEmpty(message)) {
+      return message;
+    }
+    else if (StringUtils.isNotEmpty(responseBody)) {
+      return responseBody;
+    }
+    else {
+      return StringUtils.isNotEmpty(reasonPhrase) ? "$statusCode $reasonPhrase" : "$statusCode";
+    }
+
+  }
+}
+
+class CreateEventForGroupsV3Param {
+  final Event2? event;
+  final List<String>? groupIds;
   
+  CreateEventForGroupsV3Param({this.event, this.groupIds});
+
+  static CreateEventForGroupsV3Param? fromJson(Map<String, dynamic>? json) => (json != null) ?
+    CreateEventForGroupsV3Param(
+      event: Event2.fromJson(JsonUtils.mapValue(json['event'])),
+      groupIds: JsonUtils.listStringsValue(json['group_ids'])
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'event': event?.toJson(),
+    'group_ids': groupIds
+  };
 }
