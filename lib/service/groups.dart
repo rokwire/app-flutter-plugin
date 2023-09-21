@@ -874,7 +874,6 @@ class Groups with Service implements NotificationsListener {
     return null;
   }*/
 
-  /* This API is not actually used but persists because some old Events UI refers to it */
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
@@ -897,7 +896,7 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  /*Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
+  Future<bool> updateLinkedEventMembers({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
@@ -917,7 +916,7 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false; // fail
-  }*/
+  }
 
   Future<bool> _removeEventFromGroup({String? groupId, String? eventId}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
