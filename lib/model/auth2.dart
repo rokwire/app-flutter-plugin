@@ -73,7 +73,6 @@ class Auth2Token {
 
 class Auth2Account {
   final String? id;
-  final String? username;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
   final List<Auth2StringEntry>? permissions;
@@ -83,13 +82,12 @@ class Auth2Account {
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
   
-  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
+  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
 
   factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions,
     List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
-      username: username ?? other?.username,
       profile: profile ?? other?.profile,
       prefs: prefs ?? other?.prefs,
       permissions: permissions ?? other?.permissions,
@@ -104,7 +102,6 @@ class Auth2Account {
   static Auth2Account? fromJson(Map<String, dynamic>? json, { Auth2UserPrefs? prefs, Auth2UserProfile? profile }) {
     return (json != null) ? Auth2Account(
       id: JsonUtils.stringValue(json['id']),
-      username: JsonUtils.stringValue(json['username']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
       permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
@@ -119,7 +116,6 @@ class Auth2Account {
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
-      'username' : username,
       'profile': profile,
       'preferences': prefs,
       'permissions': permissions,
@@ -135,7 +131,6 @@ class Auth2Account {
   bool operator ==(other) =>
     (other is Auth2Account) &&
       (other.id == id) &&
-      (other.username == username) &&
       (other.profile == profile) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
@@ -147,7 +142,6 @@ class Auth2Account {
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
-    (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
@@ -164,6 +158,14 @@ class Auth2Account {
     return ((identifiers != null) && identifiers!.isNotEmpty) ? identifiers?.first : null;
   }
 
+  String? get username {
+    List<Auth2Identifier> usernameIdentifiers = getLinkedForIdentifierType(Auth2Identifier.typeUsername);
+    if (usernameIdentifiers.isNotEmpty) {
+      return usernameIdentifiers.first.identifier;
+    }
+    return null;
+  }
+
   bool isIdentifierLinked(String code) {
     if (identifiers != null) {
       for (Auth2Identifier identifier in identifiers!) {
@@ -175,7 +177,7 @@ class Auth2Account {
     return false;
   }
 
-  List<Auth2Identifier> getLinkedForIdentifier(String code) {
+  List<Auth2Identifier> getLinkedForIdentifierType(String code) {
     List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
     if (identifiers != null) {
       for (Auth2Identifier identifier in identifiers!) {
@@ -255,9 +257,6 @@ class Auth2UserProfile {
   int?    _birthYear;
   String? _photoUrl;
 
-  String? _email;
-  String? _phone;
-  
   String? _address;
   String? _state;
   String? _zip;
@@ -266,9 +265,8 @@ class Auth2UserProfile {
   Map<String, dynamic>? _data;
   
   Auth2UserProfile({String? id, String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
-    String? address, String? state, String? zip, String? country,
-    Map<String, dynamic>? data
+    int? birthYear, String? photoUrl, String? address, String? state, String? zip,
+    String? country, Map<String, dynamic>? data
   }):
     _id = id,
     _firstName = firstName,
@@ -277,8 +275,6 @@ class Auth2UserProfile {
 
     _birthYear = birthYear,
     _photoUrl = photoUrl,
-    _email = email,
-    _phone = phone,
     
     _address = address,
     _state  = state,
@@ -298,8 +294,6 @@ class Auth2UserProfile {
 
       birthYear: JsonUtils.intValue(json['birth_year']),
       photoUrl: JsonUtils.stringValue(json['photo_url']),
-      email: JsonUtils.stringValue(json['email']),
-      phone: JsonUtils.stringValue(json['phone']),
   
       address: JsonUtils.stringValue(json['address']),
       state: JsonUtils.stringValue(json['state']),
@@ -329,9 +323,6 @@ class Auth2UserProfile {
       birthYear: birthYear ?? other._birthYear,
       photoUrl: photoUrl ?? other._photoUrl,
 
-      email: email ?? other._email,
-      phone: phone ?? other._phone,
-  
       address: address ?? other._address,
       state: state ?? other._state,
       zip: zip ?? other._zip,
@@ -350,8 +341,6 @@ class Auth2UserProfile {
 
       'birth_year': _birthYear,
       'photo_url': _photoUrl,
-      'email': _email,
-      'phone': _phone,
 
       'address': _address,
       'state': _state,
@@ -372,8 +361,6 @@ class Auth2UserProfile {
 
       (other._birthYear == _birthYear) &&
       (other._photoUrl == _photoUrl) &&
-      (other._email == _email) &&
-      (other._phone == _phone) &&
 
       (other._address == _address) &&
       (other._state == _state) &&
@@ -391,8 +378,6 @@ class Auth2UserProfile {
 
     (_birthYear?.hashCode ?? 0) ^
     (_photoUrl?.hashCode ?? 0) ^
-    (_email?.hashCode ?? 0) ^
-    (_phone?.hashCode ?? 0) ^
 
     (_address?.hashCode ?? 0) ^
     (_state?.hashCode ?? 0) ^
@@ -444,20 +429,6 @@ class Auth2UserProfile {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
-      if ((profile._email != _email) && (
-          (scope?.contains(Auth2UserProfileScope.email) ?? false) ||
-          ((profile._email?.isNotEmpty ?? false) && (_email?.isEmpty ?? true))
-      )) {
-        _email = profile._email;
-        modified = true;
-      }
-      if ((profile._phone != _phone) && (
-          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
-          ((profile._phone?.isNotEmpty ?? false) && (_phone?.isEmpty ?? true))
-      )) {
-        _phone = profile._phone;
-        modified = true;
-      }
 
       if ((profile._address != _address) && (
           (scope?.contains(Auth2UserProfileScope.address) ?? false) ||
@@ -506,8 +477,6 @@ class Auth2UserProfile {
 
   int?    get birthYear => _birthYear;
   String? get photoUrl => _photoUrl;
-  String? get email => _email;
-  String? get phone => _phone;
   
   String? get address => _address;
   String? get state => _state;
@@ -644,9 +613,10 @@ class Auth2Identifier {
   final String? identifier;
   final bool? verified;
   final bool? linked;
+  final bool? sensitive;
   final String? accountAuthTypeId;
   
-  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.accountAuthTypeId});
+  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.sensitive, this.accountAuthTypeId});
 
   static Auth2Identifier? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2Identifier(
@@ -655,6 +625,7 @@ class Auth2Identifier {
       identifier: JsonUtils.stringValue(json['identifier']),
       verified: JsonUtils.boolValue(json['verified']),
       linked: JsonUtils.boolValue(json['linked']),
+      sensitive: JsonUtils.boolValue(json['sensitive']),
       accountAuthTypeId: JsonUtils.stringValue(json['account_auth_type_id']),
     ) : null;
   }
@@ -666,6 +637,7 @@ class Auth2Identifier {
       'identifier': identifier,
       'verified': verified,
       'linked': linked,
+      'sensitive': sensitive,
       'account_auth_type_id': accountAuthTypeId,
     };
   }
@@ -678,6 +650,7 @@ class Auth2Identifier {
       (other.identifier == identifier) &&
       (other.verified == verified) &&
       (other.linked == linked) &&
+      (other.sensitive == sensitive) &&
       (other.accountAuthTypeId == accountAuthTypeId);
 
   @override
@@ -687,6 +660,7 @@ class Auth2Identifier {
     (code?.hashCode ?? 0) ^
     (verified?.hashCode ?? 0) ^
     (linked?.hashCode ?? 0) ^
+    (sensitive?.hashCode ?? 0) ^
     (accountAuthTypeId?.hashCode ?? 0);
 
   String? get uin {

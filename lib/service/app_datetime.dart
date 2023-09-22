@@ -255,7 +255,6 @@ class AppDateTime with Service {
       }
     }
     // return DateFormat("MMM dd, yyyy").format(deviceDateTime);
-    return '';
   }
 
   DateTime? _getDateTimeToCompare({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {

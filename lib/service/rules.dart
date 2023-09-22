@@ -486,10 +486,6 @@ class Rules {
         return Auth2().uin;
       case "net_id":
         return Auth2().netId;
-      case "email":
-        return Auth2().email;
-      case "phone":
-        return Auth2().phone;
       case "login_type":
         return Auth2().loginType;
       case "full_name":
@@ -528,9 +524,11 @@ class Rules {
         return Auth2().isLoggedIn;
       case "is_oidc_logged_in":
         return Auth2().isOidcLoggedIn;
-      case "is_email_logged_in":
+      case "is_password_logged_in":
         return Auth2().isPasswordLoggedIn;
-      case "is_phone_logged_in":
+      case "is_passkey_logged_in":
+        return Auth2().isPasskeyLoggedIn;
+      case "is_code_logged_in":
         return Auth2().isCodeLoggedIn;
     }
     return null;
@@ -548,10 +546,6 @@ class Rules {
         return Auth2().profile?.birthYear;
       case "photo_url":
         return Auth2().profile?.photoUrl;
-      case "email":
-        return Auth2().profile?.email;
-      case "phone":
-        return Auth2().profile?.phone;
       case "address":
         return Auth2().profile?.address;
       case "state":

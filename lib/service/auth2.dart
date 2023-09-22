@@ -264,10 +264,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPasswordLinked => _account?.isAuthTypeLinked(Auth2Type.typePassword) ?? false;
   bool get isPasskeyLinked => _account?.isAuthTypeLinked(Auth2Type.typePasskey) ?? false;
 
-  List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifier(Auth2Identifier.typeEmail) ?? [];
-  List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifier(Auth2Identifier.typePhone) ?? [];
-  List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifier(Auth2Identifier.typeUsername) ?? [];
-  List<Auth2Identifier> get linkedOidcIdentifiers => (_account?.getLinkedForIdentifier(Auth2Identifier.typeUin) ?? []) + (_account?.getLinkedForIdentifier(Auth2Identifier.typeNetId) ?? []);
+  List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifierType(Auth2Identifier.typeEmail) ?? [];
+  List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifierType(Auth2Identifier.typePhone) ?? [];
+  List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifierType(Auth2Identifier.typeUsername) ?? [];
+  List<Auth2Identifier> get linkedOidcIdentifiers => (_account?.getLinkedForIdentifierType(Auth2Identifier.typeUin) ?? []) + (_account?.getLinkedForIdentifierType(Auth2Identifier.typeNetId) ?? []);
 
   List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(Auth2Type.typeOidcIllinois) ?? [];
   List<Auth2Type> get linkedCode => _account?.getLinkedForAuthType(Auth2Type.typeCode) ?? [];
@@ -280,9 +280,27 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
   String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
-  String? get email => StringUtils.ensureNotEmpty(profile?.email, defaultValue: (_account?.identifier?.code == Auth2Identifier.typeEmail ? _account?.identifier?.identifier : _account?.authType?.uiucUser?.email) ?? '');
-  String? get phone => StringUtils.ensureNotEmpty(profile?.phone, defaultValue: (_account?.identifier?.code == Auth2Identifier.typePhone ? _account?.identifier?.identifier : '') ?? '');
   String? get username => _account?.username;
+
+  List<String> get emails {
+    List<String> emailStrings = [];
+    for (Auth2Identifier emailIdentifier in linkedEmail) {
+      if (emailIdentifier.identifier != null) {
+        emailStrings.add(emailIdentifier.identifier!);
+      }
+    }
+    return emailStrings;
+  }
+  
+  List<String> get phones {
+    List<String> phoneStrings = [];
+    for (Auth2Identifier phoneIdentifier in linkedPhone) {
+      if (phoneIdentifier.identifier != null) {
+        phoneStrings.add(phoneIdentifier.identifier!);
+      }
+    }
+    return phoneStrings;
+  }
 
   bool get isEventEditor => hasRole("event approvers");
   bool get isStadiumPollManager => hasRole("stadium poll manager");
