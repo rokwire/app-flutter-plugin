@@ -267,7 +267,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifierType(Auth2Identifier.typeEmail) ?? [];
   List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifierType(Auth2Identifier.typePhone) ?? [];
   List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifierType(Auth2Identifier.typeUsername) ?? [];
-  List<Auth2Identifier> get linkedOidcIdentifiers => (_account?.getLinkedForIdentifierType(Auth2Identifier.typeUin) ?? []) + (_account?.getLinkedForIdentifierType(Auth2Identifier.typeNetId) ?? []);
+  List<Auth2Identifier> get linkedOidcIdentifiers {
+    List<Auth2Identifier> identifiers = [];
+    for (Auth2Type oidcType in linkedOidc) {
+      if (oidcType.id != null) {
+        identifiers.addAll(_account?.getLinkedForAuthTypeId(oidcType.id!) ?? []);
+      }
+    }
+    return identifiers;
+  }
 
   List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(Auth2Type.typeOidcIllinois) ?? [];
   List<Auth2Type> get linkedCode => _account?.getLinkedForAuthType(Auth2Type.typeCode) ?? [];
@@ -378,7 +386,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Passkey authentication
 
-  Future<Auth2PasskeySignInResult> authenticateWithPasskey(String? identifier, {String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey({String? identifier, String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
     String? errorMessage;
     if (Config().authBaseUrl != null) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
@@ -420,7 +428,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         try {
           String? responseData = await RokwirePlugin.getPasskey(message?.message);
           debugPrint(responseData);
-          return _completeSignInWithPasskey(identifier, responseData);
+          return _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType, identifierId: identifierId);
         } catch(error) {
           if (error is PlatformException) {
             switch (error.code) {
@@ -444,7 +452,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
   }
 
-  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? identifier, String? responseData, {String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? responseData, {String? identifier, String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
@@ -488,7 +496,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
   }
 
-  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String identifier, String? displayName, {String identifierType = Auth2Identifier.typeUsername, bool? public = false, bool verifyIdentifier = false}) async {
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String identifier, {String? displayName, String identifierType = Auth2Identifier.typeUsername, bool? public = false, bool verifyIdentifier = false}) async {
     String? errorMessage;
     if (Config().authBaseUrl != null) {
       if (!await RokwirePlugin.arePasskeysSupported()) {
@@ -543,11 +551,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
         try {
           String? responseData = await RokwirePlugin.createPasskey(message?.message);
-          return completeSignUpWithPasskey(identifier, responseData);
+          return completeSignUpWithPasskey(identifier, responseData, identifierType: identifierType);
         } catch(error) {
           try {
             String? responseData = await RokwirePlugin.getPasskey(message?.message);
-            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(identifier, responseData);
+            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType);
             if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
               return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
             }
@@ -1240,6 +1248,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       String? post = JsonUtils.encode({
         'auth_type': loginType,
+        'app_type_identifier': Config().appPlatformId,
         'creds': creds,
         'params': params,
       });

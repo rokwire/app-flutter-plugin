@@ -189,6 +189,18 @@ class Auth2Account {
     return linkedTypes;
   }
 
+  List<Auth2Identifier> getLinkedForAuthTypeId(String id) {
+    List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.accountAuthTypeId == id) {
+          linkedTypes.add(identifier);
+        }
+      }
+    }
+    return linkedTypes;
+  }
+
   Auth2Type? get authType {
     return ((authTypes != null) && authTypes!.isNotEmpty) ? authTypes?.first : null;
   }
