@@ -1010,7 +1010,7 @@ class Groups with Service implements NotificationsListener {
         sortOrder: sortOrder,
         offset: offset,
         limit: limit
-      ));
+      ).toQueryJson());
       try {
         await _ensureLogin();
         Response? response = await Network().post(url, body: body, auth: Auth2());
