@@ -306,8 +306,7 @@ class Events2 with Service implements NotificationsListener {
       }
       String url = UrlUtils.addQueryParameters(baseUrl, urlParams);
       Response? response = await Network().get(url, auth: Auth2());
-      //TMP: return (response?.statusCode == 200) ? Event2PersonIdentifier.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
-      return <Event2PersonIdentifier>[Event2PersonIdentifier(accountId: '', exteralId: 'jmpaul')];
+      return (response?.statusCode == 200) ? Event2PersonIdentifier.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
     }
     return null;
   }
