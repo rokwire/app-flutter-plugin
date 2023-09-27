@@ -296,6 +296,38 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2PersonsResult) ? result : null;
   }
 
+  // Returns error message, List<Event2PersonIdentifier> if successful
+  Future<dynamic> loadEventPersonsEx({String? uin}) async {
+    if (Config().calendarUrl != null) {
+      String baseUrl = "${Config().calendarUrl}/users";
+      Map<String, String> urlParams = <String, String>{};
+      if (uin != null) {
+        urlParams['uin'] = uin;
+      }
+      String url = UrlUtils.addQueryParameters(baseUrl, urlParams);
+      Response? response = await Network().get(url, auth: Auth2());
+      //TMP: return (response?.statusCode == 200) ? Event2PersonIdentifier.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+      return <Event2PersonIdentifier>[Event2PersonIdentifier(accountId: '', exteralId: 'jmpaul')];
+    }
+    return null;
+  }
+
+  Future<List<Event2PersonIdentifier>?> loadEventPersons({String? uin}) async {
+    dynamic result = await loadEventPersonsEx(uin: uin);
+    return (result is List<Event2PersonIdentifier>) ? result : null;
+  }
+
+  // Returns error message, Event2PersonIdentifier if successful
+  Future<dynamic> loadEventPersonEx({String? uin}) async {
+    dynamic result = await loadEventPersonsEx(uin: uin);
+    return (result is List<Event2PersonIdentifier>) ? (result.isNotEmpty ? result.first : null) : result;
+  }
+
+  Future<Event2PersonIdentifier?> loadEventPerson({String? uin}) async {
+    dynamic result = await loadEventPersonEx(uin: uin);
+    return (result is Event2PersonIdentifier) ? result : null;
+  }
+
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
