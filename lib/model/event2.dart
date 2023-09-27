@@ -677,6 +677,28 @@ class Event2PersonIdentifier {
   int get hashCode =>
       (accountId?.hashCode ?? 0) ^
       (exteralId?.hashCode ?? 0);
+
+  static List<Event2PersonIdentifier>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2PersonIdentifier>? result;
+    if (jsonList != null) {
+      result = <Event2PersonIdentifier>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2PersonIdentifier.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Event2PersonIdentifier>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
 }
 
 ///////////////////////////////
