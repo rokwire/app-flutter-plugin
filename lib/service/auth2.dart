@@ -444,9 +444,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           debugPrint(errorMessage);
           Log.e(errorMessage);
         }
-      }
-      else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'not-found') {
-        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
+        }
       }
     }
     return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
@@ -490,6 +498,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         bool success = await processLoginResponse(responseJson);
         if (success) {
           return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
         }
       }
     }
@@ -545,23 +564,36 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (response != null && response.statusCode == 200) {
         // Obtain creationOptions from the server
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
-        if (verifyIdentifier) {
-          Map<String, dynamic>? requestJson = JsonUtils.decode(message?.message ?? '');
-          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: requestJson);
-        }
-        try {
-          String? responseData = await RokwirePlugin.createPasskey(message?.message);
-          return completeSignUpWithPasskey(identifier, responseData, identifierType: identifierType);
-        } catch(error) {
+        if (message != null) {
+          if (verifyIdentifier) {
+            Map<String, dynamic>? requestJson = JsonUtils.decode(message.message);
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: requestJson);
+          }
           try {
-            String? responseData = await RokwirePlugin.getPasskey(message?.message);
-            Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType);
-            if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
-              return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
-            }
+            String? responseData = await RokwirePlugin.createPasskey(message.message);
+            return completeSignUpWithPasskey(identifier, responseData, identifierType: identifierType);
           } catch(error) {
-            errorMessage = error.toString();
-            Log.e(errorMessage);
+            try {
+              String? responseData = await RokwirePlugin.getPasskey(message.message);
+              Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType);
+              if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+              }
+            } catch(error) {
+              errorMessage = error.toString();
+              Log.e(errorMessage);
+            }
+          }
+        } else {
+          Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response.body));
+          if (error?.status == 'unverified') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+          }
+          else if (error?.status == 'verification-expired') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
+          }
+          else if (error?.status == 'already-exists') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedAccountExist);
           }
         }
       }
@@ -600,6 +632,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         bool success = await processLoginResponse(responseJson);
         if (success) {
           return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
         }
       }
     }
@@ -1822,6 +1865,10 @@ enum Auth2PasskeySignUpResultStatus {
   succeeded,
   failed,
   failedNotSupported,
+  failedAccountExist,
+  failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
 }
 
 // Auth2PasskeySignInResult
@@ -1835,6 +1882,8 @@ enum Auth2PasskeySignInResultStatus {
   succeeded,
   failed,
   failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
   failedNotSupported,
   failedNoCredentials,
   failedCancelled,
