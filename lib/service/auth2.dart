@@ -566,8 +566,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
         if (message != null) {
           if (verifyIdentifier) {
-            Map<String, dynamic>? requestJson = JsonUtils.decode(message.message);
-            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: requestJson);
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: message.message);
           }
           try {
             String? responseData = await RokwirePlugin.createPasskey(message.message);
@@ -1857,7 +1856,7 @@ class Auth2Csrf with NetworkAuthProvider {
 class Auth2PasskeySignUpResult {
   Auth2PasskeySignUpResultStatus status;
   String? error;
-  Map<String, dynamic>? creationOptions;
+  String? creationOptions;
   Auth2PasskeySignUpResult(this.status, {this.error, this.creationOptions});
 }
 
