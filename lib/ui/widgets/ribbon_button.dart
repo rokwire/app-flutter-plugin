@@ -115,7 +115,10 @@ class RibbonButton extends StatefulWidget {
   @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies?.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
   @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
-  @protected Widget get displayDescriptionWidget => descriptionWidget ?? Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,);
+  @protected Widget get displayDescriptionWidget => descriptionWidget ?? Padding(
+    padding: descriptionPadding,
+    child: Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,),
+  );
 
   @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
   @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;

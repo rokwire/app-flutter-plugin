@@ -739,7 +739,7 @@ class Auth2Type {
   static Auth2Type? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2Type(
       id: JsonUtils.stringValue(json['id']),
-      code: JsonUtils.stringValue(json['code']),
+      code: JsonUtils.stringValue(json['auth_type_code']),
       active: JsonUtils.boolValue(json['active']),
       params: JsonUtils.mapValue(json['params']),
     ) : null;
@@ -748,7 +748,7 @@ class Auth2Type {
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
-      'code': code,
+      'auth_type_code': code,
       'active': active,
       'params': params,
     };
