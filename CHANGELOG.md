@@ -5,7 +5,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next build on `develop` should refer to version 1.4.1 -->
+
+## [1.5.3] - 2023-09-27
+### Changed
+- Acknowledged new Groups BB's API person identifier resolving [#387](https://github.com/rokwire/app-flutter-plugin/issues/387).
+
+## [1.5.2] - 2023-09-26
+### Changed
+- Acknowledged new Groups BB's v3 APIs for events [#384](https://github.com/rokwire/app-flutter-plugin/issues/384).
+
+## [1.5.1] - 2023-09-20
+### Changed
+- Acknowledge 'time' field for inbox messages [#381](https://github.com/rokwire/app-flutter-plugin/issues/381).
+
+## [1.5.0] - 2023-09-19
+### Changed
+- Load content attributes JSON from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Load different JSON assets from content service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Retire Assets service [#280](https://github.com/rokwire/app-flutter-plugin/issues/280).
+- Created and acknowledged at different places async versions of JSON encode/decode and collection equality checks [#283](https://github.com/rokwire/app-flutter-plugin/issues/283).
+- Move survey and rules logic from models to services [#232](https://github.com/rokwire/app-flutter-plugin/issues/232).
+- Cleaned up Explore interface [#289](https://github.com/rokwire/app-flutter-plugin/issues/289).
+- Load again content attributes JSON from content service [#359](https://github.com/rokwire/app-flutter-plugin/issues/359).
+- Build event time filters in local timezone [#377](https://github.com/rokwire/app-flutter-plugin/issues/377).
+- Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
+### Added
+- Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
+- Added support for material icons to styles images [#292](https://github.com/rokwire/app-flutter-plugin/issues/292).
+- Events2 model and service, work in progress [#288](https://github.com/rokwire/app-flutter-plugin/issues/288).
+- Added client parameter to Events2.loadEvents and Network.post APIs [#3401](https://github.com/rokwire/illinois-app/issues/3401).
+- Defined scopes for profile & prefs for transfer anonymous data to existing user account [#332](https://github.com/rokwire/app-flutter-plugin/issues/332).
+- Add query params to load surveys [#340](https://github.com/rokwire/app-flutter-plugin/issues/340).
+- More dynamic survey response cards [#344](https://github.com/rokwire/app-flutter-plugin/issues/344).
+- Added scope to content attributes global requirements [#349](https://github.com/rokwire/app-flutter-plugin/issues/349).
+- Initial handling of super and recurring events [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
+- Added progress to SectionSlantHeader [#351](https://github.com/rokwire/app-flutter-plugin/issues/351).
+- Added get all survey responses request [#354](https://github.com/rokwire/app-flutter-plugin/issues/354).
+- Added "Multi-person" event type [#356](https://github.com/rokwire/app-flutter-plugin/issues/356).
+- Added language selection capability to Localization service [#361](https://github.com/rokwire/app-flutter-plugin/issues/361).
+- Acknowledge new event2 model for sport events [#363](https://github.com/rokwire/app-flutter-plugin/issues/363).
+- Added HEAD request in Network service [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+- Added UrlUtils.fixUriAsync helper [#3580](https://github.com/rokwire/illinois-app/issues/3580).
+- Added published flag to event [#369](https://github.com/rokwire/app-flutter-plugin/issues/369).
+- Added Pinch Zoom support for ModalImagePanel [#3305](https://github.com/rokwire/illinois-app/issues/3305).
+- Override survey action summary [#373](https://github.com/rokwire/app-flutter-plugin/issues/373)
+- Added registrationOccupancy to Event2PersonsResult and relevant utility methods [#375](https://github.com/rokwire/app-flutter-plugin/issues/375).
+### Fixed
+- Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
+- Survey maximum score JSON encoding error [#294](https://github.com/rokwire/app-flutter-plugin/issues/294)
+- Only return null on unsuccessful survey responses request [#349](https://github.com/rokwire/app-flutter-plugin/issues/349)
+- Local notifications repeating weekly [#365](https://github.com/rokwire/app-flutter-plugin/issues/365)
+- Groups load upcoming events [#3645](https://github.com/rokwire/illinois-app/issues/3645).
+- String representation for "Attendance taker" event user role [#3656](https://github.com/rokwire/illinois-app/issues/3656).
+- Display raw attribute value as it is if it does not persist as content attribite value [#3743](https://github.com/rokwire/illinois-app/issues/3743).
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
@@ -29,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created TZDateTimeUtils [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Created DateTimeUni extention [#3215](https://github.com/rokwire/illinois-app/issues/3215).
 - Exposed DateTimeUni.timezoneUniOrLocal [#3222](https://github.com/rokwire/illinois-app/issues/3222).
+- Username authentication [#273](https://github.com/rokwire/app-flutter-plugin/issues/273)
 
 ### Deleted
 - Removed ExploreJsonHandler definition, not used any more [#3070](https://github.com/rokwire/illinois-app/issues/3070).

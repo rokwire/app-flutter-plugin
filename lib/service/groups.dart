@@ -25,14 +25,15 @@ import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
+import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/model/group.dart';
-import 'package:rokwire_plugin/model/event.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
+import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -816,7 +817,8 @@ class Groups with Service implements NotificationsListener {
   }
 
 // Events
-  Future<List<String>?> loadEventIds(String? groupId) async{
+  
+  /*Future<List<String>?> loadEventIds(String? groupId) async{
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
       try {
@@ -834,7 +836,7 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null; // fail
-  }
+  }*/
 
   /// 
   /// Loads group events based on the current user membership
@@ -845,15 +847,15 @@ class Groups with Service implements NotificationsListener {
   /// 
   /// value - events (limited or not)
   ///
-  Future<Map<int, List<Event>>?> loadEvents (Group? group, {int limit = -1}) async {
+  /*Future<Map<int, List<Event2>>?> loadEvents (Group? group, {int limit = -1}) async {
     if (group != null) {
       List<String>? eventIds = await loadEventIds(group.id);
-      List<Event>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events().loadEventsByIds(eventIds) : null;
+      List<Event2>? allEvents = CollectionUtils.isNotEmpty(eventIds) ? await Events2().loadEventsByIds(eventIds: eventIds) : null;
       if (CollectionUtils.isNotEmpty(allEvents)) {
-        List<Event> currentUserEvents = [];
+        List<Event2> currentUserEvents = [];
         bool isCurrentUserMemberOrAdmin = group.currentUserIsMemberOrAdmin;
-        for (Event event in allEvents!) {
-          bool isPrivate = event.isGroupPrivate!;
+        for (Event2 event in allEvents!) {
+          bool isPrivate = event.private == true;  //It was: From CreateEventPanel ->  event.isGroupPrivate = _isPrivateEvent; -> _selectedPrivacy == eventPrivacyPrivate;
           if (!isPrivate || isCurrentUserMemberOrAdmin) {
             currentUserEvents.add(event);
           }
@@ -861,16 +863,16 @@ class Groups with Service implements NotificationsListener {
         int eventsCount = currentUserEvents.length;
         SortUtils.sort(currentUserEvents);
         //limit the result count // limit available events
-        List<Event> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
-        List<Event> groupEvents = <Event>[];
-        for (Event event in visibleEvents) {
-          ListUtils.add(groupEvents, Event.fromJson(event.toJson()));
+        List<Event2> visibleEvents = ((limit > 0) && (eventsCount > limit)) ? currentUserEvents.sublist(0, limit) : currentUserEvents;
+        List<Event2> groupEvents = <Event2>[];
+        for (Event2 event in visibleEvents) {
+          ListUtils.add(groupEvents, Event2.fromJson(event.toJson()));
         }
         return {eventsCount: groupEvents};
       }
     }
     return null;
-  }
+  }*/
 
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
@@ -879,7 +881,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().post(url, auth: Auth2(),body: body);
@@ -901,7 +903,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Map<String, dynamic> bodyMap = {"event_id":eventId};
         if(CollectionUtils.isNotEmpty(toMembers)){
-          bodyMap["to_members"] = JsonUtils.encodeList(toMembers ?? []);
+          bodyMap["to_members"] = Member.listToJson(toMembers);
         }
         String? body = JsonUtils.encode(bodyMap);
         Response? response = await Network().put(url, auth: Auth2(),body: body);
@@ -916,7 +918,7 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> removeEventFromGroup({String? groupId, String? eventId}) async {
+  Future<bool> _removeEventFromGroup({String? groupId, String? eventId}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/event/$eventId';
       try {
@@ -944,7 +946,7 @@ class Groups with Service implements NotificationsListener {
         if (responseCode == 200) {
           List<dynamic>? groupEventLinkSettingsJson = (responseBody != null) ? JsonUtils.decodeList(responseBody) : null; //List of settings for all events //Probbably can pass paramether to backend
           if(groupEventLinkSettingsJson?.isNotEmpty ?? false) { //Find settings for this event
-            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhere((element) {
+            dynamic eventSettings = groupEventLinkSettingsJson!.firstWhereOrNull((element) {
                 if (element is Map<String, dynamic>) {
                   String? id = JsonUtils.stringValue(element["event_id"]);
                   if( id != null && id == eventId){
@@ -968,20 +970,21 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  Future<String?> updateGroupEvents(Event event) async {
-    String? id = await Events().updateEvent(event);
+  /*Future<String?> updateGroupEvents(Event2 event) async {
+    String? id = await Events2().updateEvent(event);
     if (StringUtils.isNotEmpty(id)) {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
     return id;
-  }
+  }*/
 
-  Future<bool?> deleteEventFromGroup({String? groupId, required Event event}) async {
+  /*Future<bool?> deleteEventFromGroup({String? groupId, required Event2 event}) async {
     bool? deleteResult = false;
-    if (await removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
-      String? creatorGroupId = event.createdByGroupId;
-      if(creatorGroupId!=null){
-        Group? creatorGroup = await loadGroup(creatorGroupId);
+    if (await _removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
+      // String? creatorGroupId = event.createdByGroupId;
+      // if(creatorGroupId!=null){
+      if(event.userRole == Event2UserRole.admin){ //event.canUserDelete
+        Group? creatorGroup = await loadGroup(groupId);
         if(creatorGroup!=null && creatorGroup.currentUserIsAdmin){
           deleteResult = await Events().deleteEvent(event.id);
         }
@@ -989,7 +992,130 @@ class Groups with Service implements NotificationsListener {
       NotificationService().notify(Groups.notifyGroupEventsUpdated);
     }
     return deleteResult;
+  }*/
+
+  // Events V3
+
+  Future<Events2ListResult?> loadEventsV3 (String? groupId, {
+    Event2TimeFilter timeFilter = Event2TimeFilter.upcoming,
+    Event2SortType? sortType = Event2SortType.dateTime,
+    Event2SortOrder sortOrder = Event2SortOrder.ascending,
+    int offset = 0, int? limit
+  }) async {
+    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3/load';
+      String? body = JsonUtils.encode(Events2Query(
+        timeFilter: timeFilter,
+        sortType: sortType,
+        sortOrder: sortOrder,
+        offset: offset,
+        limit: limit
+      ).toQueryJson());
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: body, auth: Auth2());
+        return (response?.statusCode  == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null; // fail
   }
+
+  /*List<Event2>? _buildEventsV3(List<Event2>? sourceEvents) {
+    if (sourceEvents != null) {
+
+      // Filter
+      List<Event2> events = <Event2>[];
+      DateTime nowUtc = DateTime.now().toUtc();
+      for (Event2 event in sourceEvents) {
+        DateTime? eventEndTime = event.endTimeUtc ?? event.startTimeUtc;
+        if ((eventEndTime != null) && nowUtc.isBefore(eventEndTime)) {
+          events.add(event);
+        }
+      }
+      
+      // Sort
+      events.sort((Event2 event1, Event2 event2) =>
+        SortUtils.compare(event1.startTimeUtc, event2.startTimeUtc)
+      );
+      return events;
+    }
+    return null;
+  }*/
+
+  Future<dynamic> createEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
+    if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3';
+      String? body = JsonUtils.encode({
+        'event': event.toJson(),
+        'to_members': Member.listToJson(toMembers)
+      });
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, auth: Auth2(), body: body);
+        if (response?.statusCode == 200) {
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<dynamic> createEventForGroupsV3(Event2? event, { List<String>? groupIds }) async {
+    if ((Config().groupsUrl != null) && (groupIds != null) && groupIds.isNotEmpty && (event != null)) {
+      String url = '${Config().groupsUrl}/group/events/v3';
+      String? body = JsonUtils.encode(CreateEventForGroupsV3Param(event: event, groupIds: groupIds).toJson());
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, auth: Auth2(), body: body);
+        CreateEventForGroupsV3Param? responseParam = (response?.statusCode == 200) ? CreateEventForGroupsV3Param.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+        if (responseParam?.event != null) {
+          responseParam?.groupIds?.forEach((String groupId) => NotificationService().notify(notifyGroupUpdated, groupId));
+          return responseParam;
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<dynamic> updateEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
+    if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
+      String url = '${Config().groupsUrl}/group/$groupId/events/v3';
+      String? body = JsonUtils.encode({
+        'event': event.toJson(),
+        'to_members': Member.listToJson(toMembers)
+      });
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        if (response?.statusCode == 200) {
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        }
+        else {
+          return response?.errorText;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return null;
+  }
+
+  Future<bool> deleteEventForGroupV3({String? groupId, String? eventId}) =>
+    _removeEventFromGroup(groupId: groupId, eventId: eventId);
 
   // Group Posts and Replies
 
@@ -1094,29 +1220,19 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
-    List<dynamic>? templatesContentItems = await Content().loadContentItems(categories: ['gies_post_templates']);
-    dynamic templatesContentItem = templatesContentItems?.first; // "gies.templates" are placed in a single content item.
-    if (templatesContentItem is! Map) {
-      return null;
-    }
-    Map<String, dynamic> templatesItem = templatesContentItem.cast<String, dynamic>();
-    dynamic templatesJson = templatesItem['data'];
-    if (templatesJson is! List) {
-      return null;
-    }
-    List<dynamic> templatesArray = templatesJson.cast<dynamic>();
-    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(templatesArray);
-    List<GroupPostNudge>? groupNudges;
+    const String templatesCategory = 'gies_post_templates';
+    List<GroupPostNudge>? allTemplates = GroupPostNudge.fromJsonList(JsonUtils.listValue(await Content().loadContentItem(templatesCategory)));
     if (CollectionUtils.isNotEmpty(allTemplates)) {
-      groupNudges = <GroupPostNudge>[];
+      List<GroupPostNudge> groupNudges = <GroupPostNudge>[];
       for (GroupPostNudge template in allTemplates!) {
         GroupPostNudge? nudge = _getNudgeForGroup(groupName: groupName, template: template);
         if (nudge != null) {
           groupNudges.add(nudge);
         }
       }
+      return groupNudges;
     }
-    return groupNudges;
+    return null;
   }
 
   Future<bool> togglePostReaction(String? groupId, String? postId, String reaction) async {
@@ -1254,6 +1370,14 @@ class Groups with Service implements NotificationsListener {
   List<Group>? get userGroups => _userGroups;
 
   Set<String>? get userGroupNames => _userGroupNames;
+
+  ///
+  /// Returns the groups that current user is admin of without the current group
+  ///
+  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const []}) async {
+    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my);
+    return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
+  }
 
   File? _getUserGroupsCacheFile()  =>
     (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
@@ -1523,5 +1647,40 @@ String? groupSortOrderToString(GroupSortOrder? value) {
     case GroupSortOrder.desc: return 'desc';
     default: return null;
   }
+}
+
+extension _ResponseExt on Response {
+  String? get errorText {
+    String? responseBody = body;
+    Map<String, dynamic>? responseJson = JsonUtils.decodeMap(responseBody);
+    String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+    if (StringUtils.isNotEmpty(message)) {
+      return message;
+    }
+    else if (StringUtils.isNotEmpty(responseBody)) {
+      return responseBody;
+    }
+    else {
+      return StringUtils.isNotEmpty(reasonPhrase) ? "$statusCode $reasonPhrase" : "$statusCode";
+    }
+
+  }
+}
+
+class CreateEventForGroupsV3Param {
+  final Event2? event;
+  final List<String>? groupIds;
   
+  CreateEventForGroupsV3Param({this.event, this.groupIds});
+
+  static CreateEventForGroupsV3Param? fromJson(Map<String, dynamic>? json) => (json != null) ?
+    CreateEventForGroupsV3Param(
+      event: Event2.fromJson(JsonUtils.mapValue(json['event'])),
+      groupIds: JsonUtils.listStringsValue(json['group_ids'])
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'event': event?.toJson(),
+    'group_ids': groupIds
+  };
 }

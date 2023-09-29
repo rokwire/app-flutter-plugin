@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
@@ -98,7 +99,7 @@ class Styles extends Service implements NotificationsListener{
     _debugAssetsStyles = await loadFromCache(debugCacheFileName);
 
     if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
-      build();
+      await build();
       updateFromNet();
       await super.initService();
     }
@@ -223,19 +224,18 @@ class Styles extends Service implements NotificationsListener{
     {
       _netAssetsStyles = netAssetsStyles;
       await saveToCache(netCacheFileName, netAssetsString);
-      build();
+      await build();
       NotificationService().notify(notifyChanged, null);
     }
   }
 
   @protected
-  void build() {
+  Future<void> build() async {
     Map<String, dynamic> styles = contentMap;
-    _colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
-    _fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
-    _textStyles = UiTextStyles.fromJson(styleMap: JsonUtils.mapValue(styles['text_style']), colors: _colors);
-    _images = UiImages(imageMap: JsonUtils.mapValue(styles['image']), colors: _colors,
-      assetPathResolver: resolveImageAssetPath,);
+    _colors = await compute(UiColors.fromJson, JsonUtils.mapValue(styles['color']));
+    _fontFamilies = await compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family']));
+    _textStyles = await compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: _colors, fontFamilies: _fontFamilies));
+    _images = await compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: _colors, assetPathResolver: resolveImageAssetPath));
   }
 
   Map<String, dynamic> get contentMap {
@@ -254,9 +254,10 @@ class Styles extends Service implements NotificationsListener{
         ((value == null) && (_debugAssetsStyles != null)))
       {
         _debugAssetsStyles = value;
-        build();
-        NotificationService().notify(notifyChanged, null);
         saveToCache(netCacheFileName, JsonUtils.encode(_debugAssetsStyles));
+        build().then((_){
+          NotificationService().notify(notifyChanged, null);
+        });
       }
   }
 
@@ -357,6 +358,7 @@ class UiColors {
   Color? get disabledTextColor          => colorMap['disabledTextColor'];
   Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
   Color? get dividerLine                => colorMap['dividerLine'];
+  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
 
   Color? get mango                      => colorMap['mango'];
 
@@ -432,25 +434,28 @@ class UiTextStyles {
   UiTextStyles(Map<String, TextStyle>? styleMap, { this.colors }) :
     styleMap = styleMap ?? <String, TextStyle> {};
 
-  static UiTextStyles fromJson({Map<String, dynamic>? styleMap, UiColors? colors}){
-    Map<String, TextStyle>? styles;
-    if(styleMap != null){
-      styles = <String, TextStyle> {};
-      styleMap.forEach((key, value) {
-        TextStyle? style = constructTextStyle(style: JsonUtils.mapValue(value), stylesMap: styleMap, colors: colors);
+  static UiTextStyles fromJson(Map<String, dynamic>? stylesJson, {UiColors? colors, UiFontFamilies? fontFamilies}){
+    Map<String, TextStyle>? stylesMap;
+    if(stylesJson != null){
+      stylesMap = <String, TextStyle> {};
+      stylesJson.forEach((key, value) {
+        TextStyle? style = constructTextStyle(JsonUtils.mapValue(value), stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
         if(style!=null){
-          styles![key] = style;
+          stylesMap![key] = style;
         }
       });
     }
-    return UiTextStyles(styles, colors: colors);
-  }  
+    return UiTextStyles(stylesMap, colors: colors);
+  }
+
+  static UiTextStyles fromCreationParam(_UiTextStylesCreationParam param) =>
+    UiTextStyles.fromJson(param.stylesJson, colors: param.colors, fontFamilies: param.fontFamilies);
 
   TextStyle? getTextStyle(String key){
     return styleMap[key];
   }
 
-  static TextStyle? constructTextStyle({Map<String, dynamic>? style, Map<String, dynamic>? stylesMap, UiColors? colors}){
+  static TextStyle? constructTextStyle(Map<String, dynamic>? style, { Map<String, dynamic>? stylesJson, UiColors? colors, UiFontFamilies? fontFamilies}){
     if(style == null){
       return null;
     }
@@ -460,7 +465,7 @@ class UiTextStyles {
     double? fontSize =  JsonUtils.doubleValue(style['size']);
     double? fontHeight = JsonUtils.doubleValue(style['height']);
     String? fontFamily = JsonUtils.stringValue(style['font_family']);
-    String? fontFamilyRef = Styles().fontFamilies?.fromCode(fontFamily);
+    String? fontFamilyRef = fontFamilies?.fromCode(fontFamily);
     TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
     TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
     TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
@@ -475,8 +480,8 @@ class UiTextStyles {
 
     //Extending capabilities
     String? extendsKey = JsonUtils.stringValue(style['extends']);
-    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesMap!=null ? JsonUtils.mapValue(stylesMap[extendsKey]) : null);
-    TextStyle? ancestorTextStyle = constructTextStyle(style: ancestorStyleMap, stylesMap: stylesMap, colors: colors);
+    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesJson!=null ? JsonUtils.mapValue(stylesJson[extendsKey]) : null);
+    TextStyle? ancestorTextStyle = constructTextStyle(ancestorStyleMap, stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
     bool overrides =  JsonUtils.boolValue(style["override"]) ?? true;
 
     if(ancestorTextStyle != null ){
@@ -487,19 +492,30 @@ class UiTextStyles {
   }
 }
 
+class _UiTextStylesCreationParam {
+  final Map<String, dynamic>? stylesJson;
+  final UiColors? colors;
+  final UiFontFamilies? fontFamilies;
+  _UiTextStylesCreationParam(this.stylesJson, {this.colors, this.fontFamilies});
+}
+
 class UiImages {
   final Map<String, dynamic>? imageMap;
   final UiColors? colors;
   final String Function(Uri uri)? assetPathResolver;
 
 
-  UiImages({this.imageMap, this.colors, this.assetPathResolver});
+  UiImages(this.imageMap, { this.colors, this.assetPathResolver});
+
+  static UiImages fromCreationParam(_UiImagesCreationParam param) =>
+    UiImages(param.imageMap, colors: param.colors, assetPathResolver: param.assetPathResolver);
 
   Widget? getImage(String? imageKey, {ImageSpec? defaultSpec, Key? key, String? type, dynamic source, double? scale, double? size,
-    double? width, double? height, String? weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    double? fill, dynamic weight, double? grade, double? opticalSize,
+    double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
-    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
+    Rect? centerSlice, String? fontFamily, String? fontPackage, TextDirection? textDirection, Map<String, String>? networkHeaders,
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
@@ -516,9 +532,13 @@ class UiImages {
             alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
             repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
             frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      } else if (imageSpec is FontAwesomeImageSpec) {
+      } else if (imageSpec is FontAwesomeImageSpec && (weight is String || weight == null)) {
         return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight,
             color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
+      } else if (imageSpec is MaterialIconImageSpec && (weight is double || weight == null)) {
+        return _getMaterialIcon(imageSpec, type: type, source: source, key: key, size: size, fill: fill, weight: weight,
+            grade: grade, opticalSize: opticalSize, color: color, semanticLabel: semanticLabel, textDirection: textDirection,
+            excludeFromSemantics: excludeFromSemantics, fontFamily: fontFamily, fontPackage: fontPackage, matchTextDirection: matchTextDirection);
       } else {
         return null;
       }
@@ -692,6 +712,49 @@ class UiImages {
     }
     return null;
   }
+
+  Widget? _getMaterialIcon(MaterialIconImageSpec imageSpec, { String? type, dynamic source, Key? key,
+    double? size, double? fill, double? weight, double? grade, double? opticalSize,
+    Color? color, String? fontFamily, String? fontPackage, TextDirection? textDirection, bool? matchTextDirection,
+    String? semanticLabel, bool excludeFromSemantics = false,
+  }) {
+    // TODO: Did not include Icon shadows
+    type ??= imageSpec.type;
+    source ??= imageSpec.source;
+    
+    size ??= imageSpec.size;
+    fill ??= imageSpec.fill;
+    weight ??= imageSpec.weight;
+    grade ??= imageSpec.grade;
+    opticalSize ??= imageSpec.opticalSize;
+    
+    color ??= imageSpec.color;
+    fontFamily ??= imageSpec.fontFamily;
+    fontPackage ??= imageSpec.fontPackage;
+    textDirection ??= imageSpec.textDirection;
+    matchTextDirection = imageSpec.matchTextDirection ?? false;
+
+    semanticLabel ??= imageSpec.semanticLabel;
+
+    try { switch (type) {
+      case 'material.icon':
+        IconData iconData = IconData(_ImageUtils.faCodePointValue(source) ?? 0, fontFamily: fontFamily, fontPackage: fontPackage, matchTextDirection: matchTextDirection);
+        return ExcludeSemantics( excluding: excludeFromSemantics, child:
+          Icon(iconData, key: key, size: size, fill: fill, weight: weight, grade: grade, opticalSize: opticalSize, color: color, textDirection: textDirection, semanticLabel: semanticLabel,),
+        );
+    }}
+    catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+}
+
+class _UiImagesCreationParam {
+  final Map<String, dynamic>? imageMap;
+  final UiColors? colors;
+  final String Function(Uri uri)? assetPathResolver;
+  _UiImagesCreationParam(this.imageMap, {this.colors, this.assetPathResolver});
 }
 
 abstract class ImageSpec {
@@ -711,6 +774,8 @@ abstract class ImageSpec {
       return FlutterImageSpec.fromJson(json);
     } else if (type.startsWith('fa.')) {
       return FontAwesomeImageSpec.fromJson(json);
+    } else if (type.startsWith('material.')) {
+      return MaterialIconImageSpec.fromJson(json);
     }
     return null;
   }
@@ -790,6 +855,41 @@ class FontAwesomeImageSpec extends ImageSpec {
     return FontAwesomeImageSpec.fromBase(base,
       weight: JsonUtils.stringValue(json['weight']),
       textDirection: textDirection,
+    );
+  }
+}
+
+class MaterialIconImageSpec extends ImageSpec {
+  // TODO: Did not include shadows
+  final double? fill;
+  final double? weight;
+  final double? grade;
+  final double? opticalSize;
+  final String? fontFamily;
+  final String? fontPackage;
+  final TextDirection? textDirection;
+  final bool? matchTextDirection;
+
+  const MaterialIconImageSpec({required String type, dynamic source, double? size, Color? color,
+    String? semanticLabel, this.fill, this.weight, this.grade, this.opticalSize,
+    this.fontFamily, this.fontPackage, this.textDirection, this.matchTextDirection}) :
+        super(type: type, source: source, size: size, color: color, semanticLabel: semanticLabel);
+
+  MaterialIconImageSpec.fromBase(ImageSpec base, { this.fill, this.weight, this.grade, this.opticalSize,
+    this.fontFamily, this.fontPackage, this.textDirection, this.matchTextDirection}) :
+        super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
+
+  factory MaterialIconImageSpec.fromJson(Map<String, dynamic> json) {
+    ImageSpec base = ImageSpec.baseFromJson(json);
+    return MaterialIconImageSpec.fromBase(base,
+      fill: JsonUtils.doubleValue(json['fill']),
+      weight: JsonUtils.doubleValue(json['weight']),
+      grade: JsonUtils.doubleValue(json['grade']),
+      opticalSize: JsonUtils.doubleValue(json['optical_size']),
+      fontFamily: JsonUtils.stringValue(json['font_family']),
+      fontPackage: JsonUtils.stringValue(json['font_package']),
+      textDirection: _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction'])),
+      matchTextDirection: JsonUtils.boolValue(json['match_text_direction'])
     );
   }
 }

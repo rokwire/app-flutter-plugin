@@ -121,6 +121,14 @@ class Services {
     }
   }
 
+  void enumServices(void Function(Service service) handler) {
+    if (_services != null) {
+      for (Service service in _services!) {
+        handler(service);
+      }
+    }
+  }
+
   static List<Service> _sort(List<Service> inputServices) {
     
     List<Service> queue = [];
