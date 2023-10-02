@@ -250,7 +250,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get loginType => _account?.authType?.code;
 
   bool get isLoggedIn => (_account?.id != null);
-  bool get isOidcLoggedIn => (_account?.authType?.code == Auth2Type.typeOidcIllinois || _account?.authType?.code == Auth2Type.typeOidc);
+  bool get isOidcLoggedIn => (_account?.authType?.code == oidcAuthType || _account?.authType?.code == Auth2Type.typeOidc);
   bool get isCodeLoggedIn => (_account?.authType?.code == Auth2Type.typeCode);
   bool get isPasswordLoggedIn => (_account?.authType?.code == Auth2Type.typePassword);
   bool get isPasskeyLoggedIn => (_account?.authType?.code == Auth2Type.typePasskey);
@@ -259,7 +259,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPhoneLinked => _account?.isIdentifierLinked(Auth2Identifier.typePhone) ?? false;
   bool get isUsernameLinked => _account?.isIdentifierLinked(Auth2Identifier.typeUsername) ?? false;
 
-  bool get isOidcLinked => _account?.isAuthTypeLinked(Auth2Type.typeOidcIllinois) ?? false;
+  bool get isOidcLinked => _account?.isAuthTypeLinked(oidcAuthType) ?? false;
   bool get isCodeLinked => _account?.isAuthTypeLinked(Auth2Type.typeCode) ?? false;
   bool get isPasswordLinked => _account?.isAuthTypeLinked(Auth2Type.typePassword) ?? false;
   bool get isPasskeyLinked => _account?.isAuthTypeLinked(Auth2Type.typePasskey) ?? false;
@@ -277,7 +277,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return identifiers;
   }
 
-  List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(Auth2Type.typeOidcIllinois) ?? [];
+  List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcAuthType) ?? [];
   List<Auth2Type> get linkedCode => _account?.getLinkedForAuthType(Auth2Type.typeCode) ?? [];
   List<Auth2Type> get linkedPassword => _account?.getLinkedForAuthType(Auth2Type.typePassword) ?? [];
   List<Auth2Type> get linkedPasskey => _account?.getLinkedForAuthType(Auth2Type.typePasskey) ?? [];
@@ -332,7 +332,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   // Overrides
   @protected
-  String? get oidcAuthType => Auth2Type.typeOidcIllinois;
+  String get oidcAuthType => Auth2Type.typeOidcIllinois;
 
   @protected
   Auth2UserPrefs get defaultAnonymousPrefs => Auth2UserPrefs.empty();
@@ -655,7 +655,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       if (_oidcAuthenticationCompleters == null) {
         _oidcAuthenticationCompleters = <Completer<Auth2OidcAuthenticateResult?>>[];
-        NotificationService().notify(notifyLoginStarted, Auth2Type.typeOidcIllinois);
+        NotificationService().notify(notifyLoginStarted, oidcAuthType);
 
         _OidcLogin? oidcLogin = await getOidcData();
         if (oidcLogin?.loginUrl != null) {
@@ -688,7 +688,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _processingOidcAuthentication = true;
     Auth2OidcAuthenticateResult result;
     if (_oidcLink == true) {
-      Auth2LinkResult linkResult = await linkAccountAuthType(Auth2Type.typeOidcIllinois, uri.toString(), _oidcLogin?.params);
+      Auth2LinkResult linkResult = await linkAccountAuthType(oidcAuthType, uri.toString(), _oidcLogin?.params);
       result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
     }
     else {
@@ -831,7 +831,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void completeOidcAuthentication(Auth2OidcAuthenticateResult? result) {
     
-    _notifyLogin(Auth2Type.typeOidcIllinois, result == Auth2OidcAuthenticateResult.succeeded);
+    _notifyLogin(oidcAuthType, result == Auth2OidcAuthenticateResult.succeeded);
 
     _oidcLogin = null;
     _oidcScope = null;
@@ -1299,11 +1299,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
         List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
         String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
         // Map<String, dynamic>? requestJson = JsonUtils.decode(message ?? '');
         if (authTypes != null) {
-          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, authTypes: authTypes));
+          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
           NotificationService().notify(notifyLinkChanged);
           return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
         }
@@ -1339,9 +1340,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+      List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
       List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
       if (authTypes != null) {
-        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, authTypes: authTypes));
+        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
         NotificationService().notify(notifyLinkChanged);
         return true;
       }
