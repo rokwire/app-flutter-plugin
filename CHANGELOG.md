@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load again content attributes JSON from content service [#359](https://github.com/rokwire/app-flutter-plugin/issues/359).
 - Build event time filters in local timezone [#377](https://github.com/rokwire/app-flutter-plugin/issues/377).
 - Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
-- Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
+- Integrate auth refactor [#379](https://github.com/rokwire/app-flutter-plugin/issues/379)
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
