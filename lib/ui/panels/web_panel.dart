@@ -139,7 +139,7 @@ class WebPanel extends StatefulWidget {
 }
 
 class WebPanelState extends State<WebPanel> implements NotificationsListener {
-
+  late flutter_webview.WebViewController _controller;
   bool? _isOnline;
   bool? _isTrackingEnabled;
   bool _isPageLoading = true;
@@ -152,9 +152,39 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
       AppLifecycle.notifyStateChanged,
       DeepLink.notifyUri,
     ]);
-    if (Platform.isAndroid) {
-      flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+
+    Uri? uri;
+    if (widget.url != null) {
+      uri = Uri.tryParse(widget.url!);
     }
+    _controller = flutter_webview.WebViewController()
+      ..setJavaScriptMode(flutter_webview.JavaScriptMode.unrestricted)
+      // ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        flutter_webview.NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {
+            setState(() {
+              _isPageLoading = false;
+            });
+          },
+          onWebResourceError: (flutter_webview.WebResourceError error) {},
+          onNavigationRequest: widget.processNavigation,
+        ),
+      );
+
+    if (uri != null) {
+      _controller.loadRequest(uri);
+    }
+
+    //TODO: See if we need to replace this
+    // if (Platform.isAndroid) {
+    //   flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+    // }
+
     widget.getOnline().then((bool isOnline) {
       setState(() {
         _isOnline = isOnline;
@@ -203,15 +233,8 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   Widget _buildWebView() {
     return Stack(children: [
       Visibility(visible: _isForeground,
-        child: flutter_webview.WebView(
-        initialUrl: widget.url,
-        javascriptMode: flutter_webview.JavascriptMode.unrestricted,
-        navigationDelegate: widget.processNavigation,
-        onPageFinished: (url) {
-          setState(() {
-            _isPageLoading = false;
-          });
-        },),),
+        child: flutter_webview.WebViewWidget(controller: _controller),
+      ),
       Visibility(visible: _isPageLoading,
         child: const Center(
           child: CircularProgressIndicator(),

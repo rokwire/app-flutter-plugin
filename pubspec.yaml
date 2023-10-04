@@ -39,7 +39,7 @@ dependencies:
   mime_type: ^1.0.0
   uuid: ^3.0.7
   flutter_html: ^3.0.0-beta.2
-  webview_flutter: ^3.0.4
+  webview_flutter: ^4.0.5
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.3.0
   flutter_secure_storage: ^8.0.0
