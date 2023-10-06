@@ -248,7 +248,7 @@ class Auth2AccountScope {
   final Set<Auth2UserPrefsScope>? prefs;
   final Set<Auth2UserProfileScope>? profile;
 
-  Auth2AccountScope({this.prefs, this.profile});
+  const Auth2AccountScope({this.prefs, this.profile});
 }
 
 ////////////////////////////////
