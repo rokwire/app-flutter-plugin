@@ -335,7 +335,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _OidcLogin? oidcLogin = await getOidcData();
         if (oidcLogin?.loginUrl != null) {
           _oidcLogin = oidcLogin;
-          _oidcScope = scope;
+          _oidcScope = scope ?? Auth2AccountScope(prefs: {Auth2UserPrefsScope.privacyLevel, Auth2UserPrefsScope.roles});
           _oidcLink = link;
           await _launchUrl(_oidcLogin?.loginUrl);
         }
