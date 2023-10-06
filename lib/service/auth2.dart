@@ -34,6 +34,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
+  static const Auth2AccountScope defaultLoginScope = const Auth2AccountScope(
+    prefs: { Auth2UserPrefsScope.privacyLevel, Auth2UserPrefsScope.roles }
+  );
+
+
   _OidcLogin? _oidcLogin;
   Auth2AccountScope? _oidcScope;
   bool? _oidcLink;
@@ -325,7 +330,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope, bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
 
       if (_oidcAuthenticationCompleters == null) {
@@ -543,7 +548,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2PhoneRequestCodeResult.failed;
   }
 
-  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code, { Auth2AccountScope? scope }) async {
+  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code, { Auth2AccountScope? scope = defaultLoginScope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null) && (code != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -582,7 +587,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Email Authentication
 
-  Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password, { Auth2AccountScope? scope }) async {
+  Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null) && (password != null)) {
       
       NotificationService().notify(notifyLoginStarted, emailLoginType);
@@ -741,7 +746,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Username Authentication
 
-  Future<Auth2UsernameSignInResult> authenticateWithUsername(String? username, String? password, { Auth2AccountScope? scope }) async {
+  Future<Auth2UsernameSignInResult> authenticateWithUsername(String? username, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
 
       NotificationService().notify(notifyLoginStarted, usernameLoginType);
@@ -786,7 +791,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2UsernameSignInResult.failed;
   }
 
-  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password, { Auth2AccountScope? scope }) async {
+  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
