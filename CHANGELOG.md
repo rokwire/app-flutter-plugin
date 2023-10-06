@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.6.0 -->
 
+## [1.5.4] - 2023-10-06
+### Changed
+- Set default preferences when user signs in [#393](https://github.com/rokwire/app-flutter-plugin/issues/393).
+
 ## [1.5.3] - 2023-09-27
 ### Changed
 - Acknowledged new Groups BB's API person identifier resolving [#387](https://github.com/rokwire/app-flutter-plugin/issues/387).
