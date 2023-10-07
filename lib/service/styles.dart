@@ -873,8 +873,9 @@ abstract class ImageSpec {
       fontFamily ??= imageSpec.fontFamily;
       fontPackage ??= imageSpec.fontPackage;
 
-      imageSpec = FontAwesomeImageSpec(type: type, source: source, size: size, color: color,
-          semanticLabel: semanticLabel, weight: weight, textDirection: textDirection);
+      imageSpec = MaterialIconImageSpec(type: type, source: source, size: size, color: color,
+          semanticLabel: semanticLabel, fill: fill, weight: weight, grade: grade, opticalSize: opticalSize,
+          fontFamily: fontFamily, fontPackage: fontPackage, textDirection: textDirection, matchTextDirection: matchTextDirection);
     }
     return imageSpec;
   }

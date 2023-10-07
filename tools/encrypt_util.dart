@@ -17,6 +17,8 @@ void main() async {
   // decryptAssetFile(encryptedFilepath, decryptedFile, encryptionKey, encryptionIV);
   // encryptAssetFile(decryptedFile, encryptedFilepath, encryptionKey, encryptionIV);
 
+  String tempFile = "plugin/tools/temp.enc";
+  String contents = File(tempFile).readAsStringSync();
   // String contents = """""";
   // print(decrypt(contents, key: encryptionKey, iv: encryptionIV));
   // print(encrypt(contents, key: encryptionKey, iv: encryptionIV));

@@ -27,7 +27,7 @@ dependencies:
   flutter_native_timezone: ^2.0.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
-  shared_preferences: ^2.0.17
+  shared_preferences: ^2.2.0
   package_info_plus: ^4.0.2
   device_info: ^2.0.3
   url_launcher: ^6.1.8
@@ -35,18 +35,21 @@ dependencies:
   flutter_local_notifications: ^12.0.4
   sqflite: ^2.1.0
   device_calendar: ^4.3.1
-  image_picker: ^0.8.6+1
+  image_picker: ^1.0.4
   mime_type: ^1.0.0
   uuid: ^3.0.7
   flutter_html: ^3.0.0-beta.2
-  webview_flutter: ^3.0.4
+  webview_flutter: ^4.0.5
   flutter_exif_rotation: ^0.5.1
   font_awesome_flutter: ^10.3.0
   flutter_secure_storage: ^8.0.0
   universal_html: ^2.2.3
   flutter_web_auth_2: ^2.1.4
   pinch_zoom: ^1.0.0
-  flutter_passkey: ^1.0.3
+  graphql_flutter: ^5.1.2
+
+  flutter_passkey:
+    git: https://github.com/rokmetro/flutter_passkey.git
 
   #Firebase
   firebase_core: ^2.13.0

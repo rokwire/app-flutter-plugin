@@ -597,20 +597,14 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'shibbolethLoggedIn') && (value is bool)) {
             result = result && (Auth2().isOidcLoggedIn == value);
           }
-          else if ((key == 'phoneLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isPhoneLoggedIn == value);
+          else if ((key == 'codeLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isCodeLoggedIn == value);
           }
-          else if ((key == 'emailLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isEmailLoggedIn == value);
-          }
-          else if ((key == 'usernameLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isUsernameLoggedIn == value);
+          else if ((key == 'passwordLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isPasswordLoggedIn == value);
           }
           else if ((key == 'passkeyLoggedIn') && (value is bool)) {
             result = result && (Auth2().isPasskeyLoggedIn == value);
-          }
-          else if ((key == 'phoneOrEmailLoggedIn') && (value is bool)) {
-            result = result && ((Auth2().isPhoneLoggedIn || Auth2().isEmailLoggedIn) == value) ;
           }
           else if ((key == 'shibbolethLinked') && (value is bool)) {
             result = result && (Auth2().isOidcLinked == value);

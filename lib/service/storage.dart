@@ -18,10 +18,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
-// import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-// import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -116,6 +114,19 @@ class Storage with Service {
       _sharedPreferences?.setString(name, value);
     } else {
       _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
+    return await _secureStorage?.read(key: name) ?? defaultValue;
+  }
+
+  Future<void> setSecureStringWithName(String name, String? value) async {
+    if (value != null) {
+      await _secureStorage?.write(key: name, value: value);
+    } else {
+      await _secureStorage?.delete(key: name);
     }
     NotificationService().notify(notifySettingChanged, name);
   }
@@ -261,24 +272,24 @@ class Storage with Service {
   Future<void> setAuth2AnonymousId(String? value) async => setStringWithName(auth2AnonymousIdKey, value);
 
   String get auth2AnonymousTokenKey => 'edu.illinois.rokwire.auth2.anonymous.token';
-  Future<Auth2Token?> getAuth2AnonymousToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousTokenKey)));
-  Future<void> setAuth2AnonymousToken(Auth2Token? value) async => await _secureStorage?.write(key: auth2AnonymousTokenKey, value: JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2AnonymousToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousTokenKey)));
+  Future<void> setAuth2AnonymousToken(Auth2Token? value) async => setSecureStringWithName(auth2AnonymousTokenKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousPrefsKey => 'edu.illinois.rokwire.auth2.anonymous.prefs';
-  Future<Auth2UserPrefs?> getAuth2AnonymousPrefs() async => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousPrefsKey)));
-  Future<void> setAuth2AnonymousPrefs(Auth2UserPrefs? value) async => await _secureStorage?.write(key: auth2AnonymousPrefsKey, value: JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserPrefs?> getAuth2AnonymousPrefs() async => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousPrefsKey)));
+  Future<void> setAuth2AnonymousPrefs(Auth2UserPrefs? value) async => setSecureStringWithName(auth2AnonymousPrefsKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousProfileKey => 'edu.illinois.rokwire.auth2.anonymous.profile';
-  Future<Auth2UserProfile?> getAuth2AnonymousProfile() async =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AnonymousProfileKey)));
-  Future<void> setAuth2AnonymousProfile(Auth2UserProfile? value) async => await _secureStorage?.write(key: auth2AnonymousProfileKey, value: JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserProfile?> getAuth2AnonymousProfile() async =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousProfileKey)));
+  Future<void> setAuth2AnonymousProfile(Auth2UserProfile? value) async => await setSecureStringWithName(auth2AnonymousProfileKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2TokenKey => 'edu.illinois.rokwire.auth2.token';
-  Future<Auth2Token?> getAuth2Token() async => Auth2Token.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2TokenKey)));
-  Future<void> setAuth2Token(Auth2Token? value) async => await _secureStorage?.write(key: auth2TokenKey, value: JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2Token() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2TokenKey)));
+  Future<void> setAuth2Token(Auth2Token? value) async => await setSecureStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AccountKey => 'edu.illinois.rokwire.auth2.account';
-  Future<Auth2Account?> getAuth2Account() async => Auth2Account.fromJson(JsonUtils.decodeMap(await _secureStorage?.read(key: auth2AccountKey)));
-  Future<void> setAuth2Account(Auth2Account? value) async => await _secureStorage?.write(key: auth2AccountKey, value: JsonUtils.encode(value?.toJson()));
+  Future<Auth2Account?> getAuth2Account() async => Auth2Account.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AccountKey)));
+  Future<void> setAuth2Account(Auth2Account? value) async => await setSecureStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
 
   // Http Proxy
   String get httpProxyEnabledKey =>  'edu.illinois.rokwire.http_proxy.enabled';

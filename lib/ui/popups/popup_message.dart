@@ -269,7 +269,7 @@ class ActionsMessage extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultMessageTextColor => AppColors.fillColorPrimary;
+  @protected Color? get defaultMessageTextColor => AppColors.textPrimary;
   @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
   @protected String? get defaultMessageFontFamily => AppFontFamilies.bold;

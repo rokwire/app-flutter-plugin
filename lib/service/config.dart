@@ -443,9 +443,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get upgradeAvailableVersion {
     dynamic availableVersion = upgradeStringEntry('available_version');
+    var upgradeVersions = Storage().reportedUpgradeVersions;
     bool upgradeAvailable = (availableVersion is String) &&
         (AppVersion.compareVersions(_packageInfo!.version, availableVersion) < 0) &&
-        !Storage().reportedUpgradeVersions.contains(availableVersion) &&
+        !upgradeVersions.contains(availableVersion) &&
         !_reportedUpgradeVersions.contains(availableVersion);
     return upgradeAvailable ? availableVersion : null;
   }

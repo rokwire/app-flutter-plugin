@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -69,80 +70,38 @@ class Auth2Token {
 }
 
 ////////////////////////////////
-// Auth2LoginType
-
-enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois, passkey }
-
-String? auth2LoginTypeToString(Auth2LoginType value) {
-  switch (value) {
-    case Auth2LoginType.anonymous: return 'anonymous';
-    case Auth2LoginType.apiKey: return 'api_key';
-    case Auth2LoginType.email: return 'email';
-    case Auth2LoginType.phone: return 'phone';
-    case Auth2LoginType.username: return 'username';
-    case Auth2LoginType.phoneTwilio: return 'twilio_phone';
-    case Auth2LoginType.oidc: return 'oidc';
-    case Auth2LoginType.oidcIllinois: return 'illinois_oidc';
-    case Auth2LoginType.passkey: return 'webauthn';
-  }
-}
-
-Auth2LoginType? auth2LoginTypeFromString(String? value) {
-  if (value == 'anonymous') {
-    return Auth2LoginType.anonymous;
-  }
-  else if (value == 'api_key') {
-    return Auth2LoginType.apiKey;
-  }
-  else if (value == 'email') {
-    return Auth2LoginType.email;
-  }
-  else if (value == 'phone') {
-    return Auth2LoginType.phone;
-  }
-  else if (value == 'username') {
-    return Auth2LoginType.username;
-  }
-  else if (value == 'twilio_phone') {
-    return Auth2LoginType.phoneTwilio;
-  }
-  else if (value == 'oidc') {
-    return Auth2LoginType.oidc;
-  }
-  else if (value == 'illinois_oidc') {
-    return Auth2LoginType.oidcIllinois;
-  }
-  else if (value == 'webauthn') {
-    return Auth2LoginType.passkey;
-  }
-  return null;
-}
-
-////////////////////////////////
 // Auth2Account
 
 class Auth2Account {
+  static const String notifySecretsChanged       = "edu.illinois.rokwire.account.secrets.changed";
+
   final String? id;
-  final String? username;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
+  final Map<String, dynamic> secrets;
   final List<Auth2StringEntry>? permissions;
   final List<Auth2StringEntry>? roles;
   final List<Auth2StringEntry>? groups;
+  final List<Auth2Identifier>? identifiers;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
-  
-  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  Auth2Account({this.id, this.profile, this.prefs, this.secrets = const {}, this.permissions,
+    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
+
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username,
+    Auth2UserProfile? profile, Auth2UserPrefs? prefs, Map<String, dynamic>? secrets,
+    List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups,
+    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
-      username: username ?? other?.username,
       profile: profile ?? other?.profile,
       prefs: prefs ?? other?.prefs,
+      secrets: secrets ?? other?.secrets ?? {},
       permissions: permissions ?? other?.permissions,
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
+      identifiers: identifiers ?? other?.identifiers,
       authTypes: authTypes ?? other?.authTypes,
       systemConfigs: systemConfigs ?? other?.systemConfigs,
     );
@@ -151,12 +110,13 @@ class Auth2Account {
   static Auth2Account? fromJson(Map<String, dynamic>? json, { Auth2UserPrefs? prefs, Auth2UserProfile? profile }) {
     return (json != null) ? Auth2Account(
       id: JsonUtils.stringValue(json['id']),
-      username: JsonUtils.stringValue(json['username']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
+      secrets: JsonUtils.mapValue(json['secrets']) ?? {}, //TBD Auth2
       permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
       roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
+      identifiers: Auth2Identifier.listFromJson(JsonUtils.listValue(json['identifiers'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
     ) : null;
@@ -165,12 +125,13 @@ class Auth2Account {
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
-      'username' : username,
       'profile': profile,
       'preferences': prefs,
+      'secrets': secrets,
       'permissions': permissions,
       'roles': roles,
       'groups': groups,
+      'identifiers': identifiers,
       'auth_types': authTypes,
       'system_configs': systemConfigs,
     };
@@ -180,22 +141,22 @@ class Auth2Account {
   bool operator ==(other) =>
     (other is Auth2Account) &&
       (other.id == id) &&
-      (other.username == username) &&
       (other.profile == profile) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
+      const DeepCollectionEquality().equals(other.identifiers, identifiers) &&
       const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
       const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
 
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
-    (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
+    (const DeepCollectionEquality().hash(identifiers)) ^
     (const DeepCollectionEquality().hash(authTypes)) ^
     (const DeepCollectionEquality().hash(systemConfigs));
 
@@ -203,14 +164,22 @@ class Auth2Account {
     return (id != null) && id!.isNotEmpty /* && (profile != null) && profile.isValid*/;
   }
 
-  Auth2Type? get authType {
-    return ((authTypes != null) && authTypes!.isNotEmpty) ? authTypes?.first : null;
+  Auth2Identifier? get identifier {
+    return ((identifiers != null) && identifiers!.isNotEmpty) ? identifiers?.first : null;
   }
 
-  bool isAuthTypeLinked(Auth2LoginType loginType) {
-    if (authTypes != null) {
-      for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType) {
+  String? get username {
+    List<Auth2Identifier> usernameIdentifiers = getLinkedForIdentifierType(Auth2Identifier.typeUsername);
+    if (usernameIdentifiers.isNotEmpty) {
+      return usernameIdentifiers.first.identifier;
+    }
+    return null;
+  }
+
+  bool isIdentifierLinked(String code) {
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.code == code) {
           return true;
         }
       }
@@ -218,11 +187,50 @@ class Auth2Account {
     return false;
   }
 
-  List<Auth2Type> getLinkedForAuthType(Auth2LoginType loginType) {
+  List<Auth2Identifier> getLinkedForIdentifierType(String code) {
+    List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.code == code) {
+          linkedTypes.add(identifier);
+        }
+      }
+    }
+    return linkedTypes;
+  }
+
+  List<Auth2Identifier> getLinkedForAuthTypeId(String id) {
+    List<Auth2Identifier> linkedTypes = <Auth2Identifier>[];
+    if (identifiers != null) {
+      for (Auth2Identifier identifier in identifiers!) {
+        if (identifier.accountAuthTypeId == id) {
+          linkedTypes.add(identifier);
+        }
+      }
+    }
+    return linkedTypes;
+  }
+
+  Auth2Type? get authType {
+    return ((authTypes != null) && authTypes!.isNotEmpty) ? authTypes?.first : null;
+  }
+
+  bool isAuthTypeLinked(String code) {
+    if (authTypes != null) {
+      for (Auth2Type authType in authTypes!) {
+        if (authType.code == code) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  List<Auth2Type> getLinkedForAuthType(String code) {
     List<Auth2Type> linkedTypes = <Auth2Type>[];
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.loginType == loginType) {
+        if (authType.code == code) {
           linkedTypes.add(authType);
         }
       }
@@ -246,6 +254,22 @@ class Auth2Account {
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
+
+  // Secrets
+
+  String? getSecretString(String? name, { String? defaultValue }) =>
+      JsonUtils.stringValue(getSecret(name)) ?? defaultValue;
+
+  dynamic getSecret(String? name) => secrets[name];
+
+  void applySecret(String name, dynamic value) {
+    if (value != null) {
+      secrets[name] = value;
+    } else {
+      secrets.remove(name);
+    }
+    NotificationService().notify(notifySecretsChanged, secrets);
+  }
 }
 
 class Auth2AccountScope {
@@ -271,9 +295,6 @@ class Auth2UserProfile {
   int?    _birthYear;
   String? _photoUrl;
 
-  String? _email;
-  String? _phone;
-  
   String? _address;
   String? _state;
   String? _zip;
@@ -282,9 +303,8 @@ class Auth2UserProfile {
   Map<String, dynamic>? _data;
   
   Auth2UserProfile({String? id, String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
-    String? address, String? state, String? zip, String? country,
-    Map<String, dynamic>? data
+    int? birthYear, String? photoUrl, String? address, String? state, String? zip,
+    String? country, Map<String, dynamic>? data
   }):
     _id = id,
     _firstName = firstName,
@@ -293,8 +313,6 @@ class Auth2UserProfile {
 
     _birthYear = birthYear,
     _photoUrl = photoUrl,
-    _email = email,
-    _phone = phone,
     
     _address = address,
     _state  = state,
@@ -314,8 +332,6 @@ class Auth2UserProfile {
 
       birthYear: JsonUtils.intValue(json['birth_year']),
       photoUrl: JsonUtils.stringValue(json['photo_url']),
-      email: JsonUtils.stringValue(json['email']),
-      phone: JsonUtils.stringValue(json['phone']),
   
       address: JsonUtils.stringValue(json['address']),
       state: JsonUtils.stringValue(json['state']),
@@ -345,9 +361,6 @@ class Auth2UserProfile {
       birthYear: birthYear ?? other._birthYear,
       photoUrl: photoUrl ?? other._photoUrl,
 
-      email: email ?? other._email,
-      phone: phone ?? other._phone,
-  
       address: address ?? other._address,
       state: state ?? other._state,
       zip: zip ?? other._zip,
@@ -366,8 +379,6 @@ class Auth2UserProfile {
 
       'birth_year': _birthYear,
       'photo_url': _photoUrl,
-      'email': _email,
-      'phone': _phone,
 
       'address': _address,
       'state': _state,
@@ -388,8 +399,6 @@ class Auth2UserProfile {
 
       (other._birthYear == _birthYear) &&
       (other._photoUrl == _photoUrl) &&
-      (other._email == _email) &&
-      (other._phone == _phone) &&
 
       (other._address == _address) &&
       (other._state == _state) &&
@@ -407,8 +416,6 @@ class Auth2UserProfile {
 
     (_birthYear?.hashCode ?? 0) ^
     (_photoUrl?.hashCode ?? 0) ^
-    (_email?.hashCode ?? 0) ^
-    (_phone?.hashCode ?? 0) ^
 
     (_address?.hashCode ?? 0) ^
     (_state?.hashCode ?? 0) ^
@@ -460,20 +467,6 @@ class Auth2UserProfile {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
-      if ((profile._email != _email) && (
-          (scope?.contains(Auth2UserProfileScope.email) ?? false) ||
-          ((profile._email?.isNotEmpty ?? false) && (_email?.isEmpty ?? true))
-      )) {
-        _email = profile._email;
-        modified = true;
-      }
-      if ((profile._phone != _phone) && (
-          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
-          ((profile._phone?.isNotEmpty ?? false) && (_phone?.isEmpty ?? true))
-      )) {
-        _phone = profile._phone;
-        modified = true;
-      }
 
       if ((profile._address != _address) && (
           (scope?.contains(Auth2UserProfileScope.address) ?? false) ||
@@ -522,8 +515,6 @@ class Auth2UserProfile {
 
   int?    get birthYear => _birthYear;
   String? get photoUrl => _photoUrl;
-  String? get email => _email;
-  String? get phone => _phone;
   
   String? get address => _address;
   String? get state => _state;
@@ -646,45 +637,152 @@ class Auth2StringEntry {
 enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, data }
 
 ////////////////////////////////
-// Auth2Type
+// Auth2Identifier
 
-class Auth2Type {
+class Auth2Identifier {
+  static const String typeEmail = 'email';
+  static const String typePhone = 'phone';
+  static const String typeUsername = 'username';
+  static const String typeUin = 'uin';
+  static const String typeNetId = 'net_id';
+
   final String? id;
-  final String? identifier;
-  final bool? active;
-  final bool? active2fa;
-  final bool? unverified;
   final String? code;
-  final Map<String, dynamic>? params;
+  final String? identifier;
+  final bool? verified;
+  final bool? linked;
+  final bool? sensitive;
+  final String? accountAuthTypeId;
   
-  final Auth2UiucUser? uiucUser;
-  final Auth2LoginType? loginType;
-  
-  Auth2Type({this.id, this.identifier, this.active, this.active2fa, this.unverified, this.code, this.params}) :
-    uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null,
-    loginType = auth2LoginTypeFromString(code);
+  Auth2Identifier({this.id, this.code, this.identifier, this.verified, this.linked, this.sensitive, this.accountAuthTypeId});
 
-  static Auth2Type? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? Auth2Type(
+  static Auth2Identifier? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Auth2Identifier(
       id: JsonUtils.stringValue(json['id']),
-      identifier: JsonUtils.stringValue(json['identifier']),
-      active: JsonUtils.boolValue(json['active']),
-      active2fa: JsonUtils.boolValue(json['active_2fa']),
-      unverified: JsonUtils.boolValue(json['unverified']),
       code: JsonUtils.stringValue(json['code']),
-      params: JsonUtils.mapValue(json['params']),
+      identifier: JsonUtils.stringValue(json['identifier']),
+      verified: JsonUtils.boolValue(json['verified']),
+      linked: JsonUtils.boolValue(json['linked']),
+      sensitive: JsonUtils.boolValue(json['sensitive']),
+      accountAuthTypeId: JsonUtils.stringValue(json['account_auth_type_id']),
     ) : null;
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id' : id,
-      'identifier': identifier,
-      'active': active,
-      'active_2fa': active2fa,
-      'unverified': unverified,
       'code': code,
+      'identifier': identifier,
+      'verified': verified,
+      'linked': linked,
+      'sensitive': sensitive,
+      'account_auth_type_id': accountAuthTypeId,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2Identifier) &&
+      (other.id == id) &&
+      (other.code == code) &&
+      (other.identifier == identifier) &&
+      (other.verified == verified) &&
+      (other.linked == linked) &&
+      (other.sensitive == sensitive) &&
+      (other.accountAuthTypeId == accountAuthTypeId);
+
+  @override
+  int get hashCode =>
+    (id?.hashCode ?? 0) ^
+    (identifier?.hashCode ?? 0) ^
+    (code?.hashCode ?? 0) ^
+    (verified?.hashCode ?? 0) ^
+    (linked?.hashCode ?? 0) ^
+    (sensitive?.hashCode ?? 0) ^
+    (accountAuthTypeId?.hashCode ?? 0);
+
+  String? get uin {
+    return (code == typeUin) ? identifier : null;
+  }
+
+  String? get phone {
+    return (code == typePhone) ? identifier : null;
+  }
+
+  String? get email {
+    return (code == typeEmail) ? identifier : null;
+  }
+
+  String? get username {
+    return (code == typeUsername) ? identifier : null;
+  }
+
+  static List<Auth2Identifier>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Identifier>? result;
+    if (jsonList != null) {
+      result = <Auth2Identifier>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Auth2Identifier.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2Identifier>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+}
+
+////////////////////////////////
+// Auth2Type
+
+class Auth2Type {
+  static const String typeAnonymous = 'anonymous';
+  static const String typeApiKey = 'api_key';
+  static const String typePassword = 'password';
+  static const String typeCode = 'code';
+  static const String typeOidc = 'oidc';
+  static const String typeOidcIllinois = 'illinois_oidc';
+  static const String typePasskey = 'webauthn';
+
+  final String? id;
+  final String? code;
+  final bool? active;
+  final Map<String, dynamic>? params;
+  final DateTime? dateCreated;
+  final DateTime? dateUpdated;
+
+  final Auth2UiucUser? uiucUser;
+  
+  Auth2Type({this.id, this.code, this.active, this.params, this.dateCreated, this.dateUpdated}) :
+    uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null;
+
+  static Auth2Type? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Auth2Type(
+      id: JsonUtils.stringValue(json['id']),
+      code: JsonUtils.stringValue(json['auth_type_code']),
+      active: JsonUtils.boolValue(json['active']),
+      params: JsonUtils.mapValue(json['params']),
+      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']),
+      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id' : id,
+      'auth_type_code': code,
+      'active': active,
       'params': params,
+      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
+      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
     };
   }
 
@@ -692,34 +790,16 @@ class Auth2Type {
   bool operator ==(other) =>
     (other is Auth2Type) &&
       (other.id == id) &&
-      (other.identifier == identifier) &&
-      (other.active == active) &&
-      (other.active2fa == active2fa) &&
-      (other.unverified == unverified) &&
       (other.code == code) &&
+      (other.active == active) &&
       const DeepCollectionEquality().equals(other.params, params);
 
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
-    (identifier?.hashCode ?? 0) ^
-    (active?.hashCode ?? 0) ^
-    (active2fa?.hashCode ?? 0) ^
-    (unverified?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
+    (active?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(params));
-
-  String? get uin {
-    return (loginType == Auth2LoginType.oidcIllinois) ? identifier : null;
-  }
-
-  String? get phone {
-    return (loginType == Auth2LoginType.phoneTwilio) ? identifier : null;
-  }
-
-  String? get email {
-    return (loginType == Auth2LoginType.email) ? identifier : null;
-  }
 
   static List<Auth2Type>? listFromJson(List<dynamic>? jsonList) {
     List<Auth2Type>? result;

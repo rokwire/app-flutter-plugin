@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Load again content attributes JSON from content service [#359](https://github.com/rokwire/app-flutter-plugin/issues/359).
 - Build event time filters in local timezone [#377](https://github.com/rokwire/app-flutter-plugin/issues/377).
 - Upgrade to connectivity_plus [#45](https://github.com/rokmetro/vogue-app/issues/45).
+- Integrate auth refactor [#379](https://github.com/rokwire/app-flutter-plugin/issues/379)
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Override survey action summary [#373](https://github.com/rokwire/app-flutter-plugin/issues/373)
 - Added registrationOccupancy to Event2PersonsResult and relevant utility methods [#375](https://github.com/rokwire/app-flutter-plugin/issues/375).
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
+- Handle more identifiers using passkeys and linking [#330](https://github.com/rokwire/app-flutter-plugin/issues/330)
 
 ### Fixed
 - Upgrade dependencies for Flutter v3.10 [#285](https://github.com/rokwire/app-flutter-plugin/issues/285)
