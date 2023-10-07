@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -72,24 +73,31 @@ class Auth2Token {
 // Auth2Account
 
 class Auth2Account {
+  static const String notifySecretsChanged       = "edu.illinois.rokwire.account.secrets.changed";
+
   final String? id;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
+  final Map<String, dynamic> secrets;
   final List<Auth2StringEntry>? permissions;
   final List<Auth2StringEntry>? roles;
   final List<Auth2StringEntry>? groups;
   final List<Auth2Identifier>? identifiers;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
-  
-  Auth2Account({this.id, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions,
-    List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  Auth2Account({this.id, this.profile, this.prefs, this.secrets = const {}, this.permissions,
+    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
+
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username,
+    Auth2UserProfile? profile, Auth2UserPrefs? prefs, Map<String, dynamic>? secrets,
+    List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups,
+    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       profile: profile ?? other?.profile,
       prefs: prefs ?? other?.prefs,
+      secrets: secrets ?? other?.secrets ?? {},
       permissions: permissions ?? other?.permissions,
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
@@ -104,6 +112,7 @@ class Auth2Account {
       id: JsonUtils.stringValue(json['id']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
+      secrets: JsonUtils.mapValue(json['secrets']) ?? {}, //TBD Auth2
       permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
       roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
@@ -118,6 +127,7 @@ class Auth2Account {
       'id' : id,
       'profile': profile,
       'preferences': prefs,
+      'secrets': secrets,
       'permissions': permissions,
       'roles': roles,
       'groups': groups,
@@ -244,6 +254,22 @@ class Auth2Account {
   bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
+
+  // Secrets
+
+  String? getSecretString(String? name, { String? defaultValue }) =>
+      JsonUtils.stringValue(getSecret(name)) ?? defaultValue;
+
+  dynamic getSecret(String? name) => secrets[name];
+
+  void applySecret(String name, dynamic value) {
+    if (value != null) {
+      secrets[name] = value;
+    } else {
+      secrets.remove(name);
+    }
+    NotificationService().notify(notifySecretsChanged, secrets);
+  }
 }
 
 class Auth2AccountScope {
@@ -730,10 +756,12 @@ class Auth2Type {
   final String? code;
   final bool? active;
   final Map<String, dynamic>? params;
-  
+  final DateTime? dateCreated;
+  final DateTime? dateUpdated;
+
   final Auth2UiucUser? uiucUser;
   
-  Auth2Type({this.id, this.code, this.active, this.params}) :
+  Auth2Type({this.id, this.code, this.active, this.params, this.dateCreated, this.dateUpdated}) :
     uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null;
 
   static Auth2Type? fromJson(Map<String, dynamic>? json) {
@@ -742,6 +770,8 @@ class Auth2Type {
       code: JsonUtils.stringValue(json['auth_type_code']),
       active: JsonUtils.boolValue(json['active']),
       params: JsonUtils.mapValue(json['params']),
+      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']),
+      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
     ) : null;
   }
 
@@ -751,6 +781,8 @@ class Auth2Type {
       'auth_type_code': code,
       'active': active,
       'params': params,
+      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
+      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
     };
   }
 

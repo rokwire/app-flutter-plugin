@@ -32,6 +32,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
   static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
 
@@ -60,6 +61,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   Client? _updateUserProfileClient;
   Timer? _updateUserProfileTimer;
+
+  Client? _updateUserSecretsClient;
+  Timer? _updateUserSecretsTimer;
 
   Auth2Token? _token;
   Auth2Account? _account;
@@ -96,6 +100,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       AppLifecycle.notifyStateChanged,
       Auth2UserProfile.notifyChanged,
       Auth2UserPrefs.notifyChanged,
+      Auth2Account.notifySecretsChanged,
     ]);
   }
 
@@ -170,6 +175,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     else if (name == AppLifecycle.notifyStateChanged) {
       onAppLifecycleStateChanged(param);
+    }
+    else if (name == Auth2Account.notifySecretsChanged) {
+      onAccountSecretsChanged(param);
     }
   }
 
@@ -1567,6 +1575,49 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           });
         }
         _updateUserPrefsClient = null;
+      }
+    }
+  }
+
+  // Account Secrets
+
+  @protected
+  Future<void> onAccountSecretsChanged(Map<String, dynamic>? secrets) async {
+    if (identical(secrets, _account?.secrets)) {
+      await Storage().setAuth2Account(_account);
+      NotificationService().notify(notifySecretsChanged);
+      return _saveAccountSecrets();
+    }
+    return;
+  }
+
+  Future<void> _saveAccountSecrets() async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.secrets != null)) {
+      String url = "${Config().coreUrl}/services/account/secrets";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode(_account!.secrets);
+
+      Client client = Client();
+      _updateUserSecretsClient?.close();
+      _updateUserSecretsClient = client;
+
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: _updateUserSecretsClient);
+
+      if (identical(client, _updateUserSecretsClient)) {
+        if (response?.statusCode == 200) {
+          _updateUserSecretsTimer?.cancel();
+          _updateUserSecretsClient = null;
+        }
+        else {
+          _updateUserSecretsTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
+            if (_updateUserSecretsClient == null) {
+              _saveAccountSecrets();
+            }
+          });
+        }
+        _updateUserSecretsClient = null;
       }
     }
   }
