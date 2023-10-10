@@ -587,19 +587,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
                 return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
               }
             } catch(error) {
-              if (error is PlatformException) {
-                switch (error.code) {
-                  // no credentials found
-                  case "NoCredentialException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
-                  // user cancelled on device auth
-                  case "GetPublicKeyCredentialDomException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
-                  // user cancelled on select passkey
-                  case "GetCredentialCancellationException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
-                }
+              if (error is PlatformException && error.code == "NoCredentialException") {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
               }
-              errorMessage = error.toString();
-              Log.e(errorMessage);
+
+              debugPrint(error.toString());
             }
+
+            if (error is PlatformException) {
+              switch (error.code) {
+                // user cancelled on device auth
+                case "GetPublicKeyCredentialDomException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+                // user cancelled on select passkey
+                case "GetCredentialCancellationException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+              }
+            }
+            
+            debugPrint(error.toString());
           }
         } else {
           Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response.body));
