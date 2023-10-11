@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Only return null on unsuccessful survey responses request [#349](https://github.com/rokwire/app-flutter-plugin/issues/349)
 - Local notifications repeating weekly [#365](https://github.com/rokwire/app-flutter-plugin/issues/365)
 - Groups load upcoming events [#3645](https://github.com/rokwire/illinois-app/issues/3645).
+- Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
 
 ## [1.4.0] - 2023-05-12
 ### Fixed
