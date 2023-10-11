@@ -504,6 +504,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
+  bool get isProduction => _configEnvironment == ConfigEnvironment.production;
+  bool get isTest => _configEnvironment == ConfigEnvironment.test;
+  bool get isDev => _configEnvironment == ConfigEnvironment.dev;
+
   ConfigEnvironment? get configEnvironment {
     return _configEnvironment;
   }
