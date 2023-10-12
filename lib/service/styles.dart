@@ -20,6 +20,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:flutter/services.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
@@ -27,6 +28,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/ui/widgets/ui_image.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
@@ -51,19 +53,16 @@ class Styles extends Service implements NotificationsListener{
   Map<String, dynamic>? _netAssetsStyles;
   Map<String, dynamic>? _debugAssetsStyles;
 
-  UiColors? _colors;
-  UiColors? get colors => _colors;
+  Map<String, UiTheme> _themes = {};
+  List<String> get themes => _themes.keys.toList();
 
-  UiFontFamilies? _fontFamilies;
-  UiFontFamilies? get fontFamilies => _fontFamilies;
+  UiTheme? _theme;
+  UiColors? get colors => _theme?.colors;
+  UiFontFamilies? get fontFamilies => _theme?.fontFamilies;
+  UiTextStyles? get textStyles => _theme?.textStyles;
+  UiImages? get images => _theme?.images;
 
-  UiTextStyles? _textStyles;
-  UiTextStyles? get textStyles => _textStyles;
-
-  UiImages? _images;
-  UiImages? get images => _images;
-
-  // Singletone Factory
+  // Singleton Factory
 
   static Styles? _instance;
 
@@ -116,7 +115,7 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Config() };
+    return { Config(), Storage() };
   }
 
   // NotificationsListener
@@ -233,10 +232,45 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<void> build() async {
     Map<String, dynamic> styles = contentMap;
-    _colors = await compute(UiColors.fromJson, JsonUtils.mapValue(styles['color']));
-    _fontFamilies = await compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family']));
-    _textStyles = await compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: _colors, fontFamilies: _fontFamilies));
-    _images = await compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: _colors, assetPathResolver: resolveImageAssetPath));
+    Map<String, Map<String, dynamic>> themes = JsonUtils.mapOfStringToMapOfStringsValue(styles['themes']) ?? {};
+    UiTheme defaultTheme = await UiTheme.fromJson(styles, resolveImageAssetPath);
+    _themes['default'] = defaultTheme;
+    for (MapEntry<String, Map<String, dynamic>> theme in themes.entries) {
+      if (theme.value.isNotEmpty) {
+        Map<String, dynamic>? themeData = MapUtils.mergeToNew(styles, theme.value, level: 1);
+        _themes[theme.key] = await UiTheme.fromJson(themeData, resolveImageAssetPath);
+      } else {
+        _themes[theme.key] = defaultTheme;
+      }
+    }
+    _applySelectedTheme();
+  }
+
+  void _applySelectedTheme() {
+    String? selectedTheme = _getSelectedTheme();
+    UiTheme? themeData = _themes[selectedTheme ?? 'default'];
+    if (themeData != null) {
+      _theme = themeData;
+    }
+  }
+
+  Future<void> applyTheme(String? theme) async {
+    Storage().selectedTheme = theme;
+    _applySelectedTheme();
+    NotificationService().notify(notifyChanged, null);
+  }
+
+  String? _getSelectedTheme() {
+    String? selectedTheme = Storage().selectedTheme;
+    if (selectedTheme == 'system') {
+      var brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
+      if (brightness == Brightness.light) {
+        selectedTheme = 'light';
+      } else if (brightness == Brightness.dark) {
+        selectedTheme = 'dark';
+      }
+    }
+    return selectedTheme;
   }
 
   Map<String, dynamic> get contentMap {
@@ -283,6 +317,23 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<Map<String, dynamic>?> loadAssetsManifest() async {
     return JsonUtils.decodeMap(await rootBundle.loadString('AssetManifest.json'));
+  }
+}
+
+class UiTheme {
+  UiColors? colors;
+  UiFontFamilies? fontFamilies;
+  UiTextStyles? textStyles;
+  UiImages? images;
+
+  UiTheme({this.colors, this.fontFamilies, this.textStyles, this.images});
+
+  static Future<UiTheme> fromJson(Map<String, dynamic> styles, String Function(Uri)? assetPathResolver) async {
+    UiColors? colors = await compute(UiColors.fromJson, JsonUtils.mapValue(styles['color']));
+    UiFontFamilies? fontFamilies = await compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family']));
+    UiTextStyles? textStyles = await compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies));
+    UiImages? images = await compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver));
+    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: textStyles, images: images);
   }
 }
 

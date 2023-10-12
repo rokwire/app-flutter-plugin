@@ -10,6 +10,7 @@ Map<String, String> classMap = {
   'text_style': 'AppTextStyles',
   'font_family': 'AppFontFamilies',
   'image': 'AppImages',
+  'themes': 'AppThemes',
 };
 
 Map<String, String> typesMap = {
@@ -17,6 +18,7 @@ Map<String, String> typesMap = {
   'text_style': 'TextStyle',
   'font_family': 'String',
   'image': 'UiImage',
+  'themes': 'String',
 };
 
 Map<String, String> refsMap = {
@@ -24,6 +26,7 @@ Map<String, String> refsMap = {
   'text_style': 'Styles().textStyles?.getTextStyle(%key)',
   'font_family': 'Styles().fontFamilies?.fromCode(%key)',
   'image': 'Styles().images?.getImage(%key)',
+  'themes': '%key',
 };
 
 Map<String, Function(String, MapEntry<String, dynamic>)> defaultFuncs = {
@@ -104,7 +107,7 @@ void main(List<String> arguments) async {
   }
 }
 
-String _prettyJsonEncode(Map<String, dynamic> jsonObject){
+String _prettyJsonEncode(Map<String, dynamic> jsonObject, {bool deepFormat = false}){
   String out = '{';
   bool first = true;
   for (MapEntry<String, dynamic> entry in jsonObject.entries) {
@@ -119,11 +122,19 @@ String _prettyJsonEncode(Map<String, dynamic> jsonObject){
         if (!firstSub) {
           out += ',';
         }
-        out += '\n';
         Map<String, dynamic> subMap = {};
         subMap.addEntries([subentry]);
-        String valJson = json.encode(subMap).replaceAll(':', ': ');
-        out += '    ${valJson.substring(1, valJson.length - 1)}';
+        String valJson;
+        if (entry.key == 'themes' || deepFormat) {
+          valJson = _prettyJsonEncode(subMap, deepFormat: entry.key == 'themes');
+          valJson = valJson.substring(1, valJson.length - 2);
+          valJson = valJson.replaceAll('\n', '\n  ');
+        } else {
+          valJson = json.encode(subMap).replaceAll(':', ': ');
+          valJson = valJson.substring(1, valJson.length - 1);
+          out += '\n';
+        }
+        out += '    ${valJson}';
         firstSub = false;
       }
     } else {

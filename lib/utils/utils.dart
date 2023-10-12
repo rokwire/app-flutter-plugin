@@ -372,6 +372,13 @@ class MapUtils {
     return null;
   }
 
+  static Map<String, dynamic> mergeToNew(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
+    Map<String, dynamic> out = {};
+    out.addAll(dest);
+    merge(dest, src, level: level);
+    return out;
+  }
+
   static void merge(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
     src?.forEach((String key, dynamic srcV) {
       dynamic destV = dest[key];
@@ -888,6 +895,29 @@ class JsonUtils {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Map<String, dynamic>? mapStringsValue(dynamic value) {
+    try {
+      return (value is Map<String, dynamic>) ? value : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, Map<String, dynamic>>? mapOfStringToMapOfStringsValue(dynamic value) {
+    Map<String, Map<String, dynamic>>? result;
+    if (value is Map) {
+      result = <String, Map<String, dynamic>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, mapStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
   }
 
   static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) {

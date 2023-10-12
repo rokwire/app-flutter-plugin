@@ -4,6 +4,10 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/ui_image.dart';
 import 'package:flutter/material.dart';
 
+class AppThemes {
+    static String get system => 'system';
+}
+
 class AppColors {
     static Color get fillColorPrimary => Styles().colors?.getColor('fillColorPrimary') ?? const Color(0xFF002855);
     static Color get fillColorPrimaryVariant => Styles().colors?.getColor('fillColorPrimaryVariant') ?? const Color(0xFF0F2040);

@@ -313,6 +313,11 @@ class Storage with Service {
   String? get selectedLanguage => getStringWithName(selectedLanguageKey);
   set selectedLanguage(String? value) => setStringWithName(selectedLanguageKey, value);
 
+  // Theme
+  static const String selectedThemeKey  = 'edu.illinois.rokwire.theme.selected';
+  String? get selectedTheme => getStringWithName(selectedThemeKey);
+  set selectedTheme(String? value) => setStringWithName(selectedThemeKey, value);
+
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
   String? get inboxFirebaseMessagingToken => getStringWithName(inboxFirebaseMessagingTokenKey);

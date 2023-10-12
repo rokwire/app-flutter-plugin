@@ -1,4 +1,7 @@
 {
+  "themes": {
+    "system": {}
+  },
   "color": {
     "fillColorPrimary"                      :"#002855",
     "fillColorPrimaryVariant"               :"#0F2040",
