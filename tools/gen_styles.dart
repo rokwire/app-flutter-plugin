@@ -45,7 +45,7 @@ Map<String, String> textStyleFields = {
   'decoration': 'decoration:TextDecoration',
   'overflow': 'overflow:TextOverflow',
   'decoration_style': 'decorationStyle:TextDecorationStyle',
-  'font_weight': 'fontWeight:FontWeight',
+  'weight': 'fontWeight:FontWeight',
 };
 
 String capitalize(String s) => s[0].toUpperCase() + s.substring(1);
@@ -232,7 +232,7 @@ String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<St
       }
       String? styleClass = classMap[entry.key];
       if (styleClass != null) {
-        params += ': $styleClass.${entry.value}';
+        params += ': $styleClass.${camelCase(entry.value)}';
       } else {
         params += ': $enumType${entry.value}';
       }
