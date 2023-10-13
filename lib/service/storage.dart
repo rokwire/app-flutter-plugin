@@ -287,6 +287,10 @@ class Storage with Service {
   Future<Auth2Token?> getAuth2Token() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2TokenKey)));
   Future<void> setAuth2Token(Auth2Token? value) async => await setSecureStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
 
+  String get auth2OidcTokenKey => 'edu.illinois.rokwire.auth2.oidc.token';
+  Future<Auth2Token?> getAuth2OidcToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2OidcTokenKey)));
+  Future<void> setAuth2OidcToken(Auth2Token? value) async => await setSecureStringWithName(auth2OidcTokenKey, JsonUtils.encode(value?.toJson()));
+
   String get auth2AccountKey => 'edu.illinois.rokwire.auth2.account';
   Future<Auth2Account?> getAuth2Account() async => Auth2Account.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AccountKey)));
   Future<void> setAuth2Account(Auth2Account? value) async => await setSecureStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));

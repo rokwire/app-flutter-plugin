@@ -68,6 +68,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2Token? _token;
   Auth2Account? _account;
 
+  Auth2Token? _oidcToken;
+
   String? _anonymousId;
   Auth2Token? _anonymousToken;
   Auth2UserPrefs? _anonymousPrefs;
@@ -113,6 +115,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> initService() async {
     _token = await Storage().getAuth2Token();
     _account = await Storage().getAuth2Account();
+    _oidcToken = await Storage().getAuth2OidcToken();
 
     _anonymousId = Storage().auth2AnonymousId;
     _anonymousToken = await Storage().getAuth2AnonymousToken();
@@ -250,7 +253,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2Token? get anonymousToken => _anonymousToken;
   Auth2Account? get account => _account;
   String? get deviceId => _deviceId;
-  
+
+  Auth2Token? get oidcToken => _oidcToken;
+
   bool get associateAnonymousIds => false;
   String? get accountId => _account?.id ?? _anonymousId;
   Auth2UserPrefs? get prefs => _account?.prefs ?? _anonymousPrefs;
@@ -761,6 +766,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope, Map<String, dynamic>? params }) async {
+    Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
     _refreshTokenFailCounts.remove(_token?.refreshToken);
 
@@ -770,11 +776,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs, scope: scope?.prefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile, scope: scope?.profile);
     _token = token;
+    _oidcToken = oidcToken;
     _account = account;
     await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null);
     await Storage().setAuth2AnonymousProfile(_anonymousProfile = null);
     if (!kIsWeb) {
       await Storage().setAuth2Token(token);
+      await Storage().setAuth2OidcToken(oidcToken);
       await Storage().setAuth2Account(account);
     }
 
