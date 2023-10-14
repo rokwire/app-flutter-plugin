@@ -5,6 +5,8 @@ import 'package:rokwire_plugin/ui/widgets/ui_image.dart';
 import 'package:flutter/material.dart';
 
 class AppThemes {
+    static String get light => 'light';
+    static String get dark => 'dark';
     static String get system => 'system';
 }
 

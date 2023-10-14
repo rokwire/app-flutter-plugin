@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'package:flutter/services.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -260,14 +261,24 @@ class Styles extends Service implements NotificationsListener{
     NotificationService().notify(notifyChanged, null);
   }
 
+  Future<void> updateSystemTheme() async {
+    if (Storage().selectedTheme == AppThemes.system) {
+      Styles().applyTheme(AppThemes.system);
+    }
+  }
+
   String? _getSelectedTheme() {
     String? selectedTheme = Storage().selectedTheme;
-    if (selectedTheme == 'system') {
+    if (selectedTheme == null) {
+      Storage().selectedTheme = AppThemes.system;
+    }
+
+    if (selectedTheme == AppThemes.system) {
       var brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
       if (brightness == Brightness.light) {
-        selectedTheme = 'light';
+        selectedTheme = AppThemes.light;
       } else if (brightness == Brightness.dark) {
-        selectedTheme = 'dark';
+        selectedTheme = AppThemes.dark;
       }
     }
     return selectedTheme;
