@@ -581,11 +581,11 @@ class UiTextStyles {
 
     //Extending capabilities
     String? extendsKey = JsonUtils.stringValue(style['extends']);
-    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesJson!=null ? JsonUtils.mapValue(stylesJson[extendsKey]) : null);
+    Map<String, dynamic>? ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesJson!=null ? JsonUtils.mapValue(stylesJson[extendsKey]) : null);
     TextStyle? ancestorTextStyle = constructTextStyle(ancestorStyleMap, stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
-    bool overrides =  JsonUtils.boolValue(style["override"]) ?? true;
+    bool overrides = JsonUtils.boolValue(style["override"]) ?? true;
 
-    if(ancestorTextStyle != null ){
+    if (ancestorTextStyle != null) {
       return overrides ? ancestorTextStyle.merge(textStyle) : ancestorTextStyle;
     }
 

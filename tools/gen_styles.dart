@@ -29,9 +29,9 @@ Map<String, String> refsMap = {
   'themes': '%key',
 };
 
-Map<String, Function(String, MapEntry<String, dynamic>)> defaultFuncs = {
+Map<String, Function(String, MapEntry<String, dynamic>, {Map<String, dynamic>? data})> defaultFuncs = {
   'color': _buildDefaultColor,
-  'text_style': (name, json) => _buildDefaultClass(name, json, classFields: textStyleFields),
+  'text_style': (name, entry, {data}) => _buildDefaultClass(name, entry, data: data, classFields: textStyleFields),
   'font_family': _buildDefaultString,
   'image': _buildDefaultImage,
 };
@@ -201,7 +201,7 @@ String? _buildClass(String name, Map<String, dynamic> json) {
   for (MapEntry<String, dynamic> entry in json.entries) {
     String varName = camelCase(entry.key);
     String varRef = ref.replaceAll("%key", "'${entry.key}'");
-    String? defaultObj = defaultFuncs[name]?.call(name, entry);
+    String? defaultObj = defaultFuncs[name]?.call(name, entry, data: json);
     String defaultObjString = defaultObj != null ? ' ?? $defaultObj' : '';
     classString += "    static $type get $varName => $varRef$defaultObjString;\n";
     replacements[varRef] = '$className.$varName';
@@ -210,7 +210,7 @@ String? _buildClass(String name, Map<String, dynamic> json) {
   return classString;
 }
 
-String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<String, String>? classFields}) {
+String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<String, String>? classFields, Map<String, dynamic>? data}) {
   String? type = typesMap[name];
   if (type == null) {
     return null;
@@ -218,16 +218,23 @@ String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<St
 
   dynamic value = entry.value;
   if (value is Map<String, dynamic>) {
+    String? extendsKey = value['extends'];
+    if (extendsKey != null) {
+      dynamic extendsMap = data?[extendsKey];
+      if (extendsMap is Map<String, dynamic>) {
+        _mergeMaps(extendsMap, value);
+        value = extendsMap;
+      }
+    }
     String params = '';
     for (MapEntry<String, dynamic> entry in value.entries) {
-      if (params.isNotEmpty) {
-        params += ', ';
-      }
-
       String enumType = '';
       if (classFields != null) {
         String? field = classFields[entry.key];
         if (field != null) {
+          if (params.isNotEmpty) {
+            params += ', ';
+          }
           List<String> fields = field.split(':');
           if (fields.length == 2) {
             params += fields[0];
@@ -253,7 +260,7 @@ String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<St
   return null;
 }
 
-String? _buildDefaultColor(String name, MapEntry<String, dynamic> entry) {
+String? _buildDefaultColor(String name, MapEntry<String, dynamic> entry, {Map<String, dynamic>? data}) {
   dynamic value = entry.value;
   if (value is String ) {
     value = value.replaceFirst('#', '');
@@ -265,14 +272,14 @@ String? _buildDefaultColor(String name, MapEntry<String, dynamic> entry) {
   return null;
 }
 
-String? _buildDefaultString(String name, MapEntry<String, dynamic> entry) {
+String? _buildDefaultString(String name, MapEntry<String, dynamic> entry, {Map<String, dynamic>? data}) {
   if (entry.value is String) {
     return "'${entry.value}'";
   }
   return null;
 }
 
-String? _buildDefaultImage(String name, MapEntry<String, dynamic> entry) {
+String? _buildDefaultImage(String name, MapEntry<String, dynamic> entry, {Map<String, dynamic>? data}) {
   return 'UiImage(spec: ImageSpec.fromJson(${json.encode(entry.value)}))';
 }
 
@@ -310,4 +317,10 @@ void _updateCodeRefs(String libPath, String genFilepath) async {
       entity.writeAsStringSync(data);
     }
   }
+}
+
+void _mergeMaps(Map<String, dynamic> dest, Map<String, dynamic>? src) {
+  src?.forEach((String key, dynamic val) {
+    dest[key] = val;
+  });
 }
