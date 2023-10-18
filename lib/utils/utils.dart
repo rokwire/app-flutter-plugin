@@ -187,6 +187,8 @@ class StringUtils {
       return chars [indexRandom];
     }).join('');
   }
+
+  static T? invokeIfExists<T>(String? val, T Function(String val) inv) => (val != null) ? inv(val) : null;
 }
 
 class CollectionUtils {
