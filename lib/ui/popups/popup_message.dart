@@ -210,6 +210,8 @@ class ActionsMessage extends StatelessWidget {
   final EdgeInsetsGeometry titlePadding;
   final Color? titleBarColor;
   final Widget? closeButtonIcon;
+
+  final Color? backgroundColor;
   
   final String? message;
   final TextStyle? messageTextStyle;
@@ -238,6 +240,8 @@ class ActionsMessage extends StatelessWidget {
     this.titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.titleBarColor,
     this.closeButtonIcon,
+
+    this.backgroundColor,
     
     this.message,
     this.messageTextStyle,
@@ -256,6 +260,9 @@ class ActionsMessage extends StatelessWidget {
     this.border,
     this.borderRadius,
   }) : super(key: key);
+
+  @protected Color? get defaultBackgroundColor => AppColors.surface;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
 
   @protected Color? get defaultTitleBarColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
@@ -290,6 +297,7 @@ class ActionsMessage extends StatelessWidget {
   static Future<T?> show<T>({
     String? title,
     TextStyle? titleTextStyle,
+    Color? backgroundColor,
     Color? titleTextColor,
     String? titleFontFamily,
     double titleFontSize = 20,
@@ -328,6 +336,8 @@ class ActionsMessage extends StatelessWidget {
       titlePadding: titlePadding,
       titleBarColor: titleBarColor,
       closeButtonIcon: closeButtonIcon,
+
+      backgroundColor: backgroundColor,
   
       message: message,
       messageTextStyle: messageTextStyle,
@@ -353,7 +363,9 @@ class ActionsMessage extends StatelessWidget {
       flexibleButtons.add(button);
     }
     Widget? closeButton = displayCloseButtonIcon;
-    return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
+    return Dialog(
+      backgroundColor: displayBackgroundColor,
+      shape: displayBorder, clipBehavior: Clip.antiAlias, child:
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
         Material(
           color: displayTitleBarColor,
