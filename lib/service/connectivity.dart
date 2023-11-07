@@ -99,6 +99,12 @@ class Connectivity with Service {
 
   // Connectivity
 
+  Future<ConnectivityStatus?> checkStatus() async {
+    ConnectivityStatus? connectivityStatus = _statusFromResult(await connectivity.Connectivity().checkConnectivity());
+    _setConnectivityStatus(connectivityStatus);
+    return connectivityStatus;
+  }
+
   ConnectivityStatus? get status {
     return _connectivityStatus;
   }  
