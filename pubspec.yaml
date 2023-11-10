@@ -47,6 +47,7 @@ dependencies:
   flutter_web_auth_2: ^2.1.4
   pinch_zoom: ^2.0.0
   graphql_flutter: ^5.1.2
+  native_flutter_proxy: ^0.1.15
 
   flutter_passkey:
     git: https://github.com/rokmetro/flutter_passkey.git

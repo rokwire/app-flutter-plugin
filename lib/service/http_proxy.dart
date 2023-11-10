@@ -17,6 +17,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:native_flutter_proxy/native_proxy_reader.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
@@ -51,6 +52,7 @@ class HttpProxy extends Service implements NotificationsListener {
   @override
   Future<void> initService() async {
     _handleChanged();
+    await applySystemProxy();
     await super.initService();
   }
 
@@ -70,6 +72,23 @@ class HttpProxy extends Service implements NotificationsListener {
     if(name == Config.notifyEnvironmentChanged){
       _handleChanged();
     }
+  }
+
+  Future<void> applySystemProxy() async {
+    bool enabled = false;
+    String? host;
+    int? port;
+    try {
+      ProxySetting settings = await NativeProxyReader.proxySetting;
+      enabled = settings.enabled;
+      host = settings.host;
+      port = settings.port;
+    } catch (e) {
+      print(e);
+    }
+    httpProxyHost = host;
+    httpProxyPort = port?.toString();
+    httpProxyEnabled = enabled;
   }
 
 
