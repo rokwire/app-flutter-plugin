@@ -578,6 +578,7 @@ class UiTextStyles {
     double? fontHeight = JsonUtils.doubleValue(style['height']);
     String? fontFamily = JsonUtils.stringValue(style['font_family']);
     String? fontFamilyRef = fontFamilies?.fromCode(fontFamily);
+    FontStyle? fontStyle = _TextStyleUtils.textFontStyleFromString(JsonUtils.stringValue(style["font_style"]));
     TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
     TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
     TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
@@ -587,8 +588,13 @@ class UiTextStyles {
     double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
     bool inherit =  JsonUtils.boolValue(style["inherit"]) ?? true;
 
-    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor, inherit: inherit);
+    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily,
+        fontSize: fontSize, color: color, letterSpacing: letterSpacing,
+        wordSpacing: wordSpacing, decoration: textDecoration, fontStyle: fontStyle,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight,
+        decorationThickness: decorationThickness,
+        decorationStyle: decorationStyle, decorationColor: decorationColor,
+        inherit: inherit);
 
     //Extending capabilities
     String? extendsKey = JsonUtils.stringValue(style['extends']);
@@ -1145,6 +1151,14 @@ class _ImageUtils {
 }
 
 class _TextStyleUtils {
+
+  static FontStyle? textFontStyleFromString(String? value) {
+    switch (value) {
+      case "normal" : return FontStyle.normal;
+      case "italic" : return FontStyle.italic;
+      default : return null;
+    }
+  }
 
   static TextDecoration? textDecorationFromString(String? decoration){
     switch(decoration){

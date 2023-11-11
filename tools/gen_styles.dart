@@ -42,6 +42,7 @@ Map<String, String> textStyleFields = {
   'size': 'fontSize',
   'height': 'height',
   'font_family': 'fontFamily',
+  'font_style': 'fontStyle:FontStyle',
   'letter_spacing': 'letterSpacing',
   'word_spacing': 'wordSpacing',
   'decoration_thickness': 'decorationThickness',
