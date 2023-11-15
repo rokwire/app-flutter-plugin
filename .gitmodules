@@ -1,0 +1,3 @@
+[submodule "font_awesome_flutter"]
+	path = plugins/font_awesome_flutter
+	url = https://github.com/rokwire/font_awesome_flutter.git
