@@ -12,6 +12,15 @@ Rokwire services Flutter plugin for Flutter bases client applications. Powered b
 
 ### [CocoaPods](https://guides.cocoapods.org/using/getting-started.html) 1.11.3+
 
+## Sub-modules
+
+### Make sure font_awesome_flutter repo persists
+Rokwire font_awesome_flutter directory is used by the Rokwire plugin for custom implementation of font_awesome_flutter plugin. It should be located in the `plugins/font_awesome_flutter` subdirectory of the plugin's root project directory. If it does not exist you need to clone it manually.
+```
+cd app-flutter-plugin/plugins
+git clone https://github.com/rokwire/font_awesome_flutter.git font_awesome_flutter
+```
+
 ## Integration
 
 ### Add this repo as submodule of the main repo
