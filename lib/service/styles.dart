@@ -981,6 +981,10 @@ class _ImageUtils {
         case 'solid': return IconDataSolid(codePoint);
         case 'regular': return IconDataRegular(codePoint);
         case 'brands': return IconDataBrands(codePoint);
+        // Duotone icons are not supported in flutter. Ref: https://github.com/fluttercommunity/font_awesome_flutter/issues/192
+        // case 'duotone': return IconDataDuotone(codePoint);
+        case 'thin': return IconDataThin(codePoint);
+        case 'light': return IconDataLight(codePoint);
         default: return null;
       }
     }

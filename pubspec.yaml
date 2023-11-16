@@ -41,7 +41,8 @@ dependencies:
   flutter_html: ^3.0.0-alpha.6
   webview_flutter: ^2.0.13
   flutter_exif_rotation: ^0.5.1
-  font_awesome_flutter: ^10.2.1
+#  font_awesome_flutter: ^10.6.0 # published plugin - uncomment if used
+  font_awesome_flutter: '>= 4.7.0' # comment if published plugin is used
   pinch_zoom: ^1.0.0
 
   #Firebase
@@ -54,6 +55,11 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^1.0.0
+
+# comment the override below if published plugin is used
+dependency_overrides:
+  font_awesome_flutter:
+    path: plugins/font_awesome_flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
