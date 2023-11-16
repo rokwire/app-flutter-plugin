@@ -42,10 +42,15 @@ class GraphQL with Service {
     await super.initService();
   }
 
-  GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {}, Map<String, String> defaultHeaders = const {}}) {
+  GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {},
+    Map<String, String> defaultHeaders = const {},
+    FetchPolicy? defaultFetchPolicy}) {
     GraphQLClient client = GraphQLClient(
       link: HttpLink(url, defaultHeaders: defaultHeaders),
-      defaultPolicies: DefaultPolicies(query: Policies(error: ErrorPolicy.all)),
+      defaultPolicies: DefaultPolicies(query: Policies(
+        fetch: defaultFetchPolicy,
+        error: ErrorPolicy.all
+      )),
       cache: GraphQLCache(store: HiveStore(), possibleTypes: possibleTypes, partialDataPolicy: PartialDataCachePolicy.accept),
     );
     return client;
