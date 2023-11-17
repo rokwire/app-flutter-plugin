@@ -247,6 +247,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
+  @override
+  Future<bool> refreshNetworkAuthTokenIfExpired(dynamic token) async {
+    if (token is Auth2Token && token.accessIsExpired == true) {
+      return (await Auth2().refreshToken(token: token) != null);
+    }
+    return false;
+  }
+
   // Getters
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
@@ -1920,6 +1928,14 @@ class Auth2Csrf with NetworkAuthProvider {
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
     if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token) &&
       (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
+      return (await Auth2().refreshToken(token: token) != null);
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> refreshNetworkAuthTokenIfExpired(dynamic token) async {
+    if (token is Auth2Token && token.accessIsExpired == true) {
       return (await Auth2().refreshToken(token: token) != null);
     }
     return false;

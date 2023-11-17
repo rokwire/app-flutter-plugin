@@ -1,8 +1,10 @@
 
 import 'dart:collection';
+import 'dart:core';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -15,8 +17,17 @@ class Auth2Token {
   final String? accessToken;
   final String? refreshToken;
   final String? tokenType;
+  late final Map<String, dynamic>? _parsedAccessToken;
   
-  Auth2Token({this.accessToken, this.refreshToken, this.idToken, this.tokenType});
+  Auth2Token({this.accessToken, this.refreshToken, this.idToken, this.tokenType}) {
+    if (accessToken != null) {
+      try {
+        _parsedAccessToken = JwtDecoder.decode(accessToken!);
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+  }
 
   static Auth2Token? fromOther(Auth2Token? value, {String? idToken, String? accessToken, String? refreshToken, String? tokenType }) {
     return (value != null) ? Auth2Token(
@@ -43,6 +54,15 @@ class Auth2Token {
       'refresh_token': refreshToken,
       'token_type': tokenType
     };
+  }
+
+  bool? get accessIsExpired {
+    if (_parsedAccessToken == null) {
+      return null;
+    }
+    DateTime expirationDate = DateTime.fromMillisecondsSinceEpoch(0)
+        .add(Duration(seconds: _parsedAccessToken?['exp']?.toInt()));
+    return DateTime.now().isAfter(expirationDate);
   }
 
   @override

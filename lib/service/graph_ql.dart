@@ -43,10 +43,14 @@ class GraphQL with Service {
   }
 
   GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {},
-    Map<String, String> defaultHeaders = const {},
+    Map<String, String> defaultHeaders = const {}, AuthLink? authLink,
     FetchPolicy? defaultFetchPolicy}) {
+    Link link = HttpLink(url, defaultHeaders: defaultHeaders);
+    if (authLink != null) {
+      link = authLink.concat(link);
+    }
     GraphQLClient client = GraphQLClient(
-      link: HttpLink(url, defaultHeaders: defaultHeaders),
+      link: link,
       defaultPolicies: DefaultPolicies(query: Policies(
         fetch: defaultFetchPolicy,
         error: ErrorPolicy.all
