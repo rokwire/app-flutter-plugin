@@ -683,7 +683,7 @@ class UiImages {
       "repeat":"noRepeat"
     }
   */
-  Image? getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
+  static Image? getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel,
     bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
     AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality,
@@ -756,7 +756,7 @@ class UiImages {
     }
   */
 
-  Widget? getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
+  static Widget? getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
     Key? key, double? size, String? weight, Color? color, TextDirection? textDirection,
     String? semanticLabel, bool excludeFromSemantics = false}) {
     type ??= imageSpec.type;
@@ -818,7 +818,7 @@ class UiImages {
     return null;
   }
 
-  Widget? getMaterialIcon(MaterialIconImageSpec imageSpec, { String? type, dynamic source, Key? key,
+  static Widget? getMaterialIcon(MaterialIconImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? size, double? fill, double? weight, double? grade, double? opticalSize,
     Color? color, String? fontFamily, String? fontPackage, TextDirection? textDirection, bool? matchTextDirection,
     String? semanticLabel, bool excludeFromSemantics = false,

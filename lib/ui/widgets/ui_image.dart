@@ -57,11 +57,11 @@ class UiImage extends StatelessWidget {
     if (imageSpec != null) {
       try {
         if (imageSpec is FlutterImageSpec) {
-          image = Styles().images?.getFlutterImage(imageSpec);
+          image = UiImages.getFlutterImage(imageSpec);
         } else if (imageSpec is FontAwesomeImageSpec) {
-          image = Styles().images?.getFaIcon(imageSpec);
+          image = UiImages.getFaIcon(imageSpec);
         } else if (imageSpec is MaterialIconImageSpec) {
-          image = Styles().images?.getMaterialIcon(imageSpec);
+          image = UiImages.getMaterialIcon(imageSpec);
         }
       } catch(e) {
         debugPrint(e.toString());
