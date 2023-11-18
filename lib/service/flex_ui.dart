@@ -90,13 +90,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _defContentSource = await loadFromAssets(assetsKey);
-    _appContentSource = kIsWeb ? null : await loadFromAssets(appAssetsKey);
-    if (!kIsWeb) {
-      _assetsDir = await getAssetsDir();
-      _netContentSource = await loadFromCache(netCacheFileName);
-    }
-    build();
+    await _initServiceOffline();
     if (_defaultContent != null) {
       updateFromNet();
       await super.initService();
@@ -109,6 +103,21 @@ class FlexUI with Service implements NotificationsListener {
         description: 'Failed to initialize FlexUI content.',
       );
     }
+  }
+
+  @override
+  Future<void> initServiceFallback() async {
+    await _initServiceOffline();
+  }
+
+  Future<void> _initServiceOffline() async {
+    _defContentSource = await loadFromAssets(assetsKey);
+    _appContentSource = kIsWeb ? null : await loadFromAssets(appAssetsKey);
+    if (!kIsWeb) {
+      _assetsDir = await getAssetsDir();
+      _netContentSource = await loadFromCache(netCacheFileName);
+    }
+    build();
   }
 
   @override

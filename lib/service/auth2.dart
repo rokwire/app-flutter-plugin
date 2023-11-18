@@ -113,24 +113,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _token = await Storage().getAuth2Token();
-    _account = await Storage().getAuth2Account();
-    _oidcToken = await Storage().getAuth2OidcToken();
-
-    _anonymousId = Storage().auth2AnonymousId;
-    _anonymousToken = await Storage().getAuth2AnonymousToken();
-    _anonymousPrefs = await Storage().getAuth2AnonymousPrefs();
-    _anonymousProfile = await Storage().getAuth2AnonymousProfile();
-
-    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
-
-    if ((_account == null) && (_anonymousPrefs == null)) {
-      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs);
-    }
-
-    if ((_account == null) && (_anonymousProfile == null)) {
-      await Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile);
-    }
+    await _initServiceOffline();
 
     if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
       if (!await authenticateAnonymously()) {
@@ -155,6 +138,32 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     await super.initService();
+  }
+
+  @override
+  Future<void> initServiceFallback() async {
+    await _initServiceOffline();
+  }
+
+  Future<void> _initServiceOffline() async {
+    _token = await Storage().getAuth2Token();
+    _account = await Storage().getAuth2Account();
+    _oidcToken = await Storage().getAuth2OidcToken();
+
+    _anonymousId = Storage().auth2AnonymousId;
+    _anonymousToken = await Storage().getAuth2AnonymousToken();
+    _anonymousPrefs = await Storage().getAuth2AnonymousPrefs();
+    _anonymousProfile = await Storage().getAuth2AnonymousProfile();
+
+    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+
+    if ((_account == null) && (_anonymousPrefs == null)) {
+      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs);
+    }
+
+    if ((_account == null) && (_anonymousProfile == null)) {
+      await Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile);
+    }
   }
 
   @override
