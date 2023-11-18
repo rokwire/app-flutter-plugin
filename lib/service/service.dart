@@ -31,6 +31,9 @@ abstract class Service {
     _isInitialized = true;
   }
 
+  Future<void> initServiceFallback() async {
+  }
+
   void initServiceUI() async {
   }
 
@@ -85,6 +88,7 @@ class Services {
         if (service.isInitialized != true) {
           ServiceError? error = await initService(service);
           if (error?.severity == ServiceErrorSeverity.fatal) {
+            await initFallback();
             return error;
           }
         }
@@ -103,6 +107,15 @@ class Services {
   }
 
   @protected
+  Future<void> initFallback() async {
+    for (Service service in _services!) {
+      if (service.isInitialized != true) {
+        await initServiceFallback(service);
+      }
+    }
+  }
+
+  @protected
   Future<ServiceError?> initService(Service service) async {
     try {
       await service.initService();
@@ -111,6 +124,17 @@ class Services {
       return error;
     }
     return null;
+  }
+
+
+  @protected
+  Future<void> initServiceFallback(Service service) async {
+    try {
+      await service.initServiceFallback();
+    }
+    on ServiceError catch (error) {
+      debugPrint(error.toString());
+    }
   }
 
   void initUI() {

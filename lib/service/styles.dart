@@ -115,6 +115,18 @@ class Styles extends Service implements NotificationsListener{
   }
 
   @override
+  Future<void> initServiceFallback() async {
+
+    _assetsManifest = await loadAssetsManifest();
+    _assetsStyles = await loadFromAssets(assetsKey);
+    _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey);
+
+    if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
+      await build();
+    }
+  }
+
+  @override
   Set<Service> get serviceDependsOn {
     return { Config(), Storage() };
   }
@@ -162,7 +174,9 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
     try { return JsonUtils.decodeMap(await rootBundle.loadString(assetsKey)); }
-    catch(e) { debugPrint(e.toString()); }
+    catch(e) {
+      debugPrint(e.toString());
+    }
     return null;
   }
 
