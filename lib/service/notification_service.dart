@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 class NotificationService {
@@ -31,7 +33,7 @@ class NotificationService {
 
   @protected
   NotificationService.internal();
-  
+
 
   final Map<String, Set<NotificationsListener>> _listeners = {};
 
@@ -108,5 +110,5 @@ class NotificationService {
 }
 
 abstract class NotificationsListener {
-  void onNotification(String name, dynamic param);
+  FutureOr<void> onNotification(String name, dynamic param);
 }
