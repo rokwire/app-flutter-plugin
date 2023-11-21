@@ -21,6 +21,17 @@ cd app-flutter-plugin/plugins
 git clone https://github.com/rokwire/font_awesome_flutter.git font_awesome_flutter
 ```
 
+#### Note:
+If `font_awesome_flutter` pro repo is not available then use the regular `font_awesome_flutter` plugin in pubspec.yaml:
+```
+font_awesome_flutter: ^10.6.0
+
+...
+# dependency_overrides:
+#  font_awesome_flutter:
+#    path: plugins/font_awesome_flutter
+```
+
 ## Integration
 
 ### Add this repo as submodule of the main repo
