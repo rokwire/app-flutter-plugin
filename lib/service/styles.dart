@@ -587,7 +587,7 @@ class UiImages {
     type ??= imageSpec.type;
     source ??= imageSpec.source;
 
-    scale ??= imageSpec.scale ?? 1.0;
+    scale ??= imageSpec.scale;
     size ??= imageSpec.size;
     width ??= imageSpec.width ?? size;
     height ??= imageSpec.height ?? size;
@@ -613,7 +613,7 @@ class UiImages {
         File? sourceFile = _ImageUtils.fileValue(source);
         return (sourceFile != null) ? Image.file(sourceFile,
           key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality, 
         ) : null;
       
@@ -621,7 +621,7 @@ class UiImages {
         String? urlString = JsonUtils.stringValue(source);
         return (urlString != null) ? Image.network(urlString,
           key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
           headers: networkHeaders
         ) : null;
@@ -629,7 +629,7 @@ class UiImages {
       case 'flutter.memory':
         Uint8List? bytes = _ImageUtils.bytesValue(source);
         return (bytes != null) ? Image.memory(bytes, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
         ) : null;
     }}
