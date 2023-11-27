@@ -27,6 +27,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginFailed          = "edu.illinois.rokwire.auth2.login.failed";
   static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
   static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
+  static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
   static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
   static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
@@ -1412,6 +1413,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // Logout
 
   Future<void> logout({ Auth2UserPrefs? prefs }) async {
+    NotificationService().notify(notifyLogoutStarted);
     _log("Auth2: logout");
     _refreshTokenFailCounts.remove(_token?.refreshToken);
 
