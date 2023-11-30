@@ -156,7 +156,7 @@ class ImageUtils {
       TextPainter textPainter = TextPainter(
         text: TextSpan(text: text, style: textStyle),
         textDirection: textDirection,
-        textScaleFactor: textScaleFactor,
+        textScaler: TextScaler.linear(textScaleFactor),
         maxLines: maxLines,
       )..layout();
       if ((textPainter.width <= size.width) && (textPainter.height <= size.height)) {

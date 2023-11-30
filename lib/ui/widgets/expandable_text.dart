@@ -82,7 +82,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       List<Widget> contentList = <Widget>[];
       
       TextPainter textPainter = TextPainter(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor,
+        textScaler: MediaQuery.of(context).textScaler,
         textDirection: TextDirection.rtl,
       );
       
@@ -100,7 +100,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       if (textPainter.didExceedMaxLines) {
         
         String displayText = _collapsed ? widget.text.substring(0, endIndex) + widget.trimSuffix : widget.text;
-        contentList.add(RichText(textScaleFactor: MediaQuery.of(context).textScaleFactor, softWrap: true, overflow: TextOverflow.clip,
+        contentList.add(RichText(textScaler: MediaQuery.of(context).textScaler, softWrap: true, overflow: TextOverflow.clip,
           text: TextSpan(text: displayText, style: widget._textStyle,),
         ),);
 
