@@ -189,7 +189,7 @@ class TabWidget extends StatelessWidget {
   TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies!.bold, color: selected ? Styles().colors!.fillColorSecondary : Styles().colors!.mediumGray, fontSize: 12);
 
   @protected
-  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
+  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaler.scale(1), 2);
 
   @protected
   TextOverflow get textOverflow => TextOverflow.ellipsis;
@@ -197,7 +197,7 @@ class TabWidget extends StatelessWidget {
   @protected
   Widget getTabText(BuildContext context) => Row(children: [
     Expanded(child:
-      Text(label ?? '', textScaleFactor: getTextScaleFactor(context), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
+      Text(label ?? '', textScaler: TextScaler.linear(getTextScaleFactor(context)), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
     )
   ]);
 
