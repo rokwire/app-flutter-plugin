@@ -119,9 +119,7 @@ class Storage with Service {
   }
 
   Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
-    Stopwatch stopwatch = Stopwatch()..start();
     String? hehe = await _secureStorage?.read(key: name) ?? defaultValue;
-    debugPrint('get $name in ${stopwatch.elapsed.inMilliseconds}ms');
     return hehe;
   }
 

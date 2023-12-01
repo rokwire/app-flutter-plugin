@@ -152,9 +152,7 @@ class Services {
   @protected
   Future<ServiceError?> initService(Service service) async {
     try {
-      Stopwatch stopwatch = Stopwatch()..start();
       await service.initService();
-      debugPrint('${service.debugDisplayName} service in ${stopwatch.elapsed.inMilliseconds}ms');
     }
     on ServiceError catch (error) {
       return error;
