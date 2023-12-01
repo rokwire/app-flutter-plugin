@@ -147,23 +147,41 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   Future<void> _initServiceOffline() async {
-    _token = await Storage().getAuth2Token();
-    _account = await Storage().getAuth2Account();
-    _oidcToken = await Storage().getAuth2OidcToken();
-
     _anonymousId = Storage().auth2AnonymousId;
-    _anonymousToken = await Storage().getAuth2AnonymousToken();
-    _anonymousPrefs = await Storage().getAuth2AnonymousPrefs();
-    _anonymousProfile = await Storage().getAuth2AnonymousProfile();
 
-    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+    List<Future<dynamic>> futures = [
+      Storage().getAuth2Token(),
+      Storage().getAuth2Account(),
+      Storage().getAuth2OidcToken(),
 
+      Storage().getAuth2AnonymousToken(),
+      Storage().getAuth2AnonymousPrefs(),
+      Storage().getAuth2AnonymousProfile(),
+
+      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
+    ];
+
+
+    List<dynamic> results = await Future.wait(futures);
+    _token = results[0];
+    _account = results[1];
+    _oidcToken = results[2];
+    _anonymousToken = results[3];
+    _anonymousPrefs = results[4];
+    _anonymousProfile = results[5];
+    _deviceId = results[6];
+
+    futures.clear();
     if ((_account == null) && (_anonymousPrefs == null)) {
-      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs);
+      futures.add(Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs));
     }
 
     if ((_account == null) && (_anonymousProfile == null)) {
-      await Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile);
+      futures.add(Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile));
+    }
+
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
     }
   }
 
