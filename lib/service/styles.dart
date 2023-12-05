@@ -248,16 +248,35 @@ class Styles extends Service implements NotificationsListener{
   Future<void> build() async {
     Map<String, dynamic> styles = contentMap;
     Map<String, Map<String, dynamic>> themes = JsonUtils.mapOfStringToMapOfStringsValue(styles['themes']) ?? {};
-    UiTheme defaultTheme = await UiTheme.fromJson(styles, resolveImageAssetPath);
-    _themes['default'] = defaultTheme;
+
+    List<Future<dynamic>> futures = [
+      UiTheme.fromJson(styles, resolveImageAssetPath),
+    ];
+
+    List<String> themeKeys = [];
+    List<String> defaultThemeKeys = [];
     for (MapEntry<String, Map<String, dynamic>> theme in themes.entries) {
       if (theme.value.isNotEmpty) {
         Map<String, dynamic>? themeData = MapUtils.mergeToNew(styles, theme.value, level: 1);
-        _themes[theme.key] = await UiTheme.fromJson(themeData, resolveImageAssetPath);
+        futures.add(UiTheme.fromJson(themeData, resolveImageAssetPath));
+        themeKeys.add(theme.key);
       } else {
-        _themes[theme.key] = defaultTheme;
+        defaultThemeKeys.add(theme.key);
       }
     }
+
+    List<dynamic> results = await Future.wait(futures);
+    UiTheme defaultTheme = results[0];
+    _themes['default'] = defaultTheme;
+
+    for (int i = 0; i < themeKeys.length; i++) {
+      String key = themeKeys[i];
+      _themes[key] = results[i + 1];
+    }
+    for (String key in defaultThemeKeys) {
+      _themes[key] = defaultTheme;
+    }
+
     _applySelectedTheme();
   }
 
@@ -354,11 +373,21 @@ class UiTheme {
   UiTheme({this.colors, this.fontFamilies, this.textStyles, this.images});
 
   static Future<UiTheme> fromJson(Map<String, dynamic> styles, String Function(Uri)? assetPathResolver) async {
-    UiColors? colors = await compute(UiColors.fromJson, JsonUtils.mapValue(styles['color']));
-    UiFontFamilies? fontFamilies = await compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family']));
-    UiTextStyles? textStyles = await compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies));
-    UiImages? images = await compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver));
-    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: textStyles, images: images);
+    List<Future<dynamic>> futures = [
+      compute(UiColors.fromJson, JsonUtils.mapValue(styles['color'])),
+      compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family'])),
+    ];
+    List<dynamic> results = await Future.wait(futures);
+    UiColors? colors = results[0];
+    UiFontFamilies? fontFamilies = results[1];
+
+    futures = [
+      compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies)),
+      compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver)),
+    ];
+    results = await Future.wait(futures);
+    
+    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: results[0], images: results[1]);
   }
 }
 

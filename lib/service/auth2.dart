@@ -116,7 +116,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> initService() async {
     await _initServiceOffline();
 
-    if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
+    if (isAnonymousAuthenticationSupported && (_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
       if (!await authenticateAnonymously()) {
         throw ServiceError(
           source: this,
@@ -150,33 +150,39 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _anonymousId = Storage().auth2AnonymousId;
 
     List<Future<dynamic>> futures = [
+      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
+
       Storage().getAuth2Token(),
       Storage().getAuth2Account(),
       Storage().getAuth2OidcToken(),
-
-      Storage().getAuth2AnonymousToken(),
-      Storage().getAuth2AnonymousPrefs(),
-      Storage().getAuth2AnonymousProfile(),
-
-      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
     ];
 
+    if (isAnonymousAuthenticationSupported) {
+      futures.addAll([
+        Storage().getAuth2AnonymousToken(),
+        Storage().getAuth2AnonymousPrefs(),
+        Storage().getAuth2AnonymousProfile(),
+      ]);
+    }
 
     List<dynamic> results = await Future.wait(futures);
-    _token = results[0];
-    _account = results[1];
-    _oidcToken = results[2];
-    _anonymousToken = results[3];
-    _anonymousPrefs = results[4];
-    _anonymousProfile = results[5];
-    _deviceId = results[6];
+    _deviceId = results[0];
+    _token = results[1];
+    _account = results[2];
+    _oidcToken = results[3];
+
+    if (isAnonymousAuthenticationSupported) {
+      _anonymousToken = results[4];
+      _anonymousPrefs = results[5];
+      _anonymousProfile = results[6];
+    }
 
     futures.clear();
-    if ((_account == null) && (_anonymousPrefs == null)) {
+    if ((_account == null) && (_anonymousPrefs == null) && isAnonymousAuthenticationSupported) {
       futures.add(Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs));
     }
 
-    if ((_account == null) && (_anonymousProfile == null)) {
+    if ((_account == null) && (_anonymousProfile == null) && isAnonymousAuthenticationSupported) {
       futures.add(Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile));
     }
 
@@ -184,6 +190,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       await Future.wait(futures);
     }
   }
+
+  @protected
+  bool get isAnonymousAuthenticationSupported => true;
 
   @override
   Set<Service> get serviceDependsOn {
