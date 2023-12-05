@@ -82,6 +82,7 @@ class Services {
       }
       _services = null;
       _serviceDependents = null;
+      _serviceDependencies = null;
       _attemptedServiceInits = null;
     }
   }
