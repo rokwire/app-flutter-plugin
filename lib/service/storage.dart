@@ -119,8 +119,7 @@ class Storage with Service {
   }
 
   Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
-    String? hehe = await _secureStorage?.read(key: name) ?? defaultValue;
-    return hehe;
+    return await _secureStorage?.read(key: name) ?? defaultValue;
   }
 
   Future<void> setSecureStringWithName(String name, String? value) async {

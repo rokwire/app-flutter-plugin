@@ -62,8 +62,9 @@ class Services {
   static set instance(Services? value) => _instance = value;
 
   List<Service>? _services;
-  Map<String?, Set<Service>?>? _serviceDependents;
-  Set<String>? _initializedServices;
+  Map<Service?, Set<Service>?>? _serviceDependents; // gives services that depend on the key service (looking "down" dependency tree)
+  Map<Service, Set<Service>?>? _serviceDependencies;  // gives services are dependencies of the key service (looking "up" dependency tree)
+  Set<String>? _attemptedServiceInits;  // gives names of services for which initialization has been attempted
 
   void create(List<Service> services) {
     if (_services == null) {
@@ -81,14 +82,14 @@ class Services {
       }
       _services = null;
       _serviceDependents = null;
-      _initializedServices = null;
+      _attemptedServiceInits = null;
     }
   }
 
   Future<ServiceError?> init() async {
     if (_services != null) {
-      _initializedServices = {};
-      _serviceDependents = _getServiceDependents();
+      _attemptedServiceInits ??= {};
+      _setDependencyTree();
       if (_serviceDependents?[null]?.isEmpty ?? true) {
         return ServiceError(
           source: null,
@@ -112,41 +113,32 @@ class Services {
     );*/
   }
 
-  Future<ServiceError?> _init(String? serviceName) async {
+  Future<ServiceError?> _init(Service? service) async {
     List<Future<ServiceError?>> initErrorFutures = [];
-    for (Service service in _serviceDependents![serviceName] ?? {}) {
+    for (Service dependent in _serviceDependents![service] ?? {}) {
       bool initialize = true;
-      for (Service dependency in service.serviceDependsOn ?? {}) {
+      for (Service dependency in _serviceDependencies![dependent] ?? {}) {
         if (_services!.contains(dependency) && !dependency.isInitialized) {
           initialize = false;
           break;
         }
       }
 
-      if (initialize && !service.isInitialized && !_initializedServices!.contains(service.debugDisplayName)) {
-        _initializedServices!.add(service.debugDisplayName);
-        initErrorFutures.add(initService(service).then((ServiceError? error) async {
+      if (initialize && !dependent.isInitialized && !_attemptedServiceInits!.contains(dependent.debugDisplayName)) {
+        _attemptedServiceInits!.add(dependent.debugDisplayName);
+        initErrorFutures.add(initService(dependent).then((ServiceError? error) async {
           if (error?.severity == ServiceErrorSeverity.fatal) {
-            initFallback();
+            await initServiceFallback(dependent);
             return error;
           }
 
-          return await _init(service.debugDisplayName);
+          return await _init(dependent);
         }));
       }
     }
 
     List<ServiceError?> initErrors = await Future.wait(initErrorFutures);
     return initErrors.firstWhere((element) => element != null, orElse: () => null);
-  }
-
-  @protected
-  Future<void> initFallback() async {
-    for (Service service in _services!) {
-      if (service.isInitialized != true) {
-        await initServiceFallback(service);
-      }
-    }
   }
 
   @protected
@@ -163,11 +155,13 @@ class Services {
 
   @protected
   Future<void> initServiceFallback(Service service) async {
-    try {
-      await service.initServiceFallback();
-    }
-    on ServiceError catch (error) {
-      debugPrint(error.toString());
+    if (service.isInitialized != true) {
+      try {
+        await service.initServiceFallback();
+      }
+      on ServiceError catch (error) {
+        debugPrint(error.toString());
+      }
     }
   }
 
@@ -189,58 +183,32 @@ class Services {
 
   ServiceError? verifyInitialization() {
     Set<String>? serviceNames = _services != null ? Set.of(List.generate(_services!.length, (index) => _services![index].debugDisplayName)) : null;
-    Set<String> remaining = serviceNames?.difference(_initializedServices ?? {}) ?? {};
+    Set<String> remaining = serviceNames?.difference(_attemptedServiceInits ?? {}) ?? {};
     return remaining.isEmpty ? null : ServiceError(
       source: null,
       severity: ServiceErrorSeverity.fatal,
       title: 'Services Initialization Error',
-      description: 'The following services were not initialized: $remaining',
+      description: 'The following services were not initialized: ${remaining.join(", ")}',
     );
   }
 
-  Map<String?, Set<Service>?> _getServiceDependents() {
-
-    Map<String?, Set<Service>?> serviceDependents = {};
+  void _setDependencyTree() {
+    _serviceDependencies ??= {};
+    _serviceDependents ??= {};
     for (Service service in _services!) {
-      if (service.serviceDependsOn?.isEmpty ?? true) {
-        serviceDependents[null] ??= {};
-        serviceDependents[null]!.add(service);
+      _serviceDependencies![service] = service.serviceDependsOn;
+      if (_serviceDependencies![service]?.isEmpty ?? true) {
+        _serviceDependents![null] ??= {};
+        _serviceDependents![null]!.add(service);
       } else {
-        for (Service dependency in service.serviceDependsOn!) {
+        for (Service dependency in _serviceDependencies![service]!) {
           if (_services!.contains(dependency)) {
-            serviceDependents[dependency.debugDisplayName] ??= {};
-            serviceDependents[dependency.debugDisplayName]!.add(service);
+            _serviceDependents![dependency] ??= {};
+            _serviceDependents![dependency]!.add(service);
           } 
         }
       }
     }
-
-    return serviceDependents;
-    
-    // List<Service> queue = [];
-    // List<Service> services = List.from(inputServices);
-    // while (services.isNotEmpty) {
-    //   // start with lowest priority service
-    //   Service svc = services.last;
-    //   services.removeLast();
-      
-    //   // Move to TBD anyone from Queue that depends on svc
-    //   Set<Service>? svcDependents = svc.serviceDependsOn;
-    //   if (svcDependents != null) {
-    //     for (int index = queue.length - 1; index >= 0; index--) {
-    //       Service queuedSvc = queue[index];
-    //       if (svcDependents.contains(queuedSvc)) {
-    //         queue.removeAt(index);
-    //         services.add(queuedSvc);
-    //       }
-    //     }
-    //   }
-
-    //   // Move svc from TBD to Queue, mark it as processed
-    //   queue.add(svc);
-    // }
-    
-    // return queue.reversed.toList();
   }
 
 }

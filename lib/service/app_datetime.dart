@@ -65,11 +65,6 @@ class AppDateTime with Service {
     await super.initService();
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Config(), Localization() };
-  }
-
   // Implementation
 
   DateTime get now {
