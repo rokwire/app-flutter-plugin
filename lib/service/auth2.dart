@@ -191,9 +191,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  @protected
-  bool get isAnonymousAuthenticationSupported => true;
-
   @override
   Set<Service> get serviceDependsOn {
     return { Storage(), Config() };
@@ -302,6 +299,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2Token? get oidcToken => _oidcToken;
 
   bool get associateAnonymousIds => false;
+  bool get isAnonymousAuthenticationSupported => true;
   String? get accountId => _account?.id ?? _anonymousId;
   Auth2UserPrefs? get prefs => _account?.prefs ?? _anonymousPrefs;
   Auth2UserProfile? get profile => _account?.profile ?? _anonymousProfile;
