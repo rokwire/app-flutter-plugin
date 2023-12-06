@@ -35,7 +35,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class Styles extends Service implements NotificationsListener{
   
@@ -91,13 +90,31 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   Future<void> initService() async {
-    
-    _assetsDir = await getAssetsDir();
-    _assetsManifest = await loadAssetsManifest();
-    _assetsStyles = await loadFromAssets(assetsKey);
-    _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey);
-    _netAssetsStyles = await loadFromCache(netCacheFileName);
-    _debugAssetsStyles = await loadFromCache(debugCacheFileName);
+    List<Future<dynamic>> futures = [
+      getAssetsDir(),
+      loadAssetsManifest(),
+      loadFromAssets(assetsKey),
+    ];
+
+    if (!kIsWeb) {
+      futures.add(loadFromAssets(appAssetsKey));
+    }
+    List<dynamic> results = await Future.wait(futures);
+    _assetsDir = results[0];
+    _assetsManifest = results[1];
+    _assetsStyles = results[2];
+    if (!kIsWeb) {
+      _appAssetsStyles = results[3];
+    }
+
+    futures = [
+      loadFromCache(netCacheFileName),
+      loadFromCache(debugCacheFileName),
+    ];
+    results = await Future.wait(futures);
+
+    _netAssetsStyles = results[0];
+    _debugAssetsStyles = results[1];
 
     if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
       await build();

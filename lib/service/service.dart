@@ -96,11 +96,12 @@ class Services {
           source: null,
           severity: ServiceErrorSeverity.fatal,
           title: 'Services Initialization Error',
-          description: 'All services have dependencies. No services may be initialized safely.',
+          description: 'All services have service dependencies. No services may be initialized safely.',
         );
       }
 
-      return _init(null);
+      ServiceError? initError = await _init(null);
+      return initError ?? verifyInitialization();
     }
 
     return null;
