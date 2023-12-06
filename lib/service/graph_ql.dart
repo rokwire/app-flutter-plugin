@@ -44,18 +44,30 @@ class GraphQL with Service {
 
   GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {},
     Map<String, String> defaultHeaders = const {}, AuthLink? authLink,
-    FetchPolicy? defaultFetchPolicy}) {
+    FetchPolicy? defaultFetchPolicy, bool useCache = true}) {
     Link link = HttpLink(url, defaultHeaders: defaultHeaders);
     if (authLink != null) {
       link = authLink.concat(link);
     }
     GraphQLClient client = GraphQLClient(
       link: link,
-      defaultPolicies: DefaultPolicies(query: Policies(
-        fetch: defaultFetchPolicy,
-        error: ErrorPolicy.all
-      )),
-      cache: GraphQLCache(store: HiveStore(), possibleTypes: possibleTypes, partialDataPolicy: PartialDataCachePolicy.accept),
+      defaultPolicies: DefaultPolicies(
+        query: Policies(
+          fetch: defaultFetchPolicy,
+          error: ErrorPolicy.all,
+          cacheReread: CacheRereadPolicy.ignoreAll
+        ),
+        mutate: Policies(
+          fetch: defaultFetchPolicy,
+          error: ErrorPolicy.all,
+          cacheReread: CacheRereadPolicy.ignoreAll
+        )
+      ),
+      cache: GraphQLCache(
+        store: useCache ? HiveStore() : NoOpStore(),
+        possibleTypes: possibleTypes,
+        partialDataPolicy: PartialDataCachePolicy.accept
+      ),
     );
     return client;
   }
@@ -63,4 +75,18 @@ class GraphQL with Service {
   ValueNotifier<GraphQLClient> getNotifier(GraphQLClient client) {
     return ValueNotifier(client);
   }
+}
+
+class NoOpStore implements Store {
+  Map<String, dynamic>? get(String dataId) => null;
+
+  void put(String dataId, Map<String, dynamic>? value) => null;
+
+  void putAll(Map<String, Map<String, dynamic>?> data) => null;
+
+  void delete(String dataId) => null;
+
+  void reset() => null;
+
+  Map<String, Map<String, dynamic>?> toMap() => {};
 }
