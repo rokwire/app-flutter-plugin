@@ -116,7 +116,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> initService() async {
     await _initServiceOffline();
 
-    if (isAnonymousAuthenticationSupported && (_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
+    if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
       if (!await authenticateAnonymously()) {
         throw ServiceError(
           source: this,
