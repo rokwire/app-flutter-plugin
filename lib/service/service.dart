@@ -195,25 +195,25 @@ class Services {
 
   @protected
   Future<ServiceError?> _executeInitList(List<Iterable<Service>> initList) async {
+    int initStep = 0;
     ServiceError? result = null;
     Set<Service> skipped = <Service>{};
-    for (int initStep = 0; initStep < initList.length; initStep++) {
-      Iterable<Service> currentListEntry = initList[initStep];
-      ServiceError? currentListError = await initServices(currentListEntry, skipped);
-      debugPrint("Services.init[${initStep}] => ${_servicePoolToString(currentListEntry, marked: skipped)};");
+    for (Iterable<Service> currentListEntry in initList) {
+      ServiceError? currentListError = await initServices(currentListEntry, skipped: skipped);
+      debugPrint("Services.init[${initStep++}] => ${_servicePoolToString(currentListEntry, marked: skipped)};");
       result ??= currentListError;
     }
     return result;
   }
 
   @protected
-  Future<ServiceError?> initServices(Iterable<Service> services, Set<Service> skipped) async {
+  Future<ServiceError?> initServices(Iterable<Service> services, { Set<Service>? skipped }) async {
     if (services.isNotEmpty) {
 
       Set<Service> skippedServices = <Service>{};
       List<Future<dynamic>> initFutures = <Future<dynamic>>[];
       for (Service service in services) {
-        if (skipped.containsAny(service.serviceDependsOn ?? {})) {
+        if (skipped?.containsAny(service.serviceDependsOn ?? {}) == true) {
           // Service ancessor is skipped, invoke initServiceFallback and do not try to initialize it.
           initFutures.add(initServiceFallback(service));
           skippedServices.add(service);
@@ -230,12 +230,12 @@ class Services {
         for (int index = 0; index < initResults.length; index++) {
           dynamic initResult = initResults[index];
           if ((initResult is ServiceError) && (initResult.severity == ServiceErrorSeverity.fatal)) {
-            skipped.add(services.elementAt(index)); // service initialization failed => do not attempt to initialize its ancessors
+            skipped?.add(services.elementAt(index)); // service initialization failed => do not attempt to initialize its ancessors
             initError ??= initResult;
           }
         }
         if (skippedServices.isNotEmpty) {
-          skipped.addAll(skippedServices); // service initialization is skipped => do not attempt to initialize its ancessors
+          skipped?.addAll(skippedServices); // service initialization is skipped => do not attempt to initialize its ancessors
         }
         return initError;
       }
