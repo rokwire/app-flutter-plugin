@@ -16,6 +16,7 @@
 
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class Service {
 
@@ -63,7 +64,7 @@ class Services {
 
   void create(List<Service> services) {
     if (_services == null) {
-      _services = _sort(services);
+      _services = services;
       for (Service service in _services!) {
         service.createService();
       }
@@ -80,16 +81,11 @@ class Services {
   }
 
   Future<ServiceError?> init() async {
-    if (_services != null) {
-      for (Service service in _services!) {
-        if (service.isInitialized != true) {
-          ServiceError? error = await initService(service);
-          if (error?.severity == ServiceErrorSeverity.fatal) {
-            await initFallback();
-            return error;
-          }
-        }
-      }
+    try {
+      return (_services != null) ? await _executeInitList(_buildInitList(_services!)) : null;
+    }
+    on ServiceError catch (error) {
+      return error;
     }
     return null;
 
@@ -149,33 +145,110 @@ class Services {
     }
   }
 
-  static List<Service> _sort(List<Service> inputServices) {
+  @protected
+  List<Iterable<Service>> _buildInitList(List<Service> servicesList) {
+    List<Iterable<Service>> initList = <Iterable<Service>>[]; // Ordered list of service pools as they should be initialized.
+    Set<Service> registered = Set.from(servicesList); // Pool of all registered services. Some services refer other services that are not registered so we need to ignore them.
+    Set<Service> processing = Set.from(registered); // Pool of services that are not scheduled for initialization yet.
+    Set<Service> processed = <Service>{}; // Pool of services that are scheduled for initialization.
 
-    List<Service> queue = [];
-    List<Service> services = List.from(inputServices);
-    while (services.isNotEmpty) {
-      // start with lowest priority service
-      Service svc = services.last;
-      services.removeLast();
-
-      // Move to TBD anyone from Queue that depends on svc
-      Set<Service>? svcDependents = svc.serviceDependsOn;
-      if (svcDependents != null) {
-        for (int index = queue.length - 1; index >= 0; index--) {
-          Service queuedSvc = queue[index];
-          if (svcDependents.contains(queuedSvc)) {
-            queue.removeAt(index);
-            services.add(queuedSvc);
-          }
+    while (processing.isNotEmpty) {
+      Set<Service> currentListEntry = <Service>{};
+      for (Service service in processing) {
+        if (_canProcessService(service, processed: processed, registered: registered)) /* (processed.containsAll(service.serviceDependsOn ?? {})) */ {
+          currentListEntry.add(service); // All service ancessors are already scheduled for initialization => we can initialize this service on the current step.
         }
       }
 
-      // Move svc from TBD to Queue, mark it as processed
-      queue.add(svc);
+      if (currentListEntry.isNotEmpty) {
+        initList.add(currentListEntry); // Register current initialization step.
+        processed.addAll(currentListEntry); // Mark current initialization step services as scheduled for initialization.
+        processing.removeAll(currentListEntry); // Remove current initialization step services from the not scheduled yet pool.
+      }
+      else {
+        // There are services not scheduled for initialozation but we cannot retrieve any that depends only on the scheduled pool.
+        // This is an indication that processing contains a services that have dependancy cycle.
+        throw ServiceError(
+          source: null,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Services Initialization Error',
+          description: 'Service dependency cycle: ${_servicePoolToString(processing)}',
+        );
+      }
     }
 
-    return queue.reversed.toList();
+    return initList;
   }
+
+  @protected
+  bool _canProcessService(Service service, { required Set<Service> processed, required Set<Service> registered}) {
+    Set<Service>? serviceAncessors = service.serviceDependsOn;
+    if ((serviceAncessors != null) && serviceAncessors.isNotEmpty) {
+      for (Service serviceAncessor in serviceAncessors) {
+        if (registered.contains(serviceAncessor) && !processed.contains(serviceAncessor)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  @protected
+  Future<ServiceError?> _executeInitList(List<Iterable<Service>> initList) async {
+    ServiceError? result = null;
+    Set<Service> skipped = <Service>{};
+    for (int initStep = 0; initStep < initList.length; initStep++) {
+      Iterable<Service> currentListEntry = initList[initStep];
+      ServiceError? currentListError = await initServices(currentListEntry, skipped);
+      debugPrint("Services.init[${initStep}] => ${_servicePoolToString(currentListEntry, marked: skipped)};");
+      result ??= currentListError;
+    }
+    return result;
+  }
+
+  @protected
+  Future<ServiceError?> initServices(Iterable<Service> services, Set<Service> skipped) async {
+    if (services.isNotEmpty) {
+
+      Set<Service> skippedServices = <Service>{};
+      List<Future<dynamic>> initFutures = <Future<dynamic>>[];
+      for (Service service in services) {
+        if (skipped.containsAny(service.serviceDependsOn ?? {})) {
+          // Service ancessor is skipped, invoke initServiceFallback and do not try to initialize it.
+          initFutures.add(initServiceFallback(service));
+          skippedServices.add(service);
+        }
+        else {
+          // Service should be initialized.
+          initFutures.add(initService(service));
+        }
+      }
+
+      try {
+        ServiceError? initError;
+        List<dynamic> initResults = await Future.wait(initFutures);
+        for (int index = 0; index < initResults.length; index++) {
+          dynamic initResult = initResults[index];
+          if ((initResult is ServiceError) && (initResult.severity == ServiceErrorSeverity.fatal)) {
+            skipped.add(services.elementAt(index)); // service initialization failed => do not attempt to initialize its ancessors
+            initError ??= initResult;
+          }
+        }
+        if (skippedServices.isNotEmpty) {
+          skipped.addAll(skippedServices); // service initialization is skipped => do not attempt to initialize its ancessors
+        }
+        return initError;
+      }
+      on ServiceError catch (error) {
+        return error;
+      }
+    }
+    return null;
+  }
+
+  @protected
+  String _servicePoolToString(Iterable<Service> pool, { Set<Service>? marked, String mark = '!' }) =>
+    '[${pool.map((service) => "${service.runtimeType}${(marked?.contains(service) == true) ? mark : ''}").join(', ')}]';
 }
 
 class ServiceError implements Exception {

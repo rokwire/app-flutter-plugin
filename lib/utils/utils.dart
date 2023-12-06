@@ -316,6 +316,19 @@ class SetUtils {
   }
 }
 
+extension SetExt on Set {
+  bool containsAny(Iterable<Object?> other) {
+    if (isNotEmpty && other.isNotEmpty) {
+      for (Object? entry in other) {
+        if (contains(entry)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}
+
 class LinkedHashSetUtils {
   static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
