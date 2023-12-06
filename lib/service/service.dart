@@ -42,8 +42,6 @@ abstract class Service {
   Set<Service>? get serviceDependsOn {
     return null;
   }
-
-  String get debugDisplayName => runtimeType.toString();
 }
 
 class Services {
@@ -62,14 +60,11 @@ class Services {
   static set instance(Services? value) => _instance = value;
 
   List<Service>? _services;
-  Map<Service?, Set<Service>?>? _serviceDependents; // gives services that depend on the key service (looking "down" dependency tree)
-  Map<Service, Set<Service>?>? _serviceDependencies;  // gives services are dependencies of the key service (looking "up" dependency tree)
-  Set<String>? _attemptedServiceInits;  // gives names of services for which initialization has been attempted
 
   void create(List<Service> services) {
     if (_services == null) {
-      _services = services;
-      for (Service service in services) {
+      _services = _sort(services);
+      for (Service service in _services!) {
         service.createService();
       }
     }
@@ -81,28 +76,21 @@ class Services {
         service.destroyService();
       }
       _services = null;
-      _serviceDependents = null;
-      _serviceDependencies = null;
-      _attemptedServiceInits = null;
     }
   }
 
   Future<ServiceError?> init() async {
     if (_services != null) {
-      _attemptedServiceInits ??= {};
-      _setDependencyTree();
-      if (_serviceDependents?[null]?.isEmpty ?? true) {
-        return ServiceError(
-          source: null,
-          severity: ServiceErrorSeverity.fatal,
-          title: 'Services Initialization Error',
-          description: 'All services have dependencies. No services may be initialized safely.',
-        );
+      for (Service service in _services!) {
+        if (service.isInitialized != true) {
+          ServiceError? error = await initService(service);
+          if (error?.severity == ServiceErrorSeverity.fatal) {
+            await initFallback();
+            return error;
+          }
+        }
       }
-
-      return _init(null);
     }
-
     return null;
 
     /*TMP:
@@ -114,32 +102,13 @@ class Services {
     );*/
   }
 
-  Future<ServiceError?> _init(Service? service) async {
-    List<Future<ServiceError?>> initErrorFutures = [];
-    for (Service dependent in _serviceDependents![service] ?? {}) {
-      bool initialize = true;
-      for (Service dependency in _serviceDependencies![dependent] ?? {}) {
-        if (_services!.contains(dependency) && !dependency.isInitialized) {
-          initialize = false;
-          break;
-        }
-      }
-
-      if (initialize && !dependent.isInitialized && !_attemptedServiceInits!.contains(dependent.debugDisplayName)) {
-        _attemptedServiceInits!.add(dependent.debugDisplayName);
-        initErrorFutures.add(initService(dependent).then((ServiceError? error) async {
-          if (error?.severity == ServiceErrorSeverity.fatal) {
-            await initServiceFallback(dependent);
-            return error;
-          }
-
-          return await _init(dependent);
-        }));
+  @protected
+  Future<void> initFallback() async {
+    for (Service service in _services!) {
+      if (service.isInitialized != true) {
+        await initServiceFallback(service);
       }
     }
-
-    List<ServiceError?> initErrors = await Future.wait(initErrorFutures);
-    return initErrors.firstWhere((element) => element != null, orElse: () => null);
   }
 
   @protected
@@ -156,13 +125,11 @@ class Services {
 
   @protected
   Future<void> initServiceFallback(Service service) async {
-    if (service.isInitialized != true) {
-      try {
-        await service.initServiceFallback();
-      }
-      on ServiceError catch (error) {
-        debugPrint(error.toString());
-      }
+    try {
+      await service.initServiceFallback();
+    }
+    on ServiceError catch (error) {
+      debugPrint(error.toString());
     }
   }
 
@@ -182,36 +149,33 @@ class Services {
     }
   }
 
-  ServiceError? verifyInitialization() {
-    Set<String>? serviceNames = _services != null ? Set.of(List.generate(_services!.length, (index) => _services![index].debugDisplayName)) : null;
-    Set<String> remaining = serviceNames?.difference(_attemptedServiceInits ?? {}) ?? {};
-    return remaining.isEmpty ? null : ServiceError(
-      source: null,
-      severity: ServiceErrorSeverity.fatal,
-      title: 'Services Initialization Error',
-      description: 'The following services were not initialized: ${remaining.join(", ")}',
-    );
-  }
+  static List<Service> _sort(List<Service> inputServices) {
 
-  void _setDependencyTree() {
-    _serviceDependencies ??= {};
-    _serviceDependents ??= {};
-    for (Service service in _services!) {
-      _serviceDependencies![service] = service.serviceDependsOn;
-      if (_serviceDependencies![service]?.isEmpty ?? true) {
-        _serviceDependents![null] ??= {};
-        _serviceDependents![null]!.add(service);
-      } else {
-        for (Service dependency in _serviceDependencies![service]!) {
-          if (_services!.contains(dependency)) {
-            _serviceDependents![dependency] ??= {};
-            _serviceDependents![dependency]!.add(service);
-          } 
+    List<Service> queue = [];
+    List<Service> services = List.from(inputServices);
+    while (services.isNotEmpty) {
+      // start with lowest priority service
+      Service svc = services.last;
+      services.removeLast();
+
+      // Move to TBD anyone from Queue that depends on svc
+      Set<Service>? svcDependents = svc.serviceDependsOn;
+      if (svcDependents != null) {
+        for (int index = queue.length - 1; index >= 0; index--) {
+          Service queuedSvc = queue[index];
+          if (svcDependents.contains(queuedSvc)) {
+            queue.removeAt(index);
+            services.add(queuedSvc);
+          }
         }
       }
-    }
-  }
 
+      // Move svc from TBD to Queue, mark it as processed
+      queue.add(svc);
+    }
+
+    return queue.reversed.toList();
+  }
 }
 
 class ServiceError implements Exception {
