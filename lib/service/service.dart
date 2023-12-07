@@ -87,7 +87,6 @@ class Services {
     on ServiceError catch (error) {
       return error;
     }
-    return null;
 
     /*TMP:
     return ServiceError(
