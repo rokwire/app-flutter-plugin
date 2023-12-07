@@ -65,7 +65,6 @@ class Services {
   Map<Service?, Set<Service>?>? _serviceDependents; // gives services that depend on the key service (looking "down" dependency tree)
   Map<Service, Set<Service>?>? _serviceDependencies;  // gives services are dependencies of the key service (looking "up" dependency tree)
   Set<String>? _attemptedServiceInits;  // gives names of services for which initialization has been attempted
-  Stopwatch _sw = Stopwatch();
 
   void create(List<Service> services) {
     if (_services == null) {
@@ -101,9 +100,7 @@ class Services {
         );
       }
 
-      _sw.start();
       ServiceError? initError = await _init(null);
-      _sw.stop();
       return initError ?? verifyInitialization();
     }
 
@@ -152,9 +149,7 @@ class Services {
   @protected
   Future<ServiceError?> initService(Service service) async {
     try {
-      debugPrint('Services.initService ${service} start: ${_sw.elapsedMilliseconds}ms');
       await service.initService();
-      debugPrint('Services.initService ${service} end: ${_sw.elapsedMilliseconds}ms');
     }
     on ServiceError catch (error) {
       return error;
