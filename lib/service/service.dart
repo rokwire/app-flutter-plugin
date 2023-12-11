@@ -43,6 +43,8 @@ abstract class Service {
   Set<Service>? get serviceDependsOn {
     return null;
   }
+
+  String get debugDisplayName => runtimeType.toString();
 }
 
 class Services {
@@ -155,7 +157,7 @@ class Services {
       Set<Service> currentListEntry = <Service>{};
       for (Service service in processing) {
         if (_canProcessService(service, processed: processed, registered: registered)) /* (processed.containsAll(service.serviceDependsOn ?? {})) */ {
-          currentListEntry.add(service); // All service ancessors are already scheduled for initialization => we can initialize this service on the current step.
+          currentListEntry.add(service); // All service ancestors are already scheduled for initialization => we can initialize this service on the current step.
         }
       }
 
@@ -181,10 +183,10 @@ class Services {
 
   @protected
   bool _canProcessService(Service service, { required Set<Service> processed, required Set<Service> registered}) {
-    Set<Service>? serviceAncessors = service.serviceDependsOn;
-    if ((serviceAncessors != null) && serviceAncessors.isNotEmpty) {
-      for (Service serviceAncessor in serviceAncessors) {
-        if (registered.contains(serviceAncessor) && !processed.contains(serviceAncessor)) {
+    Set<Service>? serviceAncestors = service.serviceDependsOn;
+    if ((serviceAncestors != null) && serviceAncestors.isNotEmpty) {
+      for (Service serviceAncestor in serviceAncestors) {
+        if (registered.contains(serviceAncestor) && !processed.contains(serviceAncestor)) {
           return false;
         }
       }
@@ -213,7 +215,7 @@ class Services {
       List<Future<dynamic>> initFutures = <Future<dynamic>>[];
       for (Service service in services) {
         if (skipped?.containsAny(service.serviceDependsOn ?? {}) == true) {
-          // Service ancessor is skipped, invoke initServiceFallback and do not try to initialize it.
+          // Service ancestor is skipped, invoke initServiceFallback and do not try to initialize it.
           initFutures.add(initServiceFallback(service));
           skippedServices.add(service);
         }
@@ -229,12 +231,12 @@ class Services {
         for (int index = 0; index < initResults.length; index++) {
           dynamic initResult = initResults[index];
           if ((initResult is ServiceError) && (initResult.severity == ServiceErrorSeverity.fatal)) {
-            skipped?.add(services.elementAt(index)); // service initialization failed => do not attempt to initialize its ancessors
+            skipped?.add(services.elementAt(index)); // service initialization failed => do not attempt to initialize its ancestors
             initError ??= initResult;
           }
         }
         if (skippedServices.isNotEmpty) {
-          skipped?.addAll(skippedServices); // service initialization is skipped => do not attempt to initialize its ancessors
+          skipped?.addAll(skippedServices); // service initialization is skipped => do not attempt to initialize its ancestors
         }
         return initError;
       }
