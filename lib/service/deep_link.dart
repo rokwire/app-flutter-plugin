@@ -23,7 +23,7 @@ class DeepLink with Service {
   
   static const String notifyUri  = "edu.illinois.rokwire.deeplink.uri";
 
-  // Singletone Factory
+  // Singleton Factory
 
   static DeepLink? _instance;
 
@@ -37,6 +37,9 @@ class DeepLink with Service {
   @protected
   DeepLink.internal();
 
+  Uri? _initialUri;
+  Uri? get initialUri => _initialUri;
+
   // Service
 
   @override
@@ -45,6 +48,8 @@ class DeepLink with Service {
     // 1. Initial Uri
     getInitialUri().then((uri) {
       if (uri != null) {
+        _initialUri = uri;
+        debugPrint('Launch URI: $uri');
         NotificationService().notify(notifyUri, uri);
       }
     });
@@ -52,6 +57,7 @@ class DeepLink with Service {
     // 2. Updated uri
     if (!kIsWeb) {
       uriLinkStream.listen((Uri? uri) {
+        debugPrint('Received URI: $uri');
         if (uri != null) {
           NotificationService().notify(notifyUri, uri);
         }
