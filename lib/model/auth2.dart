@@ -65,6 +65,10 @@ class Auth2Token {
     return DateTime.now().isAfter(expirationDate);
   }
 
+  dynamic getClaim(String claim) {
+    return _parsedAccessToken?[claim];
+  }
+
   @override
   bool operator ==(other) =>
     (other is Auth2Token) &&

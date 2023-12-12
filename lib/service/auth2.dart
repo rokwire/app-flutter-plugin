@@ -299,8 +299,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2Token? get oidcToken => _oidcToken;
 
   bool get associateAnonymousIds => false;
-  bool get isAnonymousAuthenticationSupported => true;
+  bool get isAnonymousAuthenticationSupported => Config().supportsAnonymousAuth;
   String? get accountId => _account?.id ?? _anonymousId;
+  String? get anonymousId => _anonymousId;
   Auth2UserPrefs? get prefs => _account?.prefs ?? _anonymousPrefs;
   Auth2UserProfile? get profile => _account?.profile ?? _anonymousProfile;
   String? get loginType => _account?.authType?.code;
