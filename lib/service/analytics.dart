@@ -107,6 +107,9 @@ class Analytics with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
+    if (kIsWeb) {
+      return;
+    }
 
     await initDatabase();
     initTimer();
@@ -149,6 +152,9 @@ class Analytics with Service implements NotificationsListener {
 
   @override
   void destroyService() {
+    if (kIsWeb) {
+      return;
+    }
     NotificationService().unsubscribe(this, Connectivity.notifyStatusChanged);
     closeDatabase();
     closeTimer();
@@ -173,6 +179,9 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   Future<void> initDatabase() async {
+    if (kIsWeb) {
+      return;
+    }
     if (_database == null) {
       String databasePath = await getDatabasesPath();
       String databaseFile = join(databasePath, databaseName);
@@ -191,6 +200,9 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   void closeDatabase() {
+    if (kIsWeb) {
+      return;
+    }
     if (_database != null) {
       _database!.close();
       _database = null;
@@ -201,6 +213,9 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   void initTimer() {
+    if (kIsWeb) {
+      return;
+    }
       if (_timer == null) {
         //Log.d("Analytics: awake");
         _timer = Timer.periodic(timerTick, onTimer);
@@ -210,6 +225,9 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   void closeTimer() {
+    if (kIsWeb) {
+      return;
+    }
     if (_timer != null) {
       //Log.d("Analytics: asleep");
       _timer!.cancel();
@@ -222,6 +240,9 @@ class Analytics with Service implements NotificationsListener {
   
   @protected
   Future<int> savePacket(String packet, int? timestamp) async {
+    if (kIsWeb) {
+      return -1;
+    }
     if (_database != null) {
       int result = await _database!.insert(databaseTable, {
         databasePacket : packet,
@@ -296,6 +317,9 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   Future<bool> sendPacket(String? packet) async {
+    if (kIsWeb) {
+      return false;
+    }
     if (packet != null) {
       try {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
@@ -326,6 +350,9 @@ class Analytics with Service implements NotificationsListener {
   // Public Accessories
 
   void logEvent(Map<String, dynamic> event, { int? timestamp }) {
+    if (kIsWeb) {
+      return;
+    }
     String packet = json.encode(event);
     debugPrint('Analytics: $packet');
     savePacket(packet, timestamp);
