@@ -50,6 +50,10 @@ class RokwirePlugin {
   }
 
   static Future<String?> getDeviceId([String? identifier, String? identifier2]) async {
+    if (kIsWeb) {
+      return null;
+    }
+
     try { return await _channel.invokeMethod('getDeviceId', {
       'identifier': identifier,
       'identifier2': identifier2
