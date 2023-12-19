@@ -324,7 +324,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       //TODO: decide how best to handle secret keys
       if (_config != null) { // && secretKeys.isNotEmpty) {
-        configFile.writeAsStringSync(configString!, flush: true);
+        if (!kIsWeb) {
+          configFile.writeAsStringSync(configString!, flush: true);
+        }
         checkUpgrade();
       }
       else {
@@ -348,7 +350,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Map<String, dynamic>? config = await configFromJsonString(configString);
     if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !await CollectionUtils.equalsAsync(_config, config))  {
       _config = config;
-      configFile.writeAsString(configString!, flush: true);
+      if (!kIsWeb) {
+        configFile.writeAsString(configString!, flush: true);
+      }
       NotificationService().notify(notifyConfigChanged, null);
 
       checkUpgrade();
