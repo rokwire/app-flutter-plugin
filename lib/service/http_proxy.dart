@@ -75,6 +75,9 @@ class HttpProxy extends Service implements NotificationsListener {
   }
 
   Future<void> applySystemProxy() async {
+    if (kIsWeb) {
+      return;
+    }
     bool enabled = false;
     String? host;
     int? port;
@@ -97,6 +100,9 @@ class HttpProxy extends Service implements NotificationsListener {
   }
 
   set httpProxyEnabled(bool? value){
+    if (kIsWeb) {
+      return;
+    }
     if(Storage().httpProxyEnabled != value) {
       Storage().httpProxyEnabled = value;
       _handleChanged();
