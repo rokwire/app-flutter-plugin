@@ -319,7 +319,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
         _configAsset = await loadFromAssets();
       }
       String? configString = await loadAsStringFromNet();
-      _configAsset = null;
+
+      // Do not clear the config asset for web
+      if (!kIsWeb) {
+        _configAsset = null;
+      }
 
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       //TODO: decide how best to handle secret keys
@@ -382,7 +386,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appPlatformId {
     if (kIsWeb) {
-      return authBaseUrl;
+      String? webAppTypeIdentifier = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['web_app_type_identifier']) : null;
+      return webAppTypeIdentifier;
     } else if (_appPlatformId == null) {
       _appPlatformId = appId;
 
@@ -588,7 +593,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
 
   // Getters: secretKeys
-  String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
+  String? get coreOrgId {
+    String? assetOrgId = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['core_org_id']) : null;
+    return kIsWeb ? assetOrgId : JsonUtils.stringValue(secretCore['org_id']);
+  }
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
