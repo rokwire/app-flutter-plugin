@@ -108,6 +108,9 @@ class RokwirePlugin {
   // Compound APIs
 
   static Future<dynamic> locationServices(String method, [dynamic arguments]) async {
+    if (kIsWeb) {
+      return null;
+    }
     try { return await _channel.invokeMethod('locationServices.$method', arguments); }
     catch(e) { debugPrint(e.toString()); }
     return null;
