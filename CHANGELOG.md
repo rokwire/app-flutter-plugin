@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integrate auth refactor [#379](https://github.com/rokwire/app-flutter-plugin/issues/379)
 - Use CCT for Android OIDC login [#404](https://github.com/rokwire/app-flutter-plugin/issues/404)
 - Improve services init on app startup [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
+- Prepare the plugin for web - in progress.
 
 ### Added
 - Survey creation tool [#263](https://github.com/rokwire/app-flutter-plugin/issues/263).
