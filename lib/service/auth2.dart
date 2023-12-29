@@ -1456,6 +1456,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty());
     await Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty());
     await Storage().setAuth2Token(_token = null);
+    await Storage().setAuth2OidcToken(_oidcToken = null);
     await Storage().setAuth2Account(_account = null);
 
     _updateUserPrefsTimer?.cancel();
