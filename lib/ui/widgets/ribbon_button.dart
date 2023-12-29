@@ -179,8 +179,8 @@ class _RibbonButtonState extends State<RibbonButton> {
         child: Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
           InkWell(
             borderRadius: widget.borderRadius,
-            onTap: () => widget.onTapWidget(context), child:
-            Padding(padding: widget.displayPadding, child:
+            onTap: widget.onTap != null ? () => widget.onTapWidget(context) : null,
+            child: Padding(padding: widget.displayPadding, child:
               Row(children: <Widget>[
                 (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
                 Expanded(child:
