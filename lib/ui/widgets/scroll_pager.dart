@@ -81,7 +81,7 @@ class ScrollPagerController {
 
   void registerScrollController(ScrollController controller) {
     if (_scrollController != null && _scrollController != controller) {
-      deregisterScrollController();
+      unregisterScrollController();
     }
     controller.addListener(_scrollListener);
     _scrollController = controller;
@@ -113,7 +113,7 @@ class ScrollPagerController {
     }
   }
 
-  void deregisterScrollController() {
+  void unregisterScrollController() {
     _scrollController?.removeListener(_scrollListener);
     _scrollController = null;
   }
