@@ -145,12 +145,11 @@ class Network  {
     http.Response? response;
 
     try {
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _get(url, headers: headers, body: body, encoding: encoding, auth: auth, client: client, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _get(url, body: body, headers: headers, auth: auth, client: client, timeout: timeout);
       }
     } catch (e) { 
@@ -189,12 +188,11 @@ class Network  {
     http.Response? response;
     
     try {
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -233,12 +231,11 @@ class Network  {
     http.Response? response;
     
     try {
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _put(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _put(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
       }
     } catch (e) {
@@ -272,13 +269,12 @@ class Network  {
   Future<http.Response?> patch(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async {
     http.Response? response;
     
-    try {    
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+    try {
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _patch(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _patch(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -312,12 +308,11 @@ class Network  {
   Future<http.Response?> delete(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async {
     http.Response? response;
     try {
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _delete(url, body: body, encoding:encoding, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _delete(url, body: body, encoding:encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -381,12 +376,11 @@ class Network  {
     http.StreamedResponse? response;
 
     try {
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
 
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
       }
     } catch (e) {
@@ -450,13 +444,12 @@ class Network  {
   Future<http.Response?> head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async {
     http.Response? response;
     
-    try {    
-      dynamic token = auth?.networkAuthToken;
-      await auth?.refreshNetworkAuthTokenIfExpired(token);
+    try {
+      await auth?.refreshNetworkAuthTokenIfExpired(auth.networkAuthToken);
 
       response = await _head(url, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _head(url, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {

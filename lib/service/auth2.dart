@@ -430,8 +430,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
           _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
-          await Storage().setAuth2AnonymousId(_anonymousId = anonymousId);
-          await Storage().setAuth2AnonymousToken(_anonymousToken = anonymousToken);
+          await Future.wait([
+            Storage().setAuth2AnonymousId(_anonymousId = anonymousId),
+            Storage().setAuth2AnonymousToken(_anonymousToken = anonymousToken),
+          ]);
           _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
           return true;
         }
@@ -836,13 +838,20 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _token = token;
     _oidcToken = oidcToken;
     _account = account;
-    await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null);
-    await Storage().setAuth2AnonymousProfile(_anonymousProfile = null);
+
+    List<Future<dynamic>> futures = [
+      Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null),
+      Storage().setAuth2AnonymousProfile(_anonymousProfile = null),
+    ];
+    
     if (!kIsWeb) {
-      await Storage().setAuth2Token(token);
-      await Storage().setAuth2OidcToken(oidcToken);
-      await Storage().setAuth2Account(account);
+      futures.addAll([
+        Storage().setAuth2Token(token),
+        Storage().setAuth2OidcToken(oidcToken),
+        Storage().setAuth2Account(account),
+      ]);
     }
+    await Future.wait(futures);
 
     if (prefsUpdated == true) {
       _saveAccountUserPrefs();
@@ -1453,11 +1462,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf(token: token));
     }
 
-    await Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty());
-    await Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty());
-    await Storage().setAuth2Token(_token = null);
-    await Storage().setAuth2OidcToken(_oidcToken = null);
-    await Storage().setAuth2Account(_account = null);
+    await Future.wait([
+      Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty()),
+      Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty()),
+      Storage().setAuth2Token(_token = null),
+      Storage().setAuth2OidcToken(_oidcToken = null),
+      Storage().setAuth2Account(_account = null),
+    ]);
 
     _updateUserPrefsTimer?.cancel();
     _updateUserPrefsTimer = null;
@@ -1533,6 +1544,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
               _refreshTokenFailCounts.remove(futureKey);
 
               if (token == _token) {
+                // do not need to await applyToken because updated tokens are set in memory immediately
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
                 return responseToken;
               }
@@ -1571,13 +1583,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<void> applyToken(Auth2Token token, { Map<String, dynamic>? params }) async {
+    Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
+
     _token = token;
+    _oidcToken = oidcToken;
     if (!kIsWeb) {
-      await Storage().setAuth2Token(token);
+      await Future.wait([
+        Storage().setAuth2Token(token),
+        Storage().setAuth2OidcToken(oidcToken),
+      ]);
     }
   }
 
-  static Future<Response?> _refreshToken(String? refreshToken) async {
+  Future<Response?> _refreshToken(String? refreshToken) {
     if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/refresh";
       
@@ -1587,7 +1605,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String? post;
       if (!Config().isReleaseWeb) {
         if (refreshToken == null) {
-          return null;
+          return Future.value(null);
         }
         post = JsonUtils.encode({
           'api_key': Config().rokwireApiKey,
@@ -1597,7 +1615,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       return Network().post(url, headers: headers, body: post, auth: Auth2Csrf());
     }
-    return null;
+    return Future.value(null);
   }
 
   // User Prefs
