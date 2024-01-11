@@ -981,7 +981,7 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 ///////////////////////////////
 /// Event2TypeFilter
 
-enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent }
+enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
 
 const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
   Event2TypeFilter.free: 'cost',
@@ -993,6 +993,8 @@ const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, S
   Event2TypeFilter.private: 'discoverability',
   Event2TypeFilter.nearby: 'proximity',
   Event2TypeFilter.superEvent: 'composite',
+  Event2TypeFilter.favorite: 'favorite',
+  Event2TypeFilter.admin: 'admin',
 };
 
 Event2TypeFilter? event2TypeFilterFromString(String? value) {
@@ -1023,6 +1025,12 @@ Event2TypeFilter? event2TypeFilterFromString(String? value) {
   else if (value == 'super-event') {
     return Event2TypeFilter.superEvent;
   }
+  else if (value == 'favorite') {
+    return Event2TypeFilter.favorite;
+  }
+  else if (value == 'admin') {
+    return Event2TypeFilter.admin;
+  }
   else {
     return null;
   }
@@ -1039,6 +1047,8 @@ String? event2TypeFilterToString(Event2TypeFilter? value) {
     case Event2TypeFilter.private: return 'private';
     case Event2TypeFilter.nearby: return 'nearby';
     case Event2TypeFilter.superEvent: return 'super-event';
+    case Event2TypeFilter.favorite: return 'favorite';
+    case Event2TypeFilter.admin: return 'admin';
     default: return null;
   }
 }
