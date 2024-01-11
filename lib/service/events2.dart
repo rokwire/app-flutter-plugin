@@ -1,4 +1,6 @@
 
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
@@ -522,6 +524,19 @@ class Events2Query {
 
     if (types.contains(Event2TypeFilter.superEvent)) {
       options['grouping'] = Event2Grouping.superEvent(null).toJson();
+    }
+
+    if (types.contains(Event2TypeFilter.admin)) {
+      options['person'] = Event2Person(role: Event2UserRole.admin).toJson();
+    }
+
+    if (types.contains(Event2TypeFilter.favorite)) {
+      LinkedHashSet<String>? favoriteIds = Auth2().account?.prefs?.getFavorites(Event2.favoriteKeyName);
+      if ((favoriteIds != null) && favoriteIds.isNotEmpty) {
+        List<String>? filterIds = JsonUtils.listStringsValue(options['ids']);
+        options['ids'] = ((filterIds != null) && filterIds.isNotEmpty) ?
+          favoriteIds.intersection(filterIds.toSet()) : favoriteIds.toList();
+      }
     }
 
     if (types.contains(Event2TypeFilter.nearby) && (location != null)) {
