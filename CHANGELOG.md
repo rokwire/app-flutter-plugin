@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next build on `develop` should refer to version 1.6.0 -->
 ### Added
 - Import and use Font Awesome Pro icons [#398](https://github.com/rokwire/app-flutter-plugin/issues/398).
+- Favorite and admin entrues to Event2TypeFilter enum [#413](https://github.com/rokwire/app-flutter-plugin/issues/413).
 ### Fixed
 - Fixed image assets resolution [#400](https://github.com/rokwire/app-flutter-plugin/issues/400).
 - Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
