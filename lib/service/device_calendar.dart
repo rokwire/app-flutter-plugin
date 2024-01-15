@@ -102,12 +102,21 @@ class DeviceCalendar with Service {
         onCreateOrUpdateEventFailed(createEventResult);
         return false;
       }
+      else{
+        consoleMessage("added");
+        onCreateOrUpdateEventSucceeded(createEventResult);
+        return true;
+      }
     } else {
       consoleMessage("calendar is missing");
+      onCreateOrUpdateEventFailed(Result<String>());
+      return false;
     }
+  }
 
-    consoleMessage("added");
-    return true;
+  @protected
+  void onCreateOrUpdateEventSucceeded(Result<String>? createEventResult) {
+    AppToast.show('Event successfully ');
   }
 
   @protected

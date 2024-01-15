@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed image assets resolution [#400](https://github.com/rokwire/app-flutter-plugin/issues/400).
 - Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
+- Notify for success of add to calendar API, make sure to return right return value [#3789](https://github.com/rokwire/illinois-app/issues/3789).
 ### Changed
 - Upgrade to Flutter 3.16.0 [#402](https://github.com/rokwire/app-flutter-plugin/issues/402)
 
