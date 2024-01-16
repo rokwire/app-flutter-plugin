@@ -42,12 +42,17 @@ class ContentAttributes {
     (const DeepCollectionEquality().hash(attributes)) ^
     (const DeepCollectionEquality().hash(_requirements));
 
-  // Copy
+  // Clone
 
-  static ContentAttributes? fromOther(ContentAttributes? other, { String? scope }) {
+  ContentAttributes clone() => ContentAttributes(
+    attributes: ContentAttribute.listFromOther(attributes, clone: true),
+    requirements: ContentAttributeRequirements.listFromOther(_requirements, clone: true),
+  );
+
+  static ContentAttributes? fromOther(ContentAttributes? other, { String? scope, bool clone = false }) {
     return (other != null) ? ContentAttributes(
-      attributes: ContentAttribute.listFromOther(other.attributes, scope: scope),
-      requirements: ContentAttributeRequirements.listFromOther(other._requirements, scope: scope) ,
+      attributes: ContentAttribute.listFromOther(other.attributes, scope: scope, clone: clone),
+      requirements: ContentAttributeRequirements.listFromOther(other._requirements, scope: scope, clone: clone) ,
     ) : null;
   }
 
@@ -312,6 +317,48 @@ class ContentAttribute {
   int compareBySortOrder(ContentAttribute? other) =>
     (sortOrder ?? 0).compareTo(other?.sortOrder ?? 0);
 
+  // Clone
+
+  ContentAttribute clone() => ContentAttribute(
+    id: id,
+    title: title,
+    longTitle: longTitle,
+    description: description,
+    text: text,
+    emptyHint: emptyHint,
+    emptyFilterHint: emptyFilterHint,
+    semanticsHint: semanticsHint,
+    semanticsFilterHint: semanticsFilterHint,
+    nullValue: nullValue,
+    widget: widget,
+    usage: usage,
+    requirements: requirements?.clone(),
+    scope: SetUtils.from(scope),
+    sortOrder: sortOrder,
+    values: ContentAttributeValue.listFromOther(values, clone: true),
+    translations: MapUtils.from(translations),
+  );
+
+  static List<ContentAttribute>? listFromOther(List<ContentAttribute>? otherList, { String? scope, bool clone = false }) {
+    if (otherList != null) {
+      if (clone) {
+        List<ContentAttribute> cloneList = <ContentAttribute>[];
+        for (ContentAttribute attribute in otherList) {
+          if ((scope == null) || attribute.inScope(scope)) {
+            cloneList.add(attribute.clone());
+          }
+        }
+        return cloneList;
+      }
+      else {
+        return List<ContentAttribute>.from((scope != null) ? otherList.where((ContentAttribute attribute) => attribute.inScope(scope)) : otherList);
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
   // Accessories
 
   String? get displayTitle => displayString(title);
@@ -510,9 +557,6 @@ class ContentAttribute {
     }
     return jsonList;
   }
-
-  static List<ContentAttribute>? listFromOther(List<ContentAttribute>? otherList, { String? scope }) =>
-    (otherList != null) ? List<ContentAttribute>.from((scope != null) ? otherList.where((ContentAttribute attribute) => attribute.inScope(scope)) : otherList) : null;
 }
 
 /////////////////////////////////////
@@ -626,6 +670,35 @@ class ContentAttributeValue {
     (info?.hashCode ?? 0) ^
     (customData?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
+
+  // Clone
+
+  ContentAttributeValue clone() => ContentAttributeValue(
+    label: _label,
+    value: _value,
+    group: group,
+    requirements: MapUtils.from(requirements),
+    info: info,
+    customData: MapUtils.from(customData)
+  );
+
+  static List<ContentAttributeValue>? listFromOther(List<ContentAttributeValue>? otherList, { bool clone = false }) {
+    if (otherList != null) {
+      if (clone) {
+        List<ContentAttributeValue> values = <ContentAttributeValue>[];
+        for (ContentAttributeValue attributeValue in otherList) {
+          values.add(attributeValue.clone());
+        }
+        return values;
+      }
+      else {
+        return List<ContentAttributeValue>.from(otherList);
+      }
+    }
+    else {
+      return null;
+    }
+  }
 
   // Accessories
 
@@ -760,6 +833,36 @@ class ContentAttributeRequirements {
     (_functionalScope?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(scope));
 
+  // Clone
+
+  ContentAttributeRequirements clone() => ContentAttributeRequirements(
+    minSelectedCount: minSelectedCount,
+    maxSelectedCount: maxSelectedCount,
+    mode: mode,
+    functionalScope: functionalScope,
+    scope: SetUtils.from(scope),
+  );
+
+  static List<ContentAttributeRequirements>? listFromOther(List<ContentAttributeRequirements>? otherList, { String? scope, bool clone = false }) {
+    if (otherList != null) {
+      if (clone) {
+        List<ContentAttributeRequirements> cloneList = <ContentAttributeRequirements>[];
+        for (ContentAttributeRequirements requirements in otherList) {
+          if ((scope == null) || requirements.inScope(scope)) {
+            cloneList.add(requirements.clone());
+          }
+        }
+        return cloneList;
+      }
+      else {
+        return List<ContentAttributeRequirements>.from((scope != null) ? otherList.where((ContentAttributeRequirements requirements) => requirements.inScope(scope)) : otherList);
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
   // Accessories
 
   int get functionalScope => _functionalScope ?? contentAttributeRequirementsFunctionalScopeCreate; // the scope by default
@@ -841,9 +944,6 @@ class ContentAttributeRequirements {
     }
     return jsonList;
   }
-
-  static List<ContentAttributeRequirements>? listFromOther(List<ContentAttributeRequirements>? otherList, { String? scope }) =>
-    (otherList != null) ? List<ContentAttributeRequirements>.from((scope != null) ? otherList.where((ContentAttributeRequirements requirements) => requirements.inScope(scope)) : otherList) : null;
 }
 
 /////////////////////////////////////
