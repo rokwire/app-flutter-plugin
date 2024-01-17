@@ -17,7 +17,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
+// import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/inbox.dart';
@@ -61,34 +61,34 @@ class FirebaseMessaging with Service {
 
   @override
   Future<void> initService() async {
-    await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    firebase_messaging.FirebaseMessaging.onMessage.listen((firebase_messaging.RemoteMessage message) {
-      Log.d('FCM: onMessage');
-      onFirebaseMessage(message);
-    });
-
-    firebase_messaging.FirebaseMessaging.onMessageOpenedApp.listen((firebase_messaging.RemoteMessage message) {
-      Log.d('FCM: onMessageOpenedApp');
-      onFirebaseMessage(message);
-    });
-
-    firebase_messaging.FirebaseMessaging.instance.getToken().then((String? token) => applyToken(token));
+    // await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    //   alert: true,
+    //   badge: true,
+    //   sound: true,
+    // );
+    //
+    // firebase_messaging.FirebaseMessaging.onMessage.listen((firebase_messaging.RemoteMessage message) {
+    //   Log.d('FCM: onMessage');
+    //   onFirebaseMessage(message);
+    // });
+    //
+    // firebase_messaging.FirebaseMessaging.onMessageOpenedApp.listen((firebase_messaging.RemoteMessage message) {
+    //   Log.d('FCM: onMessageOpenedApp');
+    //   onFirebaseMessage(message);
+    // });
+    //
+    // firebase_messaging.FirebaseMessaging.instance.getToken().then((String? token) => applyToken(token));
 
     await super.initService();
   }
 
   @override
   void initServiceUI() {
-    firebase_messaging.FirebaseMessaging.instance.getInitialMessage().then((message) {
-      if (message != null) {
-        processDataMessage(message.data);
-      }
-    });
+    // firebase_messaging.FirebaseMessaging.instance.getInitialMessage().then((message) {
+    //   if (message != null) {
+    //     processDataMessage(message.data);
+    //   }
+    // });
   }
 
   @override
@@ -97,40 +97,43 @@ class FirebaseMessaging with Service {
   }
 
   Future<NotificationsAuthorizationStatus> get authorizationStatus async {
-    firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
-    return _convertStatus(settings.authorizationStatus);
+    // firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
+    // return _covertStatus(settings.authorizationStatus);
+    return NotificationsAuthorizationStatus.notDetermined;
   }
 
   Future<bool> get requiresAuthorization async {
-    firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
-    firebase_messaging.AuthorizationStatus authorizationStatus = settings.authorizationStatus;
-    // There is not "notDetermined" status for android. Treat "denied" in Android like "notDetermined" in iOS
-    if (Config().operatingSystem == "android") {
-      return (authorizationStatus != firebase_messaging.AuthorizationStatus.denied);
-    } else {
-      return (authorizationStatus == firebase_messaging.AuthorizationStatus.notDetermined);
-    }
+    // firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
+    // firebase_messaging.AuthorizationStatus authorizationStatus = settings.authorizationStatus;
+    // // There is not "notDetermined" status for android. Treat "denied" in Android like "notDetermined" in iOS
+    // if (Config().operatingSystem == "android") {
+    //   return (authorizationStatus != firebase_messaging.AuthorizationStatus.denied);
+    // } else {
+    //   return (authorizationStatus == firebase_messaging.AuthorizationStatus.notDetermined);
+    // }
+    return false;
   }
 
   Future<NotificationsAuthorizationStatus> requestAuthorization() async {
-    firebase_messaging.FirebaseMessaging messagingInstance = firebase_messaging.FirebaseMessaging.instance;
-    firebase_messaging.NotificationSettings requestSettings = await messagingInstance.requestPermission(
-        alert: true, announcement: false, badge: true, carPlay: false, criticalAlert: false, provisional: false, sound: true);
-    return _convertStatus(requestSettings.authorizationStatus);
+    // firebase_messaging.FirebaseMessaging messagingInstance = firebase_messaging.FirebaseMessaging.instance;
+    // firebase_messaging.NotificationSettings requestSettings = await messagingInstance.requestPermission(
+    //     alert: true, announcement: false, badge: true, carPlay: false, criticalAlert: false, provisional: false, sound: true);
+    // return _convertStatus(requestSettings.authorizationStatus);
+    return NotificationsAuthorizationStatus.notDetermined;
   }
 
-  NotificationsAuthorizationStatus _convertStatus(firebase_messaging.AuthorizationStatus status) {
-    switch(status) {
-      case firebase_messaging.AuthorizationStatus.authorized:
-        return NotificationsAuthorizationStatus.authorized;
-      case firebase_messaging.AuthorizationStatus.denied:
-        return NotificationsAuthorizationStatus.denied;
-      case firebase_messaging.AuthorizationStatus.notDetermined:
-        return NotificationsAuthorizationStatus.notDetermined;
-      case firebase_messaging.AuthorizationStatus.provisional:
-        return NotificationsAuthorizationStatus.provisional;
-    }
-  }
+  // NotificationsAuthorizationStatus _convertStatus(firebase_messaging.AuthorizationStatus status) {
+  //   switch(status) {
+  //     case firebase_messaging.AuthorizationStatus.authorized:
+  //       return NotificationsAuthorizationStatus.authorized;
+  //     case firebase_messaging.AuthorizationStatus.denied:
+  //       return NotificationsAuthorizationStatus.denied;
+  //     case firebase_messaging.AuthorizationStatus.notDetermined:
+  //       return NotificationsAuthorizationStatus.notDetermined;
+  //     case firebase_messaging.AuthorizationStatus.provisional:
+  //       return NotificationsAuthorizationStatus.provisional;
+  //   }
+  // }
 
   // Token
 
@@ -155,25 +158,25 @@ class FirebaseMessaging with Service {
 
   // Message Processing
 
-  @protected
-  Future<dynamic> onFirebaseMessage(firebase_messaging.RemoteMessage message) async {
-    Log.d("FCM: onFirebaseMessage: $message");
-    try {
-      if ((AppLifecycle.instance?.state == AppLifecycleState.resumed) && StringUtils.isNotEmpty(message.notification?.body)) {
-        NotificationService().notify(notifyForegroundMessage, {
-          "body": message.notification?.body,
-          "onComplete": () {
-            processDataMessage(message.data);
-          }
-        });
-      } else {
-        processDataMessage(message.data);
-      }
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
-  }
+  // @protected
+  // Future<dynamic> onFirebaseMessage(firebase_messaging.RemoteMessage message) async {
+  //   Log.d("FCM: onFirebaseMessage: $message");
+  //   try {
+  //     if ((AppLifecycle.instance?.state == AppLifecycleState.resumed) && StringUtils.isNotEmpty(message.notification?.body)) {
+  //       NotificationService().notify(notifyForegroundMessage, {
+  //         "body": message.notification?.body,
+  //         "onComplete": () {
+  //           processDataMessage(message.data);
+  //         }
+  //       });
+  //     } else {
+  //       processDataMessage(message.data);
+  //     }
+  //   }
+  //   catch(e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
 
   
   @protected

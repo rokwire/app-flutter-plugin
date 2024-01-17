@@ -56,7 +56,7 @@ dependencies:
   #Firebase
   firebase_core: ^2.13.0
   firebase_crashlytics: ^3.3.1
-  firebase_messaging: ^14.6.1
+#  firebase_messaging: ^14.6.1 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
   #End Firebase
 
 dev_dependencies:
