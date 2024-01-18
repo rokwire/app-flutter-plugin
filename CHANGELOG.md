@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version 1.6.0 -->
 ### Added
+- Content service upload/retrieve/delete profile voice record [#3846](https://github.com/rokwire/illinois-app/issues/3846).
 - Import and use Font Awesome Pro icons [#398](https://github.com/rokwire/app-flutter-plugin/issues/398).
 - Favorite and admin entrues to Event2TypeFilter enum [#413](https://github.com/rokwire/app-flutter-plugin/issues/413).
 - Added deep copy functionality to ContentAttributes [#3828](https://github.com/rokwire/illinois-app/issues/3828).

@@ -43,6 +43,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
   static const String notifyContentWidgetsChanged         = "edu.illinois.rokwire.content.widgetss.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
+  static const String notifyUserProfileVoiceRecordChanged     = "edu.illinois.rokwire.content.user.voice_record_profile.changed";
 
   static const String _attributesContentCategory = "attributes";
   static const String _imagesContentCategory = "images";
@@ -565,6 +566,72 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
+  //Profile Voice Record
+  Future<AudioResult> uploadVoiceRecord(Uint8List? audioFile) async{ //TBD return type
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
+    if (CollectionUtils.isEmpty(audioFile)) {
+      return AudioResult.error(AudioErrorType.fileNameNotSupplied, 'Missing file.');
+    }
+    String url = "$serviceUrl/voice_record";
+    StreamedResponse? response = await Network().multipartPost(
+        url: url,
+        fileKey: "voiceRecord",
+        fileName: "record.m4a",
+        // fileName: audioFile.name,
+        fileBytes: audioFile,
+        contentType: 'audio/m4a',
+        auth: Auth2()
+    );
+
+    int responseCode = response?.statusCode ?? -1;
+    String? responseString = (await response?.stream.bytesToString());
+    if (responseCode == 200) {
+      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
+      return AudioResult.succeed(responseString);
+    } else {
+      debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
+      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio. $responseString", response);
+    }
+  }
+
+  Future<AudioResult?> retrieveVoiceRecord() async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
+    String url = "$serviceUrl/voice_record";
+
+    Response? response = await Network().get(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return AudioResult.succeed(response?.bodyBytes);
+    } else {
+      debugPrint('Failed to retrieve user audio voice_record');
+      return AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
+    }
+  }
+
+  Future<AudioResult?> deleteVoiceRecord() async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
+    String url = "$serviceUrl/voice_record";
+    Response? response = await Network().delete(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
+      return AudioResult.succeed('User profile voice record deleted.');
+    } else {
+      String? responseString = response?.body;
+      debugPrint("Failed to delete user's profile voice record. Reason: $responseCode $responseString");
+      return AudioResult.error(AudioErrorType.deleteFailed, "Failed to delete user's profile voice record.", responseString);
+    }
+  }
+
 }
 
 abstract class ContentItemCategoryClient {
@@ -608,3 +675,32 @@ class ImagesResult {
 }
 
 enum UserProfileImageType { defaultType, medium, small }
+
+enum AudioResultType { error, cancelled, succeeded }
+enum AudioErrorType {serviceNotAvailable, fileNameNotSupplied, uploadFailed, retrieveFailed, deleteFailed}
+
+class AudioResult {
+  AudioResultType? resultType;
+  AudioErrorType? errorType;
+  String? errorMessage;
+  dynamic data;
+
+  AudioResult.error(this.errorType, this.errorMessage, [this.data]) :
+        resultType = AudioResultType.error;
+
+  AudioResult.cancel() :
+        resultType = AudioResultType.cancelled;
+
+  AudioResult.succeed(this.data) :
+        resultType = AudioResultType.succeeded;
+
+  T? getDataAs<T>(){
+    return data != null && data is T ? data as T : null;
+  }
+}
+
+extension FileExtention on FileSystemEntity{ //file.name
+  String? get name {
+    return this.path.split(Platform.pathSeparator).last;
+  }
+}
