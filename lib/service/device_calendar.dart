@@ -12,7 +12,6 @@ import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
   static const String notifyPromptPopup            = "edu.illinois.rokwire.device_calendar.messaging.message.popup";
-  static const String notifyCalendarSelectionPopup = "edu.illinois.rokwire.device_calendar.messaging.calendar_selection.popup";
   static const String notifyShowConsoleMessage     = "edu.illinois.rokwire.device_calendar.console.debug.message";
 
   Calendar? _defaultCalendar;
