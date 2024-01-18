@@ -43,7 +43,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
   static const String notifyContentWidgetsChanged         = "edu.illinois.rokwire.content.widgetss.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
-  static const String notifyUserProfileVoiceRecordChanged     = "edu.illinois.rokwire.content.user.voice_record_profile.changed";
+  static const String notifyUserProfileVoiceRecordChanged = "edu.illinois.rokwire.content.user.voice_record_profile.changed";
 
   static const String _attributesContentCategory = "attributes";
   static const String _imagesContentCategory = "images";
