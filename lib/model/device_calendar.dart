@@ -5,11 +5,11 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
 class DeviceCalendarEvent {
-  String? internalEventId;
-  String? title;
-  String? deepLinkUrl;
-  DateTime? startDate;
-  DateTime? endDate;
+  final String? internalEventId;
+  final String? title;
+  final String? deepLinkUrl;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   DeviceCalendarEvent({this.internalEventId, this.title, this.deepLinkUrl, this.startDate, this.endDate});
 
