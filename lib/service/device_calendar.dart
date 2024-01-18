@@ -2,15 +2,12 @@
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/device_calendar.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
-  static const String notifyPromptPopup            = "edu.illinois.rokwire.device_calendar.messaging.message.popup";
-
   Calendar? _defaultCalendar;
   List<Calendar>? _deviceCalendars;
   Calendar? _selectedCalendar;
@@ -47,30 +44,7 @@ class DeviceCalendar with Service {
   Map<String, String>? get calendarEventIdTable => _calendarEventIdTable;
   DeviceCalendarPlugin get deviceCalendarPlugin => _deviceCalendarPlugin;
 
-  @protected
-  Future<bool> addEvent(DeviceCalendarEvent event) async {
-    //User prefs
-    if (!canAddToCalendar) {
-      debugPrint("Disabled");
-      return false;
-    }
-
-    //init check
-    bool initResult = await loadDefaultCalendarIfNeeded();
-    if (!initResult) {
-      debugPrint("Unable to init plugin");
-      return false;
-    }
-    
-    if (canShowPrompt) {
-      promptPermissionDialog(event);
-      return true;
-    }
-
-    return placeCalendarEvent(event);
-  }
-
-  @protected
+  //@protected
   Future<bool> placeCalendarEvent(DeviceCalendarEvent? event) async {
     if (event == null) {
       return false;
@@ -147,7 +121,7 @@ class DeviceCalendar with Service {
     return deleteEventResult.isSuccess;
   }
 
-  @protected
+  //@protected
   Future<bool> loadDefaultCalendarIfNeeded() async{
     return (calendar == null) ? await loadCalendars() : true;
   }
@@ -213,11 +187,6 @@ class DeviceCalendar with Service {
     }
   }
 
-  @protected
-  void promptPermissionDialog(DeviceCalendarEvent event) {
-    NotificationService().notify(DeviceCalendar.notifyPromptPopup, {"event": event});
-  }
-
   void placeEvent(dynamic data) {
     if(data!=null && data is Map){
       DeviceCalendarEvent? event = data["event"];
@@ -230,19 +199,15 @@ class DeviceCalendar with Service {
     }
   }
 
-  bool get canAddToCalendar{
-    return Storage().calendarEnabledToSave ?? false;
-  }
-  
-  bool get canShowPrompt{
-    return Storage().calendarCanPrompt ?? false;
-  }
-  
-  Calendar? get calendar{
-    return _selectedCalendar ?? _defaultCalendar;
-  }
+  bool get canAddToCalendar =>
+      Storage().calendarEnabledToSave;
 
-  set calendar(Calendar? calendar){
+  bool get shouldPrompt =>
+    Storage().calendarShouldPrompt;
+
+  Calendar? get calendar =>
+    _selectedCalendar ?? _defaultCalendar;
+
+  set calendar(Calendar? calendar) =>
     _selectedCalendar = calendar;
-  }
 }
