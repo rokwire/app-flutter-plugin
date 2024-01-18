@@ -69,29 +69,16 @@ class DeviceCalendar with Service {
 
       if((createEventResult == null) || !createEventResult.isSuccess) {
         debugPrint('failed to create/update event: ${createEventResult?.errors.toString()}');
-        onCreateOrUpdateEventFailed(createEventResult);
         return false;
       }
       else{
         debugPrint("added");
-        onCreateOrUpdateEventSucceeded(createEventResult);
         return true;
       }
     } else {
       debugPrint("calendar is missing");
-      onCreateOrUpdateEventFailed(Result<String>());
       return false;
     }
-  }
-
-  @protected
-  void onCreateOrUpdateEventSucceeded(Result<String>? createEventResult) {
-    AppToast.show('Event successfully ');
-  }
-
-  @protected
-  void onCreateOrUpdateEventFailed(Result<String>? createEventResult) {
-    AppToast.show(createEventResult?.data ?? createEventResult?.errors.toString() ?? 'Failed to create event');
   }
 
   Future<bool> deleteEvent(DeviceCalendarEvent? event) async {
@@ -157,17 +144,11 @@ class DeviceCalendar with Service {
     if (permissionsGranted.isSuccess && !permissionsGranted.data!) {
       permissionsGranted = await _deviceCalendarPlugin.requestPermissions();
       if (!permissionsGranted.isSuccess || !permissionsGranted.data!) {
-        onRequestPermissionFailed();
         return false;
       }
     }
 
     return true;
-  }
-
-  @protected
-  void onRequestPermissionFailed() {
-    AppToast.show("Unable to save event to calendar. Permissions not granted");
   }
 
   @protected
