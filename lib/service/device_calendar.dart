@@ -4,20 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/device_calendar.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
-  Calendar? _defaultCalendar;
-  List<Calendar>? _deviceCalendars;
-  Calendar? _selectedCalendar;
-  Map<String, String>? _calendarEventIdTable;
+  late Map<String, String> _calendarEventIdTable;
   final DeviceCalendarPlugin _deviceCalendarPlugin = DeviceCalendarPlugin();
 
   // Singletone Factory
-
   static DeviceCalendar? _instance;
-
   static DeviceCalendar? get instance => _instance;
 
   @protected
@@ -36,133 +30,117 @@ class DeviceCalendar with Service {
     await super.initService();
   }
 
-  // Implementation
-
-  Calendar? get defaultCalendar => _defaultCalendar;
-  List<Calendar>? get deviceCalendars => _deviceCalendars;
-  Calendar? get selectedCalendar => _selectedCalendar;
-  Map<String, String>? get calendarEventIdTable => _calendarEventIdTable;
-  DeviceCalendarPlugin get deviceCalendarPlugin => _deviceCalendarPlugin;
-
   //@protected
-  Future<bool> placeCalendarEvent(DeviceCalendarEvent? event) async {
-    if (event == null) {
-      return false;
+  Future<DeviceCalendarError?> placeCalendarEvent(DeviceCalendarEvent event) async {
+    String? eventId = event.internalEventId;
+    if (eventId != null) {
+      dynamic calendar = loadCalendar();
+      if (calendar is Calendar) {
+        Result<String>? createEventResult = await _deviceCalendarPlugin.createOrUpdateEvent(event.toCalendarEvent(calendar.id));
+        if (createEventResult?.isSuccess == true) {
+          String? calendarEventId = createEventResult?.data;
+          if (calendarEventId != null) {
+            storeEventId(eventId, calendarEventId);
+            return null; // No error
+          }
+          else {
+            return DeviceCalendarError.internal();
+          }
+        }
+        else {
+          return DeviceCalendarError.fromResultErrors(createEventResult?.errors ?? <ResultError>[]);
+        }
+      }
+      else {
+        return (calendar is DeviceCalendarError) ? calendar : DeviceCalendarError.internal();
+      }
     }
-
-    //init check
-    bool initResult = await loadDefaultCalendarIfNeeded();
-    if(!initResult){
-      debugPrint("Unable to init plugin");
-      return false;
-    }
-
-    debugPrint("Add to calendar- id:${calendar?.id}, name:${calendar?.name}, accountName:${calendar?.accountName}, accountType:${calendar?.accountType}, isReadOnly:${calendar?.isReadOnly}, isDefault:${calendar?.isDefault},");
-    //PLACE
-    if(calendar != null) {
-      Result<String>? createEventResult = await _deviceCalendarPlugin.createOrUpdateEvent(event.toCalendarEvent(calendar?.id));
-      if (createEventResult?.data!=null) {
-        storeEventId(event.internalEventId, createEventResult?.data);
-      }
-
-      debugPrint("result.data: ${createEventResult?.data}, result?.errors?.toString(): ${createEventResult?.errors.toString()}");
-
-      if((createEventResult == null) || !createEventResult.isSuccess) {
-        debugPrint('failed to create/update event: ${createEventResult?.errors.toString()}');
-        return false;
-      }
-      else{
-        debugPrint("added");
-        return true;
-      }
-    } else {
-      debugPrint("calendar is missing");
-      return false;
+    else {
+      return DeviceCalendarError.internal();
     }
   }
 
-  Future<bool> deleteEvent(DeviceCalendarEvent? event) async {
-    if (event == null) {
-      return false;
+  Future<DeviceCalendarError?> removeCalendarEvent(DeviceCalendarEvent event) async {
+    String? calendarEventId = _calendarEventIdTable[event.internalEventId];
+    if (calendarEventId != null) {
+      dynamic calendar = loadCalendar();
+      if (calendar is Calendar) {
+        Result<bool> deleteEventResult = await _deviceCalendarPlugin.deleteEvent(calendar.id, calendarEventId);
+        if (deleteEventResult.isSuccess == true) {
+          eraseEventId(event.internalEventId);
+          return null; // No error
+        }
+        else {
+          return DeviceCalendarError.fromResultErrors(deleteEventResult.errors);
+        }
+      }
+      else {
+        return (calendar is DeviceCalendarError) ? calendar : DeviceCalendarError.internal();
+      }
     }
-
-    //init check
-    bool initResult = await loadDefaultCalendarIfNeeded();
-    if (!initResult) {
-      debugPrint("Unable to init plugin");
-      return false;
+    else {
+      return DeviceCalendarError.internal();
     }
-
-    String? eventId = event.internalEventId != null && _calendarEventIdTable!= null ? _calendarEventIdTable![event.internalEventId] : null;
-    debugPrint("Try delete eventId: ${event.internalEventId} stored with calendarId: $eventId from calendarId ${calendar!.id}");
-    if (StringUtils.isEmpty(eventId)) {
-      return false;
-    }
-
-    final deleteEventResult = await _deviceCalendarPlugin.deleteEvent(calendar?.id, eventId);
-    debugPrint("delete result.data: ${deleteEventResult.data}, result.error: ${deleteEventResult.errors.toString()}");
-    if (deleteEventResult.isSuccess) {
-      eraseEventId(event.internalEventId);
-    }
-    return deleteEventResult.isSuccess;
-  }
-
-  //@protected
-  Future<bool> loadDefaultCalendarIfNeeded() async{
-    return (calendar == null) ? await loadCalendars() : true;
   }
 
   @protected
-  Future<bool> loadCalendars() async {
-    bool hasPermissions = await requestPermissions();
-    if (!hasPermissions) {
-      debugPrint("No Calendar permissions");
-      return false;
-    }
-    
-    debugPrint("Has permissions");
-    final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
-    List<Calendar>? calendars = calendarsResult.data;
-    _deviceCalendars = calendars!=null && calendars.isNotEmpty? calendars.where((Calendar calendar) => calendar.isReadOnly == false).toList() : null;
-    if(CollectionUtils.isNotEmpty(_deviceCalendars)) {
-      _defaultCalendar = _deviceCalendars!.firstWhereOrNull((element) => (element.isDefault == true));
-      return true;
-    }
-    debugPrint("No Calendars");
-    return false;
-  }
-
-  Future<List<Calendar>?> refreshCalendars() async {
-    await loadCalendars();
-    return _deviceCalendars;
-  }
-
-  
-  @protected
-  Future<bool> requestPermissions() async {
-    var permissionsGranted = await _deviceCalendarPlugin.hasPermissions();
-    if (permissionsGranted.isSuccess && !permissionsGranted.data!) {
-      permissionsGranted = await _deviceCalendarPlugin.requestPermissions();
-      if (!permissionsGranted.isSuccess || !permissionsGranted.data!) {
-        return false;
+  Future<dynamic> loadCalendar() async {
+    // returns Calendar or DeviceCalendarError
+    DeviceCalendarError? error = await requestPermissions();
+    if (error == null) {
+      final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
+      if (calendarsResult.isSuccess) {
+        List<Calendar>? calendars = calendarsResult.data;
+        List<Calendar>? deviceCalendars = ((calendars != null) && calendars.isNotEmpty) ? calendars.where((Calendar calendar) => calendar.isReadOnly == false).toList() : null;
+        Calendar? defaultCalendar = ((deviceCalendars != null) && deviceCalendars.isNotEmpty) ? deviceCalendars.firstWhereOrNull((element) => (element.isDefault == true)) : null;
+        if (defaultCalendar != null) {
+          return defaultCalendar;
+        }
+        else {
+          return DeviceCalendarError.missingCalendar();
+        }
+      }
+      else {
+        return DeviceCalendarError.fromResultErrors(calendarsResult.errors);
       }
     }
-
-    return true;
+    else {
+      return error;
+    }
   }
 
   @protected
-  void storeEventId(String? eventId, String? calendarEventId) {
-    if ((_calendarEventIdTable != null) && (eventId != null) && (calendarEventId != null)) {
-      _calendarEventIdTable![eventId] = calendarEventId;
-      Storage().calendarEventsTable = _calendarEventIdTable;
+  Future<DeviceCalendarError?> requestPermissions() async {
+    Result<bool> permissionsGranted = await _deviceCalendarPlugin.hasPermissions();
+    if (permissionsGranted.isSuccess) {
+      if (permissionsGranted.data == true) {
+        return null; // Permission granted
+      }
+      else {
+        permissionsGranted = await _deviceCalendarPlugin.requestPermissions();
+        if (permissionsGranted.isSuccess) {
+          return (permissionsGranted.data == true) ? DeviceCalendarError.permissionDenied() : null; // Permission granted
+        }
+        else {
+          return DeviceCalendarError.fromResultErrors(permissionsGranted.errors);
+        }
+      }
     }
+    else {
+      return DeviceCalendarError.fromResultErrors(permissionsGranted.errors);
+    }
+  }
+
+  @protected
+  void storeEventId(String eventId, String calendarEventId) {
+    _calendarEventIdTable[eventId] = calendarEventId;
+    Storage().calendarEventsTable = _calendarEventIdTable;
   }
   
   @protected
-  void eraseEventId(String? id) {
-    if (_calendarEventIdTable != null) {
-      _calendarEventIdTable!.remove(id);
+  void eraseEventId(String? eventId) {
+    if (eventId != null) {
+      _calendarEventIdTable.remove(eventId);
       Storage().calendarEventsTable = _calendarEventIdTable;
     }
   }
@@ -175,10 +153,4 @@ class DeviceCalendar with Service {
 
   bool get shouldAutoSave =>
     Storage().calendarEnabledToAutoSave;
-
-  Calendar? get calendar =>
-    _selectedCalendar ?? _defaultCalendar;
-
-  set calendar(Calendar? calendar) =>
-    _selectedCalendar = calendar;
 }
