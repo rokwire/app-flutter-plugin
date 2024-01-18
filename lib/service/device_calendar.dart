@@ -1,13 +1,11 @@
 
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
-import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/model/device_calendar.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:timezone/timezone.dart' as timezone;
 import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
@@ -246,35 +244,5 @@ class DeviceCalendar with Service {
 
   set calendar(Calendar? calendar){
     _selectedCalendar = calendar;
-  }
-}
-
-class DeviceCalendarEvent {
-  String? internalEventId;
-  String? title;
-  String? deepLinkUrl;
-  DateTime? startDate;
-  DateTime? endDate;
-
-  DeviceCalendarEvent({this.internalEventId, this.title, this.deepLinkUrl, this.startDate, this.endDate});
-
-  Event toCalendarEvent(String? calendarId){
-    Event calendarEvent = Event(calendarId);
-    calendarEvent.title = title ?? "";
-
-    if (startDate != null) {
-      calendarEvent.start = timezone.TZDateTime.from(startDate!, AppDateTime().universityLocation!);
-    }
-
-    if (endDate != null) {
-      calendarEvent.end = timezone.TZDateTime.from(endDate!, AppDateTime().universityLocation!);
-    } else if (startDate != null) {
-      calendarEvent.end = timezone.TZDateTime(AppDateTime().universityLocation!, startDate!.year, startDate!.month, startDate!.day, 24);
-    }
-
-    String? redirectUrl = Config().deepLinkRedirectUrl;
-    calendarEvent.description = StringUtils.isNotEmpty(redirectUrl) ? "$redirectUrl?target=$deepLinkUrl" : deepLinkUrl;
-
-    return calendarEvent;
   }
 }
