@@ -12,7 +12,6 @@ import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
   static const String notifyPromptPopup            = "edu.illinois.rokwire.device_calendar.messaging.message.popup";
-  static const String notifyShowConsoleMessage     = "edu.illinois.rokwire.device_calendar.console.debug.message";
 
   Calendar? _defaultCalendar;
   List<Calendar>? _deviceCalendars;
@@ -54,14 +53,14 @@ class DeviceCalendar with Service {
   Future<bool> addEvent(DeviceCalendarEvent event) async {
     //User prefs
     if (!canAddToCalendar) {
-      consoleMessage("Disabled");
+      debugPrint("Disabled");
       return false;
     }
 
     //init check
     bool initResult = await loadDefaultCalendarIfNeeded();
     if (!initResult) {
-      consoleMessage("Unable to init plugin");
+      debugPrint("Unable to init plugin");
       return false;
     }
     
@@ -82,11 +81,11 @@ class DeviceCalendar with Service {
     //init check
     bool initResult = await loadDefaultCalendarIfNeeded();
     if(!initResult){
-      consoleMessage("Unable to init plugin");
+      debugPrint("Unable to init plugin");
       return false;
     }
 
-    consoleMessage("Add to calendar- id:${calendar?.id}, name:${calendar?.name}, accountName:${calendar?.accountName}, accountType:${calendar?.accountType}, isReadOnly:${calendar?.isReadOnly}, isDefault:${calendar?.isDefault},");
+    debugPrint("Add to calendar- id:${calendar?.id}, name:${calendar?.name}, accountName:${calendar?.accountName}, accountType:${calendar?.accountType}, isReadOnly:${calendar?.isReadOnly}, isDefault:${calendar?.isDefault},");
     //PLACE
     if(calendar != null) {
       Result<String>? createEventResult = await _deviceCalendarPlugin.createOrUpdateEvent(event.toCalendarEvent(calendar?.id));
@@ -94,20 +93,20 @@ class DeviceCalendar with Service {
         storeEventId(event.internalEventId, createEventResult?.data);
       }
 
-      consoleMessage("result.data: ${createEventResult?.data}, result?.errors?.toString(): ${createEventResult?.errors.toString()}");
+      debugPrint("result.data: ${createEventResult?.data}, result?.errors?.toString(): ${createEventResult?.errors.toString()}");
 
       if((createEventResult == null) || !createEventResult.isSuccess) {
-        consoleMessage('failed to create/update event: ${createEventResult?.errors.toString()}');
+        debugPrint('failed to create/update event: ${createEventResult?.errors.toString()}');
         onCreateOrUpdateEventFailed(createEventResult);
         return false;
       }
       else{
-        consoleMessage("added");
+        debugPrint("added");
         onCreateOrUpdateEventSucceeded(createEventResult);
         return true;
       }
     } else {
-      consoleMessage("calendar is missing");
+      debugPrint("calendar is missing");
       onCreateOrUpdateEventFailed(Result<String>());
       return false;
     }
@@ -132,18 +131,18 @@ class DeviceCalendar with Service {
     //init check
     bool initResult = await loadDefaultCalendarIfNeeded();
     if (!initResult) {
-      consoleMessage("Unable to init plugin");
+      debugPrint("Unable to init plugin");
       return false;
     }
 
     String? eventId = event.internalEventId != null && _calendarEventIdTable!= null ? _calendarEventIdTable![event.internalEventId] : null;
-    consoleMessage("Try delete eventId: ${event.internalEventId} stored with calendarId: $eventId from calendarId ${calendar!.id}");
+    debugPrint("Try delete eventId: ${event.internalEventId} stored with calendarId: $eventId from calendarId ${calendar!.id}");
     if (StringUtils.isEmpty(eventId)) {
       return false;
     }
 
     final deleteEventResult = await _deviceCalendarPlugin.deleteEvent(calendar?.id, eventId);
-    consoleMessage("delete result.data: ${deleteEventResult.data}, result.error: ${deleteEventResult.errors.toString()}");
+    debugPrint("delete result.data: ${deleteEventResult.data}, result.error: ${deleteEventResult.errors.toString()}");
     if (deleteEventResult.isSuccess) {
       eraseEventId(event.internalEventId);
     }
@@ -159,11 +158,11 @@ class DeviceCalendar with Service {
   Future<bool> loadCalendars() async {
     bool hasPermissions = await requestPermissions();
     if (!hasPermissions) {
-      consoleMessage("No Calendar permissions");
+      debugPrint("No Calendar permissions");
       return false;
     }
     
-    consoleMessage("Has permissions");
+    debugPrint("Has permissions");
     final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
     List<Calendar>? calendars = calendarsResult.data;
     _deviceCalendars = calendars!=null && calendars.isNotEmpty? calendars.where((Calendar calendar) => calendar.isReadOnly == false).toList() : null;
@@ -171,7 +170,7 @@ class DeviceCalendar with Service {
       _defaultCalendar = _deviceCalendars!.firstWhereOrNull((element) => (element.isDefault == true));
       return true;
     }
-    consoleMessage("No Calendars");
+    debugPrint("No Calendars");
     return false;
   }
 
@@ -214,12 +213,6 @@ class DeviceCalendar with Service {
       _calendarEventIdTable!.remove(id);
       Storage().calendarEventsTable = _calendarEventIdTable;
     }
-  }
-
-  @protected
-  void consoleMessage(String msg){
-//    NotificationService().notify(DeviceCalendar.notifyShowConsoleMessage, msg); //Disable debug console messages
-      debugPrint(msg);
   }
 
   @protected
