@@ -94,7 +94,6 @@ class DeviceCalendar with Service {
     AppToast.show(createEventResult?.data ?? createEventResult?.errors.toString() ?? 'Failed to create event');
   }
 
-  @protected
   Future<bool> deleteEvent(DeviceCalendarEvent? event) async {
     if (event == null) {
       return false;
@@ -187,23 +186,14 @@ class DeviceCalendar with Service {
     }
   }
 
-  void placeEvent(dynamic data) {
-    if(data!=null && data is Map){
-      DeviceCalendarEvent? event = data["event"];
-      Calendar? calendarSelection = data["calendar"];
-
-      if(calendarSelection!=null){
-        _selectedCalendar = calendarSelection;
-      }
-      placeCalendarEvent(event);
-    }
-  }
-
   bool get canAddToCalendar =>
-      Storage().calendarEnabledToSave;
+    Storage().calendarEnabledToSave;
 
   bool get shouldPrompt =>
     Storage().calendarShouldPrompt;
+
+  bool get shouldAutoSave =>
+    Storage().calendarEnabledToAutoSave;
 
   Calendar? get calendar =>
     _selectedCalendar ?? _defaultCalendar;
