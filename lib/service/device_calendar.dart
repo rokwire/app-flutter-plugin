@@ -3,11 +3,9 @@ import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/device_calendar.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:collection/collection.dart';
 
 class DeviceCalendar with Service {
-  late Map<String, String> _calendarEventIdTable;
   final DeviceCalendarPlugin _deviceCalendarPlugin = DeviceCalendarPlugin();
 
   // Singletone Factory
@@ -26,7 +24,6 @@ class DeviceCalendar with Service {
 
   @override
   Future<void> initService() async {
-    _calendarEventIdTable = Storage().calendarEventsTable ?? {};
     await super.initService();
   }
 
@@ -40,7 +37,6 @@ class DeviceCalendar with Service {
         if (createEventResult?.isSuccess == true) {
           String? calendarEventId = createEventResult?.data;
           if (calendarEventId != null) {
-            storeEventId(eventId, calendarEventId);
             return null; // No error
           }
           else {
@@ -49,29 +45,6 @@ class DeviceCalendar with Service {
         }
         else {
           return DeviceCalendarError.fromResultErrors(createEventResult?.errors ?? <ResultError>[]);
-        }
-      }
-      else {
-        return (calendar is DeviceCalendarError) ? calendar : DeviceCalendarError.internal();
-      }
-    }
-    else {
-      return DeviceCalendarError.internal();
-    }
-  }
-
-  Future<DeviceCalendarError?> removeCalendarEvent(DeviceCalendarEvent event) async {
-    String? calendarEventId = _calendarEventIdTable[event.internalEventId];
-    if (calendarEventId != null) {
-      dynamic calendar = loadCalendar();
-      if (calendar is Calendar) {
-        Result<bool> deleteEventResult = await _deviceCalendarPlugin.deleteEvent(calendar.id, calendarEventId);
-        if (deleteEventResult.isSuccess == true) {
-          eraseEventId(event.internalEventId);
-          return null; // No error
-        }
-        else {
-          return DeviceCalendarError.fromResultErrors(deleteEventResult.errors);
         }
       }
       else {
@@ -130,27 +103,4 @@ class DeviceCalendar with Service {
       return DeviceCalendarError.fromResultErrors(permissionsGranted.errors);
     }
   }
-
-  @protected
-  void storeEventId(String eventId, String calendarEventId) {
-    _calendarEventIdTable[eventId] = calendarEventId;
-    Storage().calendarEventsTable = _calendarEventIdTable;
-  }
-  
-  @protected
-  void eraseEventId(String? eventId) {
-    if (eventId != null) {
-      _calendarEventIdTable.remove(eventId);
-      Storage().calendarEventsTable = _calendarEventIdTable;
-    }
-  }
-
-  bool get canAddToCalendar =>
-    Storage().calendarEnabledToSave;
-
-  bool get shouldPrompt =>
-    Storage().calendarShouldPrompt;
-
-  bool get shouldAutoSave =>
-    Storage().calendarEnabledToAutoSave;
 }

@@ -349,26 +349,6 @@ class Storage with Service {
   }
   set geoFenceRegionOverrides(Map<String, bool>? value) => setStringWithName(geoFenceRegionOverridesKey, JsonUtils.encode(value));
 
-  // Calendar
-  String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
-  Map<String, String>? get calendarEventsTable {
-    try { return JsonUtils.decodeMap(getStringWithName(calendarEventsTableKey))?.cast<String, String>(); }
-    catch(e) { debugPrint(e.toString()); return null; }
-  }
-  set calendarEventsTable(Map<String, String>? table) => setStringWithName(calendarEventsTableKey, JsonUtils.encode(table));
-
-  String get calendarEnableAutoSaveKey => 'edu.illinois.rokwire.calendar.auto_save_enabled';
-  bool get calendarEnabledToAutoSave => getBoolWithName(calendarEnableAutoSaveKey, defaultValue: false) ?? false;
-  set calendarEnabledToAutoSave(bool value) => setBoolWithName(calendarEnableAutoSaveKey, value);
-
-  String get calendarEnableSaveKey => 'edu.illinois.rokwire.calendar.save_enabled';
-  bool get calendarEnabledToSave => getBoolWithName(calendarEnableSaveKey, defaultValue: true) ?? true;
-  set calendarEnabledToSave(bool value) => setBoolWithName(calendarEnableSaveKey, value);
-
-  String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
-  bool get calendarShouldPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: true) ?? true;
-  set calendarShouldPrompt(bool value) => setBoolWithName(calendarEnablePromptKey, value);
-
   // Skills Self-Evaluation
   String get assessmentsEnableSaveKey => 'edu.illinois.rokwire.assessments.save_enabled';
   Map<String, bool>? get assessmentsSaveResultsMap {
