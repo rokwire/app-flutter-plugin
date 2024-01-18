@@ -31,7 +31,7 @@ class DeviceCalendar with Service {
   Future<DeviceCalendarError?> placeCalendarEvent(DeviceCalendarEvent event) async {
     String? eventId = event.internalEventId;
     if (eventId != null) {
-      dynamic calendar = loadCalendar();
+      dynamic calendar = await loadCalendar();
       if (calendar is Calendar) {
         Result<String>? createEventResult = await _deviceCalendarPlugin.createOrUpdateEvent(event.toCalendarEvent(calendar.id));
         if (createEventResult?.isSuccess == true) {
@@ -92,7 +92,7 @@ class DeviceCalendar with Service {
       else {
         permissionsGranted = await _deviceCalendarPlugin.requestPermissions();
         if (permissionsGranted.isSuccess) {
-          return (permissionsGranted.data == true) ? DeviceCalendarError.permissionDenied() : null; // Permission granted
+          return (permissionsGranted.data != true) ? DeviceCalendarError.permissionDenied() : null; // Permission granted
         }
         else {
           return DeviceCalendarError.fromResultErrors(permissionsGranted.errors);
