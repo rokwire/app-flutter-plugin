@@ -597,14 +597,17 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<AudioResult?> retrieveVoiceRecord() async {
+  Future<AudioResult?> retrieveVoiceRecord({Map<String, String>? authHeaders}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
     }
     String url = "$serviceUrl/voice_record";
+    Response? response = await Network().get(
+        url,
+        headers: authHeaders,
+        auth: authHeaders == null ? Auth2() : null);
 
-    Response? response = await Network().get(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return AudioResult.succeed(response?.bodyBytes);
