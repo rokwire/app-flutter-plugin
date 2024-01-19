@@ -73,10 +73,10 @@ class _SurveyPanelState extends State<SurveyPanel> {
     return Scaffold(
       appBar: HeaderBar(title: _survey?.title),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: Styles().colors.background,
       body: Column(
         children: [
-          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
+          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors.fillColorPrimary))),
           Expanded(child: Scrollbar(
             radius: const Radius.circular(2),
             thumbVisibility: true,

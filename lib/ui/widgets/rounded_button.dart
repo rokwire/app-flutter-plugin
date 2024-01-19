@@ -102,19 +102,19 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get defaultBackgroundColor => Styles().colors.white;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
-  @protected Color? get defautTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defautTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTextColor => textColor ?? defautTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
   @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
   @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
 
-  @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? const Color(0xFF000000);
+  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected Border get displayBorder => border ?? defaultBorder;

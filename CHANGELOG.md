@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up DeviceCalendar service [#415](https://github.com/rokwire/app-flutter-plugin/issues/415).
 ### Changed
 - Upgrade to Flutter 3.16.0 [#402](https://github.com/rokwire/app-flutter-plugin/issues/402)
+- Extend AppToast functionality [#418](https://github.com/rokwire/app-flutter-plugin/issues/418)
+- Allow static access to predefined colors and font styles in Styles [#418](https://github.com/rokwire/app-flutter-plugin/issues/418)
 
 ## [1.5.4] - 2023-10-06
 ### Changed

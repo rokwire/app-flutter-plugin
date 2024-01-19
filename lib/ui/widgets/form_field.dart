@@ -54,7 +54,7 @@ class _FormFieldTextState extends State<FormFieldText> {
         label: widget.label,
         child: TextFormField(
           readOnly: widget.readOnly,
-          style: Styles().textStyles?.getTextStyle('body'),
+          style: Styles().textStyles.getTextStyle('body'),
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
           maxLength: widget.maxLength,
@@ -68,7 +68,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
               hintText: widget.hint,
-              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles?.getTextStyle('widget.error.regular.fat')) : null,
+              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles.getTextStyle('widget.error.regular.fat')) : null,
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
@@ -77,7 +77,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors?.fillColorPrimary ?? Colors.white)
+                  borderSide: BorderSide(width: 2, color: Styles().colors.fillColorPrimary)
               )
           ),
           controller: widget.controller,
