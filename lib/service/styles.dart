@@ -417,22 +417,22 @@ class UiFontFamilies {
     return UiFontFamilies(familyMap ?? <String, String>{});
   }
 
-  String? get black        => familyMap["black"];
-  String? get blackIt      => familyMap["black_italic"];
-  String? get bold         => familyMap["bold"];
-  String? get boldIt       => familyMap["bold_italic"];
-  String? get extraBold    => familyMap["extra_bold"];
-  String? get extraBoldIt  => familyMap["extra_bold_italic"];
-  String? get light        => familyMap["light"];
-  String? get lightIt      => familyMap["light_italic"];
-  String? get medium       => familyMap["medium"];
-  String? get mediumIt     => familyMap["medium_italic"];
-  String? get regular      => familyMap["regular"];
-  String? get regularIt    => familyMap["regular_italic"];
-  String? get semiBold     => familyMap["semi_bold"];
-  String? get semiBoldIt   => familyMap["semi_bold_italic"];
-  String? get thin         => familyMap["thin"];
-  String? get thinIt       => familyMap["thin_italic"];
+  String get black        => familyMap["black"] ?? 'ProximaNovaBlack';
+  String get blackIt      => familyMap["black_italic"] ?? 'ProximaNovaBlackIt';
+  String get bold         => familyMap["bold"] ?? 'ProximaNovaBold';
+  String get boldIt       => familyMap["bold_italic"] ?? 'ProximaNovaBoldIt';
+  String get extraBold    => familyMap["extra_bold"] ?? 'ProximaNovaExtraBold';
+  String get extraBoldIt  => familyMap["extra_bold_italic"] ?? 'ProximaNovaExtraBoldIt';
+  String get light        => familyMap["light"] ?? 'ProximaNovaLight';
+  String get lightIt      => familyMap["light_italic"] ?? 'ProximaNovaLightIt';
+  String get medium       => familyMap["medium"] ?? 'ProximaNovaMedium';
+  String get mediumIt     => familyMap["medium_italic"] ?? 'ProximaNovaMediumIt';
+  String get regular      => familyMap["regular"] ?? 'ProximaNovaRegular';
+  String get regularIt    => familyMap["regular_italic"] ?? 'ProximaNovaRegularIt';
+  String get semiBold     => familyMap["semi_bold"] ?? 'ProximaNovaSemiBold';
+  String get semiBoldIt   => familyMap["semi_bold_italic"] ?? 'ProximaNovaSemiBoldIt';
+  String get thin         => familyMap["thin"] ?? 'ProximaNovaThin';
+  String get thinIt       => familyMap["thin_italic"] ?? 'ProximaNovaThinIt';
 
   String? fromCode(String? code) => familyMap[code];
 }
