@@ -720,7 +720,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // }
 
     if (!Surveys().canContinue(_survey!)) {
-      AppToast.show("Please answer all required questions to continue");
+      AppToast.showMessage("Please answer all required questions to continue");
       return;
     }
 
