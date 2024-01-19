@@ -39,7 +39,12 @@ class Styles extends Service implements NotificationsListener{
   
   static const String _assetsName       = "styles.json";
   static const String _debugAssetsName  = "styles.debug.json";
-  
+
+  static const UiColors _emptyColors = UiColors.empty();
+  static const UiFontFamilies _emptyFontFamilies = UiFontFamilies.empty();
+  static const UiTextStyles _emptyTextStyles = UiTextStyles.empty();
+  static const UiImages _emptyImages = UiImages.empty();
+
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
@@ -51,16 +56,16 @@ class Styles extends Service implements NotificationsListener{
   Map<String, dynamic>? _debugAssetsStyles;
 
   UiColors? _colors;
-  UiColors? get colors => _colors;
+  UiColors get colors => _colors ?? _emptyColors;
 
   UiFontFamilies? _fontFamilies;
-  UiFontFamilies? get fontFamilies => _fontFamilies;
+  UiFontFamilies get fontFamilies => _fontFamilies ?? _emptyFontFamilies;
 
   UiTextStyles? _textStyles;
-  UiTextStyles? get textStyles => _textStyles;
+  UiTextStyles get textStyles => _textStyles ?? _emptyTextStyles;
 
   UiImages? _images;
-  UiImages? get images => _images;
+  UiImages get images => _images ?? _emptyImages;
 
   // Singletone Factory
 
@@ -289,7 +294,9 @@ class UiColors {
 
   final Map<String, Color> colorMap;
 
-  UiColors(this.colorMap);
+  const UiColors(this.colorMap);
+
+  const UiColors.empty() : this(const <String, Color>{});
 
   static UiColors? fromJson(Map<String, dynamic>? json) {
     Map<String, Color> colors = <String, Color>{};
@@ -397,7 +404,9 @@ class UiColors {
 
 class UiFontFamilies {
   final Map<String, String> familyMap;
-  UiFontFamilies(this.familyMap);
+  const UiFontFamilies(this.familyMap);
+
+  const UiFontFamilies.empty() : this(const <String, String>{});
 
   static UiFontFamilies? fromJson(Map<String, dynamic>? json) {
     Map<String, String>? familyMap;
@@ -431,20 +440,18 @@ class UiTextStyles {
   final Map<String, TextStyle> styleMap;
   final UiColors? colors;
 
-  UiTextStyles(Map<String, TextStyle>? styleMap, { this.colors }) :
-    styleMap = styleMap ?? <String, TextStyle> {};
+  const UiTextStyles(this.styleMap, { this.colors });
+
+  const UiTextStyles.empty() : this(const <String, TextStyle>{});
 
   static UiTextStyles fromJson(Map<String, dynamic>? stylesJson, {UiColors? colors, UiFontFamilies? fontFamilies}){
-    Map<String, TextStyle>? stylesMap;
-    if(stylesJson != null){
-      stylesMap = <String, TextStyle> {};
-      stylesJson.forEach((key, value) {
-        TextStyle? style = constructTextStyle(JsonUtils.mapValue(value), stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
-        if(style!=null){
-          stylesMap![key] = style;
-        }
-      });
-    }
+    Map<String, TextStyle> stylesMap = <String, TextStyle> {};
+    stylesJson?.forEach((key, value) {
+      TextStyle? style = constructTextStyle(JsonUtils.mapValue(value), stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
+      if(style!=null){
+        stylesMap[key] = style;
+      }
+    });
     return UiTextStyles(stylesMap, colors: colors);
   }
 
@@ -504,8 +511,9 @@ class UiImages {
   final UiColors? colors;
   final String Function(Uri uri)? assetPathResolver;
 
+  const UiImages(this.imageMap, { this.colors, this.assetPathResolver});
 
-  UiImages(this.imageMap, { this.colors, this.assetPathResolver});
+  const UiImages.empty() : this(const <String, dynamic>{});
 
   static UiImages fromCreationParam(_UiImagesCreationParam param) =>
     UiImages(param.imageMap, colors: param.colors, assetPathResolver: param.assetPathResolver);

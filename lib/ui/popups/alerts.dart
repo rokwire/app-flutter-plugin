@@ -31,7 +31,7 @@ class Alerts {
     return Container(
       margin: margin,
       height: height,
-      color: Styles().colors?.dividerLine,
+      color: Styles().colors.dividerLine,
     );
   }
 }

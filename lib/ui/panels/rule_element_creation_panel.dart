@@ -237,7 +237,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Rule Element"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: Styles().colors.background,
       body: SurveyElementCreationWidget(body: _buildRuleElement(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }
@@ -427,9 +427,9 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
   Widget _buildDone() {
     return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
-      borderColor: Styles().colors?.fillColorPrimaryVariant,
-      backgroundColor: Styles().colors?.surface,
-      textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+      borderColor: Styles().colors.fillColorPrimaryVariant,
+      backgroundColor: Styles().colors.surface,
+      textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
       onTap: _onTapDone,
     ));
   }

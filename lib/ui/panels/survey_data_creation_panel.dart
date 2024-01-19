@@ -110,7 +110,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Survey Data"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: Styles().colors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyDataComponents(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }
@@ -254,15 +254,15 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       
       // defaultResponseRule
       Visibility(visible: _data is! SurveyDataResult, child: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Expanded(child: Text("Default Response Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular'), maxLines: 2, overflow: TextOverflow.ellipsis,)),
+            Expanded(child: Text("Default Response Rule", style: Styles().textStyles.getTextStyle('widget.message.regular'), maxLines: 2, overflow: TextOverflow.ellipsis,)),
             GestureDetector(
               onTap: _onTapManageDefaultResponseRule,
-              child: Text(_data.defaultResponseRule == null ? "Create" : "Remove", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.defaultResponseRule == null ? "Create" : "Remove", style: Styles().textStyles.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
           Visibility(visible: _data.defaultResponseRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
@@ -282,15 +282,15 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
       // scoreRule (show entry if survey is scored)
       Visibility(visible: _data is! SurveyDataResult && widget.scoredSurvey, child: Container(
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors?.getColor('surface')),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 16),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text("Score Rule", style: Styles().textStyles?.getTextStyle('widget.message.regular')),
+            Text("Score Rule", style: Styles().textStyles.getTextStyle('widget.message.regular')),
             GestureDetector(
               onTap: _onTapManageScoreRule,
-              child: Text(_data.scoreRule == null ? "Create" : "Remove", style: Styles().textStyles?.getTextStyle('widget.button.title.medium.underline'))
+              child: Text(_data.scoreRule == null ? "Create" : "Remove", style: Styles().textStyles.getTextStyle('widget.button.title.medium.underline'))
             ),
           ],),
           Visibility(visible: _data.scoreRule != null, child: Padding(padding: const EdgeInsets.only(top: 16), child: 
@@ -318,9 +318,9 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   Widget _buildDone() {
     return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
-      borderColor: Styles().colors?.fillColorPrimaryVariant,
-      backgroundColor: Styles().colors?.surface,
-      textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+      borderColor: Styles().colors.fillColorPrimaryVariant,
+      backgroundColor: Styles().colors.surface,
+      textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
       onTap: _onTapDone,
     ));
   }

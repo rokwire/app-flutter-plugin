@@ -94,7 +94,7 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @protected
-  Widget? get leadingIcon => (leadingIconKey != null) ? Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true) : null;
+  Widget? get leadingIcon => (leadingIconKey != null) ? Styles().images.getImage(leadingIconKey, excludeFromSemantics: true) : null;
 
   @protected
   void onTapLeading(BuildContext context) {
@@ -227,7 +227,7 @@ class SliverToutHeaderBar extends StatelessWidget {
     if (flexImageUrl != null) {
       image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true);
     } else if (flexImageKey != null) {
-      image = Styles().images?.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
+      image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
     }
     return (image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
   }
@@ -252,7 +252,7 @@ class SliverToutHeaderBar extends StatelessWidget {
         GestureDetector(onTap: () => onTapLeading(context), child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
-              Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true)
+              Styles().images.getImage(leadingIconKey, excludeFromSemantics: true)
             ),
           ),
         ),
@@ -364,7 +364,7 @@ class SliverHeaderBar extends StatelessWidget {
 
   
   @protected
-  Widget? get leadingImage => (leadingIconKey != null) ? Styles().images?.getImage(leadingIconKey, excludeFromSemantics: true) : null;
+  Widget? get leadingImage => (leadingIconKey != null) ? Styles().images.getImage(leadingIconKey, excludeFromSemantics: true) : null;
 
   @protected
   void onTapLeading(BuildContext context) {
