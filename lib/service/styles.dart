@@ -57,15 +57,19 @@ class Styles extends Service implements NotificationsListener{
 
   UiColors? _colors;
   UiColors get colors => _colors ?? _emptyColors;
+  static UiColors get appColors => _instance?._colors ?? _emptyColors;
 
   UiFontFamilies? _fontFamilies;
   UiFontFamilies get fontFamilies => _fontFamilies ?? _emptyFontFamilies;
+  static UiFontFamilies get appFontFamilies => _instance?._fontFamilies ?? _emptyFontFamilies;
 
   UiTextStyles? _textStyles;
   UiTextStyles get textStyles => _textStyles ?? _emptyTextStyles;
+  static UiTextStyles get appTextStyles => _instance?._textStyles ?? _emptyTextStyles;
 
   UiImages? _images;
   UiImages get images => _images ?? _emptyImages;
+  static UiImages get appImages => _instance?._images ?? _emptyImages;
 
   // Singletone Factory
 
