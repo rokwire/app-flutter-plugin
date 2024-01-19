@@ -962,7 +962,7 @@ class SingleSelectionList extends StatelessWidget {
               child: Card(
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
-                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16, color: Styles().colors.headlineText))),
+                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /*, color: Styles().colors.headlineText */))),
                   activeColor: Styles().colors.fillColorSecondary,
                   value: title,
                   groupValue: selectedValue?.title,
@@ -998,7 +998,7 @@ class MultiSelectionList extends StatelessWidget {
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: CheckboxListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16, color: Styles().colors.headlineText))),
+                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /* , color: Styles().colors.headlineText */))),
                       checkColor: Colors.white,
                       activeColor: Styles().colors.fillColorSecondary,
                       value: isChecked?[index],

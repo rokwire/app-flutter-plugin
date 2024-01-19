@@ -21,13 +21,13 @@ class TabBar extends StatefulWidget {
     switch(Config().configEnvironment) {
       case ConfigEnvironment.dev:        return Colors.yellowAccent;
       case ConfigEnvironment.test:       return Colors.lightGreenAccent;
-      case ConfigEnvironment.production: return Styles().colors.surface ?? Colors.white;
+      case ConfigEnvironment.production: return Styles().colors.surface;
       default:                           return Colors.white;
     }
   }
 
   @protected
-  BoxBorder? get border => Border(top: BorderSide(color: Styles().colors.surfaceAccent!, width: 1, style: BorderStyle.solid));
+  BoxBorder? get border => Border(top: BorderSide(color: Styles().colors.surfaceAccent, width: 1, style: BorderStyle.solid));
 
   @protected
   Decoration? get decoration => BoxDecoration(color: backgroundColor, border: border);

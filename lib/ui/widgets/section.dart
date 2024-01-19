@@ -97,7 +97,7 @@ class VerticalTitleValueSection extends StatelessWidget {
   @protected TextStyle get defaultHintTextStyle => TextStyle(fontFamily: displayHintFontFamily, fontSize: hintFontSize, color: displayHintTextColor);
   @protected TextStyle get displayHintTextStyle => hintTextStyle ?? defaultHintTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary ?? Colors.transparent;
+  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BoxBorder get defaultBorder => Border(left: BorderSide(color: displayBorderColor, width: borderWidth));

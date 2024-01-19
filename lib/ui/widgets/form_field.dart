@@ -77,7 +77,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors.fillColorPrimary ?? Colors.white)
+                  borderSide: BorderSide(width: 2, color: Styles().colors.fillColorPrimary)
               )
           ),
           controller: widget.controller,

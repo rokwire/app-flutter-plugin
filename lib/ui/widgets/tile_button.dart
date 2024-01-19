@@ -101,7 +101,7 @@ class TileButton extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => Styles().colors.white;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -169,7 +169,7 @@ class TileWideButton extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => Styles().colors.white;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -293,7 +293,7 @@ class TileToggleButton extends StatelessWidget {
   
   @protected Color? get displayBackgroundColor => selected ? selectedBackgroundColor : backgroundColor;
   
-  @protected Color get defaultSelectedBorderColor => Styles().colors.fillColorPrimary ?? borderColor;
+  @protected Color get defaultSelectedBorderColor => Styles().colors.fillColorPrimary;
   @protected Color get displaySelectedBorderColor => selectedBorderColor ?? defaultSelectedBorderColor;
   @protected Color get displayBorderColor => selected ? displaySelectedBorderColor : borderColor;
 
@@ -303,7 +303,7 @@ class TileToggleButton extends StatelessWidget {
   @protected BoxBorder get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected BoxBorder get dislayBorder => defaultBorder;
 
-  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors.blackTransparent018, offset: const Offset(2, 2), blurRadius: 6)];
   @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
 
   @protected Decoration get defaultDecoration => BoxDecoration(color: displayBackgroundColor, borderRadius: displayBorderRadius, border: dislayBorder, boxShadow: displayBorderShadow);

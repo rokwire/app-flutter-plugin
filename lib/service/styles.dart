@@ -311,68 +311,70 @@ class UiColors {
     return UiColors(colors);
   }
 
-  Color? get fillColorPrimary                   => colorMap['fillColorPrimary'];
-  Color? get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'];
-  Color? get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'];
-  Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
-  Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
-  Color? get textColorPrimary                   => colorMap['textColorPrimary'];
-  Color? get textColorDisabled                  => colorMap['textColorDisabled'];
-  Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
-  Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
-  Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
-  Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
-  Color? get textColorSecondary                 => colorMap['textColorSecondary'];
-  Color? get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'];
-  Color? get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'];
-  Color? get gradientColorPrimary               => colorMap['gradientColorPrimary'];
+  Color get fillColorPrimary                   => colorMap['fillColorPrimary'] ?? const Color(0xFF002855);
+  Color get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'] ?? const Color(0x4D002855);
+  Color get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'] ?? const Color(0x80002855);
+  Color get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'] ?? const Color(0xE6002855);
+  Color get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'] ?? const Color(0x26002855);
+  Color get textColorPrimary                   => colorMap['textColorPrimary'] ?? const Color(0xFFFFFFFF);
+  Color get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'] ?? const Color(0xFFFFFFFF);
+  Color get textColorDisabled                  => colorMap['textColorDisabled'] ?? const Color(0xFF5C5C5C);
+  Color get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'] ?? const Color(0xFF0F2040);
+  Color get fillColorSecondary                 => colorMap['fillColorSecondary'] ?? const Color(0xFFE84A27);
+  Color get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'] ?? const Color(0x80E84A27);
+  Color get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'] ?? const Color(0xFFCF3C1B);
+  Color get textColorSecondary                 => colorMap['textColorSecondary'] ?? const Color(0xFFFFFFFF);
+  Color get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'] ?? const Color(0xFFFFFF);
+  Color get gradientColorPrimary               => colorMap['gradientColorPrimary'] ?? const Color(0xFF244372);
 
-  Color? get surface                    => colorMap['surface'];
-  Color? get textSurface                => colorMap['textSurface'];
-  Color? get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'];
-  Color? get surfaceAccent              => colorMap['surfaceAccent'];
-  Color? get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'];
-  Color? get textSurfaceAccent          => colorMap['textSurfaceAccent'];
-  Color? get background                 => colorMap['background'];
-  Color? get textBackground             => colorMap['textBackground'];
-  Color? get backgroundVariant          => colorMap['backgroundVariant'];
-  Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
-  Color? get textBackgroundVariant2      => colorMap['textBackgroundVariant2'];
-  Color? get headlineText               => colorMap['headlineText'];
+  Color get surface                    => colorMap['surface'] ?? const Color(0xFFFFFFFF);
+  Color get textSurface                => colorMap['textSurface'] ?? const Color(0xFF404040);
+  Color get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'] ?? const Color(0x26404040);
+  Color get surfaceAccent              => colorMap['surfaceAccent'] ?? const Color(0xFFDADDE1);
+  Color get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'] ?? const Color(0x26DADDE1);
+  Color get textSurfaceAccent          => colorMap['textSurfaceAccent'] ?? const Color(0xFF404040);
+  Color get background                 => colorMap['background'] ?? const Color(0xFFF5F5F5);
+  Color get textBackground             => colorMap['textBackground'] ?? const Color(0xFF404040);
+  Color get backgroundVariant          => colorMap['backgroundVariant'] ?? const Color(0xFFE8E9EA);
+  Color get textBackgroundVariant      => colorMap['textBackgroundVariant'] ?? const Color(0xFF404040);
+  Color get textBackgroundVariant2     => colorMap['textBackgroundVariant2'] ?? const Color(0xFFE7E7E7);
 
-  Color? get accentColor1               => colorMap['accentColor1'];
-  Color? get accentColor2               => colorMap['accentColor2'];
-  Color? get accentColor3               => colorMap['accentColor3'];
-  Color? get accentColor4               => colorMap['accentColor4'];
+  Color get accentColor1               => colorMap['accentColor1'] ?? const Color(0xFFE84A27);
+  Color get accentColor2               => colorMap['accentColor2'] ?? const Color(0xFF5FA7A3);
+  Color get accentColor3               => colorMap['accentColor3'] ?? const Color(0xFF5182CF);
+  Color get accentColor4               => colorMap['accentColor4'] ?? const Color(0xFF9318BB);
 
-  Color? get iconColor                  => colorMap['iconColor'];
+  Color get iconColor                  => colorMap['iconColor'] ?? const Color(0xFFE84A27);
 
-  Color? get eventColor                 => colorMap['eventColor'];
-  Color? get diningColor                => colorMap['diningColor'];
-  Color? get placeColor                 => colorMap['placeColor'];
-  Color? get mtdColor                   => colorMap['mtdColor'];
+  Color get eventColor                 => colorMap['eventColor'] ?? const Color(0xFFE54B30);
+  Color get diningColor                => colorMap['diningColor'] ?? const Color(0xFFF09842);
+  Color get placeColor                 => colorMap['placeColor'] ?? const Color(0xFF62A7A3);
+  Color get mtdColor                   => colorMap['mtdColor'] ?? const Color(0xFF2376E5);
 
-  Color? get white                      => colorMap['white'];
-  Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
-  Color? get whiteTransparent06         => colorMap['whiteTransparent06'];
-  Color? get blackTransparent06         => colorMap['blackTransparent06'];
-  Color? get blackTransparent018        => colorMap['blackTransparent018'];
+  Color get white                      => colorMap['white'] ?? const Color(0xFFFFFFFF);
+  Color get whiteTransparent01         => colorMap['whiteTransparent01'] ?? const Color(0x1AFFFFFF);
+  Color get whiteTransparent06         => colorMap['whiteTransparent06'] ?? const Color(0x99FFFFFF);
+  Color get black                      => colorMap['black'] ?? const Color(0xFF000000);
+  Color get blackTransparent06         => colorMap['blackTransparent06'] ?? const Color(0x99000000);
+  Color get blackTransparent018        => colorMap['blackTransparent018'] ?? const Color(0x30000000);
+  Color get blackTransparent038        => colorMap['blackTransparent038'] ?? const Color(0x61000000);
 
-  Color? get mediumGray                 => colorMap['mediumGray'];
-  Color? get mediumGray1                => colorMap['mediumGray1'];
-  Color? get mediumGray2                => colorMap['mediumGray2'];
-  Color? get lightGray                  => colorMap['lightGray'];
-  Color? get disabledTextColor          => colorMap['disabledTextColor'];
-  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
-  Color? get dividerLine                => colorMap['dividerLine'];
-  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
+  Color get mediumGray                 => colorMap['mediumGray'] ?? const Color(0xFF717372);
+  Color get mediumGray1                => colorMap['mediumGray1'] ?? const Color(0xFF535353);
+  Color get mediumGray2                => colorMap['mediumGray2'] ?? const Color(0xFF979797);
+  Color get lightGray                  => colorMap['lightGray'] ?? const Color(0xFFEDEDED);
+  Color get disabledTextColor          => colorMap['disabledTextColor'] ?? const Color(0xFFBDBDBD);
+  Color get disabledTextColorTwo       => colorMap['disabledTextColorTwo'] ?? const Color(0xFF868F9D);
+  Color get dividerLine                => colorMap['dividerLine'] ?? const Color(0xFF535353);
+  Color get dividerLineAccent          => colorMap['dividerLineAccent'] ?? const Color(0xFFDADADA);
 
-  Color? get mango                      => colorMap['mango'];
+  Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
+  Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
 
-  Color? get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'];
-  Color? get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'];
-  Color? get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'];
-  Color? get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'];
+  Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);
+  Color get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'] ?? const Color(0xFFFFFF00);
+  Color get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'] ?? const Color(0xFF00FF00);
+  Color get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'] ?? const Color(0xFF808080);
 
   Color? getColor(String key) => colorMap[key];
 
