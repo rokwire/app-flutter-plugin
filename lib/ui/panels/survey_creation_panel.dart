@@ -182,7 +182,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Scaffold(
       appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: Styles().colors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
     );
   }
@@ -271,24 +271,24 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         )),
       ],));
     }
-    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles?.getTextStyle('widget.error.regular.fat'));
+    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles.getTextStyle('widget.error.regular.fat'));
   }
 
   Widget _buildPreviewAndSave() {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
-        borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
-        backgroundColor: Styles().colors?.surface,
-        textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+        borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
+        backgroundColor: Styles().colors.surface,
+        textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
         onTap: _onTapPreview,
       ))),
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         RoundedButton(
           label: 'Save',
-          borderColor: Styles().colors?.getColor("fillColorPrimaryVariant"),
-          backgroundColor: Styles().colors?.surface,
-          textStyle: Styles().textStyles?.getTextStyle('widget.detail.large.fat'),
+          borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
+          backgroundColor: Styles().colors.surface,
+          textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
           onTap: _onTapSave,
           enabled: !_loading
         ),

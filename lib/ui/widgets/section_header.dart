@@ -127,7 +127,7 @@ class SectionSlantHeader extends StatelessWidget {
     if (StringUtils.isNotEmpty(slantImageKey)) {
       Widget slantContentWidget = Row(children:[ Expanded(child:
         SizedBox(height: slantImageHeight, child:
-          Styles().images?.getImage(slantImageKey, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
+          Styles().images.getImage(slantImageKey, excludeFromSemantics: true, color: _slantColor, fit: BoxFit.fill),
         ),
       )]);
       slantList.addAll([
@@ -140,7 +140,7 @@ class SectionSlantHeader extends StatelessWidget {
     }
     else {
       Widget slantContentWidget = Container(color: _slantColor, child:
-        CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors!.background, horzDir: TriangleHorzDirection.rightToLeft), child:
+        CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors.background, horzDir: TriangleHorzDirection.rightToLeft), child:
           Container(height: slantPainterHeight,),
         ),
       );
@@ -176,7 +176,7 @@ class SectionSlantHeader extends StatelessWidget {
     if ((titleIcon != null) || (titleIconKey != null)) {
       titleList.add(
         Padding(padding: titleIconPadding, child:
-          titleIcon ?? Styles().images?.getImage(titleIconKey, excludeFromSemantics: true),
+          titleIcon ?? Styles().images.getImage(titleIconKey, excludeFromSemantics: true),
         )
       );
     }
@@ -194,7 +194,7 @@ class SectionSlantHeader extends StatelessWidget {
         Semantics(label: rightIconLabel, button: true, child:
           GestureDetector(onTap: rightIconAction, child:
             Container(padding: rightIconPadding, color: _slantColor, child:
-              rightIcon ?? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true,),
+              rightIcon ?? Styles().images.getImage(rightIconKey, excludeFromSemantics: true,),
             )
           )
         ),
@@ -216,17 +216,17 @@ class SectionSlantHeader extends StatelessWidget {
     );
   }
 
-  Color? get _slantColor => slantColor ?? Styles().colors?.fillColorPrimary;
+  Color? get _slantColor => slantColor ?? Styles().colors.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.textColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.extraBold,
+    color: titleTextColor ?? Styles().colors.textColorPrimary,
+    fontFamily: titleFontFamilly ?? Styles().fontFamilies.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors?.textColorPrimary,
-    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
+    color: subTitleTextColor ?? Styles().colors.textColorPrimary,
+    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies.regular,
     fontSize: subTitleFontSize
   );
 }
@@ -295,7 +295,7 @@ class SectionRibbonHeader extends StatelessWidget {
     
     Widget? titleIconWidget = ((titleIcon != null) || (titleIconKey != null)) ?
       Padding(padding: titleIconPadding, child:
-        titleIcon ?? Styles().images?.getImage(titleIconKey, excludeFromSemantics: true),
+        titleIcon ?? Styles().images.getImage(titleIconKey, excludeFromSemantics: true),
       ) : null;
     if ((titleIconWidget != null)) {
       titleList.add(titleIconWidget);
@@ -328,7 +328,7 @@ class SectionRibbonHeader extends StatelessWidget {
 
     Widget? rightIconWidget = ((rightIcon != null) || (rightIconKey != null)) ?
       Padding(padding: rightIconPadding, child:
-        rightIcon ?? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true),
+        rightIcon ?? Styles().images.getImage(rightIconKey, excludeFromSemantics: true),
       ) : null;
     if (rightIconWidget != null) {
       titleList.add(rightIconWidget);
@@ -362,17 +362,17 @@ class SectionRibbonHeader extends StatelessWidget {
       contentWidget;
   }
 
-  Color? get _backgroundColor => backgroundColor ?? Styles().colors?.fillColorPrimary;
+  Color? get _backgroundColor => backgroundColor ?? Styles().colors.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors?.white,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies?.extraBold,
+    color: titleTextColor ?? Styles().colors.white,
+    fontFamily: titleFontFamilly ?? Styles().fontFamilies.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors?.white,
-    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies?.regular,
+    color: subTitleTextColor ?? Styles().colors.white,
+    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies.regular,
     fontSize: subTitleFontSize
   );
 }
@@ -412,7 +412,7 @@ class ImageSlantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
-      image = Styles().images?.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
+      image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
         networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
       image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
@@ -429,7 +429,7 @@ class ImageSlantHeader extends StatelessWidget {
           Column(children: <Widget>[
             Container(height: slantImageHeadingHeight, color: _slantImageColor,),
             SizedBox(height: slantImageHeight, width: MediaQuery.of(context).size.width, child:
-              Styles().images?.getImage(slantImageKey, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
+              Styles().images.getImage(slantImageKey, fit: BoxFit.fill, color: _slantImageColor, excludeFromSemantics: true,),
             ),
           ],),
           child ?? Container(),
@@ -447,10 +447,10 @@ class ImageSlantHeader extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors.white),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
 
-  Color? get _slantImageColor => slantImageColor ?? Styles().colors?.fillColorSecondary;
+  Color? get _slantImageColor => slantImageColor ?? Styles().colors.fillColorSecondary;
 }

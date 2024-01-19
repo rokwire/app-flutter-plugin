@@ -67,7 +67,7 @@ class TileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> contentList = <Widget>[];
     if (iconAsset != null) {
-      Widget? icon = Styles().images?.getImage(iconAsset!);
+      Widget? icon = Styles().images.getImage(iconAsset!);
       if (icon != null) {
         contentList.add(icon);
       }
@@ -92,16 +92,16 @@ class TileButton extends StatelessWidget {
     );
   }
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies.bold;
   @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
 
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => Styles().colors.white;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -160,16 +160,16 @@ class TileWideButton extends StatelessWidget {
     this.onTap
   }) : super(key: key);
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
 
-  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamilly => Styles().fontFamilies.bold;
   @protected String? get displayTitleFontFamilly => titleFontFamilly ?? defaultTitleFontFamilly;
 
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors?.white ?? const Color(0x00FFFFFF);
+  @protected Color get defaultBorderColor => Styles().colors.white;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -191,7 +191,7 @@ class TileWideButton extends StatelessWidget {
       contentList.add(Expanded(child: Text(title!, textAlign: TextAlign.center, style: displayTitleTextStyle)));
     } 
     if (iconAsset != null) {
-      Widget? icon = Styles().images?.getImage(iconAsset!);
+      Widget? icon = Styles().images.getImage(iconAsset!);
       if (icon != null) {
         contentList.add(Expanded(child: Column(mainAxisSize: MainAxisSize.min, children: [icon])));
       }
@@ -293,7 +293,7 @@ class TileToggleButton extends StatelessWidget {
   
   @protected Color? get displayBackgroundColor => selected ? selectedBackgroundColor : backgroundColor;
   
-  @protected Color get defaultSelectedBorderColor => Styles().colors?.fillColorPrimary ?? borderColor;
+  @protected Color get defaultSelectedBorderColor => Styles().colors.fillColorPrimary;
   @protected Color get displaySelectedBorderColor => selectedBorderColor ?? defaultSelectedBorderColor;
   @protected Color get displayBorderColor => selected ? displaySelectedBorderColor : borderColor;
 
@@ -303,16 +303,16 @@ class TileToggleButton extends StatelessWidget {
   @protected BoxBorder get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected BoxBorder get dislayBorder => defaultBorder;
 
-  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors?.blackTransparent018 ?? Colors.transparent, offset: const Offset(2, 2), blurRadius: 6)];
+  @protected List<BoxShadow> get defaultBorderShadow => [BoxShadow(color: Styles().colors.blackTransparent018, offset: const Offset(2, 2), blurRadius: 6)];
   @protected List<BoxShadow> get displayBorderShadow => borderShadow ?? defaultBorderShadow;
 
   @protected Decoration get defaultDecoration => BoxDecoration(color: displayBackgroundColor, borderRadius: displayBorderRadius, border: dislayBorder, boxShadow: displayBorderShadow);
   @protected Decoration get displayDecoration => defaultDecoration;
 
-  @protected Color? get defaultTitleColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleColor => (selected ? selectedTitleColor : titleColor) ?? defaultTitleColor;
 
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleColor);
@@ -322,10 +322,10 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get displayTitleWidget => defaultTitleWidget;
 
   @protected String? get displayIconAsset => selected ? selectedIconKey : iconKey;
-  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images?.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
+  @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 
-  @protected Widget get defaultSelectionMarkerWidget => Styles().images?.getImage(selectionMarkerKey, excludeFromSemantics: true) ?? Container();
+  @protected Widget get defaultSelectionMarkerWidget => Styles().images.getImage(selectionMarkerKey, excludeFromSemantics: true) ?? Container();
   @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override

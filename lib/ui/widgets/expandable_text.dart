@@ -54,17 +54,17 @@ class ExpandableText extends StatefulWidget {
     this.footerWidget,
   })  : super(key: key);
 
-  TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.textBackground,);
+  TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16, color: Styles().colors.textBackground,);
   
   String get trimSuffix => '...';
 
-  Color? get _splitterColor => splitterColor ?? Styles().colors?.fillColorSecondary;
+  Color? get _splitterColor => splitterColor ?? Styles().colors.fillColorSecondary;
   
   String get readMoreText => 'Read more';
   String? get readMoreHint => null;
-  TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
+  TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorPrimary);
 
-  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images?.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
+  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();

@@ -15,10 +15,10 @@ class SurveyBuilder {
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
     List<Widget> content = [];
     if (StringUtils.isNotEmpty(survey.text)) {
-      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.fat')));
+      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles.getTextStyle('widget.title.large.fat')));
     }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
-      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular'))));
+      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles.getTextStyle('widget.detail.regular'))));
     }
     if (CollectionUtils.isNotEmpty(buttonActions)) {
       content.add(Padding(
@@ -49,13 +49,13 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.fat'))),
+          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles.getTextStyle('widget.title.small.fat'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
+              Text(date ?? '', style: Styles().textStyles.getTextStyle('widget.detail.small')),
               Container(width: 8.0),
-              Styles().images?.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
+              Styles().images.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
             ],
           ),
@@ -75,9 +75,9 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(key.replaceAll('_', ' ').toUpperCase() + ':',
-                  style: Styles().textStyles?.getTextStyle('widget.description.regular.fat')),
+                  style: Styles().textStyles.getTextStyle('widget.description.regular.fat')),
               const SizedBox(width: 8.0),
-              Flexible(child: Text(responseData ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
+              Flexible(child: Text(responseData ?? '', style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
             ],
           ));
         }
@@ -91,7 +91,7 @@ class SurveyBuilder {
 
     return Material(
       borderRadius: BorderRadius.circular(30),
-      color: Styles().colors?.surface,
+      color: Styles().colors.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) =>
@@ -119,7 +119,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat')),
+                  style: Styles().textStyles.getTextStyle('widget.detail.regular.fat')),
               const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],

@@ -73,22 +73,22 @@ class PopupMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defaultTitleBarColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleBarColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.white;
+  @protected Color? get defaultTitleTextColor => Styles().colors.white;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultMessageTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultMessageTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
-  @protected String? get defaultMessageFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultMessageFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
   
   @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
@@ -256,22 +256,22 @@ class ActionsMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defaultTitleBarColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleBarColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.white;
+  @protected Color? get defaultTitleTextColor => Styles().colors.white;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultMessageTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultMessageTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
-  @protected String? get defaultMessageFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultMessageFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
   
   @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
@@ -283,7 +283,7 @@ class ActionsMessage extends StatelessWidget {
   @protected ShapeBorder get defaultBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
   @protected ShapeBorder get displayBorder => border ?? defaultBorder;
 
-  @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImage('close-circle-white', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors?.surface));
+  @protected Widget? get defaultCloseButtonIcon => Styles().images.getImage('close-circle-white', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors.surface));
   @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
 
   static Future<void> show({
