@@ -974,6 +974,22 @@ class AppToast {
       backgroundColor: backgroundColor,
     );
   }
+
+  static void show(BuildContext context, {
+    required Widget child,
+    FToast? toast,
+    ToastGravity gravity = defaultGravity,
+    Duration duration = defaultDuration,
+  }) {
+    toast ??= FToast();
+    toast.init(context);
+    toast.showToast(
+      child: child,
+      gravity: gravity,
+      toastDuration: duration,
+    );
+  }
+
 }
 
 class MapPathKey {
