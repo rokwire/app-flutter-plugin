@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
 - Notify for success of add to calendar API, make sure to return right return value [#3789](https://github.com/rokwire/illinois-app/issues/3789).
 - Cleaned up DeviceCalendar service [#415](https://github.com/rokwire/app-flutter-plugin/issues/415).
+- Fixed ContentAttributeRequirements clone [#3828](https://github.com/rokwire/illinois-app/issues/3828).
 ### Changed
 - Upgrade to Flutter 3.16.0 [#402](https://github.com/rokwire/app-flutter-plugin/issues/402)
 - Extend AppToast functionality [#418](https://github.com/rokwire/app-flutter-plugin/issues/418)

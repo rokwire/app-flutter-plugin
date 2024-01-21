@@ -839,7 +839,7 @@ class ContentAttributeRequirements {
     minSelectedCount: minSelectedCount,
     maxSelectedCount: maxSelectedCount,
     mode: mode,
-    functionalScope: functionalScope,
+    functionalScope: _functionalScope,
     scope: SetUtils.from(scope),
   );
 
