@@ -421,8 +421,8 @@ class Events2 with Service implements NotificationsListener {
 }
 
 class Events2Query {
-  static const double nearbyDistanceInMiles = 1.0;
-  static const int startTimeOffsetInMsIfNullEndTime = 120000; // 20 mins
+  static double get nearbyDistanceInMiles => Config().event2NearbyDistanceInMiles;
+  static int get startTimeOffsetInMsIfNullEndTime => Config().event2StartTimeOffsetIfNullEndTime * 1000; // in milliseconds
 
   final Iterable<String>? ids;
   final Event2Grouping? grouping;
