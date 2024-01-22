@@ -60,7 +60,7 @@ class Auth2Token {
     if (_parsedAccessToken == null) {
       return null;
     }
-    DateTime expirationDate = DateTime.fromMillisecondsSinceEpoch(0)
+    DateTime expirationDate = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true)
         .add(Duration(seconds: _parsedAccessToken?['exp']?.toInt()));
     return DateTime.now().isAfter(expirationDate);
   }
