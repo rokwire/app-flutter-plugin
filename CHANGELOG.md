@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Import and use Font Awesome Pro icons [#398](https://github.com/rokwire/app-flutter-plugin/issues/398).
 - Favorite and admin entrues to Event2TypeFilter enum [#413](https://github.com/rokwire/app-flutter-plugin/issues/413).
 - Added deep copy functionality to ContentAttributes [#3828](https://github.com/rokwire/illinois-app/issues/3828).
+- Acknowledged new start_time_after_null_end_time and start_time_before_null_end_time event2 time filter paramters [#421](https://github.com/rokwire/app-flutter-plugin/issues/421).
 ### Fixed
 - Fixed image assets resolution [#400](https://github.com/rokwire/app-flutter-plugin/issues/400).
 - Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
