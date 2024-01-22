@@ -1593,7 +1593,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<void> applyToken(Auth2Token token, { Map<String, dynamic>? params }) async {
-    return; //TODO: REMOVE THIS
     Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
     _token = token;
