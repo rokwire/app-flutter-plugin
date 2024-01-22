@@ -409,7 +409,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (Config().supportsAnonymousAuth && (Config().authBaseUrl != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> postData = {
         'auth_type': Auth2Type.typeAnonymous,
@@ -454,7 +455,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> creds = {};
       if (StringUtils.isNotEmpty(identifier)) {
@@ -529,7 +531,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         requestJson?['response']['userHandle'] = StringUtils.base64UrlDecode(userHandle ?? '');
       }
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> creds = {
         "response": JsonUtils.encode(requestJson),
@@ -594,7 +597,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> postData = {
         'auth_type': Auth2Type.typePasskey,
@@ -680,7 +684,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> postData = {
         'auth_type': Auth2Type.typePasskey,
@@ -779,7 +784,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> postData = {
         'auth_type': oidcAuthType,
@@ -938,7 +944,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> creds = {};
       if (StringUtils.isNotEmpty(identifier)) {
@@ -977,7 +984,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (code != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> creds = {
         "code": code,
@@ -1026,7 +1034,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> creds = {
         "password": password,
@@ -1079,7 +1088,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if ((Config().authBaseUrl != null) && (identifier != null) && (password != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       Map<String, dynamic> postData = {
         'auth_type': Auth2Type.typePassword,
@@ -1583,6 +1593,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<void> applyToken(Auth2Token token, { Map<String, dynamic>? params }) async {
+    return; //TODO: REMOVE THIS
     Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
     _token = token;
@@ -1600,7 +1611,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String url = "${Config().authBaseUrl}/auth/refresh";
       
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
       String? post;
       if (!Config().isReleaseWeb) {
