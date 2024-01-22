@@ -533,7 +533,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
   int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
-  int  get event2StartTimeOffsetIfNullEndTime => JsonUtils.intValue(settings['event2StartTimeOffsetIfNullEndTime']) ?? 120;
+  int  get event2StartTimeOffsetIfNullEndTime => JsonUtils.intValue(settings['event2StartTimeOffsetIfNullEndTime']) ?? 1200;
   double get event2NearbyDistanceInMiles => JsonUtils.doubleValue(settings['event2NearbyDistanceInMiles']) ?? 1.0;
 
   // Getters: other
