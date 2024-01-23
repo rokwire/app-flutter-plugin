@@ -306,11 +306,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2UserProfile? get profile => _account?.profile ?? _anonymousProfile;
   String? get loginType => _account?.authType?.code;
 
-  bool get isLoggedIn => (_account?.id != null);
-  bool get isOidcLoggedIn => (_account?.authType?.code == oidcAuthType || _account?.authType?.code == Auth2Type.typeOidc);
-  bool get isCodeLoggedIn => (_account?.authType?.code == Auth2Type.typeCode);
-  bool get isPasswordLoggedIn => (_account?.authType?.code == Auth2Type.typePassword);
-  bool get isPasskeyLoggedIn => (_account?.authType?.code == Auth2Type.typePasskey);
+  bool get isLoggedIn => (_account?.id != null) && _token != null;
+  bool get isOidcLoggedIn => (_account?.authType?.code == oidcAuthType || _account?.authType?.code == Auth2Type.typeOidc) && _token != null;
+  bool get isCodeLoggedIn => (_account?.authType?.code == Auth2Type.typeCode) && _token != null;
+  bool get isPasswordLoggedIn => (_account?.authType?.code == Auth2Type.typePassword) && _token != null;
+  bool get isPasskeyLoggedIn => (_account?.authType?.code == Auth2Type.typePasskey) && _token != null;
 
   bool get isEmailLinked => _account?.isIdentifierLinked(Auth2Identifier.typeEmail) ?? false;
   bool get isPhoneLinked => _account?.isIdentifierLinked(Auth2Identifier.typePhone) ?? false;
