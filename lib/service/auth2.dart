@@ -1554,8 +1554,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
               _refreshTokenFailCounts.remove(futureKey);
 
               if (token == _token) {
-                // do not need to await applyToken because updated tokens are set in memory immediately
-                applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
+                await applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
                 return responseToken;
               }
               else if (token == _anonymousToken) {
