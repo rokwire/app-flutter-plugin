@@ -23,6 +23,8 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
 
+  static const String sportEventCategory = 'Big 10 Athletics';
+
   List<Map<String, dynamic>>? _eventDetailsCache;
 
   // Singletone Factory
