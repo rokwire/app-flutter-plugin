@@ -657,7 +657,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   //   }
   // }
 
-  @protected
   Future<File?> getFileContentItem(String fileName, String category) async {
     Map<String, String> queryParams = {};
     queryParams['fileName'] = fileName;
