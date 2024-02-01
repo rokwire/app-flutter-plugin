@@ -18,13 +18,15 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart' as connectivity;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 
 enum ConnectivityStatus { wifi, mobile, none }
 
-class Connectivity with Service {
+class Connectivity with Service implements NotificationsListener {
 
   static const String notifyStatusChanged  = "edu.illinois.rokwire.connectivity.status.changed";
 
@@ -49,6 +51,9 @@ class Connectivity with Service {
 
   @override
   void createService() {
+    NotificationService().subscribe(this, [
+      AppLifecycle.notifyStateChanged,
+    ]);
     _connectivitySubscription = connectivity.Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
   }
 
@@ -71,6 +76,7 @@ class Connectivity with Service {
 
   @override
   void destroyService() {
+    NotificationService().unsubscribe(this);
     _connectivitySubscription?.cancel();
     _connectivitySubscription = null;
   }
@@ -103,6 +109,20 @@ class Connectivity with Service {
     ConnectivityStatus? connectivityStatus = _statusFromResult(await connectivity.Connectivity().checkConnectivity());
     _setConnectivityStatus(connectivityStatus);
     return connectivityStatus;
+  }
+
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged(param);
+    }
+  }
+
+  @protected
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
+    if (state == AppLifecycleState.resumed) {
+      checkStatus();
+    }
   }
 
   ConnectivityStatus? get status {
