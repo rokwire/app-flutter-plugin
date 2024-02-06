@@ -35,8 +35,6 @@ import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
-import 'log.dart';
-
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
 
@@ -637,44 +635,30 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  // @protected
-  // Future<Map<String, dynamic>?> getDataContentItem(String key) async {
-  //   if (StringUtils.isEmpty(key)) {
-  //     Log.w('Failed to load data content item. Missing key.');
-  //   }
-  //
-  //   String? serviceUrl = Config().contentUrl;
-  //   String url = "$serviceUrl/data/$key";
-  //
-  //   Response? response = await Network().get(url, auth: Auth2());
-  //   int? responseCode = response?.statusCode;
-  //   String? responseString = response?.body;
-  //   if (responseCode == 200) {
-  //     Map<String, dynamic>? data = JsonUtils.decodeMap(responseString);
-  //     return da;
-  //   }else{
-  //     return null;
-  //   }
-  // }
-
   Future<File?> getFileContentItem(String fileName, String category) async {
-    Map<String, String> queryParams = {};
-    queryParams['fileName'] = fileName;
-    queryParams['category'] = category;
-    String? serviceUrl = Config().contentUrl;
-    String url = "$serviceUrl/files";
-    if (queryParams.isNotEmpty) {
-      url = UrlUtils.addQueryParameters(url, queryParams);
-    }
-    Response? response = await Network().get(url, auth: Auth2());
-    int? responseCode = response?.statusCode;
-    var responseBytes = response!.bodyBytes;
-    var dir = await getApplicationDocumentsDirectory();
-    File file = File("${dir.path}/test.pdf"); //TODO
-    File urlFile = await file.writeAsBytes(responseBytes);
-    return urlFile;
-  }
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileName': fileName,
+        'category': category,
+      };
+      String url = "${Config().contentUrl}/files";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
 
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        var dir = await getApplicationDocumentsDirectory();
+        File file = File("${dir.path}/$fileName");
+        return await file.writeAsBytes(response!.bodyBytes);
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
 }
 
 abstract class ContentItemCategoryClient {
@@ -746,48 +730,4 @@ extension FileExtention on FileSystemEntity{ //file.name
   String? get name {
     return this.path.split(Platform.pathSeparator).last;
   }
-}
-
-//Data Content Item
-class DataContentItem{
-  //TODO change to list of maps
-  final Map<String, dynamic>? data;
-
-  DataContentItem({required this.data});
-
-  static DataContentItem? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return DataContentItem(
-      data: JsonUtils.mapValue(json["data"]));
-  }
-
-}
-
-class Data{
-  final Map<String, String>? body;
-
-  Data({required this.body});
-
-  static Data? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return Data(
-        body: json["body"]);
-  }
-
-  static List<Data>? listFromJson(List<dynamic>? jsonList) {
-    List<Data>? result;
-    if (jsonList != null) {
-      result = <Data>[];
-      for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(result, Data.fromJson(JsonUtils.mapValue(jsonEntry)));
-      }
-    }
-    return result;
-  }
-
-
 }
