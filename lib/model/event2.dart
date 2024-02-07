@@ -171,7 +171,8 @@ class Event2 with Explore, Favorite {
     (free == other.free) &&
     (cost == other.cost) &&
 
-    (registrationDetails == other.registrationDetails) &&
+    Event2RegistrationDetails.equals(registrationDetails, other.registrationDetails) &&
+    //(registrationDetails == other.registrationDetails) &&
     (attendanceDetails == other.attendanceDetails) &&
     (surveyDetails == other.surveyDetails) &&
 
@@ -390,6 +391,12 @@ class Event2RegistrationDetails {
     (externalLink?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(registrants));
+
+  static bool equals(Event2RegistrationDetails? details1, Event2RegistrationDetails? details2) =>
+    ((details1 == null) && (details2 == null)) ||
+    ((details1 != null) && (details2 != null) && (details1 == details2)) ||
+    (details1?.type == Event2RegistrationType.none) ||
+    (details2?.type == Event2RegistrationType.none);
 }
 
 ///////////////////////////////
