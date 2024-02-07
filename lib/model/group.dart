@@ -320,6 +320,21 @@ class Group {
     }
     return json;
   }
+
+  static List<String>? listToListIds(List<Group>? values) {
+    List<String>? result;
+    if (values != null) {
+      result = <String>[];
+      for (Group value in values) {
+        String? groupsId = value.id;
+        if (groupsId != null) {
+          result.add(groupsId);
+        }
+      }
+    }
+    return result;
+  }
+
 }
 
 //////////////////////////////
