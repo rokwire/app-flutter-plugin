@@ -743,8 +743,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           await _launchUrl(_oidcLogin?.loginUrl);
         }
         else {
-          completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
-          return Auth2OidcAuthenticateResult.failed;
+          Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
+            Auth2OidcAuthenticateResultStatus.failed,
+            error: "error getting login url: ${oidcLogin?.error}"
+          );
+          completeOidcAuthentication(result);
+          return result;
         }
       }
 
@@ -753,7 +757,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       return completer.future;
     }
     
-    return Auth2OidcAuthenticateResult.failed;
+    return Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.failed,
+        error: "auth url is null");
   }
 
   @protected
@@ -770,8 +775,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
     }
     else {
-      bool processResult = await processOidcAuthentication(uri);
-      result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
+      String? processResult = await processOidcAuthentication(uri);
+      result = processResult == null ?
+        Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.succeeded)
+          : Auth2OidcAuthenticateResult(
+              Auth2OidcAuthenticateResultStatus.failed, error: processResult);
     }
     _processingOidcAuthentication = false;
 
@@ -780,7 +788,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<bool> processOidcAuthentication(Uri? uri) async {
+  Future<String?> processOidcAuthentication(Uri? uri) async {
     if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -799,7 +807,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (additionalParams != null) {
         postData.addAll(additionalParams);
       } else {
-        return false;
+        return 'could not get config params';
       }
       _oidcLogin = null;
 
@@ -809,9 +817,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       bool result = await processLoginResponse(responseJson, scope: _oidcScope);
       _oidcScope = null;
       _log(result ? "Auth2: login succeeded: ${response?.statusCode}\n${response?.body}" : "Auth2: login failed: ${response?.statusCode}\n${response?.body}");
-      return result;
+      if (result) {
+        return null;
+      }
+      if (response?.statusCode != HttpStatus.ok) {
+        return '${response?.statusCode} - ${response?.body}';
+      }
+      return 'invalid token or account response';
     }
-    return false;
+    return 'auth url is null';
   }
 
   @protected
@@ -891,7 +905,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
-      return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+      if (response?.statusCode == HttpStatus.ok) {
+        return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+      } else {
+        return _OidcLogin(error: '${response?.statusCode} - ${response?.body}');
+      }
     }
     return null;
   }
@@ -920,7 +938,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void completeOidcAuthentication(Auth2OidcAuthenticateResult? result) {
     
-    _notifyLogin(oidcAuthType, result == Auth2OidcAuthenticateResult.succeeded);
+    _notifyLogin(oidcAuthType, result?.status == Auth2OidcAuthenticateResultStatus.succeeded);
 
     _oidcLogin = null;
     _oidcScope = null;
@@ -1941,8 +1959,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 class _OidcLogin {
   final String? loginUrl;
   final Map<String, dynamic>? params;
+  final String? error;
   
-  _OidcLogin({this.loginUrl, this.params});
+  _OidcLogin({this.loginUrl, this.params, this.error});
 
   static _OidcLogin? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? _OidcLogin(
@@ -2142,17 +2161,27 @@ enum Auth2ForgotPasswordResult {
 
 // Auth2OidcAuthenticateResult
 
-enum Auth2OidcAuthenticateResult {
+class Auth2OidcAuthenticateResult {
+  Auth2OidcAuthenticateResultStatus status;
+  String? message;
+  String? error;
+  Auth2OidcAuthenticateResult(this.status, {this.message, this.error});
+}
+
+enum Auth2OidcAuthenticateResultStatus {
   succeeded,
   failed,
   failedAccountExist,
 }
 
 Auth2OidcAuthenticateResult auth2OidcAuthenticateResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value.status) {
-    case Auth2LinkResultStatus.succeeded: return Auth2OidcAuthenticateResult.succeeded;
-    case Auth2LinkResultStatus.failedAccountExist: return Auth2OidcAuthenticateResult.failedAccountExist;
-    default: return Auth2OidcAuthenticateResult.failed;
+  return Auth2OidcAuthenticateResult(auth2OidcAuthenticateResultStatusFromAuth2LinkResultStatus(value.status), message: value.message);
+}
+Auth2OidcAuthenticateResultStatus auth2OidcAuthenticateResultStatusFromAuth2LinkResultStatus(Auth2LinkResultStatus value) {
+  switch (value) {
+    case Auth2LinkResultStatus.succeeded: return Auth2OidcAuthenticateResultStatus.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2OidcAuthenticateResultStatus.failedAccountExist;
+    default: return Auth2OidcAuthenticateResultStatus.failed;
   }
 }
 
