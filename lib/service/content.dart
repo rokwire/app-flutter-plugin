@@ -635,6 +635,25 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
+  // Future<Map<String, dynamic>?> getDataContentItem(String key) async {
+  //   if (StringUtils.isEmpty(key)) {
+  //     Log.w('Failed to load data content item. Missing key.');
+  //   }
+  //
+  //   String? serviceUrl = Config().contentUrl;
+  //   String url = "$serviceUrl/data/$key";
+  //
+  //   Response? response = await Network().get(url, auth: Auth2());
+  //   int? responseCode = response?.statusCode;
+  //   String? responseString = response?.body;
+  //   if (responseCode == 200) {
+  //     Map<String, dynamic>? data = JsonUtils.decodeMap(responseString);
+  //     return da;
+  //   }else{
+  //     return null;
+  //   }
+  // }
+
   Future<File?> getFileContentItem(String fileName, String category) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
@@ -729,5 +748,47 @@ class AudioResult {
 extension FileExtention on FileSystemEntity{ //file.name
   String? get name {
     return this.path.split(Platform.pathSeparator).last;
+  }
+}
+
+//Data Content Item
+class DataContentItem{
+  //TODO change to list of maps
+  final Map<String, dynamic>? data;
+
+  DataContentItem({required this.data});
+
+  static DataContentItem? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return DataContentItem(
+      data: JsonUtils.mapValue(json["data"]));
+  }
+
+}
+
+class Data{
+  final Map<String, String>? body;
+
+  Data({required this.body});
+
+  static Data? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Data(
+        body: json["body"]);
+  }
+
+  static List<Data>? listFromJson(List<dynamic>? jsonList) {
+    List<Data>? result;
+    if (jsonList != null) {
+      result = <Data>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Data.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
   }
 }
