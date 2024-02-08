@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledged new start_time_after_null_end_time and start_time_before_null_end_time event2 time filter paramters [#421](https://github.com/rokwire/app-flutter-plugin/issues/421).
 - Added headerBar paramter to SurveyPanel constructor [#3876](https://github.com/rokwire/illinois-app/issues/3876).
 - Added APIs for managing event groups on Groups BB [#423](https://github.com/rokwire/app-flutter-plugin/issues/423).
+- Add get file content API [#425](https://github.com/rokwire/app-flutter-plugin/issues/425).
 ### Fixed
 - Fixed image assets resolution [#400](https://github.com/rokwire/app-flutter-plugin/issues/400).
 - Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
