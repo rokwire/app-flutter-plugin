@@ -649,9 +649,11 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        var dir = await getApplicationDocumentsDirectory();
-        File file = File("${dir.path}/$fileName");
-        return await file.writeAsBytes(response!.bodyBytes);
+        Directory? dir = await getAppDocumentsDirectory();
+        if (dir != null) {
+          File file = File("${dir.path}/$fileName");
+          return await file.writeAsBytes(response!.bodyBytes);
+        }
       } else {
         String? responseString = response?.body;
         debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
