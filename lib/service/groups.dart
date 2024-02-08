@@ -1105,7 +1105,7 @@ class Groups with Service implements NotificationsListener {
     _removeEventFromGroup(groupId: groupId, eventId: eventId);
 
 
-  Future<dynamic> createEventForGroupsV3(Event2? event, { List<String>? groupIds }) async {
+  Future<dynamic> createEventForGroupsV3(Event2? event, { Set<String>? groupIds }) async {
     if ((Config().groupsUrl != null) && (groupIds != null) && groupIds.isNotEmpty && (event != null)) {
       String url = '${Config().groupsUrl}/group/events/v3';
       String? body = JsonUtils.encode(CreateEventForGroupsV3Param(event: event, groupIds: groupIds).toJson());
@@ -1145,22 +1145,19 @@ class Groups with Service implements NotificationsListener {
     return (groupIds != null) ? await _loadAllGroupsEx(groupIds: groupIds) : result1;
   }
 
-  Future<dynamic> saveUserGroupsHavingEvent(String eventId, { List<String>? groupIds, List<String>? previousGroupIds } ) async {
+  Future<dynamic> saveUserGroupsHavingEvent(String eventId, { Set<String>? groupIds, Set<String>? previousGroupIds } ) async {
     String? groupsUrl = Config().groupsUrl;
     if ((groupsUrl != null) && (groupIds != null)) {
       String url = '$groupsUrl/user/event/$eventId/groups';
-      String? body = JsonUtils.encode({'group_ids': groupIds});
+      String? body = JsonUtils.encode({'group_ids': groupIds.toList()});
       Response? response = await Network().put(url, auth: Auth2(), body: body);
       if (response?.statusCode != 200) {
         return response?.errorText;
       }
       else {
-        List<String>? groupIds = (response?.statusCode  == 200) ? _decodeGroupIds(response?.body) : null;
+        Set<String>? groupIds = (response?.statusCode  == 200) ? _decodeGroupIds(response?.body) : null;
         if (groupIds != null) {
-          Set<String> modifiedGroupIds = Set.from(groupIds);
-          if (previousGroupIds != null) {
-            modifiedGroupIds.union(previousGroupIds.toSet());
-          }
+          Set<String> modifiedGroupIds = ((previousGroupIds != null) && previousGroupIds.isNotEmpty) ? groupIds.union(previousGroupIds) : groupIds;
           modifiedGroupIds.forEach((String groupId) => NotificationService().notify(notifyGroupUpdated, groupId));
           return groupIds;
         }
@@ -1169,9 +1166,9 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  List<String>? _decodeGroupIds(String? responseText) {
+  Set<String>? _decodeGroupIds(String? responseText) {
     Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseText);
-    return (responseMap != null) ? JsonUtils.listStringsValue(responseMap['group_ids']) : null;
+    return (responseMap != null) ? JsonUtils.setStringsValue(responseMap['group_ids']) : null;
   }
 
   // Group Posts and Replies
@@ -1726,18 +1723,18 @@ extension _ResponseExt on Response {
 
 class CreateEventForGroupsV3Param {
   final Event2? event;
-  final List<String>? groupIds;
+  final Set<String>? groupIds;
   
   CreateEventForGroupsV3Param({this.event, this.groupIds});
 
   static CreateEventForGroupsV3Param? fromJson(Map<String, dynamic>? json) => (json != null) ?
     CreateEventForGroupsV3Param(
       event: Event2.fromJson(JsonUtils.mapValue(json['event'])),
-      groupIds: JsonUtils.listStringsValue(json['group_ids'])
+      groupIds: JsonUtils.setStringsValue(json['group_ids'])
     ) : null;
 
   Map<String, dynamic> toJson() => {
     'event': event?.toJson(),
-    'group_ids': groupIds
+    'group_ids': groupIds?.toList(),
   };
 }

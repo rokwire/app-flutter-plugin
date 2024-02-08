@@ -335,6 +335,19 @@ class Group {
     return result;
   }
 
+  static Set<String>? listToSetIds(List<Group>? values) {
+    Set<String>? result;
+    if (values != null) {
+      result = <String>{};
+      for (Group value in values) {
+        String? groupsId = value.id;
+        if (groupsId != null) {
+          result.add(groupsId);
+        }
+      }
+    }
+    return result;
+  }
 }
 
 //////////////////////////////
