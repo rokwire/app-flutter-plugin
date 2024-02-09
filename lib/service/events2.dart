@@ -428,6 +428,7 @@ class Events2Query {
 
   final Iterable<String>? ids;
   final Event2Grouping? grouping;
+  final List<Event2Grouping>? groupings;
   final String? searchText;
   final Set<Event2TypeFilter>? types;
   final Position? location;
@@ -440,7 +441,7 @@ class Events2Query {
   final int? offset;
   final int? limit;
 
-  Events2Query({this.ids, this.grouping, this.searchText,
+  Events2Query({this.ids, this.grouping, this.groupings, this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
@@ -457,6 +458,10 @@ class Events2Query {
 
     if (grouping != null) {
       options['grouping'] = grouping?.toJson();
+    }
+
+    if (groupings != null) {
+      options['groupings'] = Event2Grouping.listToJson(groupings);
     }
 
     if (searchText != null) {
@@ -526,7 +531,7 @@ class Events2Query {
     }
 
     if (types.contains(Event2TypeFilter.superEvent)) {
-      options['grouping'] = Event2Grouping.superEvent(null).toJson();
+      options['groupings'] = Event2Grouping.listToJson(Event2Grouping.superEvents());
     }
 
     if (types.contains(Event2TypeFilter.admin)) {
