@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next build on `develop` should refer to version 1.6.0 -->
+<!-- The next build on `develop` should refer to version ... -->
+
+## [1.6.0] - 2024-02-12
 ### Added
 - Content service upload/retrieve/delete profile voice record [#3846](https://github.com/rokwire/illinois-app/issues/3846).
 - Import and use Font Awesome Pro icons [#398](https://github.com/rokwire/app-flutter-plugin/issues/398).
