@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version ... -->
+### Fixed
+- Fix content service storing files [#429](https://github.com/rokwire/app-flutter-plugin/issues/429).
 
 ## [1.6.0] - 2024-02-12
 ### Added

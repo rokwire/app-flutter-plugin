@@ -635,7 +635,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<File?> getFileContentItem(String fileName, String category) async {
+  Future<Uint8List?> getFileContentItem(String fileName, String category) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileName': fileName,
@@ -649,11 +649,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        Directory? dir = await getAppDocumentsDirectory();
-        if (dir != null) {
-          File file = File("${dir.path}/$fileName");
-          return await file.writeAsBytes(response!.bodyBytes);
-        }
+        return response?.bodyBytes;
       } else {
         String? responseString = response?.body;
         debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
