@@ -649,7 +649,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        return response!.bodyBytes;
+        return response?.bodyBytes;
       } else {
         String? responseString = response?.body;
         debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
