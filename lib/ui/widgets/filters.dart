@@ -61,18 +61,18 @@ class FilterListItem extends StatelessWidget {
     this.selectedIconPadding = const EdgeInsets.only(left: 10),
   }) : super(key: key);
 
-  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.medium, fontSize: 16, color: Styles().colors?.fillColorPrimary);
-  @protected TextStyle? get defaultSelectedTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
+  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies.medium, fontSize: 16, color: Styles().colors.fillColorPrimary);
+  @protected TextStyle? get defaultSelectedTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorPrimary);
   TextStyle? get _titleTextStyle => selected ? (selectedTitleTextStyle ?? defaultSelectedTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
   
   @protected TextStyle? get defaultDescriptionTextStyle         => defaultTitleTextStyle;
   @protected TextStyle? get defaultSelectedDescriptionTextStyle => defaultSelectedTitleTextStyle;
   TextStyle? get _descriptionTextStyle => selected ? (selectedDescriptionTextStyle ?? defaultSelectedDescriptionTextStyle) : (descriptionTextStyle ?? defaultDescriptionTextStyle);
 
-  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _selectedIconImage => (selectedIconKey != null) ? Styles().images?.getImage(selectedIconKey, excludeFromSemantics: true) : null;
+  Widget? get _selectedIconImage => (selectedIconKey != null) ? Styles().images.getImage(selectedIconKey, excludeFromSemantics: true) : null;
   Widget? get _selectedIconWidget => selectedIcon ?? _selectedIconImage;
 
   @override
@@ -95,7 +95,7 @@ class FilterListItem extends StatelessWidget {
 
     return Semantics(label: title, button: true, selected: selected, excludeSemantics: true, child:
       InkWell(onTap: onTap, child:
-        Container(color: (selected ? Styles().colors?.background : Colors.white), child:
+        Container(color: (selected ? Styles().colors.background : Colors.white), child:
           Padding(padding: padding, child:
             Row(mainAxisSize: MainAxisSize.max, children: contentList),
           ),
@@ -145,14 +145,14 @@ class FilterSelector extends StatelessWidget {
 
   }) : super(key: key);
 
-  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
-  @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorSecondary);
+  @protected TextStyle? get defaultTitleTextStyle         => TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorPrimary);
+  @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorSecondary);
   TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
 
-  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _activeIconImage => (activeIconKey != null) ? Styles().images?.getImage(activeIconKey, excludeFromSemantics: true) : null;
+  Widget? get _activeIconImage => (activeIconKey != null) ? Styles().images.getImage(activeIconKey, excludeFromSemantics: true) : null;
   Widget? get _activeIconWidget => activeIcon ?? _activeIconImage;
 
   @override

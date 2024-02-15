@@ -34,12 +34,13 @@ class SurveyPanel extends StatefulWidget {
   final Map<String, dynamic>? defaultResponses;
   final bool summarizeResultRules;
   final Widget? summarizeResultRulesWidget;
+  final PreferredSizeWidget? headerBar;
   final Widget? tabBar;
   final Widget? offlineWidget;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.dateTaken, this.showResult = false, this.onComplete, this.initPanelDepth = 0, this.defaultResponses,
-    this.summarizeResultRules = false, this.summarizeResultRulesWidget, this.tabBar, this.offlineWidget}) : super(key: key);
+    this.summarizeResultRules = false, this.summarizeResultRulesWidget, this.headerBar, this.tabBar, this.offlineWidget}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -71,12 +72,12 @@ class _SurveyPanelState extends State<SurveyPanel> {
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback(_checkScroll);
     return Scaffold(
-      appBar: HeaderBar(title: _survey?.title),
+      appBar: widget.headerBar ?? HeaderBar(title: _survey?.title),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors?.background,
+      backgroundColor: Styles().colors.background,
       body: Column(
         children: [
-          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors?.fillColorPrimary))),
+          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors.fillColorPrimary))),
           Expanded(child: Scrollbar(
             radius: const Radius.circular(2),
             thumbVisibility: true,

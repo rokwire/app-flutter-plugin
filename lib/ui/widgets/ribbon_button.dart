@@ -94,32 +94,32 @@ class RibbonButton extends StatefulWidget {
     this.semanticsValue,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors?.white;
+  @protected Color? get defaultBackgroundColor => Styles().colors.white;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
 
   @protected EdgeInsetsGeometry get displayPadding => padding ?? (hasDescription ? complexPadding : simplePadding);
   @protected EdgeInsetsGeometry get simplePadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
   @protected EdgeInsetsGeometry get complexPadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
-  @protected Color? get defaultTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTextColor => textColor ?? defaultTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => Styles().colors?.textSurface;
+  @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
-  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
   @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
   @protected Widget get displayDescriptionWidget => descriptionWidget ?? Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,);
 
-  @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images.getImage(leftIconKey, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images.getImage(rightIconKey, excludeFromSemantics: true) : null;
 
-  @protected Color? get defaultProgressColor => Styles().colors?.fillColorSecondary;
+  @protected Color? get defaultProgressColor => Styles().colors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
   @protected double get defaultStrokeWidth => 2.0;
   @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;

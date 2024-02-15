@@ -54,17 +54,17 @@ class ExpandableText extends StatefulWidget {
     this.footerWidget,
   })  : super(key: key);
 
-  TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.regular, fontSize: 16, color: Styles().colors?.textBackground,);
+  TextStyle get _textStyle => textStyle ?? TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16, color: Styles().colors.textBackground,);
   
   String get trimSuffix => '...';
 
-  Color? get _splitterColor => splitterColor ?? Styles().colors?.fillColorSecondary;
+  Color? get _splitterColor => splitterColor ?? Styles().colors.fillColorSecondary;
   
   String get readMoreText => 'Read more';
   String? get readMoreHint => null;
-  TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies?.bold, fontSize: 16, color: Styles().colors?.fillColorPrimary);
+  TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorPrimary);
 
-  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images?.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
+  Widget? get _readMoreIcon => readMoreIcon ?? (readMoreIconKey != null ? Styles().images.getImage(readMoreIconKey!, excludeFromSemantics: true) : null);
 
   @override
   _ExpandableTextState createState() => _ExpandableTextState();
@@ -82,7 +82,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       List<Widget> contentList = <Widget>[];
       
       TextPainter textPainter = TextPainter(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor,
+        textScaler: MediaQuery.of(context).textScaler,
         textDirection: TextDirection.rtl,
       );
       
@@ -100,7 +100,7 @@ class _ExpandableTextState extends State<ExpandableText> {
       if (textPainter.didExceedMaxLines) {
         
         String displayText = _collapsed ? widget.text.substring(0, endIndex) + widget.trimSuffix : widget.text;
-        contentList.add(RichText(textScaleFactor: MediaQuery.of(context).textScaleFactor, softWrap: true, overflow: TextOverflow.clip,
+        contentList.add(RichText(textScaler: MediaQuery.of(context).textScaler, softWrap: true, overflow: TextOverflow.clip,
           text: TextSpan(text: displayText, style: widget._textStyle,),
         ),);
 

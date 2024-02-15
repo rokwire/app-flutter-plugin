@@ -70,34 +70,34 @@ class VerticalTitleValueSection extends StatelessWidget {
     this.padding = const EdgeInsets.only(left: 10),
   }) : super(key: key);
 
-  @protected Color? get defaultTitleTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTitleTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.regular;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
 
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultValueTextColor => Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultValueTextColor => Styles().colors.fillColorPrimary;
   @protected Color? get displayValueTextColor => valueTextColor ?? defaultValueTextColor;
   
-  @protected String? get defaultValueFontFamily => Styles().fontFamilies?.extraBold;
+  @protected String? get defaultValueFontFamily => Styles().fontFamilies.extraBold;
   @protected String? get displayValueFontFamily => valueFontFamily ?? defaultValueFontFamily;
 
   @protected TextStyle get defaultValueTextStyle => TextStyle(fontFamily: displayValueFontFamily, fontSize: valueFontSize, color: displayValueTextColor);
   @protected TextStyle get displayValueTextStyle => valueTextStyle ?? defaultValueTextStyle;
 
-  @protected Color? get defaultHintTextColor => Styles().colors?.textBackground;
+  @protected Color? get defaultHintTextColor => Styles().colors.textBackground;
   @protected Color? get displayHintTextColor => hintTextColor ?? defaultHintTextColor;
   
-  @protected String? get defaultHintFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get defaultHintFontFamily => Styles().fontFamilies.regular;
   @protected String? get displayHintFontFamily => hintFontFamily ?? defaultHintFontFamily;
 
   @protected TextStyle get defaultHintTextStyle => TextStyle(fontFamily: displayHintFontFamily, fontSize: hintFontSize, color: displayHintTextColor);
   @protected TextStyle get displayHintTextStyle => hintTextStyle ?? defaultHintTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors?.fillColorSecondary ?? Colors.transparent;
+  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BoxBorder get defaultBorder => Border(left: BorderSide(color: displayBorderColor, width: borderWidth));

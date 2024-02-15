@@ -68,14 +68,14 @@ class RoundedTab extends StatefulWidget {
     this.onTap,
   }): super(key: key);
 
-  @protected Color? get defaultTextColor => selected ? Styles().colors?.white : Styles().colors?.fillColorPrimary;
+  @protected Color? get defaultTextColor => selected ? Styles().colors.white : Styles().colors.fillColorPrimary;
   @protected Color? get displayTextColor => (selected ? selectedTextColor : textColor) ?? defaultTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies?.bold;
+  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected TextStyle get displayTextStyle => (selected ? selectedTextStyle : textStyle) ?? defaultTextStyle;
 
-  @protected Color? get defaultBackgroundColor => selected ? Styles().colors?.fillColorPrimary : Styles().colors?.surfaceAccent;
+  @protected Color? get defaultBackgroundColor => selected ? Styles().colors.fillColorPrimary : Styles().colors.surfaceAccent;
   @protected Color? get displayBackgroundColor => (selected ? selectedBackgroundColor : backgroundColor) ?? defaultBackgroundColor;
   @protected Color get defaultBorderColor => const Color(0xffdadde1);
   @protected Color get displayBorderColor => (selected ? selectedBorderColor : borderColor) ?? defaultBorderColor;

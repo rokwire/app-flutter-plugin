@@ -5,6 +5,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+<!-- The next build on `develop` should refer to version ... -->
+
+## [1.6.1] - 2024-02-14
+### Fixed
+- Fix content service storing files [#429](https://github.com/rokwire/app-flutter-plugin/issues/429).
+
+## [1.6.0] - 2024-02-12
+### Added
+- Content service upload/retrieve/delete profile voice record [#3846](https://github.com/rokwire/illinois-app/issues/3846).
+- Import and use Font Awesome Pro icons [#398](https://github.com/rokwire/app-flutter-plugin/issues/398).
+- Favorite and admin entrues to Event2TypeFilter enum [#413](https://github.com/rokwire/app-flutter-plugin/issues/413).
+- Added deep copy functionality to ContentAttributes [#3828](https://github.com/rokwire/illinois-app/issues/3828).
+- Acknowledged new start_time_after_null_end_time and start_time_before_null_end_time event2 time filter paramters [#421](https://github.com/rokwire/app-flutter-plugin/issues/421).
+- Added headerBar paramter to SurveyPanel constructor [#3876](https://github.com/rokwire/illinois-app/issues/3876).
+- Added APIs for managing event groups on Groups BB [#423](https://github.com/rokwire/app-flutter-plugin/issues/423).
+- Add get file content API [#425](https://github.com/rokwire/app-flutter-plugin/issues/425).
+- Possibility for loading individual events [#3956](https://github.com/rokwire/illinois-app/issues/3956).
+### Fixed
+- Fixed image assets resolution [#400](https://github.com/rokwire/app-flutter-plugin/issues/400).
+- Replaced textScaleFactor usage with textScaler [#406](https://github.com/rokwire/app-flutter-plugin/issues/406).
+- Notify for success of add to calendar API, make sure to return right return value [#3789](https://github.com/rokwire/illinois-app/issues/3789).
+- Cleaned up DeviceCalendar service [#415](https://github.com/rokwire/app-flutter-plugin/issues/415).
+- Fixed ContentAttributeRequirements clone [#3828](https://github.com/rokwire/illinois-app/issues/3828).
+### Changed
+- Upgrade to Flutter 3.16.0 [#402](https://github.com/rokwire/app-flutter-plugin/issues/402)
+- Extend AppToast functionality [#418](https://github.com/rokwire/app-flutter-plugin/issues/418)
+- Allow static access to predefined colors and font styles in Styles [#418](https://github.com/rokwire/app-flutter-plugin/issues/418)
+- Updated APIs for managing event groups on Groups BB [#423](https://github.com/rokwire/app-flutter-plugin/issues/423).
 
 ## [1.5.4] - 2023-10-06
 ### Changed
