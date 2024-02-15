@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version ... -->
+### Fixed
+- Fixed tappable area of SliverToutHeaderBar back button [#3827](https://github.com/rokwire/illinois-app/issues/3827).
 
 ## [1.6.1] - 2024-02-14
 ### Fixed
