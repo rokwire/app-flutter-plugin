@@ -131,6 +131,7 @@ class TabWidget extends StatelessWidget {
   final String? iconKey;
   final String? selectedIconKey;
   final bool selected;
+  final bool showAnimation;
   final void Function(TabWidget tabWidget) onTap;
 
   const TabWidget({
@@ -140,19 +141,33 @@ class TabWidget extends StatelessWidget {
     this.selectedIconKey,
     this.hint,
     this.selected = false,
+    this.showAnimation = true,
     required this.onTap
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Material(color: Colors.transparent,
-      child: InkWell(onTap: () => onTap(this), child:
+    if(showAnimation) {
+      return Material(color: Colors.transparent,
+        child: InkWell(onTap: () => onTap(this), child:
         Column(children: [
           selected ? buildSelectedIndicator(context) : Container(),
           buildTab(context),
         ]),
-      ),
-    );
+        ),
+      );
+    }
+    else {
+      return Material(color: Colors.transparent,
+        child: GestureDetector(onTap: () => onTap(this), child:
+        Column(children: [
+          selected ? buildSelectedIndicator(context) : Container(),
+          buildTab(context),
+        ]),
+        ),
+      );
+    }
+
   }
 
   // Tab
