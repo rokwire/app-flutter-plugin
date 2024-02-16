@@ -403,9 +403,36 @@ class GroupStats {
       ) : null;
   }
 
-  int get activeMembersCount {
-    return (membersCount ?? 0) + (adminsCount ?? 0);
-  }
+  Map<String, dynamic> toJson() => {
+    'total_count' : totalCount,
+    'member_count': membersCount,
+    'admins_count': adminsCount,
+    'pending_count': pendingCount,
+    'rejected_count': rejectedCount,
+    'attendance_count': attendedCount,
+  };
+
+  @override
+  bool operator ==(dynamic other) =>
+    (other is GroupStats) &&
+    (other.totalCount == totalCount) &&
+    (other.membersCount == membersCount) &&
+    (other.adminsCount == adminsCount) &&
+    (other.pendingCount == pendingCount) &&
+    (other.rejectedCount == rejectedCount) &&
+    (other.attendedCount == attendedCount);
+
+  @override
+  int get hashCode =>
+    (totalCount?.hashCode ?? 0) ^
+    (membersCount?.hashCode ?? 0) ^
+    (adminsCount?.hashCode ?? 0) ^
+    (pendingCount?.hashCode ?? 0) ^
+    (rejectedCount?.hashCode ?? 0) ^
+    (attendedCount?.hashCode ?? 0);
+
+  int get activeMembersCount =>
+    (membersCount ?? 0) + (adminsCount ?? 0);
 }
 
 //////////////////////////////
