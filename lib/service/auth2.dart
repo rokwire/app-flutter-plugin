@@ -130,7 +130,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       refreshToken(ignoreUnauthorized: true).then((token) {
         if (token != null) {
           _refreshAccount();
-          NotificationService().notify(Auth2.notifyLoginSucceeded, null);
+          NotificationService().notify(notifyLoginSucceeded, null);
+          NotificationService().notify(notifyLoginChanged);
         }
       });
     } else {
