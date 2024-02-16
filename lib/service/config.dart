@@ -590,6 +590,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
   int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
+  int get oidcAuthenticationTimeout => JsonUtils.intValue(settings['oidcAuthenticationTimeout']) ?? 1000;
   String? get timezoneLocation      => JsonUtils.stringValue(settings['timezoneLocation']) ?? 'America/Chicago';
 
   // Getters: other

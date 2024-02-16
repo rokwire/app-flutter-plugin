@@ -919,7 +919,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (_oidcAuthenticationTimer != null) {
         _oidcAuthenticationTimer!.cancel();
       }
-      _oidcAuthenticationTimer = Timer(const Duration(milliseconds: 100), () {
+      _oidcAuthenticationTimer = Timer(Duration(milliseconds: Config().oidcAuthenticationTimeout), () {
         completeOidcAuthentication(null);
         _oidcAuthenticationTimer = null;
       });
