@@ -52,6 +52,7 @@ class Groups with Service implements NotificationsListener {
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
   static const String notifyGroupEventsUpdated        = "edu.illinois.rokwire.groups.events.updated";
+  static const String notifyGroupStatsUpdated         = "edu.illinois.rokwire.group.stats.updated";
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
   static const String notifyGroupUpdated              = "edu.illinois.rokwire.group.updated";
   static const String notifyGroupDeleted              = "edu.illinois.rokwire.group.deleted";
@@ -73,15 +74,18 @@ class Groups with Service implements NotificationsListener {
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
 
-  List<Map<String, dynamic>>? _groupDetailsCache;
-  List<Map<String, dynamic>>? get groupDetailsCache => _groupDetailsCache;
+  List<Map<String, dynamic>>? _launchGroupDetailsCache;
+  List<Map<String, dynamic>>? get launchGroupDetailsCache => _launchGroupDetailsCache;
 
   Directory? _appDocDir;
 
   List<Group>? _userGroups;
   Set<String>? _userGroupNames;
-
+  
   Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
+  
+  LinkedHashMap<String, GroupStats> _cachedGroupStats = LinkedHashMap<String, GroupStats>(); 
+  static const int _cachedGroupStatsMaxSize = 256;
 
   Set<Completer<bool?>>? _loginCompleters;
   final List<Completer<void>> _userGroupUpdateCompleters = [];
@@ -113,7 +117,7 @@ class Groups with Service implements NotificationsListener {
       FirebaseMessaging.notifyGroupsNotification,
       Connectivity.notifyStatusChanged
     ]);
-    _groupDetailsCache = [];
+    _launchGroupDetailsCache = [];
     super.createService();
   }
 
@@ -147,7 +151,7 @@ class Groups with Service implements NotificationsListener {
 
   @override
   void initServiceUI() {
-    processCachedGroupDetails();
+    processCachedLaunchGroupDetails();
   }
 
   @override
@@ -564,8 +568,7 @@ class Groups with Service implements NotificationsListener {
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {
-          Map<String, dynamic>? statsJson = JsonUtils.decodeMap(responseBody);
-          return GroupStats.fromJson(statsJson);
+          return _cacheGroupStats(GroupStats.fromJson(JsonUtils.decodeMap(responseBody)), groupId);
         } else {
           debugPrint('Failed to load group stats for group {$groupId}. Reason: $responseCode, $responseBody');
         }
@@ -575,6 +578,22 @@ class Groups with Service implements NotificationsListener {
     }
     return null;
   }
+  
+  GroupStats? _cacheGroupStats(GroupStats? groupStats, String? groupId) {
+    if ((groupId != null) && (groupStats != null)) {
+      GroupStats? cachedGroupStats = _cachedGroupStats[groupId];
+      if (cachedGroupStats != groupStats) {
+        _cachedGroupStats[groupId] = groupStats;
+        while (_cachedGroupStats.length > _cachedGroupStatsMaxSize) {
+          _cachedGroupStats.remove(_cachedGroupStats.keys.first);
+        }
+        NotificationService().notify(notifyGroupStatsUpdated, groupId);
+      }
+    }
+    return groupStats;
+  }
+
+  GroupStats? cachedGroupStat(String? groupId) => _cachedGroupStats[groupId];
 
   // Members APIs
 
@@ -651,8 +670,7 @@ class Groups with Service implements NotificationsListener {
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupMembershipRequested, group);
-          NotificationService().notify(notifyGroupUpdated, group.id);
+          _notifyGroupUpdateWithStats(notifyGroupMembershipRequested, group);
           return true;
         }
       } catch (e) {
@@ -669,8 +687,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Response? response = await Network().delete(url, auth: Auth2(),);
         if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupMembershipCanceled, group);
-          NotificationService().notify(notifyGroupUpdated, group.id);
+          _notifyGroupUpdateWithStats(notifyGroupMembershipCanceled, group);
           return true;
         }
       } catch (e) {
@@ -687,8 +704,7 @@ class Groups with Service implements NotificationsListener {
       Response? response = await Network().delete(url, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       if (responseCode == 200) {
-        NotificationService().notify(notifyGroupMembershipQuit, group);
-        NotificationService().notify(notifyGroupUpdated, group.id);
+        _notifyGroupUpdateWithStats(notifyGroupMembershipQuit, group);
         _updateUserGroupsFromNetSync();
         return true;
       } else {
@@ -708,8 +724,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
-          NotificationService().notify(notifyGroupUpdated, group?.id);
+          _notifyGroupUpdateWithStats(decision ? notifyGroupMembershipApproved : notifyGroupMembershipRejected, group);
           _updateUserGroupsFromNetSync();
           return true;
         }
@@ -729,13 +744,14 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Response? response = await Network().put(url, auth: Auth2(), body: body);
         if((response?.statusCode ?? -1) == 200){
+          String? notification;
           if (status == GroupMemberStatus.admin) {
-            NotificationService().notify(notifyGroupMembershipSwitchToAdmin, group);
+            notification = notifyGroupMembershipSwitchToAdmin;
           }
           else if (status == GroupMemberStatus.member) {
-            NotificationService().notify(notifyGroupMembershipSwitchToMember, group);
+            notification = notifyGroupMembershipSwitchToMember;
           }
-          NotificationService().notify(notifyGroupUpdated, group!.id);
+          _notifyGroupUpdateWithStats(notification, group);
           _updateUserGroupsFromNetSync();
           return true;
         }
@@ -753,8 +769,7 @@ class Groups with Service implements NotificationsListener {
         await _ensureLogin();
         Response? response = await Network().delete(url, auth: Auth2(),);
         if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupMembershipRemoved, group);
-          NotificationService().notify(notifyGroupUpdated, group?.id);
+          _notifyGroupUpdateWithStats(notifyGroupMembershipRemoved, group);
           _updateUserGroupsFromNetSync();
           return true;
         }
@@ -824,6 +839,15 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false;
+  }
+
+  void _notifyGroupUpdateWithStats(String? name, Group? group) {
+    loadGroupStats(group?.id).then((_) {
+      if (name != null) {
+        NotificationService().notify(name, group);
+      }
+      NotificationService().notify(notifyGroupUpdated, group?.id);
+    });
   }
 
 // Events
@@ -1379,42 +1403,42 @@ class Groups with Service implements NotificationsListener {
           (eventUri.authority == uri.authority) &&
           (eventUri.path == uri.path))
       {
-        try { handleGroupDetail(uri.queryParameters.cast<String, dynamic>()); }
+        try { handleLaunchGroupDetail(uri.queryParameters.cast<String, dynamic>()); }
         catch (e) { debugPrint(e.toString()); }
       }
     }
   }
 
   @protected
-  void handleGroupDetail(Map<String, dynamic>? params) {
+  void handleLaunchGroupDetail(Map<String, dynamic>? params) {
     if ((params != null) && params.isNotEmpty) {
-      if (_groupDetailsCache != null) {
-        cacheGroupDetail(params);
+      if (_launchGroupDetailsCache != null) {
+        cacheLaunchGroupDetail(params);
       }
       else {
-        processGroupDetail(params);
+        processLaunchGroupDetail(params);
       }
     }
   }
 
   @protected
-  void processGroupDetail(Map<String, dynamic> params) {
+  void processLaunchGroupDetail(Map<String, dynamic> params) {
     NotificationService().notify(notifyGroupDetail, params);
   }
 
   @protected
-  void cacheGroupDetail(Map<String, dynamic> params) {
-    _groupDetailsCache?.add(params);
+  void cacheLaunchGroupDetail(Map<String, dynamic> params) {
+    _launchGroupDetailsCache?.add(params);
   }
 
   @protected
-  void processCachedGroupDetails() {
-    if (_groupDetailsCache != null) {
-      List<Map<String, dynamic>> groupDetailsCache = _groupDetailsCache!;
-      _groupDetailsCache = null;
+  void processCachedLaunchGroupDetails() {
+    if (_launchGroupDetailsCache != null) {
+      List<Map<String, dynamic>> groupDetailsCache = _launchGroupDetailsCache!;
+      _launchGroupDetailsCache = null;
 
       for (Map<String, dynamic> groupDetail in groupDetailsCache) {
-        processGroupDetail(groupDetail);
+        processLaunchGroupDetail(groupDetail);
       }
     }
   }
