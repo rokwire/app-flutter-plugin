@@ -84,8 +84,7 @@ class Groups with Service implements NotificationsListener {
   
   Map<String, List<Member>?>? _attendedMembers; // Map that caches attended members for specific group - the key is group's id
   
-  LinkedHashMap<String, GroupStats> _cachedGroupStats = LinkedHashMap<String, GroupStats>(); 
-  static const int _cachedGroupStatsMaxSize = 256;
+  Map<String, GroupStats> _cachedGroupStats = <String, GroupStats>{};
 
   Set<Completer<bool?>>? _loginCompleters;
   final List<Completer<void>> _userGroupUpdateCompleters = [];
@@ -584,9 +583,6 @@ class Groups with Service implements NotificationsListener {
       GroupStats? cachedGroupStats = _cachedGroupStats[groupId];
       if (cachedGroupStats != groupStats) {
         _cachedGroupStats[groupId] = groupStats;
-        while (_cachedGroupStats.length > _cachedGroupStatsMaxSize) {
-          _cachedGroupStats.remove(_cachedGroupStats.keys.first);
-        }
         NotificationService().notify(notifyGroupStatsUpdated, groupId);
       }
     }
