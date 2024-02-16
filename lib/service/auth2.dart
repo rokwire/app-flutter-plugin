@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -264,7 +263,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     String? accessToken = token?.accessToken;
     if ((accessToken != null) && accessToken.isNotEmpty) {
       String? tokenType = token?.tokenType ?? 'Bearer';
-      return { HttpHeaders.authorizationHeader : "$tokenType $accessToken" };
+      return { 'Authorization' : "$tokenType $accessToken" };
     }
     return null;
   }
@@ -820,7 +819,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (result) {
         return null;
       }
-      if (response?.statusCode != HttpStatus.ok) {
+      if (response?.statusCode != 200) {
         return '${response?.statusCode} - ${response?.body}';
       }
       return 'invalid token or account response';
@@ -905,7 +904,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
-      if (response?.statusCode == HttpStatus.ok) {
+      if (response?.statusCode == 200) {
         return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
       } else {
         return _OidcLogin(error: '${response?.statusCode} - ${response?.body}');
@@ -1903,7 +1902,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     try {
       if ((urlStr != null)) {
         if (kIsWeb) {
-          FlutterWebAuth2.authenticate(url: urlStr, callbackUrlScheme: Uri.tryParse(urlStr)?.host ?? '').then((String url) {
+          FlutterWebAuth2.authenticate(url: urlStr,
+              callbackUrlScheme: DeepLink().appScheme ?? ''
+          ).then((String url) {
             onDeepLinkUri(Uri.tryParse(url));
           });
         } else if (await canLaunchUrlString(urlStr)) {
@@ -2001,7 +2002,7 @@ class Auth2Csrf with NetworkAuthProvider {
 
     if (StringUtils.isNotEmpty(token?.accessToken)) {
       String tokenType = token!.tokenType ?? 'Bearer';
-      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+      headers['Authorization'] = "$tokenType ${token!.accessToken}";
     }
     return headers;
   }
