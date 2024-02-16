@@ -593,7 +593,7 @@ class Groups with Service implements NotificationsListener {
     return groupStats;
   }
 
-  GroupStats? cachedGroupStat(String? groupId) => _cachedGroupStats[groupId];
+  GroupStats? cachedGroupStats(String? groupId) => _cachedGroupStats[groupId];
 
   // Members APIs
 
