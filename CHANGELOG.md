@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next build on `develop` should refer to version ... -->
 
+## [1.6.3] - 2024-02-19
+### Added
+- Added group stats caching [#3829](https://github.com/rokwire/illinois-app/issues/3829).
+
+## [1.6.2] - 2024-02-15
+### Fixed
+- Fixed tappable area of SliverToutHeaderBar back button [#3827](https://github.com/rokwire/illinois-app/issues/3827).
+
 ## [1.6.1] - 2024-02-14
 ### Fixed
 - Fix content service storing files [#429](https://github.com/rokwire/app-flutter-plugin/issues/429).

@@ -248,8 +248,8 @@ class SliverToutHeaderBar extends StatelessWidget {
   @protected
   Widget? buildLeadingWidget(BuildContext context) => (leadingIconKey != null) ?
     Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
-      Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
-        GestureDetector(onTap: () => onTapLeading(context), child:
+      GestureDetector(onTap: () => onTapLeading(context), child:
+        Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
               Styles().images.getImage(leadingIconKey, excludeFromSemantics: true)
