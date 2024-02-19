@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next build on `develop` should refer to version ... -->
+
+## [1.6.3] - 2024-02-19
 ### Added
 - Added group stats caching [#3829](https://github.com/rokwire/illinois-app/issues/3829).
 
