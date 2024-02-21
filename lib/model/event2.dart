@@ -142,7 +142,7 @@ class Event2 with Explore, Favorite {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2) &&
     (id == other.id) &&
     (name == other.name) &&
@@ -317,7 +317,7 @@ class Event2OnlineDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2OnlineDetails) &&
     (url == other.url) &&
     (meetingId == other.meetingId) &&
@@ -376,7 +376,7 @@ class Event2RegistrationDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2RegistrationDetails) &&
     (type == other.type) &&
     (label == other.label) &&
@@ -463,7 +463,7 @@ class Event2AttendanceDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled) &&
@@ -507,7 +507,7 @@ class Event2SurveyDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2SurveyDetails) &&
     (hoursAfterEvent == other.hoursAfterEvent);
 
@@ -589,7 +589,7 @@ class Event2Grouping {
   }
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2Grouping) &&
     (type == other.type) &&
     (displayAsIndividual == other.displayAsIndividual) &&
@@ -1308,7 +1308,7 @@ class Events2ListResult {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Events2ListResult) &&
     (const DeepCollectionEquality().equals(events, other.events)) &&
     (totalCount == other.totalCount);

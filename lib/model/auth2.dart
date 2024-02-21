@@ -1895,7 +1895,7 @@ class UserRole {
   toJson() => _value;
 
   @override
-  bool operator==(dynamic other) {
+  bool operator==(Object other) {
     if (other is UserRole) {
       return other._value == _value;
     }

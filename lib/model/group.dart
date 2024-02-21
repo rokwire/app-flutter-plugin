@@ -185,7 +185,7 @@ class Group {
   }
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Group) &&
       (other.id == id) &&
       (const DeepCollectionEquality().equals(other.attributes, attributes)) &&
@@ -413,7 +413,7 @@ class GroupStats {
   };
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is GroupStats) &&
     (other.totalCount == totalCount) &&
     (other.membersCount == membersCount) &&
@@ -556,7 +556,7 @@ class Member {
 
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Member) &&
       (other.id == id) &&
       (other.userId == userId) &&
