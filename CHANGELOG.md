@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml - 1.7.0 -->
+### Changed
+- Upgrade to Flutter 3.19.0 [#435](https://github.com/rokwire/app-flutter-plugin/issues/435).
 
 ## [1.6.3] - 2024-02-19
 ### Added
