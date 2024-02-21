@@ -32,7 +32,7 @@ class ContentAttributes {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is ContentAttributes) &&
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
     (const DeepCollectionEquality().equals(_requirements, other._requirements));
@@ -269,7 +269,7 @@ class ContentAttribute {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is ContentAttribute) &&
     (id == other.id) &&
     (title == other.title) &&
@@ -653,7 +653,7 @@ class ContentAttributeValue {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is ContentAttributeValue) &&
     (_label == other._label) &&
     (_value == other._value) &&
@@ -817,7 +817,7 @@ class ContentAttributeRequirements {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is ContentAttributeRequirements) &&
     (minSelectedCount == other.minSelectedCount) &&
     (maxSelectedCount == other.maxSelectedCount) &&
