@@ -27,6 +27,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
   static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
   static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
+  static const String notifyRefreshFailed        = "edu.illinois.rokwire.auth2.refresh.failed";
   static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
   static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
@@ -35,6 +36,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
   static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
+
 
   //TODO: Remove if not needed
   static const String notifyGetPasskeySuccess    = "edu.illinois.rokwire.auth2.passkey.get.succeeded";
@@ -902,7 +904,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         postData.addAll(additionalParams);
         postData['redirect_uri'] = oidcRedirectUrl;
       } else {
-        return null;
+        return _OidcLogin(error: 'config params are null');
       }
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
@@ -911,7 +913,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return _OidcLogin(error: '${response?.statusCode} - ${response?.body}');
       }
     }
-    return null;
+    return _OidcLogin(error: 'auth url is null');;
   }
 
   @protected
@@ -921,7 +923,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _oidcAuthenticationTimer!.cancel();
       }
       _oidcAuthenticationTimer = Timer(Duration(milliseconds: Config().oidcAuthenticationTimeout), () {
-        completeOidcAuthentication(null);
+        completeOidcAuthentication(Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.failed, error: 'oidc login timeout'));
         _oidcAuthenticationTimer = null;
       });
     }
@@ -1583,6 +1585,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           }
 
           _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token?.refreshToken}");
+          NotificationService().notify(notifyRefreshFailed, '${response?.statusCode} - ${response?.body}');
           int refreshTokenFailCount = 1;
           if (futureKey.isNotEmpty) {
             refreshTokenFailCount += _refreshTokenFailCounts[futureKey] ?? 0;

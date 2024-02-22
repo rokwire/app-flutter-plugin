@@ -41,6 +41,7 @@ class Network  {
   static const String notifyHttpRequestUrl  = "requestUrl";
   static const String notifyHttpRequestMethod  = "requestMethod";
   static const String notifyHttpResponseCode  = "responseCode";
+  static const String notifyHttpResponseError  = "edu.illinois.rokwire.network.http_response.error";
 
   // Singleton Factory
 
@@ -104,6 +105,7 @@ class Network  {
     } catch (e) { 
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
     return null;
   }
@@ -136,6 +138,7 @@ class Network  {
       } catch (e) { 
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -155,6 +158,7 @@ class Network  {
     } catch (e) { 
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -179,6 +183,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -198,6 +203,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -222,6 +228,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -241,6 +248,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -261,6 +269,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -280,6 +289,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -300,6 +310,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -318,6 +329,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -338,6 +350,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -350,6 +363,7 @@ class Network  {
     catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
     return null;
   }
@@ -363,6 +377,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -386,6 +401,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
@@ -422,6 +438,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -436,6 +453,7 @@ class Network  {
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
+        NotificationService().notify(notifyHttpResponseError, e);
       }
     }
     return null;
@@ -455,6 +473,7 @@ class Network  {
     } catch (e) {
       Log.d(e.toString());
       FirebaseCrashlytics().recordError(e, null);
+      NotificationService().notify(notifyHttpResponseError, e);
     }
 
     if (sendAnalytics) {
