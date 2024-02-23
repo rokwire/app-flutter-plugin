@@ -26,6 +26,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginFailed          = "edu.illinois.rokwire.auth2.login.failed";
   static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
   static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
+  static const String notifyLoginError           = "edu.illinois.rokwire.auth2.login.error";
   static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
   static const String notifyRefreshFailed        = "edu.illinois.rokwire.auth2.refresh.failed";
   static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
@@ -51,6 +52,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   _OidcLogin? _oidcLogin;
   Auth2AccountScope? _oidcScope;
   bool? _oidcLink;
+  bool _oidcLoginInProgress = false;
   List<Completer<Auth2OidcAuthenticateResult?>>? _oidcAuthenticationCompleters;
   bool? _processingOidcAuthentication;
   Timer? _oidcAuthenticationTimer;
@@ -754,6 +756,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
       }
 
+      _oidcLoginInProgress = true;
       Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
       _oidcAuthenticationCompleters!.add(completer);
       return completer.future;
@@ -764,10 +767,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
+  Future<Auth2OidcAuthenticateResult?> handleOidcAuthentication(Uri uri) async {
     
     RokwirePlugin.dismissSafariVC();
-    
+
+    if (!_oidcLoginInProgress) {
+      NotificationService().notify(notifyLoginError, 'no login in progress');
+      return null;
+    }
+    _oidcLoginInProgress = false;
+
     cancelOidcAuthenticationTimer();
 
     _processingOidcAuthentication = true;
@@ -923,7 +932,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _oidcAuthenticationTimer!.cancel();
       }
       _oidcAuthenticationTimer = Timer(Duration(milliseconds: Config().oidcAuthenticationTimeout), () {
-        completeOidcAuthentication(Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.failed, error: 'oidc login timeout'));
+        NotificationService().notify(notifyLoginError, 'oidc login timeout');
+        completeOidcAuthentication(null);
         _oidcAuthenticationTimer = null;
       });
     }
@@ -942,8 +952,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     
     _notifyLogin(oidcAuthType, result?.status == Auth2OidcAuthenticateResultStatus.succeeded);
 
-    _oidcLogin = null;
-    _oidcScope = null;
+    // _oidcLogin = null;
+    // _oidcScope = null;
     _oidcLink = null;
 
     if (_oidcAuthenticationCompleters != null) {
