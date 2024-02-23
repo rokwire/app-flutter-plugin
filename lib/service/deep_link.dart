@@ -20,8 +20,9 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:uni_links/uni_links.dart';
 
 class DeepLink with Service {
-  
+
   static const String notifyUri  = "edu.illinois.rokwire.deeplink.uri";
+  static const String notifyUriError  = "edu.illinois.rokwire.deeplink.uri.error";
 
   // Singleton Factory
 
@@ -60,7 +61,13 @@ class DeepLink with Service {
         debugPrint('Received URI: $uri');
         if (uri != null) {
           NotificationService().notify(notifyUri, uri);
+        } else {
+          NotificationService().notify(notifyUriError, 'deeplink null');
         }
+      }, onError: (e) {
+        NotificationService().notify(notifyUriError, e);
+      }, onDone: () {
+        NotificationService().notify(notifyUriError, 'deeplink handler done');
       });
     }
 
