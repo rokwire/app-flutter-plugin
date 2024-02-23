@@ -98,6 +98,9 @@ class Onboarding with Service implements NotificationsListener {
   void next(BuildContext context, OnboardingPanel panel, {bool replace = false}) {
     nextPanel(panel).then((dynamic nextPanel) {
       if (nextPanel is Widget) {
+        if (!context.mounted) {
+          return;
+        }
         if (replace) {
           Navigator.pushReplacement(context, CupertinoPageRoute(
             builder: (context) => nextPanel,
