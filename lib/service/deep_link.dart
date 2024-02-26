@@ -58,7 +58,7 @@ class DeepLink with Service {
 
     // 2. Updated uri
     if (!kIsWeb) {
-      _appLinks.allUriLinkStream.listen((Uri? uri) {
+      _appLinks.uriLinkStream.listen((Uri? uri) {
         debugPrint('Received URI: $uri');
         if (uri != null) {
           NotificationService().notify(notifyUri, uri);
