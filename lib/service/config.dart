@@ -575,9 +575,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (isReleaseWeb) {
       return '${html.window.location.origin}/$webServiceId';
     } else if (isAdmin) {
-      return '$coreUrl/admin';
+      return coreUrl != null ? '$coreUrl/admin': null;
     }
-    return '$coreUrl/services';
+    return coreUrl != null ? '$coreUrl/services' : null;
   }
 
   // Getters: otherUniversityServices
@@ -590,7 +590,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
   int? get analyticsDeliveryTimeout => JsonUtils.intValue(settings['analyticsDeliveryTimeout']);
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
-  int get oidcAuthenticationTimeout => JsonUtils.intValue(settings['oidcAuthenticationTimeout']) ?? 3000;
+  int get oidcAuthenticationTimeout => JsonUtils.intValue(settings['oidcAuthenticationTimeout']) ?? 1000;
   String? get timezoneLocation      => JsonUtils.stringValue(settings['timezoneLocation']) ?? 'America/Chicago';
 
   // Getters: other

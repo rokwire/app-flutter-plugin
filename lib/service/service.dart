@@ -64,6 +64,12 @@ class Services {
 
   List<Service>? _services;
 
+  bool _initialized = false;
+  bool get initialized => _initialized;
+
+  ServiceError? _initializeError;
+  ServiceError? get initializeError => _initializeError;
+
   void create(List<Service> services) {
     if (_services == null) {
       _services = services;
@@ -84,7 +90,11 @@ class Services {
 
   Future<ServiceError?> init() async {
     try {
-      return (_services != null) ? await _executeInitList(_buildInitList(_services!)) : null;
+      ServiceError? error = _initializeError = (_services != null) ? await _executeInitList(_buildInitList(_services!)) : null;
+      if (error == null) {
+        _initialized = true;
+      }
+      return error;
     }
     on ServiceError catch (error) {
       return error;
