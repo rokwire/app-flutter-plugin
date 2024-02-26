@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:uni_links/uni_links.dart';
 
 class DeepLink with Service {
 
@@ -45,9 +45,10 @@ class DeepLink with Service {
 
   @override
   Future<void> initService() async {
+    final _appLinks = AppLinks();
 
     // 1. Initial Uri
-    getInitialUri().then((uri) {
+    _appLinks.getInitialAppLink().then((uri) {
       if (uri != null) {
         _initialUri = uri;
         debugPrint('Launch URI: $uri');
@@ -57,7 +58,7 @@ class DeepLink with Service {
 
     // 2. Updated uri
     if (!kIsWeb) {
-      uriLinkStream.listen((Uri? uri) {
+      _appLinks.allUriLinkStream.listen((Uri? uri) {
         debugPrint('Received URI: $uri');
         if (uri != null) {
           NotificationService().notify(notifyUri, uri);
