@@ -28,7 +28,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
   static const String notifyLoginError           = "edu.illinois.rokwire.auth2.login.error";
   static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
+  static const String notifyRefreshStarted       = "edu.illinois.rokwire.auth2.refresh.started";
   static const String notifyRefreshError         = "edu.illinois.rokwire.auth2.refresh.error";
+  static const String notifyRefreshSucceeded     = "edu.illinois.rokwire.auth2.refresh.succeeded";
+  static const String notifyRefreshFinished      = "edu.illinois.rokwire.auth2.refresh.finished";
   static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
   static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
@@ -1553,6 +1556,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<Auth2Token?> refreshToken({Auth2Token? token, bool ignoreUnauthorized = false}) async {
     //TODO: validate that using CSRF token as futures and fail counts key works on web
+    NotificationService().notify(notifyRefreshStarted);
     String futureKey = token?.refreshToken ?? WebUtils.getCookie(Auth2Csrf.csrfTokenName);
     if (Config().authBaseUrl != null) {
       try {
@@ -1564,7 +1568,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
           _log("Auth2: did await refresh token: ${responseToken?.isValid}\nSource Token: ${token?.refreshToken}");
-          return ((responseToken != null) && responseToken.isValid) ? responseToken : null;
+          NotificationService().notify(notifyRefreshFinished);
+          if ((responseToken != null) && responseToken.isValid) {
+            NotificationService().notify(notifyRefreshSucceeded);
+            return responseToken;
+          }
+          NotificationService().notify(notifyRefreshError, responseToken?.isValid);
+          return null;
         }
         else {
           _log("Auth2: will refresh token:\nSource Token: ${token?.refreshToken}");
@@ -1585,10 +1595,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
               if (token == _token) {
                 await applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
+                NotificationService().notify(notifyRefreshSucceeded);
+                NotificationService().notify(notifyRefreshFinished);
                 return responseToken;
               }
               else if (token == _anonymousToken) {
                 await Storage().setAuth2AnonymousToken(_anonymousToken = responseToken);
+                NotificationService().notify(notifyRefreshSucceeded);
+                NotificationService().notify(notifyRefreshFinished);
                 return responseToken;
               }
             }
@@ -1619,6 +1633,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _refreshTokenFutures.remove(futureKey); // make sure to clear this in case something went wrong.
       }
     }
+    NotificationService().notify(notifyRefreshFinished);
     return null;
   }
 
