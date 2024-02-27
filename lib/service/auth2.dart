@@ -28,7 +28,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
   static const String notifyLoginError           = "edu.illinois.rokwire.auth2.login.error";
   static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
-  static const String notifyRefreshFailed        = "edu.illinois.rokwire.auth2.refresh.failed";
+  static const String notifyRefreshError         = "edu.illinois.rokwire.auth2.refresh.error";
   static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
   static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
@@ -1595,7 +1595,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           }
 
           _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token?.refreshToken}");
-          NotificationService().notify(notifyRefreshFailed, '${response?.statusCode} - ${response?.body}');
+          NotificationService().notify(notifyRefreshError, '${response?.statusCode} - ${response?.body}');
           int refreshTokenFailCount = 1;
           if (futureKey.isNotEmpty) {
             refreshTokenFailCount += _refreshTokenFailCounts[futureKey] ?? 0;
@@ -1615,6 +1615,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
       catch(e) {
         debugPrint(e.toString());
+        NotificationService().notify(notifyRefreshError, e);
         _refreshTokenFutures.remove(futureKey); // make sure to clear this in case something went wrong.
       }
     }
