@@ -122,8 +122,11 @@ class Storage with Service {
     return await _secureStorage?.read(key: name) ?? defaultValue;
   }
 
-  Future<void> setSecureStringWithName(String name, String? value) async {
+  Future<void> setSecureStringWithName(String name, String? value, {bool removeFirst = false}) async {
     if (value != null) {
+      if (removeFirst) {
+        await _secureStorage?.delete(key: name);
+      }
       await _secureStorage?.write(key: name, value: value);
     } else {
       await _secureStorage?.delete(key: name);

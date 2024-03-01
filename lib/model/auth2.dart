@@ -4,7 +4,6 @@ import 'dart:core';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -17,17 +16,8 @@ class Auth2Token {
   final String? accessToken;
   final String? refreshToken;
   final String? tokenType;
-  late final Map<String, dynamic>? _parsedAccessToken;
-  
-  Auth2Token({this.accessToken, this.refreshToken, this.idToken, this.tokenType}) {
-    if (accessToken != null) {
-      try {
-        _parsedAccessToken = JwtDecoder.decode(accessToken!);
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-  }
+
+  Auth2Token({this.accessToken, this.refreshToken, this.idToken, this.tokenType});
 
   static Auth2Token? fromOther(Auth2Token? value, {String? idToken, String? accessToken, String? refreshToken, String? tokenType }) {
     return (value != null) ? Auth2Token(
@@ -54,19 +44,6 @@ class Auth2Token {
       'refresh_token': refreshToken,
       'token_type': tokenType
     };
-  }
-
-  bool? get accessIsExpired {
-    if (_parsedAccessToken == null) {
-      return null;
-    }
-    DateTime expirationDate = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true)
-        .add(Duration(seconds: _parsedAccessToken?['exp']?.toInt()));
-    return DateTime.now().isAfter(expirationDate);
-  }
-
-  dynamic getClaim(String claim) {
-    return _parsedAccessToken?[claim];
   }
 
   @override
@@ -103,9 +80,9 @@ class Auth2Account {
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
   final Map<String, dynamic> secrets;
-  final List<Auth2StringEntry>? permissions;
-  final List<Auth2StringEntry>? roles;
-  final List<Auth2StringEntry>? groups;
+  final List<Auth2Permission>? permissions;
+  final List<Auth2Role>? roles;
+  final List<Auth2Group>? groups;
   final List<Auth2Identifier>? identifiers;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
@@ -115,7 +92,7 @@ class Auth2Account {
 
   factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username,
     Auth2UserProfile? profile, Auth2UserPrefs? prefs, Map<String, dynamic>? secrets,
-    List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups,
+    List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups,
     List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
@@ -137,9 +114,9 @@ class Auth2Account {
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
       secrets: JsonUtils.mapValue(json['secrets']) ?? {}, //TBD Auth2
-      permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
-      roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
-      groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
+      permissions: Auth2Permission.listFromJson(JsonUtils.listValue(json['permissions'])),
+      roles: Auth2Role.listFromJson(JsonUtils.listValue(json['roles'])),
+      groups: Auth2Group.listFromJson(JsonUtils.listValue(json['groups'])),
       identifiers: Auth2Identifier.listFromJson(JsonUtils.listValue(json['identifiers'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
@@ -274,8 +251,33 @@ class Auth2Account {
     return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
   }
 
-  bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
-  bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
+  bool hasPermission(String permission) {
+    if (Auth2StringEntry.findInList(permissions, name: permission) != null) {
+      return true;
+    }
+    for (Auth2Role role in roles ?? []) {
+      if (role.hasPermission(permission)) {
+        return true;
+      }
+    }
+    for (Auth2Group group in groups ?? []) {
+      if (group.hasPermission(permission)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  bool hasRole(String role) {
+    if (Auth2StringEntry.findInList(roles, name: role) != null) {
+      return true;
+    }
+    for (Auth2Group group in groups ?? []) {
+      if (group.hasRole(role)) {
+        return true;
+      }
+    }
+    return false;
+  }
   bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 
@@ -588,6 +590,176 @@ class Auth2UserProfile {
       NotificationService().notify(notifyChanged, this);
     }
   }
+}
+
+////////////////////////////////
+// Auth2Permission
+
+class Auth2Permission extends Auth2StringEntry {
+  Auth2Permission({super.id, super.name});
+
+  static Auth2Permission? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    Auth2StringEntry? entry = Auth2StringEntry.fromJson(json);
+    if (entry == null) {
+      return null;
+    }
+    return Auth2Permission(id: entry.id, name: entry.name);
+  }
+
+  Map<String, dynamic> toJson() => super.toJson();
+
+  @override
+  bool operator ==(other) =>
+      (other is Auth2Permission) &&
+          (other.id == id) &&
+          (other.name == name);
+
+  @override
+  int get hashCode => super.hashCode;
+
+  static List<Auth2Permission>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Permission>? result;
+    if (jsonList != null) {
+      result = <Auth2Permission>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Auth2Permission.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+}
+
+////////////////////////////////
+// Auth2Role
+
+class Auth2Role extends Auth2StringEntry {
+  final List<Auth2Permission> permissions;
+
+  Auth2Role({super.id, super.name, this.permissions = const []});
+
+  static Auth2Role? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    Auth2StringEntry? entry = Auth2StringEntry.fromJson(json);
+    if (entry == null) {
+      return null;
+    }
+    return Auth2Role(
+      id: entry.id,
+      name: entry.name,
+      permissions: Auth2Permission.listFromJson(json['permissions']) ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id' : id,
+      'name': name,
+      'permissions': permissions,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Auth2Role) &&
+          (other.id == id) &&
+          (other.name == name) &&
+          const DeepCollectionEquality().equals(other.permissions, permissions);
+
+  @override
+  int get hashCode => super.hashCode ^
+  const DeepCollectionEquality().hash(permissions);
+
+  static List<Auth2Role>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Role>? result;
+    if (jsonList != null) {
+      result = <Auth2Role>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Auth2Role.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  bool hasPermission(String permission) => Auth2StringEntry.findInList(permissions, name: permission) != null;
+}
+
+////////////////////////////////
+// Auth2Group
+
+class Auth2Group extends Auth2StringEntry {
+  final List<Auth2Permission> permissions;
+  final List<Auth2Role> roles;
+
+  Auth2Group({super.id, super.name, this.permissions = const [],
+    this.roles = const []});
+
+  static Auth2Group? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    Auth2StringEntry? entry = Auth2StringEntry.fromJson(json);
+    if (entry == null) {
+      return null;
+    }
+    return Auth2Group(
+      id: entry.id,
+      name: entry.name,
+      permissions: Auth2Permission.listFromJson(json['permissions']) ?? [],
+      roles: Auth2Role.listFromJson(json['roles']) ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id' : id,
+      'name': name,
+      'permissions': permissions,
+      'roles': roles,
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2Group) &&
+      (other.id == id) &&
+      (other.name == name) &&
+      const DeepCollectionEquality().equals(other.permissions, permissions) &&
+      const DeepCollectionEquality().equals(other.roles, roles);
+
+  @override
+  int get hashCode => super.hashCode ^
+    const DeepCollectionEquality().hash(permissions) ^
+    const DeepCollectionEquality().hash(roles);
+
+  static List<Auth2Group>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Group>? result;
+    if (jsonList != null) {
+      result = <Auth2Group>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Auth2Group.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  bool hasPermission(String permission) {
+    if (Auth2StringEntry.findInList(permissions, name: permission) != null) {
+      return true;
+    }
+    for (Auth2Role role in roles) {
+      if (role.hasPermission(permission)) {
+        return true;
+      } 
+    }
+    return false;
+  }
+
+  bool hasRole(String role) => Auth2StringEntry.findInList(roles, name: role) != null;
 }
 
 ////////////////////////////////
@@ -1244,11 +1416,11 @@ class Auth2UserPrefs {
     bool modified = false;
 
     if (_privacyLevel != null) {
-        _privacyLevel = null;
-        if (notify == true) {
-          NotificationService().notify(notifyPrivacyLevelChanged);
-        }
-        modified = true;
+      _privacyLevel = null;
+      if (notify == true) {
+        NotificationService().notify(notifyPrivacyLevelChanged);
+      }
+      modified = true;
     }
 
     if (_roles != null) {
@@ -1430,7 +1602,7 @@ class Auth2UserPrefs {
       if (value && !isFavorite) {
         if (favoriteIdsForKey == null) {
           _favorites ??= <String, LinkedHashSet<String>>{};
-            // ignore: prefer_collection_literals
+          // ignore: prefer_collection_literals
           _favorites![favorite.favoriteKey] = favoriteIdsForKey = LinkedHashSet<String>();
         }
         favoriteIdsForKey.add(favorite.favoriteId!);
