@@ -18,8 +18,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
+import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,14 +29,14 @@ class Storage with Service {
 
   static const String notifySettingChanged  = 'edu.illinois.rokwire.setting.changed';
   
-  // static const String _ecryptionKeyId  = 'edu.illinois.rokwire.encryption.storage.key';
-  // static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
+  static const String _encryptionKeyId  = 'edu.illinois.rokwire.encryption.storage.key';
+  static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
 
-  // String? _encryptionKey;
-  // String? _encryptionIV;
+  String? _encryptionKey;
+  String? _encryptionIV;
 
   // Singletone Factory
 
@@ -62,8 +64,8 @@ class Storage with Service {
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
 
-    // _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
-    // _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
+    _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: _encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
+    _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: _encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     if (_sharedPreferences == null) {
       throw ServiceError(
         source: this,
@@ -80,28 +82,54 @@ class Storage with Service {
     //     description: 'Failed to initialize encryption keys.',
     //   );
     // }
-    else {
-      await super.initService();
-    }
+    migrateEncryptedToSecureStorage();
+    await super.initService();
   }
 
   // Encryption
 
-  // String  get encryptionKeyId => _ecryptionKeyId;
+  @protected
+  List<String> get secureKeys => [
+    auth2AnonymousTokenKey, auth2AnonymousPrefsKey, auth2AnonymousProfileKey,
+    auth2TokenKey, auth2AccountKey
+  ];
+
+  @protected
+  Future<void> migrateEncryptedToSecureStorage() async {
+    if (encryptedMigratedToSecureStorage == true || _encryptionKey == null ||
+        _encryptionIV == null) {
+      return;
+    }
+
+    try {
+      for (String key in secureKeys) {
+        String? value = getEncryptedStringWithName(key);
+        if (value != null) {
+          await setSecureStringWithName(key, value);
+          setEncryptedStringWithName(key, null);
+        }
+      }
+      encryptedMigratedToSecureStorage = true;
+    } catch (e) {
+      debugPrint('error migrating encrypted storage: $e');
+    }
+  }
+
+  // String  get encryptionKeyId => _encryptionKeyId;
   // String? get encryptionKey => _encryptionKey;
   //
   // String  get encryptionIVId => _encryptionIVId;
   // String? get encryptionIV => _encryptionIV;
 
-  // String? encrypt(String? value) {
-  //   return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
-  //     AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
-  // }
-  //
-  // String? decrypt(String? value) {
-  //   return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
-  //     AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
-  // }
+  String? _encrypt(String? value) {
+    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+      AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
+  }
+
+  String? _decrypt(String? value) {
+    return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
+      AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
+  }
 
   // Utilities
 
@@ -134,30 +162,32 @@ class Storage with Service {
     NotificationService().notify(notifySettingChanged, name);
   }
 
-  // String? getEncryptedStringWithName(String name, {String? defaultValue}) {
-  //   String? value = _sharedPreferences?.getString(name);
-  //   if (value != null) {
-  //     if ((_encryptionKey != null) && (_encryptionIV != null)) {
-  //       value = decrypt(value);
-  //     }
-  //     else {
-  //       value = null;
-  //     }
-  //   }
-  //   return value ?? defaultValue;
-  // }
-  //
-  // void setEncryptedStringWithName(String name, String? value) {
-  //   if (value != null) {
-  //     if ((_encryptionKey != null) && (_encryptionIV != null)) {
-  //       value = encrypt(value);
-  //       _sharedPreferences?.setString(name, value!);
-  //     }
-  //   } else {
-  //     _sharedPreferences?.remove(name);
-  //   }
-  //   NotificationService().notify(notifySettingChanged, name);
-  // }
+  @protected
+  String? getEncryptedStringWithName(String name, {String? defaultValue}) {
+    String? value = _sharedPreferences?.getString(name);
+    if (value != null) {
+      if ((_encryptionKey != null) && (_encryptionIV != null)) {
+        value = _decrypt(value);
+      }
+      else {
+        value = null;
+      }
+    }
+    return value ?? defaultValue;
+  }
+
+  @protected
+  void setEncryptedStringWithName(String name, String? value) {
+    if (value != null) {
+      if ((_encryptionKey != null) && (_encryptionIV != null)) {
+        value = _encrypt(value);
+        _sharedPreferences?.setString(name, value!);
+      }
+    } else {
+      _sharedPreferences?.remove(name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
 
   List<String>? getStringListWithName(String name, {List<String>? defaultValue}) {
     return _sharedPreferences?.getStringList(name) ?? defaultValue;
@@ -244,6 +274,10 @@ class Storage with Service {
       }
     }
   }
+
+  String get encryptedMigratedToSecureStorageKey =>  'edu.illinois.rokwire.storage.encrypted.migrated';
+  bool? get encryptedMigratedToSecureStorage => getBoolWithName(encryptedMigratedToSecureStorageKey);
+  set encryptedMigratedToSecureStorage(bool? value) => setBoolWithName(encryptedMigratedToSecureStorageKey, value);
 
   // Config
 

@@ -18,7 +18,6 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
@@ -183,7 +182,7 @@ class StringUtils {
     if (isNumber) chars += '$number';
     if (isSpecial) chars += '$special';
     return List.generate(length, (index) {
-      final indexRandom = Random.secure().nextInt(chars.length);
+      final indexRandom = math.Random.secure().nextInt(chars.length);
       return chars [indexRandom];
     }).join('');
   }

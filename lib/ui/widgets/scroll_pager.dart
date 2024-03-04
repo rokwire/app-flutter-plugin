@@ -71,7 +71,7 @@ class ScrollPagerController {
   }
 
   void dispose() {
-    unregisterScrollController();
+    deregisterScrollController();
   }
 
   Future<void> reset() async {
@@ -84,7 +84,7 @@ class ScrollPagerController {
 
   void registerScrollController(ScrollController controller) {
     if (_scrollController != null && _scrollController != controller) {
-      unregisterScrollController();
+      deregisterScrollController();
     }
     controller.addListener(_scrollListener);
     _scrollController = controller;
@@ -116,7 +116,7 @@ class ScrollPagerController {
     }
   }
 
-  void unregisterScrollController() {
+  void deregisterScrollController() {
     _scrollController?.removeListener(_scrollListener);
     _scrollController = null;
   }
