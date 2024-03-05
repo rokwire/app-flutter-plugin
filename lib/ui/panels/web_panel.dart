@@ -60,7 +60,7 @@ class WebPanel extends StatefulWidget {
   @protected
   Widget buildInitializing(BuildContext context) {
     return Center(child:
-      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(AppColors.fillColorPrimary!),),
+      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(AppColors.fillColorPrimary)),
     );
   }
 

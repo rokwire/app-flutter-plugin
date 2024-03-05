@@ -1,4 +1,6 @@
 
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
@@ -20,6 +22,8 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch_detail";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
+
+  static const String sportEventCategory = 'Big 10 Athletics';
 
   List<Map<String, dynamic>>? _eventDetailsCache;
 
@@ -296,6 +300,37 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2PersonsResult) ? result : null;
   }
 
+  // Returns error message, List<Event2PersonIdentifier> if successful
+  Future<dynamic> loadEventPersonsEx({String? uin}) async {
+    if (Config().calendarUrl != null) {
+      String baseUrl = "${Config().calendarUrl}/users";
+      Map<String, String> urlParams = <String, String>{};
+      if (uin != null) {
+        urlParams['uin'] = uin;
+      }
+      String url = UrlUtils.addQueryParameters(baseUrl, urlParams);
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2PersonIdentifier.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
+  Future<List<Event2PersonIdentifier>?> loadEventPersons({String? uin}) async {
+    dynamic result = await loadEventPersonsEx(uin: uin);
+    return (result is List<Event2PersonIdentifier>) ? result : null;
+  }
+
+  // Returns error message, Event2PersonIdentifier if successful
+  Future<dynamic> loadEventPersonEx({String? uin}) async {
+    dynamic result = await loadEventPersonsEx(uin: uin);
+    return (result is List<Event2PersonIdentifier>) ? (result.isNotEmpty ? result.first : null) : result;
+  }
+
+  Future<Event2PersonIdentifier?> loadEventPerson({String? uin}) async {
+    dynamic result = await loadEventPersonEx(uin: uin);
+    return (result is Event2PersonIdentifier) ? result : null;
+  }
+
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
@@ -388,10 +423,12 @@ class Events2 with Service implements NotificationsListener {
 }
 
 class Events2Query {
-  static const double nearbyDistanceInMiles = 1.0;
+  static double get nearbyDistanceInMiles => Config().event2NearbyDistanceInMiles;
+  static int get startTimeOffsetInMsIfNullEndTime => Config().event2StartTimeOffsetIfNullEndTime * 1000; // in milliseconds
 
   final Iterable<String>? ids;
   final Event2Grouping? grouping;
+  final List<Event2Grouping>? groupings;
   final String? searchText;
   final Set<Event2TypeFilter>? types;
   final Position? location;
@@ -404,7 +441,7 @@ class Events2Query {
   final int? offset;
   final int? limit;
 
-  Events2Query({this.ids, this.grouping, this.searchText,
+  Events2Query({this.ids, this.grouping, this.groupings, this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
     this.attributes,
@@ -421,6 +458,10 @@ class Events2Query {
 
     if (grouping != null) {
       options['grouping'] = grouping?.toJson();
+    }
+
+    if (groupings != null) {
+      options['groupings'] = Event2Grouping.listToJson(groupings);
     }
 
     if (searchText != null) {
@@ -490,7 +531,20 @@ class Events2Query {
     }
 
     if (types.contains(Event2TypeFilter.superEvent)) {
-      options['grouping'] = Event2Grouping.superEvent(null).toJson();
+      options['groupings'] = Event2Grouping.listToJson(Event2Grouping.superEvents());
+    }
+
+    if (types.contains(Event2TypeFilter.admin)) {
+      options['person'] = Event2Person(role: Event2UserRole.admin).toJson();
+    }
+
+    if (types.contains(Event2TypeFilter.favorite)) {
+      LinkedHashSet<String>? favoriteIds = Auth2().account?.prefs?.getFavorites(Event2.favoriteKeyName);
+      if ((favoriteIds != null) && favoriteIds.isNotEmpty) {
+        List<String>? filterIds = JsonUtils.listStringsValue(options['ids']);
+        options['ids'] = ((filterIds != null) && filterIds.isNotEmpty) ?
+          favoriteIds.intersection(filterIds.toSet()) : favoriteIds.toList();
+      }
     }
 
     if (types.contains(Event2TypeFilter.nearby) && (location != null)) {
@@ -513,11 +567,13 @@ class Events2Query {
     
     if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.today) {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal, inclusive: true);
       
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.tomorrow) {
@@ -526,6 +582,7 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(tomorrowLocal, inclusive: true);
       
       options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisWeek) {
@@ -533,6 +590,7 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly((nowWeekdayLocal < 7) ? nowLocal.add(Duration(days: (7 - nowWeekdayLocal))) :  nowLocal, inclusive: true);
       
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisWeekend) {
@@ -541,6 +599,7 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly((nowWeekdayLocal < 7) ? nowLocal.add(Duration(days: (7 - nowWeekdayLocal))) :  nowLocal, inclusive: true);
 
       options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextWeek) {
@@ -549,6 +608,7 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (14 - nowWeekdayLocal))), inclusive: true);
       
       options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextWeekend) {
@@ -557,12 +617,14 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.dateOnly(nowLocal.add(Duration(days: (14 - nowWeekdayLocal))), inclusive: true);
       
       options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.thisMonth) {
       TZDateTime endTimeLocal = TZDateTimeUtils.endOfThisMonth(nowLocal);
 
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.nextMonth) {
@@ -570,11 +632,13 @@ class Events2Query {
       TZDateTime endTimeLocal = TZDateTimeUtils.endOfThisMonth(startTimeLocal);
 
       options['end_time_after'] = startTimeLocal.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
       DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowLocal)) ? customStartTimeUtc : nowLocal;
       options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
+      options['start_time_after_null_end_time'] = (startTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }

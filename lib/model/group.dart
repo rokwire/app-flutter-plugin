@@ -185,7 +185,7 @@ class Group {
   }
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Group) &&
       (other.id == id) &&
       (const DeepCollectionEquality().equals(other.attributes, attributes)) &&
@@ -320,6 +320,34 @@ class Group {
     }
     return json;
   }
+
+  static List<String>? listToListIds(List<Group>? values) {
+    List<String>? result;
+    if (values != null) {
+      result = <String>[];
+      for (Group value in values) {
+        String? groupsId = value.id;
+        if (groupsId != null) {
+          result.add(groupsId);
+        }
+      }
+    }
+    return result;
+  }
+
+  static Set<String>? listToSetIds(List<Group>? values) {
+    Set<String>? result;
+    if (values != null) {
+      result = <String>{};
+      for (Group value in values) {
+        String? groupsId = value.id;
+        if (groupsId != null) {
+          result.add(groupsId);
+        }
+      }
+    }
+    return result;
+  }
 }
 
 //////////////////////////////
@@ -375,9 +403,36 @@ class GroupStats {
       ) : null;
   }
 
-  int get activeMembersCount {
-    return (membersCount ?? 0) + (adminsCount ?? 0);
-  }
+  Map<String, dynamic> toJson() => {
+    'total_count' : totalCount,
+    'member_count': membersCount,
+    'admins_count': adminsCount,
+    'pending_count': pendingCount,
+    'rejected_count': rejectedCount,
+    'attendance_count': attendedCount,
+  };
+
+  @override
+  bool operator==(Object other) =>
+    (other is GroupStats) &&
+    (other.totalCount == totalCount) &&
+    (other.membersCount == membersCount) &&
+    (other.adminsCount == adminsCount) &&
+    (other.pendingCount == pendingCount) &&
+    (other.rejectedCount == rejectedCount) &&
+    (other.attendedCount == attendedCount);
+
+  @override
+  int get hashCode =>
+    (totalCount?.hashCode ?? 0) ^
+    (membersCount?.hashCode ?? 0) ^
+    (adminsCount?.hashCode ?? 0) ^
+    (pendingCount?.hashCode ?? 0) ^
+    (rejectedCount?.hashCode ?? 0) ^
+    (attendedCount?.hashCode ?? 0);
+
+  int get activeMembersCount =>
+    (membersCount ?? 0) + (adminsCount ?? 0);
 }
 
 //////////////////////////////
@@ -501,7 +556,7 @@ class Member {
 
 
   @override
-  bool operator ==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Member) &&
       (other.id == id) &&
       (other.userId == userId) &&

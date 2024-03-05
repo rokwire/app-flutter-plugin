@@ -166,7 +166,7 @@ class LocalNotifications with Service {
         timezone.TZDateTime.from(dateTime ?? DateTime.now(), timezone.getLocation(AppDateTime().localTimeZone)),
         notificationDetails,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
       );
       return true;

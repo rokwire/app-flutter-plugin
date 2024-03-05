@@ -73,7 +73,7 @@ class ModalImagePanel extends StatelessWidget {
       imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageKey)) {
-      imageWidget = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
+      imageWidget = Styles().images.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
         networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageUrl)) {

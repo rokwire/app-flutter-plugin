@@ -1012,6 +1012,21 @@ class JsonUtils {
     return result;
   }
 
+  static List<T>? listTypedValue<T>(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<T>();
+      }
+      else if (value is Set) {
+        return List<T>.from(value.cast<T>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
   static Duration? durationValue(dynamic value) {
     if (value is Map<String, dynamic>) {
       return Duration(days: value['days'] ?? 0, hours: value['hours'] ?? 0, minutes: value['minutes'] ?? 0, seconds: value['seconds'] ?? 0, milliseconds: value['milliseconds'] ?? 0, microseconds: value['microseconds'] ?? 0);
@@ -1021,16 +1036,42 @@ class JsonUtils {
 }
 
 class AppToast {
-  static void show(String msg) {
+  static const Duration defaultDuration = const Duration(seconds: 3);
+  static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
+  static const Color defaultTextColor = Colors.white;
+  static const Color defaultBackgroundColor = const Color(0x99000000);
+  
+  static void showMessage(String msg, {
+    ToastGravity gravity = defaultGravity,
+    Duration duration = defaultDuration,
+    Color textColor = defaultTextColor,
+    Color backgroundColor = defaultBackgroundColor,
+  }) {
     Fluttertoast.showToast(
       msg: msg,
-      textColor: Colors.white,
+      textColor: textColor,
       toastLength: Toast.LENGTH_LONG,
-      timeInSecForIosWeb: 3,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: const Color(0x99000000),
+      timeInSecForIosWeb: duration.inSeconds,
+      gravity: gravity,
+      backgroundColor: backgroundColor,
     );
   }
+
+  static void show(BuildContext context, {
+    required Widget child,
+    FToast? toast,
+    ToastGravity gravity = defaultGravity,
+    Duration duration = defaultDuration,
+  }) {
+    toast ??= FToast();
+    toast.init(context);
+    toast.showToast(
+      child: child,
+      gravity: gravity,
+      toastDuration: duration,
+    );
+  }
+
 }
 
 class MapPathKey {

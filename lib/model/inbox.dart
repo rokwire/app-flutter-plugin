@@ -11,7 +11,7 @@ class InboxMessage {
   
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
-  final DateTime? dateSentUtc;
+  final DateTime? dateTimeSentUtc;
 
   final String?   subject;
   final String?   body;
@@ -24,7 +24,7 @@ class InboxMessage {
   final List<InboxRecepient>? recepients;
 
   InboxMessage({this.messageId, this.priority, this.topic,
-    this.dateCreatedUtc, this.dateUpdatedUtc, this.dateSentUtc,
+    this.dateCreatedUtc, this.dateUpdatedUtc, this.dateTimeSentUtc,
     this.subject, this.body, this.data,
     this.mute, this.read,
     this.sender, this.recepients
@@ -38,7 +38,7 @@ class InboxMessage {
 
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created'])),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
-      dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent'])),
+      dateTimeSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['time'])),
 
       subject: JsonUtils.stringValue(json['subject']),
       body: JsonUtils.stringValue(json['body']),
@@ -60,7 +60,7 @@ class InboxMessage {
 
       'date_created': DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
       'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdatedUtc),
-      'date_sent': DateTimeUtils.utcDateTimeToString(dateSentUtc),
+      'time': DateTimeUtils.utcDateTimeToString(dateTimeSentUtc),
 
       'subject': subject,
       'body': body,
@@ -117,7 +117,7 @@ class InboxMessage {
   }
 
   String? get displayUserInfo {
-    DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateSentUtc ?? dateCreatedUtc);
+    DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateTimeSentUtc);
     if (deviceDateTime != null) {
       DateTime now = DateTime.now();
       if (deviceDateTime.compareTo(now) < 0) {
@@ -164,7 +164,7 @@ class InboxMessage {
   }
 
   String? get displaySystemInfo {
-    DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateSentUtc ?? dateCreatedUtc);
+    DateTime? deviceDateTime = AppDateTime().getDeviceTimeFromUtcTime(dateTimeSentUtc);
     if (deviceDateTime != null) {
       DateTime now = DateTime.now();
       if (deviceDateTime.compareTo(now) < 0) {

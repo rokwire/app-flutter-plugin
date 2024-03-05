@@ -243,7 +243,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         builder: (BuildContext context, List<Pair<int, SurveyElement>?> accepted, List<dynamic> rejected) {
           return displayEntry;
         },
-        onAccept: (dataPair) => dataPair.right == surveyElement && dataPair.left != index ? widget.onDrag!(dataPair.left, index) : null,
+        onAcceptWithDetails: (DragTargetDetails<Pair<int, SurveyElement>> details) => details.data.right == surveyElement && details.data.left != index ? widget.onDrag!(details.data.left, index) : null,
       ),
       childWhenDragging: displayEntry,
       axis: Axis.vertical,
@@ -424,7 +424,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
+          onAcceptWithDetails: (DragTargetDetails<int> details) => details.data != index ? widget.onDrag!(details.data, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
@@ -471,7 +471,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
+          onAcceptWithDetails: (DragTargetDetails<int> details) => details.data != index ? widget.onDrag!(details.data, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
@@ -495,19 +495,19 @@ class _SurveyElementListState extends State<SurveyElementList> {
       double buttonSize = _entryManagementButtonSize / 2;
       return Align(alignment: Alignment.centerRight, child: Row(mainAxisSize: MainAxisSize.min, children: [
         Visibility(visible: addRemove && belowLimit, child: SizedBox(width: _entryManagementButtonSize, height: _entryManagementButtonSize, child: IconButton(
-          icon: Styles().images?.getImage('plus-circle', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.add),
+          icon: Styles().images.getImage('plus-circle', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.add),
           onPressed: widget.onAdd != null ? () => widget.onAdd!(index + 1, surveyElement, parentElement) : null,
           padding: EdgeInsets.zero,
           splashRadius: buttonSize,
         ))),
         Visibility(visible: editable, child: SizedBox(width: _entryManagementButtonSize, height: _entryManagementButtonSize, child: IconButton(
-          icon: Styles().images?.getImage('edit-white', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.edit),
+          icon: Styles().images.getImage('edit-white', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.edit),
           onPressed: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, element, parentElement) : null,
           padding: EdgeInsets.zero,
           splashRadius: buttonSize,
         ))),
         Visibility(visible: addRemove && ruleRemove && index >= 0, child: SizedBox(width: _entryManagementButtonSize, height: _entryManagementButtonSize, child: IconButton(
-          icon: Styles().images?.getImage('clear', size: buttonSize) ?? const Icon(Icons.remove),
+          icon: Styles().images.getImage('clear', size: buttonSize) ?? const Icon(Icons.remove),
           onPressed: widget.onRemove != null ? () => _onRemove(index, surveyElement, parentElement) : null,
           padding: EdgeInsets.zero,
           splashRadius: buttonSize,
@@ -668,7 +668,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
         Text(label, style: AppTextStyles.widgetMessageRegular),
         Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
           DropdownButton<T>(
-            icon: Styles().images?.getImage('chevron-down', excludeFromSemantics: true),
+            icon: Styles().images.getImage('chevron-down', excludeFromSemantics: true),
             isExpanded: true,
             style: AppTextStyles.widgetDetailRegular,
             items: buildDropdownItems<T>(supportedItems),
@@ -732,7 +732,7 @@ class _SurveyElementCreationWidgetState extends State<SurveyElementCreationWidge
           ),
         )),
         Container(
-          color: AppColors?.backgroundVariant,
+          color: AppColors.backgroundVariant,
           child: widget.completionOptions,
         ),
       ],

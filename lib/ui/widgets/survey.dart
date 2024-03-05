@@ -513,7 +513,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         Visibility(
           visible: enabled,
           child: IconButton(
-            icon: calendarIcon ?? Styles().images?.getImage(defaultIconKey ?? '') ?? Container(),
+            icon: calendarIcon ?? Styles().images.getImage(defaultIconKey ?? '') ?? Container(),
             tooltip: "Date picker",
             alignment: Alignment.topCenter,
             splashRadius: 24,
@@ -721,7 +721,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     // }
 
     if (!Surveys().canContinue(_survey!)) {
-      AppToast.show("Please answer all required questions to continue");
+      AppToast.showMessage("Please answer all required questions to continue");
       return;
     }
 
@@ -750,27 +750,27 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     } else if (result is List<RuleAction>) {
       List<InlineSpan> textSpans = [TextSpan(
         text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
-        style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+        style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
       )];
       for (RuleAction action in result) {
         if (RuleAction.supportedPreviews.contains(action.action)) {
           textSpans.add(TextSpan(
             text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
           ));
           textSpans.add(TextSpan(
             text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
-            style: Styles().textStyles?.getTextStyle('widget.button.title.medium.fat.underline'),
+            style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
             recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),
           ));
           textSpans.add(TextSpan(
             text: '\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
           ));
         } else {
           textSpans.add(TextSpan(
             text: '\u2022 ${action.getSummary()}\n',
-            style: Styles().textStyles?.getTextStyle('widget.detail.regular.fat'),
+            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
           ));
         }
       }

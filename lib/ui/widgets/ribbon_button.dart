@@ -110,9 +110,9 @@ class RibbonButton extends StatefulWidget {
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => Styles().colors?.textSurface;
+  @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
-  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies?.regular;
+  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
   @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
   @protected Widget get displayDescriptionWidget => descriptionWidget ?? Padding(
@@ -120,8 +120,8 @@ class RibbonButton extends StatefulWidget {
     child: Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,),
   );
 
-  @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images?.getImage(leftIconKey, excludeFromSemantics: true) : null;
-  @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images?.getImage(rightIconKey, excludeFromSemantics: true) : null;
+  @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images.getImage(leftIconKey, excludeFromSemantics: true) : null;
+  @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images.getImage(rightIconKey, excludeFromSemantics: true) : null;
 
   @protected Color? get defaultProgressColor => AppColors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;

@@ -70,10 +70,10 @@ class FilterListItem extends StatelessWidget {
   @protected TextStyle? get defaultSelectedDescriptionTextStyle => defaultSelectedTitleTextStyle;
   TextStyle? get _descriptionTextStyle => selected ? (selectedDescriptionTextStyle ?? defaultSelectedDescriptionTextStyle) : (descriptionTextStyle ?? defaultDescriptionTextStyle);
 
-  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _selectedIconImage => (selectedIconKey != null) ? Styles().images?.getImage(selectedIconKey, excludeFromSemantics: true) : null;
+  Widget? get _selectedIconImage => (selectedIconKey != null) ? Styles().images.getImage(selectedIconKey, excludeFromSemantics: true) : null;
   Widget? get _selectedIconWidget => selectedIcon ?? _selectedIconImage;
 
   @override
@@ -150,10 +150,10 @@ class FilterSelector extends StatelessWidget {
   @protected TextStyle? get defaultActiveTitleTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, fontSize: 16, color: AppColors.fillColorSecondary);
   TextStyle? get _titleTextStyle => active ? (activeTitleTextStyle ?? defaultActiveTitleTextStyle) : (titleTextStyle ?? defaultTitleTextStyle);
 
-  Widget? get _iconImage => (iconKey != null) ? Styles().images?.getImage(iconKey, excludeFromSemantics: true) : null;
+  Widget? get _iconImage => (iconKey != null) ? Styles().images.getImage(iconKey, excludeFromSemantics: true) : null;
   Widget? get _iconWidget => icon ?? _iconImage;
 
-  Widget? get _activeIconImage => (activeIconKey != null) ? Styles().images?.getImage(activeIconKey, excludeFromSemantics: true) : null;
+  Widget? get _activeIconImage => (activeIconKey != null) ? Styles().images.getImage(activeIconKey, excludeFromSemantics: true) : null;
   Widget? get _activeIconWidget => activeIcon ?? _activeIconImage;
 
   @override

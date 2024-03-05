@@ -42,7 +42,12 @@ class Styles extends Service implements NotificationsListener{
   
   static const String _assetsName       = "styles.json";
   static const String _debugAssetsName  = "styles.debug.json";
-  
+
+  static const UiColors _emptyColors = UiColors.empty();
+  static const UiFontFamilies _emptyFontFamilies = UiFontFamilies.empty();
+  static const UiTextStyles _emptyTextStyles = UiTextStyles.empty();
+  static const UiImages _emptyImages = UiImages.empty();
+
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
@@ -57,12 +62,12 @@ class Styles extends Service implements NotificationsListener{
   List<String> get themes => _themes.keys.toList();
 
   UiTheme? _theme;
-  UiColors? get colors => _theme?.colors;
-  UiFontFamilies? get fontFamilies => _theme?.fontFamilies;
-  UiTextStyles? get textStyles => _theme?.textStyles;
-  UiImages? get images => _theme?.images;
+  UiColors get colors => _theme?.colors ?? _emptyColors;
+  UiFontFamilies get fontFamilies => _theme?.fontFamilies ?? _emptyFontFamilies;
+  UiTextStyles get textStyles => _theme?.textStyles ?? _emptyTextStyles;
+  UiImages get images => _theme?.images ?? _emptyImages;
 
-  // Singleton Factory
+  // Singletone Factory
 
   static Styles? _instance;
 
@@ -403,7 +408,7 @@ class UiTheme {
       compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver)),
     ];
     results = await Future.wait(futures);
-    
+
     return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: results[0], images: results[1]);
   }
 }
@@ -412,7 +417,9 @@ class UiColors {
 
   final Map<String, Color> colorMap;
 
-  UiColors(this.colorMap);
+  const UiColors(this.colorMap);
+
+  const UiColors.empty() : this(const <String, Color>{});
 
   static UiColors? fromJson(Map<String, dynamic>? json) {
     Map<String, Color> colors = <String, Color>{};
@@ -427,125 +434,126 @@ class UiColors {
     return UiColors(colors);
   }
 
-  // DEPRECATED
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimary                   => colorMap['fillColorPrimary'] ?? const Color(0xFF002855);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'] ?? const Color(0x4D002855);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'] ?? const Color(0x80002855);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'] ?? const Color(0xE6002855);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'] ?? const Color(0x26002855);
+  @Deprecated("Use AppColors instead")
+  Color get textColorPrimary                   => colorMap['textColorPrimary'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
+  Color get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
+  Color get textColorDisabled                  => colorMap['textColorDisabled'] ?? const Color(0xFF5C5C5C);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'] ?? const Color(0xFF0F2040);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorSecondary                 => colorMap['fillColorSecondary'] ?? const Color(0xFFE84A27);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'] ?? const Color(0x80E84A27);
+  @Deprecated("Use AppColors instead")
+  Color get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'] ?? const Color(0xFFCF3C1B);
+  @Deprecated("Use AppColors instead")
+  Color get textColorSecondary                 => colorMap['textColorSecondary'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
+  Color get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'] ?? const Color(0xFFFFFF);
+  @Deprecated("Use AppColors instead")
+  Color get gradientColorPrimary               => colorMap['gradientColorPrimary'] ?? const Color(0xFF244372);
 
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimary                   => colorMap['fillColorPrimary'];
+  Color get surface                    => colorMap['surface'] ?? const Color(0xFFFFFFFF);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'];
+  Color get textSurface                => colorMap['textSurface'] ?? const Color(0xFF404040);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'];
+  Color get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'] ?? const Color(0x26404040);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'];
+  Color get surfaceAccent              => colorMap['surfaceAccent'] ?? const Color(0xFFDADDE1);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'];
+  Color get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'] ?? const Color(0x26DADDE1);
   @Deprecated("Use AppColors instead")
-  Color? get textColorPrimary                   => colorMap['textColorPrimary'];
+  Color get textSurfaceAccent          => colorMap['textSurfaceAccent'] ?? const Color(0xFF404040);
   @Deprecated("Use AppColors instead")
-  Color? get textColorDisabled                  => colorMap['textColorDisabled'];
+  Color get background                 => colorMap['background'] ?? const Color(0xFFF5F5F5);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'];
+  Color get textBackground             => colorMap['textBackground'] ?? const Color(0xFF404040);
   @Deprecated("Use AppColors instead")
-  Color? get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'];
+  Color get backgroundVariant          => colorMap['backgroundVariant'] ?? const Color(0xFFE8E9EA);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorSecondary                 => colorMap['fillColorSecondary'];
+  Color get textBackgroundVariant      => colorMap['textBackgroundVariant'] ?? const Color(0xFF404040);
   @Deprecated("Use AppColors instead")
-  Color? get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'];
-  @Deprecated("Use AppColors instead")
-  Color? get textColorSecondary                 => colorMap['textColorSecondary'];
-  @Deprecated("Use AppColors instead")
-  Color? get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'];
-  @Deprecated("Use AppColors instead")
-  Color? get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'];
-  @Deprecated("Use AppColors instead")
-  Color? get gradientColorPrimary               => colorMap['gradientColorPrimary'];
+  Color get textBackgroundVariant2     => colorMap['textBackgroundVariant2'] ?? const Color(0xFFE7E7E7);
 
   @Deprecated("Use AppColors instead")
-  Color? get surface                    => colorMap['surface'];
+  Color get accentColor1               => colorMap['accentColor1'] ?? const Color(0xFFE84A27);
   @Deprecated("Use AppColors instead")
-  Color? get textSurface                => colorMap['textSurface'];
+  Color get accentColor2               => colorMap['accentColor2'] ?? const Color(0xFF5FA7A3);
   @Deprecated("Use AppColors instead")
-  Color? get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'];
+  Color get accentColor3               => colorMap['accentColor3'] ?? const Color(0xFF5182CF);
   @Deprecated("Use AppColors instead")
-  Color? get surfaceAccent              => colorMap['surfaceAccent'];
-  @Deprecated("Use AppColors instead")
-  Color? get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'];
-  @Deprecated("Use AppColors instead")
-  Color? get textSurfaceAccent          => colorMap['textSurfaceAccent'];
-  @Deprecated("Use AppColors instead")
-  Color? get background                 => colorMap['background'];
-  @Deprecated("Use AppColors instead")
-  Color? get textBackground             => colorMap['textBackground'];
-  @Deprecated("Use AppColors instead")
-  Color? get backgroundVariant          => colorMap['backgroundVariant'];
-  @Deprecated("Use AppColors instead")
-  Color? get textBackgroundVariant      => colorMap['textBackgroundVariant'];
-  @Deprecated("Use AppColors instead")
-  Color? get textBackgroundVariant2      => colorMap['textBackgroundVariant2'];
-  @Deprecated("Use AppColors instead")
-  Color? get headlineText               => colorMap['headlineText'];
+  Color get accentColor4               => colorMap['accentColor4'] ?? const Color(0xFF9318BB);
 
   @Deprecated("Use AppColors instead")
-  Color? get accentColor1               => colorMap['accentColor1'];
-  @Deprecated("Use AppColors instead")
-  Color? get accentColor2               => colorMap['accentColor2'];
-  @Deprecated("Use AppColors instead")
-  Color? get accentColor3               => colorMap['accentColor3'];
-  @Deprecated("Use AppColors instead")
-  Color? get accentColor4               => colorMap['accentColor4'];
+  Color get iconColor                  => colorMap['iconColor'] ?? const Color(0xFFE84A27);
 
   @Deprecated("Use AppColors instead")
-  Color? get iconColor                  => colorMap['iconColor'];
+  Color get eventColor                 => colorMap['eventColor'] ?? const Color(0xFFE54B30);
+  @Deprecated("Use AppColors instead")
+  Color get diningColor                => colorMap['diningColor'] ?? const Color(0xFFF09842);
+  @Deprecated("Use AppColors instead")
+  Color get placeColor                 => colorMap['placeColor'] ?? const Color(0xFF62A7A3);
+  @Deprecated("Use AppColors instead")
+  Color get mtdColor                   => colorMap['mtdColor'] ?? const Color(0xFF2376E5);
 
   @Deprecated("Use AppColors instead")
-  Color? get eventColor                 => colorMap['eventColor'];
+  Color get white                      => colorMap['white'] ?? const Color(0xFFFFFFFF);
   @Deprecated("Use AppColors instead")
-  Color? get diningColor                => colorMap['diningColor'];
+  Color get whiteTransparent01         => colorMap['whiteTransparent01'] ?? const Color(0x1AFFFFFF);
   @Deprecated("Use AppColors instead")
-  Color? get placeColor                 => colorMap['placeColor'];
+  Color get whiteTransparent06         => colorMap['whiteTransparent06'] ?? const Color(0x99FFFFFF);
   @Deprecated("Use AppColors instead")
-  Color? get mtdColor                   => colorMap['mtdColor'];
+  Color get black                      => colorMap['black'] ?? const Color(0xFF000000);
+  @Deprecated("Use AppColors instead")
+  Color get blackTransparent06         => colorMap['blackTransparent06'] ?? const Color(0x99000000);
+  @Deprecated("Use AppColors instead")
+  Color get blackTransparent018        => colorMap['blackTransparent018'] ?? const Color(0x30000000);
+  @Deprecated("Use AppColors instead")
+  Color get blackTransparent038        => colorMap['blackTransparent038'] ?? const Color(0x61000000);
 
   @Deprecated("Use AppColors instead")
-  Color? get white                      => colorMap['white'];
+  Color get mediumGray                 => colorMap['mediumGray'] ?? const Color(0xFF717372);
   @Deprecated("Use AppColors instead")
-  Color? get whiteTransparent01         => colorMap['whiteTransparent01'];
+  Color get mediumGray1                => colorMap['mediumGray1'] ?? const Color(0xFF535353);
   @Deprecated("Use AppColors instead")
-  Color? get whiteTransparent06         => colorMap['whiteTransparent06'];
+  Color get mediumGray2                => colorMap['mediumGray2'] ?? const Color(0xFF979797);
   @Deprecated("Use AppColors instead")
-  Color? get blackTransparent06         => colorMap['blackTransparent06'];
+  Color get lightGray                  => colorMap['lightGray'] ?? const Color(0xFFEDEDED);
   @Deprecated("Use AppColors instead")
-  Color? get blackTransparent018        => colorMap['blackTransparent018'];
+  Color get disabledTextColor          => colorMap['disabledTextColor'] ?? const Color(0xFFBDBDBD);
+  @Deprecated("Use AppColors instead")
+  Color get disabledTextColorTwo       => colorMap['disabledTextColorTwo'] ?? const Color(0xFF868F9D);
+  @Deprecated("Use AppColors instead")
+  Color get dividerLine                => colorMap['dividerLine'] ?? const Color(0xFF535353);
+  @Deprecated("Use AppColors instead")
+  Color get dividerLineAccent          => colorMap['dividerLineAccent'] ?? const Color(0xFFDADADA);
 
   @Deprecated("Use AppColors instead")
-  Color? get mediumGray                 => colorMap['mediumGray'];
+  Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
   @Deprecated("Use AppColors instead")
-  Color? get mediumGray1                => colorMap['mediumGray1'];
-  @Deprecated("Use AppColors instead")
-  Color? get mediumGray2                => colorMap['mediumGray2'];
-  @Deprecated("Use AppColors instead")
-  Color? get lightGray                  => colorMap['lightGray'];
-  @Deprecated("Use AppColors instead")
-  Color? get disabledTextColor          => colorMap['disabledTextColor'];
-  @Deprecated("Use AppColors instead")
-  Color? get disabledTextColorTwo       => colorMap['disabledTextColorTwo'];
-  @Deprecated("Use AppColors instead")
-  Color? get dividerLine                => colorMap['dividerLine'];
-  @Deprecated("Use AppColors instead")
-  Color? get dividerLineAccent          => colorMap['dividerLineAccent'];
+  Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
 
   @Deprecated("Use AppColors instead")
-  Color? get mango                      => colorMap['mango'];
-
+  Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);
   @Deprecated("Use AppColors instead")
-  Color? get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'];
+  Color get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'] ?? const Color(0xFFFFFF00);
   @Deprecated("Use AppColors instead")
-  Color? get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'];
+  Color get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'] ?? const Color(0xFF00FF00);
   @Deprecated("Use AppColors instead")
-  Color? get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'];
-  @Deprecated("Use AppColors instead")
-  Color? get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'];
-  ///
+  Color get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'] ?? const Color(0xFF808080);
 
   Color? getColor(String key) => colorMap[key];
 
@@ -577,7 +585,9 @@ class UiColors {
 
 class UiFontFamilies {
   final Map<String, String> familyMap;
-  UiFontFamilies(this.familyMap);
+  const UiFontFamilies(this.familyMap);
+
+  const UiFontFamilies.empty() : this(const <String, String>{});
 
   static UiFontFamilies? fromJson(Map<String, dynamic>? json) {
     Map<String, String>? familyMap;
@@ -586,22 +596,38 @@ class UiFontFamilies {
     return UiFontFamilies(familyMap ?? <String, String>{});
   }
 
-  String? get black        => familyMap["black"];
-  String? get blackIt      => familyMap["black_italic"];
-  String? get bold         => familyMap["bold"];
-  String? get boldIt       => familyMap["bold_italic"];
-  String? get extraBold    => familyMap["extra_bold"];
-  String? get extraBoldIt  => familyMap["extra_bold_italic"];
-  String? get light        => familyMap["light"];
-  String? get lightIt      => familyMap["light_italic"];
-  String? get medium       => familyMap["medium"];
-  String? get mediumIt     => familyMap["medium_italic"];
-  String? get regular      => familyMap["regular"];
-  String? get regularIt    => familyMap["regular_italic"];
-  String? get semiBold     => familyMap["semi_bold"];
-  String? get semiBoldIt   => familyMap["semi_bold_italic"];
-  String? get thin         => familyMap["thin"];
-  String? get thinIt       => familyMap["thin_italic"];
+  @Deprecated("Use AppFontFamilies instead")
+  String get black        => familyMap["black"] ?? 'ProximaNovaBlack';
+  @Deprecated("Use AppFontFamilies instead")
+  String get blackIt      => familyMap["black_italic"] ?? 'ProximaNovaBlackIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get bold         => familyMap["bold"] ?? 'ProximaNovaBold';
+  @Deprecated("Use AppFontFamilies instead")
+  String get boldIt       => familyMap["bold_italic"] ?? 'ProximaNovaBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get extraBold    => familyMap["extra_bold"] ?? 'ProximaNovaExtraBold';
+  @Deprecated("Use AppFontFamilies instead")
+  String get extraBoldIt  => familyMap["extra_bold_italic"] ?? 'ProximaNovaExtraBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get light        => familyMap["light"] ?? 'ProximaNovaLight';
+  @Deprecated("Use AppFontFamilies instead")
+  String get lightIt      => familyMap["light_italic"] ?? 'ProximaNovaLightIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get medium       => familyMap["medium"] ?? 'ProximaNovaMedium';
+  @Deprecated("Use AppFontFamilies instead")
+  String get mediumIt     => familyMap["medium_italic"] ?? 'ProximaNovaMediumIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get regular      => familyMap["regular"] ?? 'ProximaNovaRegular';
+  @Deprecated("Use AppFontFamilies instead")
+  String get regularIt    => familyMap["regular_italic"] ?? 'ProximaNovaRegularIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get semiBold     => familyMap["semi_bold"] ?? 'ProximaNovaSemiBold';
+  @Deprecated("Use AppFontFamilies instead")
+  String get semiBoldIt   => familyMap["semi_bold_italic"] ?? 'ProximaNovaSemiBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
+  String get thin         => familyMap["thin"] ?? 'ProximaNovaThin';
+  @Deprecated("Use AppFontFamilies instead")
+  String get thinIt       => familyMap["thin_italic"] ?? 'ProximaNovaThinIt';
 
   String? fromCode(String? code) => familyMap[code];
 }
@@ -611,20 +637,18 @@ class UiTextStyles {
   final Map<String, TextStyle> styleMap;
   final UiColors? colors;
 
-  UiTextStyles(Map<String, TextStyle>? styleMap, { this.colors }) :
-    styleMap = styleMap ?? <String, TextStyle> {};
+  const UiTextStyles(this.styleMap, { this.colors });
+
+  const UiTextStyles.empty() : this(const <String, TextStyle>{});
 
   static UiTextStyles fromJson(Map<String, dynamic>? stylesJson, {UiColors? colors, UiFontFamilies? fontFamilies}){
-    Map<String, TextStyle>? stylesMap;
-    if(stylesJson != null){
-      stylesMap = <String, TextStyle> {};
-      stylesJson.forEach((key, value) {
-        TextStyle? style = constructTextStyle(JsonUtils.mapValue(value), stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
-        if(style!=null){
-          stylesMap![key] = style;
-        }
-      });
-    }
+    Map<String, TextStyle> stylesMap = <String, TextStyle> {};
+    stylesJson?.forEach((key, value) {
+      TextStyle? style = constructTextStyle(JsonUtils.mapValue(value), stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
+      if(style!=null){
+        stylesMap[key] = style;
+      }
+    });
     return UiTextStyles(stylesMap, colors: colors);
   }
 
@@ -690,7 +714,9 @@ class UiImages {
   final UiColors? colors;
   final String Function(Uri uri)? assetPathResolver;
 
-  UiImages(this.imageMap, { this.colors, this.assetPathResolver});
+  const UiImages(this.imageMap, { this.colors, this.assetPathResolver});
+
+  const UiImages.empty() : this(const <String, dynamic>{});
 
   static UiImages fromCreationParam(_UiImagesCreationParam param) =>
     UiImages(param.imageMap, colors: param.colors, assetPathResolver: param.assetPathResolver);
@@ -761,7 +787,7 @@ class UiImages {
     type ??= imageSpec.type;
     source ??= imageSpec.source;
 
-    scale ??= imageSpec.scale ?? 1.0;
+    scale ??= imageSpec.scale;
     size ??= imageSpec.size;
     width ??= imageSpec.width ?? size;
     height ??= imageSpec.height ?? size;
@@ -787,24 +813,24 @@ class UiImages {
         File? sourceFile = _ImageUtils.fileValue(source);
         return (sourceFile != null) ? Image.file(sourceFile,
           key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality, 
         ) : null;
 
       case 'flutter.network':
         String? urlString = JsonUtils.stringValue(source);
         return (urlString != null) ? Image.network(urlString,
-            key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-            headers: networkHeaders
+          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+          headers: networkHeaders
         ) : null;
 
       case 'flutter.memory':
         Uint8List? bytes = _ImageUtils.bytesValue(source);
         return (bytes != null) ? Image.memory(bytes, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
-            scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-            centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
+          scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
+          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality
         ) : null;
     }}
     catch(e) {
@@ -1206,6 +1232,10 @@ class _ImageUtils {
         case 'solid': return IconDataSolid(codePoint);
         case 'regular': return IconDataRegular(codePoint);
         case 'brands': return IconDataBrands(codePoint);
+        // Duotone icons are not supported in flutter. Ref: https://github.com/fluttercommunity/font_awesome_flutter/issues/192
+        // case 'duotone': return IconDataDuotone(codePoint);
+        case 'thin': return IconDataThin(codePoint);
+        case 'light': return IconDataLight(codePoint);
         default: return null;
       }
     }

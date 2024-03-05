@@ -302,7 +302,7 @@ class Auth2AccountScope {
   final Set<Auth2UserPrefsScope>? prefs;
   final Set<Auth2UserProfileScope>? profile;
 
-  Auth2AccountScope({this.prefs, this.profile});
+  const Auth2AccountScope({this.prefs, this.profile});
 }
 
 ////////////////////////////////
@@ -2274,7 +2274,7 @@ class UserRole {
   toJson() => _value;
 
   @override
-  bool operator==(dynamic other) {
+  bool operator==(Object other) {
     if (other is UserRole) {
       return other._value == _value;
     }

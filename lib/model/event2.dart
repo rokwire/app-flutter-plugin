@@ -142,7 +142,7 @@ class Event2 with Explore, Favorite {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2) &&
     (id == other.id) &&
     (name == other.name) &&
@@ -171,7 +171,8 @@ class Event2 with Explore, Favorite {
     (free == other.free) &&
     (cost == other.cost) &&
 
-    (registrationDetails == other.registrationDetails) &&
+    Event2RegistrationDetails.equals(registrationDetails, other.registrationDetails) &&
+    //(registrationDetails == other.registrationDetails) &&
     (attendanceDetails == other.attendanceDetails) &&
     (surveyDetails == other.surveyDetails) &&
 
@@ -316,7 +317,7 @@ class Event2OnlineDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2OnlineDetails) &&
     (url == other.url) &&
     (meetingId == other.meetingId) &&
@@ -375,7 +376,7 @@ class Event2RegistrationDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2RegistrationDetails) &&
     (type == other.type) &&
     (label == other.label) &&
@@ -390,6 +391,12 @@ class Event2RegistrationDetails {
     (externalLink?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(registrants));
+
+  static bool equals(Event2RegistrationDetails? details1, Event2RegistrationDetails? details2) =>
+    ((details1 == null) && (details2 == null)) ||
+    ((details1 != null) && (details2 != null) && (details1 == details2)) ||
+    (details1?.type == Event2RegistrationType.none) ||
+    (details2?.type == Event2RegistrationType.none);
 }
 
 ///////////////////////////////
@@ -456,7 +463,7 @@ class Event2AttendanceDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled) &&
@@ -500,7 +507,7 @@ class Event2SurveyDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2SurveyDetails) &&
     (hoursAfterEvent == other.hoursAfterEvent);
 
@@ -520,11 +527,15 @@ class Event2SurveyDetails {
 /// Event2Grouping
 
 class Event2Grouping {
+  static final String _ignoreFieldValue = 'ignore';
+  static final String _noneFieldValue = 'none';
+
   final Event2GroupingType? type;
   final String? superEventId;
   final String? recurrenceId;
+  final dynamic displayAsIndividual;
 
-  Event2Grouping({this.type, this.superEventId, this.recurrenceId});
+  Event2Grouping({this.type, this.superEventId, this.recurrenceId, this.displayAsIndividual});
 
   factory Event2Grouping.superEvent(String? id) => Event2Grouping(
     type: Event2GroupingType.superEvent,
@@ -536,29 +547,59 @@ class Event2Grouping {
     recurrenceId: id,
   );
 
+  static List<Event2Grouping> superEvents() => <Event2Grouping>[
+    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue)
+  ];
+
+  static List<Event2Grouping> individualEvents() => <Event2Grouping>[
+    // Events without grouping type
+    Event2Grouping(type: Event2GroupingType.none, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+    // Main Super Events
+    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+    // Sub Events when display as individual is true
+    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'), //explicitly String
+    // Main Recurring events
+    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _ignoreFieldValue, recurrenceId: _noneFieldValue, displayAsIndividual: _ignoreFieldValue)
+  ];
+
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
     (json != null) ? Event2Grouping(
       type: event2GroupingTypeFromString(JsonUtils.stringValue(json['grouping_type'])) ,
       superEventId: JsonUtils.stringValue(json['super_event_id']),
       recurrenceId: JsonUtils.stringValue(json['group_id']),
+      displayAsIndividual: JsonUtils.boolValue(json['display_as_individual']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
     'grouping_type': event2GroupingTypeToString(type),
     'super_event_id': superEventId,
     'group_id': recurrenceId,
+    'display_as_individual': (displayAsIndividual is bool) ? displayAsIndividual : displayAsIndividual?.toString(),
   };
 
+  static List<dynamic>? listToJson(List<Event2Grouping>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2Grouping) &&
     (type == other.type) &&
+    (displayAsIndividual == other.displayAsIndividual) &&
     (superEventId == other.superEventId) &&
     (recurrenceId == other.recurrenceId);
 
   @override
   int get hashCode =>
     (type?.hashCode ?? 0) ^
+    (displayAsIndividual?.hashCode ?? 0) ^
     (superEventId?.hashCode ?? 0) ^
     (recurrenceId?.hashCode ?? 0);
 }
@@ -677,6 +718,28 @@ class Event2PersonIdentifier {
   int get hashCode =>
       (accountId?.hashCode ?? 0) ^
       (exteralId?.hashCode ?? 0);
+
+  static List<Event2PersonIdentifier>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2PersonIdentifier>? result;
+    if (jsonList != null) {
+      result = <Event2PersonIdentifier>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2PersonIdentifier.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<Event2PersonIdentifier>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
 }
 
 ///////////////////////////////
@@ -810,7 +873,7 @@ Event2UserRole? event2UserRoleFromString(String? value) {
   else if (value == 'participant') {
     return Event2UserRole.participant;
   }
-  else if (value == 'attendance_taker') {
+  else if (value == 'attendance-taker') {
     return Event2UserRole.attendanceTaker;
   }
   else {
@@ -822,7 +885,7 @@ String? event2UserRoleToString(Event2UserRole? value) {
   switch (value) {
     case Event2UserRole.admin: return 'admin';
     case Event2UserRole.participant: return 'participant';
-    case Event2UserRole.attendanceTaker: return 'attendance_taker';
+    case Event2UserRole.attendanceTaker: return 'attendance-taker';
     default: return null;
   }
 }
@@ -959,7 +1022,7 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 ///////////////////////////////
 /// Event2TypeFilter
 
-enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent }
+enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
 
 const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
   Event2TypeFilter.free: 'cost',
@@ -971,6 +1034,8 @@ const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, S
   Event2TypeFilter.private: 'discoverability',
   Event2TypeFilter.nearby: 'proximity',
   Event2TypeFilter.superEvent: 'composite',
+  Event2TypeFilter.favorite: 'favorite',
+  Event2TypeFilter.admin: 'admin',
 };
 
 Event2TypeFilter? event2TypeFilterFromString(String? value) {
@@ -1001,6 +1066,12 @@ Event2TypeFilter? event2TypeFilterFromString(String? value) {
   else if (value == 'super-event') {
     return Event2TypeFilter.superEvent;
   }
+  else if (value == 'favorite') {
+    return Event2TypeFilter.favorite;
+  }
+  else if (value == 'admin') {
+    return Event2TypeFilter.admin;
+  }
   else {
     return null;
   }
@@ -1017,6 +1088,8 @@ String? event2TypeFilterToString(Event2TypeFilter? value) {
     case Event2TypeFilter.private: return 'private';
     case Event2TypeFilter.nearby: return 'nearby';
     case Event2TypeFilter.superEvent: return 'super-event';
+    case Event2TypeFilter.favorite: return 'favorite';
+    case Event2TypeFilter.admin: return 'admin';
     default: return null;
   }
 }
@@ -1137,7 +1210,7 @@ String? event2SortOrderToOption(Event2SortOrder? value) {
 ///////////////////////////////
 /// Event2GroupingType
 
-enum Event2GroupingType { superEvent, recurrence }
+enum Event2GroupingType { superEvent, recurrence, none }
 
 Event2GroupingType? event2GroupingTypeFromString(String? value) {
   if (value == 'super_events') {
@@ -1145,6 +1218,9 @@ Event2GroupingType? event2GroupingTypeFromString(String? value) {
   }
   else if (value == 'repeatable') {
     return Event2GroupingType.recurrence;
+  }
+  else if (value == 'none') {
+    return Event2GroupingType.none;
   }
   else {
     return null;
@@ -1155,6 +1231,7 @@ String? event2GroupingTypeToString(Event2GroupingType? value) {
   switch (value) {
     case Event2GroupingType.superEvent: return 'super_events';
     case Event2GroupingType.recurrence: return 'repeatable';
+    case Event2GroupingType.none: return 'none';
     default: return null;
   }
 }
@@ -1231,7 +1308,7 @@ class Events2ListResult {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Events2ListResult) &&
     (const DeepCollectionEquality().equals(events, other.events)) &&
     (totalCount == other.totalCount);

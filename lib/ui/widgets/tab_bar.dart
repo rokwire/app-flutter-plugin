@@ -28,9 +28,13 @@ class TabBar extends StatefulWidget {
     switch(Config().configEnvironment) {
       case ConfigEnvironment.dev:        return Colors.yellowAccent;
       case ConfigEnvironment.test:       return Colors.lightGreenAccent;
+      case ConfigEnvironment.production: return AppColors.surface;
       default:                           return null;
     }
   }
+
+  @protected
+  BoxBorder? get border => Border(top: BorderSide(color: AppColors.surfaceAccent, width: 1, style: BorderStyle.solid));
 
   @protected
   Decoration? get decoration => BoxDecoration(color: backgroundColor, border: border);
@@ -193,7 +197,7 @@ class TabWidget extends StatelessWidget {
   TextStyle get tabTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, color: selected ? AppColors.fillColorSecondary : AppColors.textMedium, fontSize: 12);
 
   @protected
-  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
+  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaler.scale(1), 2);
 
   @protected
   TextOverflow get textOverflow => TextOverflow.ellipsis;
@@ -201,7 +205,7 @@ class TabWidget extends StatelessWidget {
   @protected
   Widget getTabText(BuildContext context) => Row(children: [
     Expanded(child:
-      Text(label ?? '', textScaleFactor: getTextScaleFactor(context), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
+      Text(label ?? '', textScaler: TextScaler.linear(getTextScaleFactor(context)), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
     )
   ]);
 
@@ -209,7 +213,7 @@ class TabWidget extends StatelessWidget {
   Widget getTabIcon(BuildContext context)  {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
+    return (key != null) ? Styles().images.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
         color: selected ? AppColors.fillColorSecondary : AppColors.textDisabled) ?? defaultIcon : defaultIcon;
   }
 
@@ -248,7 +252,7 @@ class TabCloseWidget extends StatelessWidget {
     return Semantics(label: label, hint: hint, button: true, child:
       GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
         Center(child:
-          Styles().images?.getImage(iconAsset, excludeFromSemantics: true,),
+          Styles().images.getImage(iconAsset, excludeFromSemantics: true,),
         ),
       )
     );

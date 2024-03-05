@@ -51,6 +51,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
+  static const Auth2AccountScope defaultLoginScope = const Auth2AccountScope(
+    prefs: { Auth2UserPrefsScope.privacyLevel, Auth2UserPrefsScope.roles }
+  );
+
 
   _OidcLogin? _oidcLogin;
   Auth2AccountScope? _oidcScope;
@@ -355,7 +359,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     return emailStrings;
   }
-  
+
   List<String> get phones {
     List<String> phoneStrings = [];
     for (Auth2Identifier phoneIdentifier in linkedPhone) {
@@ -656,7 +660,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
                 case "GetCredentialCancellationException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
               }
             }
-            
+
             debugPrint(error.toString());
           }
         } else {
@@ -727,7 +731,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({Auth2AccountScope? scope, bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
     if (Config().authBaseUrl != null) {
 
       if (_oidcAuthenticationCompleters == null) {
@@ -835,7 +839,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope }) async {
+  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope = defaultLoginScope}) async {
     if (responseJson != null) {
       Auth2Token? token = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
       Auth2Account? account = Auth2Account.fromJson(JsonUtils.mapValue(responseJson['account']),
@@ -851,7 +855,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope, Map<String, dynamic>? params }) async {
+  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope = defaultLoginScope, Map<String, dynamic>? params }) async {
     Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
     _refreshTokenFailCounts.remove(_token?.refreshToken);
@@ -869,7 +873,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null),
       Storage().setAuth2AnonymousProfile(_anonymousProfile = null),
     ];
-    
+
     if (!kIsWeb) {
       futures.addAll([
         Storage().setAuth2Token(token),
@@ -1005,7 +1009,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return Auth2RequestCodeResult.failed;
   }
 
-  Future<Auth2SendCodeResult> handleCodeAuthentication(String? identifier, String? code, {String identifierType = Auth2Identifier.typePhone, String? identifierId, Auth2AccountScope? scope}) async {
+  Future<Auth2SendCodeResult> handleCodeAuthentication(String? identifier, String? code, {String identifierType = Auth2Identifier.typePhone, String? identifierId, Auth2AccountScope? scope = defaultLoginScope}) async {
     if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (code != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -1052,7 +1056,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Password Authentication
 
-  Future<Auth2PasswordSignInResult> authenticateWithPassword(String? identifier, String? password, {String identifierType = Auth2Identifier.typeEmail, String? identifierId, Auth2AccountScope? scope}) async {
+  Future<Auth2PasswordSignInResult> authenticateWithPassword(String? identifier, String? password, {String identifierType = Auth2Identifier.typeEmail, String? identifierId, Auth2AccountScope? scope = defaultLoginScope}) async {
     if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (password != null)) {
       
       NotificationService().notify(notifyLoginStarted, Auth2Type.typePassword);
@@ -1371,7 +1375,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         else if (error?.status == 'invalid') {
           return Auth2LinkResult(Auth2LinkResultStatus.failedInvalid);
         }
-      } 
+      }
     }
     return Auth2LinkResult(Auth2LinkResultStatus.failed);
   }
@@ -1983,7 +1987,7 @@ class _OidcLogin {
   final String? loginUrl;
   final Map<String, dynamic>? params;
   final String? error;
-  
+
   _OidcLogin({this.loginUrl, this.params, this.error});
 
   static _OidcLogin? fromJson(Map<String, dynamic>? json) {
