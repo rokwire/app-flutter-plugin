@@ -22,10 +22,10 @@ Map<String, String> typesMap = {
 };
 
 Map<String, String> refsMap = {
-  'color': 'Styles().colors?.getColor(%key)',
-  'text_style': 'Styles().textStyles?.getTextStyle(%key)',
-  'font_family': 'Styles().fontFamilies?.fromCode(%key)',
-  'image': 'Styles().images?.getImage(%key)',
+  'color': 'Styles().colors.getColor(%key)',
+  'text_style': 'Styles().textStyles.getTextStyle(%key)',
+  'font_family': 'Styles().fontFamilies.fromCode(%key)',
+  'image': 'Styles().images.getImage(%key)',
   'themes': '%key',
 };
 
