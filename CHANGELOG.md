@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add timestamps to anonymous IDs [#309](https://github.com/rokwire/app-flutter-plugin/issues/309)
 - Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
 - Handle more identifiers using passkeys and linking [#330](https://github.com/rokwire/app-flutter-plugin/issues/330)
+- Style code generation tools
 
 ### Fixed
 - Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
