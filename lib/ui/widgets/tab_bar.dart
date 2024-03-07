@@ -152,6 +152,8 @@ class TabWidget extends StatelessWidget {
       child: InkWell(
         onTap: () => onTap(this),
         splashFactory: showAnimation ? null : NoSplash.splashFactory,
+        splashColor: showAnimation ? null : Colors.transparent,
+        highlightColor: showAnimation ? null :  Colors.transparent,
         child: Column(children: [
           selected ? buildSelectedIndicator(context) : Container(),
           buildTab(context),
