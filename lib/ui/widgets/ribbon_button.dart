@@ -65,8 +65,8 @@ class RibbonButton extends StatefulWidget {
 
     this.descriptionWidget,
     this.descriptionTextStyle,
-    this.descriptionTextColor,  //= Styles().colors.textSurface
-    this.descriptionFontFamily, //= Styles().fontFamilies.regular
+    this.descriptionTextColor,  //= AppColors.textSurface
+    this.descriptionFontFamily, //= AppFontFamilies.regular
     this.descriptionFontSize    = 14.0,
     this.descriptionTextAlign   = TextAlign.left,
     this.descriptionPadding     = const EdgeInsets.only(top: 2),
@@ -110,9 +110,9 @@ class RibbonButton extends StatefulWidget {
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
+  @protected Color? get defaultDescriptionTextColor => AppColors.textSurface;
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
-  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies.regular;
+  @protected String? get defaultDescriptionFontFamily => AppFontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
   @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
   @protected Widget get displayDescriptionWidget => descriptionWidget ?? Padding(
