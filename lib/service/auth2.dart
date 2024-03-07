@@ -346,9 +346,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get uin => _account?.authType?.uiucUser?.uin;
   String? get netId => _account?.authType?.uiucUser?.netId;
 
-  String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
-  String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
+  String? get fullName => StringUtils.notEmptyString(profile?.fullName, _account?.authType?.uiucUser?.fullName);
+  String? get firstName => StringUtils.notEmptyString(profile?.firstName, _account?.authType?.uiucUser?.firstName);
   String? get username => _account?.username;
+  String? get email => StringUtils.notEmptyString(_account?.authType?.uiucUser?.email, ListUtils.first(emails));
+  String? get phone => StringUtils.notEmptyString(ListUtils.first(phones));
 
   List<String> get emails {
     List<String> emailStrings = [];
