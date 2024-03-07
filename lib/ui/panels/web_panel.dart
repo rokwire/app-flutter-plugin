@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';

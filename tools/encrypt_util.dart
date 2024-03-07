@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:encrypt/encrypt.dart' as encrypt_package;
 
 void main() async {
-  String encryptedFilepath = "assets/configs.json.enc";
-  String keysFilepath = "assets/config.keys.json";
-  String decryptedFile = "assets/configs.json";
+  //String encryptedFilepath = "assets/configs.json.enc";
+  //String keysFilepath = "assets/config.keys.json";
+  //String decryptedFile = "assets/configs.json";
 
   Map<String, dynamic>? encryptionKeys = await loadEncryptionKeysFromAssets(keysFilepath);
   String? encryptionKey = encryptionKeys != null ? encryptionKeys['key'] : null;
@@ -17,8 +17,8 @@ void main() async {
   // decryptAssetFile(encryptedFilepath, decryptedFile, encryptionKey, encryptionIV);
   // encryptAssetFile(decryptedFile, encryptedFilepath, encryptionKey, encryptionIV);
 
-  String tempFile = "plugin/tools/temp.enc";
-  String contents = File(tempFile).readAsStringSync();
+  //String tempFile = "plugin/tools/temp.enc";
+  //String contents = File(tempFile).readAsStringSync();
   // String contents = """""";
   // print(decrypt(contents, key: encryptionKey, iv: encryptionIV));
   // print(encrypt(contents, key: encryptionKey, iv: encryptionIV));

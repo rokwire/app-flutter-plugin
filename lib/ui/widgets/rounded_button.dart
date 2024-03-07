@@ -114,7 +114,7 @@ class RoundedButton extends StatefulWidget {
   @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
   @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
 
-  @protected Color get defaultBorderColor => AppColors.fillColorSecondary ?? const Color(0xFF000000);
+  @protected Color get defaultBorderColor => AppColors.fillColorSecondary;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected Border get displayBorder => border ?? defaultBorder;

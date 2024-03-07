@@ -30,7 +30,7 @@ class ScrollPagerBuilder {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  AppImages.retryMedium ?? Container(),
+                  AppImages.retryMedium,
                   const SizedBox(width: 8.0),
                   Text(Localization().getStringEx('widget.scroll_pager.error.title', 'Something went wrong'),
                       style: AppTextStyles.widgetMessageLightRegular),

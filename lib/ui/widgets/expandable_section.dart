@@ -71,7 +71,7 @@ class ExpandableSectionState extends State<ExpandableSection> {
           initiallyExpanded: widget.initiallyExpanded,
           title: widget.displayTitleWidget,
           subtitle: widget.displaySubtitleWidget,
-          trailing: Styles().images?.getImage(_expanded ? 'chevron-up' : 'chevron-down',
+          trailing: Styles().images.getImage(_expanded ? 'chevron-up' : 'chevron-down',
             defaultSpec: FontAwesomeImageSpec(
                 type: 'fa.icon',
                 source: _expanded ? '0xf077' : '0xf078',

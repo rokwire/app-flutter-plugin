@@ -24,7 +24,6 @@ import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_options_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -238,7 +237,7 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Rule Element"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: AppColors?.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildRuleElement(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }

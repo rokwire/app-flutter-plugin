@@ -291,7 +291,7 @@ class ActionsMessage extends StatelessWidget {
   @protected ShapeBorder get defaultBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
   @protected ShapeBorder get displayBorder => border ?? defaultBorder;
 
-  @protected Widget? get defaultCloseButtonIcon => Styles().images?.getImage('close-circle-light', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: AppColors.surface));
+  @protected Widget? get defaultCloseButtonIcon => Styles().images.getImage('close-circle-light', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: AppColors.surface));
   @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
 
   static Future<T?> show<T>({

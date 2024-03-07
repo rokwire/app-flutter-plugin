@@ -121,7 +121,7 @@ class ModalImagePanel extends StatelessWidget {
     return closeWidget ?? Semantics(label: closeLabel ?? "Close Button", hint: closeHint, button: true, focusable: true, focused: true, child:
       GestureDetector(onTap: () => _onClose(context), child:
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child:
-          Text('\u00D7', style: TextStyle(color: AppColors.textLight ?? Colors.white, fontFamily: AppFontFamilies.medium, fontSize: 50),),
+          Text('\u00D7', style: TextStyle(color: AppColors.textLight, fontFamily: AppFontFamilies.medium, fontSize: 50),),
         ),
       )
     );
@@ -129,7 +129,7 @@ class ModalImagePanel extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? AppColors.surface ?? Colors.white),
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? AppColors.surface),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }

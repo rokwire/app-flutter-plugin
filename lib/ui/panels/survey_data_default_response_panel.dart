@@ -17,7 +17,6 @@
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
 
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';

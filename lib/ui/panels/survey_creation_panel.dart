@@ -22,7 +22,6 @@ import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/rules.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/panels/rule_element_creation_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
@@ -183,7 +182,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Scaffold(
       appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: AppColors?.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
     );
   }

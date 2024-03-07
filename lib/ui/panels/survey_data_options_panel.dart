@@ -22,7 +22,6 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_default_response_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';

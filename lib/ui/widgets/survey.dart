@@ -964,9 +964,7 @@ class SingleSelectionList extends StatelessWidget {
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
                   title: Transform.translate(offset: const Offset(-15, 0),
-                      child: Text(title, style: AppTextStyles.widgetTitleRegular ??
-                          TextStyle(fontFamily: AppFontFamilies.regular,
-                              fontSize: 16, color: AppColors.textPrimary))),
+                      child: Text(title, style: AppTextStyles.widgetTitleRegular)),
                   activeColor: AppColors.fillColorSecondary,
                   value: title,
                   groupValue: selectedValue?.title,

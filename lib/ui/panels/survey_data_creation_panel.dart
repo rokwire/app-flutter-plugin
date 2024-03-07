@@ -22,7 +22,6 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/rule_element_creation_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_options_panel.dart';
 import 'package:rokwire_plugin/ui/popups/popup_message.dart';
@@ -111,7 +110,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     return Scaffold(
       appBar: const HeaderBar(title: "Edit Survey Data"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: AppColors?.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyDataComponents(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }

@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class FormFieldText extends StatefulWidget {
   final String label;
@@ -78,7 +77,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: AppColors.fillColorPrimary ?? Colors.white)
+                  borderSide: BorderSide(width: 2, color: AppColors.fillColorPrimary)
               )
           ),
           controller: widget.controller,
