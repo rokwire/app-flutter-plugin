@@ -65,7 +65,7 @@ class RibbonButton extends StatefulWidget {
 
     this.descriptionWidget,
     this.descriptionTextStyle,
-    this.descriptionTextColor,  //= AppColors.textSurface
+    this.descriptionTextColor,  //= Styles().colors.getColor('textSurface')
     this.descriptionFontFamily, //= AppFontFamilies.regular
     this.descriptionFontSize    = 14.0,
     this.descriptionTextAlign   = TextAlign.left,
@@ -110,7 +110,7 @@ class RibbonButton extends StatefulWidget {
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => AppColors.textSurface;
+  @protected Color? get defaultDescriptionTextColor => Styles().colors.getColor('textSurface');
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
   @protected String? get defaultDescriptionFontFamily => AppFontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
