@@ -47,8 +47,8 @@ dependencies:
   pinch_zoom: ^2.0.0
   graphql_flutter: ^5.1.2
   native_flutter_proxy: ^0.1.15
-  font_awesome_flutter: ^10.6.0 # published plugin - uncomment if used
-#  font_awesome_flutter: '>= 4.7.0' # comment if published plugin is used
+#  font_awesome_flutter: ^10.6.0 # published plugin - uncomment if used
+  font_awesome_flutter: '>= 4.7.0' # comment if published plugin is used
 
   flutter_passkey:
     git: https://github.com/rokmetro/flutter_passkey.git
@@ -65,9 +65,9 @@ dev_dependencies:
   flutter_lints: ^1.0.0
 
 # comment the override below if published plugin is used
-#dependency_overrides:
-#  font_awesome_flutter:
-#    path: plugins/font_awesome_flutter
+dependency_overrides:
+  font_awesome_flutter:
+    path: plugins/font_awesome_flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
