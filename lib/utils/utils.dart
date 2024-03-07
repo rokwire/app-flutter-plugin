@@ -36,14 +36,32 @@ class StringUtils {
   static bool isNotEmpty(String? stringToCheck) =>
     (stringToCheck != null && stringToCheck.isNotEmpty);
 
+  static bool isEmpty(String? stringToCheck) =>
+    !isNotEmpty(stringToCheck);
+
   static bool isNotEmptyString(dynamic value) =>
     (value is String) && value.isNotEmpty;
 
   static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
     ((value != null) && value.isNotEmpty) ? value : defaultValue;
 
-  static bool isEmpty(String? stringToCheck) =>
-    !isNotEmpty(stringToCheck);
+  static String? notEmptyString(String? value, [String? value1, String? value2, String? value3]) {
+    if (isNotEmpty(value)) {
+      return value;
+    }
+    else if (isNotEmpty(value1)) {
+      return value1;
+    }
+    else if (isNotEmpty(value2)) {
+      return value2;
+    }
+    else if (isNotEmpty(value3)) {
+      return value3;
+    }
+    else {
+      return null;
+    }
+  }
 
   static String wrapRange(String s, String firstValue, String secondValue, int startPosition, int endPosition) {
     String word = s.substring(startPosition, endPosition);
