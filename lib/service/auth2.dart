@@ -2187,6 +2187,10 @@ class Auth2OidcAuthenticateResult {
   String? message;
   String? error;
   Auth2OidcAuthenticateResult(this.status, {this.message, this.error});
+
+  bool get succeeded => (status == Auth2OidcAuthenticateResultStatus.succeeded);
+  bool get failed => (status == Auth2OidcAuthenticateResultStatus.failed);
+  bool get failedAccountExist => (status == Auth2OidcAuthenticateResultStatus.failedAccountExist);
 }
 
 enum Auth2OidcAuthenticateResultStatus {
