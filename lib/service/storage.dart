@@ -121,12 +121,12 @@ class Storage with Service {
   // String  get encryptionIVId => _encryptionIVId;
   // String? get encryptionIV => _encryptionIV;
 
-  String? _encrypt(String? value) {
+  String? encrypt(String? value) {
     return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
       AESCrypt.encrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
   }
 
-  String? _decrypt(String? value) {
+  String? decrypt(String? value) {
     return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
       AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
   }
@@ -167,7 +167,7 @@ class Storage with Service {
     String? value = _sharedPreferences?.getString(name);
     if (value != null) {
       if ((_encryptionKey != null) && (_encryptionIV != null)) {
-        value = _decrypt(value);
+        value = decrypt(value);
       }
       else {
         value = null;
@@ -180,7 +180,7 @@ class Storage with Service {
   void setEncryptedStringWithName(String name, String? value) {
     if (value != null) {
       if ((_encryptionKey != null) && (_encryptionIV != null)) {
-        value = _encrypt(value);
+        value = encrypt(value);
         _sharedPreferences?.setString(name, value!);
       }
     } else {
