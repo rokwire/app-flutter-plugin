@@ -17,7 +17,6 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart' as connectivity;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/log.dart';
