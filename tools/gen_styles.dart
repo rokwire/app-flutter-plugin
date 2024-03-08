@@ -200,6 +200,9 @@ String? _buildClass(String name, Map<String, dynamic> json) {
 
   String classString = "class $className {\n";
   for (MapEntry<String, dynamic> entry in json.entries) {
+    if (entry.key.startsWith('_')) {
+      continue;
+    }
     String varName = camelCase(entry.key);
     String varRef = ref.replaceAll("%key", "'${entry.key}'");
     String? defaultObj = defaultFuncs[name]?.call(name, entry, data: json);
