@@ -2333,7 +2333,7 @@ class UserRole {
 ////////////////////////////////
 // Favorite
 
-abstract class Favorite {
+abstract mixin class Favorite {
   String get favoriteKey;
   String? get favoriteId;
   
