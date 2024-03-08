@@ -90,7 +90,7 @@ void main(List<String> arguments) async {
   }
   if (!skipPlugin) {
     print("merging plugin asset...");
-    LinkedHashMap<String, dynamic>? pluginAsset = await _loadFileJson(pluginAssetFilepath, preserveBlanks: false);
+    LinkedHashMap<String, dynamic>? pluginAsset = await _loadFileJson(pluginAssetFilepath);
     if (pluginAsset != null) {
       asset = _mergeJson(pluginAsset, asset);
       File(assetFilepath).writeAsString(_prettyJsonEncode(asset));
@@ -168,9 +168,18 @@ LinkedHashMap<String, dynamic> _mergeJson(LinkedHashMap<String, dynamic>? from, 
 
     if (section.value is Map<String, dynamic>) {
       bool addedToSection = false;
+      String? lastBlank;
       for (MapEntry<String, dynamic> entry in section.value.entries ?? {}) {
         dynamic outSection = out[section.key];
         if (!outSection.containsKey(entry.key)) {
+          if (entry.key.startsWith('_blank')) {
+            if (!addedToSection || lastBlank != null) {
+              continue;
+            }
+            lastBlank = entry.key;
+          } else {
+            lastBlank = null;
+          }
           if (!addedToSection) {
             out[section.key]['_blank_plugin_start'] = '';
             out[section.key]['_MERGED FROM PLUGIN_'] = 'The following styles were merged from the plugin. They can be overridden here as needed.';
@@ -178,6 +187,12 @@ LinkedHashMap<String, dynamic> _mergeJson(LinkedHashMap<String, dynamic>? from, 
           print("added ${section.key}: ${entry.key} = ${entry.value}");
           out[section.key][entry.key] = entry.value;
           addedToSection = true;
+        }
+      }
+      if (lastBlank != null) {
+        dynamic outSection = out[section.key];
+        if (outSection is Map<String, dynamic>) {
+          outSection.remove(lastBlank);
         }
       }
     } else {
@@ -211,17 +226,35 @@ String? _buildClass(String name, Map<String, dynamic> json) {
     return null;
   }
 
+  bool addedToSection = false;
+  bool lastBlank = false;
   String classString = "class $className {\n";
   for (MapEntry<String, dynamic> entry in json.entries) {
-    if (entry.key.startsWith('_')) {
+    if (entry.key.startsWith('_blank')) {
+      if (!lastBlank && addedToSection) {
+        classString += '\n';
+      }
+      lastBlank = true;
       continue;
     }
+
+    if (entry.key.startsWith('_')) {
+      classString += "    // ${entry.key.replaceAll('_', ' ').trim()}: ${entry.value}\n";
+      continue;
+    }
+
+    addedToSection = true;
+    lastBlank = false;
+
     String varName = camelCase(entry.key);
     String varRef = ref.replaceAll("%key", "'${entry.key}'");
     String? defaultObj = defaultFuncs[name]?.call(name, entry, data: json);
     String defaultObjString = defaultObj != null ? ' ?? $defaultObj' : '';
     classString += "    static $type get $varName => $varRef$defaultObjString;\n";
     replacements[varRef] = '$className.$varName';
+  }
+  if (classString.endsWith('\n\n')) {
+    classString = classString.substring(0, classString.length - 1);
   }
   classString += "}\n";
   return classString;
@@ -310,28 +343,21 @@ String _buildFile(List<String> classStrings) {
   return fileString;
 }
 
-Future<LinkedHashMap<String, dynamic>?> _loadFileJson(String filepath,
-    {bool preserveBlanks = true}) async {
+Future<LinkedHashMap<String, dynamic>?> _loadFileJson(String filepath) async {
   try {
     String content = await File(filepath).readAsString();
-    if (preserveBlanks) {
-      content = _addBlankPlaceholders(content);
+    List<String> lines = content.split('\n');
+    for (final (int index, String line) in lines.indexed) {
+      if (line.trim().isEmpty) {
+        lines[index] = '"_blank_${filepath}#$index": "",';
+      }
     }
+    content = lines.join('\n');
     return json.decode(content);
   } catch (e) {
     print(e);
   }
   return null;
-}
-
-String _addBlankPlaceholders(String content) {
-  List<String> lines = content.split('\n');
-  for (final (int index, String line) in lines.indexed) {
-    if (line.trim().isEmpty) {
-      lines[index] = '"_blank$index": "",';
-    }
-  }
-  return lines.join('\n');
 }
 
 void _updateCodeRefs(String libPath, String genFilepath) async {

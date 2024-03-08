@@ -28,7 +28,7 @@ import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-abstract class NetworkAuthProvider {
+abstract mixin class NetworkAuthProvider {
   Map<String, String>? get networkAuthHeaders;
   dynamic get networkAuthToken => null;
   Future<bool> refreshNetworkAuthTokenIfNeeded(http.BaseResponse? response, dynamic token) async => false;

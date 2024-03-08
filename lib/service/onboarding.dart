@@ -161,7 +161,7 @@ class Onboarding with Service implements NotificationsListener {
   String? getPanelCode({OnboardingPanel? panel}) => null;
 }
 
-abstract class OnboardingPanel {
+abstract mixin class OnboardingPanel {
   
   Map<String, dynamic>? get onboardingContext {
     return null;

@@ -109,6 +109,6 @@ class NotificationService {
 
 }
 
-abstract class NotificationsListener {
+abstract mixin class NotificationsListener {
   FutureOr<void> onNotification(String name, dynamic param);
 }
