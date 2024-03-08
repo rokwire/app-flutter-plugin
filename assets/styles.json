@@ -5,6 +5,7 @@
     "system": {}
   },
   "color": {
+    "_exampleComment"                       :"This is an example of a comment ('_' prefixed key) which will be ignored by code generation",
     "fillColorPrimary"                      :"#002855",
     "fillColorPrimaryVariant"               :"#0F2040",
     "fillColorSecondary"                    :"#E84A27",
