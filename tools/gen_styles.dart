@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
@@ -82,33 +83,34 @@ void main(List<String> arguments) async {
   String libPath = 'lib/';
   String genFilepath = '${libPath}gen/styles.dart';
 
-  Map<String, dynamic>? asset = await _loadFileJson(assetFilepath);
+  LinkedHashMap<String, dynamic>? asset = await _loadFileJson(assetFilepath);
+  if (asset == null) {
+    print('asset was not loaded');
+    return;
+  }
   if (!skipPlugin) {
     print("merging plugin asset...");
-    Map<String, dynamic>? pluginAsset = await _loadFileJson(pluginAssetFilepath);
+    LinkedHashMap<String, dynamic>? pluginAsset = await _loadFileJson(pluginAssetFilepath, preserveBlanks: false);
     if (pluginAsset != null) {
       asset = _mergeJson(pluginAsset, asset);
       File(assetFilepath).writeAsString(_prettyJsonEncode(asset));
       print('saved merged plugin asset to $assetFilepath');
     } else {
       print('plugin asset was not loaded');
+      return;
     }
   }
-  if (asset != null) {
-    String fileString = _parseAsset(asset);
-    if (fileString.isNotEmpty) {
-      File(genFilepath).writeAsString(fileString);
-      print("saved generated code to $genFilepath");
-      if (updateCode) {
-        _updateCodeRefs(libPath, genFilepath);
-      }
+  String fileString = _parseAsset(asset);
+  if (fileString.isNotEmpty) {
+    File(genFilepath).writeAsString(fileString);
+    print("saved generated code to $genFilepath");
+    if (updateCode) {
+      _updateCodeRefs(libPath, genFilepath);
     }
-  } else {
-    print('asset was not loaded');
   }
 }
 
-String _prettyJsonEncode(Map<String, dynamic> jsonObject, {bool deepFormat = false}){
+String _prettyJsonEncode(LinkedHashMap<String, dynamic> jsonObject, {bool deepFormat = false}){
   String out = '{';
   bool first = true;
   for (MapEntry<String, dynamic> entry in jsonObject.entries) {
@@ -117,13 +119,18 @@ String _prettyJsonEncode(Map<String, dynamic> jsonObject, {bool deepFormat = fal
     }
     out += '\n';
     out += '  "${entry.key}": {';
-    if (entry.value is Map<String, dynamic>) {
+    if (entry.value is LinkedHashMap<String, dynamic>) {
       bool firstSub = true;
       for (MapEntry<String, dynamic> subentry in entry.value.entries) {
         if (!firstSub) {
           out += ',';
         }
-        Map<String, dynamic> subMap = {};
+        if (subentry.key.startsWith('_blank')) {
+          out += '\n';
+          firstSub = true;
+          continue;
+        }
+        LinkedHashMap<String, dynamic> subMap = LinkedHashMap<String, dynamic>();
         subMap.addEntries([subentry]);
         String valJson;
         if (entry.key == 'themes' || deepFormat) {
@@ -150,21 +157,27 @@ String _prettyJsonEncode(Map<String, dynamic> jsonObject, {bool deepFormat = fal
   return out;
 }
 
-Map<String, dynamic> _mergeJson(Map<String, dynamic>? from, Map<String, dynamic>? to) {
-  to ??= {};
-  Map<String, dynamic> out = {};
-  out.addAll(to);
+LinkedHashMap<String, dynamic> _mergeJson(LinkedHashMap<String, dynamic>? from, LinkedHashMap<String, dynamic>? to) {
+  to ??= LinkedHashMap<String, dynamic>();
+  LinkedHashMap<String, dynamic> out = LinkedHashMap<String, dynamic>();
+  out.addEntries(to.entries);
   for (MapEntry<String, dynamic> section in from?.entries ?? {}) {
     if (!out.containsKey(section.key)) {
       out[section.key] = {};
     }
 
     if (section.value is Map<String, dynamic>) {
+      bool addedToSection = false;
       for (MapEntry<String, dynamic> entry in section.value.entries ?? {}) {
         dynamic outSection = out[section.key];
         if (!outSection.containsKey(entry.key)) {
+          if (!addedToSection) {
+            out[section.key]['_blank_plugin_start'] = '';
+            out[section.key]['_MERGED FROM PLUGIN_'] = 'The following styles were merged from the plugin. They can be overridden here as needed.';
+          }
           print("added ${section.key}: ${entry.key} = ${entry.value}");
           out[section.key][entry.key] = entry.value;
+          addedToSection = true;
         }
       }
     } else {
@@ -175,7 +188,7 @@ Map<String, dynamic> _mergeJson(Map<String, dynamic>? from, Map<String, dynamic>
   return out;
 }
 
-String _parseAsset(Map<String, dynamic> asset) {
+String _parseAsset(LinkedHashMap<String, dynamic> asset) {
   List<String> classStrings = [];
   for (MapEntry<String, dynamic> entry in asset.entries) {
     if (entry.value is Map<String, dynamic>) {
@@ -297,14 +310,28 @@ String _buildFile(List<String> classStrings) {
   return fileString;
 }
 
-Future<Map<String, dynamic>?> _loadFileJson(String filepath) async {
+Future<LinkedHashMap<String, dynamic>?> _loadFileJson(String filepath,
+    {bool preserveBlanks = true}) async {
   try {
-    String content = File(filepath).readAsStringSync();
+    String content = await File(filepath).readAsString();
+    if (preserveBlanks) {
+      content = _addBlankPlaceholders(content);
+    }
     return json.decode(content);
   } catch (e) {
     print(e);
   }
   return null;
+}
+
+String _addBlankPlaceholders(String content) {
+  List<String> lines = content.split('\n');
+  for (final (int index, String line) in lines.indexed) {
+    if (line.trim().isEmpty) {
+      lines[index] = '"_blank$index": "",';
+    }
+  }
+  return lines.join('\n');
 }
 
 void _updateCodeRefs(String libPath, String genFilepath) async {
