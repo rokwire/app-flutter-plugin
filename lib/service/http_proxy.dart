@@ -18,13 +18,12 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:native_flutter_proxy/native_proxy_reader.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class HttpProxy extends Service implements NotificationsListener {
+class HttpProxy extends Service {
   
   // Singletone Factory
 
@@ -45,8 +44,6 @@ class HttpProxy extends Service implements NotificationsListener {
   @override
   void createService() {
     super.createService();
-
-    NotificationService().subscribe(this, [Config.notifyEnvironmentChanged]);
   }
 
   @override
@@ -59,19 +56,11 @@ class HttpProxy extends Service implements NotificationsListener {
   @override
   void destroyService() {
     super.destroyService();
-    NotificationService().unsubscribe(this);
   }
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Storage(), Config()};
-  }
-
-  @override
-  void onNotification(String name, dynamic param){
-    if(name == Config.notifyEnvironmentChanged){
-      _handleChanged();
-    }
+    return { Storage(), Config() };
   }
 
   Future<void> applySystemProxy() async {

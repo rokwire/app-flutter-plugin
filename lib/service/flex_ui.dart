@@ -69,7 +69,8 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   void createService() {
-    NotificationService().subscribe(this,[
+    NotificationService().subscribe(this, [
+      Service.notifyInitialized,
       Auth2.notifyPrefsChanged,
       Auth2.notifyUserDeleted,
       Auth2UserPrefs.notifyRolesChanged,
@@ -90,7 +91,25 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    await _initServiceOffline();
+    List<Future<dynamic>> futures = [
+      loadFromAssets(assetsKey),
+      if (!kIsWeb)
+        loadFromAssets(appAssetsKey),
+      if (!kIsWeb)
+        getAssetsDir(),
+    ];
+
+    List<dynamic> results = await Future.wait(futures);
+    _defContentSource = (0 < results.length) ? results[0] : null;
+    _appContentSource = (1 < results.length) ? results[1] : null;
+    _assetsDir = (2 < results.length) ? results[2] : null;
+
+    if (_assetsDir != null) {
+      _netContentSource = await loadFromCache(netCacheFileName);
+    }
+
+    build();
+
     if (_defaultContent != null) {
       updateFromNet();
       await super.initService();
@@ -105,44 +124,40 @@ class FlexUI with Service implements NotificationsListener {
     }
   }
 
-  @override
-  Future<void> initServiceFallback() async {
-    await _initServiceOffline();
-  }
-
-  Future<void> _initServiceOffline() async {
-    _defContentSource = await loadFromAssets(assetsKey);
-    _appContentSource = kIsWeb ? null : await loadFromAssets(appAssetsKey);
-    if (!kIsWeb) {
-      _assetsDir = await getAssetsDir();
-      _netContentSource = await loadFromCache(netCacheFileName);
-    }
-    build();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Config(), Auth2(), Groups(), GeoFence() };
-  }
-
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if ((name == Auth2.notifyPrefsChanged) ||
-        (name == Auth2.notifyUserDeleted) ||
-        (name == Auth2UserPrefs.notifyRolesChanged) ||
-        (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
-        (name == Auth2.notifyLoginChanged) ||
-        (name == Auth2.notifyLinkChanged) ||
-        (name == Groups.notifyUserGroupsUpdated) ||
-        (name == GeoFence.notifyCurrentRegionsUpdated) ||
-        (name == Config.notifyConfigChanged))
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized(param is Service ? param : null);
+    }
+    else if ((name == Auth2.notifyPrefsChanged) ||
+      (name == Auth2.notifyUserDeleted) ||
+      (name == Auth2UserPrefs.notifyRolesChanged) ||
+      (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
+      (name == Auth2.notifyLoginChanged) ||
+      (name == Auth2.notifyLinkChanged) ||
+      (name == Groups.notifyUserGroupsUpdated) ||
+      (name == GeoFence.notifyCurrentRegionsUpdated) ||
+      (name == Config.notifyConfigChanged))
     {
       updateContent();
     }
     else if (name == AppLifecycle.notifyStateChanged) {
-      onAppLifecycleStateChanged(param);
+      onAppLifecycleStateChanged((param is AppLifecycleState) ? param : null);
+    }
+  }
+
+  @protected
+  Future<void> onServiceInitialized(Service? service) async {
+    if (isInitialized) {
+      if ((service == Config()) && !kIsWeb) {
+        _assetsDir = await getAssetsDir();
+        _netContentSource = await loadFromCache(netCacheFileName);
+      }
+      if (((service == Config()) && (_netContentSource != null)) || (service == Auth2()) || (service == Groups()) || (service == GeoFence())) {
+        build();
+      }
     }
   }
 

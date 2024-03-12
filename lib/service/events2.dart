@@ -60,11 +60,6 @@ class Events2 with Service implements NotificationsListener {
     processCachedEventDetails();
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { DeepLink() };
-  }
-
   // NotificationsListener
 
   @override

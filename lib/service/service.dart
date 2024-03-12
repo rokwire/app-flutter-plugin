@@ -18,8 +18,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 
 abstract mixin class Service {
+
+  static const String notifyInitialized = "edu.illinois.rokwire.service.initialized";
 
   bool? _isInitialized;
 
@@ -31,9 +34,7 @@ abstract mixin class Service {
 
   Future<void> initService() async {
     _isInitialized = true;
-  }
-
-  Future<void> initServiceFallback() async {
+    NotificationService().notify(notifyInitialized, this);
   }
 
   void initServiceUI() async {
@@ -64,12 +65,7 @@ class Services {
   static set instance(Services? value) => _instance = value;
 
   List<Service>? _services;
-
-  bool _initialized = false;
-  bool get initialized => _initialized;
-
-  ServiceError? _initializeError;
-  ServiceError? get initializeError => _initializeError;
+  bool? _isInitialized;
 
   void create(List<Service> services) {
     if (_services == null) {
@@ -86,47 +82,23 @@ class Services {
         service.destroyService();
       }
       _services = null;
+      ;
     }
   }
 
   Future<ServiceError?> init() async {
-    if (_services != null) {
-      ServiceError? se = await _ServicesInitializer(initService, initServiceFallback).process(_services!);
-      return se;
-    }
-    return null;
+    ServiceError? error = await _ServicesInitializer(initService).process(_services);
+    _isInitialized = (error != null);
+    return error;
   }
 
-  @protected
-  Future<ServiceError?> initFallback() async {
-    ServiceError? error;
-    for (Service service in _services!) {
-      if (service.isInitialized != true) {
-        error ??= await initServiceFallback(service);
-        if (error != null) {
-          return error;
-        }
-      }
-    }
-    return null;
-  }
+  bool get isInitialized => (_isInitialized == true);
+  bool get isInitializeFailed => (_isInitialized == false);
 
   @protected
   Future<ServiceError?> initService(Service service) async {
     try {
       await service.initService();
-    }
-    on ServiceError catch (error) {
-      return error;
-    }
-    return null;
-  }
-
-
-  @protected
-  Future<ServiceError?> initServiceFallback(Service service) async {
-    try {
-      await service.initServiceFallback();
     }
     on ServiceError catch (error) {
       return error;
@@ -157,16 +129,13 @@ class _ServicesInitializer {
   final Set<Service> _inProgress = <Service>{};
 
   Future<ServiceError?> Function(Service service) initService;
-  Future<ServiceError?> Function(Service service) initServiceFallback;
   Completer<ServiceError?>? _completer;
 
-  _ServicesInitializer(this.initService, this.initServiceFallback);
+  _ServicesInitializer(this.initService);
 
-  Future<ServiceError?> process(List<Service> services) async {
+  Future<ServiceError?> process(List<Service>? services) async {
 
-    for (Service service in services) {
-      (service.isInitialized ? _done : _toDo).add(service);
-    }
+    _prepareServices(services);
 
     if (_toDo.isNotEmpty) {
       _completer = Completer<ServiceError?>();
@@ -178,21 +147,40 @@ class _ServicesInitializer {
     }
   }
 
+  void _prepareServices(Iterable<Service>? services) {
+    if (services != null) {
+      for (Service service in services) {
+        _prepareService(service);
+      }
+    }
+  }
+
+  void _prepareService(Service service) {
+    if (!_done.contains(service) && !_toDo.contains(service)) {
+      (service.isInitialized ? _done : _toDo).add(service);
+      _prepareServices(service.serviceDependsOn);
+    }
+  }
+
   void _run() {
     if (_toDo.isNotEmpty) {
       for (Service service in _toDo) {
-        try {
-          if (_canStartService(service) && !_inProgress.contains(service)) {
-            _inProgress.add(service);
-            initService(service).then((ServiceError? error) async {
-              _inProgress.remove(service);
-              await _finishInitService(service, error);
-            });
-          }
-        }
-        on ServiceError catch (error) {
-          _completer?.complete(error);
-          return;
+        if (_canStartService(service) && !_inProgress.contains(service)) {
+          _inProgress.add(service);
+          initService(service).then((ServiceError? error) async {
+            _inProgress.remove(service);
+            if ((_completer != null) && (_completer?.isCompleted != true)) {
+              if (error?.severity == ServiceErrorSeverity.fatal) {
+                _completer?.complete(error);
+                _completer = null;
+              }
+              else {
+                _done.add(service);
+                _toDo.remove(service);
+                _run();
+              }
+            }
+          });
         }
       }
 
@@ -201,7 +189,7 @@ class _ServicesInitializer {
           source: null,
           severity: ServiceErrorSeverity.fatal,
           title: 'Services Initialization Error',
-          description: 'Service dependency cycle detected: ${_findServiceCycle().join(', ')}.',
+          description: 'Service dependency cycle detected.',
         ));
         _completer = null;
       }
@@ -212,83 +200,9 @@ class _ServicesInitializer {
     }
   }
 
-  Future<void> _finishInitService(Service service, ServiceError? error, {bool tryFallback = true}) async {
-    if (_completer != null && !_completer!.isCompleted) {
-      if (error?.severity == ServiceErrorSeverity.fatal) {
-        if (tryFallback) {
-          _inProgress.add(service);
-          error = await initServiceFallback(service);
-          _inProgress.remove(service);
-
-          _finishInitService(service, error, tryFallback: false);
-        }
-
-        _completer?.complete(error);
-        _completer = null;
-      }
-      else {
-        _done.add(service);
-        _toDo.remove(service);
-        _run();
-      }
-    }
-  }
-
   bool _canStartService(Service service) {
     Set<Service>? serviceDependsOn = service.serviceDependsOn;
-    if ((serviceDependsOn == null) || serviceDependsOn.isEmpty) {
-      return true;
-    }
-
-    for (Service dependency in serviceDependsOn) {
-      if (!_done.contains(dependency)) {
-        if (!_toDo.contains(dependency) && !_inProgress.contains(dependency)) {
-          // return with an error if a service depends on another service that is missing from the main initialization list (missing from _toDo, _inProgress, and _done)
-          throw ServiceError(
-            source: service,
-            severity: ServiceErrorSeverity.fatal,
-            title: 'Services Initialization Error',
-            description: 'Service dependency missing from initialization list: ${dependency.debugDisplayName}.',
-          );
-        }
-        return false;
-      }
-    }
-    return true;
-  }
-
-  List<Service> _findServiceCycle() {
-    Map<Service, Service> _firstUninitializedDependencies = {};
-    // find first uninitialized dependency for each uninitialized service
-    for (Service toDo in _toDo) {
-      try {
-        Service? dependency = toDo.serviceDependsOn?.firstWhere((dependency) => _toDo.contains(dependency) && !_done.contains(dependency));
-        if (dependency != null) {
-          _firstUninitializedDependencies[toDo] = dependency;
-        }
-      }
-      catch (error) {
-        if (error is! StateError) {
-          debugPrint(error.toString());
-        }
-      }
-    }
-
-    // traverse the uninitialized service graph to determine the cycle
-    int cycleLength = 0;
-    Map<Service, int> serviceVisits = Map.fromIterable(_toDo, value: (service) => 0);
-    Service next = _toDo.first;
-    while (cycleLength < 2 * _toDo.length) { // maximum possible cycle length is the number of uninitialized services (allow to visit at most twice)
-      if (_firstUninitializedDependencies[next] != null) {
-        next = _firstUninitializedDependencies[next]!;
-        if (serviceVisits[next] == 2) {
-          break; // if trying to visit a service that has been visited twice already, then the cycle must be the list of services visited twice
-        }
-        serviceVisits[next] = serviceVisits[next]! + 1;
-      }
-      cycleLength++;
-    }
-    return serviceVisits.keys.where((service) => serviceVisits[service] == 2).toList(); // all services visited twice are part of the cycle
+    return (serviceDependsOn == null) || serviceDependsOn.isEmpty || _done.containsAll(serviceDependsOn);
   }
 }
 
