@@ -110,18 +110,22 @@ void main(List<String> arguments) async {
   }
 }
 
-String _prettyJsonEncode(LinkedHashMap<String, dynamic> jsonObject, {bool deepFormat = false}){
+String _prettyJsonEncode(LinkedHashMap<dynamic, dynamic> jsonObject, {bool deepFormat = false}){
   String out = '{';
   bool first = true;
-  for (MapEntry<String, dynamic> entry in jsonObject.entries) {
+  for (dynamic entry in jsonObject.entries) {
+    if (!(entry is MapEntry<dynamic, dynamic>)) {
+      print('invalid entry type: ${entry.key} - ${entry.runtimeType}');
+      continue;
+    }
     if (!first) {
       out += ',';
     }
     out += '\n';
     out += '  "${entry.key}": {';
-    if (entry.value is LinkedHashMap<String, dynamic>) {
+    if (entry.value is LinkedHashMap<dynamic, dynamic> || entry.key == 'themes') {
       bool firstSub = true;
-      for (MapEntry<String, dynamic> subentry in entry.value.entries) {
+      for (dynamic subentry in entry.value.entries) {
         if (!firstSub) {
           out += ',';
         }
@@ -130,7 +134,7 @@ String _prettyJsonEncode(LinkedHashMap<String, dynamic> jsonObject, {bool deepFo
           firstSub = true;
           continue;
         }
-        LinkedHashMap<String, dynamic> subMap = LinkedHashMap<String, dynamic>();
+        LinkedHashMap<dynamic, dynamic> subMap = LinkedHashMap<dynamic, dynamic>();
         subMap.addEntries([subentry]);
         String valJson;
         if (entry.key == 'themes' || deepFormat) {
@@ -172,17 +176,21 @@ LinkedHashMap<String, dynamic> _mergeJson(LinkedHashMap<String, dynamic>? from, 
       for (MapEntry<String, dynamic> entry in section.value.entries ?? {}) {
         dynamic outSection = out[section.key];
         if (!outSection.containsKey(entry.key)) {
-          if (entry.key.startsWith('_blank')) {
-            if (!addedToSection || lastBlank != null) {
-              continue;
+          if (section.key != 'themes') {
+            if (entry.key.startsWith('_blank')) {
+              if (!addedToSection || lastBlank != null) {
+                continue;
+              }
+              lastBlank = entry.key;
+            } else {
+              lastBlank = null;
             }
-            lastBlank = entry.key;
-          } else {
-            lastBlank = null;
-          }
-          if (!addedToSection) {
-            out[section.key]['_blank_plugin_start'] = '';
-            out[section.key]['_MERGED FROM PLUGIN_'] = 'The following styles were merged from the plugin. They can be overridden here as needed.';
+            if (!addedToSection) {
+              if (outSection.isNotEmpty){
+                out[section.key]['_blank_plugin_start'] = '';
+              }
+              out[section.key]['_MERGED FROM PLUGIN_'] = 'The following styles were merged from the plugin. They can be overridden here as needed.';
+            }
           }
           print("added ${section.key}: ${entry.key} = ${entry.value}");
           out[section.key][entry.key] = entry.value;
@@ -345,7 +353,7 @@ String _buildFile(List<String> classStrings) {
 
 Future<LinkedHashMap<String, dynamic>?> _loadFileJson(String filepath) async {
   try {
-    String content = await File(filepath).readAsString();
+    String content = (await File(filepath).readAsString()).trim();
     List<String> lines = content.split('\n');
     for (final (int index, String line) in lines.indexed) {
       if (line.trim().isEmpty) {
