@@ -88,7 +88,7 @@ class Services {
 
   Future<ServiceError?> init() async {
     ServiceError? error = await _ServicesInitializer(initService).process(_services);
-    _isInitialized = (error != null);
+    _isInitialized = (error == null);
     return error;
   }
 
