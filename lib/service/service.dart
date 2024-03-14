@@ -65,6 +65,8 @@ class Services {
   static set instance(Services? value) => _instance = value;
 
   List<Service>? _services;
+
+  Future<ServiceError?>? _initialzeFuture;
   bool? _isInitialized;
 
   void create(List<Service> services) {
@@ -87,9 +89,16 @@ class Services {
   }
 
   Future<ServiceError?> init() async {
-    ServiceError? error = await _ServicesInitializer(initService).process(_services);
-    _isInitialized = (error == null);
-    return error;
+    if (_initialzeFuture != null) {
+      return await _initialzeFuture;
+    }
+    else {
+      _initialzeFuture = _ServicesInitializer(initService).process(_services);
+      ServiceError? error = await _initialzeFuture;
+      _isInitialized = (error == null);
+      _initialzeFuture = null;
+      return error;
+    }
   }
 
   bool get isInitialized => (_isInitialized == true);
