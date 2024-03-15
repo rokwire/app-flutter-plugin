@@ -15,7 +15,6 @@
  */
  
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
@@ -25,7 +24,6 @@ import 'package:rokwire_plugin/service/firebase_core.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 
@@ -93,7 +91,7 @@ class FirebaseMessaging with Service {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { FirebaseCore(), Storage(), Config() };
+    return { FirebaseCore() };
   }
 
   Future<NotificationsAuthorizationStatus> get authorizationStatus async {

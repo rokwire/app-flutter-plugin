@@ -124,40 +124,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    await _initServiceOffline();
-
-    if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
-      if (!await authenticateAnonymously()) {
-        throw ServiceError(
-          source: this,
-          severity: ServiceErrorSeverity.fatal,
-          title: 'Authentication Initialization Failed',
-          description: 'Failed to initialize anonymous authentication token.',
-        );
-      }
-    }
-
-    if (kIsWeb && _token == null) {
-      refreshToken(ignoreUnauthorized: true).then((token) {
-        if (token != null) {
-          _refreshAccount();
-          NotificationService().notify(notifyLoginSucceeded, null);
-          NotificationService().notify(notifyLoginChanged);
-        }
-      });
-    } else {
-      _refreshAccount();
-    }
-
-    await super.initService();
-  }
-
-  @override
-  Future<void> initServiceFallback() async {
-    await _initServiceOffline();
-  }
-
-  Future<void> _initServiceOffline() async {
     _anonymousId = Storage().auth2AnonymousId;
 
     List<Future<dynamic>> futures = [
@@ -200,6 +166,31 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
+
+    if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
+      if (!await authenticateAnonymously()) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Authentication Initialization Failed',
+          description: 'Failed to initialize anonymous authentication token.',
+        );
+      }
+    }
+
+    if (kIsWeb && (_token == null)) {
+      refreshToken(ignoreUnauthorized: true).then((token) {
+        if (token != null) {
+          _refreshAccount();
+          NotificationService().notify(notifyLoginSucceeded, null);
+          NotificationService().notify(notifyLoginChanged);
+        }
+      });
+    } else {
+      _refreshAccount();
+    }
+
+    await super.initService();
   }
 
   @override

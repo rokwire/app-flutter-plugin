@@ -279,12 +279,6 @@ class Storage with Service {
   bool? get encryptedMigratedToSecureStorage => getBoolWithName(encryptedMigratedToSecureStorageKey);
   set encryptedMigratedToSecureStorage(bool? value) => setBoolWithName(encryptedMigratedToSecureStorageKey, value);
 
-  // Config
-
-  String get configEnvKey => 'edu.illinois.rokwire.config_environment';
-  String? get configEnvironment => getStringWithName(configEnvKey);
-  set configEnvironment(String? value) => setStringWithName(configEnvKey, value);
-
   // Upgrade
 
   String get reportedUpgradeVersionsKey  => 'edu.illinois.rokwire.reported_upgrade_versions';
