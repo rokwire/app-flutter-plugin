@@ -734,7 +734,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.6.0"
+    version: "1.6.3"
   shared_preferences:
     dependency: transitive
     description:
