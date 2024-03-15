@@ -15,6 +15,7 @@
  */
  
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
