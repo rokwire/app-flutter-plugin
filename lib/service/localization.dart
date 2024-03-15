@@ -76,7 +76,10 @@ class Localization with Service implements NotificationsListener {
 
   @override
   void createService() {
-    NotificationService().subscribe(this, AppLifecycle.notifyStateChanged);
+    NotificationService().subscribe(this,[
+      Service.notifyInitialized,
+      AppLifecycle.notifyStateChanged,
+    ]);
   }
 
   @override
@@ -110,7 +113,7 @@ class Localization with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Storage(), Config() };
+    return { Storage() };
   }
 
   // Locale
@@ -289,12 +292,36 @@ class Localization with Service implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == AppLifecycle.notifyStateChanged) {
-      _onAppLifecycleStateChanged(param);
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized((param is Service) ? param : null);
+    }
+    else if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged((param is AppLifecycleState) ? param : null);
     }
   }
 
-  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
+  @protected
+  void onServiceInitialized(Service? service) async {
+    if (this.isInitialized) {
+      if (service == Config()) {
+        _assetsDir = await getAssetsDir();
+
+        String defaultLanguage = supportedLanguages[0];
+        if (_defaultLocale?.languageCode != defaultLanguage) {
+          _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
+          await initDefaultStirngs(defaultLanguage);
+        }
+
+        String? currentLanguage = _currentLocale?.languageCode;
+        if (currentLanguage != null) {
+          await initLocaleStirngs(currentLanguage);
+        }
+      }
+    }
+  }
+
+  @protected
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }

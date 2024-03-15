@@ -85,7 +85,10 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void createService() {
-    NotificationService().subscribe(this, AppLifecycle.notifyStateChanged);
+    NotificationService().subscribe(this, [
+      Service.notifyInitialized,
+      AppLifecycle.notifyStateChanged
+    ]);
   }
 
   @override
@@ -96,30 +99,22 @@ class Styles extends Service implements NotificationsListener{
   @override
   Future<void> initService() async {
     List<Future<dynamic>> futures = [
-      getAssetsDir(),
       loadAssetsManifest(),
       loadFromAssets(assetsKey),
+      if (!kIsWeb)
+        loadFromAssets(appAssetsKey),
+      if (!kIsWeb)
+        getAssetsDir(),
     ];
-
-    if (!kIsWeb) {
-      futures.add(loadFromAssets(appAssetsKey));
-    }
     List<dynamic> results = await Future.wait(futures);
-    _assetsDir = results[0];
-    _assetsManifest = results[1];
-    _assetsStyles = results[2];
-    if (!kIsWeb) {
-      _appAssetsStyles = results[3];
+    _assetsManifest = (0 < results.length) ? results[0] : null;
+    _assetsStyles = (1 < results.length) ? results[1] : null;
+    _appAssetsStyles = (2 < results.length) ? results[2] : null;
+    _assetsDir = (3 < results.length) ? results[3] : null;
+
+    if (_assetsDir != null) {
+      await initCaches();
     }
-
-    futures = [
-      loadFromCache(netCacheFileName),
-      loadFromCache(debugCacheFileName),
-    ];
-    results = await Future.wait(futures);
-
-    _netAssetsStyles = results[0];
-    _debugAssetsStyles = results[1];
 
     if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
       await build();
@@ -136,33 +131,36 @@ class Styles extends Service implements NotificationsListener{
     }
   }
 
-  @override
-  Future<void> initServiceFallback() async {
-
-    _assetsManifest = await loadAssetsManifest();
-    _assetsStyles = await loadFromAssets(assetsKey);
-    _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey);
-
-    if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
-      await build();
-    }
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Config(), Storage() };
-  }
-
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
+
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized(param is Service ? param : null);
+    }
     if (name == AppLifecycle.notifyStateChanged) {
-      _onAppLifecycleStateChanged(param);
+      onAppLifecycleStateChanged((param is AppLifecycleState) ? param : null);
     }
   }
 
-  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
+  @protected
+  Future<void> onServiceInitialized(Service? service) async {
+    if (isInitialized) {
+      if ((service == Config()) && !kIsWeb) {
+        _assetsDir = await getAssetsDir();
+        if (_assetsDir != null) {
+          await initCaches();
+        }
+        if ((_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
+          await build();
+        }
+      }
+    }
+  }
+
+  @protected
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -264,6 +262,18 @@ class Styles extends Service implements NotificationsListener{
       await build();
       NotificationService().notify(notifyChanged, null);
     }
+  }
+
+  @protected
+  Future<void> initCaches() async {
+    List<Future<dynamic>> futures = [
+      loadFromCache(netCacheFileName),
+      loadFromCache(debugCacheFileName),
+    ];
+
+    List<dynamic> results = await Future.wait(futures);
+    _netAssetsStyles = results[0];
+    _debugAssetsStyles = results[1];
   }
 
   @protected

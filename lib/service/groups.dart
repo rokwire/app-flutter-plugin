@@ -155,7 +155,7 @@ class Groups with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { DeepLink(), Config(), Auth2() };
+    return { Config(), Auth2() };
   }
 
   // NotificationsListener

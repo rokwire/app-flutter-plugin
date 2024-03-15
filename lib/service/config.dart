@@ -23,7 +23,6 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
-import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -41,7 +40,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   static const String notifyUpgradeAvailable    = "edu.illinois.rokwire.config.upgrade.available";
   static const String notifyOnboardingRequired  = "edu.illinois.rokwire.config.onboarding.required";
   static const String notifyConfigChanged       = "edu.illinois.rokwire.config.changed";
-  static const String notifyEnvironmentChanged  = "edu.illinois.rokwire.config.environment.changed";
 
   static const String _configsAsset       = "configs.json.enc";
   static const String _configKeysAsset    = "config.keys.json";
@@ -94,7 +92,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @override
   Future<void> initService() async {
 
-    _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
+    _configEnvironment = _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
     if (!kIsWeb) {
@@ -102,15 +100,52 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
     }
 
-    await init();
+    if (!isReleaseWeb) {
+      _encryptionKeys = await loadEncryptionKeysFromAssets();
+      if (_encryptionKeys == null) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Config Initialization Failed',
+          description: 'Failed to load config encryption keys.',
+        );
+      }
+    }
+
+    if (!kIsWeb) {
+      _config = await loadFromFile(configFile);
+    }
+
+    if (_config == null) {
+      if (!isReleaseWeb) {
+        _configAsset = await loadFromAssets();
+      }
+      String? configString = await loadAsStringFromNet();
+      _configAsset = null;
+
+      _config = (configString != null) ? await configFromJsonString(configString) : null;
+      //TODO: decide how best to handle secret keys
+      if (_config != null) { // && secretKeys.isNotEmpty) {
+        configFile.writeAsStringSync(configString!, flush: true);
+        checkUpgrade();
+      }
+      else {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Config Initialization Failed',
+          description: 'Failed to initialize application configuration.',
+        );
+      }
+    }
+    else {
+      checkUpgrade();
+      updateFromNet();
+    }
+
     await super.initService();
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage(), Connectivity() };
-  }
-  
   // NotificationsListener
 
   @override
@@ -297,52 +332,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Future<void> init() async {
-    if (!isReleaseWeb) {
-      _encryptionKeys = await loadEncryptionKeysFromAssets();
-      if (_encryptionKeys == null) {
-        throw ServiceError(
-          source: this,
-          severity: ServiceErrorSeverity.fatal,
-          title: 'Config Initialization Failed',
-          description: 'Failed to load config encryption keys.',
-        );
-      }
-    }
-
-    if (!kIsWeb) {
-      _config = await loadFromFile(configFile);
-    }
-
-    if (_config == null) {
-      if (!isReleaseWeb) {
-        _configAsset = await loadFromAssets();
-      }
-      String? configString = await loadAsStringFromNet();
-      _configAsset = null;
-
-      _config = (configString != null) ? await configFromJsonString(configString) : null;
-      //TODO: decide how best to handle secret keys
-      if (_config != null) { // && secretKeys.isNotEmpty) {
-        configFile.writeAsStringSync(configString!, flush: true);
-        checkUpgrade();
-      }
-      else {
-        throw ServiceError(
-          source: this,
-          severity: ServiceErrorSeverity.fatal,
-          title: 'Config Initialization Failed',
-          description: 'Failed to initialize application configuration.',
-        );
-      }
-    }
-    else {
-      checkUpgrade();
-      updateFromNet();
-    }
-  }
-
-  @protected
   Future<void> updateFromNet() async {
     String? configString = await loadAsStringFromNet();
     Map<String, dynamic>? config = await configFromJsonString(configString);
@@ -486,21 +475,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
     else {
       return null;
-    }
-  }
-
-  // Environment
-
-  set configEnvironment(ConfigEnvironment? configEnvironment) {
-    if (_configEnvironment != configEnvironment) {
-      _configEnvironment = configEnvironment;
-      Storage().configEnvironment = configEnvToString(_configEnvironment);
-
-      init().catchError((e){
-        debugPrint(e.toString());
-      }).whenComplete((){
-        NotificationService().notify(notifyEnvironmentChanged, null);
-      });
     }
   }
 

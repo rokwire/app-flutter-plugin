@@ -88,7 +88,7 @@ class GeoFence with Service implements NotificationsListener, ContentItemCategor
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Storage(), Content()};
+    return { Storage(), Content() };
   }
 
   // NotificationsListener
