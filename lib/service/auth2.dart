@@ -722,7 +722,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({
+    Auth2AccountScope? scope = defaultLoginScope, bool? link,
+    bool useExternalBrowser = false}) async {
     if (Config().authBaseUrl != null) {
 
       if (_oidcAuthenticationCompleters == null) {
@@ -734,7 +736,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
-          await _launchUrl(_oidcLogin?.loginUrl);
+          _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
         }
         else {
           Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
@@ -1915,7 +1917,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Helpers
 
-  Future<void> _launchUrl(String? urlStr) async {
+  Future<void> _launchUrl(String? urlStr,
+      {bool useExternalBrowser = false}) async {
     try {
       if ((urlStr != null)) {
         if (kIsWeb) {
@@ -1925,7 +1928,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             onDeepLinkUri(Uri.tryParse(url));
           });
         } else if (await canLaunchUrlString(urlStr)) {
-          await launchUrlString(urlStr);
+          await launchUrlString(urlStr, mode: useExternalBrowser ?
+            LaunchMode.externalApplication : LaunchMode.platformDefault);
         }
       }
     }
