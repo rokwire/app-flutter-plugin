@@ -17,7 +17,7 @@ class TabBar extends StatefulWidget {
   _TabBarState createState() => _TabBarState();
 
   @protected
-  Color? get backgroundColor => Styles().colors?.surface ?? Colors.white;
+  Color? get backgroundColor => Styles().colors.surface ?? Colors.white;
 
   @protected
   BoxBorder? get border => null;
@@ -185,10 +185,10 @@ class TabWidget extends StatelessWidget {
   TextAlign get tabTextAlign => TextAlign.center;
 
   @protected
-  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies?.bold, color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium, fontSize: 12);
+  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies.bold, color: selected ? Styles().colors.fillColorSecondary : Styles().colors.textMedium, fontSize: 12);
 
   @protected
-  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaleFactor, 2);
+  double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaler.scale(1), 2);
 
   @protected
   TextOverflow get textOverflow => TextOverflow.ellipsis;
@@ -196,7 +196,7 @@ class TabWidget extends StatelessWidget {
   @protected
   Widget getTabText(BuildContext context) => Row(children: [
     Expanded(child:
-      Text(label ?? '', textScaleFactor: getTextScaleFactor(context), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
+      Text(label ?? '', textScaler: TextScaler.linear(getTextScaleFactor(context)), textAlign: tabTextAlign, style: tabTextStyle, overflow: textOverflow,),
     )
   ]);
 
@@ -204,8 +204,8 @@ class TabWidget extends StatelessWidget {
   Widget getTabIcon(BuildContext context)  {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (key != null) ? Styles().images?.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
-        color: selected ? Styles().colors?.fillColorSecondary : Styles().colors?.textMedium) ?? defaultIcon : defaultIcon;
+    return (key != null) ? Styles().images.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
+        color: selected ? Styles().colors.fillColorSecondary : Styles().colors.textMedium) ?? defaultIcon : defaultIcon;
   }
 
   @protected
@@ -220,7 +220,7 @@ class TabWidget extends StatelessWidget {
   double get selectedIndicatorHeight => 4;
 
   @protected
-  Color? get selectedIndicatorColor => Styles().colors?.fillColorSecondary;
+  Color? get selectedIndicatorColor => Styles().colors.fillColorSecondary;
 
 }
 
@@ -243,7 +243,7 @@ class TabCloseWidget extends StatelessWidget {
     return Semantics(label: label, hint: hint, button: true, child:
       GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
         Center(child:
-          Styles().images?.getImage(iconAsset, excludeFromSemantics: true,),
+          Styles().images.getImage(iconAsset, excludeFromSemantics: true,),
         ),
       )
     );

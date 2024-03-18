@@ -171,19 +171,19 @@ class AppDateTime with Service {
       timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
 
       if (DateTimeUtils.isToday(dateTimeToCompare, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.time.today', 'Today');
+        displayDay = Localization().getStringEx('model.explore.date_time.today', 'Today');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isTomorrow(dateTimeToCompare, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.time.tomorrow', 'Tomorrow');
+        displayDay = Localization().getStringEx('model.explore.date_time.tomorrow', 'Tomorrow');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isYesterday(dateTimeToCompare, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
         if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.time.at', 'at')}";
+          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
       } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
         displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
@@ -216,4 +216,21 @@ class AppDateTime with Service {
     }
     return dateTimeToCompare;
   }
+}
+
+extension DateTimeUni on DateTime {
+
+  timezone.TZDateTime? toUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(this, AppDateTime().universityLocation!) : null;
+  static timezone.TZDateTime? nowUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(DateTime.now(), AppDateTime().universityLocation!) : null;
+
+  timezone.TZDateTime  toUniOrLocal() => timezone.TZDateTime.from(this, timezoneUniOrLocal);
+  static timezone.TZDateTime  nowUniOrLocal() => timezone.TZDateTime.from(DateTime.now(), timezoneUniOrLocal);
+  static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? timezone.local;
+}
+
+extension DateTimeLocal on DateTime {
+
+  timezone.TZDateTime  toLocalTZ() => timezone.TZDateTime.from(this.toLocal(), timezoneLocal);
+  static timezone.TZDateTime  nowLocalTZ() => timezone.TZDateTime.from(DateTime.now(), timezoneLocal);
+  static timezone.Location get timezoneLocal => timezone.local;
 }

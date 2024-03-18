@@ -21,232 +21,162 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract class Explore implements Comparable<Explore> {
 
-  String?   get exploreId;
-  String?   get exploreTitle;
-  String?   get exploreSubTitle;
-  String?   get exploreShortDescription;
-  String?   get exploreLongDescription;
-  DateTime? get exploreStartDateUtc;
-  String?   get exploreImageURL;
-  String?   get explorePlaceId;
-  ExploreLocation? get exploreLocation;
-  String? get exploreLocationDescription => exploreLocation?.description;
-  Map<String, dynamic> toJson();
+  String?   get exploreId => null;
+  String?   get exploreTitle => null;
+  String?   get exploreDescription => null;
+  DateTime? get exploreDateTimeUtc => null;
+  String?   get exploreImageURL => null;
+  ExploreLocation? get exploreLocation => null;
 
   @override
-  int compareTo(Explore other) => SortUtils.compare(exploreStartDateUtc, other.exploreStartDateUtc);
-
-  // ExploreJsonHandler
-  static final Set<ExploreJsonHandler> _jsonHandlers = {};
-  static void addJsonHandler(ExploreJsonHandler handler) => _jsonHandlers.add(handler);
-  static void removeJsonHandler(ExploreJsonHandler handler) => _jsonHandlers.remove(handler);
-
-  static ExploreJsonHandler? _getJsonHandler(Map<String, dynamic>? json) {
-    if (json != null) {
-      for (ExploreJsonHandler handler in _jsonHandlers) {
-        if (handler.exploreCanJson(json)) {
-          return handler;
-        }
-      }
-    }
-    return null;
+  int compareTo(Explore other) {
+    return ((exploreDateTimeUtc != null) && (other.exploreDateTimeUtc != null)) ?
+      SortUtils.compare(exploreDateTimeUtc, other.exploreDateTimeUtc) :
+      SortUtils.compare(exploreTitle, other.exploreTitle);
   }
-
-  static Explore? fromJson(Map<String, dynamic>? json)  =>
-    _getJsonHandler(json)?.exploreFromJson(json);
-
-  // List
-  
-  static List<Explore>? listFromJson(List<dynamic>? jsonList) {
-    List<Explore>? explores;
-    if (jsonList is List) {
-      explores = <Explore>[];
-      for (dynamic jsonEntry in jsonList) {
-        Explore? explore = Explore.fromJson(jsonEntry);
-        if (explore != null) {
-          explores.add(explore);
-        }
-      }
-    }
-    return explores;
-  }
-
-  static List<dynamic>? listToJson(List<Explore>? explores) {
-    List<dynamic>? result;
-    if (explores != null) {
-      result = [];
-      for (Explore explore in explores) {
-        result.add(explore.toJson());
-      }
-    }
-    return result;
-  }
-
-}
-
-//////////////////////////////
-/// ExploreJsonHandler
-
-abstract class ExploreJsonHandler {
-  bool exploreCanJson(Map<String, dynamic>? json) => false;
-  Explore? exploreFromJson(Map<String, dynamic>? json) => null;
 }
 
 //////////////////////////////
 /// ExploreLocation
 
 class ExploreLocation {
-  String? locationId;
-  String? name;
-  String? building;
-  String? address;
-  String? city;
-  String? state;
-  String? zip;
-  num? latitude;
-  num? longitude;
-  int? floor;
-  String? description;
+  final String? id;
+  final double? latitude;
+  final double? longitude;
+  final String? name;
+  final String? description;
+  final String? building;
+  final String? fullAddress;
+  final String? address;
+  final String? city;
+  final String? state;
+  final String? zip;
+  final String? floor;
+  final String? room;
 
-  ExploreLocation(
-      {this.locationId,
-      this.name,
-      this.building,
-      this.address,
-      this.city,
-      this.state,
-      this.zip,
-      this.latitude,
-      this.longitude,
-      this.floor,
-      this.description});
+  ExploreLocation({
+    this.id,
+    this.latitude,
+    this.longitude,
+    this.name,
+    this.description,
+    this.building,
+    this.fullAddress,
+    this.address,
+    this.city,
+    this.state,
+    this.zip,
+    this.floor,
+    this.room,
+  });
 
   static ExploreLocation? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? ExploreLocation(
-      locationId: JsonUtils.stringValue(json['locationId']),
+      id: JsonUtils.stringValue(json['id']),
+      latitude: JsonUtils.doubleValue(json['latitude']),
+      longitude: JsonUtils.doubleValue(json['longitude']),
       name: JsonUtils.stringValue(json['name']),
+      description: JsonUtils.stringValue(json['description']),
       building: JsonUtils.stringValue(json['building']),
+      fullAddress: JsonUtils.stringValue(json['full_address']),
       address: JsonUtils.stringValue(json['address']),
       city: JsonUtils.stringValue(json['city']),
       state: JsonUtils.stringValue(json['state']),
       zip: JsonUtils.stringValue(json['zip']),
-      latitude: JsonUtils.doubleValue(json['latitude']),
-      longitude: JsonUtils.doubleValue(json['longitude']),
-      floor: JsonUtils.intValue(json['floor']),
-      description: JsonUtils.stringValue(json['description'])) : null;
+      floor: JsonUtils.stringValue(json['floor']),
+      room: JsonUtils.stringValue(json['room']),
+    ) : null;
   }
 
   toJson() {
     return {
-      "locationId": locationId,
+      "id": id,
+      "latitude": latitude,
+      "longitude": longitude,
       "name": name,
+      "description": description,
       "building": building,
+      "fullAddress": fullAddress,
       "address": address,
       "city": city,
       "state": state,
       "zip": zip,
-      "latitude": latitude,
-      "longitude": longitude,
       "floor": floor,
-      "description": description
+      "room": room,
     };
   }
 
+  factory ExploreLocation.fromOther(ExploreLocation? other, {
+    String? id,
+    double? latitude,
+    double? longitude,
+    String? description,
+    String? name,
+    String? building,
+    String? fullAddress,
+    String? address,
+    String? city,
+    String? state,
+    String? zip,
+    String? floor,
+    String? room,
+  }) => ExploreLocation(
+    id: id ?? other?.id,
+    latitude: latitude ?? other?.latitude,
+    longitude: longitude ?? other?.longitude,
+    name: name ?? other?.name,
+    description: description ?? other?.description,
+    building: building ?? other?.building,
+    fullAddress: fullAddress ?? other?.fullAddress,
+    address: address ?? other?.address,
+    city: city ?? other?.city,
+    state: state ?? other?.state,
+    zip: zip ?? other?.zip,
+    floor: floor ?? other?.floor,
+    room: room ?? other?.room,
+  );
+
   @override
   bool operator ==(other) => (other is ExploreLocation) &&
-    (other.locationId == locationId) &&
+    (other.id == id) &&
+    (other.latitude == latitude) &&
+    (other.longitude == longitude) &&
     (other.name == name) &&
+    (other.description == description) &&
     (other.building == building) &&
+    (other.fullAddress == fullAddress) &&
     (other.address == address) &&
     (other.city == city) &&
     (other.state == state) &&
     (other.zip == zip) &&
-    (other.latitude == latitude) &&
-    (other.longitude == longitude) &&
     (other.floor == floor) &&
-    (other.description == description);
+    (other.room == room);
 
   @override
   int get hashCode =>
-    (locationId?.hashCode ?? 0) ^
+    (id?.hashCode ?? 0) ^
+    (latitude?.hashCode ?? 0) ^
+    (longitude?.hashCode ?? 0) ^
     (name?.hashCode ?? 0) ^
+    (description?.hashCode ?? 0) ^
     (building?.hashCode ?? 0) ^
+    (fullAddress?.hashCode ?? 0) ^
     (address?.hashCode ?? 0) ^
     (city?.hashCode ?? 0) ^
     (state?.hashCode ?? 0) ^
     (zip?.hashCode ?? 0) ^
-    (latitude?.hashCode ?? 0) ^
-    (longitude?.hashCode ?? 0) ^
     (floor?.hashCode ?? 0) ^
-    (description?.hashCode ?? 0);
-
-  String getDisplayName() {
-    String displayText = "";
-
-    if ((name != null) && name!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += ", ";
-      }
-      displayText += name!;
-    }
-
-    if ((building != null) && building!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += ", ";
-      }
-      displayText += building!;
-    }
-
-    return displayText;
-  }
-
-  String getDisplayAddress() {
-    String displayText = "";
-
-    if ((address != null) && address!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += ", ";
-      }
-      displayText += address!;
-    }
-
-    if ((city != null) && city!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += ", ";
-      }
-      displayText += city!;
-    }
-
-    String delimiter = ", ";
-
-    if ((state != null) && state!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += ", ";
-      }
-      displayText += state!;
-      delimiter = " ";
-    }
-
-    if ((zip != null) && zip!.isNotEmpty) {
-      if (displayText.isNotEmpty) {
-        displayText += delimiter;
-      }
-      displayText += zip!;
-    }
-
-    return displayText;
-  }
-
-  String? get coordinatesString =>
-    ((latitude != null) && (longitude != null)) ? "[$latitude, $longitude]" : null;
-
-  String? get displayCoordinates =>
-    ((latitude != null) && (longitude != null)) ? "[${latitude?.toStringAsFixed(6)}, ${longitude?.toStringAsFixed(6)}]" : null;
-
+    (room?.hashCode ?? 0);
 
   String? get analyticsValue {
     if ((name != null) && name!.isNotEmpty) {
       return name;
+    }
+    else if ((building != null) && building!.isNotEmpty) {
+      return building;
+    }
+    else if ((fullAddress != null) && fullAddress!.isNotEmpty) {
+      return fullAddress;
     }
     else if ((description != null) && description!.isNotEmpty) {
       return description;
@@ -258,12 +188,5 @@ class ExploreLocation {
 
   bool get isLocationCoordinateValid {
     return (latitude != null) && (latitude != 0) && (longitude != null) && (longitude != 0);
-  }
-
-  // ExploreJsonHandler
-  static bool canJson(Map<String, dynamic>? json) {
-    return (json != null) &&
-      (JsonUtils.doubleValue(json['latitude']) != null) &&
-      (JsonUtils.doubleValue(json['longitude']) != null);
   }
 }

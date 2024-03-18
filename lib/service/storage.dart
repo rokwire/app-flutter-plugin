@@ -285,9 +285,13 @@ class Storage with Service {
   set httpProxyPort(String? value) => setStringWithName(httpProxyPortKey, value);
 
   // Language
-  String get currentLanguageKey => 'edu.illinois.rokwire.current_language';
-  String? get currentLanguage => getStringWithName(currentLanguageKey);
-  set currentLanguage(String? value) => setStringWithName(currentLanguageKey, value);
+  String get systemLanguageKey => 'edu.illinois.rokwire.language.system';
+  String? get systemLanguage => getStringWithName(systemLanguageKey);
+  set systemLanguage(String? value) => setStringWithName(systemLanguageKey, value);
+
+  String get selectedLanguageKey => 'edu.illinois.rokwire.language.selected';
+  String? get selectedLanguage => getStringWithName(selectedLanguageKey);
+  set selectedLanguage(String? value) => setStringWithName(selectedLanguageKey, value);
 
   String get appSelectedLanguageKey => 'edu.illinois.rokwire.app_selected_language';
   String? get appSelectedLanguage => getStringWithName(appSelectedLanguageKey);
@@ -348,22 +352,6 @@ class Storage with Service {
     catch(e) { debugPrint(e.toString()); return null; }
   }
   set geoFenceRegionOverrides(Map<String, bool>? value) => setStringWithName(geoFenceRegionOverridesKey, JsonUtils.encode(value));
-
-  // Calendar
-  String get calendarEventsTableKey => 'edu.illinois.rokwire.calendar.events_table';
-  Map<String, String>? get calendarEventsTable {
-    try { return JsonUtils.decodeMap(getStringWithName(calendarEventsTableKey))?.cast<String, String>(); }
-    catch(e) { debugPrint(e.toString()); return null; }
-  }
-  set calendarEventsTable(Map<String, String>? table) => setStringWithName(calendarEventsTableKey, JsonUtils.encode(table));
-
-  String get calendarEnableSaveKey => 'edu.illinois.rokwire.calendar.save_enabled';
-  bool? get calendarEnabledToSave => getBoolWithName(calendarEnableSaveKey, defaultValue: true);
-  set calendarEnabledToSave(bool? value) => setBoolWithName(calendarEnableSaveKey, value);
-
-  String get calendarEnablePromptKey => 'edu.illinois.rokwire.calendar.prompt_enabled';
-  bool? get calendarCanPrompt => getBoolWithName(calendarEnablePromptKey, defaultValue: false);
-  set calendarCanPrompt(bool? value) => setBoolWithName(calendarEnablePromptKey, value);
 
   // Skills Self-Evaluation
   String get assessmentsEnableSaveKey => 'edu.illinois.rokwire.assessments.save_enabled';

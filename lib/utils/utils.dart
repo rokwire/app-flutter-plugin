@@ -18,29 +18,31 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:url_launcher/url_launcher.dart';
 
 class StringUtils {
 
-  static bool isEmpty(String? stringToCheck) {
-    return (stringToCheck == null || stringToCheck.isEmpty);
-  }
+  static bool isNotEmpty(String? stringToCheck) =>
+    (stringToCheck != null && stringToCheck.isNotEmpty);
 
-  static bool isNotEmpty(String? stringToCheck) {
-    return !isEmpty(stringToCheck);
-  }
+  static bool isNotEmptyString(dynamic value) =>
+    (value is String) && value.isNotEmpty;
 
-  static String ensureNotEmpty(String? value, {String defaultValue = ''}) {
-    if (isEmpty(value)) {
-      return defaultValue;
-    }
-    return value!;
-  }
+  static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
+    ((value != null) && value.isNotEmpty) ? value : defaultValue; 
+
+  static bool isEmpty(String? stringToCheck) =>
+    !isNotEmpty(stringToCheck);
 
   static String wrapRange(String s, String firstValue, String secondValue, int startPosition, int endPosition) {
     String word = s.substring(startPosition, endPosition);
@@ -176,6 +178,21 @@ class CollectionUtils {
   static int length(Iterable<dynamic>? collection) {
     return collection?.length ?? 0;
   }
+
+  static bool equals(dynamic e1, dynamic e2) =>
+    const DeepCollectionEquality().equals(e1, e2);
+
+  static Future<bool> equalsAsync(dynamic e1, dynamic e2) =>
+    compute(_equals, _EqualsParam(e1, e2));
+
+  static bool _equals(_EqualsParam param) =>
+    equals(param.e1, param.e2);
+}
+
+class _EqualsParam {
+  final dynamic e1;
+  final dynamic e2;
+  _EqualsParam(this.e1, this.e2);
 }
 
 class ListUtils {
@@ -193,15 +210,23 @@ class ListUtils {
     }
   }
 
+  static T? first<T>(List<T>? list) {
+    return ((list != null) && list.isNotEmpty) ? list.first : null;
+  }
+
   static T? entry<T>(List<T>? list, int index) {
     return ((list != null) && (0 <= index) && (index < list.length)) ? list[index] : null;
   }
 
-  static bool? contains(List<dynamic>? list, dynamic item, {bool checkAll = false}) {
+  static List<T>? notEmpty<T>(List<T>? list) {
+    return ((list?.length ?? 0) > 0) ? list : null;
+  }
+
+  static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
     if (list == null) {
       return null;
     }
-    if (item is List<dynamic>) {
+    if (item is Iterable<dynamic>) {
       for (dynamic val in item) {
         if (list.contains(val)) {
           if (!checkAll) {
@@ -215,6 +240,32 @@ class ListUtils {
     }
     return list.contains(item);
   }
+
+  static void sort<T>(List<T> list, int Function(T a, T b)? compare) =>
+    list.sort(compare);
+
+  static void _sort<T>(_SortListParam<T> param) =>
+    param.list.sort(param.compare);
+
+  static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
+    compute(_sort, _SortListParam(list, compare));
+
+  static List<String>? stripEmptyStrings(List<String>? list) {
+    if (list != null) {
+      for (int index = list.length - 1; index >= 0; index--) {
+        if (list[index].isEmpty) {
+          list.removeAt(index);
+        }
+      }
+    }
+    return ((list?.length ?? 0) > 0) ? list : null;
+  }
+}
+
+class _SortListParam<T> {
+  final List<T> list;
+  final int Function(T a, T b)? compare;
+  _SortListParam(this.list, this.compare);
 }
 
 class SetUtils {
@@ -229,6 +280,29 @@ class SetUtils {
   }
 
   static void toggle<T>(Set<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      if (set.contains(entry)) {
+        set.remove(entry);
+      }
+      else {
+        set.add(entry);
+      }
+    }
+  }
+}
+
+class LinkedHashSetUtils {
+  static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
+    return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
+  }
+
+  static void add<T>(LinkedHashSet<T>? set, T? entry) {
+    if ((set != null) && (entry != null)) {
+      set.add(entry);
+    }
+  }
+
+  static void toggle<T>(LinkedHashSet<T>? set, T? entry) {
     if ((set != null) && (entry != null)) {
       if (set.contains(entry)) {
         set.remove(entry);
@@ -432,38 +506,30 @@ class AppVersion {
 }
 
 class UrlUtils {  
-  static String? getScheme(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      return (uri != null) ? uri.scheme : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
-
-  static String? getExt(String? url) {
-    try {
-      Uri? uri = (url != null) ? Uri.parse(url) : null;
-      String? path = (uri != null) ? uri.path : null;
-      return (path != null) ? path_package.extension(path) : null;
-    } catch(e) {
-      debugPrint(e.toString());
-    }
-    return null;
-  }
 
   static bool isPdf(String? url) {
-    return (getExt(url) == '.pdf');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
+    return (ext == '.pdf');
   }
 
   static bool isWebScheme(String? url) {
-    String? scheme = getScheme(url);
-    return (scheme == 'http') || (scheme == 'https');
+    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
   static bool launchInternal(String? url) {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
+  }
+
+  static Future<bool?> launchExternal(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Uri? uri = Uri.tryParse(url!);
+      if (uri != null) {
+        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      }
+    }
+    return null;
   }
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
@@ -476,46 +542,139 @@ class UrlUtils {
     }
     return url;
   }
+
+  static bool isValidUrl(String? url) {
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
+    return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
+  }
+
+  static Uri? parseUri(String? url) {
+    if (url != null) {
+      Uri? uri = Uri.tryParse(url);
+      if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
+        List<String> pathComponents = uri.path.split('/');
+        if (0 < pathComponents.length) {
+          String host = pathComponents.first;
+          String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
+          try {
+            return Uri(
+              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
+              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+              host: host,
+              port: (0 < uri.port) ? uri.port : null,
+              path: path,
+              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+              query: uri.query.isNotEmpty ? uri.query : null,
+              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+          }
+          catch(e) {
+          }
+        }
+      }
+      return uri;
+    }
+    return null;
+  }
+
+  static Uri? buildUri(Uri uri, { String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
+    
+    String sourceHost = uri.host;
+    String sourcePath = uri.path;
+    if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
+      List<String> sourcePathComponents = sourcePath.split('/');
+      if (0 < sourcePathComponents.length) {
+        sourceHost = sourcePathComponents.first;
+        sourcePath = (1 < sourcePathComponents.length) ? sourcePathComponents.slice(1).join('/') : "";
+      }
+    }
+
+    try {
+      return Uri(
+        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
+        userInfo: (userInfo != null) ? userInfo : (uri.userInfo.isNotEmpty ? uri.userInfo : null),
+        host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
+        port: (port != null) ? port : ((0 < uri.port) ? uri.port : null),
+        path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
+        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+        query: (query != null) ? query : (uri.query.isNotEmpty ? uri.query : null),
+        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+        fragment: (fragment != null) ? fragment : (uri.fragment.isNotEmpty ? uri.fragment : null)
+      );
+    }
+    catch(e) {
+      return null;
+    }
+  }
+
+  static String? fixUrl(String url) {
+    Uri? uri = parseUri(url);
+    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    return (fixedUri != null) ? fixedUri.toString() : null;
+  }
+
+  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? buildUri(uri, scheme: 'http') : null;
+
+  static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
+    if (uri.scheme.isEmpty) {
+      final List<String> schemes = ['https', 'http'];
+      for (String scheme in schemes) {
+        Uri? schemeUri = buildUri(uri, scheme: scheme);
+        Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+        if (schemeResponse?.statusCode == 200) {
+          return schemeUri;
+        }
+      }
+
+      final String www = 'www.';
+      String? host = uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null);
+      if ((host != null) && !host.startsWith(www)) {
+        for (String scheme in schemes) {
+          Uri? schemeUri = buildUri(uri, scheme: scheme, host: www + host);
+          Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+          if (schemeResponse?.statusCode == 200) {
+            return schemeUri;
+          }
+        }
+      }
+
+    }
+    return null;
+  }
+
+  static Future<bool> isHostAvailable(String? url) async {
+    List<InternetAddress>? result;
+    String? host = parseUri(url)?.host;
+    try {
+      result = (host != null) ? await InternetAddress.lookup(host) : null;
+    }
+    on SocketException catch (e) {
+      debugPrint(e.toString());
+    }
+    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+  }
+
 }
 
 
 class JsonUtils {
 
-  static List<dynamic> encodeList(List items) {
-    List<dynamic> result =  [];
-    if (items.isNotEmpty) {
-      for (dynamic item in items) {
-        result.add(item.toJson());
-      }
-    }
-    return result;
+  static String? encode(dynamic value, { bool? prettify }) =>
+    ((prettify == true) ? _prettify : _encode)(value);
+
+  static Future<String?> encodeAsync(dynamic value, { bool? prettify }) =>
+    compute((prettify == true) ? _prettify : _encode, value);
+
+  static String? _encode(dynamic value) {
+    try { return (value != null) ? json.encode(value) : null; }
+    catch (e) { debugPrint(e.toString());}
+    return null;
   }
 
-  static Map<String, dynamic> encodeMap(Map items) {
-    Map<String, dynamic> result =  {};
-    if (items.isNotEmpty) {
-      for (MapEntry entry in items.entries) {
-        result[entry.key] = entry.value.toJson();
-      }
-    }
-    return result;
-  }
-
-  static String? encode(dynamic value, { bool? prettify }) {
-    String? result;
-    if (value != null) {
-      try {
-        if (prettify == true) {
-          result = const JsonEncoder.withIndent("  ").convert(value);
-        }
-        else {
-          result = json.encode(value);
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return result;
+  static String? _prettify(dynamic value) {
+    try { return (value != null) ? const JsonEncoder.withIndent("  ").convert(value) : null; }
+    catch (e) { debugPrint(e.toString()); }
+    return null;
   }
 
   // TBD: Use everywhere decodeMap or decodeList to guard type cast
@@ -531,6 +690,9 @@ class JsonUtils {
     return jsonContent;
   }
 
+  static Future<dynamic> decodeAsync(String? jsonString) =>
+    compute(decode, jsonString);
+
   static List<dynamic>? decodeList(String? jsonString) {
     try {
       return (decode(jsonString) as List?)?.cast<dynamic>();
@@ -540,6 +702,9 @@ class JsonUtils {
     return null;
   }
 
+  static Future<List<dynamic>?> decodeListAsync(String? jsonString) =>
+    compute(decodeList, jsonString);
+
   static Map<String, dynamic>? decodeMap(String? jsonString) {
     try {
       return (decode(jsonString) as Map?)?.cast<String, dynamic>();
@@ -548,6 +713,9 @@ class JsonUtils {
     }
     return null;
   }
+
+  static Future<Map<String, dynamic>?> decodeMapAsync(String? jsonString) =>
+    compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
     if (value is String) {
@@ -597,14 +765,29 @@ class JsonUtils {
     return null;
   }
 
-  static List<dynamic>? listValue(dynamic value) {
+  static List<T>? listValue<T>(dynamic value) {
     try {
-      return (value is List) ? value.cast<dynamic>() : null;
+      return (value is List) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Set<T>? setValue<T>(dynamic value) {
+    try {
+      return (value is Set) ? value.cast<T>() : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
+    Set<T>? set = setValue(value);
+    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
@@ -631,7 +814,27 @@ class JsonUtils {
   
   static List<String>? listStringsValue(dynamic value) {
     try {
-      return (value is List) ? value.cast<String>() : null;
+      if (value is List) {
+        return value.cast<String>();
+      }
+      else if (value is Set) {
+        return List<String>.from(value.cast<String>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static List<int>? listIntsValue(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<int>();
+      }
+      else if (value is Set) {
+        return List<int>.from(value.cast<int>());
+      }
     }
     catch(e) {
       debugPrint(e.toString());
@@ -641,7 +844,12 @@ class JsonUtils {
 
   static Set<String>? setStringsValue(dynamic value) {
     try {
-      return (value is List) ? Set<String>.from(value.cast<String>()) : null;
+      if (value is Set) {
+        return value.cast<String>();
+      }
+      else if (value is List) {
+        return Set<String>.from(value.cast<String>());
+      }
     }
     catch(e) {
       debugPrint(e.toString());
@@ -737,6 +945,21 @@ class JsonUtils {
     return result;
   }
 
+  static List<T>? listTypedValue<T>(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<T>();
+      }
+      else if (value is Set) {
+        return List<T>.from(value.cast<T>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
   static Duration? durationValue(dynamic value) {
     if (value is Map<String, dynamic>) {
       return Duration(days: value['days'] ?? 0, hours: value['hours'] ?? 0, minutes: value['minutes'] ?? 0, seconds: value['seconds'] ?? 0, milliseconds: value['milliseconds'] ?? 0, microseconds: value['microseconds'] ?? 0);
@@ -746,16 +969,42 @@ class JsonUtils {
 }
 
 class AppToast {
-  static void show(String msg) {
+  static const Duration defaultDuration = const Duration(seconds: 3);
+  static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
+  static const Color defaultTextColor = Colors.white;
+  static const Color defaultBackgroundColor = const Color(0x99000000);
+  
+  static void showMessage(String msg, {
+    ToastGravity gravity = defaultGravity,
+    Duration duration = defaultDuration,
+    Color textColor = defaultTextColor,
+    Color backgroundColor = defaultBackgroundColor,
+  }) {
     Fluttertoast.showToast(
       msg: msg,
-      textColor: Colors.white,
+      textColor: textColor,
       toastLength: Toast.LENGTH_LONG,
-      timeInSecForIosWeb: 3,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: const Color(0x99000000),
+      timeInSecForIosWeb: duration.inSeconds,
+      gravity: gravity,
+      backgroundColor: backgroundColor,
     );
   }
+
+  static void show(BuildContext context, {
+    required Widget child,
+    FToast? toast,
+    ToastGravity gravity = defaultGravity,
+    Duration duration = defaultDuration,
+  }) {
+    toast ??= FToast();
+    toast.init(context);
+    toast.showToast(
+      child: child,
+      gravity: gravity,
+      toastDuration: duration,
+    );
+  }
+
 }
 
 class MapPathKey {
@@ -1003,6 +1252,13 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
+  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
+    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
+  
+  static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
+    (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
+
+
   static int getWeekDayFromString(String weekDayName){
     switch (weekDayName){
       case "monday"   : return 1;
@@ -1133,6 +1389,62 @@ class DateTimeUtils {
     int milliseconds = durationParts.length > 4 ? int.tryParse(durationParts[4]) ?? 0 : 0;
     int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
     return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
+  }
+
+  static DateTime min(DateTime v1, DateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+class TZDateTimeUtils {
+  static timezone.TZDateTime dateOnly(timezone.TZDateTime dateTime, { timezone.Location? location, bool inclusive = false }) =>
+    dateTime.dateOnly(location: location, inclusive: inclusive);
+
+  static timezone.TZDateTime startOfNextMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.startOfNextMonth(location: location);
+
+  static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
+    dateTime.endOfThisMonth(location: location);
+
+  static dynamic toJson(timezone.TZDateTime? dateTime) =>
+    dateTime?.toJson;
+
+  static timezone.TZDateTime? fromJson(dynamic json) =>
+    TZDateTimeExt.fromJson(json);
+
+  static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
+    (time != null) ? timezone.TZDateTime.from(time, location) : null;
+
+
+  static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
+  static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
+}
+
+extension TZDateTimeExt on timezone.TZDateTime {
+  timezone.TZDateTime dateOnly({ timezone.Location? location, bool inclusive = false }) =>
+    timezone.TZDateTime(location ?? this.location, year, month, day, inclusive ? 23 : 0, inclusive ? 59 : 0, inclusive ? 59 : 0);
+
+  timezone.TZDateTime startOfNextMonth({ timezone.Location? location }) => (month < 12) ?
+    timezone.TZDateTime(location ?? this.location, year, month + 1, 1) :
+    timezone.TZDateTime(location ?? this.location, year + 1, 1, 1);
+
+  timezone.TZDateTime endOfThisMonth({ timezone.Location? location }) =>
+    startOfNextMonth(location: location).subtract(const Duration(days: 1)).dateOnly(inclusive: true);
+
+  toJson() => {
+    'location': location.name,
+    'timestamp': millisecondsSinceEpoch
+  };
+
+  static timezone.TZDateTime? fromJson(dynamic json) {
+    if (json is Map) {
+      String? locationName = JsonUtils.stringValue(json['location']);
+      timezone.Location? location = (locationName != null) ? timezone.getLocation(locationName) : null;
+      int? timestamp = JsonUtils.intValue(json['timestamp']);
+      if ((location != null) && (timestamp != null)) {
+        return timezone.TZDateTime.fromMillisecondsSinceEpoch(location, timestamp);
+      }
+    }
+    return null;
   }
 }
 

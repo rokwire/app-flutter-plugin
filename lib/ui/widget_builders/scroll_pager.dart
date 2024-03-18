@@ -30,10 +30,10 @@ class ScrollPagerBuilder {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Styles().images?.getImage('retry-gray', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf2f9', weight: 'solid', size: 18.0, color: Styles().colors?.iconMedium)) ?? Container(),
+                  Styles().images.getImage('retry-gray', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf2f9', weight: 'solid', size: 18.0, color: Styles().colors.iconMedium)) ?? Container(),
                   const SizedBox(width: 8.0),
                   Text(Localization().getStringEx('widget.scroll_pager.error.title', 'Something went wrong'),
-                      style: Styles().textStyles?.getTextStyle('widget.message.light.regular')),
+                      style: Styles().textStyles.getTextStyle('widget.message.light.regular')),
                 ],
               ),
             ),

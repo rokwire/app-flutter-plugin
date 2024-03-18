@@ -15,13 +15,20 @@
  */
 
 import 'dart:io';
+import 'dart:math';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -29,10 +36,28 @@ import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
-class Content /* with Service */ {
+class Content with Service implements NotificationsListener, ContentItemCategoryClient {
 
-  static const String notifyUserProfilePictureChanged = "edu.illinois.rokwire.content.user.picture.profile.changed";
+  static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
+  static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.attributes.changed";
+  static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
+  static const String notifyContentWidgetsChanged         = "edu.illinois.rokwire.content.widgetss.changed";
+  static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
+  static const String notifyUserProfileVoiceRecordChanged = "edu.illinois.rokwire.content.user.voice_record_profile.changed";
+
+  static const String _attributesContentCategory = "attributes";
+  static const String _imagesContentCategory = "images";
+  static const String _widgetsContentCategory = "widgets";
+  static const String _contentItemsCacheFileName = "contentItems.json";
+
+  Directory? _appDocDir;
+  DateTime?  _pausedDateTime;
+
+  Map<String, dynamic>? _contentItems;
   
+  ContentAttributes? _contentAttributes;
+  final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
+
   // Singletone Factory
 
   static Content? _instance;
@@ -46,6 +71,315 @@ class Content /* with Service */ {
 
   @protected
   Content.internal();
+
+  // Service
+
+  @override
+  void createService() {
+    NotificationService().subscribe(this,[
+      AppLifecycle.notifyStateChanged,
+    ]);
+    super.createService();
+  }
+
+  @override
+  void destroyService() {
+    NotificationService().unsubscribe(this);
+    super.destroyService();
+  }
+
+  @override
+  Future<void> initService() async {
+    _appDocDir = await getAppDocumentsDirectory();
+
+    _contentItems = await loadContentItemsFromCache();
+    if (_contentItems != null) {
+      updateContentItemsFromNet();
+    }
+    else {
+      _contentItems = await loadContentItemsFromNet();
+      if (_contentItems != null) {
+        await saveContentItemsToCache(_contentItems);
+      }
+    }
+
+    _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
+
+    if (_contentItems != null) {
+      await super.initService();
+    }
+    else {
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.nonFatal,
+        title: 'Content Initialization Failed',
+        description: 'Failed to initialize Content service.',
+      );
+    }
+
+    await super.initService();
+  }
+
+  @override
+  Set<Service> get serviceDependsOn {
+    return { Config() };
+  }
+
+  // NotificationsListener
+
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
+    }
+  }
+
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
+    if (state == AppLifecycleState.paused) {
+      _pausedDateTime = DateTime.now();
+    }
+    else if (state == AppLifecycleState.resumed) {
+      if (_pausedDateTime != null) {
+        Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
+        if (Config().refreshTimeout < pausedDuration.inSeconds) {
+          updateContentItemsFromNet();
+        }
+      }
+    }
+  }
+
+  // Caching
+
+  @protected
+  Future<Directory?> getAppDocumentsDirectory() async {
+    try {
+      return await getApplicationDocumentsDirectory();
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  // Content Items
+
+  @protected
+  List<String> get contentItemsCategories {
+    List<String> result = <String>[];
+    Services().enumServices((Service service) {
+      if (service is ContentItemCategoryClient) {
+        result.addAll(((service as ContentItemCategoryClient)).contentItemCategory);
+      }
+    });
+    return result;
+  }
+
+  dynamic contentItem(String category) =>
+    (_contentItems != null) ? _contentItems![category] : null;
+
+  Map<String, dynamic>? contentMapItem(String category) =>
+    JsonUtils.mapValue(contentItem(category));
+
+  List<dynamic>? contentListItem(String category) =>
+    JsonUtils.listValue(contentItem(category));
+
+  @protected
+  File? getContentItemsCacheFile()  =>
+    (_appDocDir != null) ? File(join(_appDocDir?.path ?? '', _contentItemsCacheFileName)) : null;
+
+  @protected
+  Future<Map<String, dynamic>?> loadContentItemsFromCache() async {
+    File? contentItemsCacheFile = getContentItemsCacheFile();
+    String? contentItemsString = (await contentItemsCacheFile?.exists() == true) ? await contentItemsCacheFile?.readAsString() : null;
+    return JsonUtils.decodeMapAsync(contentItemsString);
+  }
+
+  @protected
+  Future<void> saveContentItemsToCache(Map<String, dynamic>? value) async {
+    File? contentItemsCacheFile = getContentItemsCacheFile();
+    String? contentItemsString = await JsonUtils.encodeAsync(value);
+    if (contentItemsString != null) {
+      await contentItemsCacheFile?.writeAsString(contentItemsString, flush: true);
+    }
+    else {
+      await contentItemsCacheFile?.delete();
+    }
+  }
+
+  @protected
+  Future<Map<String, dynamic>?> loadContentItemsFromNet() async =>
+    loadContentItems(contentItemsCategories);
+
+  Future<Map<String, dynamic>?> loadContentItems(List<String> categories) async {
+    Map<String, dynamic>? result;
+    if (Config().contentUrl != null) {
+      Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': categories}), auth: Auth2());
+      List<dynamic>? responseList = (response?.statusCode == 200) ? await JsonUtils.decodeListAsync(response?.body)  : null;
+      if (responseList != null) {
+        result = <String, dynamic>{};
+        for (dynamic responseEntry in responseList) {
+          Map<String, dynamic>? contentItem = JsonUtils.mapValue(responseEntry);
+          if (contentItem != null) {
+            String? category = JsonUtils.stringValue(contentItem['category']);
+            dynamic data = contentItem['data'];
+            if ((category != null) && (data != null)) {
+              dynamic existingCategoryEntry = result[category];
+              if (existingCategoryEntry == null) {
+                result[category] = data;  
+              }
+              else if (existingCategoryEntry is List) {
+                if (data is List) {
+                  existingCategoryEntry.addAll(data);
+                }
+                else {
+                  existingCategoryEntry.add(data);
+                }
+              }
+              else {
+                List<dynamic> newCategoryEntry = <dynamic>[existingCategoryEntry];
+                if (data is List) {
+                  newCategoryEntry.addAll(data);
+                }
+                else {
+                  newCategoryEntry.add(data);
+                }
+                result[category] = newCategoryEntry;
+              }
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  Future<dynamic> loadContentItem(String category) async {
+    Map<String, dynamic>? contentItems = await loadContentItems([category]);
+    return (contentItems != null) ? contentItems[category] : null;
+  }
+
+  @protected
+  Future<void> updateContentItemsFromNet() async {
+    Map<String, dynamic>? contentItems = await loadContentItemsFromNet();
+    if (contentItems != null) {
+      Set<String>? categoriesDiff = await compute(_compareContentItemsInParam, _CompareContentItemsParam(_contentItems, contentItems));
+      if ((categoriesDiff != null) && categoriesDiff.isNotEmpty) {
+        _contentItems = contentItems;
+        await saveContentItemsToCache(contentItems);
+        onContentItemsChanged(categoriesDiff);
+      }
+    }
+  }
+
+  static Set<String>? _compareContentItemsInParam(_CompareContentItemsParam param) =>
+    _compareContentItems(param.items1, param.items2);
+
+  static Set<String>? _compareContentItems(Map<String, dynamic>? items1, Map<String, dynamic>? items2) {
+    if (items1 != null) {
+      if (items2 != null) {
+        Set<String>? result = <String>{};
+        Set<String> passed = <String>{};
+        for (String key in items1.keys) {
+          dynamic item1 = items1[key];
+          dynamic item2 = items2[key];
+          if (const DeepCollectionEquality().equals(item1, item2) != true) {
+            result.add(key);
+          }
+          passed.add(key);
+        }
+        for (String key in items2.keys) {
+          if (!passed.contains(key)) {
+            result.add(key);
+          }
+        }
+        return result.isNotEmpty ? result : null;
+      }
+      else {
+        return items1.keys.isNotEmpty ? Set<String>.from(items1.keys) : null;
+      }
+    }
+    else if (items2 != null) {
+      return items2.keys.isNotEmpty ? Set<String>.from(items2.keys) : null;
+    }
+    else {
+      return null;
+    }
+  }
+
+  @protected
+  void onContentItemsChanged(Set<String> categoriesDiff) {
+    if (categoriesDiff.contains(attributesContentCategory)) {
+      _onContentAttributesChanged();
+    }
+    if (categoriesDiff.contains(imagesContentCategory)) {
+      _onContentImagesChanged();
+    }
+    if (categoriesDiff.contains(widgetsContentCategory)) {
+      _onContentWidgetsChanged();
+    }
+    NotificationService().notify(notifyContentItemsChanged, categoriesDiff);
+  }
+
+  // Attributes Content Items
+
+  @protected
+  String get attributesContentCategory =>
+    _attributesContentCategory;
+
+  Map<String, dynamic>? get _contentAttributesJson =>
+    contentMapItem(attributesContentCategory);
+
+  ContentAttributes? contentAttributes(String scope) => (_contentAttributes != null) ?
+      (_contentAttributesByScope[scope] ??= (ContentAttributes.fromOther(_contentAttributes, scope: scope) ?? ContentAttributes())) : null;
+
+  void _onContentAttributesChanged() {
+    _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
+    _contentAttributesByScope.clear();
+    NotificationService().notify(notifyContentAttributesChanged);
+  }
+
+  // Images Content Items
+
+  @protected
+  String get imagesContentCategory =>
+    _imagesContentCategory;
+
+  Map<String, dynamic>? get contentImages =>
+    contentMapItem(imagesContentCategory);
+
+  String? randomImageUrl(String key) {
+    List<dynamic>? list = JsonUtils.listValue(MapPathKey.entry(contentImages, "random.$key"));
+    return ((list != null) && list.isNotEmpty) ? JsonUtils.stringValue(list[Random().nextInt(list.length)]) : null;
+  }
+
+  void _onContentImagesChanged() {
+    NotificationService().notify(notifyContentImagesChanged);
+  }
+
+  // Widgets Content Items
+
+  @protected
+  String get widgetsContentCategory =>
+    _widgetsContentCategory;
+
+  Map<String, dynamic>? get contentWidgets =>
+    contentMapItem(widgetsContentCategory);
+
+  Map<String, dynamic>? contentWidget(String key) =>
+    contentWidgets?[key];
+
+  void _onContentWidgetsChanged() {
+    NotificationService().notify(notifyContentWidgetsChanged);
+  }
+
+  // ContentItemCategoryClient
+
+  @override
+  List<String> get contentItemCategory => <String>[
+    attributesContentCategory,
+    imagesContentCategory,
+    widgetsContentCategory,
+  ];
 
   // Implementation
 
@@ -232,41 +566,107 @@ class Content /* with Service */ {
     }
   }
 
-  //Content items
-  Future<List<dynamic>?> loadContentItems({List<String>? categories, List<String>? ids}) async {
+  //Profile Voice Record
+  Future<AudioResult> uploadVoiceRecord(Uint8List? audioFile) async{ //TBD return type
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
-      debugPrint('Missing content service url.');
-      return null;
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
     }
-    if (CollectionUtils.isEmpty(categories) && CollectionUtils.isEmpty(ids)) {
-      debugPrint('Missing content item category');
-      return null;
+    if (CollectionUtils.isEmpty(audioFile)) {
+      return AudioResult.error(AudioErrorType.fileNameNotSupplied, 'Missing file.');
     }
+    String url = "$serviceUrl/voice_record";
+    StreamedResponse? response = await Network().multipartPost(
+        url: url,
+        fileKey: "voiceRecord",
+        fileName: "record.m4a",
+        // fileName: audioFile.name,
+        fileBytes: audioFile,
+        contentType: 'audio/m4a',
+        auth: Auth2()
+    );
 
-    Map<String, dynamic> json = {};
-    if(CollectionUtils.isNotEmpty(categories)){
-      json["categories"] = categories;
-    }
-
-    if(CollectionUtils.isNotEmpty(ids)){
-      json["ids"] = ids;
-    }
-    String? body = JsonUtils.encode(json);
-
-    String url = "$serviceUrl/content_items";
-    Response? response = await Network().get(url, body: body, auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
-    String? responseBody = response?.body;
+    String? responseString = (await response?.stream.bytesToString());
     if (responseCode == 200) {
-      String? responseBody = response?.body;
-      return (responseBody != null) ? JsonUtils.decodeList(responseBody) : null;
+      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
+      return AudioResult.succeed(responseString);
     } else {
-      debugPrint('Failed to load content itemReason: ');
-      debugPrint(responseBody);
-      return null;
+      debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
+      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio. $responseString", response);
     }
   }
+
+  Future<AudioResult?> retrieveVoiceRecord({Map<String, String>? authHeaders}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
+    String url = "$serviceUrl/voice_record";
+    Response? response = await Network().get(
+        url,
+        headers: authHeaders,
+        auth: authHeaders == null ? Auth2() : null);
+
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return AudioResult.succeed(response?.bodyBytes);
+    } else {
+      debugPrint('Failed to retrieve user audio voice_record');
+      return AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
+    }
+  }
+
+  Future<AudioResult?> deleteVoiceRecord() async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
+    String url = "$serviceUrl/voice_record";
+    Response? response = await Network().delete(url, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
+      return AudioResult.succeed('User profile voice record deleted.');
+    } else {
+      String? responseString = response?.body;
+      debugPrint("Failed to delete user's profile voice record. Reason: $responseCode $responseString");
+      return AudioResult.error(AudioErrorType.deleteFailed, "Failed to delete user's profile voice record.", responseString);
+    }
+  }
+
+  Future<Uint8List?> getFileContentItem(String fileName, String category) async {
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileName': fileName,
+        'category': category,
+      };
+      String url = "${Config().contentUrl}/files";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+
+      Response? response = await Network().get(url, auth: Auth2());
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        return response?.bodyBytes;
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+}
+
+abstract class ContentItemCategoryClient {
+  List<String> get contentItemCategory;
+}
+
+class _CompareContentItemsParam {
+  final Map<String, dynamic>? items1;
+  final Map<String, dynamic>? items2;
+  _CompareContentItemsParam(this.items1, this.items2);
 }
 
 enum ImagesResultType { error, cancelled, succeeded }
@@ -300,3 +700,32 @@ class ImagesResult {
 }
 
 enum UserProfileImageType { defaultType, medium, small }
+
+enum AudioResultType { error, cancelled, succeeded }
+enum AudioErrorType {serviceNotAvailable, fileNameNotSupplied, uploadFailed, retrieveFailed, deleteFailed}
+
+class AudioResult {
+  AudioResultType? resultType;
+  AudioErrorType? errorType;
+  String? errorMessage;
+  dynamic data;
+
+  AudioResult.error(this.errorType, this.errorMessage, [this.data]) :
+        resultType = AudioResultType.error;
+
+  AudioResult.cancel() :
+        resultType = AudioResultType.cancelled;
+
+  AudioResult.succeed(this.data) :
+        resultType = AudioResultType.succeeded;
+
+  T? getDataAs<T>(){
+    return data != null && data is T ? data as T : null;
+  }
+}
+
+extension FileExtention on FileSystemEntity{ //file.name
+  String? get name {
+    return this.path.split(Platform.pathSeparator).last;
+  }
+}

@@ -156,7 +156,7 @@ class ImageUtils {
       TextPainter textPainter = TextPainter(
         text: TextSpan(text: text, style: textStyle),
         textDirection: textDirection,
-        textScaleFactor: textScaleFactor,
+        textScaler: TextScaler.linear(textScaleFactor),
         maxLines: maxLines,
       )..layout();
       if ((textPainter.width <= size.width) && (textPainter.height <= size.height)) {
@@ -167,7 +167,7 @@ class ImageUtils {
       }
     }
 
-    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaleFactor: (0 < textScaleFactor) ? textScaleFactor : 1, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
     ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
     return paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: size.width));
 

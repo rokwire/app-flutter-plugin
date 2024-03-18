@@ -15,6 +15,8 @@
  */
 
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 abstract class Service {
@@ -62,7 +64,7 @@ class Services {
 
   void create(List<Service> services) {
     if (_services == null) {
-      _services = _sort(services);
+      _services = services;
       for (Service service in _services!) {
         service.createService();
       }
@@ -78,29 +80,16 @@ class Services {
     }
   }
 
-  Future<ServiceError?> init() async {
-
-    if (_services != null) {
-      for (Service service in _services!) {
-        if (service.isInitialized != true) {
-          ServiceError? error = await initService(service);
-          if (error?.severity == ServiceErrorSeverity.fatal) {
-            return error;
-          }
-        }
-      }
-    }
-
-    return null;
+  Future<ServiceError?> init() async =>
+    (_services != null) ? await _ServicesInitializer(initService).process(_services!) : null;
 
     /*TMP:
-    return ServiceError(
+    ServiceError(
       source: null,
       severity: ServiceErrorSeverity.fatal,
       title: 'Text Initialization Error',
       description: 'This is a test initialization error.',
     );*/
-  }
 
   @protected
   Future<ServiceError?> initService(Service service) async {
@@ -121,34 +110,83 @@ class Services {
     }
   }
 
-  static List<Service> _sort(List<Service> inputServices) {
-    
-    List<Service> queue = [];
-    List<Service> services = List.from(inputServices);
-    while (services.isNotEmpty) {
-      // start with lowest priority service
-      Service svc = services.last;
-      services.removeLast();
-      
-      // Move to TBD anyone from Queue that depends on svc
-      Set<Service>? svcDependents = svc.serviceDependsOn;
-      if (svcDependents != null) {
-        for (int index = queue.length - 1; index >= 0; index--) {
-          Service queuedSvc = queue[index];
-          if (svcDependents.contains(queuedSvc)) {
-            queue.removeAt(index);
-            services.add(queuedSvc);
-          }
+  void enumServices(void Function(Service service) handler) {
+    if (_services != null) {
+      for (Service service in _services!) {
+        handler(service);
+      }
+    }
+  }
+}
+
+class _ServicesInitializer {
+  final Set<Service> _toDo = <Service>{};
+  final Set<Service> _done = <Service>{};
+  final Set<Service> _inProgress = <Service>{};
+
+  Future<ServiceError?> Function(Service service) initService;
+  Completer<ServiceError?>? _completer;
+
+  _ServicesInitializer(this.initService);
+
+  Future<ServiceError?> process(List<Service> services) async {
+
+    for (Service service in services) {
+      (service.isInitialized ? _done : _toDo).add(service);
+    }
+
+    if (_toDo.isNotEmpty) {
+      _completer = Completer<ServiceError?>();
+      _run();
+      return _completer!.future;
+    }
+    else {
+      return null;
+    }
+  }
+
+  void _run() {
+    if (_toDo.isNotEmpty) {
+      for (Service service in _toDo) {
+        if (_canStartService(service) && !_inProgress.contains(service)) {
+          _inProgress.add(service);
+          initService(service).then((ServiceError? error) {
+            _inProgress.remove(service);
+            if (_completer != null) {
+              if (error?.severity == ServiceErrorSeverity.fatal) {
+                _completer?.complete(error);
+                _completer = null;
+              }
+              else {
+                _done.add(service);
+                _toDo.remove(service);
+                _run();
+              }
+            }
+          });
         }
       }
 
-      // Move svc from TBD to Queue, mark it as processed
-      queue.add(svc);
+      if (_inProgress.isEmpty) {
+        _completer?.complete(ServiceError(
+            source: null,
+            severity: ServiceErrorSeverity.fatal,
+            title: 'Services Initialization Error',
+            description: 'Service dependency cycle detected.',
+          ));
+        _completer = null;
+      }
     }
-    
-    return queue.reversed.toList();
+    else {
+      _completer?.complete(null);
+      _completer = null;
+    }
   }
 
+  bool _canStartService(Service service) {
+    Set<Service>? serviceDependsOn = service.serviceDependsOn;
+    return (serviceDependsOn == null) || serviceDependsOn.isEmpty || _done.containsAll(serviceDependsOn);
+  }
 }
 
 class ServiceError implements Exception {

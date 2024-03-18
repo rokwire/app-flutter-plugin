@@ -21,7 +21,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/event.dart';
-import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
@@ -35,7 +34,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:geolocator/geolocator.dart' as core;
 import 'package:http/http.dart' as http;
 
-class Events with Service implements NotificationsListener, ExploreJsonHandler {
+class Events with Service implements NotificationsListener {
 
   static const String notifyEventDetail  = "edu.illinois.rokwire.explore.event.detail";
   static const String notifyEventCreated = "edu.illinois.rokwire.explore.event.created";
@@ -66,7 +65,6 @@ class Events with Service implements NotificationsListener, ExploreJsonHandler {
 
   @override
   void createService() {
-    Explore.addJsonHandler(this);
     NotificationService().subscribe(this,[
       DeepLink.notifyUri,
     ]);
@@ -75,7 +73,6 @@ class Events with Service implements NotificationsListener, ExploreJsonHandler {
 
   @override
   void destroyService() {
-    Explore.removeJsonHandler(this);
     NotificationService().unsubscribe(this);
     super.destroyService();
   }
@@ -98,10 +95,6 @@ class Events with Service implements NotificationsListener, ExploreJsonHandler {
       onDeepLinkUri(param);
     }
   }
-
-  // ExploreJsonHandler
-  @override bool exploreCanJson(Map<String, dynamic>? json) => Event.canJson(json);
-  @override Explore? exploreFromJson(Map<String, dynamic>? json) => Event.fromJson(json);
 
   // Implementation
 

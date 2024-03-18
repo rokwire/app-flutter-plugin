@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:pinch_zoom/pinch_zoom.dart';
 
 class ModalImagePanel extends StatelessWidget {
   final String? imageUrl;
@@ -71,7 +72,7 @@ class ModalImagePanel extends StatelessWidget {
       imageWidget = Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageKey)) {
-      imageWidget = Styles().images?.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
+      imageWidget = Styles().images.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
         networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder);
     }
     else if (StringUtils.isNotEmpty(imageUrl)) {
@@ -80,15 +81,17 @@ class ModalImagePanel extends StatelessWidget {
     }
     return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
       SafeArea(child:
-        InkWell(onTap: () => _onDismiss(context), child:
-          Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Expanded(child:
-              Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget),) : Container()
+        _buildPinchZoomControl(child:
+          InkWell(onTap: () => _onDismiss(context), child:
+            Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                    Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget)) : Container()
+                    ),
+                  ],)
                 ),
-              ],)
-            ),
-          ],),
+            ],)
+          ),
         ),
       ),
     );
@@ -117,7 +120,7 @@ class ModalImagePanel extends StatelessWidget {
     return closeWidget ?? Semantics(label: closeLabel ?? "Close Button", hint: closeHint, button: true, focusable: true, focused: true, child:
       GestureDetector(onTap: () => _onClose(context), child:
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child:
-          Text('\u00D7', style: TextStyle(color: Styles().colors?.white ?? Colors.white, fontFamily: Styles().fontFamilies?.medium, fontSize: 50),),
+          Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
         ),
       )
     );
@@ -125,10 +128,19 @@ class ModalImagePanel extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors?.white ?? Colors.white), 
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors.white),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
+
+  Widget _buildPinchZoomControl({required Widget child}) =>
+      PinchZoom(
+        child: child,
+        resetDuration: const Duration(milliseconds: 100),
+        maxScale: 4,
+        onZoomStart: (){print('Start zooming');},
+        onZoomEnd: (){print('Stop zooming');},
+      );
 
   void _onClose(BuildContext context) {
     if (onClose != null) {

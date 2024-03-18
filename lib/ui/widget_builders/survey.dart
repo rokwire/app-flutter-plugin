@@ -15,10 +15,10 @@ class SurveyBuilder {
     List<Widget> buttonActions = resultSurveyButtons(context, survey);
     List<Widget> content = [];
     if (StringUtils.isNotEmpty(survey.text)) {
-      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles?.getTextStyle('widget.title.large.bold')));
+      content.add(Text(survey.text, textAlign: TextAlign.start, style: Styles().textStyles.getTextStyle('widget.title.large.bold')));
     }
     if (StringUtils.isNotEmpty(survey.moreInfo)) {
-      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles?.getTextStyle('widget.detail.regular'))));
+      content.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(survey.moreInfo!, style: Styles().textStyles.getTextStyle('widget.detail.regular'))));
     }
     if (CollectionUtils.isNotEmpty(buttonActions)) {
       content.add(Padding(
@@ -34,7 +34,7 @@ class SurveyBuilder {
     return ActionBuilder.actionButtons(ActionBuilder.actionTypeButtonActions(context, survey?.actions, dismissContext: context));
   }
 
-  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {bool showTimeOnly = false}) {
+  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, bool showTimeOnly = false}) {
     List<Widget> widgets = [];
 
     String? date;
@@ -49,35 +49,35 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(response.survey.title.toUpperCase(), style: Styles().textStyles?.getTextStyle('widget.title.small.bold'))),
+          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles.getTextStyle('widget.title.small.bold'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(date ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.small')),
+              Text(date ?? '', style: Styles().textStyles.getTextStyle('widget.detail.small')),
               Container(width: 8.0),
-              Styles().images?.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
+              Styles().images.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
             ],
           ),
         ],
       ),
-      Container(height: 8),
     ]);
 
     if (CollectionUtils.isNotEmpty(response.survey.responseKeys)) {
       Map<String, dynamic>? responses = response.survey.stats?.responseData;
 
-      for (String key in response.survey.responseKeys ?? []) {
+      for (String key in response.survey.responseKeys!) {
         //TODO: Handle string localization
         dynamic responseData = responses?[key];
         if (responseData != null) {
+          widgets.add(Container(height: 8));
           widgets.add(Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(key.replaceAll('_', ' ').toUpperCase() + ':',
-                  style: Styles().textStyles?.getTextStyle('widget.description.regular.bold')),
+                  style: Styles().textStyles.getTextStyle('widget.description.regular.bold')),
               const SizedBox(width: 8.0),
-              Flexible(child: Text(responseData ?? '', style: Styles().textStyles?.getTextStyle('widget.detail.regular'))),
+              Flexible(child: Text(responseData ?? '', style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
             ],
           ));
         }
@@ -91,7 +91,7 @@ class SurveyBuilder {
 
     return Material(
       borderRadius: BorderRadius.circular(30),
-      color: Styles().colors?.surface,
+      color: Styles().colors.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) =>
@@ -99,6 +99,7 @@ class SurveyBuilder {
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: widgets,
             )
@@ -118,7 +119,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
-                  style: Styles().textStyles?.getTextStyle('widget.detail.regular.bold')),
+                  style: Styles().textStyles.getTextStyle('widget.detail.regular.bold')),
               const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],
