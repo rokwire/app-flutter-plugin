@@ -17,13 +17,13 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:native_flutter_proxy/native_proxy_reader.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class HttpProxy extends Service implements NotificationsListener {
+class HttpProxy extends Service {
   
   // Singletone Factory
 
@@ -44,32 +44,43 @@ class HttpProxy extends Service implements NotificationsListener {
   @override
   void createService() {
     super.createService();
-
-    NotificationService().subscribe(this, [Config.notifyEnvironmentChanged]);
   }
 
   @override
   Future<void> initService() async {
     _handleChanged();
+    await applySystemProxy();
     await super.initService();
   }
 
   @override
   void destroyService() {
     super.destroyService();
-    NotificationService().unsubscribe(this);
   }
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Storage(), Config()};
+    return { Storage(), Config() };
   }
 
-  @override
-  void onNotification(String name, dynamic param){
-    if(name == Config.notifyEnvironmentChanged){
-      _handleChanged();
+  Future<void> applySystemProxy() async {
+    if (kIsWeb) {
+      return;
     }
+    bool enabled = false;
+    String? host;
+    int? port;
+    try {
+      ProxySetting settings = await NativeProxyReader.proxySetting;
+      enabled = settings.enabled;
+      host = settings.host;
+      port = settings.port;
+    } catch (e) {
+      print(e);
+    }
+    httpProxyHost = host;
+    httpProxyPort = port?.toString();
+    httpProxyEnabled = enabled;
   }
 
 
@@ -78,6 +89,9 @@ class HttpProxy extends Service implements NotificationsListener {
   }
 
   set httpProxyEnabled(bool? value){
+    if (kIsWeb) {
+      return;
+    }
     if(Storage().httpProxyEnabled != value) {
       Storage().httpProxyEnabled = value;
       _handleChanged();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -52,20 +53,20 @@ class RibbonButton extends StatefulWidget {
     this.label,
     this.description,
     this.onTap,
-    this.backgroundColor,      //= Styles().colors.white
+    this.backgroundColor,      //= AppColors.white
     this.padding,
 
     this.textWidget,
     this.textStyle,
-    this.textColor,            //= Styles().colors.fillColorPrimary
-    this.fontFamily,           //= Styles().fontFamilies.bold
+    this.textColor,            //= AppColors.fillColorPrimary
+    this.fontFamily,           //= AppFontFamilies.bold
     this.fontSize                = 16.0,
     this.textAlign               = TextAlign.left,
 
     this.descriptionWidget,
     this.descriptionTextStyle,
-    this.descriptionTextColor,  //= Styles().colors.textSurface
-    this.descriptionFontFamily, //= Styles().fontFamilies.regular
+    this.descriptionTextColor,  //= Styles().colors.getColor('textSurface')
+    this.descriptionFontFamily, //= AppFontFamilies.regular
     this.descriptionFontSize    = 14.0,
     this.descriptionTextAlign   = TextAlign.left,
     this.descriptionPadding     = const EdgeInsets.only(top: 2),
@@ -94,32 +95,35 @@ class RibbonButton extends StatefulWidget {
     this.semanticsValue,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors.white;
+  @protected Color? get defaultBackgroundColor => AppColors.background;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
 
   @protected EdgeInsetsGeometry get displayPadding => padding ?? (hasDescription ? complexPadding : simplePadding);
   @protected EdgeInsetsGeometry get simplePadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
   @protected EdgeInsetsGeometry get complexPadding => const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
-  @protected Color? get defaultTextColor => Styles().colors.fillColorPrimary;
+  @protected Color? get defaultTextColor => AppColors.textPrimary;
   @protected Color? get displayTextColor => textColor ?? defaultTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
+  @protected String? get defaultFontFamily => AppFontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
+  @protected Color? get defaultDescriptionTextColor => Styles().colors.getColor('textSurface');
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
-  @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies.regular;
+  @protected String? get defaultDescriptionFontFamily => AppFontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
   @protected TextStyle get displayDescriptionTextStyle => descriptionTextStyle ?? TextStyle(fontFamily: displayDescriptionFontFamily, fontSize: fontSize, color: displayDescriptionTextColor);
-  @protected Widget get displayDescriptionWidget => descriptionWidget ?? Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,);
+  @protected Widget get displayDescriptionWidget => descriptionWidget ?? Padding(
+    padding: descriptionPadding,
+    child: Text(description ?? '', style: displayDescriptionTextStyle, textAlign: descriptionTextAlign,),
+  );
 
   @protected Widget? get leftIconImage => (leftIconKey != null) ? Styles().images.getImage(leftIconKey, excludeFromSemantics: true) : null;
   @protected Widget? get rightIconImage => (rightIconKey != null) ? Styles().images.getImage(rightIconKey, excludeFromSemantics: true) : null;
 
-  @protected Color? get defaultProgressColor => Styles().colors.fillColorSecondary;
+  @protected Color? get defaultProgressColor => AppColors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
   @protected double get defaultStrokeWidth => 2.0;
   @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;
@@ -165,27 +169,28 @@ class _RibbonButtonState extends State<RibbonButton> {
     Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
     Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
     Widget textContentWidget = widget.hasDescription ?
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        widget.displayTextWidget,
-        widget.displayDescriptionWidget,
-      ],) : widget.displayTextWidget;
-    return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
-      GestureDetector(onTap: () => widget.onTapWidget(context), child:
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-          Expanded(child:
-            Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
-              Padding(padding: widget.displayPadding, child:
-                Row(children: <Widget>[
-                  (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
-                  Expanded(child:
-                    textContentWidget
-                  ),
-                  (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
-                ],),
-              ),
-            )
+    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      widget.displayTextWidget,
+      widget.displayDescriptionWidget,
+    ],) : widget.displayTextWidget;
+    return Container(key: _contentKey, decoration: BoxDecoration(border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow),
+      child: Material(color: widget.displayBackgroundColor ?? Colors.transparent,
+        borderRadius: widget.borderRadius,
+        child: Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
+          InkWell(
+            borderRadius: widget.borderRadius,
+            onTap: widget.onTap != null ? () => widget.onTapWidget(context) : null,
+            child: Padding(padding: widget.displayPadding, child:
+              Row(children: <Widget>[
+                (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
+                Expanded(child:
+                  textContentWidget
+                ),
+                (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
+              ],),
+            ),
           ),
-        ],),
+        ),
       ),
     );
   }

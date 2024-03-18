@@ -22,7 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
@@ -468,7 +468,7 @@ class Polls with Service implements NotificationsListener {
             NotificationService().notify(notifyCreated, pollId);
             if (!poll.hasGroup) {
               presentWaiting();
-              if (AppLivecycle().state == AppLifecycleState.paused) {
+              if (AppLifecycle().state == AppLifecycleState.paused) {
                 launchPollNotification(poll);
               }
             }

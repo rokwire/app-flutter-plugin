@@ -20,18 +20,21 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:flutter/services.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
+import 'package:rokwire_plugin/ui/widgets/ui_image.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 class Styles extends Service implements NotificationsListener{
   
@@ -55,21 +58,14 @@ class Styles extends Service implements NotificationsListener{
   Map<String, dynamic>? _netAssetsStyles;
   Map<String, dynamic>? _debugAssetsStyles;
 
-  UiColors? _colors;
-  UiColors get colors => _colors ?? _emptyColors;
-  static UiColors get appColors => _instance?._colors ?? _emptyColors;
+  Map<String, UiTheme> _themes = {};
+  List<String> get themes => _themes.keys.toList();
 
-  UiFontFamilies? _fontFamilies;
-  UiFontFamilies get fontFamilies => _fontFamilies ?? _emptyFontFamilies;
-  static UiFontFamilies get appFontFamilies => _instance?._fontFamilies ?? _emptyFontFamilies;
-
-  UiTextStyles? _textStyles;
-  UiTextStyles get textStyles => _textStyles ?? _emptyTextStyles;
-  static UiTextStyles get appTextStyles => _instance?._textStyles ?? _emptyTextStyles;
-
-  UiImages? _images;
-  UiImages get images => _images ?? _emptyImages;
-  static UiImages get appImages => _instance?._images ?? _emptyImages;
+  UiTheme? _theme;
+  UiColors get colors => _theme?.colors ?? _emptyColors;
+  UiFontFamilies get fontFamilies => _theme?.fontFamilies ?? _emptyFontFamilies;
+  UiTextStyles get textStyles => _theme?.textStyles ?? _emptyTextStyles;
+  UiImages get images => _theme?.images ?? _emptyImages;
 
   // Singletone Factory
 
@@ -89,7 +85,10 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void createService() {
-    NotificationService().subscribe(this, AppLivecycle.notifyStateChanged);
+    NotificationService().subscribe(this, [
+      Service.notifyInitialized,
+      AppLifecycle.notifyStateChanged
+    ]);
   }
 
   @override
@@ -99,13 +98,23 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   Future<void> initService() async {
-    
-    _assetsDir = await getAssetsDir();
-    _assetsManifest = await loadAssetsManifest();
-    _assetsStyles = await loadFromAssets(assetsKey);
-    _appAssetsStyles = await loadFromAssets(appAssetsKey);
-    _netAssetsStyles = await loadFromCache(netCacheFileName);
-    _debugAssetsStyles = await loadFromCache(debugCacheFileName);
+    List<Future<dynamic>> futures = [
+      loadAssetsManifest(),
+      loadFromAssets(assetsKey),
+      if (!kIsWeb)
+        loadFromAssets(appAssetsKey),
+      if (!kIsWeb)
+        getAssetsDir(),
+    ];
+    List<dynamic> results = await Future.wait(futures);
+    _assetsManifest = (0 < results.length) ? results[0] : null;
+    _assetsStyles = (1 < results.length) ? results[1] : null;
+    _appAssetsStyles = (2 < results.length) ? results[2] : null;
+    _assetsDir = (3 < results.length) ? results[3] : null;
+
+    if (_assetsDir != null) {
+      await initCaches();
+    }
 
     if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
       await build();
@@ -122,21 +131,36 @@ class Styles extends Service implements NotificationsListener{
     }
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Config() };
-  }
-
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized(param is Service ? param : null);
+    }
+    if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged((param is AppLifecycleState) ? param : null);
     }
   }
 
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  @protected
+  Future<void> onServiceInitialized(Service? service) async {
+    if (isInitialized) {
+      if ((service == Config()) && !kIsWeb) {
+        _assetsDir = await getAssetsDir();
+        if (_assetsDir != null) {
+          await initCaches();
+        }
+        if ((_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
+          await build();
+        }
+      }
+    }
+  }
+
+  @protected
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -170,7 +194,9 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<Map<String, dynamic>?> loadFromAssets(String assetsKey) async {
     try { return JsonUtils.decodeMap(await rootBundle.loadString(assetsKey)); }
-    catch(e) { debugPrint(e.toString()); }
+    catch(e) {
+      debugPrint(e.toString());
+    }
     return null;
   }
 
@@ -217,7 +243,7 @@ class Styles extends Service implements NotificationsListener{
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }
@@ -239,12 +265,88 @@ class Styles extends Service implements NotificationsListener{
   }
 
   @protected
+  Future<void> initCaches() async {
+    List<Future<dynamic>> futures = [
+      loadFromCache(netCacheFileName),
+      loadFromCache(debugCacheFileName),
+    ];
+
+    List<dynamic> results = await Future.wait(futures);
+    _netAssetsStyles = results[0];
+    _debugAssetsStyles = results[1];
+  }
+
+  @protected
   Future<void> build() async {
     Map<String, dynamic> styles = contentMap;
-    _colors = await compute(UiColors.fromJson, JsonUtils.mapValue(styles['color']));
-    _fontFamilies = await compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family']));
-    _textStyles = await compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: _colors, fontFamilies: _fontFamilies));
-    _images = await compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: _colors, assetPathResolver: resolveImageAssetPath));
+    Map<String, Map<String, dynamic>> themes = JsonUtils.mapOfStringToMapOfStringsValue(styles['themes']) ?? {};
+
+    List<Future<dynamic>> futures = [
+      UiTheme.fromJson(styles, resolveImageAssetPath),
+    ];
+
+    List<String> themeKeys = [];
+    List<String> defaultThemeKeys = [];
+    for (MapEntry<String, Map<String, dynamic>> theme in themes.entries) {
+      if (theme.value.isNotEmpty) {
+        Map<String, dynamic>? themeData = MapUtils.mergeToNew(styles, theme.value, level: 1);
+        futures.add(UiTheme.fromJson(themeData, resolveImageAssetPath));
+        themeKeys.add(theme.key);
+      } else {
+        defaultThemeKeys.add(theme.key);
+      }
+    }
+
+    List<dynamic> results = await Future.wait(futures);
+    UiTheme defaultTheme = results[0];
+    _themes['default'] = defaultTheme;
+
+    for (int i = 0; i < themeKeys.length; i++) {
+      String key = themeKeys[i];
+      _themes[key] = results[i + 1];
+    }
+    for (String key in defaultThemeKeys) {
+      _themes[key] = defaultTheme;
+    }
+
+    _applySelectedTheme();
+  }
+
+  void _applySelectedTheme() {
+    String? selectedTheme = _getSelectedTheme();
+    UiTheme? themeData = _themes[selectedTheme ?? 'default'];
+    if (themeData != null) {
+      _theme = themeData;
+    }
+  }
+
+  Future<void> applyTheme(String? theme) async {
+    Storage().selectedTheme = theme;
+    _applySelectedTheme();
+    NotificationService().notify(notifyChanged, null);
+  }
+
+  Future<void> updateSystemTheme() async {
+    if (Storage().selectedTheme == AppThemes.system) {
+      Styles().applyTheme(AppThemes.system);
+    }
+  }
+
+  String? _getSelectedTheme() {
+    String? selectedTheme = Storage().selectedTheme;
+    if (selectedTheme == null) {
+      Storage().selectedTheme = AppThemes.system;
+    }
+
+    if (selectedTheme == AppThemes.system) {
+      var brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
+      if (brightness == Brightness.light) {
+        selectedTheme = AppThemes.light;
+      } else if (brightness == Brightness.dark) {
+        selectedTheme = AppThemes.dark;
+      }
+    }
+    return selectedTheme;
   }
 
   Map<String, dynamic> get contentMap {
@@ -294,6 +396,33 @@ class Styles extends Service implements NotificationsListener{
   }
 }
 
+class UiTheme {
+  UiColors? colors;
+  UiFontFamilies? fontFamilies;
+  UiTextStyles? textStyles;
+  UiImages? images;
+
+  UiTheme({this.colors, this.fontFamilies, this.textStyles, this.images});
+
+  static Future<UiTheme> fromJson(Map<String, dynamic> styles, String Function(Uri)? assetPathResolver) async {
+    List<Future<dynamic>> futures = [
+      compute(UiColors.fromJson, JsonUtils.mapValue(styles['color'])),
+      compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family'])),
+    ];
+    List<dynamic> results = await Future.wait(futures);
+    UiColors? colors = results[0];
+    UiFontFamilies? fontFamilies = results[1];
+
+    futures = [
+      compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies)),
+      compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver)),
+    ];
+    results = await Future.wait(futures);
+
+    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: results[0], images: results[1]);
+  }
+}
+
 class UiColors {
 
   final Map<String, Color> colorMap;
@@ -315,69 +444,125 @@ class UiColors {
     return UiColors(colors);
   }
 
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimary                   => colorMap['fillColorPrimary'] ?? const Color(0xFF002855);
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimaryTransparent03      => colorMap['fillColorPrimaryTransparent03'] ?? const Color(0x4D002855);
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimaryTransparent05      => colorMap['fillColorPrimaryTransparent05'] ?? const Color(0x80002855);
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimaryTransparent09      => colorMap['fillColorPrimaryTransparent09'] ?? const Color(0xE6002855);
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimaryTransparent015     => colorMap['fillColorPrimaryTransparent015'] ?? const Color(0x26002855);
+  @Deprecated("Use AppColors instead")
   Color get textColorPrimary                   => colorMap['textColorPrimary'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get textColorPrimaryVariant            => colorMap['textColorPrimaryVariant'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get textColorDisabled                  => colorMap['textColorDisabled'] ?? const Color(0xFF5C5C5C);
+  @Deprecated("Use AppColors instead")
   Color get fillColorPrimaryVariant            => colorMap['fillColorPrimaryVariant'] ?? const Color(0xFF0F2040);
+  @Deprecated("Use AppColors instead")
   Color get fillColorSecondary                 => colorMap['fillColorSecondary'] ?? const Color(0xFFE84A27);
+  @Deprecated("Use AppColors instead")
   Color get fillColorSecondaryTransparent05    => colorMap['fillColorSecondaryTransparent05'] ?? const Color(0x80E84A27);
+  @Deprecated("Use AppColors instead")
   Color get fillColorSecondaryVariant          => colorMap['fillColorSecondaryVariant'] ?? const Color(0xFFCF3C1B);
+  @Deprecated("Use AppColors instead")
   Color get textColorSecondary                 => colorMap['textColorSecondary'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get textColorSecondaryVariant          => colorMap['textColorSecondaryVariant'] ?? const Color(0xFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get gradientColorPrimary               => colorMap['gradientColorPrimary'] ?? const Color(0xFF244372);
 
+  @Deprecated("Use AppColors instead")
   Color get surface                    => colorMap['surface'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get textSurface                => colorMap['textSurface'] ?? const Color(0xFF404040);
+  @Deprecated("Use AppColors instead")
   Color get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'] ?? const Color(0x26404040);
+  @Deprecated("Use AppColors instead")
   Color get surfaceAccent              => colorMap['surfaceAccent'] ?? const Color(0xFFDADDE1);
+  @Deprecated("Use AppColors instead")
   Color get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'] ?? const Color(0x26DADDE1);
+  @Deprecated("Use AppColors instead")
   Color get textSurfaceAccent          => colorMap['textSurfaceAccent'] ?? const Color(0xFF404040);
+  @Deprecated("Use AppColors instead")
   Color get background                 => colorMap['background'] ?? const Color(0xFFF5F5F5);
+  @Deprecated("Use AppColors instead")
   Color get textBackground             => colorMap['textBackground'] ?? const Color(0xFF404040);
+  @Deprecated("Use AppColors instead")
   Color get backgroundVariant          => colorMap['backgroundVariant'] ?? const Color(0xFFE8E9EA);
+  @Deprecated("Use AppColors instead")
   Color get textBackgroundVariant      => colorMap['textBackgroundVariant'] ?? const Color(0xFF404040);
+  @Deprecated("Use AppColors instead")
   Color get textBackgroundVariant2     => colorMap['textBackgroundVariant2'] ?? const Color(0xFFE7E7E7);
 
+  @Deprecated("Use AppColors instead")
   Color get accentColor1               => colorMap['accentColor1'] ?? const Color(0xFFE84A27);
+  @Deprecated("Use AppColors instead")
   Color get accentColor2               => colorMap['accentColor2'] ?? const Color(0xFF5FA7A3);
+  @Deprecated("Use AppColors instead")
   Color get accentColor3               => colorMap['accentColor3'] ?? const Color(0xFF5182CF);
+  @Deprecated("Use AppColors instead")
   Color get accentColor4               => colorMap['accentColor4'] ?? const Color(0xFF9318BB);
 
+  @Deprecated("Use AppColors instead")
   Color get iconColor                  => colorMap['iconColor'] ?? const Color(0xFFE84A27);
 
+  @Deprecated("Use AppColors instead")
   Color get eventColor                 => colorMap['eventColor'] ?? const Color(0xFFE54B30);
+  @Deprecated("Use AppColors instead")
   Color get diningColor                => colorMap['diningColor'] ?? const Color(0xFFF09842);
+  @Deprecated("Use AppColors instead")
   Color get placeColor                 => colorMap['placeColor'] ?? const Color(0xFF62A7A3);
+  @Deprecated("Use AppColors instead")
   Color get mtdColor                   => colorMap['mtdColor'] ?? const Color(0xFF2376E5);
 
+  @Deprecated("Use AppColors instead")
   Color get white                      => colorMap['white'] ?? const Color(0xFFFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get whiteTransparent01         => colorMap['whiteTransparent01'] ?? const Color(0x1AFFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get whiteTransparent06         => colorMap['whiteTransparent06'] ?? const Color(0x99FFFFFF);
+  @Deprecated("Use AppColors instead")
   Color get black                      => colorMap['black'] ?? const Color(0xFF000000);
+  @Deprecated("Use AppColors instead")
   Color get blackTransparent06         => colorMap['blackTransparent06'] ?? const Color(0x99000000);
+  @Deprecated("Use AppColors instead")
   Color get blackTransparent018        => colorMap['blackTransparent018'] ?? const Color(0x30000000);
+  @Deprecated("Use AppColors instead")
   Color get blackTransparent038        => colorMap['blackTransparent038'] ?? const Color(0x61000000);
 
+  @Deprecated("Use AppColors instead")
   Color get mediumGray                 => colorMap['mediumGray'] ?? const Color(0xFF717372);
+  @Deprecated("Use AppColors instead")
   Color get mediumGray1                => colorMap['mediumGray1'] ?? const Color(0xFF535353);
+  @Deprecated("Use AppColors instead")
   Color get mediumGray2                => colorMap['mediumGray2'] ?? const Color(0xFF979797);
+  @Deprecated("Use AppColors instead")
   Color get lightGray                  => colorMap['lightGray'] ?? const Color(0xFFEDEDED);
+  @Deprecated("Use AppColors instead")
   Color get disabledTextColor          => colorMap['disabledTextColor'] ?? const Color(0xFFBDBDBD);
+  @Deprecated("Use AppColors instead")
   Color get disabledTextColorTwo       => colorMap['disabledTextColorTwo'] ?? const Color(0xFF868F9D);
+  @Deprecated("Use AppColors instead")
   Color get dividerLine                => colorMap['dividerLine'] ?? const Color(0xFF535353);
+  @Deprecated("Use AppColors instead")
   Color get dividerLineAccent          => colorMap['dividerLineAccent'] ?? const Color(0xFFDADADA);
 
+  @Deprecated("Use AppColors instead")
   Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
+  @Deprecated("Use AppColors instead")
   Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
 
+  @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);
+  @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'] ?? const Color(0xFFFFFF00);
+  @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'] ?? const Color(0xFF00FF00);
+  @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorGrey       => colorMap['saferLocationWaitTimeColorGrey'] ?? const Color(0xFF808080);
 
   Color? getColor(String key) => colorMap[key];
@@ -421,21 +606,37 @@ class UiFontFamilies {
     return UiFontFamilies(familyMap ?? <String, String>{});
   }
 
+  @Deprecated("Use AppFontFamilies instead")
   String get black        => familyMap["black"] ?? 'ProximaNovaBlack';
+  @Deprecated("Use AppFontFamilies instead")
   String get blackIt      => familyMap["black_italic"] ?? 'ProximaNovaBlackIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get bold         => familyMap["bold"] ?? 'ProximaNovaBold';
+  @Deprecated("Use AppFontFamilies instead")
   String get boldIt       => familyMap["bold_italic"] ?? 'ProximaNovaBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get extraBold    => familyMap["extra_bold"] ?? 'ProximaNovaExtraBold';
+  @Deprecated("Use AppFontFamilies instead")
   String get extraBoldIt  => familyMap["extra_bold_italic"] ?? 'ProximaNovaExtraBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get light        => familyMap["light"] ?? 'ProximaNovaLight';
+  @Deprecated("Use AppFontFamilies instead")
   String get lightIt      => familyMap["light_italic"] ?? 'ProximaNovaLightIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get medium       => familyMap["medium"] ?? 'ProximaNovaMedium';
+  @Deprecated("Use AppFontFamilies instead")
   String get mediumIt     => familyMap["medium_italic"] ?? 'ProximaNovaMediumIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get regular      => familyMap["regular"] ?? 'ProximaNovaRegular';
+  @Deprecated("Use AppFontFamilies instead")
   String get regularIt    => familyMap["regular_italic"] ?? 'ProximaNovaRegularIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get semiBold     => familyMap["semi_bold"] ?? 'ProximaNovaSemiBold';
+  @Deprecated("Use AppFontFamilies instead")
   String get semiBoldIt   => familyMap["semi_bold_italic"] ?? 'ProximaNovaSemiBoldIt';
+  @Deprecated("Use AppFontFamilies instead")
   String get thin         => familyMap["thin"] ?? 'ProximaNovaThin';
+  @Deprecated("Use AppFontFamilies instead")
   String get thinIt       => familyMap["thin_italic"] ?? 'ProximaNovaThinIt';
 
   String? fromCode(String? code) => familyMap[code];
@@ -479,6 +680,7 @@ class UiTextStyles {
     double? fontHeight = JsonUtils.doubleValue(style['height']);
     String? fontFamily = JsonUtils.stringValue(style['font_family']);
     String? fontFamilyRef = fontFamilies?.fromCode(fontFamily);
+    FontStyle? fontStyle = _TextStyleUtils.textFontStyleFromString(JsonUtils.stringValue(style["font_style"]));
     TextDecoration? textDecoration = _TextStyleUtils.textDecorationFromString(JsonUtils.stringValue(style["decoration"]));
     TextOverflow? textOverflow = _TextStyleUtils.textOverflowFromString(JsonUtils.stringValue(style["overflow"]));
     TextDecorationStyle? decorationStyle = _TextStyleUtils.textDecorationStyleFromString(JsonUtils.stringValue(style["decoration_style"]));
@@ -488,16 +690,21 @@ class UiTextStyles {
     double? decorationThickness = JsonUtils.doubleValue(style['decoration_thickness']);
     bool inherit =  JsonUtils.boolValue(style["inherit"]) ?? true;
 
-    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily, fontSize: fontSize, color: color, letterSpacing: letterSpacing, wordSpacing: wordSpacing, decoration: textDecoration,
-        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight, decorationThickness: decorationThickness, decorationStyle: decorationStyle, decorationColor: decorationColor, inherit: inherit);
+    TextStyle textStyle = TextStyle(fontFamily: fontFamilyRef ?? fontFamily,
+        fontSize: fontSize, color: color, letterSpacing: letterSpacing,
+        wordSpacing: wordSpacing, decoration: textDecoration, fontStyle: fontStyle,
+        overflow: textOverflow, height: fontHeight, fontWeight: fontWeight,
+        decorationThickness: decorationThickness,
+        decorationStyle: decorationStyle, decorationColor: decorationColor,
+        inherit: inherit);
 
     //Extending capabilities
     String? extendsKey = JsonUtils.stringValue(style['extends']);
-    Map<String, dynamic>?  ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesJson!=null ? JsonUtils.mapValue(stylesJson[extendsKey]) : null);
+    Map<String, dynamic>? ancestorStyleMap = (StringUtils.isNotEmpty(extendsKey) && stylesJson!=null ? JsonUtils.mapValue(stylesJson[extendsKey]) : null);
     TextStyle? ancestorTextStyle = constructTextStyle(ancestorStyleMap, stylesJson: stylesJson, colors: colors, fontFamilies: fontFamilies);
-    bool overrides =  JsonUtils.boolValue(style["override"]) ?? true;
+    bool overrides = JsonUtils.boolValue(style["override"]) ?? true;
 
-    if(ancestorTextStyle != null ){
+    if (ancestorTextStyle != null) {
       return overrides ? ancestorTextStyle.merge(textStyle) : ancestorTextStyle;
     }
 
@@ -524,55 +731,45 @@ class UiImages {
   static UiImages fromCreationParam(_UiImagesCreationParam param) =>
     UiImages(param.imageMap, colors: param.colors, assetPathResolver: param.assetPathResolver);
 
-  Widget? getImage(String? imageKey, {ImageSpec? defaultSpec, Key? key, String? type, dynamic source, double? scale, double? size,
-    double? fill, dynamic weight, double? grade, double? opticalSize,
-    double? width, double? height, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+  UiImage? getImage(String? imageKey, {ImageSpec? defaultSpec, Widget? defaultWidget, Key? key, dynamic source, double? scale, double? size,
+    double? width, double? height, dynamic weight, Color? color, String? semanticLabel, bool excludeFromSemantics = false,
+    double? fill, double? grade, double? opticalSize, String? fontFamily, String? fontPackage,
     bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false, AlignmentGeometry? alignment,
     Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
-    Rect? centerSlice, String? fontFamily, String? fontPackage, TextDirection? textDirection, Map<String, String>? networkHeaders,
+    Rect? centerSlice, TextDirection? textDirection, Map<String, String>? networkHeaders,
     Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
 
     Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
-    ImageSpec? imageSpec = ImageSpec.fromJson(imageJson) ?? defaultSpec;
+    ImageSpec? imageSpec = ImageSpec.fromJson(imageJson, colors: colors) ?? defaultSpec;
     if (imageSpec != null) {
-      if (imageSpec is FlutterImageSpec) {
-        return _getFlutterImage(imageSpec, type: type, source: source, key: key,
-            scale: scale, size: size, width: width, height: height, color: color,
-            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      } else if (imageSpec is FontAwesomeImageSpec && (weight is String || weight == null)) {
-        return _getFaIcon(imageSpec, type: type, source: source, key: key, size: size ?? height ?? width, weight: weight,
-            color: color, textDirection: textDirection, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics);
-      } else if (imageSpec is MaterialIconImageSpec && (weight is double || weight == null)) {
-        return _getMaterialIcon(imageSpec, type: type, source: source, key: key, size: size, fill: fill, weight: weight,
-            grade: grade, opticalSize: opticalSize, color: color, semanticLabel: semanticLabel, textDirection: textDirection,
-            excludeFromSemantics: excludeFromSemantics, fontFamily: fontFamily, fontPackage: fontPackage, matchTextDirection: matchTextDirection);
-      } else {
-        return null;
+      imageSpec = ImageSpec.fromOther(imageSpec, source: source, scale: scale, size: size,
+        width: width, height: height, weight: weight,
+        fill: fill, grade: grade, opticalSize: opticalSize,
+        fontFamily: fontFamily, fontPackage: fontPackage,
+        color: color, semanticLabel: semanticLabel, isAntiAlias: isAntiAlias,
+        matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+        alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
+        filterQuality: filterQuality, repeat: repeat, textDirection: textDirection,
+      );
+    } else if (imageKey != null) {
+      // If no image definition for that key - try with asset name / network source
+      Uri? uri = Uri.tryParse(imageKey);
+      if (uri != null) {
+        imageSpec = _getDefaultFlutterImageSpec(uri,
+          scale: scale, width: width ?? size, height: height ?? size, color: color,
+          semanticLabel: semanticLabel, isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection,
+          gaplessPlayback: gaplessPlayback, alignment: alignment,colorBlendMode: colorBlendMode,
+          fit: fit, filterQuality: filterQuality, repeat: repeat
+        );
       }
     }
 
-    // If no image definition for that key - try with asset name / network source
-    if (imageKey != null) {
-      Uri? uri = Uri.tryParse(imageKey);
-      if (uri != null) {
-        return _getDefaultFlutterImage(uri, key: key,
-            scale: scale, width: width ?? size, height: height ?? size, color: color,
-            semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-            isAntiAlias: isAntiAlias, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
-            alignment: alignment, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, filterQuality: filterQuality,
-            repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
-            frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
-      }
-    }
-    
-    return null;
+    return UiImage(key: key, spec: imageSpec, defaultWidget: defaultWidget, excludeFromSemantics: excludeFromSemantics,
+        opacity: opacity, repeat: repeat, centerSlice: centerSlice, networkHeaders: networkHeaders,
+        frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder);
   }
 
   /* Example:
@@ -590,14 +787,13 @@ class UiImages {
       "repeat":"noRepeat"
     }
   */
-
-  Image? _getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
+  static Image? getFlutterImage(FlutterImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? scale, double? size, double? width, double? height, Color? color, String? semanticLabel,
     bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
-    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
-    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
+    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality,
+    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder,
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
-  ) {
+      ) {
     type ??= imageSpec.type;
     source ??= imageSpec.source;
 
@@ -613,7 +809,7 @@ class UiImages {
     fit ??= imageSpec.fit;
     filterQuality ??= imageSpec.filterQuality ?? FilterQuality.low;
     repeat ??= imageSpec.repeat ?? ImageRepeat.noRepeat;
-    
+
     try { switch (type) {
       case 'flutter.asset':
         String? assetString = JsonUtils.stringValue(source);
@@ -622,7 +818,7 @@ class UiImages {
           scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
         ) : null;
-      
+
       case 'flutter.file':
         File? sourceFile = _ImageUtils.fileValue(source);
         return (sourceFile != null) ? Image.file(sourceFile,
@@ -630,7 +826,7 @@ class UiImages {
           scale: scale ?? 1.0, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality, 
         ) : null;
-      
+
       case 'flutter.network':
         String? urlString = JsonUtils.stringValue(source);
         return (urlString != null) ? Image.network(urlString,
@@ -639,7 +835,7 @@ class UiImages {
           centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
           headers: networkHeaders
         ) : null;
-      
+
       case 'flutter.memory':
         Uint8List? bytes = _ImageUtils.bytesValue(source);
         return (bytes != null) ? Image.memory(bytes, key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel,  excludeFromSemantics: excludeFromSemantics,
@@ -664,7 +860,7 @@ class UiImages {
     }
   */
 
-  Widget? _getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
+  static Widget? getFaIcon(FontAwesomeImageSpec imageSpec, {String? type, dynamic source,
     Key? key, double? size, String? weight, Color? color, TextDirection? textDirection,
     String? semanticLabel, bool excludeFromSemantics = false}) {
     type ??= imageSpec.type;
@@ -678,10 +874,9 @@ class UiImages {
 
     try { switch (type) {
       case 'fa.icon':
-
         IconData? iconData = _ImageUtils.faIconDataValue(weight, codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
-          FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
+        FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
         ) : null;
     }}
     catch (e) {
@@ -690,35 +885,35 @@ class UiImages {
     return null;
   }
 
-  Image? _getDefaultFlutterImage(Uri uri, { Key? key, double? scale, double? width, double? height, Color? color, String? semanticLabel,
-    bool excludeFromSemantics = false, bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
-    AlignmentGeometry? alignment, Animation<double>? opacity, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, 
-    ImageRepeat? repeat, Rect? centerSlice, Map<String, String>? networkHeaders, Widget Function(BuildContext, Widget, int?, bool)? frameBuilder, 
-    Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder, Widget Function(BuildContext, Object, StackTrace?)? errorBuilder }
+  FlutterImageSpec? _getDefaultFlutterImageSpec(Uri uri, { double? scale, double? width, double? height, Color? color, String? semanticLabel,
+    bool isAntiAlias = false, bool matchTextDirection = false, bool gaplessPlayback = false,
+    AlignmentGeometry? alignment, BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality,
+    ImageRepeat? repeat }
   ) {
     try {
       scale ??= 1.0;
       alignment ??= Alignment.center;
       repeat ??= ImageRepeat.noRepeat;
       filterQuality ??= FilterQuality.low;
+      String? type;
+      String? source;
 
       if (uri.scheme.isNotEmpty) {
-        return Image.network(uri.toString(),
-          key: key, frameBuilder: frameBuilder, loadingBuilder: loadingBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-          headers: networkHeaders
-        );
+        type = 'flutter.network';
+        source = uri.toString();
       }
       else if (uri.path.isNotEmpty) {
-        return Image.asset((assetPathResolver != null) ? assetPathResolver!(uri) : uri.path,
-          key: key, frameBuilder: frameBuilder, errorBuilder: errorBuilder, semanticLabel: semanticLabel, excludeFromSemantics: excludeFromSemantics,
-          scale: scale, width: width, height: height, color: color, opacity: opacity, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment, repeat: repeat,
-          centerSlice: centerSlice, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback, isAntiAlias: isAntiAlias, filterQuality: filterQuality,
-        );
+        type = 'flutter.asset';
+        source = assetPathResolver?.call(uri) ?? uri.path;
       }
-      else {
-        return null;
+
+      if (type != null && source != null) {
+        return FlutterImageSpec(type: 'flutter.network', source: uri.toString(),
+          semanticLabel: semanticLabel, scale: scale, width: width, height: height,
+          color: color, colorBlendMode: colorBlendMode, fit: fit, alignment: alignment,
+          repeat: repeat, matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          isAntiAlias: isAntiAlias, filterQuality: filterQuality,
+        );
       }
     }
     catch(e) {
@@ -727,7 +922,7 @@ class UiImages {
     return null;
   }
 
-  Widget? _getMaterialIcon(MaterialIconImageSpec imageSpec, { String? type, dynamic source, Key? key,
+  static Widget? getMaterialIcon(MaterialIconImageSpec imageSpec, { String? type, dynamic source, Key? key,
     double? size, double? fill, double? weight, double? grade, double? opticalSize,
     Color? color, String? fontFamily, String? fontPackage, TextDirection? textDirection, bool? matchTextDirection,
     String? semanticLabel, bool excludeFromSemantics = false,
@@ -735,13 +930,13 @@ class UiImages {
     // TODO: Did not include Icon shadows
     type ??= imageSpec.type;
     source ??= imageSpec.source;
-    
+
     size ??= imageSpec.size;
     fill ??= imageSpec.fill;
     weight ??= imageSpec.weight;
     grade ??= imageSpec.grade;
     opticalSize ??= imageSpec.opticalSize;
-    
+
     color ??= imageSpec.color;
     fontFamily ??= imageSpec.fontFamily;
     fontPackage ??= imageSpec.fontPackage;
@@ -780,22 +975,22 @@ abstract class ImageSpec {
 
   const ImageSpec({required this.type, this.source, this.size, this.color, this.semanticLabel});
 
-  static ImageSpec? fromJson(Map<String, dynamic> json) {
+  static ImageSpec? fromJson(Map<String, dynamic> json, {UiColors? colors}) {
     String? type = JsonUtils.stringValue(json['type']);
     if (type == null) {
       return null;
     } else if (type.startsWith('flutter.')) {
-      return FlutterImageSpec.fromJson(json);
+      return FlutterImageSpec.fromJson(json, colors: colors);
     } else if (type.startsWith('fa.')) {
-      return FontAwesomeImageSpec.fromJson(json);
+      return FontAwesomeImageSpec.fromJson(json, colors: colors);
     } else if (type.startsWith('material.')) {
-      return MaterialIconImageSpec.fromJson(json);
+      return MaterialIconImageSpec.fromJson(json, colors: colors);
     }
     return null;
   }
 
-  factory ImageSpec.baseFromJson(Map<String, dynamic> json) {
-    Color? color = _ImageUtils.colorValue(JsonUtils.stringValue(json['color']), colors: Styles().colors);
+  factory ImageSpec.baseFromJson(Map<String, dynamic> json, {UiColors? colors}) {
+    Color? color = _ImageUtils.colorValue(JsonUtils.stringValue(json['color']), colors: colors ?? Styles().colors);
     return _BaseImageSpec(
       type: JsonUtils.stringValue(json['type']) ?? '',
       source: json['src'],
@@ -803,6 +998,58 @@ abstract class ImageSpec {
       color: color,
       semanticLabel: JsonUtils.stringValue(json['semantic_label']),
     );
+  }
+
+  factory ImageSpec.fromOther(ImageSpec spec, {dynamic source, double? scale, double? size,
+    double? width, double? height, dynamic weight, Color? color, String? semanticLabel,
+    double? fill, double? grade, double? opticalSize, String? fontFamily, String? fontPackage,
+    bool? isAntiAlias, bool? matchTextDirection, bool? gaplessPlayback, AlignmentGeometry? alignment,
+    BlendMode? colorBlendMode, BoxFit? fit, FilterQuality? filterQuality, ImageRepeat? repeat,
+    TextDirection? textDirection}) {
+    ImageSpec imageSpec = spec;
+    String type = imageSpec.type;
+    source ??= imageSpec.source;
+    size ??= imageSpec.size;
+    color ??= imageSpec.color;
+
+    if (imageSpec is FlutterImageSpec) {
+      scale ??= imageSpec.scale;
+      width ??= imageSpec.width;
+      height ??= imageSpec.height;
+      alignment ??= imageSpec.alignment;
+      colorBlendMode ??= imageSpec.colorBlendMode;
+      fit ??= imageSpec.fit;
+      filterQuality ??= imageSpec.filterQuality;
+      repeat ??= imageSpec.repeat;
+      matchTextDirection ?? imageSpec.matchTextDirection;
+
+      imageSpec = FlutterImageSpec(type: type, source: source, size: size, color: color,
+          scale: scale, width: width, height: height, isAntiAlias: isAntiAlias,
+          matchTextDirection: matchTextDirection, gaplessPlayback: gaplessPlayback,
+          alignment: alignment, colorBlendMode: colorBlendMode, fit: fit,
+          filterQuality: filterQuality, repeat: repeat);
+    } else if (imageSpec is FontAwesomeImageSpec) {
+      weight ??= imageSpec.weight;
+      textDirection ??= imageSpec.textDirection;
+      semanticLabel ??= imageSpec.semanticLabel;
+
+      imageSpec = FontAwesomeImageSpec(type: type, source: source, size: size, color: color,
+          semanticLabel: semanticLabel, weight: weight, textDirection: textDirection);
+    } else if (imageSpec is MaterialIconImageSpec) {
+      weight ??= imageSpec.weight;
+      textDirection ??= imageSpec.textDirection;
+      matchTextDirection ?? imageSpec.matchTextDirection;
+      fill ??= imageSpec.fill;
+      grade ??= imageSpec.grade;
+      opticalSize ??= imageSpec.opticalSize;
+      fontFamily ??= imageSpec.fontFamily;
+      fontPackage ??= imageSpec.fontPackage;
+
+      imageSpec = MaterialIconImageSpec(type: type, source: source, size: size, color: color,
+          semanticLabel: semanticLabel, fill: fill, weight: weight, grade: grade, opticalSize: opticalSize,
+          fontFamily: fontFamily, fontPackage: fontPackage, textDirection: textDirection, matchTextDirection: matchTextDirection);
+    }
+    return imageSpec;
   }
 }
 
@@ -834,7 +1081,7 @@ class FlutterImageSpec extends ImageSpec {
       this.alignment, this.colorBlendMode, this.fit, this.filterQuality, this.repeat}) :
         super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
 
-  factory FlutterImageSpec.fromJson(Map<String, dynamic> json) {
+  factory FlutterImageSpec.fromJson(Map<String, dynamic> json, {UiColors? colors}) {
     ImageSpec base = ImageSpec.baseFromJson(json);
     return FlutterImageSpec.fromBase(base,
       scale: JsonUtils.doubleValue(json['scale']),
@@ -863,8 +1110,8 @@ class FontAwesomeImageSpec extends ImageSpec {
   FontAwesomeImageSpec.fromBase(ImageSpec base, {this.weight, this.textDirection}) :
         super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
 
-  factory FontAwesomeImageSpec.fromJson(Map<String, dynamic> json) {
-    ImageSpec base = ImageSpec.baseFromJson(json);
+  factory FontAwesomeImageSpec.fromJson(Map<String, dynamic> json, {UiColors? colors}) {
+    ImageSpec base = ImageSpec.baseFromJson(json, colors: colors);
     TextDirection? textDirection = _ImageUtils.lookup(TextDirection.values, JsonUtils.stringValue(json['text_direction']));
     return FontAwesomeImageSpec.fromBase(base,
       weight: JsonUtils.stringValue(json['weight']),
@@ -893,8 +1140,8 @@ class MaterialIconImageSpec extends ImageSpec {
     this.fontFamily, this.fontPackage, this.textDirection, this.matchTextDirection}) :
         super(type: base.type, source: base.source, size: base.size, color: base.color, semanticLabel: base.semanticLabel);
 
-  factory MaterialIconImageSpec.fromJson(Map<String, dynamic> json) {
-    ImageSpec base = ImageSpec.baseFromJson(json);
+  factory MaterialIconImageSpec.fromJson(Map<String, dynamic> json, {UiColors? colors}) {
+    ImageSpec base = ImageSpec.baseFromJson(json, colors: colors);
     return MaterialIconImageSpec.fromBase(base,
       fill: JsonUtils.doubleValue(json['fill']),
       weight: JsonUtils.doubleValue(json['weight']),
@@ -909,7 +1156,7 @@ class MaterialIconImageSpec extends ImageSpec {
 }
 
 class _ImageUtils {
-  
+
   static File? fileValue(dynamic value) {
     if (value is File) {
       return value;
@@ -1012,6 +1259,14 @@ class _ImageUtils {
 }
 
 class _TextStyleUtils {
+
+  static FontStyle? textFontStyleFromString(String? value) {
+    switch (value) {
+      case "normal" : return FontStyle.normal;
+      case "italic" : return FontStyle.italic;
+      default : return null;
+    }
+  }
 
   static TextDecoration? textDecorationFromString(String? decoration){
     switch(decoration){

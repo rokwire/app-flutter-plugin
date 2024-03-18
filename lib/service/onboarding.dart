@@ -97,12 +97,21 @@ class Onboarding with Service implements NotificationsListener {
 
   void next(BuildContext context, OnboardingPanel panel, {bool replace = false}) {
     nextPanel(panel).then((dynamic nextPanel) {
+      if (!context.mounted) {
+        return;
+      }
       if (nextPanel is Widget) {
         if (replace) {
-          Navigator.pushReplacement(context, CupertinoPageRoute(builder: (context) => nextPanel));
+          Navigator.pushReplacement(context, CupertinoPageRoute(
+            builder: (context) => nextPanel,
+            settings: nextPanel is OnboardingPanel ? RouteSettings(name: getPanelCode(panel: nextPanel as OnboardingPanel)) : null,
+          ));
         }
         else {
-          Navigator.push(context, CupertinoPageRoute(builder: (context) => nextPanel));
+          Navigator.push(context, CupertinoPageRoute(
+            builder: (context) => nextPanel,
+            settings: nextPanel is OnboardingPanel ? RouteSettings(name: getPanelCode(panel: nextPanel as OnboardingPanel)) : null,
+          ));
         }
       }
       else if ((nextPanel is bool) && !nextPanel) {
@@ -137,9 +146,7 @@ class Onboarding with Service implements NotificationsListener {
           if ((nextPanel != null) && (nextPanel is Widget) && nextPanel.onboardingCanDisplay && await nextPanel.onboardingCanDisplayAsync) {
             return nextPanel as Widget;
           }
-          else {
-            nextPanelIndex++;
-          }
+          nextPanelIndex++;
         }
         return false;
       }
@@ -154,7 +161,7 @@ class Onboarding with Service implements NotificationsListener {
   String? getPanelCode({OnboardingPanel? panel}) => null;
 }
 
-abstract class OnboardingPanel {
+abstract mixin class OnboardingPanel {
   
   Map<String, dynamic>? get onboardingContext {
     return null;

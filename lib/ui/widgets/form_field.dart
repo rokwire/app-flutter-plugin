@@ -14,8 +14,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/localization.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 
 class FormFieldText extends StatefulWidget {
   final String label;
@@ -23,7 +23,7 @@ class FormFieldText extends StatefulWidget {
   final bool readOnly;
   final bool multipleLines;
   final bool required;
-  
+
   final String? initialValue;
   final String? hint;
   final int? maxLength;
@@ -54,7 +54,7 @@ class _FormFieldTextState extends State<FormFieldText> {
         label: widget.label,
         child: TextFormField(
           readOnly: widget.readOnly,
-          style: Styles().textStyles.getTextStyle('body'),
+          style: AppTextStyles.widgetDetailRegular,
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
           maxLength: widget.maxLength,
@@ -68,7 +68,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
               hintText: widget.hint,
-              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles.getTextStyle('widget.error.regular.fat')) : null,
+              prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: AppTextStyles.widgetErrorRegularBold) : null,
               filled: true,
               fillColor: Colors.white,
               enabledBorder: OutlineInputBorder(
@@ -77,7 +77,7 @@ class _FormFieldTextState extends State<FormFieldText> {
               ),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide(width: 2, color: Styles().colors.fillColorPrimary)
+                  borderSide: BorderSide(width: 2, color: AppColors.fillColorPrimary)
               )
           ),
           controller: widget.controller,

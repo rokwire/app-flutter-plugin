@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -16,21 +16,38 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
-  static const String notifyLoginStarted      = "edu.illinois.rokwire.auth2.login.started";
-  static const String notifyLoginSucceeded    = "edu.illinois.rokwire.auth2.login.succeeded";
-  static const String notifyLoginFailed       = "edu.illinois.rokwire.auth2.login.failed";
-  static const String notifyLoginChanged      = "edu.illinois.rokwire.auth2.login.changed";
-  static const String notifyLoginFinished     = "edu.illinois.rokwire.auth2.login.finished";
-  static const String notifyLogout            = "edu.illinois.rokwire.auth2.logout";
-  static const String notifyLinkChanged       = "edu.illinois.rokwire.auth2.link.changed";
-  static const String notifyAccountChanged    = "edu.illinois.rokwire.auth2.account.changed";
-  static const String notifyProfileChanged    = "edu.illinois.rokwire.auth2.profile.changed";
-  static const String notifyPrefsChanged      = "edu.illinois.rokwire.auth2.prefs.changed";
-  static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
-  static const String notifyPrepareUserDelete = "edu.illinois.rokwire.auth2.user.prepare.delete";
+  static const String notifyLoginStarted         = "edu.illinois.rokwire.auth2.login.started";
+  static const String notifyLoginSucceeded       = "edu.illinois.rokwire.auth2.login.succeeded";
+  static const String notifyLoginFailed          = "edu.illinois.rokwire.auth2.login.failed";
+  static const String notifyLoginChanged         = "edu.illinois.rokwire.auth2.login.changed";
+  static const String notifyLoginFinished        = "edu.illinois.rokwire.auth2.login.finished";
+  static const String notifyLoginError           = "edu.illinois.rokwire.auth2.login.error";
+  static const String notifyLogoutStarted        = "edu.illinois.rokwire.auth2.logout.started";
+  static const String notifyRefreshStarted       = "edu.illinois.rokwire.auth2.refresh.started";
+  static const String notifyRefreshError         = "edu.illinois.rokwire.auth2.refresh.error";
+  static const String notifyRefreshSucceeded     = "edu.illinois.rokwire.auth2.refresh.succeeded";
+  static const String notifyRefreshFinished      = "edu.illinois.rokwire.auth2.refresh.finished";
+  static const String notifyLogout               = "edu.illinois.rokwire.auth2.logout";
+  static const String notifyLinkChanged          = "edu.illinois.rokwire.auth2.link.changed";
+  static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
+  static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
+  static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
+  static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
+  static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
+
+
+  //TODO: Remove if not needed
+  static const String notifyGetPasskeySuccess    = "edu.illinois.rokwire.auth2.passkey.get.succeeded";
+  static const String notifyGetPasskeyFailed     = "edu.illinois.rokwire.auth2.passkey.get.failed";
+  static const String notifyCreatePasskeySuccess = "edu.illinois.rokwire.auth2.passkey.create.succeeded";
+  static const String notifyCreatePasskeyFailed  = "edu.illinois.rokwire.auth2.passkey.create.failed";
+  //
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
@@ -42,12 +59,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   _OidcLogin? _oidcLogin;
   Auth2AccountScope? _oidcScope;
   bool? _oidcLink;
+  bool _oidcLoginInProgress = false;
   List<Completer<Auth2OidcAuthenticateResult?>>? _oidcAuthenticationCompleters;
   bool? _processingOidcAuthentication;
   Timer? _oidcAuthenticationTimer;
 
   final Map<String, Future<Response?>> _refreshTokenFutures = {};
-  final Map<String, int> _refreshTonenFailCounts = {};
+  final Map<String, int> _refreshTokenFailCounts = {};
 
   Client? _updateUserPrefsClient;
   Timer? _updateUserPrefsTimer;
@@ -55,8 +73,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Client? _updateUserProfileClient;
   Timer? _updateUserProfileTimer;
 
+  Client? _updateUserSecretsClient;
+  Timer? _updateUserSecretsTimer;
+
   Auth2Token? _token;
   Auth2Account? _account;
+
+  Auth2Token? _oidcToken;
 
   String? _anonymousId;
   Auth2Token? _anonymousToken;
@@ -87,9 +110,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   void createService() {
     NotificationService().subscribe(this, [
       DeepLink.notifyUri,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       Auth2UserProfile.notifyChanged,
       Auth2UserPrefs.notifyChanged,
+      Auth2Account.notifySecretsChanged,
     ]);
   }
 
@@ -100,25 +124,50 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _token = Storage().auth2Token;
-    _account = Storage().auth2Account;
-
     _anonymousId = Storage().auth2AnonymousId;
-    _anonymousToken = Storage().auth2AnonymousToken;
-    _anonymousPrefs = Storage().auth2AnonymousPrefs;
-    _anonymousProfile = Storage().auth2AnonymousProfile;
 
-    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+    List<Future<dynamic>> futures = [
+      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
 
-    if ((_account == null) && (_anonymousPrefs == null)) {
-      Storage().auth2AnonymousPrefs = _anonymousPrefs = defaultAnonimousPrefs;
+      Storage().getAuth2Token(),
+      Storage().getAuth2Account(),
+      Storage().getAuth2OidcToken(),
+    ];
+
+    if (isAnonymousAuthenticationSupported) {
+      futures.addAll([
+        Storage().getAuth2AnonymousToken(),
+        Storage().getAuth2AnonymousPrefs(),
+        Storage().getAuth2AnonymousProfile(),
+      ]);
     }
 
-    if ((_account == null) && (_anonymousProfile == null)) {
-      Storage().auth2AnonymousProfile = _anonymousProfile = defaultAnonimousProfile;
+    List<dynamic> results = await Future.wait(futures);
+    _deviceId = results[0];
+    _token = results[1];
+    _account = results[2];
+    _oidcToken = results[3];
+
+    if (isAnonymousAuthenticationSupported) {
+      _anonymousToken = results[4];
+      _anonymousPrefs = results[5];
+      _anonymousProfile = results[6];
     }
 
-    if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
+    futures.clear();
+    if ((_account == null) && (_anonymousPrefs == null) && isAnonymousAuthenticationSupported) {
+      futures.add(Storage().setAuth2AnonymousPrefs(_anonymousPrefs = defaultAnonymousPrefs));
+    }
+
+    if ((_account == null) && (_anonymousProfile == null) && isAnonymousAuthenticationSupported) {
+      futures.add(Storage().setAuth2AnonymousProfile(_anonymousProfile = defaultAnonymousProfile));
+    }
+
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
+
+    if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
       if (!await authenticateAnonymously()) {
         throw ServiceError(
           source: this,
@@ -129,7 +178,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
     }
 
-    _refreshAccount();
+    if (kIsWeb && (_token == null)) {
+      refreshToken(ignoreUnauthorized: true).then((token) {
+        if (token != null) {
+          _refreshAccount();
+          NotificationService().notify(notifyLoginSucceeded, null);
+          NotificationService().notify(notifyLoginChanged);
+        }
+      });
+    } else {
+      _refreshAccount();
+    }
 
     await super.initService();
   }
@@ -143,7 +202,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
+    //TODO: try to do this without explicit web check
+    if (name == DeepLink.notifyUri && !kIsWeb) {
       onDeepLinkUri(param);
     }
     else if (name == Auth2UserProfile.notifyChanged) {
@@ -152,13 +212,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (name == Auth2UserPrefs.notifyChanged) {
       onUserPrefsChanged(param);
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      onAppLivecycleStateChanged(param);
+    else if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged(param);
+    }
+    else if (name == Auth2Account.notifySecretsChanged) {
+      onAccountSecretsChanged(param);
     }
   }
 
   @protected
-  void onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -182,14 +245,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void onDeepLinkUri(Uri? uri) {
     if (uri != null) {
-      Uri? redirectUri = Uri.tryParse(oidcRedirectUrl);
-      if ((redirectUri != null) &&
-          (redirectUri.scheme == uri.scheme) &&
-          (redirectUri.authority == uri.authority) &&
-          (redirectUri.path == uri.path))
-      {
-        handleOidcAuthentication(uri);
+      if (!kIsWeb) {
+        Uri? redirectUri = Uri.tryParse(oidcRedirectUrl);
+        if ((redirectUri == null) ||
+            (redirectUri.scheme != uri.scheme) ||
+            (redirectUri.authority != uri.authority) ||
+            (redirectUri.path != uri.path)) {
+          return;
+        }
       }
+
+      handleOidcAuthentication(uri);
     }
   }
 
@@ -200,7 +266,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     String? accessToken = token?.accessToken;
     if ((accessToken != null) && accessToken.isNotEmpty) {
       String? tokenType = token?.tokenType ?? 'Bearer';
-      return { HttpHeaders.authorizationHeader : "$tokenType $accessToken" };
+      return { 'Authorization' : "$tokenType $accessToken" };
     }
     return null;
   }
@@ -210,54 +276,92 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token)) {
-      return (await refreshToken(token) != null);
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
+      return (await refreshToken(token: token) != null);
     }
     return false;
   }
 
   // Getters
-  Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
-  Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
-  Auth2LoginType get emailLoginType => Auth2LoginType.email;
-  Auth2LoginType get usernameLoginType => Auth2LoginType.username;
-
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
   Auth2Token? get anonymousToken => _anonymousToken;
   Auth2Account? get account => _account;
   String? get deviceId => _deviceId;
-  
+
+  Auth2Token? get oidcToken => _oidcToken;
+
+  bool get associateAnonymousIds => false;
+  bool get isAnonymousAuthenticationSupported => Config().supportsAnonymousAuth;
   String? get accountId => _account?.id ?? _anonymousId;
+  String? get anonymousId => _anonymousId;
   Auth2UserPrefs? get prefs => _account?.prefs ?? _anonymousPrefs;
   Auth2UserProfile? get profile => _account?.profile ?? _anonymousProfile;
-  Auth2LoginType? get loginType => _account?.authType?.loginType;
+  String? get loginType => _account?.authType?.code;
 
-  bool get isLoggedIn => (_account?.id != null);
-  bool get isOidcLoggedIn => (_account?.authType?.loginType == oidcLoginType);
-  bool get isPhoneLoggedIn => (_account?.authType?.loginType == phoneLoginType);
-  bool get isEmailLoggedIn => (_account?.authType?.loginType == emailLoginType);
-  bool get isUsernameLoggedIn => (_account?.authType?.loginType == usernameLoginType);
+  bool get isLoggedIn => (_account?.id != null) && _token != null;
+  bool get isOidcLoggedIn => (_account?.authType?.code == oidcAuthType || _account?.authType?.code == Auth2Type.typeOidc) && _token != null;
+  bool get isCodeLoggedIn => (_account?.authType?.code == Auth2Type.typeCode) && _token != null;
+  bool get isPasswordLoggedIn => (_account?.authType?.code == Auth2Type.typePassword) && _token != null;
+  bool get isPasskeyLoggedIn => (_account?.authType?.code == Auth2Type.typePasskey) && _token != null;
 
-  bool get isOidcLinked => _account?.isAuthTypeLinked(oidcLoginType) ?? false;
-  bool get isPhoneLinked => _account?.isAuthTypeLinked(phoneLoginType) ?? false;
-  bool get isEmailLinked => _account?.isAuthTypeLinked(emailLoginType) ?? false;
-  bool get isUsernameLinked => _account?.isAuthTypeLinked(usernameLoginType) ?? false;
+  bool get isEmailLinked => _account?.isIdentifierLinked(Auth2Identifier.typeEmail) ?? false;
+  bool get isPhoneLinked => _account?.isIdentifierLinked(Auth2Identifier.typePhone) ?? false;
+  bool get isUsernameLinked => _account?.isIdentifierLinked(Auth2Identifier.typeUsername) ?? false;
 
-  List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcLoginType) ?? [];
-  List<Auth2Type> get linkedPhone => _account?.getLinkedForAuthType(phoneLoginType) ?? [];
-  List<Auth2Type> get linkedEmail => _account?.getLinkedForAuthType(emailLoginType) ?? [];
-  List<Auth2Type> get linkedUsername => _account?.getLinkedForAuthType(usernameLoginType) ?? [];
+  bool get isOidcLinked => _account?.isAuthTypeLinked(oidcAuthType) ?? false;
+  bool get isCodeLinked => _account?.isAuthTypeLinked(Auth2Type.typeCode) ?? false;
+  bool get isPasswordLinked => _account?.isAuthTypeLinked(Auth2Type.typePassword) ?? false;
+  bool get isPasskeyLinked => _account?.isAuthTypeLinked(Auth2Type.typePasskey) ?? false;
+
+  List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifierType(Auth2Identifier.typeEmail) ?? [];
+  List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifierType(Auth2Identifier.typePhone) ?? [];
+  List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifierType(Auth2Identifier.typeUsername) ?? [];
+  List<Auth2Identifier> get linkedOidcIdentifiers {
+    List<Auth2Identifier> identifiers = [];
+    for (Auth2Type oidcType in linkedOidc) {
+      if (oidcType.id != null) {
+        identifiers.addAll(_account?.getLinkedForAuthTypeId(oidcType.id!) ?? []);
+      }
+    }
+    return identifiers;
+  }
+
+  List<Auth2Type> get linkedOidc => _account?.getLinkedForAuthType(oidcAuthType) ?? [];
+  List<Auth2Type> get linkedCode => _account?.getLinkedForAuthType(Auth2Type.typeCode) ?? [];
+  List<Auth2Type> get linkedPassword => _account?.getLinkedForAuthType(Auth2Type.typePassword) ?? [];
+  List<Auth2Type> get linkedPasskey => _account?.getLinkedForAuthType(Auth2Type.typePasskey) ?? [];
 
   bool get hasUin => (0 < (uin?.length ?? 0));
   String? get uin => _account?.authType?.uiucUser?.uin;
   String? get netId => _account?.authType?.uiucUser?.netId;
 
-  String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
-  String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
-  String? get email => StringUtils.ensureNotEmpty(profile?.email, defaultValue: _account?.authType?.uiucUser?.email ?? '');
-  String? get phone => StringUtils.ensureNotEmpty(profile?.phone, defaultValue: _account?.authType?.phone ?? '');
+  String? get fullName => StringUtils.notEmptyString(profile?.fullName, _account?.authType?.uiucUser?.fullName);
+  String? get firstName => StringUtils.notEmptyString(profile?.firstName, _account?.authType?.uiucUser?.firstName);
   String? get username => _account?.username;
+  String? get email => StringUtils.notEmptyString(_account?.authType?.uiucUser?.email, ListUtils.first(emails));
+  String? get phone => StringUtils.notEmptyString(ListUtils.first(phones));
+
+  List<String> get emails {
+    List<String> emailStrings = [];
+    for (Auth2Identifier emailIdentifier in linkedEmail) {
+      if (emailIdentifier.identifier != null) {
+        emailStrings.add(emailIdentifier.identifier!);
+      }
+    }
+    return emailStrings;
+  }
+
+  List<String> get phones {
+    List<String> phoneStrings = [];
+    for (Auth2Identifier phoneIdentifier in linkedPhone) {
+      if (phoneIdentifier.identifier != null) {
+        phoneStrings.add(phoneIdentifier.identifier!);
+      }
+    }
+    return phoneStrings;
+  }
 
   bool get isEventEditor => hasRole("event approvers");
   bool get isStadiumPollManager => hasRole("stadium poll manager");
@@ -280,12 +384,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get votePlace => prefs?.voter?.votePlace;
   
   // Overrides
+  @protected
+  String get oidcAuthType => Auth2Type.typeOidcIllinois;
 
   @protected
-  Auth2UserPrefs get defaultAnonimousPrefs => Auth2UserPrefs.empty();
+  Auth2UserPrefs get defaultAnonymousPrefs => Auth2UserPrefs.empty();
 
   @protected
-  Auth2UserProfile get defaultAnonimousProfile => Auth2UserProfile.empty();
+  Auth2UserProfile get defaultAnonymousProfile => Auth2UserProfile.empty();
 
   @protected
   String? get deviceIdIdentifier => _deviceIdIdentifier;
@@ -296,29 +402,35 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // Anonymous Authentication
 
   Future<bool> authenticateAnonymously() async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (Config().rokwireApiKey != null)) {
-      String url = "${Config().coreUrl}/services/auth/login";
+    if (Config().supportsAnonymousAuth && (Config().authBaseUrl != null)) {
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(Auth2LoginType.anonymous),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'device': deviceInfo
-      });
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typeAnonymous,
+        'device': deviceInfo,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return false;
+      }
       
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       if (responseJson != null) {
         Auth2Token? anonymousToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
         Map<String, dynamic>? params = JsonUtils.mapValue(responseJson['params']);
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
-          _refreshTonenFailCounts.remove(_anonymousToken?.refreshToken);
-          Storage().auth2AnonymousId = _anonymousId = anonymousId;
-          Storage().auth2AnonymousToken = _anonymousToken = anonymousToken;
+          _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
+          await Future.wait([
+            Storage().setAuth2AnonymousId(_anonymousId = anonymousId),
+            Storage().setAuth2AnonymousToken(_anonymousToken = anonymousToken),
+          ]);
           _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
           return true;
         }
@@ -328,14 +440,296 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
+  // Passkey authentication
+
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey({String? identifier, String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
+    String? errorMessage;
+    if (Config().authBaseUrl != null) {
+      if (!await RokwirePlugin.arePasskeysSupported()) {
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotSupported);
+      }
+
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> creds = {};
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds[identifierType] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePasskey,
+        'creds': creds,
+        'params': {
+          'sign_up': false,
+        },
+        'username': identifierType == Auth2Identifier.typeUsername ? identifier : null,
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+        'account_identifier_id': identifierId,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response  != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        String? responseBody = response.body;
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
+        try {
+          String? responseData = await RokwirePlugin.getPasskey(message?.message);
+          debugPrint(responseData);
+          return _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType, identifierId: identifierId);
+        } catch(error) {
+          if (error is PlatformException) {
+            switch (error.code) {
+              // no credentials found
+              case "NoCredentialException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNoCredentials);
+              // user cancelled on device auth
+              case "GetPublicKeyCredentialDomException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+              // user cancelled on select passkey
+              case "GetCredentialCancellationException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+            }
+          }
+          errorMessage = error.toString();
+          debugPrint(errorMessage);
+          Log.e(errorMessage);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
+  }
+
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? responseData, {String? identifier, String identifierType = Auth2Identifier.typeUsername, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (responseData != null)) {
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
+      // TODO: remove if statement once plugin is fixed
+      if (Config().operatingSystem == 'ios') {
+        String? userHandle = requestJson?['response']['userHandle'];
+        requestJson?['response']['userHandle'] = StringUtils.base64UrlDecode(userHandle ?? '');
+      }
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> creds = {
+        "response": JsonUtils.encode(requestJson),
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds[identifierType] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePasskey,
+        'creds': creds,
+        'username': identifierType == Auth2Identifier.typeUsername ? identifier : null,
+        'device': deviceInfo,
+        'account_identifier_id': identifierId,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response != null && response.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
+  }
+
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String identifier, {String? displayName, String identifierType = Auth2Identifier.typeUsername, bool? public = false, bool verifyIdentifier = false}) async {
+    String? errorMessage;
+    if (Config().authBaseUrl != null) {
+      if (!await RokwirePlugin.arePasskeysSupported()) {
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotSupported);
+      }
+
+      Auth2UserProfile? profile = _anonymousProfile;
+      List<String>? nameParts = displayName?.split(' ');
+      if (nameParts != null && nameParts.length >= 2) {
+        Auth2UserProfile nameData = Auth2UserProfile(firstName: nameParts[0], lastName: nameParts.skip(1).join(' '));
+        if (profile != null) {
+          profile.apply(nameData);
+        } else {
+          profile = nameData;
+        }
+      }
+
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePasskey,
+        'creds': {
+          identifierType: identifier,
+        },
+        'params': {
+          "display_name": displayName,
+        },
+        'privacy': {
+          'public': public,
+        },
+        'username': identifierType == Auth2Identifier.typeUsername ? identifier : null,
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
+        if (message != null) {
+          if (verifyIdentifier) {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: message.message);
+          }
+          try {
+            String? responseData = await RokwirePlugin.createPasskey(message.message);
+            return completeSignUpWithPasskey(identifier, responseData, identifierType: identifierType);
+          } catch(error) {
+            try {
+              String? responseData = await RokwirePlugin.getPasskey(message.message);
+              Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType);
+              if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+              }
+            } catch(error) {
+              if (error is PlatformException && error.code == "NoCredentialException") {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
+              }
+
+              debugPrint(error.toString());
+            }
+
+            if (error is PlatformException) {
+              switch (error.code) {
+                // user cancelled on device auth
+                case "GetPublicKeyCredentialDomException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+                // user cancelled on select passkey
+                case "GetCredentialCancellationException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+              }
+            }
+
+            debugPrint(error.toString());
+          }
+        } else {
+          Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response.body));
+          if (error?.status == 'unverified') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+          }
+          else if (error?.status == 'verification-expired') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
+          }
+          else if (error?.status == 'already-exists') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedAccountExist);
+          }
+        }
+      }
+      // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+      //   return Auth2PasskeySignUpResult.failedAccountExist;
+      // }
+    }
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed, error: errorMessage);
+  }
+
+  Future<Auth2PasskeySignUpResult> completeSignUpWithPasskey(String identifier, String? responseData, {String identifierType = Auth2Identifier.typeUsername}) async {
+    if ((Config().authBaseUrl != null) && (responseData != null)) {
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePasskey,
+        'creds': {
+          identifierType: identifier,
+          "response": responseData,
+        },
+        'username': identifierType == Auth2Identifier.typeUsername ? identifier : null,
+        'device': deviceInfo,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response != null && response.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
+  }
+
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
+    if (Config().authBaseUrl != null) {
 
       if (_oidcAuthenticationCompleters == null) {
         _oidcAuthenticationCompleters = <Completer<Auth2OidcAuthenticateResult?>>[];
-        NotificationService().notify(notifyLoginStarted, oidcLoginType);
+        NotificationService().notify(notifyLoginStarted, oidcAuthType);
 
         _OidcLogin? oidcLogin = await getOidcData();
         if (oidcLogin?.loginUrl != null) {
@@ -345,35 +739,50 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           await _launchUrl(_oidcLogin?.loginUrl);
         }
         else {
-          completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
-          return Auth2OidcAuthenticateResult.failed;
+          Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
+            Auth2OidcAuthenticateResultStatus.failed,
+            error: "error getting login url: ${oidcLogin?.error}"
+          );
+          completeOidcAuthentication(result);
+          return result;
         }
       }
 
+      _oidcLoginInProgress = true;
       Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
       _oidcAuthenticationCompleters!.add(completer);
       return completer.future;
     }
     
-    return Auth2OidcAuthenticateResult.failed;
+    return Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.failed,
+        error: "auth url is null");
   }
 
   @protected
-  Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
+  Future<Auth2OidcAuthenticateResult?> handleOidcAuthentication(Uri uri) async {
     
     RokwirePlugin.dismissSafariVC();
-    
+
+    if (!_oidcLoginInProgress) {
+      NotificationService().notify(notifyLoginError, 'no login in progress');
+      return null;
+    }
+    _oidcLoginInProgress = false;
+
     cancelOidcAuthenticationTimer();
 
     _processingOidcAuthentication = true;
     Auth2OidcAuthenticateResult result;
     if (_oidcLink == true) {
-      Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params);
+      Auth2LinkResult linkResult = await linkAccountAuthType(oidcAuthType, uri.toString(), _oidcLogin?.params);
       result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
     }
     else {
-      bool processResult = await processOidcAuthentication(uri);
-      result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
+      String? processResult = await processOidcAuthentication(uri);
+      result = processResult == null ?
+        Auth2OidcAuthenticateResult(Auth2OidcAuthenticateResultStatus.succeeded)
+          : Auth2OidcAuthenticateResult(
+              Auth2OidcAuthenticateResultStatus.failed, error: processResult);
     }
     _processingOidcAuthentication = false;
 
@@ -382,38 +791,48 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<bool> processOidcAuthentication(Uri? uri) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
-      String url = "${Config().coreUrl}/services/auth/login";
+  Future<String?> processOidcAuthentication(Uri? uri) async {
+    if (Config().authBaseUrl != null) {
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(oidcLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
+      Map<String, dynamic> postData = {
+        'auth_type': oidcAuthType,
         'creds': uri?.toString(),
         'params': _oidcLogin?.params,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
-      });
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return 'could not get config params';
+      }
       _oidcLogin = null;
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       Log.d("Login: ${response?.statusCode}, ${response?.body}", lineLength: 512);
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       bool result = await processLoginResponse(responseJson, scope: _oidcScope);
       _oidcScope = null;
       _log(result ? "Auth2: login succeeded: ${response?.statusCode}\n${response?.body}" : "Auth2: login failed: ${response?.statusCode}\n${response?.body}");
-      return result;
+      if (result) {
+        return null;
+      }
+      if (response?.statusCode != 200) {
+        return '${response?.statusCode} - ${response?.body}';
+      }
+      return 'invalid token or account response';
     }
-    return false;
+    return 'auth url is null';
   }
 
   @protected
-  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope }) async {
+  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope = defaultLoginScope}) async {
     if (responseJson != null) {
       Auth2Token? token = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
       Auth2Account? account = Auth2Account.fromJson(JsonUtils.mapValue(responseJson['account']),
@@ -429,16 +848,33 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope, Map<String, dynamic>? params }) async {
+  Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope = defaultLoginScope, Map<String, dynamic>? params }) async {
+    Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
-    _refreshTonenFailCounts.remove(_token?.refreshToken);
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
+    if (associateAnonymousIds) {
+      _anonymousPrefs?.addAnonymousId(_anonymousId);
+    }
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs, scope: scope?.prefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile, scope: scope?.profile);
-    Storage().auth2Token = _token = token;
-    Storage().auth2Account = _account = account;
-    Storage().auth2AnonymousPrefs = _anonymousPrefs = null;
-    Storage().auth2AnonymousProfile = _anonymousProfile = null;
+    _token = token;
+    _oidcToken = oidcToken;
+    _account = account;
+
+    List<Future<dynamic>> futures = [
+      Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null),
+      Storage().setAuth2AnonymousProfile(_anonymousProfile = null),
+    ];
+
+    if (!kIsWeb) {
+      futures.addAll([
+        Storage().setAuth2Token(token),
+        Storage().setAuth2OidcToken(oidcToken),
+        Storage().setAuth2Account(account),
+      ]);
+    }
+    await Future.wait(futures);
 
     if (prefsUpdated == true) {
       _saveAccountUserPrefs();
@@ -455,23 +891,30 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<_OidcLogin?> getOidcData() async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
+    if (Config().authBaseUrl != null) {
 
-      String url = "${Config().coreUrl}/services/auth/login-url";
+      String url = "${Config().authBaseUrl}/auth/login-url";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(oidcLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'redirect_uri': oidcRedirectUrl,
-      });
-      Response? response = await Network().post(url, headers: headers, body: post);
-      return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+      Map<String, dynamic> postData = {
+        'auth_type': oidcAuthType,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+        postData['redirect_uri'] = oidcRedirectUrl;
+      } else {
+        return _OidcLogin(error: 'config params are null');
+      }
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response?.statusCode == 200) {
+        return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+      } else {
+        return _OidcLogin(error: '${response?.statusCode} - ${response?.body}');
+      }
     }
-    return null;
+    return _OidcLogin(error: 'auth url is null');;
   }
 
   @protected
@@ -480,7 +923,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (_oidcAuthenticationTimer != null) {
         _oidcAuthenticationTimer!.cancel();
       }
-      _oidcAuthenticationTimer = Timer(const Duration(milliseconds: 100), () {
+      _oidcAuthenticationTimer = Timer(Duration(milliseconds: Config().oidcAuthenticationTimeout), () {
+        NotificationService().notify(notifyLoginError, 'oidc login timeout');
         completeOidcAuthentication(null);
         _oidcAuthenticationTimer = null;
       });
@@ -498,10 +942,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void completeOidcAuthentication(Auth2OidcAuthenticateResult? result) {
     
-    _notifyLogin(oidcLoginType, result == Auth2OidcAuthenticateResult.succeeded);
+    _notifyLogin(oidcAuthType, result?.status == Auth2OidcAuthenticateResultStatus.succeeded);
 
-    _oidcLogin = null;
-    _oidcScope = null;
+    // _oidcLogin = null;
+    // _oidcScope = null;
     _oidcLink = null;
 
     if (_oidcAuthenticationCompleters != null) {
@@ -514,346 +958,286 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  // Phone Authentication
+  // Code Authentication
 
-  Future<Auth2PhoneRequestCodeResult> authenticateWithPhone(String? phoneNumber) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null)) {
-      NotificationService().notify(notifyLoginStarted, phoneLoginType);
+  Future<Auth2RequestCodeResult> authenticateWithCode(String? identifier, {String identifierType = Auth2Identifier.typePhone, bool? public = false, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null)) {
+      NotificationService().notify(notifyLoginStarted, Auth2Type.typeCode);
 
-      String url = "${Config().coreUrl}/services/auth/login";
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(phoneLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'creds': {
-          "phone": phoneNumber,
+      Map<String, dynamic> creds = {};
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds[identifierType] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typeCode,
+        'creds': creds,
+        'privacy': {
+          'public': public,
         },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
-      });
+        'account_identifier_id': identifierId,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2RequestCodeResult.failed;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
-        return Auth2PhoneRequestCodeResult.succeeded;
+        return Auth2RequestCodeResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2PhoneRequestCodeResult.failedAccountExist;
+        return Auth2RequestCodeResult.failedAccountExist;
       }
     }
-    return Auth2PhoneRequestCodeResult.failed;
+    return Auth2RequestCodeResult.failed;
   }
 
-  Future<Auth2PhoneSendCodeResult> handlePhoneAuthentication(String? phoneNumber, String? code, { Auth2AccountScope? scope = defaultLoginScope }) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (phoneNumber != null) && (code != null)) {
-      String url = "${Config().coreUrl}/services/auth/login";
+  Future<Auth2SendCodeResult> handleCodeAuthentication(String? identifier, String? code, {String identifierType = Auth2Identifier.typePhone, String? identifierId, Auth2AccountScope? scope = defaultLoginScope}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (code != null)) {
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(phoneLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'creds': {
-          "phone": phoneNumber,
-          "code": code,
-        },
+      Map<String, dynamic> creds = {
+        "code": code,
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds[identifierType] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typeCode,
+        'creds': creds,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
-      });
+        'account_identifier_id': identifierId,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2SendCodeResult.failed;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(phoneLoginType, result);
-        return result ? Auth2PhoneSendCodeResult.succeeded : Auth2PhoneSendCodeResult.failed;
+        _notifyLogin(Auth2Type.typeCode, result);
+        return result ? Auth2SendCodeResult.succeeded : Auth2SendCodeResult.failed;
       }
       else {
-        _notifyLogin(phoneLoginType, false);
+        _notifyLogin(Auth2Type.typeCode, false);
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'invalid') {
-          return Auth2PhoneSendCodeResult.failedInvalid;
+          return Auth2SendCodeResult.failedInvalid;
         }
       }
     }
-    return Auth2PhoneSendCodeResult.failed;
+    return Auth2SendCodeResult.failed;
   }
 
-  // Email Authentication
+  // Password Authentication
 
-  Future<Auth2EmailSignInResult> authenticateWithEmail(String? email, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null) && (password != null)) {
+  Future<Auth2PasswordSignInResult> authenticateWithPassword(String? identifier, String? password, {String identifierType = Auth2Identifier.typeEmail, String? identifierId, Auth2AccountScope? scope = defaultLoginScope}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null || identifierId != null) && (password != null)) {
       
-      NotificationService().notify(notifyLoginStarted, emailLoginType);
+      NotificationService().notify(notifyLoginStarted, Auth2Type.typePassword);
 
-      String url = "${Config().coreUrl}/services/auth/login";
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'creds': {
-          "email": email,
-          "password": password
-        },
+      Map<String, dynamic> creds = {
+        "password": password,
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds[identifierType] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePassword,
+        'creds': creds,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
-      });
+        'account_identifier_id': identifierId,
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasswordSignInResult.failed;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(emailLoginType, result);
-        return result ? Auth2EmailSignInResult.succeeded : Auth2EmailSignInResult.failed;
+        _notifyLogin(Auth2Type.typePassword, result);
+        return result ? Auth2PasswordSignInResult.succeeded : Auth2PasswordSignInResult.failed;
       }
       else {
-        _notifyLogin(emailLoginType, false);
+        _notifyLogin(Auth2Type.typePassword, false);
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'unverified') {
-          return Auth2EmailSignInResult.failedNotActivated;
+          return Auth2PasswordSignInResult.failedNotActivated;
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasswordSignInResult.failedNotFound;
         }
         else if (error?.status == 'verification-expired') {
-          return Auth2EmailSignInResult.failedActivationExpired;
+          return Auth2PasswordSignInResult.failedActivationExpired;
         }
         else if (error?.status == 'invalid') {
-          return Auth2EmailSignInResult.failedInvalid;
+          return Auth2PasswordSignInResult.failedInvalid;
         }
       }
     }
-    return Auth2EmailSignInResult.failed;
+    return Auth2PasswordSignInResult.failed;
   }
 
-  Future<Auth2EmailSignUpResult> signUpWithEmail(String? email, String? password) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null) && (password != null)) {
-      String url = "${Config().coreUrl}/services/auth/login";
+  Future<Auth2PasswordSignUpResult> signUpWithPassword(String? identifier, String? password, {String identifierType = Auth2Identifier.typeEmail, bool? public = false}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null) && (password != null)) {
+      String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePassword,
         'creds': {
-          "email": email,
+          identifierType: identifier,
           "password": password
         },
         'params': {
           "sign_up": true,
           "confirm_password": password
         },
+        'privacy': {
+          'public': public,
+        },
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
-      });
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2PasswordSignUpResult.failed;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
-        return Auth2EmailSignUpResult.succeeded;
+        return Auth2PasswordSignUpResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2EmailSignUpResult.failedAccountExist;
+        return Auth2PasswordSignUpResult.failedAccountExist;
       }
     }
-    return Auth2EmailSignUpResult.failed;
+    return Auth2PasswordSignUpResult.failed;
   }
 
-  Future<Auth2EmailAccountState?> checkEmailAccountState(String? email) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
-      String url = "${Config().coreUrl}/services/auth/account/exists";
+  Future<Auth2AccountState?> checkAccountState(String? identifier, {String identifierType = Auth2Identifier.typeEmail}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/account/exists";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': email,
-      });
+      Map<String, dynamic> postData = {
+        'identifier': {
+          identifierType: identifier,
+        }
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return null;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
-        //TBD: handle Auth2EmailAccountState.unverified
-        return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2EmailAccountState.verified : Auth2EmailAccountState.nonExistent;
+        //TBD: handle Auth2AccountState.unverified
+        return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2AccountState.verified : Auth2AccountState.nonExistent;
       }
     }
     return null;
   }
 
-  Future<Auth2EmailForgotPasswordResult> resetEmailPassword(String? email) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
-      String url = "${Config().coreUrl}/services/auth/credential/forgot/initiate";
+  Future<Auth2ForgotPasswordResult> resetPassword(String? identifier, {String identifierType = Auth2Identifier.typeEmail}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/credential/forgot/initiate";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': email,
-        'identifier': email,
-      });
+      Map<String, dynamic> postData = {
+        'auth_type': Auth2Type.typePassword,
+        'identifier': {
+          identifierType: identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return Auth2ForgotPasswordResult.failed;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
-        return Auth2EmailForgotPasswordResult.succeeded;
+        return Auth2ForgotPasswordResult.succeeded;
       }
       else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'verification-expired') {
-          return Auth2EmailForgotPasswordResult.failedActivationExpired;
+          return Auth2ForgotPasswordResult.failedActivationExpired;
         } 
         else if (error?.status == 'unverified') {
-          return Auth2EmailForgotPasswordResult.failedNotActivated;
+          return Auth2ForgotPasswordResult.failedNotActivated;
         }
       }
     }
-    return Auth2EmailForgotPasswordResult.failed;
+    return Auth2ForgotPasswordResult.failed;
   }
 
-  Future<bool> resentActivationEmail(String? email) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (email != null)) {
-      String url = "${Config().coreUrl}/services/auth/credential/send-verify";
+  Future<bool> resendIdentifierVerification(String? identifier, {String identifierType = Auth2Identifier.typeEmail}) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/identifier/send-verify";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(emailLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': email,
-        'identifier': email,
-      });
+      Map<String, dynamic> postData = {
+        'identifier': {
+          identifierType: identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return false;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       return (response?.statusCode == 200);
     }
     return false;
   }
 
-  // Username Authentication
-
-  Future<Auth2UsernameSignInResult> authenticateWithUsername(String? username, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
-
-      NotificationService().notify(notifyLoginStarted, usernameLoginType);
-
-      String url = "${Config().coreUrl}/services/auth/login";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(usernameLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'creds': {
-          "username": username,
-          "password": password
-        },
-        'params': {
-          "sign_up": false,
-        },
-        'profile': _anonymousProfile?.toJson(),
-        'preferences': _anonymousPrefs?.toJson(),
-        'device': deviceInfo,
-      });
-
-      Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(usernameLoginType, result);
-        return result ? Auth2UsernameSignInResult.succeeded : Auth2UsernameSignInResult.failed;
-      }
-      else {
-        _notifyLogin(usernameLoginType, false);
-        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
-        if (error?.status == 'not-found') {
-          return Auth2UsernameSignInResult.failedNotFound;
-        } else if (error?.status == 'invalid') {
-          return Auth2UsernameSignInResult.failedInvalid;
-        }
-      }
-    }
-    return Auth2UsernameSignInResult.failed;
-  }
-
-  Future<Auth2UsernameSignUpResult> signUpWithUsername(String? username, String? password, { Auth2AccountScope? scope = defaultLoginScope }) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null) && (password != null)) {
-      String url = "${Config().coreUrl}/services/auth/login";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(usernameLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'creds': {
-          "username": username,
-          "password": password
-        },
-        'params': {
-          "sign_up": true,
-          "confirm_password": password
-        },
-        'profile': _anonymousProfile?.toJson(),
-        'preferences': _anonymousPrefs?.toJson(),
-        'device': deviceInfo,
-      });
-
-      Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(usernameLoginType, result);
-        return result ? Auth2UsernameSignUpResult.succeeded : Auth2UsernameSignUpResult.failed;
-      }
-      else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2UsernameSignUpResult.failedAccountExist;
-      }
-    }
-    return Auth2UsernameSignUpResult.failed;
-  }
-
-  Future<Auth2UsernameAccountState?> checkUsernameAccountState(String? username) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (username != null)) {
-      String url = "${Config().coreUrl}/services/auth/account/exists";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(usernameLoginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': username,
-      });
-
-      Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        //TBD: handle Auth2EmailAccountState.unverified
-        return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2UsernameAccountState.exists : Auth2UsernameAccountState.nonExistent;
-      }
-    }
-    return null;
-  }
-
   // Notify Login
 
-  void _notifyLogin(Auth2LoginType loginType, bool? result) {
+  void _notifyLogin(String loginType, bool? result) {
     if (result != null) {
       NotificationService().notify(result ? notifyLoginSucceeded : notifyLoginFailed, loginType);
       NotificationService().notify(notifyLoginFinished, loginType);
@@ -862,21 +1246,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Account Checks
 
-  Future<bool?> canSignIn(String? identifier, Auth2LoginType loginType) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (identifier != null)) {
-      String url = "${Config().coreUrl}/services/auth/account/can-sign-in";
+  Future<bool?> canSignIn(String? identifier, String identifierType) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/account/can-sign-in";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(loginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': identifier,
-      });
+      Map<String, dynamic> postData = {
+        'identifier': {
+          identifierType: identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return null;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }
@@ -884,21 +1272,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool?> canLink(String? identifier, Auth2LoginType loginType) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (identifier != null)) {
-      String url = "${Config().coreUrl}/services/auth/account/can-link";
+  Future<bool?> canLink(String? identifier, String identifierType) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/account/can-link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(loginType),
-        'app_type_identifier': Config().appPlatformId,
-        'api_key': Config().rokwireApiKey,
-        'org_id': Config().coreOrgId,
-        'user_identifier': identifier,
-      });
+      Map<String, dynamic> postData = {
+        'identifier': {
+          identifierType: identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return null;
+      }
 
-      Response? response = await Network().post(url, headers: headers, body: post);
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }
@@ -906,16 +1298,113 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  // Account Linking
+  // Sign in options
 
-  Future<Auth2LinkResult> linkAccountAuthType(Auth2LoginType? loginType, dynamic creds, Map<String, dynamic>? params) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (loginType != null)) {
+  Future<Auth2SignInOptionsResult?> signInOptions(String? identifier, String identifierType) async {
+    if ((Config().authBaseUrl != null) && (identifier != null)) {
+      String url = "${Config().authBaseUrl}/auth/account/sign-in-options";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      Map<String, dynamic> postData = {
+        'identifier': {
+          identifierType: identifier,
+        },
+      };
+      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+      if (additionalParams != null) {
+        postData.addAll(additionalParams);
+      } else {
+        return null;
+      }
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      if (response?.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+        List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
+        return Auth2SignInOptionsResult(identifierOptions: identifiers, authTypeOptions: authTypes);
+      }
+    }
+    return null;
+  }
+
+  // Account Identifier Linking
+
+  Future<Auth2LinkResult> linkAccountIdentifier(String? identifier, String identifierType) async {
+    if ((Config().coreUrl != null) && (identifier != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/identifier/link";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'identifier': {
+          identifierType: identifier,
+        },
+      });
+
+      Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
+      if (response?.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        if (identifiers != null) {
+          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+          NotificationService().notify(notifyLinkChanged);
+          return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
+        }
+      }
+      else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'verification-expired') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedActivationExpired);
+        }
+        else if (error?.status == 'unverified') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'already-exists') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedAccountExist);
+        }
+        else if (error?.status == 'invalid') {
+          return Auth2LinkResult(Auth2LinkResultStatus.failedInvalid);
+        }
+      }
+    }
+    return Auth2LinkResult(Auth2LinkResultStatus.failed);
+  }
+
+  Future<bool> unlinkAccountIdentifier(String? id) async {
+    if ((Config().coreUrl != null) && (id != null)) {
+      String url = "${Config().coreUrl}/services/auth/account/identifier/link";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? body = JsonUtils.encode({
+        'id': id
+      });
+
+      Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
+      Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+      List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
+      if (identifiers != null) {
+        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+        NotificationService().notify(notifyLinkChanged);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Account Auth Type Linking
+
+  Future<Auth2LinkResult> linkAccountAuthType(String? loginType, dynamic creds, Map<String, dynamic>? params) async {
+    if ((Config().coreUrl != null) && (loginType != null)) {
       String url = "${Config().coreUrl}/services/auth/account/auth-type/link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(loginType),
+        'auth_type': loginType,
         'app_type_identifier': Config().appPlatformId,
         'creds': creds,
         'params': params,
@@ -925,49 +1414,51 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         Map<String, dynamic>? responseJson = JsonUtils.decodeMap(response?.body);
+        List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
         List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
+        String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
+        // Map<String, dynamic>? requestJson = JsonUtils.decode(message ?? '');
         if (authTypes != null) {
-          Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
+          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
           NotificationService().notify(notifyLinkChanged);
-          return Auth2LinkResult.succeeded;
+          return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
         }
       }
       else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
         if (error?.status == 'verification-expired') {
-          return Auth2LinkResult.failedActivationExpired;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedActivationExpired);
         }
         else if (error?.status == 'unverified') {
-          return Auth2LinkResult.failedNotActivated;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedNotActivated);
         }
         else if (error?.status == 'already-exists') {
-          return Auth2LinkResult.failedAccountExist;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedAccountExist);
         }
         else if (error?.status == 'invalid') {
-          return Auth2LinkResult.failedInvalid;
+          return Auth2LinkResult(Auth2LinkResultStatus.failedInvalid);
         }
       } 
     }
-    return Auth2LinkResult.failed;
+    return Auth2LinkResult(Auth2LinkResultStatus.failed);
   }
 
-  Future<bool> unlinkAccountAuthType(Auth2LoginType? loginType, String identifier) async {
-    if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (loginType != null)) {
+  Future<bool> unlinkAccountAuthType(String? id) async {
+    if ((Config().coreUrl != null) && (id != null)) {
       String url = "${Config().coreUrl}/services/auth/account/auth-type/link";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? body = JsonUtils.encode({
-        'auth_type': auth2LoginTypeToString(loginType),
-        'app_type_identifier': Config().appPlatformId,
-        'identifier': identifier,
+        'id': id
       });
 
       Response? response = await Network().delete(url, headers: headers, body: body, auth: Auth2());
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+      List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
       List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
       if (authTypes != null) {
-        Storage().auth2Account = _account = Auth2Account.fromOther(_account, authTypes: authTypes);
+        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
         NotificationService().notify(notifyLinkChanged);
         return true;
       }
@@ -980,41 +1471,53 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Map<String, dynamic> get deviceInfo {
     return {
-      'type': "mobile",
-      'device_id': _deviceId,
-      'os': Platform.operatingSystem,
+      'type': kIsWeb ? 'web' : 'mobile',
+      'device_id': kIsWeb ? 'web' : _deviceId,
+      'os': Config().operatingSystem,
     };
   }
 
   // Logout
 
-  void logout({ Auth2UserPrefs? prefs }) {
-    if (_token != null) {
-      _log("Auth2: logout");
-      _refreshTonenFailCounts.remove(_token?.refreshToken);
+  Future<void> logout({ Auth2UserPrefs? prefs }) async {
+    NotificationService().notify(notifyLogoutStarted);
+    _log("Auth2: logout");
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
-      Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
-      Storage().auth2AnonymousProfile = _anonymousProfile = Auth2UserProfile.empty();
-      Storage().auth2Token = _token = null;
-      Storage().auth2Account = _account = null;
-
-      _updateUserPrefsTimer?.cancel();
-      _updateUserPrefsTimer = null;
-
-      _updateUserPrefsClient?.close();
-      _updateUserPrefsClient = null;
-
-      _updateUserProfileTimer?.cancel();
-      _updateUserProfileTimer = null;
-
-      _updateUserProfileClient?.close();
-      _updateUserProfileClient = null;
-
-      NotificationService().notify(notifyProfileChanged);
-      NotificationService().notify(notifyPrefsChanged);
-      NotificationService().notify(notifyLoginChanged);
-      NotificationService().notify(notifyLogout);
+    if (Config().authBaseUrl != null) {
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? body = JsonUtils.encode({
+        'all_sessions': false,
+      });
+      await Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf(token: token));
     }
+
+    await Future.wait([
+      Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty()),
+      Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty()),
+      Storage().setAuth2Token(_token = null),
+      Storage().setAuth2OidcToken(_oidcToken = null),
+      Storage().setAuth2Account(_account = null),
+    ]);
+
+    _updateUserPrefsTimer?.cancel();
+    _updateUserPrefsTimer = null;
+
+    _updateUserPrefsClient?.close();
+    _updateUserPrefsClient = null;
+
+    _updateUserProfileTimer?.cancel();
+    _updateUserProfileTimer = null;
+
+    _updateUserProfileClient?.close();
+    _updateUserProfileClient = null;
+
+    NotificationService().notify(notifyProfileChanged);
+    NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyLoginChanged);
+    NotificationService().notify(notifyLogout);
   }
 
   // Delete
@@ -1040,47 +1543,67 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Refresh
 
-  Future<Auth2Token?> refreshToken(Auth2Token token) async {
-    if ((Config().coreUrl != null) && (token.refreshToken != null)) {
+  Future<Auth2Token?> refreshToken({Auth2Token? token, bool ignoreUnauthorized = false}) async {
+    //TODO: validate that using CSRF token as futures and fail counts key works on web
+    NotificationService().notify(notifyRefreshStarted);
+    String futureKey = token?.refreshToken ?? WebUtils.getCookie(Auth2Csrf.csrfTokenName);
+    if (Config().authBaseUrl != null) {
       try {
-        Future<Response?>? refreshTokenFuture = _refreshTokenFutures[token.refreshToken];
+        Future<Response?>? refreshTokenFuture = futureKey.isNotEmpty ? _refreshTokenFutures[futureKey] : null;
 
         if (refreshTokenFuture != null) {
-          _log("Auth2: will await refresh token:\nSource Token: ${token.refreshToken}");
+          _log("Auth2: will await refresh token:\nSource Token: ${token?.refreshToken}");
           Response? response = await refreshTokenFuture;
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
-          _log("Auth2: did await refresh token: ${responseToken?.isValid}\nSource Token: ${token.refreshToken}");
-          return ((responseToken != null) && responseToken.isValid) ? responseToken : null;
+          _log("Auth2: did await refresh token: ${responseToken?.isValid}\nSource Token: ${token?.refreshToken}");
+          NotificationService().notify(notifyRefreshFinished);
+          if ((responseToken != null) && responseToken.isValid) {
+            NotificationService().notify(notifyRefreshSucceeded);
+            return responseToken;
+          }
+          NotificationService().notify(notifyRefreshError, responseToken?.isValid);
+          return null;
         }
         else {
-          _log("Auth2: will refresh token:\nSource Token: ${token.refreshToken}");
+          _log("Auth2: will refresh token:\nSource Token: ${token?.refreshToken}");
 
-          _refreshTokenFutures[token.refreshToken!] = refreshTokenFuture = _refreshToken(token.refreshToken);
+          refreshTokenFuture = _refreshToken(token?.refreshToken);
+          if (futureKey.isNotEmpty) {
+            _refreshTokenFutures[futureKey] = refreshTokenFuture;
+          }
           Response? response = await refreshTokenFuture;
-          _refreshTokenFutures.remove(token.refreshToken);
+          _refreshTokenFutures.remove(futureKey);
 
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           if (responseJson != null) {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
-              _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token.refreshToken}");
-              _refreshTonenFailCounts.remove(token.refreshToken);
+              _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token?.refreshToken}");
+              _refreshTokenFailCounts.remove(futureKey);
 
               if (token == _token) {
-                applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
+                await applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
+                NotificationService().notify(notifyRefreshSucceeded);
+                NotificationService().notify(notifyRefreshFinished);
                 return responseToken;
               }
               else if (token == _anonymousToken) {
-                Storage().auth2AnonymousToken = _anonymousToken = responseToken;
+                await Storage().setAuth2AnonymousToken(_anonymousToken = responseToken);
+                NotificationService().notify(notifyRefreshSucceeded);
+                NotificationService().notify(notifyRefreshFinished);
                 return responseToken;
               }
             }
           }
 
-          _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token.refreshToken}");
-          int refreshTonenFailCount  = (_refreshTonenFailCounts[token.refreshToken] ?? 0) + 1;
-          if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTonenFailCount)) {
+          _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token?.refreshToken}");
+          NotificationService().notify(notifyRefreshError, '${response?.statusCode} - ${response?.body}');
+          int refreshTokenFailCount = 1;
+          if (futureKey.isNotEmpty) {
+            refreshTokenFailCount += _refreshTokenFailCounts[futureKey] ?? 0;
+          }
+          if (((response?.statusCode == 400) || (!ignoreUnauthorized && response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
             if (token == _token) {
               logout();
             }
@@ -1088,39 +1611,57 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
               await authenticateAnonymously();
             }
           }
-          else {
-            _refreshTonenFailCounts[token.refreshToken!] = refreshTonenFailCount;
+          else if (futureKey.isNotEmpty) {
+            _refreshTokenFailCounts[futureKey] = refreshTokenFailCount;
           }
         }
       }
       catch(e) {
         debugPrint(e.toString());
-        _refreshTokenFutures.remove(token.refreshToken); // make sure to clear this in case something went wrong.
+        NotificationService().notify(notifyRefreshError, e);
+        _refreshTokenFutures.remove(futureKey); // make sure to clear this in case something went wrong.
       }
     }
+    NotificationService().notify(notifyRefreshFinished);
     return null;
   }
 
   @protected
-  void applyToken(Auth2Token token, { Map<String, dynamic>? params }) {
-    Storage().auth2Token = _token = token;
+  Future<void> applyToken(Auth2Token token, { Map<String, dynamic>? params }) async {
+    Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
+
+    _token = token;
+    _oidcToken = oidcToken;
+    if (!kIsWeb) {
+      await Future.wait([
+        Storage().setAuth2Token(token),
+        Storage().setAuth2OidcToken(oidcToken),
+      ]);
+    }
   }
 
-  static Future<Response?> _refreshToken(String? refreshToken) async {
-    if ((Config().coreUrl != null) && (refreshToken != null)) {
-      String url = "${Config().coreUrl}/services/auth/refresh";
+  Future<Response?> _refreshToken(String? refreshToken) {
+    if (Config().authBaseUrl != null) {
+      String url = "${Config().authBaseUrl}/auth/refresh";
       
       Map<String, String> headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
       };
-      String? post = JsonUtils.encode({
-        'api_key': Config().rokwireApiKey,
-        'refresh_token': refreshToken
-      });
+      String? post;
+      if (!Config().isReleaseWeb) {
+        if (refreshToken == null) {
+          return Future.value(null);
+        }
+        post = JsonUtils.encode({
+          'api_key': Config().rokwireApiKey,
+          'refresh_token': refreshToken
+        });
+      }
 
-      return Network().post(url, headers: headers, body: post);
+      return Network().post(url, headers: headers, body: post, auth: Auth2Csrf());
     }
-    return null;
+    return Future.value(null);
   }
 
   // User Prefs
@@ -1128,11 +1669,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<void> onUserPrefsChanged(Auth2UserPrefs? prefs) async {
     if (identical(prefs, _anonymousPrefs)) {
-      Storage().auth2AnonymousPrefs = _anonymousPrefs;
+      await Storage().setAuth2AnonymousPrefs(_anonymousPrefs);
       NotificationService().notify(notifyPrefsChanged);
     }
     else if (identical(prefs, _account?.prefs)) {
-      Storage().auth2Account = _account;
+      await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyPrefsChanged);
       return _saveAccountUserPrefs();
     }
@@ -1170,6 +1711,49 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
+  // Account Secrets
+
+  @protected
+  Future<void> onAccountSecretsChanged(Map<String, dynamic>? secrets) async {
+    if (identical(secrets, _account?.secrets)) {
+      await Storage().setAuth2Account(_account);
+      NotificationService().notify(notifySecretsChanged);
+      return _saveAccountSecrets();
+    }
+    return;
+  }
+
+  Future<void> _saveAccountSecrets() async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.secrets != null)) {
+      String url = "${Config().coreUrl}/services/account/secrets";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode(_account!.secrets);
+
+      Client client = Client();
+      _updateUserSecretsClient?.close();
+      _updateUserSecretsClient = client;
+
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: _updateUserSecretsClient);
+
+      if (identical(client, _updateUserSecretsClient)) {
+        if (response?.statusCode == 200) {
+          _updateUserSecretsTimer?.cancel();
+          _updateUserSecretsClient = null;
+        }
+        else {
+          _updateUserSecretsTimer ??= Timer.periodic(const Duration(seconds: 3), (_) {
+            if (_updateUserSecretsClient == null) {
+              _saveAccountSecrets();
+            }
+          });
+        }
+        _updateUserSecretsClient = null;
+      }
+    }
+  }
+
   /*Future<Auth2UserPrefs?> _loadAccountUserPrefs() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/preferences";
@@ -1192,13 +1776,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // User Profile
   
   @protected
-  void onUserProfileChanged(Auth2UserProfile? profile) {
+  Future<void> onUserProfileChanged(Auth2UserProfile? profile) async {
     if (identical(profile, _anonymousProfile)) {
-      Storage().auth2AnonymousProfile = _anonymousProfile;
+      await Storage().setAuth2AnonymousProfile(_anonymousProfile);
       NotificationService().notify(notifyProfileChanged);
     }
     else if (identical(profile, _account?.profile)) {
-      Storage().auth2Account = _account;
+      await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyProfileChanged);
       _saveAccountUserProfile();
     }
@@ -1211,7 +1795,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
     if (await _saveExternalAccountUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
-        Storage().auth2Account = _account;
+        await Storage().setAuth2Account(_account);
         NotificationService().notify(notifyProfileChanged);
       }
       return true;
@@ -1272,6 +1856,25 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
+  Future<bool> updateUsername(String username) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+      String url = "${Config().coreUrl}/services/account/username";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      Map<String, String> body = {
+        'username': username.toLowerCase().trim(),
+      };
+      String? bodyJson = JsonUtils.encode(body);
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: bodyJson);
+      if (response?.statusCode == 200) {
+        _refreshAccount();
+        return true;
+      }
+    }
+    return false;
+  }
+
   /*Future<void> _refreshAccountUserProfile() async {
     Auth2UserProfile? profile = await _loadAccountUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
@@ -1299,8 +1902,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
-      
-      Storage().auth2Account = _account = account;
+
+      await Storage().setAuth2Account(_account = account);
       NotificationService().notify(notifyAccountChanged);
 
       if (profileUpdated) {
@@ -1314,10 +1917,18 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Helpers
 
-  static Future<void> _launchUrl(String? urlStr) async {
+  Future<void> _launchUrl(String? urlStr) async {
     try {
-      if ((urlStr != null) && await canLaunchUrlString(urlStr)) {
-        await launchUrlString(urlStr, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+      if ((urlStr != null)) {
+        if (kIsWeb) {
+          FlutterWebAuth2.authenticate(url: urlStr,
+              callbackUrlScheme: DeepLink().appScheme ?? ''
+          ).then((String url) {
+            onDeepLinkUri(Uri.tryParse(url));
+          });
+        } else if (await canLaunchUrlString(urlStr)) {
+          await launchUrlString(urlStr);
+        }
       }
     }
     catch(e) {
@@ -1329,13 +1940,48 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     Log.d(message, lineLength: 512); // max line length of VS Code Debug Console
   }
 
+  Map<String, dynamic>? _getConfigParams(Map<String, dynamic> params) {
+    if (!Config().isReleaseWeb) {
+      if (Config().appPlatformId == null || Config().coreOrgId == null || Config().rokwireApiKey == null) {
+        return null;
+      }
+      params['app_type_identifier'] = Config().appPlatformId;
+      params['api_key'] = Config().rokwireApiKey;
+      params['org_id'] = Config().coreOrgId;
+    }
+    return params;
+  }
+
+  // Plugin
+
+  Future<dynamic> onPluginNotification(String? name, dynamic arguments) async {
+    switch (name) {
+      case 'onGetPasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeySuccess, responseJson);
+        break;
+      case 'onGetPasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyGetPasskeyFailed, error);
+        break;
+      case 'onCreatePasskeySuccess':
+        String? responseJson = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeySuccess, responseJson);
+        break;
+      case 'onCreatePasskeyFailed':
+        String? error = JsonUtils.stringValue(arguments);
+        NotificationService().notify(notifyCreatePasskeyFailed, error);
+        break;
+    }
+  }
 }
 
 class _OidcLogin {
   final String? loginUrl;
   final Map<String, dynamic>? params;
-  
-  _OidcLogin({this.loginUrl, this.params});
+  final String? error;
+
+  _OidcLogin({this.loginUrl, this.params, this.error});
 
   static _OidcLogin? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? _OidcLogin(
@@ -1353,85 +1999,172 @@ class _OidcLogin {
 
 }
 
-// Auth2PhoneRequestCodeResult
+class Auth2Csrf with NetworkAuthProvider {
+  Auth2Token? token;
 
-enum Auth2PhoneRequestCodeResult {
+  Auth2Csrf({this.token});
+
+  static const String csrfTokenName = 'rokwire-csrf-token';
+
+  @override
+  Map<String, String>? get networkAuthHeaders {
+    String cookieName = csrfTokenName;
+    if (Config().authBaseUrl?.contains("localhost") == false) {
+      cookieName = '__Host-' + cookieName;
+    }
+
+    Map<String, String> headers = {};
+    String cookieValue = WebUtils.getCookie(cookieName);
+    if (cookieValue.isNotEmpty) {
+      headers[csrfTokenName] = cookieValue;
+    }
+
+    if (StringUtils.isNotEmpty(token?.accessToken)) {
+      String tokenType = token!.tokenType ?? 'Bearer';
+      headers['Authorization'] = "$tokenType ${token!.accessToken}";
+    }
+    return headers;
+  }
+
+  @override
+  dynamic get networkAuthToken => token;
+
+  @override
+  Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token) &&
+      (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
+      return (await Auth2().refreshToken(token: token) != null);
+    }
+    return false;
+  }
+}
+
+// Auth2PasskeySignUpResult
+
+class Auth2PasskeySignUpResult {
+  Auth2PasskeySignUpResultStatus status;
+  String? error;
+  String? creationOptions;
+  Auth2PasskeySignUpResult(this.status, {this.error, this.creationOptions});
+}
+
+enum Auth2PasskeySignUpResultStatus {
+  succeeded,
+  failed,
+  failedNotSupported,
+  failedAccountExist,
+  failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
+  failedNoCredentials,
+  failedCancelled,
+}
+
+// Auth2PasskeySignInResult
+class Auth2PasskeySignInResult {
+  Auth2PasskeySignInResultStatus status;
+  String? error;
+  Auth2PasskeySignInResult(this.status, {this.error});
+}
+
+enum Auth2PasskeySignInResultStatus {
+  succeeded,
+  failed,
+  failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
+  failedNotSupported,
+  failedNoCredentials,
+  failedCancelled,
+}
+
+// Auth2RequestCodeResult
+
+enum Auth2RequestCodeResult {
   succeeded,
   failed,
   failedAccountExist,
 }
 
-Auth2PhoneRequestCodeResult auth2PhoneRequestCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2PhoneRequestCodeResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2PhoneRequestCodeResult.failedAccountExist;
-    default: return Auth2PhoneRequestCodeResult.failed;
+Auth2RequestCodeResult auth2RequestCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2RequestCodeResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2RequestCodeResult.failedAccountExist;
+    default: return Auth2RequestCodeResult.failed;
   }
 }
 
-// Auth2PhoneSendCodeResult
+// Auth2SendCodeResult
 
-enum Auth2PhoneSendCodeResult {
+enum Auth2SendCodeResult {
   succeeded,
   failed,
   failedInvalid,
 }
 
-Auth2PhoneSendCodeResult auth2PhoneSendCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2PhoneSendCodeResult.succeeded;
-    case Auth2LinkResult.failedInvalid: return Auth2PhoneSendCodeResult.failedInvalid;
-    default: return Auth2PhoneSendCodeResult.failed;
+Auth2SendCodeResult auth2SendCodeResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2SendCodeResult.succeeded;
+    case Auth2LinkResultStatus.failedInvalid: return Auth2SendCodeResult.failedInvalid;
+    default: return Auth2SendCodeResult.failed;
   }
 }
 
-// Auth2EmailAccountState
+// Auth2AccountState
 
-enum Auth2EmailAccountState {
+enum Auth2AccountState {
   nonExistent,
   unverified,
   verified,
 }
 
-// Auth2EmailSignUpResult
+// Auth2SignInOptionsResult
+class Auth2SignInOptionsResult {
+  List<Auth2Identifier>? identifierOptions;
+  List<Auth2Type>? authTypeOptions;
+  Auth2SignInOptionsResult({this.identifierOptions, this.authTypeOptions});
+}
 
-enum Auth2EmailSignUpResult {
+// Auth2PasswordSignUpResult
+
+enum Auth2PasswordSignUpResult {
   succeeded,
   failed,
   failedAccountExist,
 }
 
-Auth2EmailSignUpResult auth2EmailSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2EmailSignUpResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2EmailSignUpResult.failedAccountExist;
-    default: return Auth2EmailSignUpResult.failed;
+Auth2PasswordSignUpResult auth2PasswordSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2PasswordSignUpResult.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2PasswordSignUpResult.failedAccountExist;
+    default: return Auth2PasswordSignUpResult.failed;
   }
 }
 
-// Auth2EmailSignInResult
+// Auth2PasswordSignInResult
 
-enum Auth2EmailSignInResult {
+enum Auth2PasswordSignInResult {
   succeeded,
   failed,
+  failedNotFound,
   failedActivationExpired,
   failedNotActivated,
   failedInvalid,
 }
 
-Auth2EmailSignInResult auth2EmailSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2EmailSignInResult.succeeded;
-    case Auth2LinkResult.failedNotActivated: return Auth2EmailSignInResult.failedNotActivated;
-    case Auth2LinkResult.failedActivationExpired: return Auth2EmailSignInResult.failedActivationExpired;
-    case Auth2LinkResult.failedInvalid: return Auth2EmailSignInResult.failedInvalid;
-    default: return Auth2EmailSignInResult.failed;
+Auth2PasswordSignInResult auth2PasswordSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
+  switch (value.status) {
+    case Auth2LinkResultStatus.succeeded: return Auth2PasswordSignInResult.succeeded;
+    case Auth2LinkResultStatus.failedNotActivated: return Auth2PasswordSignInResult.failedNotActivated;
+    case Auth2LinkResultStatus.failedActivationExpired: return Auth2PasswordSignInResult.failedActivationExpired;
+    case Auth2LinkResultStatus.failedInvalid: return Auth2PasswordSignInResult.failedInvalid;
+    default: return Auth2PasswordSignInResult.failed;
   }
 }
 
-// Auth2EmailForgotPasswordResult
+// Auth2ForgotPasswordResult
 
-enum Auth2EmailForgotPasswordResult {
+enum Auth2ForgotPasswordResult {
   succeeded,
   failed,
   failedActivationExpired,
@@ -1440,63 +2173,43 @@ enum Auth2EmailForgotPasswordResult {
 
 // Auth2OidcAuthenticateResult
 
-enum Auth2OidcAuthenticateResult {
+class Auth2OidcAuthenticateResult {
+  Auth2OidcAuthenticateResultStatus status;
+  String? message;
+  String? error;
+  Auth2OidcAuthenticateResult(this.status, {this.message, this.error});
+
+  bool get succeeded => (status == Auth2OidcAuthenticateResultStatus.succeeded);
+  bool get failed => (status == Auth2OidcAuthenticateResultStatus.failed);
+  bool get failedAccountExist => (status == Auth2OidcAuthenticateResultStatus.failedAccountExist);
+}
+
+enum Auth2OidcAuthenticateResultStatus {
   succeeded,
   failed,
   failedAccountExist,
 }
 
 Auth2OidcAuthenticateResult auth2OidcAuthenticateResultFromAuth2LinkResult(Auth2LinkResult value) {
+  return Auth2OidcAuthenticateResult(auth2OidcAuthenticateResultStatusFromAuth2LinkResultStatus(value.status), message: value.message);
+}
+Auth2OidcAuthenticateResultStatus auth2OidcAuthenticateResultStatusFromAuth2LinkResultStatus(Auth2LinkResultStatus value) {
   switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2OidcAuthenticateResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2OidcAuthenticateResult.failedAccountExist;
-    default: return Auth2OidcAuthenticateResult.failed;
-  }
-}
-
-// Auth2UsernameAccountState
-
-enum Auth2UsernameAccountState {
-  nonExistent,
-  exists,
-}
-
-// Auth2UsernameSignUpResult
-
-enum Auth2UsernameSignUpResult {
-  succeeded,
-  failed,
-  failedAccountExist,
-}
-
-Auth2UsernameSignUpResult auth2UsernameSignUpResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2UsernameSignUpResult.succeeded;
-    case Auth2LinkResult.failedAccountExist: return Auth2UsernameSignUpResult.failedAccountExist;
-    default: return Auth2UsernameSignUpResult.failed;
-  }
-}
-
-// Auth2UsernameSignInResult
-
-enum Auth2UsernameSignInResult {
-  succeeded,
-  failed,
-  failedNotFound,
-  failedInvalid,
-}
-
-Auth2UsernameSignInResult auth2UsernameSignInResultFromAuth2LinkResult(Auth2LinkResult value) {
-  switch (value) {
-    case Auth2LinkResult.succeeded: return Auth2UsernameSignInResult.succeeded;
-    case Auth2LinkResult.failedInvalid: return Auth2UsernameSignInResult.failedInvalid;
-    default: return Auth2UsernameSignInResult.failed;
+    case Auth2LinkResultStatus.succeeded: return Auth2OidcAuthenticateResultStatus.succeeded;
+    case Auth2LinkResultStatus.failedAccountExist: return Auth2OidcAuthenticateResultStatus.failedAccountExist;
+    default: return Auth2OidcAuthenticateResultStatus.failed;
   }
 }
 
 // Auth2LinkResult
 
-enum Auth2LinkResult {
+class Auth2LinkResult {
+  Auth2LinkResultStatus status;
+  String? message;
+  Auth2LinkResult(this.status, {this.message});
+}
+
+enum Auth2LinkResultStatus {
   succeeded,
   failed,
   failedActivationExpired,

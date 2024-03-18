@@ -2,13 +2,18 @@ group 'edu.illinois.rokwire.rokwire_plugin'
 version '1.0'
 
 buildscript {
+    ext {
+        gradle_version = '7.0.0'
+        kotlin_version = '1.8.10'
+    }
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'
+        classpath "com.android.tools.build:gradle:$gradle_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -20,6 +25,7 @@ rootProject.allprojects {
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 33
@@ -30,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 26
     }
 }
 
@@ -44,6 +50,10 @@ dependencies {
     
     //AltBeacon - Android Beacon Library
     implementation 'org.altbeacon:android-beacon-library:2.19.5-beta7'
+
+    //Passkeys
+    implementation "androidx.credentials:credentials:1.0.0-alpha03"
+    implementation "androidx.credentials:credentials-play-services-auth:1.0.0-alpha03"
 
     //End Common Dependencies
 }

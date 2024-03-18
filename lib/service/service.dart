@@ -18,8 +18,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 
-abstract class Service {
+abstract mixin class Service {
+
+  static const String notifyInitialized = "edu.illinois.rokwire.service.initialized";
 
   bool? _isInitialized;
 
@@ -31,6 +34,7 @@ abstract class Service {
 
   Future<void> initService() async {
     _isInitialized = true;
+    NotificationService().notify(notifyInitialized, this);
   }
 
   void initServiceUI() async {
@@ -62,6 +66,9 @@ class Services {
 
   List<Service>? _services;
 
+  Future<ServiceError?>? _initialzeFuture;
+  bool? _isInitialized;
+
   void create(List<Service> services) {
     if (_services == null) {
       _services = services;
@@ -77,19 +84,25 @@ class Services {
         service.destroyService();
       }
       _services = null;
+      ;
     }
   }
 
-  Future<ServiceError?> init() async =>
-    (_services != null) ? await _ServicesInitializer(initService).process(_services!) : null;
+  Future<ServiceError?> init() async {
+    if (_initialzeFuture != null) {
+      return await _initialzeFuture;
+    }
+    else {
+      _initialzeFuture = _ServicesInitializer(initService).process(_services);
+      ServiceError? error = await _initialzeFuture;
+      _isInitialized = (error == null);
+      _initialzeFuture = null;
+      return error;
+    }
+  }
 
-    /*TMP:
-    ServiceError(
-      source: null,
-      severity: ServiceErrorSeverity.fatal,
-      title: 'Text Initialization Error',
-      description: 'This is a test initialization error.',
-    );*/
+  bool get isInitialized => (_isInitialized == true);
+  bool get isInitializeFailed => (_isInitialized == false);
 
   @protected
   Future<ServiceError?> initService(Service service) async {
@@ -129,11 +142,9 @@ class _ServicesInitializer {
 
   _ServicesInitializer(this.initService);
 
-  Future<ServiceError?> process(List<Service> services) async {
+  Future<ServiceError?> process(List<Service>? services) async {
 
-    for (Service service in services) {
-      (service.isInitialized ? _done : _toDo).add(service);
-    }
+    _prepareServices(services);
 
     if (_toDo.isNotEmpty) {
       _completer = Completer<ServiceError?>();
@@ -145,14 +156,29 @@ class _ServicesInitializer {
     }
   }
 
+  void _prepareServices(Iterable<Service>? services) {
+    if (services != null) {
+      for (Service service in services) {
+        _prepareService(service);
+      }
+    }
+  }
+
+  void _prepareService(Service service) {
+    if (!_done.contains(service) && !_toDo.contains(service)) {
+      (service.isInitialized ? _done : _toDo).add(service);
+      _prepareServices(service.serviceDependsOn);
+    }
+  }
+
   void _run() {
     if (_toDo.isNotEmpty) {
       for (Service service in _toDo) {
         if (_canStartService(service) && !_inProgress.contains(service)) {
           _inProgress.add(service);
-          initService(service).then((ServiceError? error) {
+          initService(service).then((ServiceError? error) async {
             _inProgress.remove(service);
-            if (_completer != null) {
+            if ((_completer != null) && (_completer?.isCompleted != true)) {
               if (error?.severity == ServiceErrorSeverity.fatal) {
                 _completer?.complete(error);
                 _completer = null;
@@ -169,11 +195,11 @@ class _ServicesInitializer {
 
       if (_inProgress.isEmpty) {
         _completer?.complete(ServiceError(
-            source: null,
-            severity: ServiceErrorSeverity.fatal,
-            title: 'Services Initialization Error',
-            description: 'Service dependency cycle detected.',
-          ));
+          source: null,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Services Initialization Error',
+          description: 'Service dependency cycle detected.',
+        ));
         _completer = null;
       }
     }

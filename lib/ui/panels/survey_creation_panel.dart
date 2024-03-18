@@ -16,12 +16,12 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/rules.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/panels/rule_element_creation_panel.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
@@ -182,7 +182,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Scaffold(
       appBar: HeaderBar(title: widget.survey != null ? "Update Survey" : "Create Survey"),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyCreationTools(), completionOptions: _buildPreviewAndSave(), scrollController: _scrollController,),
     );
   }
@@ -271,24 +271,24 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         )),
       ],));
     }
-    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles.getTextStyle('widget.error.regular.fat'));
+    return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: AppTextStyles.widgetErrorRegularBold);
   }
 
   Widget _buildPreviewAndSave() {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
-        borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
-        backgroundColor: Styles().colors.surface,
-        textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+        borderColor: AppColors.fillColorPrimaryVariant,
+        backgroundColor: AppColors.surface,
+        textStyle: AppTextStyles.widgetDetailLargeBold,
         onTap: _onTapPreview,
       ))),
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         RoundedButton(
           label: 'Save',
-          borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
-          backgroundColor: Styles().colors.surface,
-          textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+          borderColor: AppColors.fillColorPrimaryVariant,
+          backgroundColor: AppColors.surface,
+          textStyle: AppTextStyles.widgetDetailLargeBold,
           onTap: _onTapSave,
           enabled: !_loading
         ),

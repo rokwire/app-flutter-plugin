@@ -15,9 +15,9 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
 
 import 'package:rokwire_plugin/ui/widgets/survey.dart';
@@ -74,10 +74,10 @@ class _SurveyPanelState extends State<SurveyPanel> {
     return Scaffold(
       appBar: widget.headerBar ?? HeaderBar(title: _survey?.title),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors.background,
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors.fillColorPrimary))),
+          Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(AppColors.fillColorPrimary))),
           Expanded(child: Scrollbar(
             radius: const Radius.circular(2),
             thumbVisibility: true,

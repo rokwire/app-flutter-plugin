@@ -14,6 +14,7 @@
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
@@ -135,7 +136,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxLines: 3,
       ) : Text(
         label,
-        style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+        style: AppTextStyles.widgetDetailMedium,
         overflow: TextOverflow.ellipsis,
         maxLines: 3,
       )),
@@ -152,9 +153,9 @@ class _SurveyElementListState extends State<SurveyElementList> {
         child: ListTileTheme(horizontalTitleGap: 8, child: rokwire.ExpansionTile(
           key: grandParentElement == null && (parentIndex ?? 0) > 0 && _handleScrolling ? (widget.targetWidgetKeys?[parentIndex! - 1]) : null,
           controller: parentElement == null ? widget.controller : null,
-          iconColor: Styles().colors.getColor('fillColorSecondary'),
-          backgroundColor: Styles().colors.getColor('background'),
-          collapsedBackgroundColor: Styles().colors.getColor('surface'),
+          iconColor: AppColors.fillColorSecondary,
+          backgroundColor: AppColors.background,
+          collapsedBackgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           title: useSubtitle ? GestureDetector(
@@ -162,17 +163,17 @@ class _SurveyElementListState extends State<SurveyElementList> {
             child: Text.rich(TextSpan(children: [
               TextSpan(
                 text: 'From ',
-                style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+                style: AppTextStyles.widgetDetailMedium,
               ),
               TextSpan(
                 text: widget.dataSubtitles![parentIndex]!,
-                style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
+                style: AppTextStyles.widgetButtonTitleMediumBoldUnderline,
               ),
             ],),),
           ) : title,
           subtitle: useSubtitle ? Padding(padding: const EdgeInsets.only(bottom: 4), child: title) : null,
           children: [
-            Container(height: 2, color: Styles().colors.getColor('fillColorSecondary'),),
+            Container(height: 2, color: AppColors.fillColorSecondary,),
             dataList.isNotEmpty ? ListView.builder(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
@@ -203,14 +204,14 @@ class _SurveyElementListState extends State<SurveyElementList> {
       entryText = data;
     }
     
-    Widget dataKeyText = Text('${index + 1}. $entryText', style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+    Widget dataKeyText = Text('${index + 1}. $entryText', style: AppTextStyles.widgetDetailMedium, overflow: TextOverflow.ellipsis, maxLines: 2,);
     List<Widget> textWidgets = [dataKeyText];
     if (_handleScrolling && widget.dataSubtitles?[index] != null) {
       textWidgets.add(GestureDetector(
         onTap: widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index]) : null,
         child: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Text(widget.dataSubtitles![index]!, style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'))
+          child: Text(widget.dataSubtitles![index]!, style: AppTextStyles.widgetButtonTitleMediumBoldUnderline)
         )
       ));
     }
@@ -219,7 +220,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     Widget displayEntry = Card(
       key: _handleScrolling ? (widget.targetWidgetKeys?[index]) : null,
       margin: const EdgeInsets.symmetric(vertical: 4),
-      color: Styles().colors.getColor('surface'),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       child: InkWell(
         onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
@@ -235,7 +236,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
         padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: AppColors.surface),
         child: Align(alignment: Alignment.centerLeft, child: dataKeyText),
       )),
       child: DragTarget<Pair<int, SurveyElement>>(
@@ -252,7 +253,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
     Widget sectionTextEntry = TextField(
       controller: data as TextEditingController,
-      style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+      style: AppTextStyles.widgetDetailMedium,
       decoration: InputDecoration.collapsed(
         hintText: surveyElement == SurveyElement.sections ? "Section Name" : "Value",
         border: InputBorder.none,
@@ -260,7 +261,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     );
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      color: Styles().colors.getColor('surface'),
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
           Expanded(flex: 3, child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
@@ -273,7 +274,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     if (data is Pair<String, bool>) {
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        color: Styles().colors.getColor('surface'),
+        color: AppColors.surface,
         child: SurveyElementCreationWidget.buildCheckboxWidget(data.left, data.right, widget.onChanged != null ? (value) => widget.onChanged!(index, value) : null, padding: EdgeInsets.zero)
       );
     }
@@ -312,11 +313,11 @@ class _SurveyElementListState extends State<SurveyElementList> {
               child: Text.rich(TextSpan(children: [
                 TextSpan(
                   text: 'From ',
-                  style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+                  style: AppTextStyles.widgetDetailMedium,
                 ),
                 TextSpan(
                   text: widget.dataSubtitles![index]!,
-                  style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
+                  style: AppTextStyles.widgetButtonTitleMediumBoldUnderline,
                   recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index - 1]) : null 
                 ),
               ],), overflow: TextOverflow.ellipsis, maxLines: 2,)
@@ -324,7 +325,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           }
           textWidgets.add(Text.rich(TextSpan(children: _buildTextSpansForLink(summary, surveyElement)), overflow: TextOverflow.ellipsis, maxLines: 2,));
         } else {
-          textWidgets.add(Text(summary, style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+          textWidgets.add(Text(summary, style: AppTextStyles.widgetDetailMedium, overflow: TextOverflow.ellipsis, maxLines: 2,));
         }
         Widget ruleText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
         int numButtons = _numEntryManagementButtons(index, element: data, parentElement: parentElement, addRemove: addRemove);
@@ -367,7 +368,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       //   maxSimultaneousDrags: 1,
       //   feedback: Card(child: Container(
       //     padding: const EdgeInsets.all(16),
-      //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+      //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: AppColors.surface),
       //     child: Align(alignment: Alignment.centerLeft, child: ruleText)
       //   )),
       //   child: DragTarget<String>(
@@ -395,7 +396,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       }
       Widget optionDataText = Text(
         '${index + 1}. $entryText',
-        style: Styles().textStyles.getTextStyle(data.isCorrect ? 'widget.detail.medium.fat' : 'widget.detail.medium'),
+        style: data.isCorrect ? AppTextStyles.widgetDetailRegularBold : AppTextStyles.widgetDetailMedium,
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
       );
@@ -416,7 +417,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: AppColors.surface),
           child: optionDataText,
         )),
         child: DragTarget<int>(
@@ -434,14 +435,14 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
     if (data is ActionData) {
-      Widget actionDataText = Text('${index + 1}. ${data.label ?? 'New Action'}', style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+      Widget actionDataText = Text('${index + 1}. ${data.label ?? 'New Action'}', style: AppTextStyles.widgetDetailMedium, overflow: TextOverflow.ellipsis, maxLines: 2,);
       List<Widget> textWidgets = [actionDataText];
       if (data.data != null) {
         String dataString = data.data.toString();
         if (dataString.isNotEmpty) {
           textWidgets.add(Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(dataString, style: Styles().textStyles.getTextStyle('widget.detail.medium'))
+            child: Text(dataString, style: AppTextStyles.widgetDetailMedium)
           ));
         }
       }
@@ -463,7 +464,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: AppColors.surface),
           child: actionDataText,
         )),
         child: DragTarget<int>(
@@ -494,13 +495,13 @@ class _SurveyElementListState extends State<SurveyElementList> {
       double buttonSize = _entryManagementButtonSize / 2;
       return Align(alignment: Alignment.centerRight, child: Row(mainAxisSize: MainAxisSize.min, children: [
         Visibility(visible: addRemove && belowLimit, child: SizedBox(width: _entryManagementButtonSize, height: _entryManagementButtonSize, child: IconButton(
-          icon: Styles().images.getImage('plus-circle', color: Styles().colors.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.add),
+          icon: Styles().images.getImage('plus-circle', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.add),
           onPressed: widget.onAdd != null ? () => widget.onAdd!(index + 1, surveyElement, parentElement) : null,
           padding: EdgeInsets.zero,
           splashRadius: buttonSize,
         ))),
         Visibility(visible: editable, child: SizedBox(width: _entryManagementButtonSize, height: _entryManagementButtonSize, child: IconButton(
-          icon: Styles().images.getImage('edit-white', color: Styles().colors.getColor('fillColorPrimary'), size: buttonSize) ?? const Icon(Icons.edit),
+          icon: Styles().images.getImage('edit-white', color: AppColors.fillColorPrimary, size: buttonSize) ?? const Icon(Icons.edit),
           onPressed: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, element, parentElement) : null,
           padding: EdgeInsets.zero,
           splashRadius: buttonSize,
@@ -552,7 +553,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       if (dataKeyIndex > 0) {
         textSpans.add(TextSpan(
           text: partialLink,
-          style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
+          style: AppTextStyles.widgetButtonTitleMediumBoldUnderline,
           recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex + widgetKeyOffset]) : null,  
         ));
         previousLink = true;
@@ -566,7 +567,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         }
         textSpans.add(TextSpan(
           text: text,
-          style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+          style: AppTextStyles.widgetDetailMedium,
         ));
         previousLink = false;
       }
@@ -660,20 +661,20 @@ class SurveyElementCreationWidget extends StatefulWidget {
   static Widget buildDropdownWidget<T>(Map<T?, String> supportedItems, String label, T? value, Function(T?)? onChanged,
     {EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 16), EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: AppColors.surface),
       padding: padding,
       margin: margin,
       child: Row(children: [
-        Text(label, style: Styles().textStyles.getTextStyle('widget.message.regular')),
+        Text(label, style: AppTextStyles.widgetMessageRegular),
         Expanded(child: Align(alignment: Alignment.centerRight, child: DropdownButtonHideUnderline(child:
           DropdownButton<T>(
             icon: Styles().images.getImage('chevron-down', excludeFromSemantics: true),
             isExpanded: true,
-            style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+            style: AppTextStyles.widgetDetailRegular,
             items: buildDropdownItems<T>(supportedItems),
             value: value,
             onChanged: onChanged,
-            dropdownColor: Styles().colors.getColor('surface'),
+            dropdownColor: AppColors.surface,
           ),
         ),))],
       )
@@ -682,11 +683,11 @@ class SurveyElementCreationWidget extends StatefulWidget {
 
   static Widget buildCheckboxWidget(String label, bool value, Function(bool?)? onChanged, {EdgeInsetsGeometry padding = const EdgeInsets.only(top: 16.0)}) {
     return Padding(padding: padding, child: CheckboxListTile(
-      title: Padding(padding: const EdgeInsets.only(left: 8), child: Text(label, style: Styles().textStyles.getTextStyle('widget.message.regular'))),
+      title: Padding(padding: const EdgeInsets.only(left: 8), child: Text(label, style: AppTextStyles.widgetMessageRegular)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-      tileColor: Styles().colors.getColor('surface'),
-      checkColor: Styles().colors.getColor('surface'),
-      activeColor: Styles().colors.getColor('fillColorPrimary'),
+      tileColor: AppColors.surface,
+      checkColor: AppColors.surface,
+      activeColor: AppColors.fillColorPrimary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       value: value,
       onChanged: onChanged,
@@ -701,7 +702,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
         value: item.key,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(item.value, style: Styles().textStyles.getTextStyle('widget.detail.regular'), textAlign: TextAlign.center, maxLines: 2,)
+          child: Text(item.value, style: AppTextStyles.widgetDetailRegular, textAlign: TextAlign.center, maxLines: 2,)
         ),
         alignment: Alignment.centerRight,
       ));
@@ -731,7 +732,7 @@ class _SurveyElementCreationWidgetState extends State<SurveyElementCreationWidge
           ),
         )),
         Container(
-          color: Styles().colors.backgroundVariant,
+          color: AppColors.backgroundVariant,
           child: widget.completionOptions,
         ),
       ],

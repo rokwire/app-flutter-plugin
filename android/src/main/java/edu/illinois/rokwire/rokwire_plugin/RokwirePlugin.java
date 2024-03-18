@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.credentials.exceptions.GetCredentialException;
 
 import java.lang.ref.WeakReference;
 
@@ -25,6 +26,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,7 +95,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   // ActivityAware
 
   @Override
-  public void onAttachedToActivity​(ActivityPluginBinding binding) {
+  public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
     _applyActivityBinding(binding);
   }
 
@@ -103,7 +105,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   }
 
   @Override
-  public void	onReattachedToActivityForConfigChanges​(ActivityPluginBinding binding) {
+  public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
     _applyActivityBinding(binding);
   }
 
@@ -130,45 +132,48 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
       nextMethodComponents = call.method.substring(pos + 1);
     }
 
-    if (firstMethodComponent.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    }
-    else if (firstMethodComponent.equals("createAndroidNotificationChannel")) {
-      result.success(createNotificationChannel(call));
-    }
-    else if (firstMethodComponent.equals("showNotification")) {
-      result.success(showNotification(call));
-    }
-    else if (firstMethodComponent.equals("getDeviceId")) {
-      result.success(getDeviceId(call.arguments));
-    }
-    else if (firstMethodComponent.equals("getEncryptionKey")) {
-      result.success(getEncryptionKey(call.arguments));
-    }
-    else if (firstMethodComponent.equals("dismissSafariVC")) {
-      result.success(null); // Safari VV not available in Android
-    }
-    else if (firstMethodComponent.equals("launchApp")) {
-      result.success(launchApp(call.arguments));
-    }
-    else if (firstMethodComponent.equals("launchAppSettings")) {
-      result.success(launchAppSettings(call.arguments));
-    }
-    else if (firstMethodComponent.equals("locationServices")) {
-      LocationServices.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
-    }
-    else if (firstMethodComponent.equals("trackingServices")) {
-      result.success("allowed"); // tracking is allowed in Android by default
-    }
-    else if (firstMethodComponent.equals("geoFence")) {
-      GeofenceMonitor.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
-    }
-    else {
-      result.notImplemented();
+    switch (firstMethodComponent) {
+      case "getPlatformVersion":
+        result.success("Android " + Build.VERSION.RELEASE);
+        break;
+      case "createAndroidNotificationChannel":
+        result.success(createNotificationChannel(call));
+        break;
+      case "showNotification":
+        result.success(showNotification(call));
+        break;
+      case "getDeviceId":
+        result.success(getDeviceId(call.arguments));
+        break;
+      case "getEncryptionKey":
+        result.success(getEncryptionKey(call.arguments));
+        break;
+      case "dismissSafariVC":
+        result.success(null); // Safari VV not available in Android
+        break;
+      case "launchApp":
+        result.success(launchApp(call.arguments));
+        break;
+      case "launchAppSettings":
+        result.success(launchAppSettings(call.arguments));
+        break;
+      case "locationServices":
+        assert nextMethodComponents != null;
+        LocationServices.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
+        break;
+      case "trackingServices":
+        result.success("allowed"); // tracking is allowed in Android by default
+        break;
+      case "geoFence":
+        GeofenceMonitor.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
+        break;
+      default:
+        result.notImplemented();
+        break;
     }
   }
 
-  public void notifyGeoFence​(String event, Object arguments) {
+  public void notifyGeoFence(String event, Object arguments) {
     Activity activity = getActivity();
     if ((activity != null) && (_channel != null)) {
       activity.runOnUiThread(() -> _channel.invokeMethod(String.format("geoFence.%s", event), arguments));
@@ -185,7 +190,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   // PluginRegistry.RequestPermissionsResultListener
 
   @Override
-  public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+  public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     if (requestCode == LocationServices.LOCATION_PERMISSION_REQUEST_CODE) {
       return LocationServices.getInstance().onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
@@ -212,7 +217,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     {
       UUID uuid;
       final String androidId = Settings.Secure.getString(getActivity().getContentResolver(), Settings.Secure.ANDROID_ID);
-      uuid = UUID.nameUUIDFromBytes(androidId.getBytes("utf8"));
+      uuid = UUID.nameUUIDFromBytes(androidId.getBytes(StandardCharsets.UTF_8));
       deviceId = uuid.toString();
     }
     catch (Exception e)
@@ -226,12 +231,11 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     // Create the NotificationChannel, but only on API 26+ because
     // the NotificationChannel class is new and not in the support library
     Context appContext = (_flutterBinding != null) ? _flutterBinding.getApplicationContext() : null;
-    if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) && (appContext != null)) {
-
+    if (appContext != null) {
       try {
-        String id = call.hasArgument​("id") ? call.argument("id") : "edu.illinois.rokwire.firebase_messaging.notification_channel";
-        String name = call.hasArgument​("name") ? call.argument("name") : "Rokwire";
-        int importance = call.hasArgument​("importance") ? call.argument("importance") : android.app.NotificationManager.IMPORTANCE_DEFAULT;
+        String id = call.hasArgument("id") ? call.argument("id") : "edu.illinois.rokwire.firebase_messaging.notification_channel";
+        String name = call.hasArgument("name") ? call.argument("name") : "Rokwire";
+        int importance = call.hasArgument("importance") ? call.argument("importance") : android.app.NotificationManager.IMPORTANCE_DEFAULT;
 
         NotificationChannel channel = new NotificationChannel(id, name, importance);
         String description = call.argument("description");
@@ -340,16 +344,14 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     }
     String base64KeyValue = Utils.AppSecureSharedPrefs.getString(getActivity(), identifier, null);
     byte[] encryptionKey = Utils.Base64.decode(base64KeyValue);
-    if ((encryptionKey != null) && (encryptionKey.length == keySize)) {
-      return base64KeyValue;
-    } else {
+    if ((encryptionKey == null) || (encryptionKey.length != keySize)) {
       byte[] keyBytes = new byte[keySize];
       SecureRandom secRandom = new SecureRandom();
       secRandom.nextBytes(keyBytes);
       base64KeyValue = Utils.Base64.encode(keyBytes);
       Utils.AppSecureSharedPrefs.saveString(getActivity(), identifier, base64KeyValue);
-      return base64KeyValue;
     }
+    return base64KeyValue;
   }
 
   // Helpers

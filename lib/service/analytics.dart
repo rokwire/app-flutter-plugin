@@ -27,7 +27,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info/device_info.dart';
 
 
@@ -100,9 +100,17 @@ class Analytics with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
+      Service.notifyInitialized,
       Connectivity.notifyStatusChanged,
     ]);
+  }
 
+  @override
+  void destroyService() {
+    NotificationService().unsubscribe(this);
+    closeDatabase();
+    closeTimer();
+    super.destroyService();
   }
 
   @override
@@ -147,24 +155,14 @@ class Analytics with Service implements NotificationsListener {
     }
   }
 
-  @override
-  void destroyService() {
-    NotificationService().unsubscribe(this, Connectivity.notifyStatusChanged);
-    closeDatabase();
-    closeTimer();
-    super.destroyService();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Connectivity(), Config() };
-  }
-
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == Connectivity.notifyStatusChanged) {
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized(param is Service ? param : null);
+    }
+    else if (name == Connectivity.notifyStatusChanged) {
       applyConnectivityStatus(param);
     }
   }
@@ -237,7 +235,7 @@ class Analytics with Service implements NotificationsListener {
   @protected
   void onTimer(_) {
     
-    if ((_database != null) && !_inTimer && (_connectionStatus != ConnectivityStatus.none)) {
+    if ((_database != null) && !_inTimer && (_connectionStatus != ConnectivityStatus.none) && StringUtils.isNotEmpty(Config().loggingUrl)) {
       _inTimer = true;
 
       int? deliveryTimeout = Config().analyticsDeliveryTimeout;
@@ -296,11 +294,12 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   Future<bool> sendPacket(String? packet) async {
-    if (packet != null) {
+    String? loggingUrl = Config().loggingUrl;
+    if ((loggingUrl != null) && (packet != null)) {
       try {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
         //TBD: Remove this when logging service gets updated.
-        final response = await Network().post(Config().loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: Config() /* Auth2() */, sendAnalytics: false);
+        final response = await Network().post(loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: Config() /* Auth2() */, sendAnalytics: false);
         return (response != null) && ((response.statusCode == 200) || (response.statusCode == 201));
       }
       catch (e) {
@@ -311,11 +310,25 @@ class Analytics with Service implements NotificationsListener {
     return false;
   }
 
+  // Services
+
+  @protected
+  Future<void> onServiceInitialized(Service? service) async {
+    if (isInitialized) {
+      if (service == Connectivity()) {
+        updateConnectivity();
+      }
+    }
+  }
+
   // Connectivity
 
   @protected
   void updateConnectivity() {
-    applyConnectivityStatus(Connectivity().status);
+    ConnectivityStatus? connectionStatus = Connectivity().status;
+    if (_connectionStatus != connectionStatus) {
+      applyConnectivityStatus(Connectivity().status);
+    }
   }
 
   @protected

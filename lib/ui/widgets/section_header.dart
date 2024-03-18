@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
@@ -57,6 +58,7 @@ class SectionSlantHeader extends StatelessWidget {
   final EdgeInsetsGeometry rightIconPadding;
 
   final Widget? headerWidget;
+  final Widget? headerChild;
   final Widget? progressWidget;
   final List<Widget>? children;
   final EdgeInsetsGeometry childrenPadding;
@@ -102,6 +104,7 @@ class SectionSlantHeader extends StatelessWidget {
     this.rightIconPadding = const EdgeInsets.only(left: 16, right: 16),
     
     this.headerWidget,
+    this.headerChild,
     this.progressWidget,
     this.children,
     this.childrenPadding = const EdgeInsets.all(16),
@@ -122,6 +125,16 @@ class SectionSlantHeader extends StatelessWidget {
       contentList.add(_buildSubTitle());
     }
 
+    if (headerChild != null) {
+      contentList.add(Container(
+        color: slantColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: headerChild ?? Container(),
+        ),
+      ));
+    }
+
     // Slant
     List<Widget> slantList = <Widget>[];
     if (StringUtils.isNotEmpty(slantImageKey)) {
@@ -140,7 +153,7 @@ class SectionSlantHeader extends StatelessWidget {
     }
     else {
       Widget slantContentWidget = Container(color: _slantColor, child:
-        CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? Styles().colors.background, horzDir: TriangleHorzDirection.rightToLeft), child:
+        CustomPaint(painter: TrianglePainter(painterColor: backgroundColor ?? AppColors.background, horzDir: TriangleHorzDirection.rightToLeft), child:
           Container(height: slantPainterHeight,),
         ),
       );
@@ -216,17 +229,17 @@ class SectionSlantHeader extends StatelessWidget {
     );
   }
 
-  Color? get _slantColor => slantColor ?? Styles().colors.fillColorPrimary;
+  Color? get _slantColor => slantColor ?? AppColors.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors.textColorPrimary,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies.extraBold,
+    color: titleTextColor ?? AppColors.textPrimary,
+    fontFamily: titleFontFamilly ?? AppFontFamilies.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors.textColorPrimary,
-    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies.regular,
+    color: subTitleTextColor ?? AppColors.textPrimary,
+    fontFamily: subTitleFontFamilly ?? AppFontFamilies.regular,
     fontSize: subTitleFontSize
   );
 }
@@ -362,17 +375,17 @@ class SectionRibbonHeader extends StatelessWidget {
       contentWidget;
   }
 
-  Color? get _backgroundColor => backgroundColor ?? Styles().colors.fillColorPrimary;
+  Color? get _backgroundColor => backgroundColor ?? AppColors.fillColorPrimary;
 
   TextStyle get _titleTextStyle => titleTextStyle ?? TextStyle(
-    color: titleTextColor ?? Styles().colors.white,
-    fontFamily: titleFontFamilly ?? Styles().fontFamilies.extraBold,
+    color: titleTextColor ?? AppColors.textLight,
+    fontFamily: titleFontFamilly ?? AppFontFamilies.extraBold,
     fontSize: titleFontSize
   );
 
   TextStyle get _subTitleTextStyle => subTitleTextStyle ?? TextStyle(
-    color: subTitleTextColor ?? Styles().colors.white,
-    fontFamily: subTitleFontFamilly ?? Styles().fontFamilies.regular,
+    color: subTitleTextColor ?? AppColors.textLight,
+    fontFamily: subTitleFontFamilly ?? AppFontFamilies.regular,
     fontSize: subTitleFontSize
   );
 }
@@ -447,10 +460,10 @@ class ImageSlantHeader extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors.white),
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? AppColors.surface),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
 
-  Color? get _slantImageColor => slantImageColor ?? Styles().colors.fillColorSecondary;
+  Color? get _slantImageColor => slantImageColor ?? AppColors.fillColorSecondary;
 }

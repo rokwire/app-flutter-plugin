@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -17,17 +18,20 @@ class TabBar extends StatefulWidget {
   _TabBarState createState() => _TabBarState();
 
   @protected
-  Color? get backgroundColor {
+  Color? get backgroundColor => AppColors.surface;
+
+  @protected
+  Color? get environmentColor {
     switch(Config().configEnvironment) {
       case ConfigEnvironment.dev:        return Colors.yellowAccent;
       case ConfigEnvironment.test:       return Colors.lightGreenAccent;
-      case ConfigEnvironment.production: return Styles().colors.surface;
-      default:                           return Colors.white;
+      case ConfigEnvironment.production: return AppColors.surface;
+      default:                           return null;
     }
   }
 
   @protected
-  BoxBorder? get border => Border(top: BorderSide(color: Styles().colors.surfaceAccent, width: 1, style: BorderStyle.solid));
+  BoxBorder? get border => Border(top: BorderSide(color: AppColors.surfaceAccent, width: 1, style: BorderStyle.solid));
 
   @protected
   Decoration? get decoration => BoxDecoration(color: backgroundColor, border: border);
@@ -71,13 +75,11 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       Container(decoration: widget.decoration, child:
-        SafeArea(child:
-          Row(children: 
-            buildTabs(),
-          ),
-        ),
+        Row(children: buildTabs()),
       ),
-    ],);
+      Visibility(visible: widget.environmentColor != null,
+          child: Container(height: 4, color: widget.environmentColor))
+    ]);
   }
 
   @protected
@@ -87,9 +89,7 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
     for (int tabIndex = 0; tabIndex < tabsCount; tabIndex++) {
       Widget? tab = widget.buildTab(context, _contentListCodes![tabIndex], tabIndex);
       if (tab != null) {
-        tabs.add(Expanded(
-          child: tab,
-        ));
+        tabs.add(Expanded(child: tab));
       }
     }
       
@@ -132,6 +132,7 @@ class TabWidget extends StatelessWidget {
   final String? iconKey;
   final String? selectedIconKey;
   final bool selected;
+  final bool showAnimation;
   final void Function(TabWidget tabWidget) onTap;
 
   const TabWidget({
@@ -141,16 +142,22 @@ class TabWidget extends StatelessWidget {
     this.selectedIconKey,
     this.hint,
     this.selected = false,
+    this.showAnimation = true,
     required this.onTap
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
-      Stack(children: <Widget>[
-        buildTab(context),
-        selected ? buildSelectedIndicator(context) : Container(),
-        ],
+    return Material(color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onTap(this),
+        splashFactory: showAnimation ? null : NoSplash.splashFactory,
+        splashColor: showAnimation ? null : Colors.transparent,
+        highlightColor: showAnimation ? null :  Colors.transparent,
+        child: Column(children: [
+          selected ? buildSelectedIndicator(context) : Container(),
+          buildTab(context),
+        ]),
       ),
     );
   }
@@ -186,7 +193,7 @@ class TabWidget extends StatelessWidget {
   TextAlign get tabTextAlign => TextAlign.center;
 
   @protected
-  TextStyle get tabTextStyle => TextStyle(fontFamily: Styles().fontFamilies.bold, color: selected ? Styles().colors.fillColorSecondary : Styles().colors.mediumGray, fontSize: 12);
+  TextStyle get tabTextStyle => TextStyle(fontFamily: AppFontFamilies.bold, color: selected ? AppColors.fillColorSecondary : AppColors.textMedium, fontSize: 12);
 
   @protected
   double getTextScaleFactor(BuildContext context) => min(MediaQuery.of(context).textScaler.scale(1), 2);
@@ -205,7 +212,8 @@ class TabWidget extends StatelessWidget {
   Widget getTabIcon(BuildContext context)  {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
-    return (key != null) ? Styles().images.getImage(key, width: tabIconSize.width, height: tabIconSize.height) ?? defaultIcon : defaultIcon;
+    return (key != null) ? Styles().images.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
+        color: selected ? AppColors.fillColorSecondary : AppColors.textDisabled) ?? defaultIcon : defaultIcon;
   }
 
   @protected
@@ -214,17 +222,13 @@ class TabWidget extends StatelessWidget {
   // Selected Indicator
 
   @protected
-  Widget buildSelectedIndicator(BuildContext context) => Positioned.fill(child:
-    Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-      Container(height: selectedIndicatorHeight, color: selectedIndicatorColor)
-    ],),
-  );
+  Widget buildSelectedIndicator(BuildContext context) => Container(height: selectedIndicatorHeight, color: selectedIndicatorColor);
 
   @protected
   double get selectedIndicatorHeight => 4;
 
   @protected
-  Color? get selectedIndicatorColor => Styles().colors.fillColorSecondary;
+  Color? get selectedIndicatorColor => AppColors.fillColorSecondary;
 
 }
 

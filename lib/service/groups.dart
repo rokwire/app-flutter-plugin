@@ -27,7 +27,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/model/group.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
@@ -112,7 +112,7 @@ class Groups with Service implements NotificationsListener {
     NotificationService().subscribe(this,[
       DeepLink.notifyUri,
       Auth2.notifyLoginChanged,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       FirebaseMessaging.notifyGroupsNotification,
       Connectivity.notifyStatusChanged
     ]);
@@ -155,7 +155,7 @@ class Groups with Service implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { DeepLink(), Config(), Auth2() };
+    return { Config(), Auth2() };
   }
 
   // NotificationsListener
@@ -168,8 +168,8 @@ class Groups with Service implements NotificationsListener {
     else if (name == Auth2.notifyLoginChanged) {
       _onLoginChanged();
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param);
+    else if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
     }
     else if (name == FirebaseMessaging.notifyGroupsNotification){
       _onFirebaseMessageForGroupUpdate();
@@ -192,7 +192,7 @@ class Groups with Service implements NotificationsListener {
     }
   }
   
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -459,7 +459,7 @@ class Groups with Service implements NotificationsListener {
       try {
         await _ensureLogin();
         Map<String, dynamic> json = group.toJson(/*withId: false*/);
-        json["creator_email"] = Auth2().account?.profile?.email ?? "";
+        json["creator_email"] = Auth2().account?.authType?.uiucUser?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
@@ -660,7 +660,7 @@ class Groups with Service implements NotificationsListener {
       try {
         await _ensureLogin();
         Map<String, dynamic> json = {};
-        json["email"] = Auth2().account?.profile?.email ?? "";
+        json["email"] = Auth2().account?.authType?.uiucUser?.email ?? "";
         json["name"] = Auth2().account?.profile?.fullName ?? "";
         json["member_answers"] = CollectionUtils.isNotEmpty(answers) ? answers!.map((e) => e.toJson()).toList() : [];
         String? body = JsonUtils.encode(json);

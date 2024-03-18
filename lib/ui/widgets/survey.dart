@@ -16,6 +16,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
@@ -84,8 +85,8 @@ class SurveyWidget extends StatefulWidget {
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
       RoundedButton(
           label: Localization().getStringEx("widget.survey.button.action.continue.title", "Continue") + questionProgress,
-          textColor: canContinue ? null : Styles().colors.disabledTextColor,
-          borderColor: canContinue ? null : Styles().colors.disabledTextColor,
+          textColor: canContinue ? null : AppColors.textDisabled,
+          borderColor: canContinue ? null : AppColors.textDisabled,
           enabled: canContinue && !controller.saving,
           onTap: controller.continueSurvey,
           progress: controller.saving),
@@ -149,7 +150,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         alignment: Alignment.center,
         child: Padding(
           padding: const EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors.fillColorPrimary)),
+          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(AppColors.fillColorPrimary)),
         ),
       );
     }
@@ -175,14 +176,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
+      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: AppTextStyles.widgetDetailRegular,),
     );
   }
 
   Widget _buildMoreInfo() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 32.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles.getTextStyle('widget.message.large.fat'),),
+      child: Text(_survey!.moreInfo ?? '', style: AppTextStyles.widgetMessageLargeBold,),
     );
   }
 
@@ -256,14 +257,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
-              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles.getTextStyle('widget.error.regular.fat'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? AppTextStyles.widgetErrorRegularBold)),
               Visibility(
                 visible: !surveyWidget.containsText,
                 child: Flexible(
                   child: Text(
                     survey.text,
                     textAlign: TextAlign.start,
-                    style: textStyle ?? Styles().textStyles.getTextStyle('widget.message.medium'),
+                    style: textStyle ?? AppTextStyles.widgetMessageMedium,
                   ),
                 ),
               ),
@@ -278,7 +279,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             child: Text(
               survey.moreInfo ?? '',
               textAlign: TextAlign.start,
-              style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+              style: AppTextStyles.widgetDetailRegular,
             ),
           ),
         ),
@@ -412,11 +413,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title, style: Styles().textStyles.getTextStyle('widget.detail.small'), textAlign: TextAlign.center),
-          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.surface),
-          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorPrimaryVariant),
-          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorSecondary)),
-          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.mediumGray)),
+          textWidget: Text(option.title, style: AppTextStyles.widgetDetailSmall, textAlign: TextAlign.center),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.textDisabled)),
         ),
       )));
     }
@@ -434,8 +435,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         survey.response = false;
       }
       return SurveyDataWidget(Checkbox(
-        checkColor: Styles().colors.surface,
-        activeColor: Styles().colors.fillColorPrimary,
+        checkColor: AppColors.surface,
+        activeColor: AppColors.fillColorPrimary,
         value: survey.response,
         onChanged: enabled ? (bool? value) {
           // if (survey.scored && survey.response != null) {
@@ -453,7 +454,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       }
       return SurveyDataWidget(Switch(
         value: survey.response,
-        activeColor: Styles().colors.fillColorPrimary,
+        activeColor: AppColors.fillColorPrimary,
         onChanged: enabled ? (bool value) {
           // if (survey.scored && survey.response != null) {
           //   return;
@@ -632,12 +633,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     return SurveyDataWidget(Row(
       mainAxisSize: MainAxisSize.max,
       children: [
-        Container(decoration: BoxDecoration(color: Styles().colors.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
+        Container(decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-          child: Text(label, style: Styles().textStyles.getTextStyle('headline3')),
+          child: Text(label, style: AppTextStyles.widgetHeadingRegular),
         )),
         Expanded(
-          child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors.fillColorPrimary, onChanged: enabled ? (value) {
+          child: Slider(value: value, min: min, max: max, label: label, activeColor: AppColors.fillColorPrimary, onChanged: enabled ? (value) {
            survey.response = value;
            _onChangeResponse(false);
           } : null)
@@ -661,8 +662,8 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Text(i.toString(), style: Styles().textStyles.getTextStyle('label')),
-       Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
+       Text(i.toString(), style: AppTextStyles.widgetDetailRegular),
+       Radio(value: i, groupValue: value, activeColor: AppColors.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
            _onChangeResponse(false);
@@ -676,7 +677,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
         Padding(
           padding: const EdgeInsets.only(top: 24.0),
-          child: Container(height: 1, color: Styles().colors.dividerLine),
+          child: Container(height: 1, color: AppColors.dividerLine),
         )
       ],
     );
@@ -885,7 +886,7 @@ class CustomIconSelectionList extends StatelessWidget {
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
                       child: ListTile(
-                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? Styles().textStyles.getTextStyle('labelSelected') : Styles().textStyles.getTextStyle('label'))),
+                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? AppTextStyles.widgetDetailRegularBold : AppTextStyles.widgetDetailRegular)),
                         leading:
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -908,11 +909,11 @@ class CustomIconSelectionList extends StatelessWidget {
                   Text(
                       "Correct Answer: ",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles.getTextStyle('headline2')),
+                      style: AppTextStyles.widgetHeadingLarge),
                   Text(
                       correctAnswer ?? "",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles.getTextStyle('body'))
+                      style: AppTextStyles.widgetDescriptionRegular)
                 ],
               ),
         )),
@@ -962,8 +963,9 @@ class SingleSelectionList extends StatelessWidget {
               child: Card(
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
-                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /*, color: Styles().colors.headlineText */))),
-                  activeColor: Styles().colors.fillColorSecondary,
+                  title: Transform.translate(offset: const Offset(-15, 0),
+                      child: Text(title, style: AppTextStyles.widgetTitleRegular)),
+                  activeColor: AppColors.fillColorSecondary,
                   value: title,
                   groupValue: selectedValue?.title,
                   onChanged: onChanged != null ? (_) => onChanged!(index) : null,
@@ -998,9 +1000,9 @@ class MultiSelectionList extends StatelessWidget {
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: CheckboxListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /* , color: Styles().colors.headlineText */))),
+                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: AppTextStyles.widgetDetailRegular)),
                       checkColor: Colors.white,
-                      activeColor: Styles().colors.fillColorSecondary,
+                      activeColor: AppColors.fillColorSecondary,
                       value: isChecked?[index],
                       onChanged: onChanged != null ? (_) => onChanged!(index) : null,
                       contentPadding: const EdgeInsets.all(8),

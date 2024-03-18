@@ -20,21 +20,21 @@ import 'package:rokwire_plugin/service/service.dart';
 
 typedef AppLifecycleCallback = void Function(AppLifecycleState state);
 
-class AppLivecycleWidgetsBindingObserver extends WidgetsBindingObserver {
-  final AppLifecycleCallback? onAppLivecycleChange;
-  AppLivecycleWidgetsBindingObserver({this.onAppLivecycleChange});
+class AppLifecycleWidgetsBindingObserver extends WidgetsBindingObserver {
+  final AppLifecycleCallback? onAppLifecycleChange;
+  AppLifecycleWidgetsBindingObserver({this.onAppLifecycleChange});
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (onAppLivecycleChange != null) {
-      onAppLivecycleChange!(state);
+    if (onAppLifecycleChange != null) {
+      onAppLifecycleChange!(state);
     }
   }
 }
 
-class AppLivecycle with Service {
+class AppLifecycle with Service {
 
-  static const String notifyStateChanged  = "edu.illinois.rokwire.applivecycle.state.changed";
+  static const String notifyStateChanged  = "edu.illinois.rokwire.applifecycle.state.changed";
 
   WidgetsBindingObserver? _bindingObserver;
   AppLifecycleState _state = AppLifecycleState.resumed; // initial value
@@ -42,17 +42,17 @@ class AppLivecycle with Service {
 
   // Singletone Factory
 
-  static AppLivecycle? _instance;
+  static AppLifecycle? _instance;
 
-  static AppLivecycle? get instance => _instance;
-
-  @protected
-  static set instance(AppLivecycle? value) => _instance = value;
-
-  factory AppLivecycle() => _instance ?? (_instance = AppLivecycle.internal());
+  static AppLifecycle? get instance => _instance;
 
   @protected
-  AppLivecycle.internal();
+  static set instance(AppLifecycle? value) => _instance = value;
+
+  factory AppLifecycle() => _instance ?? (_instance = AppLifecycle.internal());
+
+  @protected
+  AppLifecycle.internal();
   
   // Service
 
@@ -74,7 +74,7 @@ class AppLivecycle with Service {
   @protected
   void initBinding() {
     if (_bindingObserver == null) {
-      _bindingObserver = AppLivecycleWidgetsBindingObserver(onAppLivecycleChange:_onAppLivecycleChangeState);
+      _bindingObserver = AppLifecycleWidgetsBindingObserver(onAppLifecycleChange: _onAppLifecycleChangeState);
       WidgetsBinding.instance.addObserver(_bindingObserver!);
     }
   }
@@ -86,7 +86,7 @@ class AppLivecycle with Service {
     }
   }
 
-  void _onAppLivecycleChangeState(AppLifecycleState state) {
+  void _onAppLifecycleChangeState(AppLifecycleState state) {
     _state = state;
     NotificationService().notify(notifyStateChanged, state);
   }

@@ -17,7 +17,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 class RoundedButton extends StatefulWidget {
   final String label;
@@ -65,15 +65,15 @@ class RoundedButton extends StatefulWidget {
     Key? key,
     required this.label,
     this.onTap,
-    this.backgroundColor,      //= Styles().colors.white
+    this.backgroundColor,      //= AppColors.white
     this.padding                 = const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
     this.contentWeight           = 1.0,
     this.conentAlignment         = MainAxisAlignment.center,
 
     this.textWidget,
     this.textStyle,
-    this.textColor,            //= Styles().colors.fillColorPrimary
-    this.fontFamily,           //= Styles().fontFamilies.bold
+    this.textColor,            //= AppColors.fillColorPrimary
+    this.fontFamily,           //= AppFontFamilies.bold
     this.fontSize                = 20.0,
     this.textAlign               = TextAlign.center,
 
@@ -87,10 +87,10 @@ class RoundedButton extends StatefulWidget {
     this.enabled                 = true,
 
     this.border,
-    this.borderColor,          //= Styles().colors.fillColorSecondary
+    this.borderColor,          //= AppColors.fillColorSecondary
     this.borderWidth             =  2.0,
     this.borderShadow,
-    this.maxBorderRadius         = 24.0,
+    this.maxBorderRadius         = 36.0,
 
     this.secondaryBorder,
     this.secondaryBorderColor,
@@ -102,19 +102,19 @@ class RoundedButton extends StatefulWidget {
     this.progressStrokeWidth,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors.white;
+  @protected Color? get defaultBackgroundColor => AppColors.surface;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
   
-  @protected Color? get defautTextColor => Styles().colors.fillColorPrimary;
-  @protected Color? get displayTextColor => textColor ?? defautTextColor;
-  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
+  @protected Color? get defaultTextColor => AppColors.textPrimary;
+  @protected Color? get displayTextColor => textColor ?? defaultTextColor;
+  @protected String? get defaultFontFamily => AppFontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
   @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
   @protected Widget get defaultTextWidget => Text(label, style: displayTextStyle, textAlign: textAlign,);
   @protected Widget get displayTextWidget => textWidget ?? defaultTextWidget;
 
-  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary;
+  @protected Color get defaultBorderColor => AppColors.fillColorSecondary;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
   @protected Border get displayBorder => border ?? defaultBorder;
@@ -163,8 +163,9 @@ class _RoundedButtonState extends State<RoundedButton> {
 
   Widget get _outerContent {
     //TODO: Fix ripple effect from InkWell (behind button content)
-    return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
-      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent),
+    return Material(color: Colors.transparent,
+      child: Semantics(label: widget.label, hint: widget.hint, button: true,
+        enabled: widget.enabled, child: _wrapperContent,),
     );
   }
 
@@ -207,9 +208,13 @@ class _RoundedButtonState extends State<RoundedButton> {
 
     Border? secondaryBorder = widget.displaySecondaryBorder;
     // BorderRadiusGeometry? borderRadius = 
-    return Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
-      ? Container(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
-      : _innerContent
+    return InkWell(
+      onTap: widget.onTap,
+      borderRadius: borderRadius,
+      child: Ink(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.displayBorder, borderRadius: borderRadius, boxShadow: widget.borderShadow), child: (secondaryBorder != null)
+        ? Ink(decoration: BoxDecoration(color: widget.displayBackgroundColor, border: secondaryBorder, borderRadius: borderRadius), child: _innerContent)
+        : _innerContent
+      ),
     );
   }
 

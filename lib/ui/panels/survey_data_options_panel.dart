@@ -16,12 +16,12 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_data_default_response_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -107,7 +107,7 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     return Scaffold(
       appBar: HeaderBar(title: _headerText),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildSurveyDataOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }
@@ -181,9 +181,9 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
   Widget _buildDone() {
     return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
-      borderColor: Styles().colors.fillColorPrimaryVariant,
-      backgroundColor: Styles().colors.surface,
-      textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+      borderColor: AppColors.fillColorPrimaryVariant,
+      backgroundColor: AppColors.surface,
+      textStyle: AppTextStyles.widgetDetailLargeBold,
       onTap: _onTapDone,
     ));
   }

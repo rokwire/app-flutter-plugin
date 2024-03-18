@@ -29,20 +29,39 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 
 class StringUtils {
 
   static bool isNotEmpty(String? stringToCheck) =>
     (stringToCheck != null && stringToCheck.isNotEmpty);
 
+  static bool isEmpty(String? stringToCheck) =>
+    !isNotEmpty(stringToCheck);
+
   static bool isNotEmptyString(dynamic value) =>
     (value is String) && value.isNotEmpty;
 
   static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
-    ((value != null) && value.isNotEmpty) ? value : defaultValue; 
+    ((value != null) && value.isNotEmpty) ? value : defaultValue;
 
-  static bool isEmpty(String? stringToCheck) =>
-    !isNotEmpty(stringToCheck);
+  static String? notEmptyString(String? value, [String? value1, String? value2, String? value3]) {
+    if (isNotEmpty(value)) {
+      return value;
+    }
+    else if (isNotEmpty(value1)) {
+      return value1;
+    }
+    else if (isNotEmpty(value2)) {
+      return value2;
+    }
+    else if (isNotEmpty(value3)) {
+      return value3;
+    }
+    else {
+      return null;
+    }
+  }
 
   static String wrapRange(String s, String firstValue, String secondValue, int startPosition, int endPosition) {
     String word = s.substring(startPosition, endPosition);
@@ -164,6 +183,29 @@ class StringUtils {
   static bool isUinValid(String? uin) {
     return isNotEmpty(uin) && RegExp(_uinPattern).hasMatch(uin!);
   }
+
+  static String base64UrlEncode(String value) => utf8.fuse(base64Url).encode(value);
+
+  static String base64UrlDecode(String value) => utf8.fuse(base64Url).decode(value);
+
+  static String generatePassword({bool letter = true, bool isNumber = true, bool isSpecial = true}) {
+    final length = 20;
+    final letterLowerCase = "abcdefghijklmnopqrstuvwxyz";
+    final letterUpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    final number = '0123456789';
+    final special = '@#%^*>\$@?/[]=+';
+
+    String chars = "";
+    if (letter) chars += '$letterLowerCase$letterUpperCase';
+    if (isNumber) chars += '$number';
+    if (isSpecial) chars += '$special';
+    return List.generate(length, (index) {
+      final indexRandom = math.Random.secure().nextInt(chars.length);
+      return chars [indexRandom];
+    }).join('');
+  }
+
+  static T? invokeIfExists<T>(String? val, T Function(String val) inv) => (val != null) ? inv(val) : null;
 }
 
 class CollectionUtils {
@@ -291,6 +333,19 @@ class SetUtils {
   }
 }
 
+extension SetExt on Set {
+  bool containsAny(Iterable<Object?> other) {
+    if (isNotEmpty && other.isNotEmpty) {
+      for (Object? entry in other) {
+        if (contains(entry)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+}
+
 class LinkedHashSetUtils {
   static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
@@ -347,6 +402,13 @@ class MapUtils {
       }
     }
     return null;
+  }
+
+  static Map<String, dynamic> mergeToNew(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
+    Map<String, dynamic> out = {};
+    out.addAll(dest);
+    merge(dest, src, level: level);
+    return out;
   }
 
   static void merge(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
@@ -578,7 +640,7 @@ class UrlUtils {
   }
 
   static Uri? buildUri(Uri uri, { String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
-    
+
     String sourceHost = uri.host;
     String sourcePath = uri.path;
     if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
@@ -865,6 +927,29 @@ class JsonUtils {
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  static Map<String, dynamic>? mapStringsValue(dynamic value) {
+    try {
+      return (value is Map<String, dynamic>) ? value : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, Map<String, dynamic>>? mapOfStringToMapOfStringsValue(dynamic value) {
+    Map<String, Map<String, dynamic>>? result;
+    if (value is Map) {
+      result = <String, Map<String, dynamic>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, mapStringsValue(value[key]));
+        }
+      }
+    }
+    return result;
   }
 
   static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) {
@@ -1227,7 +1312,9 @@ DayPart? dayPartFromString(String? value) {
 }
 
 class DateTimeUtils {
-  
+
+  static const String defaultDateTimeFormat = 'yyyy-MM-ddTHH:mm:ss.SSS';
+
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
       return null;
@@ -1244,17 +1331,17 @@ class DateTimeUtils {
     return dateTime;
   }
 
-  static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+  static String? utcDateTimeToString(DateTime? dateTime, { String format =  defaultDateTimeFormat }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
   }
 
-  static String? localDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
+  static String? localDateTimeToString(DateTime? dateTime, { String format = defaultDateTimeFormat }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
   static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
     (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
-  
+
   static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
     (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
 
@@ -1295,6 +1382,14 @@ class DateTimeUtils {
     return (date != null) ? DateTime(date.year, date.month, date.day) : null;
   }
 
+  static DateTime dayStart(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  static DateTime dayEnd(DateTime date) {
+    return dayStart(date).add(const Duration(days: 1)).subtract(const Duration(microseconds: 1));
+  }
+
   static DateTime nowTimezone(timezone.Location? location) {
     DateTime now = DateTime.now();
     if (location != null) {
@@ -1303,47 +1398,57 @@ class DateTimeUtils {
     return now;
   }
 
-  static bool isToday(DateTime? date, {timezone.Location? location}) {
+  static bool isToday(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime now = nowTimezone(location);
+    now ??= nowTimezone(location);
     return now.day == date.day && now.month == date.month && now.year == date.year;
   }
 
-  static bool isYesterday(DateTime? date, {timezone.Location? location}) {
+  static bool isYesterday(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime yesterday = nowTimezone(location).subtract(const Duration(days: 1));
+    now ??= nowTimezone(location);
+    DateTime yesterday = now.subtract(const Duration(days: 1));
     return yesterday.day == date.day && yesterday.month == date.month && yesterday.year == date.year;
   }
 
-  static bool isTomorrow(DateTime? date, {timezone.Location? location}) {
+  static bool isTomorrow(DateTime? date, {DateTime? now, timezone.Location? location}) {
     if (date == null) {
       return false;
     }
-    DateTime tomorrow = nowTimezone(location).add(const Duration(days: 1));
+    now ??= nowTimezone(location);
+    DateTime tomorrow = now.add(const Duration(days: 1));
     return tomorrow.day == date.day && tomorrow.month == date.month && tomorrow.year == date.year;
   }
 
-  static bool isThisWeek(DateTime? date, {timezone.Location? location}) {
+  static bool isThisWeek(DateTime? date, {DateTime? now, timezone.Location? location}) {
+    return isInRange(date, start: weekStart(now: now, location: location), end: weekEnd(now: now, location: location));
+  }
+
+  static DateTime weekStart({DateTime? now, timezone.Location? location}) {
+    now ??= nowTimezone(location);
+    DateTime today = dayStart(now);
+    return today.subtract(Duration(days: today.weekday - 1));
+  }
+
+  static DateTime weekEnd({DateTime? now, timezone.Location? location}) {
+    return weekStart(now: now, location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
+  }
+
+  static bool isInRange(DateTime? date, {DateTimeRange? range, DateTime? start, DateTime? end}) {
     if (date == null) {
       return false;
     }
-    if (date.isAfter(weekStart(location: location)) && date.isBefore(weekEnd(location: location))) {
+    if (range != null && date.isAfter(range.start) && date.isBefore(range.end)) {
+      return true;
+    }
+    if (start != null && end != null && date.isAfter(start) && date.isBefore(end)) {
       return true;
     }
     return false;
-  }
-
-  static DateTime weekStart({timezone.Location? location}) {
-    DateTime now = nowTimezone(location);
-    return now.subtract(Duration(days: now.weekday - 1));
-  }
-
-  static DateTime weekEnd({timezone.Location? location}) {
-    return weekStart(location: location).add(const Duration(days: 7)).subtract(const Duration(microseconds: 1));
   }
   
   static timezone.TZDateTime? changeTimeZoneToDate(DateTime time, timezone.Location location) {
@@ -1445,6 +1550,21 @@ extension TZDateTimeExt on timezone.TZDateTime {
       }
     }
     return null;
+  }
+}
+
+class WebUtils {
+  static String getCookie(String name) {
+    String? cookie = html.document.cookie;
+    if (StringUtils.isNotEmpty(cookie)) {
+      for (String item in cookie!.split(";")) {
+        final split = item.split("=");
+        if (split[0].trim() == name) {
+          return split[1];
+        }
+      }
+    }
+    return "";
   }
 }
 

@@ -15,17 +15,16 @@
  */
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -60,7 +59,7 @@ class WebPanel extends StatefulWidget {
   @protected
   Widget buildInitializing(BuildContext context) {
     return Center(child:
-      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Styles().colors.fillColorPrimary),),
+      CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(AppColors.fillColorPrimary)),
     );
   }
 
@@ -88,8 +87,8 @@ class WebPanel extends StatefulWidget {
     if (title != null) {
       contentList.add(flutter_html.Html(data: title,
           onLinkTap: (url, context, element) => onTapStatusLink(url),
-          style: { "body": flutter_html.Style(color: Styles().colors.fillColorPrimary,
-              fontFamily: Styles().fontFamilies.bold, fontSize: flutter_html.FontSize(32),
+          style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary,
+              fontFamily: AppFontFamilies.bold, fontSize: flutter_html.FontSize(32),
               textAlign: TextAlign.center, padding: null /* EdgeInsets.zero, const flutter_html.HtmlPaddings() */, margin: flutter_html.Margins.zero), },),
       );
     }
@@ -101,8 +100,8 @@ class WebPanel extends StatefulWidget {
     if ((message != null)) {
       contentList.add(flutter_html.Html(data: message,
         onLinkTap: (url, context, element) => onTapStatusLink(url),
-        style: { "body": flutter_html.Style(color: Styles().colors.fillColorPrimary,
-            fontFamily: Styles().fontFamilies.regular, fontSize: flutter_html.FontSize(20),
+        style: { "body": flutter_html.Style(color: AppColors.fillColorPrimary,
+            fontFamily: AppFontFamilies.regular, fontSize: flutter_html.FontSize(20),
             textAlign: TextAlign.left, padding: null /* EdgeInsets.zero, const flutter_html.HtmlPaddings() */, margin: flutter_html.Margins.zero), },),
       );
     }
@@ -139,7 +138,7 @@ class WebPanel extends StatefulWidget {
 }
 
 class WebPanelState extends State<WebPanel> implements NotificationsListener {
-
+  late flutter_webview.WebViewController _controller;
   bool? _isOnline;
   bool? _isTrackingEnabled;
   bool _isPageLoading = true;
@@ -149,12 +148,42 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   void initState() {
     super.initState();
     NotificationService().subscribe(this, [
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       DeepLink.notifyUri,
     ]);
-    if (Platform.isAndroid) {
-      flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+
+    Uri? uri;
+    if (widget.url != null) {
+      uri = Uri.tryParse(widget.url!);
     }
+    _controller = flutter_webview.WebViewController()
+      ..setJavaScriptMode(flutter_webview.JavaScriptMode.unrestricted)
+      // ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        flutter_webview.NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {
+            setState(() {
+              _isPageLoading = false;
+            });
+          },
+          onWebResourceError: (flutter_webview.WebResourceError error) {},
+          onNavigationRequest: widget.processNavigation,
+        ),
+      );
+
+    if (uri != null) {
+      _controller.loadRequest(uri);
+    }
+
+    //TODO: See if we need to replace this
+    // if (Platform.isAndroid) {
+    //   flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+    // }
+
     widget.getOnline().then((bool isOnline) {
       setState(() {
         _isOnline = isOnline;
@@ -193,7 +222,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
 
     return Scaffold(
       appBar: widget.headerBar ?? HeaderBar(title: widget.title),
-      backgroundColor: Styles().colors.background,
+      backgroundColor: AppColors.background,
       body: Column(children: <Widget>[
         Expanded(child: contentWidget),
         widget.tabBar ?? Container()
@@ -203,15 +232,8 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   Widget _buildWebView() {
     return Stack(children: [
       Visibility(visible: _isForeground,
-        child: flutter_webview.WebView(
-        initialUrl: widget.url,
-        javascriptMode: flutter_webview.JavascriptMode.unrestricted,
-        navigationDelegate: widget.processNavigation,
-        onPageFinished: (url) {
-          setState(() {
-            _isPageLoading = false;
-          });
-        },),),
+        child: flutter_webview.WebViewWidget(controller: _controller),
+      ),
       Visibility(visible: _isPageLoading,
         child: const Center(
           child: CircularProgressIndicator(),
@@ -221,7 +243,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param){
-    if (name == AppLivecycle.notifyStateChanged) {
+    if (name == AppLifecycle.notifyStateChanged) {
       setState(() {
         _isForeground = (param == AppLifecycleState.resumed);
       });

@@ -22,7 +22,7 @@ import 'package:http/http.dart';
 
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
@@ -69,14 +69,15 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   void createService() {
-    NotificationService().subscribe(this,[
+    NotificationService().subscribe(this, [
+      Service.notifyInitialized,
       Auth2.notifyPrefsChanged,
       Auth2.notifyUserDeleted,
       Auth2UserPrefs.notifyRolesChanged,
       Auth2UserPrefs.notifyPrivacyLevelChanged,
       Auth2.notifyLoginChanged,
       Auth2.notifyLinkChanged,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
       Groups.notifyUserGroupsUpdated,
       GeoFence.notifyCurrentRegionsUpdated,
       Config.notifyConfigChanged,
@@ -90,11 +91,25 @@ class FlexUI with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _assetsDir = await getAssetsDir();
-    _defContentSource = await loadFromAssets(assetsKey);
-    _appContentSource = await loadFromAssets(appAssetsKey);
-    _netContentSource = await loadFromCache(netCacheFileName);
+    List<Future<dynamic>> futures = [
+      loadFromAssets(assetsKey),
+      if (!kIsWeb)
+        loadFromAssets(appAssetsKey),
+      if (!kIsWeb)
+        getAssetsDir(),
+    ];
+
+    List<dynamic> results = await Future.wait(futures);
+    _defContentSource = (0 < results.length) ? results[0] : null;
+    _appContentSource = (1 < results.length) ? results[1] : null;
+    _assetsDir = (2 < results.length) ? results[2] : null;
+
+    if (_assetsDir != null) {
+      _netContentSource = await loadFromCache(netCacheFileName);
+    }
+
     build();
+
     if (_defaultContent != null) {
       updateFromNet();
       await super.initService();
@@ -109,34 +124,45 @@ class FlexUI with Service implements NotificationsListener {
     }
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Config(), Auth2(), Groups(), GeoFence() };
-  }
-
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if ((name == Auth2.notifyPrefsChanged) ||
-        (name == Auth2.notifyUserDeleted) ||
-        (name == Auth2UserPrefs.notifyRolesChanged) ||
-        (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
-        (name == Auth2.notifyLoginChanged) ||
-        (name == Auth2.notifyLinkChanged) ||
-        (name == Groups.notifyUserGroupsUpdated) ||
-        (name == GeoFence.notifyCurrentRegionsUpdated) ||
-        (name == Config.notifyConfigChanged))
+    if (name == Service.notifyInitialized) {
+      onServiceInitialized(param is Service ? param : null);
+    }
+    else if ((name == Auth2.notifyPrefsChanged) ||
+      (name == Auth2.notifyUserDeleted) ||
+      (name == Auth2UserPrefs.notifyRolesChanged) ||
+      (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
+      (name == Auth2.notifyLoginChanged) ||
+      (name == Auth2.notifyLinkChanged) ||
+      (name == Groups.notifyUserGroupsUpdated) ||
+      (name == GeoFence.notifyCurrentRegionsUpdated) ||
+      (name == Config.notifyConfigChanged))
     {
       updateContent();
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      onAppLivecycleStateChanged(param); 
+    else if (name == AppLifecycle.notifyStateChanged) {
+      onAppLifecycleStateChanged((param is AppLifecycleState) ? param : null);
     }
   }
 
   @protected
-  void onAppLivecycleStateChanged(AppLifecycleState? state) {
+  Future<void> onServiceInitialized(Service? service) async {
+    if (isInitialized) {
+      if ((service == Config()) && !kIsWeb) {
+        _assetsDir = await getAssetsDir();
+        _netContentSource = await loadFromCache(netCacheFileName);
+      }
+      if (((service == Config()) && (_netContentSource != null)) || (service == Auth2()) || (service == Groups()) || (service == GeoFence())) {
+        build();
+      }
+    }
+  }
+
+  @protected
+  void onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -213,7 +239,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }
@@ -223,14 +249,16 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Future<void> updateFromNet() async {
     String? netContentSourceString = await loadContentStringFromNet();
-    Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
-    if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
-        ((netContentSource == null) && (_netContentSource != null)))
-    {
-      _netContentSource = netContentSource;
-      await saveToCache(netCacheFileName, netContentSourceString);
-      build();
-      NotificationService().notify(notifyChanged, null);
+    if (netContentSourceString != null) {
+      Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
+      if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
+          ((netContentSource == null) && (_netContentSource != null)))
+      {
+        _netContentSource = netContentSource;
+        await saveToCache(netCacheFileName, netContentSourceString);
+        build();
+        NotificationService().notify(notifyChanged, null);
+      }
     }
   }
 
@@ -593,17 +621,14 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'shibbolethLoggedIn') && (value is bool)) {
             result = result && (Auth2().isOidcLoggedIn == value);
           }
-          else if ((key == 'phoneLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isPhoneLoggedIn == value);
+          else if ((key == 'codeLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isCodeLoggedIn == value);
           }
-          else if ((key == 'emailLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isEmailLoggedIn == value);
+          else if ((key == 'passwordLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isPasswordLoggedIn == value);
           }
-          else if ((key == 'usernameLoggedIn') && (value is bool)) {
-            result = result && (Auth2().isUsernameLoggedIn == value);
-          }
-          else if ((key == 'phoneOrEmailLoggedIn') && (value is bool)) {
-            result = result && ((Auth2().isPhoneLoggedIn || Auth2().isEmailLoggedIn) == value) ;
+          else if ((key == 'passkeyLoggedIn') && (value is bool)) {
+            result = result && (Auth2().isPasskeyLoggedIn == value);
           }
           else if ((key == 'shibbolethLinked') && (value is bool)) {
             result = result && (Auth2().isOidcLinked == value);
@@ -616,6 +641,9 @@ class FlexUI with Service implements NotificationsListener {
           }
           else if ((key == 'usernameLinked') && (value is bool)) {
             result = result && (Auth2().isUsernameLinked == value);
+          }
+          else if ((key == 'passkeyLinked') && (value is bool)) {
+            result = result && (Auth2().isPasskeyLinked == value);
           }
           else if ((key == 'accountRole') && (value is String)) {
             result = result && Auth2().hasRole(value);
@@ -643,7 +671,7 @@ class FlexUI with Service implements NotificationsListener {
         if (key is String) {
           String? target;
           if (key == 'os') {
-            target = Platform.operatingSystem;
+            target = Config().operatingSystem;
           }
           else if (key == 'environment') {
             target = configEnvToString(Config().configEnvironment);

@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
 class PopupToast extends StatelessWidget {
 
@@ -9,8 +9,8 @@ class PopupToast extends StatelessWidget {
   static const EdgeInsetsGeometry defaultPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
   static BoxDecoration defaultDecoration = BoxDecoration(
-      color: Styles.appColors.surface,
-      border: Border.all(color: Styles.appColors.surfaceAccent, width: 1),
+      color: AppColors.surface,
+      border: Border.all(color: AppColors.surfaceAccent, width: 1),
       borderRadius: const BorderRadius.all(const Radius.circular(8))
   );
 

@@ -67,8 +67,11 @@ class ScrollPagerController {
   ScrollController? get scrollController => _scrollController;
 
   ScrollPagerController({required this.limit, required this.onPage, this.onStateChanged, this.onReset, ScrollController? controller}) {
-    controller ??= ScrollController();
-    registerScrollController(controller);
+    registerScrollController(controller ?? ScrollController());
+  }
+
+  void dispose() {
+    deregisterScrollController();
   }
 
   Future<void> reset() async {

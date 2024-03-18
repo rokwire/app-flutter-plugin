@@ -167,7 +167,10 @@ class ImageUtils {
       }
     }
 
-    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(
+        textScaler: (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor)
+            : TextScaler.noScaling, textDirection: textDirection,
+        textAlign: textAlign, maxLines: maxLines);
     ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
     return paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: size.width));
 

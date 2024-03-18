@@ -8,7 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml - 1.7.0 -->
 ### Changed
 - Upgrade to Flutter 3.19.0 [#435](https://github.com/rokwire/app-flutter-plugin/issues/435).
-- Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
+- Integrate auth refactor [#379](https://github.com/rokwire/app-flutter-plugin/issues/379)
+- Use CCT for Android OIDC login [#404](https://github.com/rokwire/app-flutter-plugin/issues/404)
+- Improve services init on app startup [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
+- Improve services failure processing [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
+
+### Added
+- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
+- Web app passkey support [#299](https://github.com/rokwire/app-flutter-plugin/issues/299)
+- Anonymous account association [#305](https://github.com/rokwire/app-flutter-plugin/issues/305)
+- Add timestamps to anonymous IDs [#309](https://github.com/rokwire/app-flutter-plugin/issues/309)
+- Web app authentication support [#291](https://github.com/rokwire/app-flutter-plugin/issues/291)
+- Handle more identifiers using passkeys and linking [#330](https://github.com/rokwire/app-flutter-plugin/issues/330)
+- Style code generation tools
+
+### Fixed
+- Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
 
 ## [1.6.3] - 2024-02-19
 ### Added

@@ -18,13 +18,13 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/inbox.dart';
 import 'package:rokwire_plugin/service/firebase_core.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 
@@ -92,7 +92,43 @@ class FirebaseMessaging with Service {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { FirebaseCore(), Storage(), };
+    return { FirebaseCore() };
+  }
+
+  Future<NotificationsAuthorizationStatus> get authorizationStatus async {
+    firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
+    return _convertStatus(settings.authorizationStatus);
+  }
+
+  Future<bool> get requiresAuthorization async {
+    firebase_messaging.NotificationSettings settings = await firebase_messaging.FirebaseMessaging.instance.getNotificationSettings();
+    firebase_messaging.AuthorizationStatus authorizationStatus = settings.authorizationStatus;
+    // There is not "notDetermined" status for android. Treat "denied" in Android like "notDetermined" in iOS
+    if (Config().operatingSystem == "android") {
+      return (authorizationStatus != firebase_messaging.AuthorizationStatus.denied);
+    } else {
+      return (authorizationStatus == firebase_messaging.AuthorizationStatus.notDetermined);
+    }
+  }
+
+  Future<NotificationsAuthorizationStatus> requestAuthorization() async {
+    firebase_messaging.FirebaseMessaging messagingInstance = firebase_messaging.FirebaseMessaging.instance;
+    firebase_messaging.NotificationSettings requestSettings = await messagingInstance.requestPermission(
+        alert: true, announcement: false, badge: true, carPlay: false, criticalAlert: false, provisional: false, sound: true);
+    return _convertStatus(requestSettings.authorizationStatus);
+  }
+
+  NotificationsAuthorizationStatus _convertStatus(firebase_messaging.AuthorizationStatus status) {
+    switch(status) {
+      case firebase_messaging.AuthorizationStatus.authorized:
+        return NotificationsAuthorizationStatus.authorized;
+      case firebase_messaging.AuthorizationStatus.denied:
+        return NotificationsAuthorizationStatus.denied;
+      case firebase_messaging.AuthorizationStatus.notDetermined:
+        return NotificationsAuthorizationStatus.notDetermined;
+      case firebase_messaging.AuthorizationStatus.provisional:
+        return NotificationsAuthorizationStatus.provisional;
+    }
   }
 
   // Token
@@ -122,7 +158,7 @@ class FirebaseMessaging with Service {
   Future<dynamic> onFirebaseMessage(firebase_messaging.RemoteMessage message) async {
     Log.d("FCM: onFirebaseMessage: $message");
     try {
-      if ((AppLivecycle.instance?.state == AppLifecycleState.resumed) && StringUtils.isNotEmpty(message.notification?.body)) {
+      if ((AppLifecycle.instance?.state == AppLifecycleState.resumed) && StringUtils.isNotEmpty(message.notification?.body)) {
         NotificationService().notify(notifyForegroundMessage, {
           "body": message.notification?.body,
           "onComplete": () {
@@ -143,3 +179,5 @@ class FirebaseMessaging with Service {
   void processDataMessage(Map<String, dynamic>? data) {
   }
 }
+
+enum NotificationsAuthorizationStatus { authorized, denied, notDetermined, provisional }

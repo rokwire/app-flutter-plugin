@@ -15,8 +15,8 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 
-import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
@@ -74,7 +74,7 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
     return Scaffold(
       appBar: const HeaderBar(title: 'Edit Default Response'),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors.background,
+      backgroundColor: AppColors.background,
       body: SurveyElementCreationWidget(body: _buildDefaultResponseOptions(), completionOptions: _buildDone(), scrollController: _scrollController,),
     );
   }
@@ -90,9 +90,9 @@ class _SurveyDataDefaultResponsePanelState extends State<SurveyDataDefaultRespon
   Widget _buildDone() {
     return Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
       label: 'Done',
-      borderColor: Styles().colors.fillColorPrimaryVariant,
-      backgroundColor: Styles().colors.surface,
-      textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+      borderColor: AppColors.fillColorPrimaryVariant,
+      backgroundColor: AppColors.surface,
+      textStyle: AppTextStyles.widgetDetailLargeBold,
       onTap: _onTapDone,
     ));
   }

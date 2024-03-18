@@ -1,10 +1,7 @@
-
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
-import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/firebase_messaging.dart';
@@ -51,7 +48,7 @@ class Inbox with Service implements NotificationsListener {
       FirebaseMessaging.notifyToken,
       Auth2.notifyLoginChanged,
       Auth2.notifyPrepareUserDelete,
-      AppLivecycle.notifyStateChanged,
+      AppLifecycle.notifyStateChanged,
     ]);
   }
 
@@ -90,14 +87,14 @@ class Inbox with Service implements NotificationsListener {
       _loadUserInfo();
       _loadUnreadMessagesCount();
     }
-    else if (name == AppLivecycle.notifyStateChanged) {
-      _onAppLivecycleStateChanged(param); 
+    else if (name == AppLifecycle.notifyStateChanged) {
+      _onAppLifecycleStateChanged(param);
     } else if (name == Auth2.notifyPrepareUserDelete){
       _deleteUser();
     }
   }
 
-  void _onAppLivecycleStateChanged(AppLifecycleState? state) {
+  void _onAppLifecycleStateChanged(AppLifecycleState? state) {
     if (state == AppLifecycleState.paused) {
       _pausedDateTime = DateTime.now();
     }
@@ -295,7 +292,7 @@ class Inbox with Service implements NotificationsListener {
       String? body = JsonUtils.encode({
         'token': token,
         'previous_token': previousToken,
-        'app_platform': Platform.operatingSystem,
+        'app_platform': Config().operatingSystem,
         'app_version': Config().appVersion,
       });
       Response? response = await Network().post(url, body: body, auth: Auth2());

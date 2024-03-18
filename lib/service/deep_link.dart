@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:uni_links/uni_links.dart';
 
 class DeepLink with Service {
-  
-  static const String notifyUri  = "edu.illinois.rokwire.deeplink.uri";
 
-  // Singletone Factory
+  static const String notifyUri  = "edu.illinois.rokwire.deeplink.uri";
+  static const String notifyUriError  = "edu.illinois.rokwire.deeplink.uri.error";
+
+  // Singleton Factory
 
   static DeepLink? _instance;
 
@@ -37,24 +38,39 @@ class DeepLink with Service {
   @protected
   DeepLink.internal();
 
+  Uri? _initialUri;
+  Uri? get initialUri => _initialUri;
+
   // Service
 
   @override
   Future<void> initService() async {
+    final _appLinks = AppLinks();
 
     // 1. Initial Uri
-    getInitialUri().then((uri) {
+    _appLinks.getInitialAppLink().then((uri) {
       if (uri != null) {
+        _initialUri = uri;
+        debugPrint('Launch URI: $uri');
         NotificationService().notify(notifyUri, uri);
       }
     });
 
     // 2. Updated uri
-    uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        NotificationService().notify(notifyUri, uri);
-      }
-    });
+    if (!kIsWeb) {
+      _appLinks.uriLinkStream.listen((Uri? uri) {
+        debugPrint('Received URI: $uri');
+        if (uri != null) {
+          NotificationService().notify(notifyUri, uri);
+        } else {
+          NotificationService().notify(notifyUriError, 'deeplink null');
+        }
+      }, onError: (e) {
+        NotificationService().notify(notifyUriError, e);
+      }, onDone: () {
+        NotificationService().notify(notifyUriError, 'deeplink handler done');
+      });
+    }
 
     await super.initService();
   }

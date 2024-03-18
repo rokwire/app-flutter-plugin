@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -120,7 +121,7 @@ class ModalImagePanel extends StatelessWidget {
     return closeWidget ?? Semantics(label: closeLabel ?? "Close Button", hint: closeHint, button: true, focusable: true, focused: true, child:
       GestureDetector(onTap: () => _onClose(context), child:
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child:
-          Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
+          Text('\u00D7', style: TextStyle(color: AppColors.textLight, fontFamily: AppFontFamilies.medium, fontSize: 50),),
         ),
       )
     );
@@ -128,7 +129,7 @@ class ModalImagePanel extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
     return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors.white),
+      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? AppColors.surface),
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
@@ -136,7 +137,6 @@ class ModalImagePanel extends StatelessWidget {
   Widget _buildPinchZoomControl({required Widget child}) =>
       PinchZoom(
         child: child,
-        resetDuration: const Duration(milliseconds: 100),
         maxScale: 4,
         onZoomStart: (){print('Start zooming');},
         onZoomEnd: (){print('Stop zooming');},

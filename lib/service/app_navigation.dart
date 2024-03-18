@@ -28,20 +28,6 @@ class AppNavigation extends NavigatorObserver {
   static const String notifyParamRoute  = 'route';
   static const String notifyParamPreviousRoute  = 'previous_route';
 
-  // Singletone Factory
-
-  static AppNavigation ? _instance;
-
-  static AppNavigation? get instance => _instance;
-  
-  @protected
-  static set instance(AppNavigation? value) => _instance = value;
-
-  factory AppNavigation() => _instance ?? (_instance = AppNavigation.internal());
-
-  @protected
-  AppNavigation.internal();
-
   // NavigatorObserver
   
   @override

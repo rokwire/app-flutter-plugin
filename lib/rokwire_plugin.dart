@@ -4,7 +4,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
+
+import 'package:rokwire_plugin/platform_impl/stub.dart'
+    if (dart.library.io) 'package:rokwire_plugin/platform_impl/mobile.dart'
+    if (dart.library.html) 'package:rokwire_plugin/platform_impl/web.dart';
 
 class RokwirePlugin {
   static final MethodChannel _channel = _createChannel('edu.illinois.rokwire/plugin', _handleChannelCall);
@@ -45,11 +50,17 @@ class RokwirePlugin {
   }
 
   static Future<String?> getDeviceId([String? identifier, String? identifier2]) async {
+    if (kIsWeb) {
+      return null;
+    }
+
     try { return await _channel.invokeMethod('getDeviceId', {
       'identifier': identifier,
       'identifier2': identifier2
     }); }
-    catch(e) { debugPrint(e.toString()); }
+    catch(e) {
+      debugPrint(e.toString());
+    }
     return null;
   }
 
@@ -78,6 +89,20 @@ class RokwirePlugin {
     try { return await _channel.invokeMethod('launchAppSettings'); }
     catch(e) { debugPrint(e.toString()); }
     return false;
+  }
+
+  static Future<bool> arePasskeysSupported() async {
+    try { return await PasskeyImpl().arePasskeysSupported(); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  } 
+
+  static Future<String?> getPasskey(String? optionsJson) async {
+    return await PasskeyImpl().getPasskey(optionsJson);
+  }
+
+  static Future<String?> createPasskey(String? optionsJson) async {
+    return await PasskeyImpl().createPasskey(optionsJson);
   }
 
   // Compound APIs
@@ -113,6 +138,9 @@ class RokwirePlugin {
 
     if (firstMethodComponent == 'geoFence') {
       GeoFence().onPluginNotification(nextMethodComponents, call.arguments);
+    }
+    else if (firstMethodComponent == 'passkey') {
+      Auth2().onPluginNotification(nextMethodComponents, call.arguments);
     }
   }
 }

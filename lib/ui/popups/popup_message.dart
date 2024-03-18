@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/gen/styles.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 
@@ -36,7 +37,7 @@ class PopupMessage extends StatelessWidget {
   final TextAlign? messageTextAlign;
   final EdgeInsetsGeometry messagePadding;
   final Widget? messageWidget;
-  
+
   final Widget? button;
   final String? buttonTitle;
   final EdgeInsetsGeometry buttonPadding;
@@ -63,7 +64,7 @@ class PopupMessage extends StatelessWidget {
     this.messageTextAlign,
     this.messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     this.messageWidget,
-    
+
     this.button,
     this.buttonTitle,
     this.buttonPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -73,22 +74,22 @@ class PopupMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defaultTitleBarColor => Styles().colors.fillColorPrimary;
+  @protected Color? get defaultTitleBarColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defaultTitleTextColor => Styles().colors.white;
+  @protected Color? get defaultTitleTextColor => AppColors.textLight;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.bold;
+  @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultMessageTextColor => Styles().colors.fillColorPrimary;
+  @protected Color? get defaultMessageTextColor => AppColors.fillColorPrimary;
   @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
-  @protected String? get defaultMessageFontFamily => Styles().fontFamilies.bold;
+  @protected String? get defaultMessageFontFamily => AppFontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
   
   @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
@@ -121,7 +122,7 @@ class PopupMessage extends StatelessWidget {
     TextAlign? messageTextAlign,
     EdgeInsetsGeometry messagePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
     Widget? messageWidget,
-    
+
     Widget? button,
     String? buttonTitle,
     EdgeInsetsGeometry buttonPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -153,7 +154,7 @@ class PopupMessage extends StatelessWidget {
       messageTextAlign: messageTextAlign,
       messagePadding: messagePadding,
       messageWidget: messageWidget,
-  
+
       button: button,
       buttonTitle: buttonTitle,
       buttonPadding: buttonPadding,
@@ -209,6 +210,8 @@ class ActionsMessage extends StatelessWidget {
   final EdgeInsetsGeometry titlePadding;
   final Color? titleBarColor;
   final Widget? closeButtonIcon;
+
+  final Color? backgroundColor;
   
   final String? message;
   final TextStyle? messageTextStyle;
@@ -237,6 +240,8 @@ class ActionsMessage extends StatelessWidget {
     this.titlePadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.titleBarColor,
     this.closeButtonIcon,
+
+    this.backgroundColor,
     
     this.message,
     this.messageTextStyle,
@@ -256,22 +261,25 @@ class ActionsMessage extends StatelessWidget {
     this.borderRadius,
   }) : super(key: key);
 
-  @protected Color? get defaultTitleBarColor => Styles().colors.fillColorPrimary;
+  @protected Color? get defaultBackgroundColor => AppColors.surface;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
+
+  @protected Color? get defaultTitleBarColor => AppColors.fillColorPrimary;
   @protected Color? get displayTitleBarColor => titleBarColor ?? defaultTitleBarColor;
 
-  @protected Color? get defaultTitleTextColor => Styles().colors.white;
+  @protected Color? get defaultTitleTextColor => AppColors.textLight;
   @protected Color? get displayTitleTextColor => titleTextColor ?? defaultTitleTextColor;
   
-  @protected String? get defaultTitleFontFamily => Styles().fontFamilies.bold;
+  @protected String? get defaultTitleFontFamily => AppFontFamilies.bold;
   @protected String? get displayTitleFontFamily => titleFontFamily ?? defaultTitleFontFamily;
   
   @protected TextStyle get defaultTitleTextStyle => TextStyle(fontFamily: displayTitleFontFamily, fontSize: titleFontSize, color: displayTitleTextColor);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color? get defaultMessageTextColor => Styles().colors.fillColorPrimary;
+  @protected Color? get defaultMessageTextColor => AppColors.textPrimary;
   @protected Color? get displayMessageTextColor => messageTextColor ?? defaultMessageTextColor;
   
-  @protected String? get defaultMessageFontFamily => Styles().fontFamilies.bold;
+  @protected String? get defaultMessageFontFamily => AppFontFamilies.bold;
   @protected String? get displayMessageFontFamily => messageFontFamily ?? defaultMessageFontFamily;
   
   @protected TextStyle get defaultMessageTextStyle => TextStyle(fontFamily: displayMessageFontFamily, fontSize: messageFontSize, color: displayMessageTextColor);
@@ -283,12 +291,13 @@ class ActionsMessage extends StatelessWidget {
   @protected ShapeBorder get defaultBorder => RoundedRectangleBorder(borderRadius: displayBorderRadius,);
   @protected ShapeBorder get displayBorder => border ?? defaultBorder;
 
-  @protected Widget? get defaultCloseButtonIcon => Styles().images.getImage('close-circle-white', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: Styles().colors.surface));
+  @protected Widget? get defaultCloseButtonIcon => Styles().images.getImage('close-circle-light', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf057', size: 18.0, color: AppColors.surface));
   @protected Widget? get displayCloseButtonIcon => closeButtonIcon ?? defaultCloseButtonIcon;
 
-  static Future<void> show({
+  static Future<T?> show<T>({
     String? title,
     TextStyle? titleTextStyle,
+    Color? backgroundColor,
     Color? titleTextColor,
     String? titleFontFamily,
     double titleFontSize = 20,
@@ -327,6 +336,8 @@ class ActionsMessage extends StatelessWidget {
       titlePadding: titlePadding,
       titleBarColor: titleBarColor,
       closeButtonIcon: closeButtonIcon,
+
+      backgroundColor: backgroundColor,
   
       message: message,
       messageTextStyle: messageTextStyle,
@@ -349,10 +360,12 @@ class ActionsMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> flexibleButtons = [];
     for (Widget button in buttons) {
-      flexibleButtons.add(Flexible(flex: 1, child: button));
+      flexibleButtons.add(button);
     }
     Widget? closeButton = displayCloseButtonIcon;
-    return Dialog(shape: displayBorder, clipBehavior: Clip.antiAlias, child:
+    return Dialog(
+      backgroundColor: displayBackgroundColor,
+      shape: displayBorder, clipBehavior: Clip.antiAlias, child:
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: <Widget>[
         Material(
           color: displayTitleBarColor,
@@ -372,7 +385,8 @@ class ActionsMessage extends StatelessWidget {
           buttonAxis == Axis.vertical ?
               Padding(padding: buttonsPadding, child: Column(children: buttons),)
                 : Padding(padding: buttonsPadding,
-                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
+                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min, children: flexibleButtons,),
                 ),
         ])
       ],),
