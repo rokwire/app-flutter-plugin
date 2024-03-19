@@ -164,6 +164,10 @@ class StringUtils {
   static bool isUinValid(String? uin) {
     return isNotEmpty(uin) && RegExp(_uinPattern).hasMatch(uin!);
   }
+
+  static String base64UrlEncode(String value) => utf8.fuse(base64Url).encode(value);
+
+  static String base64UrlDecode(String value) => utf8.fuse(base64Url).decode(value);
 }
 
 class CollectionUtils {

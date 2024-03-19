@@ -44,6 +44,7 @@ dependencies:
 #  font_awesome_flutter: ^10.6.0 # published plugin - uncomment if used
   font_awesome_flutter: '>= 4.7.0' # comment if published plugin is used
   pinch_zoom: ^1.0.0
+  flutter_passkey: ^1.0.4
 
   #Firebase
   firebase_core: ^2.13.0

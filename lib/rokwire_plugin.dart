@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rokwire_plugin/service/geo_fence.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
+
+import 'package:flutter_passkey/flutter_passkey.dart';
 
 class RokwirePlugin {
   static final MethodChannel _channel = _createChannel('edu.illinois.rokwire/plugin', _handleChannelCall);
@@ -78,6 +81,33 @@ class RokwirePlugin {
     try { return await _channel.invokeMethod('launchAppSettings'); }
     catch(e) { debugPrint(e.toString()); }
     return false;
+  }
+
+  static Future<bool> arePasskeysSupported() async {
+    try { return await FlutterPasskey().isSupported(); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  } 
+
+  static Future<String?> getPasskey(String? optionsJson) async {
+    dynamic options = JsonUtils.decode(optionsJson ?? '');
+    if (options is Map) {
+      Map<String, dynamic>? pubKeyRequest = options['publicKey'];
+      return await FlutterPasskey().getCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+    }
+
+    return null;
+    // return await PasskeyImpl().getPasskey(optionsJson);
+  }
+
+  static Future<String?> createPasskey(String? optionsJson) async {
+    dynamic options = JsonUtils.decode(optionsJson ?? '');
+    if (options is Map) {
+      Map<String, dynamic>? pubKeyRequest = options['publicKey'];
+      return await FlutterPasskey().createCredential(JsonUtils.encode(pubKeyRequest) ?? '');
+    }
+
+    return null;
   }
 
   // Compound APIs

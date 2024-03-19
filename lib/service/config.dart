@@ -523,6 +523,13 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
 
+  String? get authBaseUrl {
+    if (isAdmin) {
+      return coreUrl != null ? '$coreUrl/admin': null;
+    }
+    return coreUrl != null ? '$coreUrl/services' : null;
+  }
+
   // Getters: otherUniversityServices
   String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
 
@@ -541,6 +548,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
+
+  bool get isAdmin => false;
 }
 
 enum ConfigEnvironment { production, test, dev }

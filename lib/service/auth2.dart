@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -221,6 +222,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2LoginType get phoneLoginType => Auth2LoginType.phoneTwilio;
   Auth2LoginType get emailLoginType => Auth2LoginType.email;
   Auth2LoginType get usernameLoginType => Auth2LoginType.username;
+  Auth2LoginType get passkeyLoginType => Auth2LoginType.passkey;
 
   Auth2Token? get token => _token ?? _anonymousToken;
   Auth2Token? get userToken => _token;
@@ -326,6 +328,276 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       _log("Auth2: anonymous auth failed: ${response?.statusCode}\n${response?.body}");
     }
     return false;
+  }
+
+  // Passkey authentication
+
+  Future<Auth2PasskeySignInResult> authenticateWithPasskey({String? identifier, String? identifierId}) async {
+    String? errorMessage;
+    if (Config().authBaseUrl != null && Config().appPlatformId != null && Config().coreOrgId != null && Config().rokwireApiKey != null) {
+      if (!await RokwirePlugin.arePasskeysSupported()) {
+        return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotSupported);
+      }
+
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> creds = {};
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds['username'] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': creds,
+        'params': {
+          'sign_up': false,
+        },
+        'username': identifier,
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+        'account_identifier_id': identifierId,
+      };
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      if (response  != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        String? responseBody = response.body;
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(responseBody));
+        try {
+          String? responseData = await RokwirePlugin.getPasskey(message?.message);
+          debugPrint(responseData);
+          return _completeSignInWithPasskey(responseData, identifier: identifier, identifierId: identifierId);
+        } catch(error) {
+          if (error is PlatformException) {
+            switch (error.code) {
+              // no credentials found
+              case "NoCredentialException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNoCredentials);
+              // user cancelled on device auth
+              case "GetPublicKeyCredentialDomException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+              // user cancelled on select passkey
+              case "GetCredentialCancellationException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+            }
+          }
+          errorMessage = error.toString();
+          debugPrint(errorMessage);
+          Log.e(errorMessage);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed, error: errorMessage);
+  }
+
+  Future<Auth2PasskeySignInResult> _completeSignInWithPasskey(String? responseData, {String? identifier, String? identifierId}) async {
+    if ((Config().authBaseUrl != null) && (responseData != null) && Config().appPlatformId != null && Config().coreOrgId != null && Config().rokwireApiKey != null) {
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
+      // TODO: remove if statement once plugin is fixed
+      if (Platform.operatingSystem == 'ios') {
+        String? userHandle = requestJson?['response']['userHandle'];
+        requestJson?['response']['userHandle'] = StringUtils.base64UrlDecode(userHandle ?? '');
+      }
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> creds = {
+        "response": JsonUtils.encode(requestJson),
+      };
+      if (StringUtils.isNotEmpty(identifier)) {
+        creds['username'] = identifier;
+      }
+      Map<String, dynamic> postData = {
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': creds,
+        'username': identifier,
+        'device': deviceInfo,
+        'account_identifier_id': identifierId,
+      };
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      if (response != null && response.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
+  }
+
+  Future<Auth2PasskeySignUpResult> signUpWithPasskey(String identifier, {String? displayName, bool? public = false, bool verifyIdentifier = false}) async {
+    String? errorMessage;
+    if (Config().authBaseUrl != null && Config().appPlatformId != null && Config().coreOrgId != null && Config().rokwireApiKey != null) {
+      if (!await RokwirePlugin.arePasskeysSupported()) {
+        return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotSupported);
+      }
+
+      Auth2UserProfile? profile = _anonymousProfile;
+      List<String>? nameParts = displayName?.split(' ');
+      if (nameParts != null && nameParts.length >= 2) {
+        Auth2UserProfile nameData = Auth2UserProfile(firstName: nameParts[0], lastName: nameParts.skip(1).join(' '));
+        if (profile != null) {
+          profile.apply(nameData);
+        } else {
+          profile = nameData;
+        }
+      }
+
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> postData = {
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          'username': identifier,
+        },
+        'params': {
+          "display_name": displayName,
+        },
+        'privacy': {
+          'public': public,
+        },
+        'username': identifier,
+        'profile': profile?.toJson(),
+        'preferences': _anonymousPrefs?.toJson(),
+        'device': deviceInfo,
+      };
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      if (response != null && response.statusCode == 200) {
+        // Obtain creationOptions from the server
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decode(response.body));
+        if (message != null) {
+          if (verifyIdentifier) {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded, creationOptions: message.message);
+          }
+          try {
+            String? responseData = await RokwirePlugin.createPasskey(message.message);
+            return completeSignUpWithPasskey(identifier, responseData);
+          } catch(error) {
+            try {
+              String? responseData = await RokwirePlugin.getPasskey(message.message);
+              Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier);
+              if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+              }
+            } catch(error) {
+              if (error is PlatformException && error.code == "NoCredentialException") {
+                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
+              }
+
+              debugPrint(error.toString());
+            }
+
+            if (error is PlatformException) {
+              switch (error.code) {
+                // user cancelled on device auth
+                case "GetPublicKeyCredentialDomException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+                // user cancelled on select passkey
+                case "GetCredentialCancellationException": return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedCancelled);
+              }
+            }
+
+            debugPrint(error.toString());
+          }
+        } else {
+          Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response.body));
+          if (error?.status == 'unverified') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+          }
+          else if (error?.status == 'verification-expired') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
+          }
+          else if (error?.status == 'already-exists') {
+            return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedAccountExist);
+          }
+        }
+      }
+      // else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
+      //   return Auth2PasskeySignUpResult.failedAccountExist;
+      // }
+    }
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed, error: errorMessage);
+  }
+
+  Future<Auth2PasskeySignUpResult> completeSignUpWithPasskey(String identifier, String? responseData) async {
+    if ((Config().authBaseUrl != null) && (responseData != null) && Config().appPlatformId != null && Config().coreOrgId != null && Config().rokwireApiKey != null) {
+      String url = "${Config().authBaseUrl}/auth/login";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Client-Version': Config().appVersion ?? '',
+      };
+      Map<String, dynamic> postData = {
+        'auth_type': auth2LoginTypeToString(passkeyLoginType),
+        'app_type_identifier': Config().appPlatformId,
+        'api_key': Config().rokwireApiKey,
+        'org_id': Config().coreOrgId,
+        'creds': {
+          "username": identifier,
+          "response": responseData,
+        },
+        'username': identifier,
+        'device': deviceInfo,
+      };
+
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
+      if (response != null && response.statusCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
+        bool success = await processLoginResponse(responseJson);
+        if (success) {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
+        }
+      } else {
+        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        if (error?.status == 'unverified') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
+        }
+        else if (error?.status == 'not-found') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotFound);
+        }
+        else if (error?.status == 'verification-expired') {
+          return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedActivationExpired);
+        }
+      }
+    }
+    return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failed);
   }
 
   // OIDC Authentication
@@ -1328,7 +1600,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static void _log(String message) {
     Log.d(message, lineLength: 512); // max line length of VS Code Debug Console
   }
-
 }
 
 class _OidcLogin {
@@ -1351,6 +1622,45 @@ class _OidcLogin {
     };
   }  
 
+}
+
+// Auth2PasskeySignUpResult
+
+class Auth2PasskeySignUpResult {
+  Auth2PasskeySignUpResultStatus status;
+  String? error;
+  String? creationOptions;
+  Auth2PasskeySignUpResult(this.status, {this.error, this.creationOptions});
+}
+
+enum Auth2PasskeySignUpResultStatus {
+  succeeded,
+  failed,
+  failedNotSupported,
+  failedAccountExist,
+  failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
+  failedNoCredentials,
+  failedCancelled,
+}
+
+// Auth2PasskeySignInResult
+class Auth2PasskeySignInResult {
+  Auth2PasskeySignInResultStatus status;
+  String? error;
+  Auth2PasskeySignInResult(this.status, {this.error});
+}
+
+enum Auth2PasskeySignInResultStatus {
+  succeeded,
+  failed,
+  failedNotFound,
+  failedActivationExpired,
+  failedNotActivated,
+  failedNotSupported,
+  failedNoCredentials,
+  failedCancelled,
 }
 
 // Auth2PhoneRequestCodeResult
