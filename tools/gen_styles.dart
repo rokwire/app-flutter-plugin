@@ -355,7 +355,9 @@ Future<LinkedHashMap<String, dynamic>?> _loadFileJson(String filepath) async {
   try {
     String content = (await File(filepath).readAsString()).trim();
     List<String> lines = content.split('\n');
-    for (final (int index, String line) in lines.indexed) {
+    for (final entry in lines.asMap().entries) {
+      final index = entry.key;
+      final line = entry.value;
       if (line.trim().isEmpty) {
         lines[index] = '"_blank_${filepath}#$index": "",';
       }
