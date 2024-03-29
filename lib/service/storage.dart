@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
@@ -32,6 +33,8 @@ class Storage with Service {
   static const String _encryptionIVId  = 'edu.illinois.rokwire.encryption.storage.iv';
 
   SharedPreferences? _sharedPreferences;
+  FlutterSecureStorage? _secureStorage;
+
   String? _encryptionKey;
   String? _encryptionIV;
 
@@ -111,6 +114,23 @@ class Storage with Service {
     NotificationService().notify(notifySettingChanged, name);
   }
 
+  Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
+    return await _secureStorage?.read(key: name) ?? defaultValue;
+  }
+
+  Future<void> setSecureStringWithName(String name, String? value, {bool removeFirst = false}) async {
+    if (value != null) {
+      if (removeFirst) {
+        await _secureStorage?.delete(key: name);
+      }
+      await _secureStorage?.write(key: name, value: value);
+    } else {
+      await _secureStorage?.delete(key: name);
+    }
+    NotificationService().notify(notifySettingChanged, name);
+  }
+
+  @protected
   String? getEncryptedStringWithName(String name, {String? defaultValue}) {
     String? value = _sharedPreferences?.getString(name);
     if (value != null) {
@@ -124,6 +144,7 @@ class Storage with Service {
     return value ?? defaultValue;
   }
 
+  @protected
   void setEncryptedStringWithName(String name, String? value) {
     if (value != null) {
       if ((_encryptionKey != null) && (_encryptionIV != null)) {
@@ -249,27 +270,31 @@ class Storage with Service {
   
   String get auth2AnonymousIdKey => 'edu.illinois.rokwire.auth2.anonymous.id';
   String? get auth2AnonymousId => getStringWithName(auth2AnonymousIdKey);
-  set auth2AnonymousId(String? value) => setStringWithName(auth2AnonymousIdKey, value);
+  Future<void> setAuth2AnonymousId(String? value) async => setStringWithName(auth2AnonymousIdKey, value);
 
   String get auth2AnonymousTokenKey => 'edu.illinois.rokwire.auth2.anonymous.token';
-  Auth2Token? get auth2AnonymousToken => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousTokenKey)));
-  set auth2AnonymousToken(Auth2Token? value) => setEncryptedStringWithName(auth2AnonymousTokenKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2AnonymousToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousTokenKey)));
+  Future<void> setAuth2AnonymousToken(Auth2Token? value) async => setSecureStringWithName(auth2AnonymousTokenKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousPrefsKey => 'edu.illinois.rokwire.auth2.anonymous.prefs';
-  Auth2UserPrefs? get auth2AnonymousPrefs => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousPrefsKey)));
-  set auth2AnonymousPrefs(Auth2UserPrefs? value) => setEncryptedStringWithName(auth2AnonymousPrefsKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserPrefs?> getAuth2AnonymousPrefs() async => Auth2UserPrefs.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousPrefsKey)));
+  Future<void> setAuth2AnonymousPrefs(Auth2UserPrefs? value) async => setSecureStringWithName(auth2AnonymousPrefsKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AnonymousProfileKey => 'edu.illinois.rokwire.auth2.anonymous.profile';
-  Auth2UserProfile? get auth2AnonymousProfile =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AnonymousProfileKey)));
-  set auth2AnonymousProfile(Auth2UserProfile? value) => setEncryptedStringWithName(auth2AnonymousProfileKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2UserProfile?> getAuth2AnonymousProfile() async =>  Auth2UserProfile.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AnonymousProfileKey)));
+  Future<void> setAuth2AnonymousProfile(Auth2UserProfile? value) async => await setSecureStringWithName(auth2AnonymousProfileKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2TokenKey => 'edu.illinois.rokwire.auth2.token';
-  Auth2Token? get auth2Token => Auth2Token.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2TokenKey)));
-  set auth2Token(Auth2Token? value) => setEncryptedStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Token?> getAuth2Token() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2TokenKey)));
+  Future<void> setAuth2Token(Auth2Token? value) async => await setSecureStringWithName(auth2TokenKey, JsonUtils.encode(value?.toJson()));
+
+  String get auth2OidcTokenKey => 'edu.illinois.rokwire.auth2.oidc.token';
+  Future<Auth2Token?> getAuth2OidcToken() async => Auth2Token.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2OidcTokenKey)));
+  Future<void> setAuth2OidcToken(Auth2Token? value) async => await setSecureStringWithName(auth2OidcTokenKey, JsonUtils.encode(value?.toJson()));
 
   String get auth2AccountKey => 'edu.illinois.rokwire.auth2.account';
-  Auth2Account? get auth2Account => Auth2Account.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AccountKey)));
-  set auth2Account(Auth2Account? value) => setEncryptedStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
+  Future<Auth2Account?> getAuth2Account() async => Auth2Account.fromJson(JsonUtils.decodeMap(await getSecureStringWithName(auth2AccountKey)));
+  Future<void> setAuth2Account(Auth2Account? value) async => await setSecureStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
 
   // Http Proxy
   String get httpProxyEnabledKey =>  'edu.illinois.rokwire.http_proxy.enabled';
