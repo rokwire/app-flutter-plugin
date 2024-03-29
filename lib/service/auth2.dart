@@ -1803,7 +1803,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
-  Future<Auth2UserProfile?> _loadAccountUserProfile() async {
+  Future<Auth2UserProfile?> _loadAccountUserProfile() async { //manavmodi
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Response? response = await Network().get(url, auth: Auth2());
