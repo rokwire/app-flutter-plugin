@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade to Flutter 3.19.0 [#435](https://github.com/rokwire/app-flutter-plugin/issues/435).
 - Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
 - SurveyPanel HeaderBar exposed for overriding [#4020](https://github.com/rokwire/illinois-app/issues/4020).
+### Added
+- Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
+- Created additional notifications for group post create/update/delete [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
 
 ## [1.6.3] - 2024-02-19
 ### Added
