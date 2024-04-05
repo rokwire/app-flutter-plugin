@@ -1202,7 +1202,7 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post.toJson(create: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
       Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
-      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.mapValue(response?.body)) : null;
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       if (responsePost != null) {
         NotificationService().notify(notifyGroupPostCreated, responsePost);
         NotificationService().notify(notifyGroupPostsUpdated);
@@ -1220,7 +1220,7 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post!.toJson(update: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
-      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.mapValue(response?.body)) : null;
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       if (responsePost != null) {
         NotificationService().notify(notifyGroupPostUpdated, responsePost);
         NotificationService().notify(notifyGroupPostsUpdated);
