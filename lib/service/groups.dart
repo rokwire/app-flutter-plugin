@@ -56,6 +56,9 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
   static const String notifyGroupUpdated              = "edu.illinois.rokwire.group.updated";
   static const String notifyGroupDeleted              = "edu.illinois.rokwire.group.deleted";
+  static const String notifyGroupPostCreated          = "edu.illinois.rokwire.group.post.created";
+  static const String notifyGroupPostUpdated          = "edu.illinois.rokwire.group.post.updated";
+  static const String notifyGroupPostDeleted          = "edu.illinois.rokwire.group.post.deleted";
   static const String notifyGroupPostsUpdated         = "edu.illinois.rokwire.group.posts.updated";
   static const String notifyGroupPostReactionsUpdated = "edu.illinois.rokwire.group.post.reactions.updated";
   static const String notifyGroupDetail               = "edu.illinois.rokwire.group.detail";
@@ -1199,9 +1202,10 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post.toJson(create: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
       Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
-        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? 1 : null);
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.mapValue(response?.body)) : null;
+      if (responsePost != null) {
+        NotificationService().notify(notifyGroupPostCreated, responsePost);
+        NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to create group post. Response: ${response?.body}');
@@ -1216,8 +1220,9 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post!.toJson(update: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.mapValue(response?.body)) : null;
+      if (responsePost != null) {
+        NotificationService().notify(notifyGroupPostUpdated, responsePost);
         NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
@@ -1232,9 +1237,9 @@ class Groups with Service implements NotificationsListener {
       await _ensureLogin();
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
       Response? response = await Network().delete(requestUrl, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
-        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? -1 : null);
+      if (response?.statusCode == 200) {
+        NotificationService().notify(notifyGroupPostDeleted, post);
+        NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to delete group post. Response: ${response?.body}');
