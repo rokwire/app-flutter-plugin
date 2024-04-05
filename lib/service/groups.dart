@@ -1243,9 +1243,13 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
-  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {int? offset, int? limit, GroupSortOrder? order}) async {
+  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order}) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String urlParams = "";
+      if (type != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "type=${groupPostTypeToString(type)}";
+      }
       if (offset != null) {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
         urlParams += "offset=$offset";
@@ -1720,6 +1724,23 @@ String? groupSortOrderToString(GroupSortOrder? value) {
     case GroupSortOrder.asc:  return 'asc';
     case GroupSortOrder.desc: return 'desc';
     default: return null;
+  }
+}
+
+enum GroupPostType { post, message }
+
+GroupPostType? groupPostTypeFromString(String? value) {
+  switch(value) {
+    case 'post': return GroupPostType.post;
+    case 'message': return GroupPostType.message;
+    default: return null;
+  }
+}
+
+String groupPostTypeToString(GroupPostType value) {
+  switch(value) {
+    case GroupPostType.post: return 'post';
+    case GroupPostType.message: return 'message';
   }
 }
 
