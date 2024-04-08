@@ -220,9 +220,24 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<Map<String, dynamic>?> configFromJsonString(String? configJsonString) async {
+    return configFromJsonObjectString(configJsonString);
+  }
+
+  @protected
+  Map<String, dynamic>? configFromJsonObjectString(String? configJsonString) {
+    Map<String, dynamic>? configJson = JsonUtils.decode(configJsonString);
+    Map<String, dynamic>? configData = configJson?["data"];
+    if (configData != null) {
+      decryptSecretKeys(configData);
+      return configData;
+    }
+    return null;
+  }
+
+  @protected
+  Future<Map<String, dynamic>?> configFromJsonListString(String? configJsonString) async {
     List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
-
       jsonList.sort((dynamic cfg1, dynamic cfg2) {
         return ((cfg1 is Map) && (cfg2 is Map)) ? AppVersion.compareVersions(cfg1['mobileAppVersion'], cfg2['mobileAppVersion']) : 0;
       });
