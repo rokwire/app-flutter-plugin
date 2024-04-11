@@ -63,6 +63,18 @@ class StringUtils {
     return maskedPhoneNumber;
   }
 
+  static String getMaskedEmailAddress(String? emailAddress) {
+    if(StringUtils.isNotEmpty(emailAddress)) {
+      List<String> emailParts = emailAddress!.split('@');
+      if (emailParts.length == 2) {
+        int lastChars = math.min(emailParts[0].length, 3);
+        int starsCount = (emailParts[0].length - lastChars);
+        return emailAddress.replaceRange(0, starsCount, "*" * starsCount);
+      }
+    }
+    return "*********";
+  }
+
   static String capitalize(String value, { bool allWords = false, Pattern splitDelimiter = ' ', String joinDelimiter = ' '}) {
 
     if (allWords) {

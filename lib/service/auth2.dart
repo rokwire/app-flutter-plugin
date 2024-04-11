@@ -619,9 +619,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             try {
               String? responseData = await RokwirePlugin.getPasskey(message.message);
               Auth2PasskeySignInResult result = await _completeSignInWithPasskey(responseData, identifier: identifier, identifierType: identifierType);
-              if (result.status == Auth2PasskeySignInResultStatus.succeeded) {
-                return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
-              }
+              return Auth2PasskeySignUpResult(auth2PasskeySignUpResultStatusFromAuthPasskeySignInResultStatus(result.status));
             } catch(error) {
               if (error is PlatformException && error.code == "NoCredentialException") {
                 return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
@@ -975,6 +973,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
       if (response?.statusCode == 200) {
+        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decodeMap(response?.body));
+        if (message?.message == "verification code sent successfully") {
+          return Auth2RequestCodeResult.succeededMustVerify;
+        }
         return Auth2RequestCodeResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
@@ -2006,6 +2008,20 @@ enum Auth2PasskeySignUpResultStatus {
   failedCancelled,
 }
 
+Auth2PasskeySignInResultStatus auth2PasskeySignInResultStatusFromAuthPasskeySignUpResultStatus(Auth2PasskeySignUpResultStatus value) {
+  switch (value) {
+    case Auth2PasskeySignUpResultStatus.succeeded: return Auth2PasskeySignInResultStatus.succeeded;
+    case Auth2PasskeySignUpResultStatus.failed: return Auth2PasskeySignInResultStatus.failed;
+    case Auth2PasskeySignUpResultStatus.failedNotSupported: return Auth2PasskeySignInResultStatus.failedNotSupported;
+    case Auth2PasskeySignUpResultStatus.failedAccountExist: return Auth2PasskeySignInResultStatus.failed;
+    case Auth2PasskeySignUpResultStatus.failedNotFound: return Auth2PasskeySignInResultStatus.failedNotFound;
+    case Auth2PasskeySignUpResultStatus.failedActivationExpired: return Auth2PasskeySignInResultStatus.failedActivationExpired;
+    case Auth2PasskeySignUpResultStatus.failedNotActivated: return Auth2PasskeySignInResultStatus.failedNotActivated;
+    case Auth2PasskeySignUpResultStatus.failedNoCredentials: return Auth2PasskeySignInResultStatus.failedNoCredentials;
+    case Auth2PasskeySignUpResultStatus.failedCancelled: return Auth2PasskeySignInResultStatus.failedCancelled;
+  }
+}
+
 // Auth2PasskeySignInResult
 class Auth2PasskeySignInResult {
   Auth2PasskeySignInResultStatus status;
@@ -2024,10 +2040,25 @@ enum Auth2PasskeySignInResultStatus {
   failedCancelled,
 }
 
+Auth2PasskeySignUpResultStatus auth2PasskeySignUpResultStatusFromAuthPasskeySignInResultStatus(Auth2PasskeySignInResultStatus value) {
+  switch (value) {
+    case Auth2PasskeySignInResultStatus.succeeded: return Auth2PasskeySignUpResultStatus.succeeded;
+    case Auth2PasskeySignInResultStatus.failed: return Auth2PasskeySignUpResultStatus.failed;
+    case Auth2PasskeySignInResultStatus.failedNotSupported: return Auth2PasskeySignUpResultStatus.failedNotSupported;
+    case Auth2PasskeySignInResultStatus.failedNotFound: return Auth2PasskeySignUpResultStatus.failedNotFound;
+    case Auth2PasskeySignInResultStatus.failedActivationExpired: return Auth2PasskeySignUpResultStatus.failedActivationExpired;
+    case Auth2PasskeySignInResultStatus.failedNotActivated: return Auth2PasskeySignUpResultStatus.failedNotActivated;
+    case Auth2PasskeySignInResultStatus.failedNoCredentials: return Auth2PasskeySignUpResultStatus.failedNoCredentials;
+    case Auth2PasskeySignInResultStatus.failedCancelled: return Auth2PasskeySignUpResultStatus.failedCancelled;
+  }
+}
+
 // Auth2RequestCodeResult
 
 enum Auth2RequestCodeResult {
   succeeded,
+  //TODO: remove succeededMustVerify later (email and code login needs to be improved on Core BB)
+  succeededMustVerify,
   failed,
   failedAccountExist,
 }
