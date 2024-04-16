@@ -57,6 +57,11 @@ class Storage with Service {
   @override
   Future<void> initService() async {
     _sharedPreferences = await SharedPreferences.getInstance();
+    _secureStorage = FlutterSecureStorage(
+      aOptions: const AndroidOptions(encryptedSharedPreferences: true,),
+      iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)
+    );
+
     _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     
