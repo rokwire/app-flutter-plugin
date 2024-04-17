@@ -475,7 +475,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           if (error is PlatformException) {
             switch (error.code) {
             // no credentials found
-              case "NoCredentialException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNoCredentials);
+              case "NoCredentialException": return (error.message?.toLowerCase().contains("blocked") ?? false) ?
+                Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedBlocked, error: error.message) : Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNoCredentials);
             // user cancelled on device auth
               case "GetPublicKeyCredentialDomException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
             // user cancelled on select passkey
@@ -2006,6 +2007,7 @@ enum Auth2PasskeySignUpResultStatus {
   failedNotActivated,
   failedNoCredentials,
   failedCancelled,
+  failedBlocked,
 }
 
 Auth2PasskeySignInResultStatus auth2PasskeySignInResultStatusFromAuthPasskeySignUpResultStatus(Auth2PasskeySignUpResultStatus value) {
@@ -2019,6 +2021,7 @@ Auth2PasskeySignInResultStatus auth2PasskeySignInResultStatusFromAuthPasskeySign
     case Auth2PasskeySignUpResultStatus.failedNotActivated: return Auth2PasskeySignInResultStatus.failedNotActivated;
     case Auth2PasskeySignUpResultStatus.failedNoCredentials: return Auth2PasskeySignInResultStatus.failedNoCredentials;
     case Auth2PasskeySignUpResultStatus.failedCancelled: return Auth2PasskeySignInResultStatus.failedCancelled;
+    case Auth2PasskeySignUpResultStatus.failedBlocked: return Auth2PasskeySignInResultStatus.failedBlocked;
   }
 }
 
@@ -2038,6 +2041,7 @@ enum Auth2PasskeySignInResultStatus {
   failedNotSupported,
   failedNoCredentials,
   failedCancelled,
+  failedBlocked,
 }
 
 Auth2PasskeySignUpResultStatus auth2PasskeySignUpResultStatusFromAuthPasskeySignInResultStatus(Auth2PasskeySignInResultStatus value) {
@@ -2050,6 +2054,7 @@ Auth2PasskeySignUpResultStatus auth2PasskeySignUpResultStatusFromAuthPasskeySign
     case Auth2PasskeySignInResultStatus.failedNotActivated: return Auth2PasskeySignUpResultStatus.failedNotActivated;
     case Auth2PasskeySignInResultStatus.failedNoCredentials: return Auth2PasskeySignUpResultStatus.failedNoCredentials;
     case Auth2PasskeySignInResultStatus.failedCancelled: return Auth2PasskeySignUpResultStatus.failedCancelled;
+    case Auth2PasskeySignInResultStatus.failedBlocked: return Auth2PasskeySignUpResultStatus.failedBlocked;
   }
 }
 
