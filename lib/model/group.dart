@@ -1003,7 +1003,7 @@ class GroupPost {
         body: json['body'],
         dateCreatedUtc: groupUtcDateTimeFromString(json['date_created']),
         dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
-        dateScheduledUtc:  groupUtcDateTimeFromString(json['date_scheduled']) ?? DateTime.now(),//TBD remove after testing
+        dateScheduledUtc:  groupUtcDateTimeFromString(json['date_scheduled']);
         private: json['private'],
         imageUrl: JsonUtils.stringValue(json["image_url"]),
         replies: GroupPost.fromJsonList(json['replies']),
