@@ -1248,7 +1248,7 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
-  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order}) async {
+  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly}) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String urlParams = "";
       if (type != null) {
@@ -1266,6 +1266,10 @@ class Groups with Service implements NotificationsListener {
       if (order != null) {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
         urlParams += "order=${groupSortOrderToString(order)}";
+      }
+      if (scheduled != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "scheduled_only=$scheduled";
       }
       
       await _ensureLogin();
