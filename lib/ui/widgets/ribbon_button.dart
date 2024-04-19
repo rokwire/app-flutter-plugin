@@ -94,7 +94,7 @@ class RibbonButton extends StatefulWidget {
     this.semanticsValue,
   }) : super(key: key);
 
-  @protected Color? get defaultBackgroundColor => Styles().colors.white;
+  @protected Color? get defaultBackgroundColor => Styles().colors.surface;
   @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
 
   @protected EdgeInsetsGeometry get displayPadding => padding ?? (hasDescription ? complexPadding : simplePadding);
@@ -109,7 +109,7 @@ class RibbonButton extends StatefulWidget {
   @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
-  @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
+  @protected Color? get defaultDescriptionTextColor => Styles().colors.textLight;
   @protected Color? get displayDescriptionTextColor => descriptionTextColor ?? defaultDescriptionTextColor;
   @protected String? get defaultDescriptionFontFamily => Styles().fontFamilies.regular;
   @protected String? get displayDescriptionFontFamily => descriptionFontFamily ?? defaultDescriptionFontFamily;
