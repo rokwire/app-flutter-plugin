@@ -86,7 +86,7 @@ class Events2 with Service implements NotificationsListener {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/events/load";
       String? body = JsonUtils.encode(query?.toQueryJson());
-      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: client, auth: Auth2());
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: null, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
       return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
     }
@@ -94,7 +94,7 @@ class Events2 with Service implements NotificationsListener {
   }
 
   Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
-    dynamic result = await loadEventsEx(query);
+    dynamic result = await loadEventsEx(query, client: client);
     return (result is Events2ListResult) ? result : null;
   }
 
