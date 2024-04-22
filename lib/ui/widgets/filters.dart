@@ -95,7 +95,7 @@ class FilterListItem extends StatelessWidget {
 
     return Semantics(label: title, button: true, selected: selected, excludeSemantics: true, child:
       InkWell(onTap: onTap, child:
-        Container(color: (selected ? Styles().colors.background : Colors.white), child:
+        Container(color: (selected ? Styles().colors.fillColorSecondary : Styles().colors.surface), child:
           Padding(padding: padding, child:
             Row(mainAxisSize: MainAxisSize.max, children: contentList),
           ),
