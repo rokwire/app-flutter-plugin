@@ -1267,9 +1267,9 @@ class Groups with Service implements NotificationsListener {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
         urlParams += "order=${groupSortOrderToString(order)}";
       }
-      if (scheduled != null) {
+      if (scheduledOnly != null) {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "scheduled_only=$scheduled";
+        urlParams += "scheduled_only=$scheduledOnly";
       }
       
       await _ensureLogin();
