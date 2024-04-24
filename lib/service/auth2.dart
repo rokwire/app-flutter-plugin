@@ -974,10 +974,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData));
       if (response?.statusCode == 200) {
-        Auth2Message? message = Auth2Message.fromJson(JsonUtils.decodeMap(response?.body));
-        if (message?.message == "verification code sent successfully") {
-          return Auth2RequestCodeResult.succeededMustVerify;
-        }
         return Auth2RequestCodeResult.succeeded;
       }
       else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
@@ -2062,8 +2058,6 @@ Auth2PasskeySignUpResultStatus auth2PasskeySignUpResultStatusFromAuthPasskeySign
 
 enum Auth2RequestCodeResult {
   succeeded,
-  //TODO: remove succeededMustVerify later (email and code login needs to be improved on Core BB)
-  succeededMustVerify,
   failed,
   failedAccountExist,
 }
