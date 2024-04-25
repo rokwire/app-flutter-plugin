@@ -321,6 +321,21 @@ class Group {
     return json;
   }
 
+  static Map<String, Group>? mapFromJson(List<dynamic>? json) {
+    Map<String, Group>? result;
+    if (json != null) {
+      result = <String, Group>{};
+      for (dynamic entry in json) {
+        Group? group = Group.fromJson(JsonUtils.mapValue(entry));
+        String? groupId = group?.id;
+        if ((group != null) && (groupId != null)) {
+          result[groupId] = group;
+        }
+      }
+    }
+    return result;
+  }
+
   static List<String>? listToListIds(List<Group>? values) {
     List<String>? result;
     if (values != null) {
@@ -964,6 +979,7 @@ class GroupMembershipAnswer {
 
 class GroupPost {
   final String? id;
+  final String? groupId;
   final String? parentId;
   final Member? member;
   final String? subject;
@@ -976,7 +992,7 @@ class GroupPost {
   final String? imageUrl;
   final Map<String, List<String>> reactions;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
+  GroupPost({this.id, this.groupId, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -996,6 +1012,7 @@ class GroupPost {
 
     return GroupPost(
         id: json['id'],
+        groupId: json['group_id'],
         parentId: json['parent_id'],
         member: Member.fromJson(json['member']),
         subject: json['subject'],
@@ -1014,6 +1031,9 @@ class GroupPost {
   Map<String, dynamic> toJson({bool create = false, bool update = false}) {
     // MV: This does not look well at all!
     Map<String, dynamic> json = {'body': body, 'private': private};
+    if ((groupId != null) && create) {
+      json['group_id'] = groupId;
+    }
     if ((parentId != null) && create) {
       json['parent_id'] = parentId;
     }
