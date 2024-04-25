@@ -78,6 +78,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   void createService() {
     NotificationService().subscribe(this,[
       AppLifecycle.notifyStateChanged,
+      Auth2.notifyLoginChanged,
     ]);
     super.createService();
   }
@@ -131,6 +132,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   void onNotification(String name, dynamic param) {
     if (name == AppLifecycle.notifyStateChanged) {
       _onAppLifecycleStateChanged(param);
+    } else if (name == Auth2.notifyLoginChanged) {
+      if (_contentItems == null && Auth2().isLoggedIn) {
+        loadContentItemsFromNet().then((contentItems) {
+          _contentItems = contentItems;
+          _contentAttributes = ContentAttributes.fromJson(_contentAttributesJson);
+        });
+      }
     }
   }
 
