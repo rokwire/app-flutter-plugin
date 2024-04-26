@@ -18,6 +18,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
@@ -202,6 +203,30 @@ class ListUtils {
 
   static List<T>? reversed<T>(List<T>? elements) {
     return (elements != null) ? List<T>.from(elements.reversed) : null;
+  }
+
+  static List<T>? range<T>(List<T>? elements, { int offset = 0, int? limit }) {
+    if (elements != null) {
+      if (offset < 0) {
+        offset = 0;
+      }
+      if (offset < elements.length) {
+        if (limit != null) {
+          if (limit < 0) {
+            limit = 0;
+          }
+          int end = min(offset + limit, elements.length);
+          if (offset < end) {
+            return elements.sublist(offset, end);
+          }
+        }
+        else {
+          return elements.sublist(offset);
+        }
+      }
+      return <T>[];
+    }
+    return null;
   }
 
   static void add<T>(List<T>? list, T? entry) {
