@@ -134,6 +134,9 @@ class Survey extends RuleEngine {
     );
   }
 
+  static Survey? fromJsonExt(Map<String, dynamic>? json) =>
+      (json != null) ? Survey.fromJson(json) : null;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
