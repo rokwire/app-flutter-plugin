@@ -435,6 +435,7 @@ class Events2Query {
   final Event2TimeFilter? timeFilter;
   final DateTime? customStartTimeUtc;
   final DateTime? customEndTimeUtc;
+  final bool adjustCustomTime;
   final Map<String, dynamic>? attributes;
   final Event2SortType? sortType;
   final Event2SortOrder? sortOrder;
@@ -443,7 +444,7 @@ class Events2Query {
 
   Events2Query({this.ids, this.grouping, this.groupings, this.searchText,
     this.types, this.location,
-    this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
+    this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc, this.adjustCustomTime = true,
     this.attributes,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
     this.offset = 0, this.limit
@@ -473,7 +474,7 @@ class Events2Query {
     }
 
     if (timeFilter != null) {
-      buildTimeLoadOptions(options, timeFilter!, customStartTimeUtc: customStartTimeUtc, customEndTimeUtc: customEndTimeUtc);
+      buildTimeLoadOptions(options, timeFilter!, customStartTimeUtc: customStartTimeUtc, customEndTimeUtc: customEndTimeUtc, adjustCustomTime: adjustCustomTime);
     }
 
     if ((attributes != null) && attributes!.isNotEmpty) {
@@ -562,7 +563,7 @@ class Events2Query {
     }
   }
 
-  static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
+  static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc, bool adjustCustomTime = true }) {
     TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
     
     if (timeFilter == Event2TimeFilter.upcoming) {
@@ -636,9 +637,11 @@ class Events2Query {
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
-      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowLocal)) ? customStartTimeUtc : nowLocal;
-      options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_after_null_end_time'] = (startTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      DateTime? startTimeUtc = (adjustCustomTime && ((customStartTimeUtc == null) || customStartTimeUtc.isBefore(nowLocal))) ? nowLocal : customStartTimeUtc;
+      if (startTimeUtc != null) {
+        options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
+        options['start_time_after_null_end_time'] = (startTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      }
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
