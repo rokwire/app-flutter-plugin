@@ -52,7 +52,7 @@ class RibbonButton extends StatefulWidget {
     this.label,
     this.description,
     this.onTap,
-    this.backgroundColor,      //= Styles().colors.white
+    this.backgroundColor,      //= Styles().colors.surface
     this.padding,
 
     this.textWidget,

@@ -66,7 +66,7 @@ class RoundedButton extends StatefulWidget {
     Key? key,
     required this.label,
     this.onTap,
-    this.backgroundColor,      //= Styles().colors.white
+    this.backgroundColor,      //= Styles().colors.surface
     this.padding                 = const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
     this.contentWeight           = 1.0,
     this.conentAlignment         = MainAxisAlignment.center,

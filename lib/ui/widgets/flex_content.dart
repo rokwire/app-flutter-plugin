@@ -143,7 +143,7 @@ class FlexContent extends StatefulWidget {
     label: StringUtils.ensureNotEmpty(JsonUtils.stringValue(button['title'])),
     textColor: Styles().colors.fillColorPrimary,
     borderColor: Styles().colors.fillColorSecondary,
-    backgroundColor: Styles().colors.white,
+    backgroundColor: Styles().colors.surface,
     contentWeight: 0.0,
     onTap: () => onTapButton(context, button),
   );

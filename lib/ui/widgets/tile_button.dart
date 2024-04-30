@@ -101,7 +101,7 @@ class TileButton extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors.white;
+  @protected Color get defaultBorderColor => Styles().colors.surface;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
   
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
@@ -169,7 +169,7 @@ class TileWideButton extends StatelessWidget {
   @protected TextStyle get defaultTitleTextStyle => TextStyle(color: displayTitleTextColor, fontFamily: displayTitleFontFamilly, fontSize: titleFontSize);
   @protected TextStyle get displayTitleTextStyle => titleTextStyle ?? defaultTitleTextStyle;
 
-  @protected Color get defaultBorderColor => Styles().colors.white;
+  @protected Color get defaultBorderColor => Styles().colors.surface;
   @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
 
   @protected BorderRadiusGeometry get defaultBorderRadius => BorderRadius.circular(4);
