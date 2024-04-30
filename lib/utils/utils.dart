@@ -966,6 +966,9 @@ class JsonUtils {
     }
     return null;
   }
+
+  static T? cast<T>(dynamic value) =>
+    (value is T) ? value : null;
 }
 
 class AppToast {
