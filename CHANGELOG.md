@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml - 1.7.0 -->
 ### Changed
 - Upgrade to Flutter 3.19.0 [#435](https://github.com/rokwire/app-flutter-plugin/issues/435).
+- Require minimal SDK version 2.17.0 [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
 - Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
 - SurveyPanel HeaderBar exposed for overriding [#4020](https://github.com/rokwire/illinois-app/issues/4020).
 ### Added
 - Added Group post scheduling [#4027](https://github.com/rokwire/illinois-app/issues/4027).
 - Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
 - Created additional notifications for group post create/update/delete [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
+- Created separate classes for Auth2 permission, role and group, perform more precise permissions detection [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
 ### Added
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
 

@@ -122,15 +122,15 @@ class Auth2Account {
   final String? username;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
-  final List<Auth2StringEntry>? permissions;
-  final List<Auth2StringEntry>? roles;
-  final List<Auth2StringEntry>? groups;
+  final List<Auth2Permission>? permissions;
+  final List<Auth2Role>? roles;
+  final List<Auth2Group>? groups;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
   
   Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2StringEntry>? permissions, List<Auth2StringEntry>? roles, List<Auth2StringEntry>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       username: username ?? other?.username,
@@ -150,9 +150,9 @@ class Auth2Account {
       username: JsonUtils.stringValue(json['username']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
-      permissions: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['permissions'])),
-      roles: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['roles'])),
-      groups: Auth2StringEntry.listFromJson(JsonUtils.listValue(json['groups'])),
+      permissions: Auth2Permission.listFromJson(JsonUtils.listValue(json['permissions'])),
+      roles: Auth2Role.listFromJson(JsonUtils.listValue(json['roles'])),
+      groups: Auth2Group.listFromJson(JsonUtils.listValue(json['groups'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
     ) : null;
@@ -162,12 +162,12 @@ class Auth2Account {
     return {
       'id' : id,
       'username' : username,
-      'profile': profile,
-      'preferences': prefs,
-      'permissions': permissions,
-      'roles': roles,
-      'groups': groups,
-      'auth_types': authTypes,
+      'profile': profile?.toJson(),
+      'preferences': prefs?.toJson(),
+      'permissions': Auth2StringEntry.listToJson(permissions),
+      'roles': Auth2StringEntry.listToJson(roles),
+      'groups': Auth2StringEntry.listToJson(groups),
+      'auth_types': Auth2Type.listToJson(authTypes),
       'system_configs': systemConfigs,
     };
   }
@@ -226,21 +226,18 @@ class Auth2Account {
     return linkedTypes;
   }
 
-  bool get isCalendarAdmin {
-    return hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
-  }
+  bool get isCalendarAdmin => hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
+  bool get isManagedGroupAdmin => hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
+  bool get isResearchProjectAdmin => hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
 
-  bool get isManagedGroupAdmin {
-    return hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
-  }
-
-  bool get isResearchProjectAdmin {
-    return hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
-  }
+  bool hasPermission(String permission) =>
+    (Auth2Permission.findInList(permissions, permission: permission) != null) ||
+    (Auth2Role.findInList(roles, permission: permission) != null) ||
+    (Auth2Group.findInList(groups, permission: permission) != null);
 
   bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
-  bool hasPermission(String premission) => (Auth2StringEntry.findInList(permissions, name: premission) != null);
   bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
@@ -580,25 +577,20 @@ class Auth2StringEntry {
   
   Auth2StringEntry({this.id, this.name});
 
-  static Auth2StringEntry? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? Auth2StringEntry(
-      id: JsonUtils.stringValue(json['id']),
-      name: JsonUtils.stringValue(json['name']),
-    ) : null;
-  }
+  factory Auth2StringEntry.fromJson(Map<String, dynamic> json) => Auth2StringEntry(
+    id: JsonUtils.stringValue(json['id']),
+    name: JsonUtils.stringValue(json['name']),
+  );
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id' : id,
-      'name': name,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id' : id,
+    'name': name,
+  };
 
   @override
-  bool operator ==(other) =>
-    (other is Auth2StringEntry) &&
-      (other.id == id) &&
-      (other.name == name);
+  bool operator ==(other) => (other is Auth2StringEntry) &&
+    (other.id == id) &&
+    (other.name == name);
 
   @override
   int get hashCode =>
@@ -610,7 +602,10 @@ class Auth2StringEntry {
     if (jsonList != null) {
       result = <Auth2StringEntry>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(result, Auth2StringEntry.fromJson(JsonUtils.mapValue(jsonEntry)));
+        Map<String, dynamic>? jsonMap = JsonUtils.mapValue(jsonEntry);
+        if (jsonMap != null) {
+          result.add(Auth2StringEntry.fromJson(jsonMap));
+        }
       }
     }
     return result;
@@ -620,8 +615,8 @@ class Auth2StringEntry {
     List<dynamic>? jsonList;
     if (contentList != null) {
       jsonList = <dynamic>[];
-      for (dynamic contentEntry in contentList) {
-        jsonList.add(contentEntry?.toJson());
+      for (Auth2StringEntry contentEntry in contentList) {
+        jsonList.add(contentEntry.toJson());
       }
     }
     return jsonList;
@@ -629,8 +624,8 @@ class Auth2StringEntry {
 
   static Auth2StringEntry? findInList(List<Auth2StringEntry>? contentList, { String? name }) {
     if (contentList != null) {
-      for (Auth2StringEntry? contentEntry in contentList) {
-        if (contentEntry!.name == name) {
+      for (Auth2StringEntry contentEntry in contentList) {
+        if (contentEntry.name == name) {
           return contentEntry;
         }
       }
@@ -638,6 +633,164 @@ class Auth2StringEntry {
     return null;
   }
 }
+
+////////////////////////////////
+// Auth2Permission
+
+class Auth2Permission extends Auth2StringEntry {
+  Auth2Permission({super.id, super.name});
+
+  factory Auth2Permission.fromBase(Auth2StringEntry other) => Auth2Permission(
+    id: other.id, name: other.name,
+  );
+
+  factory Auth2Permission.fromJson(Map<String, dynamic> json) =>
+    Auth2Permission.fromBase(Auth2StringEntry.fromJson(json));
+
+  bool hasPermission(String? permission) => (name == permission);
+
+  static List<Auth2Permission>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Permission>? result;
+    if (jsonList != null) {
+      result = <Auth2Permission>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? jsonMap = JsonUtils.mapValue(jsonEntry);
+        if (jsonMap != null) {
+          result.add(Auth2Permission.fromJson(jsonMap));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Auth2Permission? findInList(List<Auth2Permission>? contentList, { String? permission }) =>
+    JsonUtils.cast(Auth2StringEntry.findInList(contentList, name: permission));
+}
+
+////////////////////////////////
+// Auth2Role
+
+class Auth2Role extends Auth2Permission {
+  final List<Auth2Permission>? permissions;
+
+  Auth2Role({super.id, super.name, this.permissions});
+
+  factory Auth2Role.fromBase(Auth2Permission other, { List<Auth2Permission>? permissions }) => Auth2Role(
+    id: other.id, name: other.name,
+    permissions: permissions,
+  );
+
+  factory Auth2Role.fromJson(Map<String, dynamic> json) =>
+    Auth2Role.fromBase(Auth2Permission.fromJson(json),
+      permissions: Auth2Permission.listFromJson(JsonUtils.listValue(json['permissions'])),
+    );
+
+  @override
+  Map<String, dynamic> toJson() =>
+    super.toJson()..addAll({
+      'permissions': Auth2StringEntry.listToJson(permissions)
+    });
+
+  @override
+  bool operator ==(other) => (other is Auth2Role) && (super == other) &&
+    (const DeepCollectionEquality().equals(other.permissions, permissions));
+
+  @override
+  int get hashCode => super.hashCode ^
+    const DeepCollectionEquality().hash(permissions);
+
+  bool hasPermission(String? permission) =>
+    (Auth2Permission.findInList(permissions, permission: permission) != null);
+
+  static List<Auth2Role>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Role>? result;
+    if (jsonList != null) {
+      result = <Auth2Role>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? jsonMap = JsonUtils.mapValue(jsonEntry);
+        if (jsonMap != null) {
+          result.add(Auth2Role.fromJson(jsonMap));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Auth2Role? findInList(List<Auth2Role>? contentList, { String? permission }) {
+    if (contentList != null) {
+      for (Auth2Role contentEntry in contentList) {
+        if (contentEntry.hasPermission(permission)) {
+          return contentEntry;
+        }
+      }
+    }
+    return null;
+  }
+}
+
+////////////////////////////////
+// Auth2Group
+
+class Auth2Group extends Auth2Role {
+  final List<Auth2Role>? roles;
+
+  Auth2Group({super.id, super.name, super.permissions, this.roles});
+
+  factory Auth2Group.fromBase(Auth2Role other, { List<Auth2Role>? roles }) => Auth2Group(
+    id: other.id, name: other.name, permissions: other.permissions,
+    roles: roles,
+  );
+
+  factory Auth2Group.fromJson(Map<String, dynamic> json) =>
+    Auth2Group.fromBase(Auth2Role.fromJson(json),
+      roles: Auth2Role.listFromJson(JsonUtils.listValue(json['roles'])),
+    );
+
+  @override
+  Map<String, dynamic> toJson() =>
+    super.toJson()..addAll({
+      'roles': Auth2StringEntry.listToJson(roles)
+    });
+
+  @override
+  bool operator ==(other) => (other is Auth2Group) && (super == other) &&
+    (const DeepCollectionEquality().equals(other.roles, roles));
+
+  @override
+  int get hashCode => super.hashCode ^
+    const DeepCollectionEquality().hash(roles);
+
+  bool hasPermission(String? permission) => super.hasPermission(permission) ||
+    (Auth2Role.findInList(roles, permission: permission) != null);
+
+  static List<Auth2Group>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Group>? result;
+    if (jsonList != null) {
+      result = <Auth2Group>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? jsonMap = JsonUtils.mapValue(jsonEntry);
+        if (jsonMap != null) {
+          result.add(Auth2Group.fromJson(jsonMap));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Auth2Group? findInList(List<Auth2Group>? contentList, { String? permission }) {
+    if (contentList != null) {
+      for (Auth2Group contentEntry in contentList) {
+        if (contentEntry.hasPermission(permission)) {
+          return contentEntry;
+        }
+      }
+    }
+    return null;
+  }
+}
+
+////////////////////////////////
+// Auth2UserProfileScope
 
 enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, data }
 
