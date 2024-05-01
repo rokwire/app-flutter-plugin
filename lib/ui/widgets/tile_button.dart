@@ -325,7 +325,7 @@ class TileToggleButton extends StatelessWidget {
   @protected Widget get defaultIconWidget => (displayIconAsset != null) ?  Styles().images.getImage(displayIconAsset!, width: iconWidth, fit: iconFit, excludeFromSemantics: true) ?? Container() : Container();
   @protected Widget get displayIconWidget => (selected ? selectedIcon : icon) ?? defaultIconWidget;
 
-  @protected Widget get defaultSelectionMarkerWidget => Styles().images.getImage(selectionMarkerKey, excludeFromSemantics: true) ?? Container();
+  @protected Widget get defaultSelectionMarkerWidget => Container(decoration: BoxDecoration(color: Styles().colors.surface, shape: BoxShape.circle), child: Styles().images.getImage(selectionMarkerKey, excludeFromSemantics: true) ?? Container());
   @protected Widget get displaySelectionMarkerWidget => selectionMarker ?? defaultSelectionMarkerWidget;
 
   @override
