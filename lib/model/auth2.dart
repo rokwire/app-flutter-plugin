@@ -324,6 +324,9 @@ class Auth2UserProfile {
   static const String notifyDataChanged          = "edu.illinois.rokwire.user.profile.data.changed";
   static const String notifyChanged              = "edu.illinois.rokwire.user.profile.changed";
 
+  static const Set<Auth2UserProfileScope> defaultProfileScope = const {
+    Auth2UserProfileScope.firstName, Auth2UserProfileScope.middleName, Auth2UserProfileScope.lastName,
+  };
 
   String? _id;
   String? _firstName;
@@ -386,8 +389,8 @@ class Auth2UserProfile {
 
   static Auth2UserProfile? fromOther(Auth2UserProfile? other, {
     String? id, String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
-    String? address, String? state, String? zip, String? country,
+    int? birthYear, String? photoUrl, String? address,
+    String? state, String? zip, String? country,
     Map<String, dynamic>? data}) {
 
     return (other != null) ? Auth2UserProfile(
@@ -461,7 +464,7 @@ class Auth2UserProfile {
 
     (const DeepCollectionEquality().hash(_data));
 
-  bool apply(Auth2UserProfile? profile, { Set<Auth2UserProfileScope>? scope }) {
+  bool apply(Auth2UserProfile? profile, { Set<Auth2UserProfileScope>? scope = defaultProfileScope}) {
     bool modified = false;
     if (profile != null) {
       /*if ((profile._id != _id) && (profile._id?.isNotEmpty ?? false)) {
