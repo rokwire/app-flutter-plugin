@@ -16,13 +16,13 @@
 
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as timezone;
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 
 class AppDateTime with Service {
 
@@ -58,7 +58,7 @@ class AppDateTime with Service {
       debugPrint('AppDateTime: Timezone database initializiation omitted.');
     }
 
-    _localTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+    _localTimeZone = await FlutterTimezone.getLocalTimezone();
     timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
     timezone.setLocalLocation(deviceLocation);
 
