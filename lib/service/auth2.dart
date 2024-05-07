@@ -1069,12 +1069,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
               if (token == _token) {
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
-                return responseToken;
               }
               else if (token == _anonymousToken) {
                 Storage().auth2AnonymousToken = _anonymousToken = responseToken;
-                return responseToken;
               }
+              return responseToken;
             }
           }
 

@@ -16,8 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
 - Created additional notifications for group post create/update/delete [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
 - Created separate classes for Auth2 permission, role and group, perform more precise permissions detection [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
-### Added
+### Fixed
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
+- Make sure to always return successfully refreshed token in Auth2 service.
 
 ## [1.6.3] - 2024-02-19
 ### Added
