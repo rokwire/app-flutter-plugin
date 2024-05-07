@@ -512,15 +512,17 @@ class Events with Service implements NotificationsListener {
         targetAudiences.add('students');
       } else if (role == UserRole.alumni) {
         targetAudiences.add('alumni');
-      } else if (role == UserRole.employee) {
-        targetAudiences.addAll(['faculty', 'staff']);
+      } else if (role == UserRole.faculty) {
+        targetAudiences.add('faculty');
+      } else if (role == UserRole.staff) {
+        targetAudiences.add('staff');
       } else if (role == UserRole.fan) {
         targetAudiences.add('public');
       } else if (role == UserRole.parent) {
         targetAudiences.add('parents');
       } else if (role == UserRole.visitor) {
         targetAudiences.add('public');
-      } else if (role == UserRole.gies) {
+      } else if (role == UserRole.prospectiveStudent) {
 
       }
     }
