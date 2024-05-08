@@ -70,15 +70,15 @@ class _TabBarState extends State<TabBar> implements NotificationsListener {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(decoration: widget.decoration, child:
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      SafeArea(
+        child: Container(decoration: widget.decoration, child:
           Row(children: buildTabs()),
         ),
-        Visibility(visible: widget.environmentColor != null,
-            child: Container(height: 4, color: widget.environmentColor))
-      ]),
-    );
+      ),
+      Visibility(visible: widget.environmentColor != null,
+          child: Container(height: 4, color: widget.environmentColor))
+    ]);
   }
 
   @protected
