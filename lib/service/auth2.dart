@@ -302,6 +302,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isPasswordLinked => _account?.isAuthTypeLinked(Auth2Type.typePassword) ?? false;
   bool get isPasskeyLinked => _account?.isAuthTypeLinked(Auth2Type.typePasskey) ?? false;
 
+  bool get hasPasskeyForPlatform {
+    for (Auth2Type authType in linkedPasskey) {
+      if (authType.platformName == Platform.operatingSystem.toLowerCase() && (authType.hasCredential ?? false)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   List<Auth2Identifier> get linkedEmail => _account?.getLinkedForIdentifierType(Auth2Identifier.typeEmail) ?? [];
   List<Auth2Identifier> get linkedPhone => _account?.getLinkedForIdentifierType(Auth2Identifier.typePhone) ?? [];
   List<Auth2Identifier> get linkedUsername => _account?.getLinkedForIdentifierType(Auth2Identifier.typeUsername) ?? [];

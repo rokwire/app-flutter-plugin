@@ -1,6 +1,7 @@
 
 import 'dart:collection';
 import 'dart:core';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -966,13 +967,14 @@ class Auth2Type {
   final String? id;
   final String? code;
   final bool? active;
+  final bool? hasCredential;
   final Map<String, dynamic>? params;
   final DateTime? dateCreated;
   final DateTime? dateUpdated;
 
   final Auth2UiucUser? uiucUser;
 
-  Auth2Type({this.id, this.code, this.active, this.params, this.dateCreated, this.dateUpdated}) :
+  Auth2Type({this.id, this.code, this.active, this.hasCredential, this.params, this.dateCreated, this.dateUpdated}) :
         uiucUser = (params != null) ? Auth2UiucUser.fromJson(JsonUtils.mapValue(params['user'])) : null;
 
   static Auth2Type? fromJson(Map<String, dynamic>? json) {
@@ -980,6 +982,7 @@ class Auth2Type {
       id: JsonUtils.stringValue(json['id']),
       code: JsonUtils.stringValue(json['auth_type_code']),
       active: JsonUtils.boolValue(json['active']),
+      hasCredential: JsonUtils.boolValue(json['has_credential']),
       params: JsonUtils.mapValue(json['params']),
       dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']),
       dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
@@ -991,6 +994,7 @@ class Auth2Type {
       'id' : id,
       'auth_type_code': code,
       'active': active,
+      'has_credential': hasCredential,
       'params': params,
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
@@ -1003,6 +1007,7 @@ class Auth2Type {
       (other.id == id) &&
       (other.code == code) &&
       (other.active == active) &&
+      (other.hasCredential == hasCredential) &&
       const DeepCollectionEquality().equals(other.params, params);
 
   @override
@@ -1010,6 +1015,7 @@ class Auth2Type {
     (id?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
     (active?.hashCode ?? 0) ^
+    (hasCredential?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(params));
 
   static List<Auth2Type>? listFromJson(List<dynamic>? jsonList) {
@@ -1032,6 +1038,30 @@ class Auth2Type {
       }
     }
     return jsonList;
+  }
+
+  String? get platformName {
+    if (code == typePasskey) {
+      dynamic appTypeIdentifier = params?['app_type_identifier'];
+      if (appTypeIdentifier is String) {
+        if (appTypeIdentifier.contains('https')) {
+          return 'web';
+        }
+        List<String> appTypeIdentifierParts = appTypeIdentifier.split('.');
+        if (appTypeIdentifierParts.isNotEmpty) {
+          return appTypeIdentifierParts.last;
+        }
+      }
+    }
+    return null;
+  }
+
+  bool? get hasValidCredential {
+    switch (code) {
+      case typePassword: return hasCredential ?? false;
+      case typePasskey: return hasCredential ?? false;
+      default: return null;
+    }
   }
 }
 

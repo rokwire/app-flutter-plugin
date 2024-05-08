@@ -16,7 +16,6 @@ class TabBar extends StatefulWidget {
   @override
   _TabBarState createState() => _TabBarState();
 
-  @protected
   Color? get backgroundColor => Styles().colors.surface ?? Colors.white;
 
   @protected
