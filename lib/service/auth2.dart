@@ -516,11 +516,19 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if ((Config().authBaseUrl != null) && (responseData != null)) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, dynamic>? requestJson = JsonUtils.decode(responseData);
-      // TODO: remove if statement once plugin is fixed
-      if (Platform.isIOS) {
+      try {
         String? userHandle = requestJson?['response']['userHandle'];
-        requestJson?['response']['userHandle'] = StringUtils.base64UrlDecode(userHandle ?? '');
+        String decodedUserHandle = StringUtils.base64UrlDecode(userHandle ?? '');
+
+        // if the userHandle can be base64Url decoded twice, set the response userHandle to be the first decoding (backend expects a base64Url once-encoded userHandle)
+        StringUtils.base64UrlDecode(decodedUserHandle);
+        requestJson?['response']['userHandle'] = decodedUserHandle;
+      } catch (e) {
+        if (e is! FormatException) {
+          return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failed);
+        }
       }
+
       Map<String, String> headers = {
         'Content-Type': 'application/json',
         'Client-Version': Config().appVersion ?? '',
