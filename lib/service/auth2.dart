@@ -491,6 +491,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
             // user cancelled on select passkey
               case "GetCredentialCancellationException": return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
             }
+            if (error.message?.contains('Code=1001') == true) {
+              return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedCancelled);
+            }
           }
           errorMessage = error.toString();
           debugPrint(errorMessage);
