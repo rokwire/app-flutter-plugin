@@ -1056,11 +1056,11 @@ class Auth2Type {
     return null;
   }
 
-  bool? get hasValidCredential {
+  bool get hasValidCredential {
     switch (code) {
-      case typePassword: return hasCredential ?? false;
-      case typePasskey: return hasCredential ?? false;
-      default: return null;
+      case typePassword: return hasCredential ?? true;
+      case typePasskey: return hasCredential ?? true;
+      default: return false;
     }
   }
 }

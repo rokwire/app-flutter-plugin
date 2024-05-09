@@ -304,7 +304,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   bool get hasPasskeyForPlatform {
     for (Auth2Type authType in linkedPasskey) {
-      if (authType.platformName == Platform.operatingSystem.toLowerCase() && (authType.hasCredential ?? false)) {
+      if (authType.platformName == Platform.operatingSystem.toLowerCase() && authType.hasValidCredential) {
         return true;
       }
     }
