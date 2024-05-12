@@ -231,7 +231,7 @@ class Auth2Account {
   bool isAuthTypeLinked(String code) {
     if (authTypes != null) {
       for (Auth2Type authType in authTypes!) {
-        if (authType.code == code) {
+        if (authType.code == code && authType.hasValidCredential) {
           return true;
         }
       }
@@ -1060,7 +1060,7 @@ class Auth2Type {
     switch (code) {
       case typePassword: return hasCredential ?? true;
       case typePasskey: return hasCredential ?? true;
-      default: return false;
+      default: return true;
     }
   }
 }
