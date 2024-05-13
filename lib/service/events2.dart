@@ -19,13 +19,14 @@ import 'package:timezone/timezone.dart';
 
 class Events2 with Service implements NotificationsListener {
 
-  static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch_detail";
+  static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch.detail";
+  static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
 
   static const String sportEventCategory = 'Big 10 Athletics';
 
-  List<Map<String, dynamic>>? _eventDetailsCache;
+  List<Uri>? _deepLinkUrisCache;
 
   // Singletone Factory
 
@@ -46,7 +47,7 @@ class Events2 with Service implements NotificationsListener {
     NotificationService().subscribe(this,[
       DeepLink.notifyUri,
     ]);
-    _eventDetailsCache = [];
+    _deepLinkUrisCache = <Uri>[];
   }
 
   @override
@@ -57,7 +58,7 @@ class Events2 with Service implements NotificationsListener {
 
   @override
   void initServiceUI() {
-    processCachedEventDetails();
+    processCachedDeepLinkUris();
   }
 
   @override
@@ -371,52 +372,43 @@ class Events2 with Service implements NotificationsListener {
   // DeepLinks
 
   String get eventDetailUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
+  String get eventsQueryUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
 
   @protected
   void onDeepLinkUri(Uri? uri) {
     if (uri != null) {
-      Uri? eventUri = Uri.tryParse(eventDetailUrl);
-      if ((eventUri != null) &&
-          (eventUri.scheme == uri.scheme) &&
-          (eventUri.authority == uri.authority) &&
-          (eventUri.path == uri.path))
-      {
-        try { handleEventDetail(uri.queryParameters.cast<String, dynamic>()); }
-        catch (e) { debugPrint(e.toString()); }
-      }
-    }
-  }
-
-  @protected
-  void handleEventDetail(Map<String, dynamic>? params) {
-    if ((params != null) && params.isNotEmpty) {
-      if (_eventDetailsCache != null) {
-        cacheEventDetail(params);
+      if (_deepLinkUrisCache != null) {
+        cacheDeepLinkUri(uri);
       }
       else {
-        processEventDetail(params);
+        processDeepLinkUri(uri);
       }
     }
   }
 
   @protected
-  void processEventDetail(Map<String, dynamic> params) {
-    NotificationService().notify(notifyLaunchDetail, params);
+  void processDeepLinkUri(Uri uri) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailUrl))) {
+      NotificationService().notify(notifyLaunchDetail, uri.queryParameters);
+    }
+    else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryUrl))) {
+      NotificationService().notify(notifyLaunchQuery, uri.queryParameters);
+    }
   }
 
   @protected
-  void cacheEventDetail(Map<String, dynamic> params) {
-    _eventDetailsCache?.add(params);
+  void cacheDeepLinkUri(Uri uri) {
+    _deepLinkUrisCache?.add(uri);
   }
 
   @protected
-  void processCachedEventDetails() {
-    if (_eventDetailsCache != null) {
-      List<Map<String, dynamic>> eventDetailsCache = _eventDetailsCache!;
-      _eventDetailsCache = null;
+  void processCachedDeepLinkUris() {
+    if (_deepLinkUrisCache != null) {
+      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
+      _deepLinkUrisCache = null;
 
-      for (Map<String, dynamic> eventDetail in eventDetailsCache) {
-        processEventDetail(eventDetail);
+      for (Uri deepLinkUri in deepLinkUrisCache) {
+        processDeepLinkUri(deepLinkUri);
       }
     }
   }
@@ -690,3 +682,4 @@ extension _ResponseExt on Response {
 
   }
 }
+

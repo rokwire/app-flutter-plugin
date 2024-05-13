@@ -335,6 +335,12 @@ class MapUtils {
     }
   }
 
+  static void add<K, T>(Map<K, T>? map, K? key, T? entry) {
+    if ((map != null) && (key != null) && (entry != null)) {
+      map[key] = entry;
+    }
+  }
+
   static T? get2<K, T>(Map<K, T>? map, List<K?>? keys) {
     if ((map != null) && (keys != null)) {
       for (K? key in keys) {
@@ -653,7 +659,6 @@ class UrlUtils {
     }
     return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
-
 }
 
 
@@ -1449,6 +1454,13 @@ extension TZDateTimeExt on timezone.TZDateTime {
     }
     return null;
   }
+}
+
+extension UriUtilsExt on Uri {
+  bool matchDeepLinkUri(Uri? deepLinkUri) => (deepLinkUri != null) &&
+    (deepLinkUri.scheme == scheme) &&
+    (deepLinkUri.authority == authority) &&
+    (deepLinkUri.path == path);
 }
 
 class Pair<L,R> {
