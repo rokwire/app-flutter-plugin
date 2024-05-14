@@ -1114,7 +1114,7 @@ List<Event2TypeFilter>? event2TypeFilterListFromStringList(List<String>? values)
   return null;
 }
 
-List<String>? event2TypeFilterListToStringList(List<Event2TypeFilter>? values) {
+List<String>? event2TypeFilterListToStringList(Iterable<Event2TypeFilter>? values) {
   if (values != null) {
     List<String> list = <String>[];
     for (Event2TypeFilter value in values) {
