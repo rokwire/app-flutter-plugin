@@ -37,10 +37,12 @@ class SurveyPanel extends StatefulWidget {
   final PreferredSizeWidget? headerBar;
   final Widget? tabBar;
   final Widget? offlineWidget;
+  final Color? backgroundColor;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.dateTaken, this.showResult = false, this.onComplete, this.initPanelDepth = 0, this.defaultResponses,
-    this.summarizeResultRules = false, this.summarizeResultRulesWidget, this.headerBar, this.tabBar, this.offlineWidget}) : super(key: key);
+    this.summarizeResultRules = false, this.summarizeResultRulesWidget, this.headerBar, this.tabBar,
+    this.backgroundColor, this.offlineWidget}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -50,6 +52,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
   final bool _loading = false;
   Survey? _survey;
   SurveyData? _mainSurveyData;
+  late final Color _backgroundColor;
 
   GlobalKey? dataKey;
 
@@ -65,6 +68,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     if (widget.survey is Survey) {
       _setSurvey(widget.survey!);
     }
+    _backgroundColor = widget.backgroundColor ?? Styles().colors.background;
     super.initState();
   }
 
@@ -74,7 +78,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     return Scaffold(
       appBar: widget.headerBar ?? HeaderBar(title: _survey?.title),
       bottomNavigationBar: widget.tabBar,
-      backgroundColor: Styles().colors.background,
+      backgroundColor: _backgroundColor,
       body: Column(
         children: [
           Visibility(visible: _loading, child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color?>(Styles().colors.fillColorPrimary))),
