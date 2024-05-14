@@ -1,7 +1,6 @@
 
 import 'dart:collection';
 import 'dart:core';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
