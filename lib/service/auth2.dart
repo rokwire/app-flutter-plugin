@@ -501,6 +501,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
       } else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        _notifyLogin(Auth2Type.typePasskey, false);
         if (error?.status == 'unverified') {
           return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
         }
@@ -561,10 +562,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
         bool success = await processLoginResponse(responseJson);
         if (success) {
+          _notifyLogin(Auth2Type.typePasskey, true);
           return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.succeeded);
         }
       } else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        _notifyLogin(Auth2Type.typePasskey, false);
         if (error?.status == 'unverified') {
           return Auth2PasskeySignInResult(Auth2PasskeySignInResultStatus.failedNotActivated);
         }
@@ -643,6 +646,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
               return Auth2PasskeySignUpResult(auth2PasskeySignUpResultStatusFromAuthPasskeySignInResultStatus(result.status));
             } catch(error) {
               if (error is PlatformException && error.code == "NoCredentialException") {
+                _notifyLogin(Auth2Type.typePasskey, false);
                 return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNoCredentials);
               }
 
@@ -662,6 +666,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           }
         } else {
           Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response.body));
+          _notifyLogin(Auth2Type.typePasskey, false);
           if (error?.status == 'unverified') {
             return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
           }
@@ -708,10 +713,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? responseJson = JsonUtils.decode(response.body);
         bool success = await processLoginResponse(responseJson);
         if (success) {
+          _notifyLogin(Auth2Type.typePasskey, true);
           return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.succeeded);
         }
       } else {
         Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        _notifyLogin(Auth2Type.typePasskey, false);
         if (error?.status == 'unverified') {
           return Auth2PasskeySignUpResult(Auth2PasskeySignUpResultStatus.failedNotActivated);
         }
