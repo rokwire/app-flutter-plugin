@@ -371,8 +371,11 @@ class Events2 with Service implements NotificationsListener {
 
   // DeepLinks
 
-  String get eventDetailUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
-  String get eventsQueryUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
+  static String get eventDetailRawUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
+  static String eventDetailUrl(Event2? event) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{'event_id' : "${event?.id}"});
+
+  static String get eventsQueryRawUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
+  static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl, params);
 
   @protected
   void onDeepLinkUri(Uri? uri) {
@@ -388,10 +391,10 @@ class Events2 with Service implements NotificationsListener {
 
   @protected
   void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailUrl))) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailRawUrl))) {
       NotificationService().notify(notifyLaunchDetail, uri.queryParameters);
     }
-    else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryUrl))) {
+    else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
       NotificationService().notify(notifyLaunchQuery, uri.queryParameters);
     }
   }
