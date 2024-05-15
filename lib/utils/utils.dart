@@ -42,6 +42,9 @@ class StringUtils {
   static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
     ((value != null) && value.isNotEmpty) ? value : defaultValue; 
 
+  static String? ensureEmpty(String? value) =>
+    (value?.isNotEmpty == true) ? value : null;
+
   static bool isEmpty(String? stringToCheck) =>
     !isNotEmpty(stringToCheck);
 
@@ -247,6 +250,10 @@ class ListUtils {
     return ((list?.length ?? 0) > 0) ? list : null;
   }
 
+  static List<T>? ensureEmpty<T>(List<T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
+  }
+
   static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
     if (list == null) {
       return null;
@@ -337,6 +344,10 @@ class LinkedHashSetUtils {
       }
     }
   }
+
+  static LinkedHashSet<T>? ensureEmpty<T>(LinkedHashSet<T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
+  }
 }
 
 class MapUtils {
@@ -360,6 +371,12 @@ class MapUtils {
     }
   }
 
+  static void add<K, T>(Map<K, T>? map, K? key, T? entry) {
+    if ((map != null) && (key != null) && (entry != null)) {
+      map[key] = entry;
+    }
+  }
+
   static T? get2<K, T>(Map<K, T>? map, List<K?>? keys) {
     if ((map != null) && (keys != null)) {
       for (K? key in keys) {
@@ -372,6 +389,10 @@ class MapUtils {
       }
     }
     return null;
+  }
+
+  static Map<K, T>? ensureEmpty<K, T>(Map<K, T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
   }
 
   static void merge(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
@@ -568,6 +589,19 @@ class UrlUtils {
     return url;
   }
 
+  static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
+    Uri? uri = Uri.tryParse(url);
+    return Uri(
+      scheme: StringUtils.ensureEmpty(uri?.scheme),
+      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
+      host: StringUtils.ensureEmpty(uri?.host),
+      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
+      path: StringUtils.ensureEmpty(uri?.path),
+      fragment: StringUtils.ensureEmpty(uri?.fragment),
+      queryParameters: queryParameters,
+    ).toString();
+  }
+
   static bool isValidUrl(String? url) {
     Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
@@ -678,7 +712,6 @@ class UrlUtils {
     }
     return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
-
 }
 
 
@@ -1474,6 +1507,13 @@ extension TZDateTimeExt on timezone.TZDateTime {
     }
     return null;
   }
+}
+
+extension UriUtilsExt on Uri {
+  bool matchDeepLinkUri(Uri? deepLinkUri) => (deepLinkUri != null) &&
+    (deepLinkUri.scheme == scheme) &&
+    (deepLinkUri.authority == authority) &&
+    (deepLinkUri.path == path);
 }
 
 class Pair<L,R> {

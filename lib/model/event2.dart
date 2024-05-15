@@ -392,6 +392,12 @@ class Event2RegistrationDetails {
     (eventCapacity?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(registrants));
 
+  bool get isEmpty => !isNotEmpty;
+
+  bool get isNotEmpty =>
+    (type == Event2RegistrationType.internal) ||
+    (type == Event2RegistrationType.external);
+
   static bool equals(Event2RegistrationDetails? details1, Event2RegistrationDetails? details2) =>
     ((details1 == null) && (details2 == null)) ||
     ((details1 != null) && (details2 != null) && (details1 == details2)) ||
@@ -1108,7 +1114,7 @@ List<Event2TypeFilter>? event2TypeFilterListFromStringList(List<String>? values)
   return null;
 }
 
-List<String>? event2TypeFilterListToStringList(List<Event2TypeFilter>? values) {
+List<String>? event2TypeFilterListToStringList(Iterable<Event2TypeFilter>? values) {
   if (values != null) {
     List<String> list = <String>[];
     for (Event2TypeFilter value in values) {

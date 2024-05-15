@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -122,7 +123,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Config() };
+    return { Config(), Storage(), Auth2() };
   }
 
   // NotificationsListener
