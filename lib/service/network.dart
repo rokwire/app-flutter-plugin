@@ -30,8 +30,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 abstract mixin class NetworkAuthProvider {
   Map<String, String>? get networkAuthHeaders;
-  dynamic get networkAuthToken => null;
-  Future<bool> refreshNetworkAuthTokenIfNeeded(http.BaseResponse? response, dynamic token) async => false;
+  Future<bool> refreshNetworkAuthTokenIfNeeded(http.BaseResponse? response) async => false;
 }
 
 class Network  {
@@ -149,7 +148,7 @@ class Network  {
     try {
       response = await _get(url, headers: headers, body: body, encoding: encoding, auth: auth, client: client, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _get(url, body: body, headers: headers, auth: auth, client: client, timeout: timeout);
       }
     } catch (e) { 
@@ -186,13 +185,13 @@ class Network  {
     return null;
   }
 
-  Future<http.Response?> post(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, http.Client? client, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl }) async{
+  Future<http.Response?> post(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, http.Client? client, NetworkAuthProvider? auth, int? timeout = 60, bool sendAnalytics = true, String? analyticsUrl}) async{
     http.Response? response;
     
     try {
       response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -235,7 +234,7 @@ class Network  {
     try {
       response = await _put(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _put(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
       }
     } catch (e) {
@@ -274,7 +273,7 @@ class Network  {
     try {
       response = await _patch(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _patch(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -312,7 +311,7 @@ class Network  {
     try {
       response = await _delete(url, body: body, encoding:encoding, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _delete(url, body: body, encoding:encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
@@ -382,7 +381,7 @@ class Network  {
     try {
       response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
 
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
       }
     } catch (e) {
@@ -452,7 +451,7 @@ class Network  {
     try {
       response = await _head(url, headers: headers, auth: auth, timeout: timeout);
       
-      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response) == true) {
         response = await _head(url, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
