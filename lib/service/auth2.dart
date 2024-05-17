@@ -65,7 +65,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Timer? _oidcAuthenticationTimer;
 
   Future<Auth2Token?>? _refreshTokenFuture;
-  final Map<String, int> _refreshTokenFailCounts = {};
+  int _refreshTokenFailCount = 0;
 
   Client? _updateUserPrefsClient;
   Timer? _updateUserPrefsTimer;
@@ -420,7 +420,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Map<String, dynamic>? params = JsonUtils.mapValue(responseJson['params']);
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
-          _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
+          _refreshTokenFailCount = 0;
           await Future.wait([
             Storage().setAuth2AnonymousId(_anonymousId = anonymousId),
             Storage().setAuth2AnonymousToken(_anonymousToken = anonymousToken),
@@ -850,7 +850,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope = defaultLoginScope, Map<String, dynamic>? params }) async {
     Auth2Token? oidcToken = (params != null) ? Auth2Token.fromJson(JsonUtils.mapValue(params['oidc_token'])) : null;
 
-    _refreshTokenFailCounts.remove(_token?.refreshToken);
+    _refreshTokenFailCount = 0;
 
     if (associateAnonymousIds) {
       _anonymousPrefs?.addAnonymousId(_anonymousId);
@@ -1481,7 +1481,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> logout({ Auth2UserPrefs? prefs }) async {
     NotificationService().notify(notifyLogoutStarted);
     _log("Auth2: logout");
-    _refreshTokenFailCounts.remove(_token?.refreshToken);
+    _refreshTokenFailCount = 0;
 
     if (Config().authBaseUrl != null) {
       Map<String, String> headers = {
@@ -1556,6 +1556,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
         Auth2Token? newToken = await _refreshTokenFuture;
         _refreshTokenFuture = null;
+        NotificationService().notify(notifyRefreshFinished);
         return newToken;
       }
       catch(e) {
@@ -1604,7 +1605,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
         if ((responseToken != null) && responseToken.isValid) {
           _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token?.refreshToken}");
-          _refreshTokenFailCounts.remove(token?.refreshToken);
+          _refreshTokenFailCount = 0;
 
           if (token == _token) {
             await applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
@@ -1619,20 +1620,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token?.refreshToken}");
       NotificationService().notify(notifyRefreshError, '${response?.statusCode} - ${response?.body}');
-      int refreshTokenFailCount = 1;
-      if (StringUtils.isNotEmpty(token!.refreshToken)) {
-        refreshTokenFailCount += _refreshTokenFailCounts[token!.refreshToken!] ?? 0;
-      }
-      if (((response?.statusCode == 400) || (!ignoreUnauthorized && response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
+      if (((response?.statusCode == 400) || (!ignoreUnauthorized && response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= ++_refreshTokenFailCount)) {
         if (token == _token) {
           logout();
         }
         else if (token == _anonymousToken) {
           await authenticateAnonymously();
         }
-      }
-      else if (StringUtils.isNotEmpty(token!.refreshToken)) {
-        _refreshTokenFailCounts[token!.refreshToken!] = refreshTokenFailCount;
       }
     }
     return null;
