@@ -560,10 +560,30 @@ class Event2Grouping {
   static List<Event2Grouping> individualEvents() => <Event2Grouping>[
     // Events without grouping type
     Event2Grouping(type: Event2GroupingType.none, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+
     // Main Super Events
     Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+
     // Sub Events when display as individual is true
     Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'), //explicitly String
+
+    // Main Recurring events
+    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _ignoreFieldValue, recurrenceId: _noneFieldValue, displayAsIndividual: _ignoreFieldValue)
+  ];
+
+  static List<Event2Grouping> feedEvents() => <Event2Grouping>[
+    // Events without grouping type
+    Event2Grouping(type: Event2GroupingType.none, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+
+    // Main Super Events
+    //Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
+
+    // Sub Events when display as individual is true
+    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'), //explicitly String
+
+    // Sub Events when display as individual is false
+    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'false'), //explicitly String
+
     // Main Recurring events
     Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _ignoreFieldValue, recurrenceId: _noneFieldValue, displayAsIndividual: _ignoreFieldValue)
   ];
