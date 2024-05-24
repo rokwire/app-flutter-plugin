@@ -1446,8 +1446,8 @@ class DateTimeUtils {
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
-  static DateTime? parseDateTime(String dateTimeString, {String? format, bool isUtc = false}) {
-    if (StringUtils.isNotEmpty(dateTimeString)) {
+  static DateTime? parseDateTime(String? dateTimeString, {String? format, bool isUtc = false}) {
+    if (dateTimeString != null && StringUtils.isNotEmpty(dateTimeString)) {
       if (StringUtils.isNotEmpty(format)) {
         try {
           return DateFormat(format).parse(dateTimeString, isUtc);
