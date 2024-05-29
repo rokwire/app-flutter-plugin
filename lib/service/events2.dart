@@ -77,7 +77,8 @@ class Events2 with Service implements NotificationsListener {
 
   // Content Attributes
 
-  ContentAttributes? get contentAttributes => Content().contentAttributes('events');
+  static const String contentAttributesScope = 'events';
+  ContentAttributes? get contentAttributes => Content().contentAttributes(contentAttributesScope);
 
 
   // Implementation
