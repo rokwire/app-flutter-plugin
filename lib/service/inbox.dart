@@ -250,11 +250,14 @@ class Inbox with Service implements NotificationsListener {
   }
 
   Future<bool> _manageFCMSubscription({String? topic, String? token, String? action}) async {
-    if ((Config().notificationsUrl != null) && (topic != null) && (token != null) && (action != null)) {
+    if ((Config().notificationsUrl != null) && (topic != null) && (action != null)) {
       String url = "${Config().notificationsUrl}/api/topic/$topic/$action";
-      String? body = JsonUtils.encode({
-        'token': token
-      });
+      String? body;
+      if (token != null) {
+        body = JsonUtils.encode({
+          'token': token
+        });
+      }
       Response? response = await Network().post(url, body: body, auth: Auth2());
       //Log.d("FCMTopic_$action($topic) => ${(response?.statusCode == 200) ? 'Yes' : 'No'}");
       return (response?.statusCode == 200);
