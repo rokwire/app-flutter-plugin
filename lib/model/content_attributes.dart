@@ -205,9 +205,7 @@ class ContentAttributes {
             debugPrint("Start: ${attributesScope.toString()}");
           }
           else {
-            String oldValue = attributesScope.toString();
             attributesScope = attributesScope.intersection(attribute.scope!);
-            debugPrint("Update: oldValue AND ${attribute.scope} => ${attributesScope.toString()}");
           }
         }
       }
