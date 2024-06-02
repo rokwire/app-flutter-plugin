@@ -32,6 +32,8 @@ class FirebaseMessaging with Service {
 
   static const String notifyGroupsNotification    = "edu.illinois.rokwire.firebase.messaging.groups.updated";
 
+  static const String deviceTokenType = "firebase";
+
   String?   _token;
   
   // Singletone Factory

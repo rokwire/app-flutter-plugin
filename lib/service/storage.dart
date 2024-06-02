@@ -355,12 +355,12 @@ class Storage with Service {
 
   // Inbox
   String get inboxFirebaseMessagingTokenKey => 'edu.illinois.rokwire.inbox.firebase_messaging.token';
-  String? get inboxFirebaseMessagingToken => getStringWithName(inboxFirebaseMessagingTokenKey);
-  set inboxFirebaseMessagingToken(String? value) => setStringWithName(inboxFirebaseMessagingTokenKey, value);
+  String? get inboxNotificationToken => getStringWithName(inboxFirebaseMessagingTokenKey);
+  set inboxNotificationToken(String? value) => setStringWithName(inboxFirebaseMessagingTokenKey, value);
 
   String get inboxFirebaseMessagingUserIdKey => 'edu.illinois.rokwire.inbox.firebase_messaging.user_id';
-  String? get inboxFirebaseMessagingUserId => getStringWithName(inboxFirebaseMessagingUserIdKey);
-  set inboxFirebaseMessagingUserId(String? value) => setStringWithName(inboxFirebaseMessagingUserIdKey, value);
+  String? get inboxNotificationUserId => getStringWithName(inboxFirebaseMessagingUserIdKey);
+  set inboxNotificationUserId(String? value) => setStringWithName(inboxFirebaseMessagingUserIdKey, value);
 
   String get inboxUserInfoKey => 'edu.illinois.rokwire.inbox.user_info';
   InboxUserInfo? get inboxUserInfo => InboxUserInfo.fromJson(JsonUtils.decode(getStringWithName(inboxUserInfoKey)));
@@ -375,7 +375,7 @@ class Storage with Service {
   Set<String>? get inboxFirebaseMessagingSubscriptionTopics => SetUtils.from(getStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey));
   set inboxFirebaseMessagingSubscriptionTopics(Set<String>? value) => setStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey, ListUtils.from(value));
 
-  void addInboxFirebaseMessagingSubscriptionTopic(String? value) {
+  void addInboxNotificationSubscriptionTopic(String? value) {
     if (value != null) {
       Set<String> topics = inboxFirebaseMessagingSubscriptionTopics ?? {};
       topics.add(value);
@@ -383,7 +383,7 @@ class Storage with Service {
     }
   }
 
-  void removeInboxFirebaseMessagingSubscriptionTopic(String? value) {
+  void removeInboxNotificationSubscriptionTopic(String? value) {
     if (value != null) {
       Set<String>? topics = inboxFirebaseMessagingSubscriptionTopics;
       topics?.remove(value);

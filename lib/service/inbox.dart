@@ -18,8 +18,8 @@ class Inbox with Service implements NotificationsListener {
   static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
   static const String notifyInboxMessageRead                 = "edu.illinois.rokwire.inbox.message.read";
 
-  String?   _fcmToken;
-  String?   _fcmUserId;
+  String?   _notificationDeviceToken;
+  String?   _notificationUserId;
   bool?     _isServiceInitialized;
   DateTime? _pausedDateTime;
   
@@ -59,12 +59,12 @@ class Inbox with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _fcmToken = Storage().inboxFirebaseMessagingToken;
-    _fcmUserId = Storage().inboxFirebaseMessagingUserId;
+    _notificationDeviceToken = Storage().inboxNotificationToken;
+    _notificationUserId = Storage().inboxNotificationUserId;
     _userInfo = Storage().inboxUserInfo;
     _unreadMessagesCount = Storage().inboxUnreadMessagesCount;
     _isServiceInitialized = true;
-    _processFcmToken();
+    processDeviceToken();
     _loadUserInfo();
     _loadUnreadMessagesCount();
     await super.initService();
@@ -80,10 +80,10 @@ class Inbox with Service implements NotificationsListener {
   @override
   void onNotification(String name, dynamic param) {
     if (name == FirebaseMessaging.notifyToken) {
-      _processFcmToken();
+      processDeviceToken();
     }
     else if (name == Auth2.notifyLoginChanged) {
-      _processFcmToken();
+      processDeviceToken();
       _loadUserInfo();
       _loadUnreadMessagesCount();
     }
@@ -102,7 +102,7 @@ class Inbox with Service implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _processFcmToken();
+          processDeviceToken();
           _loadUserInfo();
           _loadUnreadMessagesCount();
         }
@@ -259,6 +259,7 @@ class Inbox with Service implements NotificationsListener {
         });
       }
       Response? response = await Network().post(url, body: body, auth: Auth2());
+      String? responseBody = response?.body;
       //Log.d("FCMTopic_$action($topic) => ${(response?.statusCode == 200) ? 'Yes' : 'No'}");
       return (response?.statusCode == 200);
     }
@@ -267,33 +268,39 @@ class Inbox with Service implements NotificationsListener {
 
   // FCM Token
 
-  void _processFcmToken() {
+  @protected
+  String? getDeviceToken() => FirebaseMessaging().token;
+  String? getDeviceTokenType() => FirebaseMessaging.deviceTokenType;
+
+  void processDeviceToken() {
     // We call _processFcmToken when FCM token changes or when user logs in/out.
     if (_isServiceInitialized == true) {
-      String? fcmToken = FirebaseMessaging().token;
+      String? deviceToken = getDeviceToken();
+      String? tokenType = getDeviceTokenType();
       String? userId = Auth2().accountId;
-      if ((fcmToken != null) && (fcmToken != _fcmToken)) {
-        _updateFCMToken(token: fcmToken, previousToken: _fcmToken).then((bool result) {
+      if ((deviceToken != null) && (deviceToken != _notificationDeviceToken)) {
+        _updateDeviceToken(token: deviceToken, previousToken: _notificationDeviceToken, type: tokenType).then((bool result) {
           if (result) {
-            Storage().inboxFirebaseMessagingToken = _fcmToken = fcmToken;
+            Storage().inboxNotificationToken = _notificationDeviceToken = deviceToken;
           }
         });
       }
-      else if (userId != _fcmUserId) {
-        _updateFCMToken(token: fcmToken).then((bool result) {
+      else if (userId != _notificationUserId) {
+        _updateDeviceToken(token: deviceToken, type: tokenType).then((bool result) {
           if (result) {
-            Storage().inboxFirebaseMessagingUserId = _fcmUserId = userId;
+            Storage().inboxNotificationUserId = _notificationUserId = userId;
           }
         });
       }
     }
   }
 
-  Future<bool> _updateFCMToken({String? token, String? previousToken}) async {
+  Future<bool> _updateDeviceToken({String? token, String? previousToken, String? type}) async {
     if ((Config().notificationsUrl != null) && ((token != null) || (previousToken != null))) {
       String url = "${Config().notificationsUrl}/api/token";
       String? body = JsonUtils.encode({
         'token': token,
+        'token_type': type,
         'previous_token': previousToken,
         'app_platform': Config().operatingSystem,
         'app_version': Config().appVersion,
@@ -308,7 +315,7 @@ class Inbox with Service implements NotificationsListener {
   // Topics storage
   void _storeTopic(String? topic) {
     if (!Auth2().isLoggedIn) {
-      Storage().addInboxFirebaseMessagingSubscriptionTopic(topic);
+      Storage().addInboxNotificationSubscriptionTopic(topic);
     }
     else if (userInfo != null) {
       _userInfo?.topics ??= <String>{};
@@ -318,7 +325,7 @@ class Inbox with Service implements NotificationsListener {
 
   void _removeStoredTopic(String? topic) {
     if (!Auth2().isLoggedIn) {
-      Storage().removeInboxFirebaseMessagingSubscriptionTopic(topic);
+      Storage().removeInboxNotificationSubscriptionTopic(topic);
     }
     else if (userInfo?.topics != null) {
       userInfo?.topics?.remove(topic);
