@@ -1009,12 +1009,14 @@ class AppToast {
   static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
   static const Color defaultTextColor = Colors.white;
   static const Color defaultBackgroundColor = const Color(0x99000000);
-  
+  static const String defaultWebBackgroundColor = '#ffffff';
+
   static void showMessage(String msg, {
     ToastGravity gravity = defaultGravity,
     Duration duration = defaultDuration,
     Color textColor = defaultTextColor,
     Color backgroundColor = defaultBackgroundColor,
+    String webBackgroundColor = defaultWebBackgroundColor,
   }) {
     Fluttertoast.showToast(
       msg: msg,
@@ -1023,6 +1025,7 @@ class AppToast {
       timeInSecForIosWeb: duration.inSeconds,
       gravity: gravity,
       backgroundColor: backgroundColor,
+      webBgColor: defaultWebBackgroundColor
     );
   }
 
