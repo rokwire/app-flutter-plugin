@@ -228,9 +228,11 @@ class Inbox with Service implements NotificationsListener {
   }
 
   Future<bool> subscribeToTopic({String? topic, String? token}) async {
-    _storeTopic(topic); // Store first, otherwise we have delay
     bool result = await _manageFCMSubscription(topic: topic, token: token, action: 'subscribe');
-    if (!result){
+    if (result) {
+      _storeTopic(topic); // Store first, otherwise we have delay
+    }
+    else {
       //if failed and not already stored remove
       Log.e("Unable to subscribe to topic: $topic");
     }
@@ -239,9 +241,10 @@ class Inbox with Service implements NotificationsListener {
   }
 
   Future<bool> unsubscribeFromTopic({String? topic, String? token}) async {
-    _removeStoredTopic(topic); //StoreFist, otherwise we have visual delay
     bool result = await _manageFCMSubscription(topic: topic, token: token, action: 'unsubscribe');
-    if (!result){
+    if (result) {
+      _removeStoredTopic(topic); //StoreFist, otherwise we have visual delay
+    } else {
       //if failed //TBD
       Log.e("Unable to unsubscribe from topic: $topic");
     }
