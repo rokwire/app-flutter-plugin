@@ -19,6 +19,9 @@ import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/firebase_core.dart';
 import 'package:rokwire_plugin/service/service.dart';
 
+///
+/// Disable FirebaseCrashlytics for web - not supported.
+///
 class FirebaseCrashlytics with Service {
   
   // Singletone Factory
@@ -39,9 +42,10 @@ class FirebaseCrashlytics with Service {
 
   @override
   Future<void> initService() async{
-
-    // Enable automatic data collection
-    google.FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    if (!kIsWeb) {
+      // Enable automatic data collection
+      google.FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    }
 
     // Pass all uncaught errors to Firebase.Crashlytics.
     FlutterError.onError = handleFlutterError;
@@ -51,21 +55,29 @@ class FirebaseCrashlytics with Service {
 
   void handleFlutterError(FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
-    google.FirebaseCrashlytics.instance.recordFlutterError(details);
+    if (!kIsWeb) {
+      google.FirebaseCrashlytics.instance.recordFlutterError(details);
+    }
   }
 
   void handleZoneError(dynamic exception, StackTrace stack) {
     debugPrint(exception?.toString());
-    google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    if (!kIsWeb) {
+      google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    }
   }
 
   void recordError(dynamic exception, StackTrace? stack) {
     debugPrint(exception?.toString());
-    google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    if (!kIsWeb) {
+      google.FirebaseCrashlytics.instance.recordError(exception, stack);
+    }
   }
 
   void log(String message) {
-    google.FirebaseCrashlytics.instance.log(message);
+    if (!kIsWeb) {
+      google.FirebaseCrashlytics.instance.log(message);
+    }
   }
 
   @override
