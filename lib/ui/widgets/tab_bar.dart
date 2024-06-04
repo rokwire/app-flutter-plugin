@@ -213,11 +213,11 @@ class TabWidget extends StatelessWidget {
     String? key = selected ? (selectedIconKey ?? iconKey) : iconKey;
     Widget defaultIcon = SizedBox(width: tabIconSize.width, height: tabIconSize.height);
     return (key != null) ? Styles().images.getImage(key, width: tabIconSize.width, height: tabIconSize.height,
-        color: selected ? AppColors.fillColorSecondary : AppColors.textDisabled) ?? defaultIcon : defaultIcon;
+        color: selected ? AppColors.fillColorSecondary : AppColors.iconDisabled) ?? defaultIcon : defaultIcon;
   }
 
   @protected
-  Size get tabIconSize => const Size(20, 20);
+  Size get tabIconSize => const Size(16, 16);
 
   // Selected Indicator
 
