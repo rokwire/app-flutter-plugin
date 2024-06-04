@@ -217,7 +217,7 @@ class TabWidget extends StatelessWidget {
   }
 
   @protected
-  Size get tabIconSize => const Size(16, 16);
+  Size get tabIconSize => const Size(20, 20);
 
   // Selected Indicator
 
