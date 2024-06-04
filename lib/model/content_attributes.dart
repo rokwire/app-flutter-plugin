@@ -2,6 +2,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -192,6 +193,24 @@ class ContentAttributes {
       }
     }
     return displayList;
+  }
+
+  Set<String>? get scope {
+    Set<String>? attributesScope;
+    if (attributes != null) {
+      for (ContentAttribute attribute in attributes!) {
+        if (attribute.scope?.isNotEmpty == true) {
+          if (attributesScope == null) {
+            attributesScope = attribute.scope;
+            debugPrint("Start: ${attributesScope.toString()}");
+          }
+          else {
+            attributesScope = attributesScope.intersection(attribute.scope!);
+          }
+        }
+      }
+    }
+    return attributesScope;
   }
 }
 
