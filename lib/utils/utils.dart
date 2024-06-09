@@ -758,6 +758,15 @@ class JsonUtils {
     return null;
   }
 
+  static Map<String, T>? decodeMapT<T>(String? jsonString) {
+    try {
+      return (decode(jsonString) as Map?)?.cast<String, T>();
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
   static Future<Map<String, dynamic>?> decodeMapAsync(String? jsonString) =>
     compute(decodeMap, jsonString);
 
@@ -802,6 +811,16 @@ class JsonUtils {
   static Map<String, dynamic>? mapValue(dynamic value) {
     try {
       return (value is Map) ? value.cast<String, dynamic>() : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, T>? mapValueT<T>(dynamic value) {
+    try {
+      return (value is Map) ? value.cast<String, T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
