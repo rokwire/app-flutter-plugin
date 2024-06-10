@@ -115,7 +115,7 @@ String _prettyJsonEncode(LinkedHashMap<dynamic, dynamic> jsonObject, {bool deepF
   bool first = true;
   for (dynamic entry in jsonObject.entries) {
     if (!(entry is MapEntry<dynamic, dynamic>)) {
-      print('invalid entry type: ${entry.key} - ${entry.runtimeType}');
+      print('Warn: invalid entry type: ${entry.key} - ${entry.runtimeType}');
       continue;
     }
     if (!first) {
@@ -204,7 +204,7 @@ LinkedHashMap<String, dynamic> _mergeJson(LinkedHashMap<String, dynamic>? from, 
         }
       }
     } else {
-      print("unexpected section type: ${section.value}");
+      print("Warn: unexpected section type: ${section.value}");
     }
   }
 
@@ -220,7 +220,7 @@ String _parseAsset(LinkedHashMap<String, dynamic> asset) {
         classStrings.add(classString);
       }
     } else {
-      print("unexpected structure type: ${entry.value}");
+      print("Warn: unexpected structure type: ${entry.value}");
     }
   }
   return _buildFile(classStrings);
@@ -282,6 +282,8 @@ String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<St
       if (extendsMap is Map<String, dynamic>) {
         _mergeMaps(extendsMap, value);
         value = extendsMap;
+      } else {
+        print('Warn: Failed to text style "$extendsKey" extended by "${entry.key}"');
       }
     }
     String params = '';
