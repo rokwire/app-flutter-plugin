@@ -321,6 +321,7 @@ class Inbox with Service implements NotificationsListener {
       Storage().addInboxNotificationSubscriptionTopic(topic);
     }
     else {
+      _userInfo ??= InboxUserInfo(userId: Auth2().accountId);
       _userInfo?.topics ??= {};
       userInfo?.topics?.add(topic);
     }
