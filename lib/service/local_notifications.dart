@@ -48,16 +48,22 @@ class LocalNotifications with Service {
 
   @override
   Future<void> initService() async {
-    try {
-      await RokwirePlugin.createAndroidNotificationChannel(androidNotificationChannel);
-      await _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(androidNotificationChannel);
-    } catch (e) {
-      throw ServiceError(
-        source: this,
-        severity: ServiceErrorSeverity.nonFatal,
-        title: 'Local Notifications Initialization Failed',
-        description: 'Failed to create Android notification channel: ${e.toString()}.',
-      );
+    if (kIsWeb) {
+      debugPrint('WEB: Local notifications are not supported in web');
+    } else {
+      try {
+        await RokwirePlugin.createAndroidNotificationChannel(androidNotificationChannel);
+        await _localNotifications
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(androidNotificationChannel);
+      } catch (e) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.nonFatal,
+          title: 'Local Notifications Initialization Failed',
+          description: 'Failed to create Android notification channel: ${e.toString()}.',
+        );
+      }
     }
     
     bool? initSuccess = await _initPlugin();
