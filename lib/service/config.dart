@@ -95,8 +95,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
-    _appDocumentsDir = await getApplicationDocumentsDirectory();
-    Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
+    _appDocumentsDir = kIsWeb ? null : await getApplicationDocumentsDirectory();
+    Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
 
     await init();
     await super.initService();
@@ -154,9 +154,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  File get configFile {
-    String configFilePath = join(_appDocumentsDir!.path, configName);
-    return File(configFilePath);
+  File? get configFile {
+    String? configFilePath = (_appDocumentsDir != null) ? join(_appDocumentsDir!.path, configName) : null;
+    return (configFilePath != null) ? File(configFilePath) : null;
   }
 
   @protected
@@ -294,7 +294,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       if (_config != null) {
-        configFile.writeAsStringSync(configString!, flush: true);
+        configFile?.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
       else {
@@ -318,7 +318,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Map<String, dynamic>? config = await configFromJsonString(configString);
     if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !await CollectionUtils.equalsAsync(_config, config))  {
       _config = config;
-      configFile.writeAsString(configString!, flush: true);
+      configFile?.writeAsString(configString!, flush: true);
       NotificationService().notify(notifyConfigChanged, null);
 
       checkUpgrade();

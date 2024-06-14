@@ -154,7 +154,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   @protected
   Future<Directory?> getAppDocumentsDirectory() async {
     try {
-      return await getApplicationDocumentsDirectory();
+      return kIsWeb ? null : await getApplicationDocumentsDirectory();
     }
     catch(e) {
       debugPrint(e.toString());

@@ -15,9 +15,9 @@
  */
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -34,6 +34,11 @@ class ImageUtils {
   ///
   static Future<bool?> saveToFs(Uint8List? imageBytes, String fileName) async {
     if ((imageBytes == null) || StringUtils.isEmpty(fileName)) {
+      return false;
+    }
+    if (kIsWeb) {
+      //TBD: DD - implement for web
+      debugPrint('WEB: implement downloading file to file system');
       return false;
     }
     final String dir = (await getApplicationDocumentsDirectory()).path;

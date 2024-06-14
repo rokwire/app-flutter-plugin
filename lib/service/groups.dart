@@ -20,6 +20,7 @@ import 'dart:core';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path/path.dart';
@@ -224,7 +225,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<Directory?> _getAppDocumentsDirectory() async {
     try {
-      return await getApplicationDocumentsDirectory();
+      return kIsWeb ? null : await getApplicationDocumentsDirectory();
     }
     catch(e) {
       debugPrint(e.toString());
