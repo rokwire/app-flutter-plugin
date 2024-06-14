@@ -320,8 +320,8 @@ class Inbox with Service implements NotificationsListener {
     if (!Auth2().isLoggedIn) {
       Storage().addInboxNotificationSubscriptionTopic(topic);
     }
-    else if (userInfo != null) {
-      _userInfo?.topics ??= <String>{};
+    else {
+      _userInfo?.topics ??= {};
       userInfo?.topics?.add(topic);
     }
   }
@@ -330,7 +330,7 @@ class Inbox with Service implements NotificationsListener {
     if (!Auth2().isLoggedIn) {
       Storage().removeInboxNotificationSubscriptionTopic(topic);
     }
-    else if (userInfo?.topics != null) {
+    else {
       userInfo?.topics?.remove(topic);
     }
   }
