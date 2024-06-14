@@ -16,8 +16,10 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -90,14 +92,18 @@ class LocationServices with Service implements NotificationsListener {
   LocationServicesStatus? get lastStatus => _lastStatus;
 
   Future<LocationServicesStatus?> get status async {
-    _lastStatus = _locationServicesStatusFromString(JsonUtils.stringValue(await RokwirePlugin.locationServices('queryStatus')));
+    if (kIsWeb) {
+      _lastStatus = _locationServicesStatusFromPermissionStatus(await Permission.location.status);
+    } else {
+      _lastStatus = _locationServicesStatusFromString(JsonUtils.stringValue(await RokwirePlugin.locationServices('queryStatus')));
+    }
     _updateLocationMonitor();
     return _lastStatus;
   }
 
   Future<LocationServicesStatus?> requestService() async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      await Geolocator.openLocationSettings();
+    if (!kIsWeb && !await Geolocator.isLocationServiceEnabled()) {
+      await Geolocator.openLocationSettings(); // Not supported in web
     }
 
     _lastStatus = await status;
@@ -214,5 +220,19 @@ LocationServicesStatus? _locationServicesStatusFromString(String? value) {
   }
   else {
     return null;
+  }
+}
+
+LocationServicesStatus? _locationServicesStatusFromPermissionStatus(PermissionStatus? value) {
+  switch (value) {
+    case PermissionStatus.granted:
+      return LocationServicesStatus.permissionAllowed;
+    case PermissionStatus.denied:
+    case PermissionStatus.permanentlyDenied:
+      return LocationServicesStatus.permissionDenied;
+    case PermissionStatus.restricted:
+      return LocationServicesStatus.serviceDisabled;
+    default:
+      return null;
   }
 }
