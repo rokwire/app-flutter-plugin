@@ -14,7 +14,7 @@ dependencies:
   logger: ^1.1.0
   connectivity_plus: ^3.0.0
   uni_links: ^0.5.1
-  fluttertoast: ^8.0.8
+  fluttertoast: ^8.2.6
   path: ^1.8.0
   gallery_saver: ^2.3.2
   path_provider: ^2.0.4
