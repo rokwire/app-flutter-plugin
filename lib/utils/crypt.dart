@@ -65,6 +65,13 @@ class AESCrypt {
     }));
   }
 
+  static String secureKey({int size = kCCBlockSizeAES128}) {
+    SecureRandom secureRandom = RsaKeyHelper.getSecureRandom();
+    Uint8List bytes = secureRandom.nextBytes(size!);
+    String encodedKey = base64Encode(bytes);
+    return encodedKey;
+  }
+
   /*static bool debugEncode() {
     String base64Key = '...';
     String base64IV = '...';

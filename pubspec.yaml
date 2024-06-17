@@ -47,6 +47,7 @@ dependencies:
 
   # Below are the plugins imported alongside web integration
   permission_handler: ^11.3.1
+  flutter_secure_storage: ^9.2.2
 
   #Firebase
   firebase_core: ^2.13.0
