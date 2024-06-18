@@ -40,6 +40,9 @@ class FlexUI with Service implements NotificationsListener {
   static const String _assetsName   = "flexUI.json";
   static const String _defaultContentSourceKey   = "";
 
+  static const String _featuresKey   = "features";
+  static const String _attributesKey   = "attributes";
+
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
@@ -50,6 +53,8 @@ class FlexUI with Service implements NotificationsListener {
 
   Map<String, dynamic>? _defaultContent;
   Set<dynamic>?         _defaultFeatures;
+  Map<String, Set<String>>? _sourceAttributes;
+  Map<String, Set<String>>? _defaultAttributes;
 
   // Singletone Factory
 
@@ -259,8 +264,12 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   void build() {
     _contentSource = buildContentSource();
+
     _defaultContent = buildContent(defaultContentSourceEntry);
+    _sourceAttributes = buildAttributes(defaultSourceContent);
+
     _defaultFeatures = buildFeatures(_defaultContent);
+    _defaultAttributes = buildAttributes(_defaultContent);
   }
 
   @protected
@@ -268,15 +277,34 @@ class FlexUI with Service implements NotificationsListener {
     Map<String, dynamic>? defaultContent = buildContent(defaultContentSourceEntry);
     if ((defaultContent != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, defaultContent))) {
       _defaultContent = defaultContent;
+
       _defaultFeatures = buildFeatures(_defaultContent);
+      _defaultAttributes = buildAttributes(_defaultContent);
       NotificationService().notify(notifyChanged, null);
     }
   }
 
   @protected
   Set<dynamic>? buildFeatures(Map<String, dynamic>? content) {
-    dynamic featuresList = (content != null) ? content['features'] : null;
+    dynamic featuresList = (content != null) ? content[_featuresKey] : null;
     return (featuresList is Iterable) ? Set.from(featuresList) : null;
+  }
+
+  Map<String, Set<String>>? buildAttributes(Map<String, dynamic>? content) {
+    Map<String, Set<String>>? attributesForScope;
+    if (content != null) {
+      List<String>? scopesList = JsonUtils.listStringsValue(content[_attributesKey]);
+      if (scopesList != null) {
+        attributesForScope = <String, Set<String>>{};
+        for (String scope in scopesList) {
+          Set<String>? scopeAttributes = JsonUtils.setStringsValue(content["$_attributesKey.$scope"]);
+          if (scopeAttributes != null) {
+            attributesForScope[scope] = scopeAttributes;
+          }
+        }
+      }
+    }
+    return attributesForScope;
   }
 
   // Content
@@ -298,8 +326,12 @@ class FlexUI with Service implements NotificationsListener {
     return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
   }
 
-  Map<String, dynamic> get defaultRules {
+  Map<String, dynamic> get defaultSourceRules {
     return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
+  }
+
+  Map<String, dynamic> get defaultSourceContent {
+    return JsonUtils.mapValue(defaultContentSourceEntry?['content']) ?? <String, dynamic>{};
   }
 
   Set<dynamic>? get defaultFeatures {
@@ -309,6 +341,17 @@ class FlexUI with Service implements NotificationsListener {
   bool hasFeature(String feature) {
     return (_defaultFeatures != null) && _defaultFeatures!.contains(feature);
   }
+
+  Map<String, Set<String>>? get sourceAttributes => _sourceAttributes;
+  Map<String, Set<String>>? get defaultAttributes => _defaultAttributes;
+
+  bool isAttributeEnabled(String? attribute, { String? scope }) =>
+    !isAttributeDisabled(attribute, scope: scope);
+
+  bool isAttributeDisabled(String? attribute, { String? scope }) =>
+    (attribute != null) && (scope != null) &&
+    (_sourceAttributes?[scope]?.contains(attribute) == true) &&
+    (_defaultAttributes?[scope]?.contains(attribute) == false);
 
   Future<void> update() async {
     return updateContent();
