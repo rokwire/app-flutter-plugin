@@ -470,45 +470,16 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool localeEvalGroupRule(dynamic groupRule) {
-    return BoolExpr.eval(groupRule, (String? argument) {
-      if (argument != null) {
-        bool? not, all, any;
-        if (not = argument.startsWith('~')) {
-          argument = argument.substring(1);
-        }
-        if (all = argument.endsWith('!')) {
-          argument = argument.substring(0, argument.length - 1);
-        }
-        else if (any = argument.endsWith('?')) {
-          argument = argument.substring(0, argument.length - 1);
-        }
-        
-        Set<String>? targetGroups = localeEvalStringsSetParam(argument);
-        Set<String> userGroups = Groups().userGroupNames ?? {};
-        if (targetGroups != null) {
-          if (not == true) {
-            targetGroups = userGroups.difference(targetGroups);
-          }
-
-          if (all == true) {
-            return const DeepCollectionEquality().equals(userGroups, targetGroups);
-          }
-          else if (any == true) {
-            return userGroups.intersection(targetGroups).isNotEmpty;
-          }
-          else {
-            return userGroups.containsAll(targetGroups);
-          }
-        }
-      }
-      return null;
-    });
-  }
+  bool localeEvalGroupRule(dynamic groupRule) =>
+    localeEvalStringsSetExpr(groupRule, Groups().userGroupNames);
 
   @protected
-  bool localeEvalLocationRule(dynamic locationRule) {
-    return BoolExpr.eval(locationRule, (String? argument) {
+  bool localeEvalLocationRule(dynamic locationRule) =>
+    localeEvalStringsSetExpr(locationRule, GeoFence().currentRegionIds);
+
+  @protected
+  bool localeEvalStringsSetExpr(dynamic rule, Set<String>? allStrings) {
+    return BoolExpr.eval(rule, (String? argument) {
       if (argument != null) {
         bool? not, all, any;
         if (not = argument.startsWith('~')) {
@@ -520,22 +491,21 @@ class FlexUI with Service implements NotificationsListener {
         else if (any = argument.endsWith('?')) {
           argument = argument.substring(0, argument.length - 1);
         }
-        
-        Set<String>? targetLocations = localeEvalStringsSetParam(argument);
-        Set<String> userLocations = GeoFence().currentRegionIds;
-        if (targetLocations != null) {
+
+        Set<String>? targetStrings = localeEvalStringsSetParam(argument);
+        if (targetStrings != null) {
           if (not == true) {
-            targetLocations = userLocations.difference(targetLocations);
+            targetStrings = allStrings?.difference(targetStrings) ?? <String>{};
           }
 
           if (all == true) {
-            return const DeepCollectionEquality().equals(userLocations, targetLocations);
+            return const DeepCollectionEquality().equals(allStrings, targetStrings);
           }
           else if (any == true) {
-            return userLocations.intersection(targetLocations).isNotEmpty;
+            return allStrings?.intersection(targetStrings).isNotEmpty == true;
           }
           else {
-            return userLocations.containsAll(targetLocations);
+            return allStrings?.containsAll(targetStrings) == true;
           }
         }
       }
@@ -617,8 +587,11 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'usernameLinked') && (value is bool)) {
             result = result && (Auth2().isUsernameLinked == value);
           }
-          else if ((key == 'accountRole') && (value is String)) {
-            result = result && Auth2().hasRole(value);
+          else if (key == 'accountRole') {
+            result = result && localeEvalAccountRole(value);
+          }
+          else if (key == 'accountPermission') {
+            result = result && localeEvalAccountPermission(value);
           }
           else if ((key == 'shibbolethMemberOf') && (value is String)) {
             result = result && Auth2().isShibbolethMemberOf(value);
@@ -634,6 +607,14 @@ class FlexUI with Service implements NotificationsListener {
     }
     return result;
   }
+
+  @protected
+  bool localeEvalAccountRole(dynamic accountRoleRule) =>
+    localeEvalStringsSetExpr(accountRoleRule, Auth2().account?.allRoleNames);
+
+  @protected
+  bool localeEvalAccountPermission(dynamic accountPermissionRule) =>
+    localeEvalStringsSetExpr(accountPermissionRule, Auth2().account?.allPermissionNames);
 
   @protected
   bool localeEvalPlatformRule(dynamic platformRule) {

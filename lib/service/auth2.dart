@@ -259,12 +259,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get phone => StringUtils.ensureNotEmpty(profile?.phone, defaultValue: _account?.authType?.phone ?? '');
   String? get username => _account?.username;
 
-  bool get isEventEditor => hasRole("event approvers");
+  bool get isEventEditor => hasRole("event approvers") || hasPermission("event_approvers");
+  bool get isGroupsAccess => hasRole("groups access") || hasPermission("groups_access");
   bool get isStadiumPollManager => hasRole("stadium poll manager");
   bool get isDebugManager => hasRole("debug");
-  bool get isGroupsAccess => hasRole("groups access");
 
-  bool hasRole(String role) => _account?.hasRole(role) ?? false;
+  bool hasRole(String role) => _account?.hasRole(role) == true;
+  bool hasPermission(String permission) => _account?.hasPermission(permission) == true;
 
   bool isShibbolethMemberOf(String group) => _account?.authType?.uiucUser?.groupsMembership?.contains(group) ?? false;
 
