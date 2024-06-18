@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -16,6 +15,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:universal_io/io.dart';
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
