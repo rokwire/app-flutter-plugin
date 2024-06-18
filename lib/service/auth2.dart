@@ -181,13 +181,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (kIsWeb && (_token == null)) {
       refreshToken(ignoreUnauthorized: true).then((token) {
         if (token != null) {
-          _refreshAccount();
+          refreshAccount();
           NotificationService().notify(notifyLoginSucceeded, null);
           NotificationService().notify(notifyLoginChanged);
         }
       });
     } else {
-      _refreshAccount();
+      refreshAccount();
     }
 
     await super.initService();
@@ -233,7 +233,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _refreshAccount();
+          refreshAccount();
         }
       }
     }
@@ -1868,7 +1868,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String? bodyJson = JsonUtils.encode(body);
       Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: bodyJson);
       if (response?.statusCode == 200) {
-        _refreshAccount();
+        refreshAccount();
         return true;
       }
     }
@@ -1896,7 +1896,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<void> _refreshAccount() async {
+  @protected
+  Future<void> refreshAccount() async {
     Auth2Account? account = await _loadAccount();
     if ((account != null) && (account != _account)) {
       

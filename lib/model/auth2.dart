@@ -143,22 +143,26 @@ class Auth2Account {
     (other is Auth2Account) &&
       (other.id == id) &&
       (other.profile == profile) &&
+      (other.prefs == prefs) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
       const DeepCollectionEquality().equals(other.identifiers, identifiers) &&
       const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
+      const DeepCollectionEquality().equals(other.secrets, secrets) &&
       const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
 
   @override
   int get hashCode =>
     (id?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
+    (prefs?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
     (const DeepCollectionEquality().hash(identifiers)) ^
     (const DeepCollectionEquality().hash(authTypes)) ^
+    (const DeepCollectionEquality().hash(secrets)) ^
     (const DeepCollectionEquality().hash(systemConfigs));
 
   bool get isValid {
