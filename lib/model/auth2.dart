@@ -96,8 +96,8 @@ class Auth2Account {
     List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
-      profile: profile ?? other?.profile,
-      prefs: prefs ?? other?.prefs,
+      profile: profile ?? other?.profile ?? Auth2UserProfile.empty(),
+      prefs: prefs ?? other?.prefs ?? Auth2UserPrefs.empty(),
       secrets: secrets ?? other?.secrets ?? {},
       permissions: permissions ?? other?.permissions,
       roles: roles ?? other?.roles,

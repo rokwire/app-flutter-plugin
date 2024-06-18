@@ -1903,7 +1903,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
 
-      await Storage().setAuth2Account(_account = account);
+      await Storage().setAuth2Account(_account = Auth2Account.fromOther(account));
       NotificationService().notify(notifyAccountChanged);
 
       if (profileUpdated) {
