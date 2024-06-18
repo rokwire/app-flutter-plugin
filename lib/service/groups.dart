@@ -34,6 +34,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/events2.dart';
+import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -235,8 +236,15 @@ class Groups with Service implements NotificationsListener {
   // Content Attributes
 
   static const String contentAttributesScope = 'groups';
-  ContentAttributes? get contentAttributes => Content().contentAttributes(contentAttributesScope);
 
+  ContentAttributes? get contentAttributes =>
+    Content().contentAttributes(contentAttributesScope);
+
+  bool isContentAttributeEnabled(ContentAttribute? attribute) =>
+    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope);
+
+  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) =>
+    contentAttributes?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope, complete: complete);
 
   // Categories APIs
   // TBD: REMOVE
