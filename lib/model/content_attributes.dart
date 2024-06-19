@@ -189,8 +189,9 @@ class ContentAttributes {
     List<String> displayList = <String>[];
     if ((attributes != null) && (selection != null)) {
       for (ContentAttribute attribute in attributes!) {
-        if (((usage == null) || (attribute.usage == usage)) &&
-            ((scope == null) || (attribute.id == null) || FlexUI().isAttributeEnabled(attribute.id, scope: scope))) {
+        if (((attribute.id != null)) &&
+            ((usage == null) || (attribute.usage == usage)) &&
+            ((scope == null) || FlexUI().isAttributeEnabled(attribute.id, scope: scope))) {
           displayList.addAll(attribute.displaySelectedLabelsFromSelection(selection, complete: complete) ?? <String>[]);
         }
       }

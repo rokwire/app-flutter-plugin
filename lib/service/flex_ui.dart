@@ -346,7 +346,7 @@ class FlexUI with Service implements NotificationsListener {
   Map<String, Set<String>>? get defaultAttributes => _defaultAttributes;
 
   bool isAttributeEnabled(String? attribute, { String? scope }) =>
-    !isAttributeDisabled(attribute, scope: scope);
+    (attribute != null) && !isAttributeDisabled(attribute, scope: scope);
 
   bool isAttributeDisabled(String? attribute, { String? scope }) =>
     (attribute != null) && (scope != null) &&
