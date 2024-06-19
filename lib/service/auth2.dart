@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
@@ -108,7 +109,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _anonymousPrefs = Storage().auth2AnonymousPrefs;
     _anonymousProfile = Storage().auth2AnonymousProfile;
 
-    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+    _deviceId = kIsWeb ? '' : await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
 
     if ((_account == null) && (_anonymousPrefs == null)) {
       Storage().auth2AnonymousPrefs = _anonymousPrefs = defaultAnonimousPrefs;
