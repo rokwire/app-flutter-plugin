@@ -328,7 +328,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // App Id & Version
 
   String? get appId {
-    return _packageInfo?.packageName;
+    //TBD: DD - implement web - read it from a config or any resource
+    return kIsWeb ? 'edu.illinois.rokwire' : _packageInfo?.packageName;
   }
 
   String? get appCanonicalId {
@@ -347,7 +348,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".${kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase()}";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }

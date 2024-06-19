@@ -981,7 +981,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Map<String, dynamic> get deviceInfo {
     return {
-      'type': "mobile",
+      'type': kIsWeb ? 'web' : 'mobile',
       'device_id': _deviceId,
       'os': Platform.operatingSystem,
     };
