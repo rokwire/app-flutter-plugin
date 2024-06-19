@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require minimal SDK version 2.17.0 [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
 - Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
 - SurveyPanel HeaderBar exposed for overriding [#4020](https://github.com/rokwire/illinois-app/issues/4020).
+- Support for Group Report Abuse [#4038](https://github.com/rokwire/illinois-app/issues/4038).
 ### Added
 - Added Group post scheduling [#4027](https://github.com/rokwire/illinois-app/issues/4027).
 - Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
