@@ -200,6 +200,10 @@ class GeoFence with Service implements NotificationsListener, ContentItemCategor
 
   @protected
   Future<void> monitorRegions() async {
+    if (kIsWeb) {
+      debugPrint('WEB: GeoFence: monitorRegions - not implemented');
+      return;
+    }
     await RokwirePlugin.geoFence('monitorRegions', GeoFenceRegion.listToJsonList(GeoFenceRegion.filterList(_regions?.values, shouldMonitorRegion), locationRadius: _debugRegionRadius?.toDouble()));
   }
 
