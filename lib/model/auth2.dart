@@ -226,17 +226,42 @@ class Auth2Account {
     return linkedTypes;
   }
 
-  bool get isCalendarAdmin => hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
-  bool get isManagedGroupAdmin => hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
-  bool get isResearchProjectAdmin => hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
+  // Permissions
 
-  bool hasPermission(String permission) =>
+  bool hasPermission(String? permission) => (permission != null) && (
     (Auth2Permission.findInList(permissions, permission: permission) != null) ||
     (Auth2Role.findInList(roles, permission: permission) != null) ||
-    (Auth2Group.findInList(groups, permission: permission) != null);
+    (Auth2Group.findInList(groups, permission: permission) != null)
+  );
 
-  bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
-  bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  Set<Auth2Permission> get allPermissions {
+    Set<Auth2Permission> result = (permissions != null) ? Set<Auth2Permission>.of(permissions!) : <Auth2Permission>{};
+    result.union(Auth2Role.permissionsInList(roles));
+    result.union(Auth2Group.permissionsInList(groups));
+    return result;
+  }
+
+  Set<String> get allPermissionNames => Set<String>.of(allPermissions.map<String>((Auth2Permission permission) => permission.name ?? ''));
+
+  // Roles
+
+  bool hasRole(String? role) => (role != null) && (Auth2StringEntry.findInList(roles, name: role) != null);
+
+  Set<Auth2Role> get allRoles {
+    Set<Auth2Role> result = (roles != null) ? Set<Auth2Role>.of(roles!) : <Auth2Role>{};
+    result.union(Auth2Group.rolesInList(groups));
+    return result;
+  }
+
+  Set<String> get allRoleNames => Set<String>.of(allRoles.map<String>((Auth2Role role) => role.name ?? ''));
+
+  // Groups
+
+  bool belongsToGroup(String? group) => (group != null) && (Auth2StringEntry.findInList(groups, name: group) != null);
+  Set<Auth2Group> get allGroups => (groups != null) ? Set<Auth2Group>.of(groups!) : <Auth2Group>{};
+  Set<String> get allGroupNames => Set<String>.of(allGroups.map<String>((Auth2Group group) => group.name ?? ''));
+
+  // System config
 
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
@@ -726,6 +751,18 @@ class Auth2Role extends Auth2Permission {
     }
     return null;
   }
+
+  static Set<Auth2Permission> permissionsInList(List<Auth2Role>? contentList) {
+    Set<Auth2Permission> permissions = <Auth2Permission>{};
+    if (contentList != null) {
+      for (Auth2Role contentEntry in contentList) {
+        if (contentEntry.permissions != null) {
+          permissions.union(Set<Auth2Permission>.of(contentEntry.permissions!));
+        }
+      }
+    }
+    return permissions;
+  }
 }
 
 ////////////////////////////////
@@ -786,6 +823,30 @@ class Auth2Group extends Auth2Role {
       }
     }
     return null;
+  }
+
+  static Set<Auth2Permission> permissionsInList(List<Auth2Group>? contentList) {
+    Set<Auth2Permission> permissions = <Auth2Permission>{};
+    if (contentList != null) {
+      for (Auth2Group contentEntry in contentList) {
+        if (contentEntry.roles != null) {
+          permissions.union(Auth2Role.permissionsInList(contentEntry.roles),);
+        }
+      }
+    }
+    return permissions;
+  }
+
+  static Set<Auth2Role> rolesInList(List<Auth2Group>? contentList) {
+    Set<Auth2Role> roles = <Auth2Role>{};
+    if (contentList != null) {
+      for (Auth2Group contentEntry in contentList) {
+        if (contentEntry.roles != null) {
+          roles.union(Set<Auth2Role>.of(contentEntry.roles!));
+        }
+      }
+    }
+    return roles;
   }
 }
 

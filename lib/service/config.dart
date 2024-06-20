@@ -537,6 +537,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get event2StartTimeOffsetIfNullEndTime => JsonUtils.intValue(settings['event2StartTimeOffsetIfNullEndTime']) ?? 1200;
   double get event2NearbyDistanceInMiles => JsonUtils.doubleValue(settings['event2NearbyDistanceInMiles']) ?? 1.0;
 
+  // Getters: path keys access
+  dynamic pathEntry(String key)     => MapPathKey.entry(content, key);
+  String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
+
   // Getters: other
   String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;

@@ -1159,9 +1159,9 @@ class GeometryUtils {
 
 class BoolExpr {
   
-  static bool eval(dynamic expr, bool? Function(String?)? evalArg) {
+  static bool eval(dynamic expr, bool? Function(dynamic)? evalArg) {
     
-    if (expr is String) {
+    if ((expr is String) || (expr is Map)) {
 
       if (expr == 'TRUE') {
         return true;
