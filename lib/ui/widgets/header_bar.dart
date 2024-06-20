@@ -127,6 +127,7 @@ class SliverToutHeaderBar extends StatelessWidget {
 
   final bool pinned;
   final bool floating;
+  final double toolbarHeight;
   final double? expandedHeight;
   final Color? backgroundColor;
 
@@ -140,9 +141,10 @@ class SliverToutHeaderBar extends StatelessWidget {
   final double? flexLeftToRightTriangleHeight;
 
   final Widget? leadingWidget;
+  final double? leadingWidth;
   final String? leadingLabel;
   final String? leadingHint;
-  final EdgeInsetsGeometry? leadingPadding;
+  final EdgeInsetsGeometry leadingPadding;
   final Size? leadingOvalSize;
   final Color? leadingOvalColor;
   final String? leadingIconKey;
@@ -161,6 +163,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   const SliverToutHeaderBar({Key? key,
     this.pinned = false,
     this.floating = false,
+    this.toolbarHeight = kToolbarHeight,
     this.expandedHeight,
     this.backgroundColor,
 
@@ -174,9 +177,10 @@ class SliverToutHeaderBar extends StatelessWidget {
     this.flexLeftToRightTriangleHeight,
 
     this.leadingWidget,
+    this.leadingWidth,
     this.leadingLabel,
     this.leadingHint,
-    this.leadingPadding,
+    this.leadingPadding = const EdgeInsets.all(8),
     this.leadingOvalSize,
     this.leadingOvalColor,
     this.leadingIconKey,
@@ -198,11 +202,13 @@ class SliverToutHeaderBar extends StatelessWidget {
     return SliverAppBar(
       pinned: pinned,
       floating: floating,
+      toolbarHeight: toolbarHeight,
       expandedHeight: expandedHeight,
       backgroundColor: backgroundColor,
-      flexibleSpace: flexWidget ?? buildFlexibleSpace(context),
       leading: leadingWidget ?? buildLeadingWidget(context),
+      leadingWidth: leadingWidth,
       title: titleWidget ?? buildTitleWidget(context),
+      flexibleSpace: flexWidget ?? buildFlexibleSpace(context),
     );
   }
 
@@ -249,7 +255,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   Widget? buildLeadingWidget(BuildContext context) => (leadingIconKey != null) ?
     Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
       GestureDetector(onTap: () => onTapLeading(context), child:
-        Padding(padding: leadingPadding ?? const EdgeInsets.all(0), child:
+        Padding(padding: leadingPadding, child:
           ClipOval(child:
             Container(color: leadingOvalColor, width: leadingOvalSize?.width ?? 0, height: leadingOvalSize?.height ?? 0, child:
               Styles().images.getImage(leadingIconKey, excludeFromSemantics: true)
@@ -288,9 +294,11 @@ class SliverHeaderBar extends StatelessWidget {
   final bool pinned;
   final bool floating;
   final double? elevation;
+  final double toolbarHeight;
   final Color? backgroundColor;
 
   final Widget? leadingWidget;
+  final double? leadingWidth;
   final String? leadingLabel;
   final String? leadingHint;
   final String? leadingIconKey;
@@ -313,9 +321,11 @@ class SliverHeaderBar extends StatelessWidget {
     this.pinned = false,
     this.floating = false,
     this.elevation,
+    this.toolbarHeight = kToolbarHeight,
     this.backgroundColor,
 
     this.leadingWidget,
+    this.leadingWidth,
     this.leadingLabel,
     this.leadingHint,
     this.leadingIconKey,
@@ -344,12 +354,14 @@ class SliverHeaderBar extends StatelessWidget {
     return SliverAppBar(
       pinned: pinned,
       floating: floating,
+      toolbarHeight: toolbarHeight,
       backgroundColor: backgroundColor,
       elevation: 0,
       leading : leadingWidget ?? buildLeadingWidget(context),
+      leadingWidth: leadingWidth,
       title: titleWidget ?? buildTitleWidget(context),
       centerTitle: centerTitle,
-      actions: actions,
+      actions: actions
     );
   }
 
