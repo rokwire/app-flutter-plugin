@@ -12,11 +12,11 @@ dependencies:
     sdk: flutter
 
   logger: ^1.1.0
-  connectivity_plus: ^3.0.0
+  connectivity_plus: ^4.0.2
   uni_links: ^0.5.1
   fluttertoast: ^8.2.6
   path: ^1.8.0
-  gallery_saver: ^2.3.2
+#  gallery_saver: ^2.3.2 #TBD:DD - check relevant plugin available for latest flutter version and web
   path_provider: ^2.0.4
   asn1lib: ^1.0.3
   pointycastle: ^3.5.0
@@ -24,7 +24,7 @@ dependencies:
   intl: ^0.19.0
   http: ^0.13.3
   timezone: ^0.9.2
-  flutter_native_timezone: ^2.0.0
+  flutter_timezone: ^1.0.8
   geolocator: ^8.0.0
   cookie_jar: ^3.0.1
   shared_preferences: ^2.0.7
