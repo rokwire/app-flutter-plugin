@@ -965,6 +965,7 @@ class GroupMembershipAnswer {
 class GroupPost {
   final String? id;
   final String? parentId;
+  final String? topParentId;//main post for sub reply thread
   final Member? member;
   final String? subject;
   final String? body;
@@ -977,7 +978,7 @@ class GroupPost {
   final String? imageUrl;
   final Map<String, List<String>> reactions;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.dateScheduledUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
+  GroupPost({this.id, this.parentId, this.topParentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.dateScheduledUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -998,6 +999,7 @@ class GroupPost {
     return GroupPost(
         id: json['id'],
         parentId: json['parent_id'],
+        topParentId: json['top_parent_id'],
         member: Member.fromJson(json['member']),
         subject: json['subject'],
         body: json['body'],
@@ -1018,6 +1020,9 @@ class GroupPost {
     Map<String, dynamic> json = {'body': body, 'private': private};
     if ((parentId != null) && create) {
       json['parent_id'] = parentId;
+    }
+    if ((topParentId != null) && create) {
+      json['top_parent_id'] = parentId;
     }
     if ((id != null) && update) {
       json['id'] = id;
