@@ -26,6 +26,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info/device_info.dart';
@@ -174,18 +175,32 @@ class Analytics with Service implements NotificationsListener {
   @protected
   Future<void> initDatabase() async {
     if (_database == null) {
-      String databasePath = await getDatabasesPath();
-      String databaseFile = join(databasePath, databaseName);
-      _database = await openDatabase(databaseFile, version: databaseVersion,
-        onCreate: (Database db, int version) async {
-          await db.execute("CREATE TABLE IF NOT EXISTS `$databaseTable` (`$databaseTimestamp` INTEGER DEFAULT NULL, `$databasePacket` TEXT NOT NULL)",);
-        },
-        onUpgrade: (Database db, int oldVersion, int newVersion) async {
+      final String createSql =
+          "CREATE TABLE IF NOT EXISTS `$databaseTable` (`$databaseTimestamp` INTEGER DEFAULT NULL, `$databasePacket` TEXT NOT NULL)";
+      final String upgradeSql = "ALTER TABLE `$databaseTable` ADD COLUMN `$databaseTimestamp` INTEGER DEFAULT NULL";
+      if (kIsWeb) {
+        _database = await databaseFactoryFfiWeb.openDatabase(databaseName,
+            options: OpenDatabaseOptions(
+                version: databaseVersion,
+                onCreate: (Database db, int version) async {
+                  await db.execute(createSql);
+                },
+                onUpgrade: (Database db, int oldVersion, int newVersion) async {
+                  if (oldVersion < 2) {
+                    await db.execute(upgradeSql);
+                  }
+                }));
+      } else {
+        String databasePath = await getDatabasesPath();
+        String databaseFile = join(databasePath, databaseName);
+        _database = await openDatabase(databaseFile, version: databaseVersion, onCreate: (Database db, int version) async {
+          await db.execute(createSql);
+        }, onUpgrade: (Database db, int oldVersion, int newVersion) async {
           if (oldVersion < 2) {
-            await db.execute("ALTER TABLE `$databaseTable` ADD COLUMN `$databaseTimestamp` INTEGER DEFAULT NULL",);
+            await db.execute(upgradeSql);
           }
-        }
-      );
+        });
+      }
     }
   }
 
