@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -183,11 +184,14 @@ class ContentAttributes {
 
   bool hasRequired(int functionalScope) => hasRequiredAttributes(functionalScope) || (requirements?.hasRequired ?? false);
 
-  List<String> displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) {
+  List<String> displaySelectedLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, String? scope, bool complete = false }) {
+
     List<String> displayList = <String>[];
     if ((attributes != null) && (selection != null)) {
       for (ContentAttribute attribute in attributes!) {
-        if ((usage == null) || (attribute.usage == usage)) {
+        if (((attribute.id != null)) &&
+            ((usage == null) || (attribute.usage == usage)) &&
+            ((scope == null) || FlexUI().isAttributeEnabled(attribute.id, scope: scope))) {
           displayList.addAll(attribute.displaySelectedLabelsFromSelection(selection, complete: complete) ?? <String>[]);
         }
       }

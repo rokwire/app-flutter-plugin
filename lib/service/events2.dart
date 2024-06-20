@@ -11,6 +11,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
+import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -78,8 +79,15 @@ class Events2 with Service implements NotificationsListener {
   // Content Attributes
 
   static const String contentAttributesScope = 'events';
-  ContentAttributes? get contentAttributes => Content().contentAttributes(contentAttributesScope);
 
+  ContentAttributes? get contentAttributes =>
+    Content().contentAttributes(contentAttributesScope);
+
+  bool isContentAttributeEnabled(ContentAttribute? attribute) =>
+    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope);
+
+  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) =>
+    contentAttributes?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope, complete: complete);
 
   // Implementation
 
