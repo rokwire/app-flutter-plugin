@@ -16,7 +16,6 @@
 
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -29,6 +28,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class StringUtils {
 
