@@ -596,9 +596,13 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalAuthRule(dynamic authRule) {
+    return BoolExpr.eval(authRule, (dynamic argument) => localeEvalAuthRuleParam(argument));
+  }
+
+  bool? localeEvalAuthRuleParam(dynamic authParam) {
     bool result = true;  // allow everything that is not defined or we do not understand
-    if (authRule is Map) {
-      authRule.forEach((dynamic key, dynamic value) {
+    if (authParam is Map) {
+      authParam.forEach((dynamic key, dynamic value) {
         if (key is String) {
           if ((key == 'loggedIn') && (value is bool)) {
             result = result && (Auth2().isLoggedIn == value);
