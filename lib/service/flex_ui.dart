@@ -450,8 +450,8 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalRoleRule(dynamic roleRule) {
-    return BoolExpr.eval(roleRule, (String? argument) {
-      if (argument != null) {
+    return BoolExpr.eval(roleRule, (dynamic argument) {
+      if (argument is String) {
         bool? not, all, any;
         if (not = argument.startsWith('~')) {
           argument = argument.substring(1);
@@ -522,8 +522,8 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalStringsSetExpr(dynamic rule, Set<String>? allStrings) {
-    return BoolExpr.eval(rule, (String? argument) {
-      if (argument != null) {
+    return BoolExpr.eval(rule, (dynamic argument) {
+      if (argument is String) {
         bool? not, all, any;
         if (not = argument.startsWith('~')) {
           argument = argument.substring(1);
@@ -700,14 +700,14 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalEnableRule(dynamic enableRule) {
-    return BoolExpr.eval(enableRule, (String? argument) {
+    return BoolExpr.eval(enableRule, (dynamic argument) {
       return localeEvalBoolParam(argument);
     });
   }
 
   @protected
-  bool? localeEvalBoolParam(String? stringParam) {
-    if (stringParam != null) {
+  bool? localeEvalBoolParam(dynamic stringParam) {
+    if (stringParam is String) {
       if (RegExp(r"\${.+}").hasMatch(stringParam)) {
         String stringRef = stringParam.substring(2, stringParam.length - 1);
         return JsonUtils.boolValue(localeEvalStringReference(stringRef));
