@@ -29,7 +29,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:device_info/device_info.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 
 class Analytics with Service implements NotificationsListener {
@@ -54,6 +54,7 @@ class Analytics with Service implements NotificationsListener {
   PackageInfo?          _packageInfo;
   AndroidDeviceInfo?    _androidDeviceInfo;
   IosDeviceInfo?        _iosDeviceInfo;
+  WebBrowserInfo?       _webBrowserInfo;
   String?               _appId;
   String?               _appVersion;
   String?               _osVersion;
@@ -76,6 +77,7 @@ class Analytics with Service implements NotificationsListener {
   PackageInfo?        get packageInfo       => _packageInfo;
   AndroidDeviceInfo?  get androidDeviceInfo => _androidDeviceInfo;
   IosDeviceInfo?      get iosDeviceInfo     => _iosDeviceInfo;
+  WebBrowserInfo?     get webBrowserInfo    => _webBrowserInfo;
   String?             get appId             => _appId;
   String?             get appVersion        => _appVersion;
   String?             get osVersion         => _osVersion;
@@ -116,11 +118,18 @@ class Analytics with Service implements NotificationsListener {
     
     PackageInfo.fromPlatform().then((PackageInfo packageInfo) {
       _packageInfo = packageInfo;
-      _appId = _packageInfo?.packageName;
+      _appId = Config().appId;
       _appVersion = "${_packageInfo?.version}+${_packageInfo?.buildNumber}";
     });
 
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    if (kIsWeb) {
+      DeviceInfoPlugin().webBrowserInfo.then((WebBrowserInfo webBrowserInfo) {
+        _webBrowserInfo = webBrowserInfo;
+        _deviceModel = _webBrowserInfo?.browserName.name;
+        _osVersion = _webBrowserInfo?.appVersion;
+      });
+    }
+    else if (defaultTargetPlatform == TargetPlatform.android) {
       DeviceInfoPlugin().androidInfo.then((AndroidDeviceInfo androidDeviceInfo) {
         _androidDeviceInfo = androidDeviceInfo;
         _deviceModel = _androidDeviceInfo?.model;
