@@ -226,16 +226,13 @@ class Auth2Account {
     return linkedTypes;
   }
 
-  bool get isCalendarAdmin => hasPermission('calendar_admin'); //TBD: These names might go to app config in settings.groups section.
-  bool get isManagedGroupAdmin => hasPermission('managed_group_admin'); //TBD: These names might go to app config in settings.groups section.
-  bool get isResearchProjectAdmin => hasPermission('research_group_admin'); //TBD: These names might go to app config in settings.groups section.
-
   // Permissions
 
-  bool hasPermission(String permission) =>
+  bool hasPermission(String? permission) => (permission != null) && (
     (Auth2Permission.findInList(permissions, permission: permission) != null) ||
     (Auth2Role.findInList(roles, permission: permission) != null) ||
-    (Auth2Group.findInList(groups, permission: permission) != null);
+    (Auth2Group.findInList(groups, permission: permission) != null)
+  );
 
   Set<Auth2Permission> get allPermissions {
     Set<Auth2Permission> result = (permissions != null) ? Set<Auth2Permission>.of(permissions!) : <Auth2Permission>{};
@@ -248,7 +245,7 @@ class Auth2Account {
 
   // Roles
 
-  bool hasRole(String role) => (Auth2StringEntry.findInList(roles, name: role) != null);
+  bool hasRole(String? role) => (role != null) && (Auth2StringEntry.findInList(roles, name: role) != null);
 
   Set<Auth2Role> get allRoles {
     Set<Auth2Role> result = (roles != null) ? Set<Auth2Role>.of(roles!) : <Auth2Role>{};
@@ -260,12 +257,11 @@ class Auth2Account {
 
   // Groups
 
-  bool belongsToGroup(String group) => (Auth2StringEntry.findInList(groups, name: group) != null);
+  bool belongsToGroup(String? group) => (group != null) && (Auth2StringEntry.findInList(groups, name: group) != null);
   Set<Auth2Group> get allGroups => (groups != null) ? Set<Auth2Group>.of(groups!) : <Auth2Group>{};
   Set<String> get allGroupNames => Set<String>.of(allGroups.map<String>((Auth2Group group) => group.name ?? ''));
 
   // System config
-
 
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }

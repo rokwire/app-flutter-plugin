@@ -580,7 +580,7 @@ class FlexUI with Service implements NotificationsListener {
     if (stringRef != null) {
       String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
       if (stringRef.startsWith(configPrefix)) {
-        return MapPathKey.entry(Config().content, stringRef.substring(configPrefix.length));
+        return Config().pathEntry(stringRef.substring(configPrefix.length));
       }
     }
     return null;
