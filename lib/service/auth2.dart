@@ -37,6 +37,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyPrefsSaved           = "edu.illinois.rokwire.auth2.prefs.saved";
   static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
   static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
@@ -1675,9 +1676,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (identical(prefs, _account?.prefs)) {
       await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyPrefsChanged);
-      return _saveAccountUserPrefs();
+      _saveAccountUserPrefs();
     }
-    return;
   }
 
   Future<void> _saveAccountUserPrefs() async {
@@ -1696,6 +1696,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       
       if (identical(client, _updateUserPrefsClient)) {
         if (response?.statusCode == 200) {
+          NotificationService().notify(notifyPrefsSaved);
           _updateUserPrefsTimer?.cancel();
           _updateUserPrefsTimer = null;
         }
