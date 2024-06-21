@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
 - SurveyPanel HeaderBar exposed for overriding [#4020](https://github.com/rokwire/illinois-app/issues/4020).
 - Support for Group Report Abuse [#4038](https://github.com/rokwire/illinois-app/issues/4038).
+- Extend customization of SliverAppBars [#3827](https://github.com/rokwire/illinois-app/issues/3827).
 ### Added
 - Added Group post scheduling [#4027](https://github.com/rokwire/illinois-app/issues/4027).
 - Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added events2 query deep link [#4041](https://github.com/rokwire/illinois-app/issues/4041).
 - Exposed scope in content attributes [#4029](https://github.com/rokwire/illinois-app/issues/4029).
 - Implemented conditional content attributes [#4134](https://github.com/rokwire/illinois-app/issues/4134).
+- Acknowledge group.topPаrentId field [#4049](https://github.com/rokwire/illinois-app/issues/4049).
 ### Fixed
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
 - Make sure to always return successfully refreshed token in Auth2 service.
