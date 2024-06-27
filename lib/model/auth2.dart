@@ -163,6 +163,10 @@ class Auth2Account {
       (other.id == id) &&
       (other.profile == profile) &&
       (other.prefs == prefs) &&
+      (other.dateCreated == dateCreated) &&
+      (other.dateUpdated == dateUpdated) &&
+      (other.lastLoginDate == lastLoginDate) &&
+      (other.lastAccessTokenDate == lastAccessTokenDate) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
@@ -176,6 +180,10 @@ class Auth2Account {
     (id?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
     (prefs?.hashCode ?? 0) ^
+    (dateCreated?.hashCode ?? 0) ^
+    (dateUpdated?.hashCode ?? 0) ^
+    (lastLoginDate?.hashCode ?? 0) ^
+    (lastAccessTokenDate?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
