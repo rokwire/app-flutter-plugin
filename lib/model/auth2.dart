@@ -86,14 +86,21 @@ class Auth2Account {
   final List<Auth2Identifier>? identifiers;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
+  final DateTime? dateCreated;
+  final DateTime? dateUpdated;
+  final DateTime? lastLoginDate;
+  final DateTime? lastAccessTokenDate;
 
   Auth2Account({this.id, this.profile, this.prefs, this.secrets = const {}, this.permissions,
-    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
+    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs,
+    this.dateCreated, this.dateUpdated, this.lastLoginDate, this.lastAccessTokenDate});
 
   factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username,
     Auth2UserProfile? profile, Auth2UserPrefs? prefs, Map<String, dynamic>? secrets,
     List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups,
-    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes,
+    Map<String, dynamic>? systemConfigs, DateTime? dateCreated,
+    DateTime? dateUpdated, DateTime? lastLoginDate, DateTime? lastAccessTokenDate}) {
     return Auth2Account(
       id: id ?? other?.id,
       profile: profile ?? other?.profile ?? Auth2UserProfile.empty(),
@@ -105,6 +112,10 @@ class Auth2Account {
       identifiers: identifiers ?? other?.identifiers,
       authTypes: authTypes ?? other?.authTypes,
       systemConfigs: systemConfigs ?? other?.systemConfigs,
+      dateCreated: dateCreated ?? other?.dateCreated,
+      dateUpdated: dateUpdated ?? other?.dateUpdated,
+      lastLoginDate: lastLoginDate ?? other?.lastLoginDate,
+      lastAccessTokenDate: lastAccessTokenDate ?? other?.lastAccessTokenDate,
     );
   }
 
@@ -120,6 +131,10 @@ class Auth2Account {
       identifiers: Auth2Identifier.listFromJson(JsonUtils.listValue(json['identifiers'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
+      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']),
+      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
+      lastLoginDate: AppDateTime().dateTimeLocalFromJson(json['last_login_date']),
+      lastAccessTokenDate: AppDateTime().dateTimeLocalFromJson(json['last_access_token_date']),
     ) : null;
   }
 
@@ -135,6 +150,10 @@ class Auth2Account {
       'identifiers': identifiers,
       'auth_types': authTypes,
       'system_configs': systemConfigs,
+      'date_created': dateCreated,
+      'date_updated': dateUpdated,
+      'last_login_date': lastLoginDate,
+      'last_access_token_date': lastAccessTokenDate,
     };
   }
 
