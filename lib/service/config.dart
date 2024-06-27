@@ -535,6 +535,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   int  get refreshTokenRetriesCount => JsonUtils.intValue(settings['refreshTokenRetriesCount']) ?? 3;
   int  get event2StartTimeOffsetIfNullEndTime => JsonUtils.intValue(settings['event2StartTimeOffsetIfNullEndTime']) ?? 1200;
   double get event2NearbyDistanceInMiles => JsonUtils.doubleValue(settings['event2NearbyDistanceInMiles']) ?? 1.0;
+  int  get truncationSymbolsCount => JsonUtils.intValue(settings['truncationSymbolsCount']) ?? 256;
 
   // Getters: path keys access
   dynamic pathEntry(String key)     => MapPathKey.entry(content, key);

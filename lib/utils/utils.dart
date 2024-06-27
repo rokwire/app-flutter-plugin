@@ -112,7 +112,9 @@ class StringUtils {
   static String truncate({required String value, required int atLength}) {
     int valueLength = value.length;
     if ((atLength > 0) && (valueLength > atLength)) {
-      return '${value.substring(0, value.substring(0, atLength).lastIndexOf(" "))} ...';
+      String truncatedValue = value.substring(0, atLength);
+      int lastSpaceIndex = truncatedValue.lastIndexOf(' ');
+      return '${(lastSpaceIndex > 0) ? truncatedValue.substring(0, lastSpaceIndex) : truncatedValue} ...';
     } else {
       return value;
     }
