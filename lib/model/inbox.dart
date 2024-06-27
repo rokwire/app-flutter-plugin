@@ -210,6 +210,8 @@ class InboxMessage {
     }
   }
 
+  String? get displayBody => (body != null) ? StringUtils.truncate(value: body!, atLength: 250) : body;
+
   bool get isMuted => (mute == true);
   bool get isRead => (read == true);
 }

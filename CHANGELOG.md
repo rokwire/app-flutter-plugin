@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exposed scope in content attributes [#4029](https://github.com/rokwire/illinois-app/issues/4029).
 - Implemented conditional content attributes [#4134](https://github.com/rokwire/illinois-app/issues/4134).
 - Acknowledge group.topPаrentId field [#4049](https://github.com/rokwire/illinois-app/issues/4049).
+- Truncate notification [#4050](https://github.com/rokwire/illinois-app/issues/4050).
 ### Fixed
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
 - Make sure to always return successfully refreshed token in Auth2 service.
