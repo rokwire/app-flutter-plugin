@@ -109,6 +109,17 @@ class StringUtils {
     return fullName;
   }
 
+  static String truncate({required String value, required int atLength}) {
+    int valueLength = value.length;
+    if ((atLength > 0) && (valueLength > atLength)) {
+      String truncatedValue = value.substring(0, atLength);
+      int lastSpaceIndex = truncatedValue.lastIndexOf(' ');
+      return '${(lastSpaceIndex > 0) ? truncatedValue.substring(0, lastSpaceIndex) : truncatedValue} ...';
+    } else {
+      return value;
+    }
+  }
+
   /// US Phone validation  https://github.com/rokwire/illinois-app/issues/47
 
   static const String _usPhonePattern1 = "^[2-9][0-9]{9}\$";          // Valid:   23456789120

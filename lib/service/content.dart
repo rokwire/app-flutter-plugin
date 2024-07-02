@@ -55,16 +55,18 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   DateTime?  _pausedDateTime;
 
   Map<String, dynamic>? _contentItems;
-  
+
   ContentAttributes? _contentAttributes;
   final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
+  Map<String, Uint8List?> _fileContentCache = {};
+  Map<String, Future<Response?>?> _fileContentFutures = {};
 
   // Singletone Factory
 
   static Content? _instance;
 
   static Content? get instance => _instance;
-  
+
   @protected
   static set instance(Content? value) => _instance = value;
 
@@ -226,7 +228,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
             if ((category != null) && (data != null)) {
               dynamic existingCategoryEntry = result[category];
               if (existingCategoryEntry == null) {
-                result[category] = data;  
+                result[category] = data;
               }
               else if (existingCategoryEntry is List) {
                 if (data is List) {
@@ -637,20 +639,33 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<Uint8List?> getFileContentItem(String fileName, String category) async {
+    String key = '${fileName}_${category}';
+    if (_fileContentCache[key] != null) {
+      return _fileContentCache[key];
+    }
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
-      Map<String, String> queryParams = {
-        'fileName': fileName,
-        'category': category,
-      };
-      String url = "${Config().contentUrl}/files";
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
+      Response? response;
+      if (_fileContentFutures[key] == null) {
+        Map<String, String> queryParams = {
+          'fileName': fileName,
+          'category': category,
+        };
+        String url = "${Config().contentUrl}/files";
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
 
-      Response? response = await Network().get(url, auth: Auth2());
+        _fileContentFutures[key] = Network().get(url, auth: Auth2());
+      }
+      response = await _fileContentFutures[key];
+      _fileContentFutures[key] = null;
+
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        return response?.bodyBytes;
+        Uint8List? fileContent = response?.bodyBytes;
+        if (fileContent != null) {
+          return _fileContentCache[key] = fileContent;
+        }
       } else {
         String? responseString = response?.body;
         debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
