@@ -209,6 +209,20 @@ class _EqualsParam {
   _EqualsParam(this.e1, this.e2);
 }
 
+// StringCompareGit4143
+// "Alphabetization is letter-by-letter and apostrophes are ignored"
+// (https://github.com/rokwire/illinois-app/issues/4143)
+
+extension StringCompareGit4143 on String {
+  static const String symbolRegExp = r'[^\w\s]+';
+
+  String toGit4143Canonical() =>
+    toLowerCase().replaceAll(symbolRegExp, '');
+
+  int compareGit4143To(String other) =>
+    toGit4143Canonical().compareTo(other.toGit4143Canonical());
+}
+
 class ListUtils {
   static List<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? List<T>.from(elements) : null;
