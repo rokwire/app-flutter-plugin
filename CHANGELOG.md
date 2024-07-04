@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
 - Make sure to always return successfully refreshed token in Auth2 service.
 - Fixed Content service dependency [#447](https://github.com/rokwire/app-flutter-plugin/issues/447).
+- Fixed RegExp definition for Git4143 canonical representation [#4143](https://github.com/rokwire/illinois-app/issues/4143).
 
 ## [1.6.3] - 2024-02-19
 ### Added
