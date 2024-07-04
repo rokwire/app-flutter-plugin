@@ -214,7 +214,7 @@ class _EqualsParam {
 // (https://github.com/rokwire/illinois-app/issues/4143)
 
 extension StringCompareGit4143 on String {
-  static const String symbolRegExp = r'[^\w\s]+';
+  static RegExp symbolRegExp = RegExp(r'[^\w\s]+');
 
   String toGit4143Canonical() =>
     toLowerCase().replaceAll(symbolRegExp, '');
