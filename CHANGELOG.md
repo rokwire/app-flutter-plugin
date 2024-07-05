@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement file content cache [#456](https://github.com/rokwire/app-flutter-plugin/issues/456)
 - Created StringCompareGit4143 extension for non-standard lexicographic sorting [#4143](https://github.com/rokwire/illinois-app/issues/4143).
 - Added clearSafariVC API to RokwirePlugin, do not use it for now.
+- Add "prompt":"login" parameter to OIDC login URL in Debug mode only.
 ### Fixed
 - Fixed client paramter in loadEventsEx invocation from loadEvents API.
 - Make sure to always return successfully refreshed token in Auth2 service.
