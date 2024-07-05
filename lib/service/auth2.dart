@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
@@ -352,8 +353,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
+
           //await RokwirePlugin.clearSafariVC();
-          await _launchUrl(_oidcLogin?.loginUrl);
+          await _launchUrl(_preprocessOidcLoginUrl(_oidcLogin?.loginUrl));
         }
         else {
           completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
@@ -1323,6 +1325,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   // Helpers
+
+  static String? _preprocessOidcLoginUrl(String? loginUrl) {
+    if ((loginUrl != null) && kDebugMode) {
+      Uri? loginUri = Uri.tryParse(loginUrl);
+      if (loginUri != null) {
+        Map<String, String> queryParameters = Map<String, String>.from(loginUri.queryParameters);
+        if (queryParameters['prompt'] == null) {
+          queryParameters.addAll(<String, String>{
+            'prompt': 'login'
+          });
+          loginUri = loginUri.replace(queryParameters: queryParameters);
+          loginUrl = loginUri.toString();
+        }
+      }
+    }
+    return loginUrl;
+  }
 
   static Future<void> _launchUrl(String? urlStr) async {
     try {

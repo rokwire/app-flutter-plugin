@@ -580,11 +580,13 @@ class UrlUtils {
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
-      Uri uri = Uri.parse(url);
-      Map<String, String> urlParams = uri.queryParameters;
-      queryParameters.addAll(urlParams);
-      uri = uri.replace(queryParameters: queryParameters);
-      url = uri.toString();
+      Uri? uri = Uri.tryParse(url);
+      if (uri != null) {
+        Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
+        queryParameters.addAll(urlParams);
+        uri = uri.replace(queryParameters: queryParameters);
+        url = uri.toString();
+      }
     }
     return url;
   }
