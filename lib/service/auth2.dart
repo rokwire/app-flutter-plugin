@@ -352,6 +352,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
+          //await RokwirePlugin.clearSafariVC();
           await _launchUrl(_oidcLogin?.loginUrl);
         }
         else {
@@ -371,7 +372,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
     
-    RokwirePlugin.dismissSafariVC();
+    await RokwirePlugin.dismissSafariVC();
     
     cancelOidcAuthenticationTimer();
 

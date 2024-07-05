@@ -148,6 +148,9 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     else if (firstMethodComponent.equals("dismissSafariVC")) {
       result.success(null); // Safari VV not available in Android
     }
+    else if (firstMethodComponent.equals("clearSafariVC")) {
+      result.success(null); // Safari VV not available in Android
+    }
     else if (firstMethodComponent.equals("launchApp")) {
       result.success(launchApp(call.arguments));
     }
