@@ -124,7 +124,7 @@ class _RoundedTabState extends State<RoundedTab> {
   void _evalContentSize() {
     try {
       final RenderObject? renderBox = _contentKey.currentContext?.findRenderObject();
-      if (renderBox is RenderBox) {
+      if ((renderBox is RenderBox) && renderBox.hasSize) {
         if (mounted) {
           setState(() {
             _contentSize = renderBox.size;

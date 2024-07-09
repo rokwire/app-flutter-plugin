@@ -7,8 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml - 1.7.0 -->
 ### Changed
+- Upgrade to Flutter 3.22.2.
 - Upgrade to Flutter 3.19.0 [#435](https://github.com/rokwire/app-flutter-plugin/issues/435).
+- Require minimal SDK version 2.17.0 [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
 - Init application services in parallel [#408](https://github.com/rokwire/app-flutter-plugin/issues/408).
+- SurveyPanel HeaderBar exposed for overriding [#4020](https://github.com/rokwire/illinois-app/issues/4020).
+- Support for Group Report Abuse [#4038](https://github.com/rokwire/illinois-app/issues/4038).
+- Extend customization of SliverAppBars [#3827](https://github.com/rokwire/illinois-app/issues/3827).
+- Always check if RenderBox has size [#4125](https://github.com/rokwire/illinois-app/issues/4125).
+### Added
+- Added Group post scheduling [#4027](https://github.com/rokwire/illinois-app/issues/4027).
+- Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
+- Created additional notifications for group post create/update/delete [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
+- Created separate classes for Auth2 permission, role and group, perform more precise permissions detection [#445](https://github.com/rokwire/app-flutter-plugin/issues/445).
+- Added isEmpty & isNotEmpty properties to Event2RegistrationDetails [#4043](https://github.com/rokwire/illinois-app/issues/4043).
+- Added events2 query deep link [#4041](https://github.com/rokwire/illinois-app/issues/4041).
+- Exposed scope in content attributes [#4029](https://github.com/rokwire/illinois-app/issues/4029).
+- Implemented conditional content attributes [#4134](https://github.com/rokwire/illinois-app/issues/4134).
+- Acknowledge group.topPаrentId field [#4049](https://github.com/rokwire/illinois-app/issues/4049).
+- Truncate notification [#4050](https://github.com/rokwire/illinois-app/issues/4050).
+- Implement file content cache [#456](https://github.com/rokwire/app-flutter-plugin/issues/456)
+- Created StringCompareGit4143 extension for non-standard lexicographic sorting [#4143](https://github.com/rokwire/illinois-app/issues/4143).
+- Added clearSafariVC API to RokwirePlugin, do not use it for now.
+- Add "prompt":"login" parameter to OIDC login URL in Debug mode only.
+### Fixed
+- Fixed client paramter in loadEventsEx invocation from loadEvents API.
+- Make sure to always return successfully refreshed token in Auth2 service.
+- Fixed Content service dependency [#447](https://github.com/rokwire/app-flutter-plugin/issues/447).
+- Fixed RegExp definition for Git4143 canonical representation [#4143](https://github.com/rokwire/illinois-app/issues/4143).
 
 ## [1.6.3] - 2024-02-19
 ### Added

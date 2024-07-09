@@ -562,6 +562,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   int get oidcAuthenticationTimeout => JsonUtils.intValue(settings['oidcAuthenticationTimeout']) ?? 1000;
 
+  // Getters: path keys access
+  dynamic pathEntry(String key)     => MapPathKey.entry(content, key);
+  String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
+
   // Getters: other
   String? get deepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;

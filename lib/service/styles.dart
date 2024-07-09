@@ -425,6 +425,7 @@ class UiColors {
   Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
   @Deprecated("Color style names should meaningfully reflect intended usage")
   Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
+  Color get blueAccent                 => colorMap['blueAccent'] ?? const Color(0xFF0058A7);
 
   @Deprecated("Application specific colors should be defined in the application")
   Color get eventColor                 => colorMap['eventColor'] ?? const Color(0xFFE54B30);
