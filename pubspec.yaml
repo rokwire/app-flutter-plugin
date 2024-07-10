@@ -46,9 +46,9 @@ dependencies:
   pinch_zoom: ^1.0.0
 
   #Firebase
-  firebase_core: ^2.13.0
-  firebase_crashlytics: ^3.3.1
-  firebase_messaging: ^14.6.1
+  firebase_core: ^3.2.0
+  firebase_crashlytics: ^4.0.3
+  firebase_messaging: ^15.0.3
   #End Firebase
 
 dev_dependencies:
