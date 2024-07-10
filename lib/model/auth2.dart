@@ -2308,7 +2308,9 @@ class UserRole {
   static const student = UserRole._internal('student');
   static const prospectiveStudent = UserRole._internal('prospective_student');
   static const faculty = UserRole._internal('faculty');
+  static const prospectiveFaculty = UserRole._internal('prospective_faculty');
   static const staff = UserRole._internal('staff');
+  static const prospectiveStaff = UserRole._internal('prospective_staff');
 
   static const visitor = UserRole._internal('visitor');
   static const fan = UserRole._internal('fan');
