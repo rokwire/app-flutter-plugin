@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for Group Report Abuse [#4038](https://github.com/rokwire/illinois-app/issues/4038).
 - Extend customization of SliverAppBars [#3827](https://github.com/rokwire/illinois-app/issues/3827).
 - Always check if RenderBox has size [#4125](https://github.com/rokwire/illinois-app/issues/4125).
+- Upgrade to latest Firebase libraries [#4220](https://github.com/rokwire/illinois-app/issues/4220).
 ### Added
 - Added Group post scheduling [#4027](https://github.com/rokwire/illinois-app/issues/4027).
 - Added post type paramter to loadGroupPosts API [#441](https://github.com/rokwire/app-flutter-plugin/issues/441).
