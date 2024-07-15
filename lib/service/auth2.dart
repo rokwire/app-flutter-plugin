@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
@@ -259,12 +260,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   String? get phone => StringUtils.ensureNotEmpty(profile?.phone, defaultValue: _account?.authType?.phone ?? '');
   String? get username => _account?.username;
 
-  bool get isEventEditor => hasRole("event approvers");
-  bool get isStadiumPollManager => hasRole("stadium poll manager");
-  bool get isDebugManager => hasRole("debug");
-  bool get isGroupsAccess => hasRole("groups access");
+  bool get isCalendarAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.calendar_admin', defaults: 'calendar_admin'));
+  bool get isManagedGroupAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.managed_group_admin', defaults: 'managed_group_admin'));
+  bool get isResearchProjectAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.research_group_admin', defaults: 'research_group_admin'));
 
-  bool hasRole(String role) => _account?.hasRole(role) ?? false;
+  bool get isStadiumPollManager => hasRole(Config().stringPathEntry('settings.auth.roles.stadium_poll_manager', defaults: 'stadium poll manager'));
+  bool get isDebugManager => hasRole(Config().stringPathEntry('settings.auth.roles.debug', defaults: 'debug'));
+
+  bool get isEventEditor => hasRole(Config().stringPathEntry('settings.auth.roles.event_approvers', defaults: 'event approvers')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.event_approvers', defaults: 'event_approvers'));
+
+  bool get isGroupsAccess => hasRole(Config().stringPathEntry('settings.auth.roles.groups_access', defaults: 'groups access')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.groups_access', defaults: 'groups_access'));
+
+  bool hasRole(String? role) => _account?.hasRole(role) == true;
+  bool hasPermission(String? permission) => _account?.hasPermission(permission) == true;
+  bool belongsToGroup(String? group) => _account?.belongsToGroup(group) == true;
 
   bool isShibbolethMemberOf(String group) => _account?.authType?.uiucUser?.groupsMembership?.contains(group) ?? false;
 
@@ -342,7 +353,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
-          await _launchUrl(_oidcLogin?.loginUrl);
+
+          //await RokwirePlugin.clearSafariVC();
+          await _launchUrl(_preprocessOidcLoginUrl(_oidcLogin?.loginUrl));
         }
         else {
           completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
@@ -361,7 +374,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
     
-    RokwirePlugin.dismissSafariVC();
+    await RokwirePlugin.dismissSafariVC();
     
     cancelOidcAuthenticationTimer();
 
@@ -1069,12 +1082,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
               if (token == _token) {
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
-                return responseToken;
               }
               else if (token == _anonymousToken) {
                 Storage().auth2AnonymousToken = _anonymousToken = responseToken;
-                return responseToken;
               }
+              return responseToken;
             }
           }
 
@@ -1313,6 +1325,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   // Helpers
+
+  static String? _preprocessOidcLoginUrl(String? loginUrl) {
+    if ((loginUrl != null) && kDebugMode) {
+      Uri? loginUri = Uri.tryParse(loginUrl);
+      if (loginUri != null) {
+        Map<String, String> queryParameters = Map<String, String>.from(loginUri.queryParameters);
+        if (queryParameters['prompt'] == null) {
+          queryParameters.addAll(<String, String>{
+            'prompt': 'login'
+          });
+          loginUri = loginUri.replace(queryParameters: queryParameters);
+          loginUrl = loginUri.toString();
+        }
+      }
+    }
+    return loginUrl;
+  }
 
   static Future<void> _launchUrl(String? urlStr) async {
     try {

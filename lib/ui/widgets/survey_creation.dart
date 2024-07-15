@@ -242,7 +242,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         builder: (BuildContext context, List<Pair<int, SurveyElement>?> accepted, List<dynamic> rejected) {
           return displayEntry;
         },
-        onAccept: (dataPair) => dataPair.right == surveyElement && dataPair.left != index ? widget.onDrag!(dataPair.left, index) : null,
+        onAcceptWithDetails: (DragTargetDetails<Pair<int, SurveyElement>> details) => details.data.right == surveyElement && details.data.left != index ? widget.onDrag!(details.data.left, index) : null,
       ),
       childWhenDragging: displayEntry,
       axis: Axis.vertical,
@@ -423,7 +423,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
+          onAcceptWithDetails: (DragTargetDetails<int> details) => details.data != index ? widget.onDrag!(details.data, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,
@@ -470,7 +470,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
           builder: (BuildContext context, List<int?> accepted, List<dynamic> rejected) {
             return displayEntry;
           },
-          onAccept: (oldIndex) => oldIndex != index ? widget.onDrag!(oldIndex, index) : null,
+          onAcceptWithDetails: (DragTargetDetails<int> details) => details.data != index ? widget.onDrag!(details.data, index) : null,
         ),
         childWhenDragging: displayEntry,
         axis: Axis.vertical,

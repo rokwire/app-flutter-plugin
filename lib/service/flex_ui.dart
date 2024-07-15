@@ -40,6 +40,9 @@ class FlexUI with Service implements NotificationsListener {
   static const String _assetsName   = "flexUI.json";
   static const String _defaultContentSourceKey   = "";
 
+  static const String _featuresKey   = "features";
+  static const String _attributesKey   = "attributes";
+
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
@@ -50,6 +53,8 @@ class FlexUI with Service implements NotificationsListener {
 
   Map<String, dynamic>? _defaultContent;
   Set<dynamic>?         _defaultFeatures;
+  Map<String, Set<String>>? _sourceAttributes;
+  Map<String, Set<String>>? _defaultAttributes;
 
   // Singletone Factory
 
@@ -259,8 +264,12 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   void build() {
     _contentSource = buildContentSource();
+
     _defaultContent = buildContent(defaultContentSourceEntry);
+    _sourceAttributes = buildAttributes(defaultSourceContent);
+
     _defaultFeatures = buildFeatures(_defaultContent);
+    _defaultAttributes = buildAttributes(_defaultContent);
   }
 
   @protected
@@ -268,15 +277,34 @@ class FlexUI with Service implements NotificationsListener {
     Map<String, dynamic>? defaultContent = buildContent(defaultContentSourceEntry);
     if ((defaultContent != null) && ((_defaultContent == null) || !const DeepCollectionEquality().equals(_defaultContent, defaultContent))) {
       _defaultContent = defaultContent;
+
       _defaultFeatures = buildFeatures(_defaultContent);
+      _defaultAttributes = buildAttributes(_defaultContent);
       NotificationService().notify(notifyChanged, null);
     }
   }
 
   @protected
   Set<dynamic>? buildFeatures(Map<String, dynamic>? content) {
-    dynamic featuresList = (content != null) ? content['features'] : null;
+    dynamic featuresList = (content != null) ? content[_featuresKey] : null;
     return (featuresList is Iterable) ? Set.from(featuresList) : null;
+  }
+
+  Map<String, Set<String>>? buildAttributes(Map<String, dynamic>? content) {
+    Map<String, Set<String>>? attributesForScope;
+    if (content != null) {
+      List<String>? scopesList = JsonUtils.listStringsValue(content[_attributesKey]);
+      if (scopesList != null) {
+        attributesForScope = <String, Set<String>>{};
+        for (String scope in scopesList) {
+          Set<String>? scopeAttributes = JsonUtils.setStringsValue(content["$_attributesKey.$scope"]);
+          if (scopeAttributes != null) {
+            attributesForScope[scope] = scopeAttributes;
+          }
+        }
+      }
+    }
+    return attributesForScope;
   }
 
   // Content
@@ -298,8 +326,12 @@ class FlexUI with Service implements NotificationsListener {
     return (_defaultContent != null) ? JsonUtils.listValue(_defaultContent![key]) : null;
   }
 
-  Map<String, dynamic> get defaultRules {
+  Map<String, dynamic> get defaultSourceRules {
     return JsonUtils.mapValue(defaultContentSourceEntry?['rules']) ?? <String, dynamic>{};
+  }
+
+  Map<String, dynamic> get defaultSourceContent {
+    return JsonUtils.mapValue(defaultContentSourceEntry?['content']) ?? <String, dynamic>{};
   }
 
   Set<dynamic>? get defaultFeatures {
@@ -309,6 +341,16 @@ class FlexUI with Service implements NotificationsListener {
   bool hasFeature(String feature) {
     return (_defaultFeatures != null) && _defaultFeatures!.contains(feature);
   }
+
+  Map<String, Set<String>>? get sourceAttributes => _sourceAttributes;
+  Map<String, Set<String>>? get defaultAttributes => _defaultAttributes;
+
+  bool isAttributeEnabled(String? attribute, { String? scope }) =>
+    (attribute != null) && (scope != null) && !isAttributeDisabled(attribute, scope: scope);
+
+  bool isAttributeDisabled(String attribute, { required String scope }) =>
+    (_sourceAttributes?[scope]?.contains(attribute) == true) &&
+    (_defaultAttributes?[scope]?.contains(attribute) == false);
 
   Future<void> update() async {
     return updateContent();
@@ -407,8 +449,8 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalRoleRule(dynamic roleRule) {
-    return BoolExpr.eval(roleRule, (String? argument) {
-      if (argument != null) {
+    return BoolExpr.eval(roleRule, (dynamic argument) {
+      if (argument is String) {
         bool? not, all, any;
         if (not = argument.startsWith('~')) {
           argument = argument.substring(1);
@@ -470,46 +512,17 @@ class FlexUI with Service implements NotificationsListener {
   }
 
   @protected
-  bool localeEvalGroupRule(dynamic groupRule) {
-    return BoolExpr.eval(groupRule, (String? argument) {
-      if (argument != null) {
-        bool? not, all, any;
-        if (not = argument.startsWith('~')) {
-          argument = argument.substring(1);
-        }
-        if (all = argument.endsWith('!')) {
-          argument = argument.substring(0, argument.length - 1);
-        }
-        else if (any = argument.endsWith('?')) {
-          argument = argument.substring(0, argument.length - 1);
-        }
-        
-        Set<String>? targetGroups = localeEvalStringsSetParam(argument);
-        Set<String> userGroups = Groups().userGroupNames ?? {};
-        if (targetGroups != null) {
-          if (not == true) {
-            targetGroups = userGroups.difference(targetGroups);
-          }
-
-          if (all == true) {
-            return const DeepCollectionEquality().equals(userGroups, targetGroups);
-          }
-          else if (any == true) {
-            return userGroups.intersection(targetGroups).isNotEmpty;
-          }
-          else {
-            return userGroups.containsAll(targetGroups);
-          }
-        }
-      }
-      return null;
-    });
-  }
+  bool localeEvalGroupRule(dynamic groupRule) =>
+    localeEvalStringsSetExpr(groupRule, Groups().userGroupNames);
 
   @protected
-  bool localeEvalLocationRule(dynamic locationRule) {
-    return BoolExpr.eval(locationRule, (String? argument) {
-      if (argument != null) {
+  bool localeEvalLocationRule(dynamic locationRule) =>
+    localeEvalStringsSetExpr(locationRule, GeoFence().currentRegionIds);
+
+  @protected
+  bool localeEvalStringsSetExpr(dynamic rule, Set<String>? allStrings) {
+    return BoolExpr.eval(rule, (dynamic argument) {
+      if (argument is String) {
         bool? not, all, any;
         if (not = argument.startsWith('~')) {
           argument = argument.substring(1);
@@ -520,22 +533,21 @@ class FlexUI with Service implements NotificationsListener {
         else if (any = argument.endsWith('?')) {
           argument = argument.substring(0, argument.length - 1);
         }
-        
-        Set<String>? targetLocations = localeEvalStringsSetParam(argument);
-        Set<String> userLocations = GeoFence().currentRegionIds;
-        if (targetLocations != null) {
+
+        Set<String>? targetStrings = localeEvalStringsSetParam(argument);
+        if (targetStrings != null) {
           if (not == true) {
-            targetLocations = userLocations.difference(targetLocations);
+            targetStrings = allStrings?.difference(targetStrings) ?? <String>{};
           }
 
           if (all == true) {
-            return const DeepCollectionEquality().equals(userLocations, targetLocations);
+            return const DeepCollectionEquality().equals(allStrings, targetStrings);
           }
           else if (any == true) {
-            return userLocations.intersection(targetLocations).isNotEmpty;
+            return allStrings?.intersection(targetStrings).isNotEmpty == true;
           }
           else {
-            return userLocations.containsAll(targetLocations);
+            return allStrings?.containsAll(targetStrings) == true;
           }
         }
       }
@@ -567,7 +579,7 @@ class FlexUI with Service implements NotificationsListener {
     if (stringRef != null) {
       String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
       if (stringRef.startsWith(configPrefix)) {
-        return MapPathKey.entry(Config().content, stringRef.substring(configPrefix.length));
+        return Config().pathEntry(stringRef.substring(configPrefix.length));
       }
     }
     return null;
@@ -583,9 +595,13 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalAuthRule(dynamic authRule) {
+    return BoolExpr.eval(authRule, (dynamic argument) => localeEvalAuthRuleParam(argument));
+  }
+
+  bool? localeEvalAuthRuleParam(dynamic authParam) {
     bool result = true;  // allow everything that is not defined or we do not understand
-    if (authRule is Map) {
-      authRule.forEach((dynamic key, dynamic value) {
+    if (authParam is Map) {
+      authParam.forEach((dynamic key, dynamic value) {
         if (key is String) {
           if ((key == 'loggedIn') && (value is bool)) {
             result = result && (Auth2().isLoggedIn == value);
@@ -617,8 +633,11 @@ class FlexUI with Service implements NotificationsListener {
           else if ((key == 'usernameLinked') && (value is bool)) {
             result = result && (Auth2().isUsernameLinked == value);
           }
-          else if ((key == 'accountRole') && (value is String)) {
-            result = result && Auth2().hasRole(value);
+          else if (key == 'accountRole') {
+            result = result && localeEvalAccountRole(value);
+          }
+          else if (key == 'accountPermission') {
+            result = result && localeEvalAccountPermission(value);
           }
           else if ((key == 'shibbolethMemberOf') && (value is String)) {
             result = result && Auth2().isShibbolethMemberOf(value);
@@ -634,6 +653,14 @@ class FlexUI with Service implements NotificationsListener {
     }
     return result;
   }
+
+  @protected
+  bool localeEvalAccountRole(dynamic accountRoleRule) =>
+    localeEvalStringsSetExpr(accountRoleRule, Auth2().account?.allRoleNames);
+
+  @protected
+  bool localeEvalAccountPermission(dynamic accountPermissionRule) =>
+    localeEvalStringsSetExpr(accountPermissionRule, Auth2().account?.allPermissionNames);
 
   @protected
   bool localeEvalPlatformRule(dynamic platformRule) {
@@ -676,14 +703,14 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   bool localeEvalEnableRule(dynamic enableRule) {
-    return BoolExpr.eval(enableRule, (String? argument) {
+    return BoolExpr.eval(enableRule, (dynamic argument) {
       return localeEvalBoolParam(argument);
     });
   }
 
   @protected
-  bool? localeEvalBoolParam(String? stringParam) {
-    if (stringParam != null) {
+  bool? localeEvalBoolParam(dynamic stringParam) {
+    if (stringParam is String) {
       if (RegExp(r"\${.+}").hasMatch(stringParam)) {
         String stringRef = stringParam.substring(2, stringParam.length - 1);
         return JsonUtils.boolValue(localeEvalStringReference(stringRef));

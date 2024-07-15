@@ -142,7 +142,7 @@ class Event2 with Explore, Favorite {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2) &&
     (id == other.id) &&
     (name == other.name) &&
@@ -317,7 +317,7 @@ class Event2OnlineDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2OnlineDetails) &&
     (url == other.url) &&
     (meetingId == other.meetingId) &&
@@ -376,7 +376,7 @@ class Event2RegistrationDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2RegistrationDetails) &&
     (type == other.type) &&
     (label == other.label) &&
@@ -391,6 +391,12 @@ class Event2RegistrationDetails {
     (externalLink?.hashCode ?? 0) ^
     (eventCapacity?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(registrants));
+
+  bool get isEmpty => !isNotEmpty;
+
+  bool get isNotEmpty =>
+    (type == Event2RegistrationType.internal) ||
+    (type == Event2RegistrationType.external);
 
   static bool equals(Event2RegistrationDetails? details1, Event2RegistrationDetails? details2) =>
     ((details1 == null) && (details2 == null)) ||
@@ -463,7 +469,7 @@ class Event2AttendanceDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled) &&
@@ -507,7 +513,7 @@ class Event2SurveyDetails {
   };
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2SurveyDetails) &&
     (hoursAfterEvent == other.hoursAfterEvent);
 
@@ -589,7 +595,7 @@ class Event2Grouping {
   }
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Event2Grouping) &&
     (type == other.type) &&
     (displayAsIndividual == other.displayAsIndividual) &&
@@ -1108,7 +1114,7 @@ List<Event2TypeFilter>? event2TypeFilterListFromStringList(List<String>? values)
   return null;
 }
 
-List<String>? event2TypeFilterListToStringList(List<Event2TypeFilter>? values) {
+List<String>? event2TypeFilterListToStringList(Iterable<Event2TypeFilter>? values) {
   if (values != null) {
     List<String> list = <String>[];
     for (Event2TypeFilter value in values) {
@@ -1308,7 +1314,7 @@ class Events2ListResult {
   // Equality
 
   @override
-  bool operator==(dynamic other) =>
+  bool operator==(Object other) =>
     (other is Events2ListResult) &&
     (const DeepCollectionEquality().equals(events, other.events)) &&
     (totalCount == other.totalCount);

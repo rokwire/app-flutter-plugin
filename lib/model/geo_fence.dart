@@ -128,7 +128,7 @@ class GeoFenceRegion {
   }
 
   @override
-  bool operator==(dynamic other) {
+  bool operator==(Object other) {
     return (other is GeoFenceRegion) &&
       (id == other.id) &&
       const DeepCollectionEquality().equals(types, other.types) &&
@@ -177,7 +177,7 @@ class GeoFenceLocation {
   }
 
   @override
-  bool operator==(dynamic other) {
+  bool operator==(Object other) {
     bool value = (other is GeoFenceLocation) &&
       (latitude == other.latitude) &&
       (longitude == other.longitude) &&
@@ -225,7 +225,7 @@ class GeoFenceBeacon {
   }
 
   @override
-  bool operator==(dynamic other) {
+  bool operator==(Object other) {
     bool value = (other is GeoFenceBeacon) &&
       (uuid == other.uuid) &&
       (major == other.major) &&
