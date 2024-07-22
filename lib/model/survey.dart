@@ -1121,7 +1121,7 @@ class SurveysQueryParam {
     }
 
     if (endsAfter != null) {
-      queryParams['ends_after'] = endsBefore!.secondsSinceEpoch.toString();
+      queryParams['ends_after'] = endsAfter!.secondsSinceEpoch.toString();
     }
 
     if (offset != null) {
