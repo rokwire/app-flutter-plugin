@@ -1035,13 +1035,32 @@ class SurveysQueryParam {
   final List<String>? ids;
   final List<String>? types;
   final String? calendarEventID;
-  final int? limit;
+  final bool? public;
+  final bool? archived;
+  final DateTime? startsBefore;
+  final DateTime? startsAfter;
+  final DateTime? endsBefore;
+  final DateTime? endsAfter;
   final int? offset;
+  final int? limit;
 
-  SurveysQueryParam({this.ids, this.types, this.calendarEventID, this.limit, this.offset});
+  SurveysQueryParam({this.ids,
+    this.types, this.calendarEventID,
+    this.public, this.archived,
+    this.startsBefore, this.startsAfter,
+    this.endsBefore, this.endsAfter,
+    this.offset, this.limit});
 
   factory SurveysQueryParam.fromType(String type) => SurveysQueryParam(types: [type]);
+
   factory SurveysQueryParam.fromCalendarEventID(String calendarEventID) => SurveysQueryParam(calendarEventID: calendarEventID);
+
+  factory SurveysQueryParam.public({int? offset, int? limit}) => SurveysQueryParam(
+    public: true, archived: false,
+    startsBefore: DateTime.now(),
+    endsAfter: DateTime.now(),
+    offset: offset, limit: limit,
+  );
 
   Map<String, String> get urlParams {
     Map<String, String> queryParams = {};
@@ -1058,12 +1077,36 @@ class SurveysQueryParam {
       queryParams['calendar_event_id'] = calendarEventID!;
     }
 
-    if (limit != null) {
-      queryParams['limit'] = limit.toString();
+    if (public != null) {
+      queryParams['public'] = public.toString();
+    }
+
+    if (archived != null) {
+      queryParams['archived'] = archived.toString();
+    }
+
+    if (startsBefore != null) {
+      queryParams['starts_before'] = startsBefore!.secondsSinceEpoch.toString();
+    }
+
+    if (startsAfter != null) {
+      queryParams['starts_after'] = startsAfter!.secondsSinceEpoch.toString();
+    }
+
+    if (endsBefore != null) {
+      queryParams['ends_before'] = endsBefore!.secondsSinceEpoch.toString();
+    }
+
+    if (endsAfter != null) {
+      queryParams['ends_after'] = endsBefore!.secondsSinceEpoch.toString();
     }
 
     if (offset != null) {
       queryParams['offset'] = offset.toString();
+    }
+
+    if (limit != null) {
+      queryParams['limit'] = limit.toString();
     }
 
     return queryParams;

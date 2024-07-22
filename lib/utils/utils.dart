@@ -1511,6 +1511,10 @@ extension TZDateTimeExt on timezone.TZDateTime {
   }
 }
 
+extension DateTimeExt on DateTime {
+  int get secondsSinceEpoch => millisecondsSinceEpoch ~/ 1000;
+}
+
 extension UriUtilsExt on Uri {
   bool matchDeepLinkUri(Uri? deepLinkUri) => (deepLinkUri != null) &&
     (deepLinkUri.scheme == scheme) &&
