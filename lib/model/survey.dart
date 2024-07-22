@@ -1030,3 +1030,43 @@ class SurveyDataPage extends SurveyData {
 */
 
 enum SurveyElement { questionData, actionData, sections, followUpRules, resultRules, defaultResponseRule, scoreRule }
+
+class SurveysQueryParam {
+  final List<String>? ids;
+  final List<String>? types;
+  final String? calendarEventID;
+  final int? limit;
+  final int? offset;
+
+  SurveysQueryParam({this.ids, this.types, this.calendarEventID, this.limit, this.offset});
+
+  factory SurveysQueryParam.fromType(String type) => SurveysQueryParam(types: [type]);
+  factory SurveysQueryParam.fromCalendarEventID(String calendarEventID) => SurveysQueryParam(calendarEventID: calendarEventID);
+
+  Map<String, String> get urlParams {
+    Map<String, String> queryParams = {};
+
+    if (CollectionUtils.isNotEmpty(ids)) {
+      queryParams['ids'] = ids!.join(',');
+    }
+
+    if (CollectionUtils.isNotEmpty(types)) {
+      queryParams['types'] = types!.join(',');
+    }
+
+    if (calendarEventID != null) {
+      queryParams['calendar_event_id'] = calendarEventID!;
+    }
+
+    if (limit != null) {
+      queryParams['limit'] = limit.toString();
+    }
+
+    if (offset != null) {
+      queryParams['offset'] = offset.toString();
+    }
+
+    return queryParams;
+  }
+
+}
