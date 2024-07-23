@@ -97,6 +97,8 @@ class Survey extends RuleEngine {
   final bool scored;
   final bool? public;
   final bool? archived;
+  final bool? completed;
+  final int? estimatedCompletionTime;
   String title;
   String? moreInfo;
   final String? defaultDataKey;
@@ -112,7 +114,8 @@ class Survey extends RuleEngine {
   String? calendarEventId;
 
   Survey({required this.id, required this.data, required this.type,
-    this.scored = true, this.public, this.archived,
+    this.scored = true, this.public, this.archived, this.completed,
+    this.estimatedCompletionTime,
     required this.title, this.moreInfo,
     this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
     this.responseKeys,
@@ -130,6 +133,8 @@ class Survey extends RuleEngine {
       scored: JsonUtils.boolValue(json['scored']) ?? true,
       public: JsonUtils.boolValue(json['public']),
       archived: JsonUtils.boolValue(json['archived']),
+      completed: JsonUtils.boolValue(json['completed']),
+      estimatedCompletionTime: JsonUtils.intValue(json['estimated_completion_time']),
       title: JsonUtils.stringValue(json['title']) ?? 'Survey',
       moreInfo: JsonUtils.stringValue(json['more_info']),
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
@@ -157,6 +162,8 @@ class Survey extends RuleEngine {
       'scored': scored,
       'public': public,
       'archived': archived,
+      'completed': completed,
+      'estimated_completion_time': estimatedCompletionTime,
       'title': title,
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
@@ -188,6 +195,8 @@ class Survey extends RuleEngine {
       scored: other.scored,
       public: other.public,
       archived: other.archived,
+      completed: other.completed,
+      estimatedCompletionTime: other.estimatedCompletionTime,
       title: other.title,
       moreInfo: other.moreInfo,
       defaultDataKey: other.defaultDataKey,
@@ -1060,6 +1069,7 @@ class SurveysQueryParam {
   final String? calendarEventID;
   final bool? public;
   final bool? archived;
+  final bool? completed;
   final DateTime? startsBefore;
   final DateTime? startsAfter;
   final DateTime? endsBefore;
@@ -1069,7 +1079,7 @@ class SurveysQueryParam {
 
   SurveysQueryParam({this.ids,
     this.types, this.calendarEventID,
-    this.public, this.archived,
+    this.public, this.archived, this.completed,
     this.startsBefore, this.startsAfter,
     this.endsBefore, this.endsAfter,
     this.offset, this.limit});
@@ -1078,8 +1088,8 @@ class SurveysQueryParam {
 
   factory SurveysQueryParam.fromCalendarEventID(String calendarEventID) => SurveysQueryParam(calendarEventID: calendarEventID);
 
-  factory SurveysQueryParam.public({int? offset, int? limit}) => SurveysQueryParam(
-    public: true, archived: false,
+  factory SurveysQueryParam.public({bool? completed, int? offset, int? limit}) => SurveysQueryParam(
+    public: true, archived: false, completed: completed,
     startsBefore: DateTime.now(),
     endsAfter: DateTime.now(),
     offset: offset, limit: limit,
@@ -1106,6 +1116,10 @@ class SurveysQueryParam {
 
     if (archived != null) {
       queryParams['archived'] = archived.toString();
+    }
+
+    if (completed != null) {
+      queryParams['completed'] = completed.toString();
     }
 
     if (startsBefore != null) {
