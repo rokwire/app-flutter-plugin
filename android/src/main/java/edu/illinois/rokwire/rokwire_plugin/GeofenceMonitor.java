@@ -53,10 +53,6 @@ import java.util.UUID;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 public class GeofenceMonitor implements BeaconConsumer {
@@ -352,9 +348,11 @@ public class GeofenceMonitor implements BeaconConsumer {
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
         GeofencingRequest geofencingRequest = builder.build();
-        geofencingClient.addGeofences(geofencingRequest, getGeofencePendingIntent()).
-                addOnSuccessListener(addGeofencesSuccessListener).
-                addOnFailureListener(addGeofencesFailureListener);
+        if (ContextCompat.checkSelfPermission(RokwirePlugin.getInstance().getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            geofencingClient.addGeofences(geofencingRequest, getGeofencePendingIntent()).
+                    addOnSuccessListener(addGeofencesSuccessListener).
+                    addOnFailureListener(addGeofencesFailureListener);
+        }
     }
 
     private void stopMonitorGeofenceRegions(List<String> geofenceIdList) {
@@ -375,7 +373,7 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         Intent intent = new Intent(RokwirePlugin.getInstance().getActivity(), GeofenceBroadcastReceiver.class);
         geofencePendingIntent = PendingIntent.getBroadcast(RokwirePlugin.getInstance().getActivity(), 0,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                intent, PendingIntent.FLAG_IMMUTABLE);
         return geofencePendingIntent;
     }
 
