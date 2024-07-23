@@ -19,7 +19,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:gallery_saver/gallery_saver.dart';
+import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -42,7 +42,8 @@ class ImageUtils {
     await capturedFile.writeAsBytes(imageBytes);
     bool? saveResult = false;
     try {
-      saveResult = await GallerySaver.saveImage(capturedFile.path);
+      await Gal.putImage(capturedFile.path);
+      saveResult = true;
     } catch (e) {
       debugPrint('Failed to save image to fs. \nException: ${e.toString()}');
     }
