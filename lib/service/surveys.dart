@@ -342,29 +342,9 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<Survey>?> loadSurveys({List<String>? ids, List<String>? types, String? calendarEventID, int? limit, int? offset}) async {
+  Future<List<Survey>?> loadSurveys(SurveysQueryParam queryParam) async {
     if (enabled) {
-      Map<String, String> queryParams = {};
-      if (CollectionUtils.isNotEmpty(ids)) {
-        queryParams['ids'] = ids!.join(',');
-      }
-      if (CollectionUtils.isNotEmpty(types)) {
-        queryParams['types'] = types!.join(',');
-      }
-      if (calendarEventID != null) {
-        queryParams['calendar_event_id'] = calendarEventID;
-      }
-      if (limit != null) {
-        queryParams['limit'] = limit.toString();
-      }
-      if (offset != null) {
-        queryParams['offset'] = offset.toString();
-      }
-
-      String url = '${Config().surveysUrl}/surveys';
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
+      String url = UrlUtils.addQueryParameters('${Config().surveysUrl}/surveys', queryParam.urlParams);
       Response? response = await Network().get(url, auth: Auth2());
       int? responseCode = response?.statusCode;
       String? responseBody = response?.body;
