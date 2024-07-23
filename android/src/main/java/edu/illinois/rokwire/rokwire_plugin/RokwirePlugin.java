@@ -93,7 +93,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   // ActivityAware
 
   @Override
-  public void onAttachedToActivity​(ActivityPluginBinding binding) {
+  public void onAttachedToActivity(ActivityPluginBinding binding) {
     _applyActivityBinding(binding);
   }
 
@@ -103,7 +103,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
   }
 
   @Override
-  public void	onReattachedToActivityForConfigChanges​(ActivityPluginBinding binding) {
+  public void	onReattachedToActivityForConfigChanges(ActivityPluginBinding binding) {
     _applyActivityBinding(binding);
   }
 
@@ -232,9 +232,9 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) && (appContext != null)) {
 
       try {
-        String id = call.hasArgument​("id") ? call.argument("id") : "edu.illinois.rokwire.firebase_messaging.notification_channel";
-        String name = call.hasArgument​("name") ? call.argument("name") : "Rokwire";
-        int importance = call.hasArgument​("importance") ? call.argument("importance") : android.app.NotificationManager.IMPORTANCE_DEFAULT;
+        String id = call.hasArgument("id") ? call.argument("id") : "edu.illinois.rokwire.firebase_messaging.notification_channel";
+        String name = call.hasArgument("name") ? call.argument("name") : "Rokwire";
+        int importance = call.hasArgument("importance") ? call.argument("importance") : android.app.NotificationManager.IMPORTANCE_DEFAULT;
 
         NotificationChannel channel = new NotificationChannel(id, name, importance);
         String description = call.argument("description");
@@ -265,7 +265,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
 
         Intent intent = new Intent(application, activity.getClass());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(application, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(application, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         //if (title == null) {
         //  title = this.getString(R.string.app_name);
