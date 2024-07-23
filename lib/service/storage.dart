@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
@@ -34,7 +36,7 @@ class Storage with Service {
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
-
+  WebOptions? _secureStorageWebOptions;
   String? _encryptionKey;
   String? _encryptionIV;
 
@@ -58,12 +60,16 @@ class Storage with Service {
   Future<void> initService() async {
     _sharedPreferences = await SharedPreferences.getInstance();
     _secureStorage = FlutterSecureStorage(
-      aOptions: const AndroidOptions(encryptedSharedPreferences: true,),
-      iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)
+        aOptions: const AndroidOptions(encryptedSharedPreferences: true,),
+        iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)
     );
-
-    _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
-    _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
+    if (kIsWeb) {
+      // Use this secure storage only for web for now
+      _secureStorageWebOptions =
+          WebOptions(dbName: 'edu.illinois.rokwire.storage.web.db', publicKey: 'edu.illinois.rokwire.storage.web.key.public');
+    }
+    _encryptionKey = await _getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
+    _encryptionIV = await _getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     
     if (_sharedPreferences == null) {
       throw ServiceError(
@@ -102,6 +108,28 @@ class Storage with Service {
   String? decrypt(String? value) {
     return ((value != null) && (_encryptionKey != null) && (_encryptionIV != null)) ?
       AESCrypt.decrypt(value, key: _encryptionKey, iv: _encryptionIV) : null;
+  }
+
+  Future<String?> _getEncryptionKey({required String identifier, required int size}) async {
+    if (kIsWeb) {
+      // Use flutter plugin for securely storing for web for now ...
+      bool hasKey = await _secureStorage?.containsKey(key: identifier, webOptions: _secureStorageWebOptions) ?? false;
+      String? encodedKey = hasKey ? await _secureStorage?.read(key: identifier, webOptions: _secureStorageWebOptions) : null;
+      Uint8List? decodedKey = (encodedKey != null) ? base64Decode(encodedKey) : null;
+      if (hasKey && (decodedKey != null) && (decodedKey.length == size)) {
+        return encodedKey;
+      } else {
+        return await _storeEncryptionKey(identifier: identifier, size: size);
+      }
+    } else {
+      return await RokwirePlugin.getEncryptionKey(identifier: identifier, size: size);
+    }
+  }
+
+  Future<String?> _storeEncryptionKey({required String identifier, required int size}) async {
+    String secureKey = AESCrypt.secureKey(size: size);
+    await _secureStorage?.write(key: identifier, value: secureKey);
+    return secureKey;
   }
 
   // Utilities

@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -31,6 +30,7 @@ import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class WebPanel extends StatefulWidget {
   final String? url;

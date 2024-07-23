@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -25,13 +24,14 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/utils/crypt.dart';
+import 'package:universal_io/io.dart';
 
 class Config with Service, NetworkAuthProvider, NotificationsListener {
 
@@ -95,8 +95,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
-    _appDocumentsDir = await getApplicationDocumentsDirectory();
-    Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
+    _appDocumentsDir = kIsWeb ? null : await getApplicationDocumentsDirectory();
+    Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
 
     await init();
     await super.initService();
@@ -154,9 +154,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  File get configFile {
-    String configFilePath = join(_appDocumentsDir!.path, configName);
-    return File(configFilePath);
+  File? get configFile {
+    String? configFilePath = (_appDocumentsDir != null) ? join(_appDocumentsDir!.path, configName) : null;
+    return (configFilePath != null) ? File(configFilePath) : null;
   }
 
   @protected
@@ -309,7 +309,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       if (_config != null) {
-        configFile.writeAsStringSync(configString!, flush: true);
+        configFile?.writeAsStringSync(configString!, flush: true);
         checkUpgrade();
       }
       else {
@@ -333,7 +333,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Map<String, dynamic>? config = await configFromJsonString(configString);
     if ((config != null) && (AppVersion.compareVersions(content['mobileAppVersion'], config['mobileAppVersion']) <= 0) && !await CollectionUtils.equalsAsync(_config, config))  {
       _config = config;
-      configFile.writeAsString(configString!, flush: true);
+      configFile?.writeAsString(configString!, flush: true);
       NotificationService().notify(notifyConfigChanged, null);
 
       checkUpgrade();
@@ -343,7 +343,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // App Id & Version
 
   String? get appId {
-    return _packageInfo?.packageName;
+    //TBD: DD - implement web - read it from a config or any resource
+    return kIsWeb ? 'edu.illinois.rokwire' : _packageInfo?.packageName;
   }
 
   String? get appCanonicalId {
@@ -362,7 +363,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".${kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase()}";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }

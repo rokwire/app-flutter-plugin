@@ -16,7 +16,6 @@
 
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -29,6 +28,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class StringUtils {
 
@@ -1052,12 +1052,14 @@ class AppToast {
   static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
   static const Color defaultTextColor = Colors.white;
   static const Color defaultBackgroundColor = const Color(0x99000000);
-  
+  static const String defaultWebBackgroundColor = '#ffffff';
+
   static void showMessage(String msg, {
     ToastGravity gravity = defaultGravity,
     Duration duration = defaultDuration,
     Color textColor = defaultTextColor,
     Color backgroundColor = defaultBackgroundColor,
+    String webBackgroundColor = defaultWebBackgroundColor,
   }) {
     Fluttertoast.showToast(
       msg: msg,
@@ -1066,6 +1068,7 @@ class AppToast {
       timeInSecForIosWeb: duration.inSeconds,
       gravity: gravity,
       backgroundColor: backgroundColor,
+      webBgColor: defaultWebBackgroundColor
     );
   }
 

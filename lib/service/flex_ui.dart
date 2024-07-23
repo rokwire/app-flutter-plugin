@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -32,6 +31,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
+import 'package:universal_io/io.dart';
 
 class FlexUI with Service implements NotificationsListener {
 

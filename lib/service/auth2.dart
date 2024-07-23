@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:universal_io/io.dart';
 
 class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
@@ -127,7 +127,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _anonymousId = Storage().auth2AnonymousId;
 
     List<Future<dynamic>> futures = [
-      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
+      kIsWeb ? '' : RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
 
       Storage().getAuth2Token(),
       Storage().getAuth2Account(),
@@ -1509,7 +1509,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Map<String, dynamic> get deviceInfo {
     return {
-      'type': "mobile",
+      'type': kIsWeb ? 'web' : 'mobile',
       'device_id': _deviceId,
       'os': Platform.operatingSystem,
     };
