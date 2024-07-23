@@ -36,7 +36,6 @@ class Storage with Service {
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
-  WebOptions? _secureStorageWebOptions;
   String? _encryptionKey;
   String? _encryptionIV;
 
@@ -61,13 +60,9 @@ class Storage with Service {
     _sharedPreferences = await SharedPreferences.getInstance();
     _secureStorage = FlutterSecureStorage(
         aOptions: const AndroidOptions(encryptedSharedPreferences: true,),
-        iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)
+        iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
+        webOptions: kIsWeb ? WebOptions(dbName: 'edu.illinois.rokwire.storage.web.db', publicKey: 'edu.illinois.rokwire.storage.web.key.public') : WebOptions.defaultOptions,
     );
-    if (kIsWeb) {
-      // Use this secure storage only for web for now
-      _secureStorageWebOptions =
-          WebOptions(dbName: 'edu.illinois.rokwire.storage.web.db', publicKey: 'edu.illinois.rokwire.storage.web.key.public');
-    }
     _encryptionKey = await _getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     _encryptionIV = await _getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     
@@ -113,8 +108,8 @@ class Storage with Service {
   Future<String?> _getEncryptionKey({required String identifier, required int size}) async {
     if (kIsWeb) {
       // Use flutter plugin for securely storing for web for now ...
-      bool hasKey = await _secureStorage?.containsKey(key: identifier, webOptions: _secureStorageWebOptions) ?? false;
-      String? encodedKey = hasKey ? await _secureStorage?.read(key: identifier, webOptions: _secureStorageWebOptions) : null;
+      bool hasKey = await _secureStorage?.containsKey(key: identifier) ?? false;
+      String? encodedKey = hasKey ? await _secureStorage?.read(key: identifier) : null;
       Uint8List? decodedKey = (encodedKey != null) ? base64Decode(encodedKey) : null;
       if (hasKey && (decodedKey != null) && (decodedKey.length == size)) {
         return encodedKey;
