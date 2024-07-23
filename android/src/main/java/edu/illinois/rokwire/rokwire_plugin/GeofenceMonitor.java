@@ -83,12 +83,16 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     public void init() {
         Context activityContext = RokwirePlugin.getInstance().getActivity();
-        if ((activityContext != null) &&
-            (ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
-            (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            Log.d(TAG, "Location Permissions Granted.");
-            initGeofenceClient();
-            initBeaconManager();
+        if (activityContext != null) {
+            if ((ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
+                    (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Location Permissions Granted - init geofence client.");
+                initGeofenceClient();
+            }
+            if ((ContextCompat.checkSelfPermission(activityContext, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Bluetooth_scan permissions Granted - init beacon manager.");
+                initBeaconManager();
+            }
         }
     }
 
@@ -459,8 +463,8 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         for (Region region : beaconRegions) {
             try {
-                beaconManager.startMonitoringBeaconsInRegion(region);
-            } catch (RemoteException e) {
+                beaconManager.startMonitoring(region);
+            } catch (Exception e) {
                 Log.e(TAG, "Failed to start monitor beacon region with id: " + region.getUniqueId());
                 e.printStackTrace();
             }
@@ -476,8 +480,8 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         for (Region region : beaconRegions) {
             try {
-                beaconManager.stopMonitoringBeaconsInRegion(region);
-            } catch (RemoteException e) {
+                beaconManager.stopMonitoring(region);
+            } catch (Exception e) {
                 Log.e(TAG, "Failed to stop monitor beacon region with id: " + region.getUniqueId());
                 e.printStackTrace();
             }
