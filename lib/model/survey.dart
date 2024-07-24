@@ -142,8 +142,8 @@ class Survey extends RuleEngine {
       resultRules: JsonUtils.listOrNull((json) => RuleResult.listFromJson(json), JsonUtils.decode(json['result_rules'])),
       resultData: JsonUtils.decode(json['result_json']),
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
-      startDate: AppDateTime().dateTimeLocalFromJson(json['start_date']),
-      endDate: AppDateTime().dateTimeLocalFromJson(json['end_date']),
+      startDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start_date']))?.toUtc(),
+      endDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end_date']))?.toUtc(),
       dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -174,8 +174,8 @@ class Survey extends RuleEngine {
       'constants': constants,
       'strings': strings,
       'sub_rules': RuleEngine.subRulesToJson(subRules),
-      'start_date': AppDateTime().dateTimeLocalToJson(startDate),
-      'end_date': AppDateTime().dateTimeLocalToJson(endDate),
+      'start_date': DateTimeUtils.utcDateTimeToString(startDate),
+      'end_date': DateTimeUtils.utcDateTimeToString(endDate),
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
@@ -1122,21 +1122,10 @@ class SurveysQueryParam {
       queryParams['completed'] = completed.toString();
     }
 
-    if (startsBefore != null) {
-      queryParams['starts_before'] = startsBefore!.secondsSinceEpoch.toString();
-    }
-
-    if (startsAfter != null) {
-      queryParams['starts_after'] = startsAfter!.secondsSinceEpoch.toString();
-    }
-
-    if (endsBefore != null) {
-      queryParams['ends_before'] = endsBefore!.secondsSinceEpoch.toString();
-    }
-
-    if (endsAfter != null) {
-      queryParams['ends_after'] = endsAfter!.secondsSinceEpoch.toString();
-    }
+    MapUtils.set(queryParams, 'starts_before', DateTimeUtils.utcDateTimeToString(startsBefore));
+    MapUtils.set(queryParams, 'starts_after', DateTimeUtils.utcDateTimeToString(startsAfter));
+    MapUtils.set(queryParams, 'ends_before', DateTimeUtils.utcDateTimeToString(endsBefore));
+    MapUtils.set(queryParams, 'ends_after', DateTimeUtils.utcDateTimeToString(endsAfter));
 
     if (offset != null) {
       queryParams['offset'] = offset.toString();
