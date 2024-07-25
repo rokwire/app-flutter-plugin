@@ -97,6 +97,8 @@ class Survey extends RuleEngine {
   final bool scored;
   final bool? public;
   final bool? archived;
+  final bool? completed;
+  final int? estimatedCompletionTime;
   String title;
   String? moreInfo;
   final String? defaultDataKey;
@@ -112,7 +114,8 @@ class Survey extends RuleEngine {
   String? calendarEventId;
 
   Survey({required this.id, required this.data, required this.type,
-    this.scored = true, this.public, this.archived,
+    this.scored = true, this.public, this.archived, this.completed,
+    this.estimatedCompletionTime,
     required this.title, this.moreInfo,
     this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
     this.responseKeys,
@@ -130,6 +133,8 @@ class Survey extends RuleEngine {
       scored: JsonUtils.boolValue(json['scored']) ?? true,
       public: JsonUtils.boolValue(json['public']),
       archived: JsonUtils.boolValue(json['archived']),
+      completed: JsonUtils.boolValue(json['completed']),
+      estimatedCompletionTime: JsonUtils.intValue(json['estimated_completion_time']),
       title: JsonUtils.stringValue(json['title']) ?? 'Survey',
       moreInfo: JsonUtils.stringValue(json['more_info']),
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
@@ -137,8 +142,8 @@ class Survey extends RuleEngine {
       resultRules: JsonUtils.listOrNull((json) => RuleResult.listFromJson(json), JsonUtils.decode(json['result_rules'])),
       resultData: JsonUtils.decode(json['result_json']),
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
-      startDate: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start_date'])),
-      endDate: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end_date'])),
+      startDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start_date']))?.toUtc(),
+      endDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end_date']))?.toUtc(),
       dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -157,6 +162,8 @@ class Survey extends RuleEngine {
       'scored': scored,
       'public': public,
       'archived': archived,
+      'completed': completed,
+      'estimated_completion_time': estimatedCompletionTime,
       'title': title,
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
@@ -167,8 +174,8 @@ class Survey extends RuleEngine {
       'constants': constants,
       'strings': strings,
       'sub_rules': RuleEngine.subRulesToJson(subRules),
-      'start_date': startDate?.secondsSinceEpoch,
-      'end_date': endDate?.secondsSinceEpoch,
+      'start_date': DateTimeUtils.utcDateTimeToString(startDate),
+      'end_date': DateTimeUtils.utcDateTimeToString(endDate),
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
@@ -188,6 +195,8 @@ class Survey extends RuleEngine {
       scored: other.scored,
       public: other.public,
       archived: other.archived,
+      completed: other.completed,
+      estimatedCompletionTime: other.estimatedCompletionTime,
       title: other.title,
       moreInfo: other.moreInfo,
       defaultDataKey: other.defaultDataKey,
@@ -1060,6 +1069,7 @@ class SurveysQueryParam {
   final String? calendarEventID;
   final bool? public;
   final bool? archived;
+  final bool? completed;
   final DateTime? startsBefore;
   final DateTime? startsAfter;
   final DateTime? endsBefore;
@@ -1069,7 +1079,7 @@ class SurveysQueryParam {
 
   SurveysQueryParam({this.ids,
     this.types, this.calendarEventID,
-    this.public, this.archived,
+    this.public, this.archived, this.completed,
     this.startsBefore, this.startsAfter,
     this.endsBefore, this.endsAfter,
     this.offset, this.limit});
@@ -1078,8 +1088,8 @@ class SurveysQueryParam {
 
   factory SurveysQueryParam.fromCalendarEventID(String calendarEventID) => SurveysQueryParam(calendarEventID: calendarEventID);
 
-  factory SurveysQueryParam.public({int? offset, int? limit}) => SurveysQueryParam(
-    public: true, archived: false,
+  factory SurveysQueryParam.public({bool? completed, int? offset, int? limit}) => SurveysQueryParam(
+    public: true, archived: false, completed: completed,
     startsBefore: DateTime.now(),
     endsAfter: DateTime.now(),
     offset: offset, limit: limit,
@@ -1108,21 +1118,14 @@ class SurveysQueryParam {
       queryParams['archived'] = archived.toString();
     }
 
-    if (startsBefore != null) {
-      queryParams['starts_before'] = startsBefore!.secondsSinceEpoch.toString();
+    if (completed != null) {
+      queryParams['completed'] = completed.toString();
     }
 
-    if (startsAfter != null) {
-      queryParams['starts_after'] = startsAfter!.secondsSinceEpoch.toString();
-    }
-
-    if (endsBefore != null) {
-      queryParams['ends_before'] = endsBefore!.secondsSinceEpoch.toString();
-    }
-
-    if (endsAfter != null) {
-      queryParams['ends_after'] = endsAfter!.secondsSinceEpoch.toString();
-    }
+    MapUtils.set(queryParams, 'starts_before', DateTimeUtils.utcDateTimeToString(startsBefore));
+    MapUtils.set(queryParams, 'starts_after', DateTimeUtils.utcDateTimeToString(startsAfter));
+    MapUtils.set(queryParams, 'ends_before', DateTimeUtils.utcDateTimeToString(endsBefore));
+    MapUtils.set(queryParams, 'ends_after', DateTimeUtils.utcDateTimeToString(endsAfter));
 
     if (offset != null) {
       queryParams['offset'] = offset.toString();
