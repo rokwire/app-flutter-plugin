@@ -60,7 +60,7 @@ class Auth2Token {
     (tokenType?.hashCode ?? 0);
 
   bool get isValid {
-    return StringUtils.isNotEmpty(accessToken) && StringUtils.isNotEmpty(refreshToken) && StringUtils.isNotEmpty(tokenType);
+    return StringUtils.isNotEmpty(accessToken) && (kIsWeb || StringUtils.isNotEmpty(refreshToken)) && StringUtils.isNotEmpty(tokenType);
   }
 
   bool get isValidUiuc {

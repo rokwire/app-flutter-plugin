@@ -32,6 +32,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 class Config with Service, NetworkAuthProvider, NotificationsListener {
 
@@ -95,8 +96,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
-    _appDocumentsDir = kIsWeb ? null : await getApplicationDocumentsDirectory();
-    Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
+    if (!kIsWeb) {
+      _appDocumentsDir = await getApplicationDocumentsDirectory();
+      Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
+    }
 
     await init();
     await super.initService();
@@ -205,12 +208,17 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Future<String?> loadAsStringFromCore() async {
     Map<String, dynamic> body = {
       'version': appVersion,
-      'app_type_identifier': appPlatformId,
-      'api_key': rokwireApiKey,
     };
-    String? bodyString =  JsonUtils.encode(body);
+    if (!isReleaseWeb) {
+      if (appPlatformId == null || rokwireApiKey == null) {
+        return null;
+      }
+      body['app_type_identifier'] = appPlatformId;
+      body['api_key'] = rokwireApiKey;
+    }
+
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: bodyString);
+      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: Auth2Csrf());
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -327,6 +335,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // App Id & Version
 
+  String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
+
   String? get appId {
     //TBD: DD - implement web - read it from a config or any resource
     return kIsWeb ? 'edu.illinois.rokwire' : _packageInfo?.packageName;
@@ -336,7 +346,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appCanonicalId == null) {
       _appCanonicalId = appId;
       
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".$operatingSystem";
       if ((_appCanonicalId != null) && _appCanonicalId!.endsWith(platformSuffix)) {
         _appCanonicalId = _appCanonicalId!.substring(0, _appCanonicalId!.length - platformSuffix.length);
       }
@@ -348,7 +358,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".$operatingSystem";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }
@@ -442,7 +452,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       return entry;
     }
     else if (entry is Map) {
-      dynamic value = entry[Platform.operatingSystem.toLowerCase()];
+      dynamic value = entry[operatingSystem];
       return (value is String) ? value : null;
     }
     else {
@@ -546,6 +556,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
+
+  bool get bypassLogin => true; // Bypass login for testing web layouts
+  bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }
 
 enum ConfigEnvironment { production, test, dev }

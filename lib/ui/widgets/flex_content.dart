@@ -16,6 +16,7 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/panels/web_panel.dart';
@@ -186,7 +187,7 @@ class FlexContent extends StatefulWidget {
         Map<String, dynamic>? options = JsonUtils.mapValue(linkJson['options']);
         dynamic target = (options != null) ? options['target'] : 'internal';
         if (target is Map) {
-          target = target[Platform.operatingSystem.toLowerCase()];
+          target = target[Config().operatingSystem];
         }
 
         if (target == 'external') {
