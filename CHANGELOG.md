@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
+- Use ISO 8601/RFC 3339 strings for survey start & end dates [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 
 ## [1.7.0] - 2024-07-15
 ### Changed
