@@ -35,6 +35,7 @@ class Surveys /* with Service */ {
 
   static const String notifySurveyLoaded = "edu.illinois.rokwire.survey.loaded";
   static const String notifySurveyResponseCreated = "edu.illinois.rokwire.survey_response.created";
+  static const String notifySurveyResponseDeleted = "edu.illinois.rokwire.survey_response.deleted";
 
   // Singletone Factory
 
@@ -545,7 +546,10 @@ class Surveys /* with Service */ {
       }
       Response? response = await Network().delete(url, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
-      return responseCode == 200;
+      if (responseCode == 200) {
+        NotificationService().notify(notifySurveyResponseDeleted);
+        return true;
+      }
     }
     return false;
   }
