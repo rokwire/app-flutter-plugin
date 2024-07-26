@@ -27,6 +27,7 @@ class FormFieldText extends StatefulWidget {
   final String? initialValue;
   final String? hint;
   final int? maxLength;
+  final TextStyle? style;
   final TextInputType? inputType;
   final TextEditingController? controller;
   final Function(String)? onFieldSubmitted;
@@ -38,7 +39,7 @@ class FormFieldText extends StatefulWidget {
 
 
   const FormFieldText(this.label, {Key? key, this.padding = const EdgeInsets.only(bottom: 20), this.readOnly = false, this.multipleLines = false, 
-    this.required = false, this.initialValue, this.hint, this.maxLength, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved,
+    this.required = false, this.initialValue, this.hint, this.maxLength, this.style, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved,
     this.onChanged, this.validator, this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
 
   @override
@@ -54,7 +55,7 @@ class _FormFieldTextState extends State<FormFieldText> {
         label: widget.label,
         child: TextFormField(
           readOnly: widget.readOnly,
-          style: Styles().textStyles.getTextStyle('body'),
+          style: widget.style ?? Styles().textStyles.getTextStyle('body'),
           maxLines: widget.multipleLines ? null : 1,
           minLines: widget.multipleLines ? 2 : null,
           maxLength: widget.maxLength,

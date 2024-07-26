@@ -38,11 +38,12 @@ class SurveyPanel extends StatefulWidget {
   final Widget? tabBar;
   final Widget? offlineWidget;
   final Color? backgroundColor;
+  final SurveyWidgetTextStyles? textStyles;
 
   const SurveyPanel({Key? key, required this.survey, this.surveyDataKey, this.inputEnabled = true,
     this.dateTaken, this.showResult = false, this.onComplete, this.initPanelDepth = 0, this.defaultResponses,
     this.summarizeResultRules = false, this.summarizeResultRulesWidget, this.headerBar, this.tabBar,
-    this.backgroundColor, this.offlineWidget}) : super(key: key);
+    this.backgroundColor, this.offlineWidget, this.textStyles}) : super(key: key);
 
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
@@ -103,6 +104,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 summarizeResultRules: widget.summarizeResultRules,
                 summarizeResultRulesWidget: widget.summarizeResultRulesWidget,
                 offlineWidget: widget.offlineWidget,
+                textStyles: widget.textStyles,
               ),
             ),
           )),
