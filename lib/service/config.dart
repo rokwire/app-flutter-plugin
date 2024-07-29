@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -282,21 +283,27 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<void> init() async {
-    
-    _encryptionKeys = await loadEncryptionKeysFromAssets();
-    if (_encryptionKeys == null) {
-      throw ServiceError(
-        source: this,
-        severity: ServiceErrorSeverity.fatal,
-        title: 'Config Initialization Failed',
-        description: 'Failed to load config encryption keys.',
-      );
+
+    if (!isReleaseWeb) {
+      _encryptionKeys = await loadEncryptionKeysFromAssets();
+      if (_encryptionKeys == null) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Config Initialization Failed',
+          description: 'Failed to load config encryption keys.',
+        );
+      }
     }
 
-    _config = await loadFromFile(configFile);
+    if (!kIsWeb) {
+      _config = await loadFromFile(configFile);
+    }
 
     if (_config == null) {
-      _configAsset = await loadFromAssets();
+      if (!isReleaseWeb) {
+        _configAsset = await loadFromAssets();
+      }
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
@@ -557,6 +564,19 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
 
+  // Getters: web
+  String? get webIdentifierOrigin => html.window.location.origin;
+  String? get authBaseUrl {
+    if (isReleaseWeb) {
+      return '$webIdentifierOrigin/${_packageInfo?.packageName}';
+    } else if (isAdmin) {
+      return '$coreUrl/admin';
+    }
+    return '$coreUrl/services';
+  }
+
+  bool get supportsAnonymousAuth => true;
+  bool get isAdmin => false;
   bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }
