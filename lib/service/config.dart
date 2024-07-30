@@ -198,7 +198,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   Future<String?> loadAsStringFromAppConfig() async {
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: Auth2Csrf());
+      http.Response? response = await Network().get(appConfigUrl, auth: kIsWeb ? Auth2Csrf(): this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -533,7 +533,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: platformBuildingBlocks
   String? get coreUrl          => JsonUtils.stringValue(platformBuildingBlocks['core_url']);
   String? get notificationsUrl => JsonUtils.stringValue(platformBuildingBlocks["notifications_url"]);
-  String? get loggingUrl       => JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
+  String? get loggingUrl       => kIsWeb ? '$authBaseUrl/logs' : JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
   String? get quickPollsUrl    => JsonUtils.stringValue(platformBuildingBlocks["polls_url"]);
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);

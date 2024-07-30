@@ -18,6 +18,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -324,7 +325,7 @@ class Analytics with Service implements NotificationsListener {
       try {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
         //TBD: Remove this when logging service gets updated.
-        final response = await Network().post(Config().loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: Config() /* Auth2() */, sendAnalytics: false);
+        final response = await Network().post(Config().loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: kIsWeb ? Auth2Csrf() : Config(), sendAnalytics: false);
         return (response != null) && ((response.statusCode == 200) || (response.statusCode == 201));
       }
       catch (e) {
