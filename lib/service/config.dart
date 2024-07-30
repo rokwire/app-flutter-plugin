@@ -198,7 +198,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   Future<String?> loadAsStringFromAppConfig() async {
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: this);
+      http.Response? response = await Network().get(appConfigUrl, auth: Auth2Csrf());
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -396,7 +396,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-configs" : null);
   } 
   
   String? get rokwireApiKey          {
