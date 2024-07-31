@@ -49,11 +49,11 @@ class SurveyBuilder {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles.getTextStyle('widget.title.small.bold'))),
+          Flexible(child: Text(title ?? response.survey.title.toUpperCase(), style: Styles().textStyles.getTextStyle('widget.title.dark.small.fat'))),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(date ?? '', style: Styles().textStyles.getTextStyle('widget.detail.small')),
+              Text(date ?? '', style: Styles().textStyles.getTextStyle('widget.detail.dark.small')),
               Container(width: 8.0),
               Styles().images.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
@@ -75,7 +75,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(key.replaceAll('_', ' ').toUpperCase() + ':',
-                  style: Styles().textStyles.getTextStyle('widget.description.regular.bold')),
+                  style: Styles().textStyles.getTextStyle('widget.description.regular.fat')),
               const SizedBox(width: 8.0),
               Flexible(child: Text(responseData ?? '', style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
             ],
@@ -119,7 +119,7 @@ class SurveyBuilder {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(Localization().getStringEx("widget.survey.response_card.result.title", "Result:"),
-                  style: Styles().textStyles.getTextStyle('widget.detail.regular.bold')),
+                  style: Styles().textStyles.getTextStyle('widget.detail.dark.regular.fat')),
               const SizedBox(height: 8.0),
               SurveyBuilder.surveyDataResult(context, dataResult) ?? Container(),
             ],
