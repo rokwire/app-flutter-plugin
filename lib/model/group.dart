@@ -965,18 +965,20 @@ class GroupMembershipAnswer {
 class GroupPost {
   final String? id;
   final String? parentId;
+  final String? topParentId;//main post for sub reply thread
   final Member? member;
   final String? subject;
   final String? body;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
+  final DateTime? dateScheduledUtc;
   final bool? private;
   final List<GroupPost>? replies;
   final List<Member>? members;
   final String? imageUrl;
   final Map<String, List<String>> reactions;
 
-  GroupPost({this.id, this.parentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
+  GroupPost({this.id, this.parentId, this.topParentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.dateScheduledUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
 
   static GroupPost? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -997,11 +999,13 @@ class GroupPost {
     return GroupPost(
         id: json['id'],
         parentId: json['parent_id'],
+        topParentId: json['top_parent_id'],
         member: Member.fromJson(json['member']),
         subject: json['subject'],
         body: json['body'],
         dateCreatedUtc: groupUtcDateTimeFromString(json['date_created']),
         dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
+        dateScheduledUtc:  groupUtcDateTimeFromString(json['date_scheduled']),
         private: json['private'],
         imageUrl: JsonUtils.stringValue(json["image_url"]),
         replies: GroupPost.fromJsonList(json['replies']),
@@ -1017,6 +1021,9 @@ class GroupPost {
     if ((parentId != null) && create) {
       json['parent_id'] = parentId;
     }
+    if ((topParentId != null) && create) {
+      json['top_parent_id'] = parentId;
+    }
     if ((id != null) && update) {
       json['id'] = id;
     }
@@ -1028,6 +1035,9 @@ class GroupPost {
     }
     if(members!=null){
       json['to_members'] = Member.listToJson(members);
+    }
+    if(dateScheduledUtc!=null) {
+      json['date_scheduled'] = groupUtcDateTimeToString(dateScheduledUtc);
     }
     return json;
   }
@@ -1054,8 +1064,9 @@ class PostDataModel {
   String? subject;
   String? imageUrl;
   List<Member>? members;
+  DateTime? dateScheduled;
 
-  PostDataModel({this.body, this.subject, this.imageUrl, this.members});
+  PostDataModel({this.body, this.subject, this.imageUrl, this.members, this.dateScheduled});
 }
 
 //////////////////////////////

@@ -555,6 +555,7 @@ class UiColors {
   Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
   @Deprecated("Use AppColors instead")
   Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
+  Color get blueAccent                 => colorMap['blueAccent'] ?? const Color(0xFF0058A7);
 
   @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);

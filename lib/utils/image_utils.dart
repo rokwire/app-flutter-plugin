@@ -19,7 +19,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:gallery_saver/gallery_saver.dart';
+import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -42,7 +42,8 @@ class ImageUtils {
     await capturedFile.writeAsBytes(imageBytes);
     bool? saveResult = false;
     try {
-      saveResult = await GallerySaver.saveImage(capturedFile.path);
+      await Gal.putImage(capturedFile.path);
+      saveResult = true;
     } catch (e) {
       debugPrint('Failed to save image to fs. \nException: ${e.toString()}');
     }
@@ -63,44 +64,44 @@ class ImageUtils {
   static Future<Uint8List?> applyLabelOverImage(Uint8List? imageBytes, String? label, {
     double width = 1024,
     double height = 1024,
-    ui.TextDirection textDirection = ui.TextDirection.ltr,
+    TextStyle? textStyle,
     TextAlign textAlign = TextAlign.center,
-    String? fontFamily,
-    double? fontSize,
-    Color textColor = Colors.black,
+    ui.TextDirection textDirection = ui.TextDirection.ltr,
   }) async {
     if (imageBytes != null) {
-      const double labelHeight = 156;
-      double newHeight = (height + labelHeight);
+
       try {
+        double textGutterX = width / 16;
+        double textGutterY = height / 32;
+
+        final ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(
+            ui.ParagraphStyle(textDirection: textDirection, textAlign: textAlign, fontSize: textStyle?.fontSize, fontFamily: textStyle?.fontFamily))
+          ..pushStyle(ui.TextStyle(color: textStyle?.color))
+          ..addText(label ?? '');
+        final ui.Paragraph paragraph = paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: width - 2 * textGutterX));
+        final double textHeight = paragraph.height + 2 * textGutterY;
+        final double outputHeight = (height + textHeight);
+
         final recorder = ui.PictureRecorder();
-        Canvas canvas = Canvas(recorder, Rect.fromPoints(const Offset(0.0, 0.0), Offset(width, newHeight)));
+        Canvas canvas = Canvas(recorder, Rect.fromPoints(const Offset(0.0, 0.0), Offset(width, outputHeight)));
         final fillPaint = Paint()
           ..color = Colors.white
           ..style = PaintingStyle.fill;
 
-        canvas.drawRect(Rect.fromLTWH(0.0, 0.0, width, newHeight), fillPaint);
+        canvas.drawRect(Rect.fromLTWH(0.0, 0.0, width, outputHeight), fillPaint);
 
         ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
         ui.FrameInfo frameInfo = await codec.getNextFrame();
-        canvas.drawImage(frameInfo.image, const Offset(0.0, labelHeight), fillPaint);
-
-        final ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(
-            ui.ParagraphStyle(textDirection: textDirection, textAlign: textAlign, fontSize: fontSize, fontFamily: fontFamily))
-          ..pushStyle(ui.TextStyle(color: textColor))
-          ..addText(label!);
-        final ui.Paragraph paragraph = paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: width));
-        double textY = ((newHeight - height) - paragraph.height) / 2.0;
-        canvas.drawParagraph(paragraph, Offset(0.0, textY));
+        canvas.drawImage(frameInfo.image, Offset(0.0, 0.0), fillPaint);
+        canvas.drawParagraph(paragraph, Offset(textGutterX, height + textGutterY));
 
         final picture = recorder.endRecording();
-        final img = await picture.toImage(width.toInt(), newHeight.toInt());
+        final img = await picture.toImage(width.toInt(), outputHeight.toInt());
         ByteData pngBytes = await img.toByteData(format: ui.ImageByteFormat.png) ?? ByteData(0);
         Uint8List newQrBytes = Uint8List(pngBytes.lengthInBytes);
         for (int i = 0; i < pngBytes.lengthInBytes; i++) {
           newQrBytes[i] = pngBytes.getUint8(i);
         }
-
         return newQrBytes;
       } catch (e) {
         debugPrint('Failed to apply label to image. \nException: ${e.toString()}');

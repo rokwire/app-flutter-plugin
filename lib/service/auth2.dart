@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
@@ -362,12 +363,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return phoneStrings;
   }
 
-  bool get isEventEditor => hasRole("event approvers");
-  bool get isStadiumPollManager => hasRole("stadium poll manager");
-  bool get isDebugManager => hasRole("debug");
-  bool get isGroupsAccess => hasRole("groups access");
+  bool get isCalendarAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.calendar_admin', defaults: 'calendar_admin'));
+  bool get isManagedGroupAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.managed_group_admin', defaults: 'managed_group_admin'));
+  bool get isResearchProjectAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.research_group_admin', defaults: 'research_group_admin'));
 
-  bool hasRole(String role) => _account?.hasRole(role) ?? false;
+  bool get isStadiumPollManager => hasRole(Config().stringPathEntry('settings.auth.roles.stadium_poll_manager', defaults: 'stadium poll manager'));
+  bool get isDebugManager => hasRole(Config().stringPathEntry('settings.auth.roles.debug', defaults: 'debug'));
+
+  bool get isEventEditor => hasRole(Config().stringPathEntry('settings.auth.roles.event_approvers', defaults: 'event approvers')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.event_approvers', defaults: 'event_approvers'));
+
+  bool get isGroupsAccess => hasRole(Config().stringPathEntry('settings.auth.roles.groups_access', defaults: 'groups access')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.groups_access', defaults: 'groups_access'));
+
+  bool hasRole(String? role) => _account?.hasRole(role) == true;
+  bool hasPermission(String? permission) => _account?.hasPermission(permission) == true;
+  bool belongsToGroup(String? group) => _account?.belongsToGroup(group) == true;
 
   bool isShibbolethMemberOf(String group) => _account?.authType?.uiucUser?.groupsMembership?.contains(group) ?? false;
 
@@ -737,7 +748,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
-          _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
+
+          //await RokwirePlugin.clearSafariVC();
+          await _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
         }
         else {
           Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
@@ -1587,14 +1600,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
                 await applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
                 NotificationService().notify(notifyRefreshSucceeded);
                 NotificationService().notify(notifyRefreshFinished);
-                return responseToken;
               }
               else if (token == _anonymousToken) {
                 await Storage().setAuth2AnonymousToken(_anonymousToken = responseToken);
                 NotificationService().notify(notifyRefreshSucceeded);
                 NotificationService().notify(notifyRefreshFinished);
-                return responseToken;
               }
+              return responseToken;
             }
           }
 

@@ -127,7 +127,7 @@ class Connectivity with Service implements NotificationsListener {
 
   ConnectivityStatus? get status {
     return _connectivityStatus;
-  }  
+  }
 
   bool get isOnline {
     return (_connectivityStatus != null) && (_connectivityStatus != ConnectivityStatus.none);

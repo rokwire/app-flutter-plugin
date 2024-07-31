@@ -1,6 +1,6 @@
 name: rokwire_plugin
 description: Rokwire Flutter plugin
-version: 1.7.0
+version: 1.8.0
 homepage:
 
 environment:
@@ -13,6 +13,7 @@ dependencies:
 
   logger: ^1.1.0
   connectivity_plus: ^3.0.0
+  gal: ^2.3.0
   app_links: ^3.5.0
   fluttertoast: ^8.2.2
   path: ^1.8.2
@@ -24,7 +25,7 @@ dependencies:
   intl: ^0.19.0
   http: ^0.13.5
   timezone: ^0.9.2
-  flutter_timezone: 1.0.8
+  flutter_timezone: ^2.1.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
   shared_preferences: ^2.2.0
@@ -54,9 +55,9 @@ dependencies:
     git: https://github.com/rokmetro/flutter_passkey.git
 
   #Firebase
-  firebase_core: ^2.13.0
-  firebase_crashlytics: ^3.3.1
-#  firebase_messaging: ^14.6.1 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
+  firebase_core: ^3.2.0
+  firebase_crashlytics: ^4.0.3
+#  firebase_messaging: ^15.0.3 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
   #End Firebase
 
 dev_dependencies:

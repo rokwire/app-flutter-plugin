@@ -42,6 +42,9 @@ class StringUtils {
   static String ensureNotEmpty(String? value, {String defaultValue = ''}) =>
     ((value != null) && value.isNotEmpty) ? value : defaultValue;
 
+  static String? ensureEmpty(String? value) =>
+    (value?.isNotEmpty == true) ? value : null;
+
   static bool isEmpty(String? stringToCheck) =>
     !isNotEmpty(stringToCheck);
 
@@ -105,6 +108,17 @@ class StringUtils {
       }
     }
     return fullName;
+  }
+
+  static String truncate({required String value, required int atLength}) {
+    int valueLength = value.length;
+    if ((atLength > 0) && (valueLength > atLength)) {
+      String truncatedValue = value.substring(0, atLength);
+      int lastSpaceIndex = truncatedValue.lastIndexOf(' ');
+      return '${(lastSpaceIndex > 0) ? truncatedValue.substring(0, lastSpaceIndex) : truncatedValue} ...';
+    } else {
+      return value;
+    }
   }
 
   /// US Phone validation  https://github.com/rokwire/illinois-app/issues/47
@@ -219,6 +233,20 @@ class _EqualsParam {
   _EqualsParam(this.e1, this.e2);
 }
 
+// StringCompareGit4143
+// "Alphabetization is letter-by-letter and apostrophes are ignored"
+// (https://github.com/rokwire/illinois-app/issues/4143)
+
+extension StringCompareGit4143 on String {
+  static RegExp symbolRegExp = RegExp(r'[^\w\s]+');
+
+  String toGit4143Canonical() =>
+    toLowerCase().replaceAll(symbolRegExp, '');
+
+  int compareGit4143To(String other) =>
+    toGit4143Canonical().compareTo(other.toGit4143Canonical());
+}
+
 class ListUtils {
   static List<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? List<T>.from(elements) : null;
@@ -244,6 +272,10 @@ class ListUtils {
 
   static List<T>? notEmpty<T>(List<T>? list) {
     return ((list?.length ?? 0) > 0) ? list : null;
+  }
+
+  static List<T>? ensureEmpty<T>(List<T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
   }
 
   static bool? contains(Iterable<dynamic>? list, dynamic item, {bool checkAll = false}) {
@@ -349,6 +381,10 @@ class LinkedHashSetUtils {
       }
     }
   }
+
+  static LinkedHashSet<T>? ensureEmpty<T>(LinkedHashSet<T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
+  }
 }
 
 class MapUtils {
@@ -372,6 +408,12 @@ class MapUtils {
     }
   }
 
+  static void add<K, T>(Map<K, T>? map, K? key, T? entry) {
+    if ((map != null) && (key != null) && (entry != null)) {
+      map[key] = entry;
+    }
+  }
+
   static T? get2<K, T>(Map<K, T>? map, List<K?>? keys) {
     if ((map != null) && (keys != null)) {
       for (K? key in keys) {
@@ -384,6 +426,10 @@ class MapUtils {
       }
     }
     return null;
+  }
+
+  static Map<K, T>? ensureEmpty<K, T>(Map<K, T>? value) {
+    return (value?.isNotEmpty == true) ? value : null;
   }
 
   static Map<String, dynamic> mergeToNew(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
@@ -578,13 +624,28 @@ class UrlUtils {
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
-      Uri uri = Uri.parse(url);
-      Map<String, String> urlParams = uri.queryParameters;
-      queryParameters.addAll(urlParams);
-      uri = uri.replace(queryParameters: queryParameters);
-      url = uri.toString();
+      Uri? uri = Uri.tryParse(url);
+      if (uri != null) {
+        Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
+        queryParameters.addAll(urlParams);
+        uri = uri.replace(queryParameters: queryParameters);
+        url = uri.toString();
+      }
     }
     return url;
+  }
+
+  static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
+    Uri? uri = Uri.tryParse(url);
+    return Uri(
+      scheme: StringUtils.ensureEmpty(uri?.scheme),
+      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
+      host: StringUtils.ensureEmpty(uri?.host),
+      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
+      path: StringUtils.ensureEmpty(uri?.path),
+      fragment: StringUtils.ensureEmpty(uri?.fragment),
+      queryParameters: queryParameters,
+    ).toString();
   }
 
   static bool isValidUrl(String? url) {
@@ -697,7 +758,6 @@ class UrlUtils {
     }
     return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
-
 }
 
 
@@ -1052,6 +1112,9 @@ class JsonUtils {
     }
     return null;
   }
+
+  static T? cast<T>(dynamic value) =>
+    (value is T) ? value : null;
 }
 
 class AppToast {
@@ -1206,9 +1269,9 @@ class GeometryUtils {
 
 class BoolExpr {
   
-  static bool eval(dynamic expr, bool? Function(String?)? evalArg) {
+  static bool eval(dynamic expr, bool? Function(dynamic)? evalArg) {
     
-    if (expr is String) {
+    if ((expr is String) || (expr is Map)) {
 
       if (expr == 'TRUE') {
         return true;
@@ -1552,6 +1615,17 @@ extension TZDateTimeExt on timezone.TZDateTime {
     }
     return null;
   }
+}
+
+extension DateTimeExt on DateTime {
+  int get secondsSinceEpoch => millisecondsSinceEpoch ~/ 1000;
+}
+
+extension UriUtilsExt on Uri {
+  bool matchDeepLinkUri(Uri? deepLinkUri) => (deepLinkUri != null) &&
+    (deepLinkUri.scheme == scheme) &&
+    (deepLinkUri.authority == authority) &&
+    (deepLinkUri.path == path);
 }
 
 class WebUtils {

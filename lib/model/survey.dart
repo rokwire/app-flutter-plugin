@@ -95,20 +95,34 @@ class Survey extends RuleEngine {
   @override final String type;
   final Map<String, SurveyData> data;
   final bool scored;
+  final bool? public;
+  final bool? archived;
+  final bool? completed;
+  final int? estimatedCompletionTime;
   String title;
   String? moreInfo;
   final String? defaultDataKey;
   final RuleResult? defaultDataKeyRule;
   final List<RuleResult>? resultRules;
   final List<String>? responseKeys;
+  DateTime? startDate;
+  DateTime? endDate;
   DateTime? dateCreated;
   DateTime? dateUpdated;
   SurveyStats? stats;
 
   String? calendarEventId;
 
-  Survey({required this.id, required this.data, required this.type, this.scored = true, required this.title, this.moreInfo, this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
-    this.responseKeys, this.dateUpdated, this.dateCreated, this.stats, this.calendarEventId, dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
+  Survey({required this.id, required this.data, required this.type,
+    this.scored = true, this.public, this.archived, this.completed,
+    this.estimatedCompletionTime,
+    required this.title, this.moreInfo,
+    this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
+    this.responseKeys,
+    this.startDate, this.endDate,
+    this.dateUpdated, this.dateCreated,
+    this.stats, this.calendarEventId,
+    dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
   factory Survey.fromJson(Map<String, dynamic> json) {
@@ -117,6 +131,10 @@ class Survey extends RuleEngine {
       data: SurveyData.mapFromJson(JsonUtils.mapValue(json['data']) ?? {}),
       type: JsonUtils.stringValue(json['type']) ?? '',
       scored: JsonUtils.boolValue(json['scored']) ?? true,
+      public: JsonUtils.boolValue(json['public']),
+      archived: JsonUtils.boolValue(json['archived']),
+      completed: JsonUtils.boolValue(json['completed']),
+      estimatedCompletionTime: JsonUtils.intValue(json['estimated_completion_time']),
       title: JsonUtils.stringValue(json['title']) ?? 'Survey',
       moreInfo: JsonUtils.stringValue(json['more_info']),
       defaultDataKey: JsonUtils.stringValue(json['default_data_key']),
@@ -124,6 +142,8 @@ class Survey extends RuleEngine {
       resultRules: JsonUtils.listOrNull((json) => RuleResult.listFromJson(json), JsonUtils.decode(json['result_rules'])),
       resultData: JsonUtils.decode(json['result_json']),
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
+      startDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start_date']))?.toUtc(),
+      endDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end_date']))?.toUtc(),
       dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
@@ -140,6 +160,10 @@ class Survey extends RuleEngine {
       'data': SurveyData.mapToJson(data),
       'type': type,
       'scored': scored,
+      'public': public,
+      'archived': archived,
+      'completed': completed,
+      'estimated_completion_time': estimatedCompletionTime,
       'title': title,
       'more_info': moreInfo,
       'default_data_key': defaultDataKey,
@@ -150,6 +174,8 @@ class Survey extends RuleEngine {
       'constants': constants,
       'strings': strings,
       'sub_rules': RuleEngine.subRulesToJson(subRules),
+      'start_date': DateTimeUtils.utcDateTimeToString(startDate),
+      'end_date': DateTimeUtils.utcDateTimeToString(endDate),
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
@@ -167,6 +193,10 @@ class Survey extends RuleEngine {
       data: data,
       type: other.type,
       scored: other.scored,
+      public: other.public,
+      archived: other.archived,
+      completed: other.completed,
+      estimatedCompletionTime: other.estimatedCompletionTime,
       title: other.title,
       moreInfo: other.moreInfo,
       defaultDataKey: other.defaultDataKey,
@@ -174,6 +204,8 @@ class Survey extends RuleEngine {
       resultRules: other.resultRules != null ? List.from(other.resultRules!) : null,
       resultData: other.resultData is Map ? Map.from(other.resultData) : (other.resultData is Iterable ? List.from(other.resultData) : other.resultData),
       responseKeys: other.responseKeys != null ? List.from(other.responseKeys!) : null,
+      startDate: other.startDate,
+      endDate: other.endDate,
       dateCreated: other.dateCreated,
       dateUpdated: other.dateUpdated,
       constants: Map.of(other.constants),
@@ -1030,3 +1062,80 @@ class SurveyDataPage extends SurveyData {
 */
 
 enum SurveyElement { questionData, actionData, sections, followUpRules, resultRules, defaultResponseRule, scoreRule }
+
+class SurveysQueryParam {
+  final List<String>? ids;
+  final List<String>? types;
+  final String? calendarEventID;
+  final bool? public;
+  final bool? archived;
+  final bool? completed;
+  final DateTime? startsBefore;
+  final DateTime? startsAfter;
+  final DateTime? endsBefore;
+  final DateTime? endsAfter;
+  final int? offset;
+  final int? limit;
+
+  SurveysQueryParam({this.ids,
+    this.types, this.calendarEventID,
+    this.public, this.archived, this.completed,
+    this.startsBefore, this.startsAfter,
+    this.endsBefore, this.endsAfter,
+    this.offset, this.limit});
+
+  factory SurveysQueryParam.fromType(String type) => SurveysQueryParam(types: [type]);
+
+  factory SurveysQueryParam.fromCalendarEventID(String calendarEventID) => SurveysQueryParam(calendarEventID: calendarEventID);
+
+  factory SurveysQueryParam.public({bool? completed, int? offset, int? limit}) => SurveysQueryParam(
+    public: true, archived: false, completed: completed,
+    startsBefore: DateTime.now(),
+    endsAfter: DateTime.now(),
+    offset: offset, limit: limit,
+  );
+
+  Map<String, String> get urlParams {
+    Map<String, String> queryParams = {};
+
+    if (CollectionUtils.isNotEmpty(ids)) {
+      queryParams['ids'] = ids!.join(',');
+    }
+
+    if (CollectionUtils.isNotEmpty(types)) {
+      queryParams['types'] = types!.join(',');
+    }
+
+    if (calendarEventID != null) {
+      queryParams['calendar_event_id'] = calendarEventID!;
+    }
+
+    if (public != null) {
+      queryParams['public'] = public.toString();
+    }
+
+    if (archived != null) {
+      queryParams['archived'] = archived.toString();
+    }
+
+    if (completed != null) {
+      queryParams['completed'] = completed.toString();
+    }
+
+    MapUtils.set(queryParams, 'starts_before', DateTimeUtils.utcDateTimeToString(startsBefore));
+    MapUtils.set(queryParams, 'starts_after', DateTimeUtils.utcDateTimeToString(startsAfter));
+    MapUtils.set(queryParams, 'ends_before', DateTimeUtils.utcDateTimeToString(endsBefore));
+    MapUtils.set(queryParams, 'ends_after', DateTimeUtils.utcDateTimeToString(endsAfter));
+
+    if (offset != null) {
+      queryParams['offset'] = offset.toString();
+    }
+
+    if (limit != null) {
+      queryParams['limit'] = limit.toString();
+    }
+
+    return queryParams;
+  }
+
+}
