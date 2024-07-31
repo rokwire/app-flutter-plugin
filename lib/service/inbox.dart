@@ -326,9 +326,19 @@ class Inbox with Service implements NotificationsListener {
   }
 
   //UserInfo
+  Future<Response?> loadUserInfoEx() async {
+    try {
+      return (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user", auth: Auth2()) : null;
+    } catch (e) {
+      Log.e('Failed to load inbox user info');
+      Log.e(e.toString());
+    }
+    return null;
+  }
+
   Future<void> _loadUserInfo() async {
     try {
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user", auth: Auth2()) : null;
+      Response? response = await loadUserInfoEx();
       if (response?.statusCode == 200) {
         Map<String, dynamic>? jsonData = JsonUtils.decode(response?.body);
         InboxUserInfo? userInfo = InboxUserInfo.fromJson(jsonData);
