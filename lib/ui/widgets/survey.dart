@@ -60,11 +60,13 @@ class SurveyWidget extends StatefulWidget {
   final bool summarizeResultRules;
   final Widget? summarizeResultRulesWidget;
 
+  late final SurveyWidgetTextStyles textStyles;
   late final SurveyWidgetController controller;
 
   SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, this.internalContinueButton = true,
     this.surveyDataKey, this.mainSurveyData, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, this.summarizeResultRulesWidget,
-    SurveyWidgetController? controller}) : super(key: key) {
+    SurveyWidgetTextStyles? textStyles, SurveyWidgetController? controller}) : super(key: key) {
+    this.textStyles = textStyles ?? SurveyWidgetTextStyles.withDefaults();
     this.controller = controller ?? SurveyWidgetController();
   }
 
@@ -175,14 +177,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
+      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: widget.textStyles.dateTaken,),
     );
   }
 
   Widget _buildMoreInfo() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 32.0),
-      child: Text(_survey!.moreInfo ?? '', style: Styles().textStyles.getTextStyle('widget.message.large.bold'),),
+      child: Text(_survey!.moreInfo ?? '', style: widget.textStyles.surveyMoreInfo,),
     );
   }
 
@@ -256,14 +258,14 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Visibility(visible: surveyWidget!.orientation == WidgetOrientation.left, child: surveyWidget.widget!),
-              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? Styles().textStyles.getTextStyle('widget.error.regular.bold'))),
+              Visibility(visible: !survey.allowSkip, child: Text("* ", semanticsLabel: Localization().getStringEx("widget.survey.label.required.hint", "Required"), style: textStyle ?? widget.textStyles.required)),
               Visibility(
                 visible: !surveyWidget.containsText,
                 child: Flexible(
                   child: Text(
                     survey.text,
                     textAlign: TextAlign.start,
-                    style: textStyle ?? Styles().textStyles.getTextStyle('widget.message.medium'),
+                    style: textStyle ?? widget.textStyles.surveyText,
                   ),
                 ),
               ),
@@ -278,7 +280,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             child: Text(
               survey.moreInfo ?? '',
               textAlign: TextAlign.start,
-              style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+              style: widget.textStyles.dataMoreInfo,
             ),
           ),
         ),
@@ -412,7 +414,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
             _onChangeResponse(false);
           },
           enabled: enabled,
-          textWidget: Text(option.title, style: Styles().textStyles.getTextStyle('widget.detail.small'), textAlign: TextAlign.center),
+          textWidget: Text(option.title, style: widget.textStyles.horizontalMultipleChoiceOption, textAlign: TextAlign.center),
           backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.surface),
           borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorPrimaryVariant),
           selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorSecondary)),
@@ -634,7 +636,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       children: [
         Container(decoration: BoxDecoration(color: Styles().colors.surface, borderRadius: BorderRadius.circular(8)),child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-          child: Text(label, style: Styles().textStyles.getTextStyle('headline3')),
+          child: Text(label, style: widget.textStyles.sliderLabel),
         )),
         Expanded(
           child: Slider(value: value, min: min, max: max, label: label, activeColor: Styles().colors.fillColorPrimary, onChanged: enabled ? (value) {
@@ -661,7 +663,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Text(i.toString(), style: Styles().textStyles.getTextStyle('label')),
+       Text(i.toString(), style: widget.textStyles.radioButtonNumLabel),
        Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
          onChanged: enabled ? (Object? value) {
            survey.response = value;
@@ -683,11 +685,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, int? maxLength, bool multipleLines = false, String? initialValue, String? hint,
-    TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator,
+    TextStyle? textStyle, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator,
     TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
-    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, maxLength: maxLength, multipleLines: multipleLines,
+    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, maxLength: maxLength, multipleLines: multipleLines, style: textStyle ?? widget.textStyles.textInput,
       inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
-      textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters
+      textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters,
     ));
   }
 
@@ -749,27 +751,27 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     } else if (result is List<RuleAction>) {
       List<InlineSpan> textSpans = [TextSpan(
         text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
-        style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
+        style: widget.textStyles.preview,
       )];
       for (RuleAction action in result) {
         if (RuleAction.supportedPreviews.contains(action.action)) {
           textSpans.add(TextSpan(
             text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
-            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
+            style: widget.textStyles.preview,
           ));
           textSpans.add(TextSpan(
             text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
-            style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
+            style: widget.textStyles.previewAction,
             recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),
           ));
           textSpans.add(TextSpan(
             text: '\n',
-            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
+            style: widget.textStyles.preview,
           ));
         } else {
           textSpans.add(TextSpan(
             text: '\u2022 ${action.getSummary()}\n',
-            style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
+            style: widget.textStyles.preview,
           ));
         }
       }
@@ -825,6 +827,10 @@ class CustomIconSelectionList extends StatelessWidget {
   final Widget? selectedIcon;
   final Widget? checkIcon;
   final Widget? incorrectIcon;
+  final TextStyle? selectedStyle;
+  final TextStyle? notSelectedStyle;
+  final TextStyle? correctAnswerLabelStyle;
+  final TextStyle? correctAnswerValueStyle;
 
   const CustomIconSelectionList({
     Key? key,
@@ -838,6 +844,10 @@ class CustomIconSelectionList extends StatelessWidget {
     this.selectedIcon,
     this.checkIcon,
     this.incorrectIcon,
+    this.selectedStyle,
+    this.notSelectedStyle,
+    this.correctAnswerLabelStyle,
+    this.correctAnswerValueStyle,
   }) : super(key: key);
 
   @override
@@ -882,18 +892,24 @@ class CustomIconSelectionList extends StatelessWidget {
 
               return Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
+                    shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
-                      child: ListTile(
-                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? Styles().textStyles.getTextStyle('labelSelected') : Styles().textStyles.getTextStyle('label'))),
-                        leading:
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: optionIcon),
-                          ],
+                      child: Theme(
+                        data: ThemeData(
+                            unselectedWidgetColor: Styles().colors.textDark
                         ),
-                        contentPadding: const EdgeInsets.all(8),
+                        child: ListTile(
+                          title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? selectedStyle : notSelectedStyle)),
+                          leading:
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: optionIcon),
+                            ],
+                          ),
+                          contentPadding: const EdgeInsets.all(8),
+                        ),
                       ),
                     )
                 ),
@@ -908,11 +924,11 @@ class CustomIconSelectionList extends StatelessWidget {
                   Text(
                       "Correct Answer: ",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles.getTextStyle('headline2')),
+                      style: correctAnswerLabelStyle),
                   Text(
                       correctAnswer ?? "",
                       textAlign: TextAlign.start,
-                      style: Styles().textStyles.getTextStyle('body'))
+                      style: correctAnswerValueStyle)
                 ],
               ),
         )),
@@ -961,13 +977,20 @@ class SingleSelectionList extends StatelessWidget {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
                 clipBehavior: Clip.hardEdge,
-                child: RadioListTile(
-                  title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /*, color: Styles().colors.headlineText */))),
-                  activeColor: Styles().colors.fillColorSecondary,
-                  value: title,
-                  groupValue: selectedValue?.title,
-                  onChanged: onChanged != null ? (_) => onChanged!(index) : null,
-                  contentPadding: const EdgeInsets.all(8),
+                shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
+                child: Theme(
+                  data: ThemeData(
+                    unselectedWidgetColor: Styles().colors.textDark
+                  ),
+                  child: RadioListTile(
+                    title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
+                    activeColor: Styles().colors.fillColorSecondary,
+                    tileColor: Styles().colors.surface,
+                    value: title,
+                    groupValue: selectedValue?.title,
+                    onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                    contentPadding: const EdgeInsets.all(8),
+                  ),
                 )
               ));
         });
@@ -995,19 +1018,73 @@ class MultiSelectionList extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
+                  shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
-                    child: CheckboxListTile(
-                      title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /* , color: Styles().colors.headlineText */))),
-                      checkColor: Colors.white,
-                      activeColor: Styles().colors.fillColorSecondary,
-                      value: isChecked?[index],
-                      onChanged: onChanged != null ? (_) => onChanged!(index) : null,
-                      contentPadding: const EdgeInsets.all(8),
-                      controlAffinity: ListTileControlAffinity.leading,
+                    child: Theme(
+                      data: ThemeData(
+                          unselectedWidgetColor: Styles().colors.textDark
+                      ),
+                      child: CheckboxListTile(
+                        title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
+                        checkColor: Styles().colors.fillColorSecondary,
+                        activeColor: Styles().colors.fillColorSecondary,
+                        tileColor: Styles().colors.surface,
+                        value: isChecked?[index],
+                        onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                        contentPadding: const EdgeInsets.all(8),
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
                     ),
                   )
               ));
         });
+  }
+}
+
+class SurveyWidgetTextStyles {
+  final TextStyle? dateTaken;
+  final TextStyle? surveyMoreInfo;
+  final TextStyle? required;
+  final TextStyle? surveyText;
+  final TextStyle? dataMoreInfo;
+  final TextStyle? horizontalMultipleChoiceOption;
+  final TextStyle? sliderLabel;
+  final TextStyle? radioButtonNumLabel;
+  final TextStyle? textInput;
+  final TextStyle? preview;
+  final TextStyle? previewAction;
+  final TextStyle? verticalMultipleChoiceSelected;
+  final TextStyle? verticalMultipleChoiceNotSelected;
+  final TextStyle? correctAnswerLabel;
+  final TextStyle? correctAnswerValue;
+
+  const SurveyWidgetTextStyles({this.dateTaken, this.surveyMoreInfo, this.required, this.surveyText,
+    this.dataMoreInfo, this.horizontalMultipleChoiceOption, this.sliderLabel, this.radioButtonNumLabel, this.textInput,
+    this.preview, this.previewAction, this.verticalMultipleChoiceSelected, this.verticalMultipleChoiceNotSelected,
+    this.correctAnswerLabel, this.correctAnswerValue});
+
+  factory SurveyWidgetTextStyles.withDefaults({TextStyle? dateTaken, TextStyle? surveyMoreInfo, TextStyle? required, TextStyle? surveyText,
+    TextStyle? dataMoreInfo, TextStyle? horizontalMultipleChoiceOption, TextStyle? sliderLabel, TextStyle? radioButtonNumLabel, TextStyle? textInput,
+    TextStyle? preview, TextStyle? previewAction, TextStyle? verticalMultipleChoiceSelected, TextStyle? verticalMultipleChoiceNotSelected,
+    TextStyle? correctAnswerLabel, TextStyle? correctAnswerValue}) {
+
+    return SurveyWidgetTextStyles(
+      dateTaken: dateTaken ?? Styles().textStyles.getTextStyle('widget.detail.regular'),
+      surveyMoreInfo: surveyMoreInfo ?? Styles().textStyles.getTextStyle('widget.message.large.bold'),
+      required: required ?? Styles().textStyles.getTextStyle('widget.error.regular.fat'),
+      surveyText: surveyText ?? Styles().textStyles.getTextStyle('widget.message.medium'),
+      dataMoreInfo: dataMoreInfo ?? Styles().textStyles.getTextStyle('widget.detail.regular'),
+      horizontalMultipleChoiceOption: horizontalMultipleChoiceOption ?? Styles().textStyles.getTextStyle('widget.detail.small'),
+      sliderLabel: sliderLabel ?? Styles().textStyles.getTextStyle('headline3'),
+      radioButtonNumLabel: radioButtonNumLabel ?? Styles().textStyles.getTextStyle('label'),
+      textInput: textInput ?? Styles().textStyles.getTextStyle('widget.description.regular'),
+      preview: preview ?? Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
+      previewAction: previewAction ?? Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
+      verticalMultipleChoiceSelected: verticalMultipleChoiceSelected ?? Styles().textStyles.getTextStyle('labelSelected'),
+      verticalMultipleChoiceNotSelected: verticalMultipleChoiceNotSelected ?? Styles().textStyles.getTextStyle('label'),
+      correctAnswerLabel: correctAnswerLabel ?? Styles().textStyles.getTextStyle('headline2'),
+      correctAnswerValue: correctAnswerValue ?? Styles().textStyles.getTextStyle('body'),
+    );
   }
 }
