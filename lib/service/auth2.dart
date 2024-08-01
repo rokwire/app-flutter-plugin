@@ -188,7 +188,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  String get oidcRedirectUrl => '${DeepLink().appUrl}/oidc-auth';
+  String get oidcRedirectUrl => kIsWeb ? '${Config().authBaseUrl}/auth/redirect' : '${DeepLink().appUrl}/oidc-auth';
 
   @protected
   void onDeepLinkUri(Uri? uri) {
@@ -1431,7 +1431,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     try {
       if ((urlStr != null)) {
         if (kIsWeb) {
-          FlutterWebAuth2.authenticate(url: urlStr, callbackUrlScheme: Uri.tryParse(urlStr)?.host ?? '').then((String url) {
+          FlutterWebAuth2.authenticate(url: urlStr, callbackUrlScheme: Uri.tryParse(oidcRedirectUrl)?.scheme ?? '').then((String url) {
             onDeepLinkUri(Uri.tryParse(url));
           });
         } else if (await canLaunchUrlString(urlStr)) {
