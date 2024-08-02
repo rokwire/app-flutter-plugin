@@ -20,6 +20,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -32,6 +33,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/utils/crypt.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 class Config with Service, NetworkAuthProvider, NotificationsListener {
 
@@ -95,8 +97,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
-    _appDocumentsDir = kIsWeb ? null : await getApplicationDocumentsDirectory();
-    Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
+    if (!kIsWeb) {
+      _appDocumentsDir = await getApplicationDocumentsDirectory();
+      Log.d('Application Documents Directory: ${_appDocumentsDir?.path}');
+    }
 
     await init();
     await super.initService();
@@ -194,7 +198,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   Future<String?> loadAsStringFromAppConfig() async {
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: this);
+      http.Response? response = await Network().get(appConfigUrl, auth: kIsWeb ? Auth2Csrf(): this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -205,12 +209,17 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Future<String?> loadAsStringFromCore() async {
     Map<String, dynamic> body = {
       'version': appVersion,
-      'app_type_identifier': appPlatformId,
-      'api_key': rokwireApiKey,
     };
-    String? bodyString =  JsonUtils.encode(body);
+    if (!isReleaseWeb) {
+      if (appPlatformId == null || rokwireApiKey == null) {
+        return null;
+      }
+      body['app_type_identifier'] = appPlatformId;
+      body['api_key'] = rokwireApiKey;
+    }
+
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: bodyString, headers: {'content-type': 'application/json'});
+      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: Auth2Csrf());
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -289,21 +298,27 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<void> init() async {
-    
-    _encryptionKeys = await loadEncryptionKeysFromAssets();
-    if (_encryptionKeys == null) {
-      throw ServiceError(
-        source: this,
-        severity: ServiceErrorSeverity.fatal,
-        title: 'Config Initialization Failed',
-        description: 'Failed to load config encryption keys.',
-      );
+
+    if (!isReleaseWeb) {
+      _encryptionKeys = await loadEncryptionKeysFromAssets();
+      if (_encryptionKeys == null) {
+        throw ServiceError(
+          source: this,
+          severity: ServiceErrorSeverity.fatal,
+          title: 'Config Initialization Failed',
+          description: 'Failed to load config encryption keys.',
+        );
+      }
     }
 
-    _config = await loadFromFile(configFile);
+    if (!kIsWeb) {
+      _config = await loadFromFile(configFile);
+    }
 
     if (_config == null) {
-      _configAsset = await loadFromAssets();
+      if (!isReleaseWeb) {
+        _configAsset = await loadFromAssets();
+      }
       String? configString = await loadAsStringFromNet();
       _configAsset = null;
 
@@ -342,13 +357,15 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // App Id & Version
 
+  String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
+
   String? get appId => _packageInfo?.packageName;
 
   String? get appCanonicalId {
     if (_appCanonicalId == null) {
       _appCanonicalId = appId;
       
-      String platformSuffix = ".${Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".$operatingSystem";
       if ((_appCanonicalId != null) && _appCanonicalId!.endsWith(platformSuffix)) {
         _appCanonicalId = _appCanonicalId!.substring(0, _appCanonicalId!.length - platformSuffix.length);
       }
@@ -360,7 +377,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase()}";
+      String platformSuffix = ".$operatingSystem";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }
@@ -391,7 +408,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-configs" : null);
   } 
   
   String? get rokwireApiKey          {
@@ -454,7 +471,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
       return entry;
     }
     else if (entry is Map) {
-      dynamic value = entry[Platform.operatingSystem.toLowerCase()];
+      dynamic value = entry[operatingSystem];
       return (value is String) ? value : null;
     }
     else {
@@ -510,8 +527,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsCacheDir != null) ? Directory(assetsCacheDir) : null;
   }
 
-  bool get supportsAnonymousAuth => true;
-
   // Getters: compound entries
   Map<String, dynamic> get content                 => _config ?? {};
 
@@ -530,20 +545,13 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: platformBuildingBlocks
   String? get coreUrl          => JsonUtils.stringValue(platformBuildingBlocks['core_url']);
   String? get notificationsUrl => JsonUtils.stringValue(platformBuildingBlocks["notifications_url"]);
-  String? get loggingUrl       => JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
+  String? get loggingUrl       => kIsWeb ? '$authBaseUrl/logs' : JsonUtils.stringValue(platformBuildingBlocks['logging_url']);
   String? get quickPollsUrl    => JsonUtils.stringValue(platformBuildingBlocks["polls_url"]);
   String? get eventsUrl        => JsonUtils.stringValue(platformBuildingBlocks['events_url']);
   String? get groupsUrl        => JsonUtils.stringValue(platformBuildingBlocks["groups_url"]);
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
   String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
-
-  String? get authBaseUrl {
-    if (isAdmin) {
-      return coreUrl != null ? '$coreUrl/admin': null;
-    }
-    return coreUrl != null ? '$coreUrl/services' : null;
-  }
 
   // Getters: otherUniversityServices
   String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
@@ -570,7 +578,20 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
 
+  // Getters: web
+  String? get webIdentifierOrigin => html.window.location.origin;
+  String? get authBaseUrl {
+    if (isReleaseWeb) {
+      return '$webIdentifierOrigin/${_packageInfo?.packageName}';
+    } else if (isAdmin) {
+      return '$coreUrl/admin';
+    }
+    return '$coreUrl/services';
+  }
+
+  bool get supportsAnonymousAuth => true;
   bool get isAdmin => false;
+  bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isDebugWeb => kIsWeb && kDebugMode;
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
 }

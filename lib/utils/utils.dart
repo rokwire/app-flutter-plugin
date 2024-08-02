@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_io/io.dart';
+import 'package:universal_html/html.dart' as html;
 
 class StringUtils {
 
@@ -1541,6 +1542,21 @@ extension UriUtilsExt on Uri {
     (deepLinkUri.scheme == scheme) &&
     (deepLinkUri.authority == authority) &&
     (deepLinkUri.path == path);
+}
+
+class WebUtils {
+  static String getCookie(String name) {
+    String? cookie = html.document.cookie;
+    if (StringUtils.isNotEmpty(cookie)) {
+      for (String item in cookie!.split(";")) {
+        final split = item.split("=");
+        if (split[0].trim() == name) {
+          return split[1];
+        }
+      }
+    }
+    return "";
+  }
 }
 
 class Pair<L,R> {

@@ -11,7 +11,6 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:universal_io/io.dart';
 
 class Inbox with Service implements NotificationsListener {
 
@@ -293,7 +292,7 @@ class Inbox with Service implements NotificationsListener {
       String? body = JsonUtils.encode({
         'token': token,
         'previous_token': previousToken,
-        'app_platform': Platform.operatingSystem,
+        'app_platform': Config().operatingSystem,
         'app_version': Config().appVersion,
       });
       Response? response = await Network().post(url, body: body, auth: Auth2());
