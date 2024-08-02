@@ -1706,9 +1706,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       String? post;
       if (!kIsWeb) {
-        if (refreshToken == null) {
-          return null;
-        }
         post = JsonUtils.encode({
           'api_key': Config().rokwireApiKey,
           'refresh_token': refreshToken
@@ -1990,7 +1987,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return loginUrl;
   }
 
-  static Future<void> _launchUrl(String? urlStr,
+  Future<void> _launchUrl(String? urlStr,
       {bool useExternalBrowser = false}) async {
     try {
       if ((urlStr != null)) {
