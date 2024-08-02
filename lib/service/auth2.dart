@@ -316,7 +316,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   bool get hasPasskeyForPlatform {
     for (Auth2Type authType in linkedPasskey) {
-      if (authType.platformName == Platform.operatingSystem.toLowerCase() && authType.hasValidCredential) {
+      if (authType.platformName == Config().operatingSystem && authType.hasValidCredential) {
         return true;
       }
     }
@@ -1542,7 +1542,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String? body = JsonUtils.encode({
         'all_sessions': false,
       });
-      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2());
+      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf());
     }
 
     _token = null;
