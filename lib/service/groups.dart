@@ -1386,20 +1386,22 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<Map<String, dynamic>?> loadUserStats() async {
+  Future<Response?> loadUserStatsResponse() async {
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
       try {
         await _ensureLogin();
-        Response? response = await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
-        if(response?.statusCode == 200) {
-          return  JsonUtils.decodeMap(response?.body);
-        }
+        return await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
       } catch (e) {
         Log.e(e.toString());
       }
     }
 
     return null;
+  }
+
+  Future<Map<String, dynamic>?> loadUserStats() async {
+    Response? response = await loadUserStatsResponse();
+    return (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
   }
 
   Future<int> getUserPostCount() async{
@@ -1510,7 +1512,31 @@ class Groups with Service implements NotificationsListener {
     return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
   }
 
+  Future<Response?> loadUserGroupsResponse() async {
+    if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
+      await _ensureLogin();
+      // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
+      String url = '${Config().groupsUrl}/v2/user/groups';
+      String? post = JsonUtils.encode({
+        'research_group': false,
+      });
+      return Network().get(url, body: post, auth: Auth2());
+    }
+    return null;
+  }
+
   Future<String?> _loadUserGroupsStringFromNet() async {
+    Response? response = await loadUserGroupsResponse();
+    if (response != null) {
+      if (response.statusCode == 200) {
+        return response.body;
+      }
+      else {
+        debugPrint('Failed to load user groups. Code: ${response.statusCode}}.\nResponse: ${response.body}');
+      }
+      return null;
+    }
+
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
       await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
