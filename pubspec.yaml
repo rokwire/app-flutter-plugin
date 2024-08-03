@@ -55,8 +55,8 @@ dependencies:
     git: https://github.com/rokmetro/flutter_passkey.git
 
   #Firebase
-  firebase_core: ^3.2.0
-  firebase_crashlytics: ^4.0.3
+  firebase_core: ^3.3.0
+  firebase_crashlytics: ^4.0.4
 #  firebase_messaging: ^15.0.3 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
   #End Firebase
 
