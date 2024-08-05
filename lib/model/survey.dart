@@ -370,6 +370,7 @@ abstract class SurveyData {
   String? moreInfo;
   String? style;
   dynamic response;
+  Map<String, dynamic>? extras;
   
   String? defaultFollowUpKey;
   RuleResult? defaultResponseRule;
@@ -377,7 +378,7 @@ abstract class SurveyData {
   RuleResult? scoreRule;
   num? _maximumScore;
   SurveyData({required this.key, this.section, this.sections, required this.text, this.defaultFollowUpKey, this.defaultResponseRule, this.followUpRule, this.scoreRule,
-    this.moreInfo, this.style, this.response, this.allowSkip = false, this.replace = false, num? maximumScore}) : _maximumScore = maximumScore;
+    this.moreInfo, this.style, this.response, this.allowSkip = false, this.replace = false, this.extras, num? maximumScore}) : _maximumScore = maximumScore;
 
   factory SurveyData.fromJson(String key, Map<String, dynamic> json) {
     String? surveyType = JsonUtils.stringValue(json["type"]);
@@ -430,6 +431,7 @@ abstract class SurveyData {
       'allow_skip': allowSkip,
       'replace': replace,
       'style': style,
+      'extras': extras,
       'default_follow_up_key': defaultFollowUpKey,
       'default_response_rule': JsonUtils.encode(defaultResponseRule?.toJson()),
       'follow_up_rule': JsonUtils.encode(followUpRule?.toJson()),
@@ -491,10 +493,10 @@ class SurveyQuestionTrueFalse extends SurveyData {
   bool? correctAnswer;
   final List<OptionData> options;
 
-  SurveyQuestionTrueFalse({required String text, this.correctAnswer, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, RuleResult? defaultResponseRule,
+  SurveyQuestionTrueFalse({required String text, this.correctAnswer, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, RuleResult? defaultResponseRule, Map<String, dynamic>? extras,
     RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
       : options = [OptionData(title: style == "yes_no" ? "Yes" : "True", value: true), OptionData(title: style == "yes_no" ? "No" : "False", value: false)],
-        super(allowSkip: allowSkip, replace: replace, key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey,
+        super(allowSkip: allowSkip, replace: replace, key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, extras: extras,
           defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, maximumScore: maximumScore);
 
   factory SurveyQuestionTrueFalse.fromJson(String key, Map<String, dynamic> json) {
@@ -514,6 +516,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
       scoreRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -533,6 +536,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
       replace: other.replace,
       style: other.style,
       maximumScore: other.maximumScore,
+      extras: other.extras,
     );
   }
 
@@ -564,9 +568,9 @@ class SurveyQuestionMultipleChoice extends SurveyData {
   bool allowMultiple;
   bool selfScore;
 
-  SurveyQuestionMultipleChoice({required String text, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, String? section, List<String>? sections,
+  SurveyQuestionMultipleChoice({required String text, required this.options, this.correctAnswers, this.allowMultiple = false, this.selfScore = false, required String key, String? section, List<String>? sections, Map<String, dynamic>? extras,
     String? defaultFollowUpKey, RuleResult? defaultResponseRule, RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, allowSkip: allowSkip, replace: replace, text: text, defaultFollowUpKey: defaultFollowUpKey,
+      : super(key: key, section: section, sections: sections, allowSkip: allowSkip, replace: replace, text: text, defaultFollowUpKey: defaultFollowUpKey, extras: extras,
         defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, maximumScore: maximumScore);
 
   factory SurveyQuestionMultipleChoice.fromJson(String key, Map<String, dynamic> json) {
@@ -589,6 +593,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       scoreRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -611,6 +616,7 @@ class SurveyQuestionMultipleChoice extends SurveyData {
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
+      extras: other.extras,
     );
   }
 
@@ -660,9 +666,9 @@ class SurveyQuestionDateTime extends SurveyData {
   DateTime? endTime;
   bool askTime;
 
-  SurveyQuestionDateTime({required String text, this.startTime, this.endTime, this.askTime = true, required String key, String? section, List<String>? sections, String? defaultFollowUpKey,
+  SurveyQuestionDateTime({required String text, this.startTime, this.endTime, this.askTime = true, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, Map<String, dynamic>? extras,
     RuleResult? defaultResponseRule, RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
+      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, extras: extras,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
@@ -684,6 +690,7 @@ class SurveyQuestionDateTime extends SurveyData {
       scoreRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -705,6 +712,7 @@ class SurveyQuestionDateTime extends SurveyData {
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
+      extras: other.extras,
     );
   }
 
@@ -731,9 +739,9 @@ class SurveyQuestionNumeric extends SurveyData {
   bool wholeNum;
   bool selfScore;
 
-  SurveyQuestionNumeric({required String text, this.minimum, this.maximum, this.wholeNum = false, this.selfScore = false, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, 
+  SurveyQuestionNumeric({required String text, this.minimum, this.maximum, this.wholeNum = false, this.selfScore = false, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, Map<String, dynamic>? extras,
     RuleResult? defaultResponseRule, RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
+      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, extras: extras,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
   factory SurveyQuestionNumeric.fromJson(String key, Map<String, dynamic> json) {
@@ -756,6 +764,7 @@ class SurveyQuestionNumeric extends SurveyData {
       scoreRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -778,6 +787,7 @@ class SurveyQuestionNumeric extends SurveyData {
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
+      extras: other.extras,
     );
   }
 
@@ -820,9 +830,9 @@ class SurveyQuestionText extends SurveyData {
   int minLength;
   int? maxLength;
 
-  SurveyQuestionText({required String text, this.minLength = 0, this.maxLength, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, RuleResult? defaultResponseRule, 
+  SurveyQuestionText({required String text, this.minLength = 0, this.maxLength, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, RuleResult? defaultResponseRule, Map<String, dynamic>? extras,
     RuleResult? followUpRule, RuleResult? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
+      : super(key: key, section: section, sections: sections, text: text, defaultFollowUpKey: defaultFollowUpKey, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, extras: extras,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
   factory SurveyQuestionText.fromJson(String key, Map<String, dynamic> json) {
@@ -843,6 +853,7 @@ class SurveyQuestionText extends SurveyData {
       scoreRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['score_rule'])),
       moreInfo: JsonUtils.stringValue(json['more_info']),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -863,6 +874,7 @@ class SurveyQuestionText extends SurveyData {
       moreInfo: other.moreInfo,
       style: other.style,
       maximumScore: other.maximumScore,
+      extras: other.extras,
     );
   }
 
@@ -971,9 +983,9 @@ class SurveyDataEntry extends SurveyData {
 class SurveyDataResult extends SurveyData {
   List<ActionData>? actions;
 
-  SurveyDataResult({required String text, this.actions, String? moreInfo, required String key,
+  SurveyDataResult({required String text, this.actions, String? moreInfo, required String key, Map<String, dynamic>? extras,
     bool replace = false, String? defaultFollowUpKey, RuleResult? followUpRule, String? style}) :
-        super(key: key, text: text, moreInfo: moreInfo, allowSkip: true, replace: replace,
+        super(key: key, text: text, moreInfo: moreInfo, allowSkip: true, replace: replace, extras: extras,
         defaultFollowUpKey: defaultFollowUpKey, followUpRule: followUpRule, style: style);
 
   factory SurveyDataResult.fromJson(String key, Map<String, dynamic> json) {
@@ -986,6 +998,7 @@ class SurveyDataResult extends SurveyData {
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
       followUpRule: JsonUtils.mapOrNull((json) => RuleResult.fromJson(json), JsonUtils.decode(json['follow_up_rule'])),
       style: JsonUtils.stringValue(json['style']),
+      extras: JsonUtils.mapValue(json['extras']),
     );
   }
 
@@ -999,6 +1012,7 @@ class SurveyDataResult extends SurveyData {
       defaultFollowUpKey: other.defaultFollowUpKey,
       followUpRule: other.followUpRule != null ? RuleResult.fromOther(other.followUpRule!) : null,
       style: other.style,
+      extras: other.extras,
     );
   }
 
