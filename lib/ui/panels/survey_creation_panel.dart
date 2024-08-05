@@ -191,9 +191,25 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     if (_branchDepth <= _maxBranchDepth) {
       return Padding(padding: const EdgeInsets.all(16), child: Column(children: [
         // title
-        FormFieldText('Title', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words, required: true),
+        FormFieldText('Title',
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          padding: const EdgeInsets.only(bottom: 16),
+          controller: _textControllers["title"],
+          inputType: TextInputType.text,
+          textCapitalization: TextCapitalization.words,
+          required: true
+        ),
         // more_info
-        FormFieldText('Additional Information', padding: const EdgeInsets.only(bottom: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+        FormFieldText('Additional Information',
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          padding: const EdgeInsets.only(bottom: 16),
+          controller: _textControllers["more_info"],
+          multipleLines: true,
+          inputType: TextInputType.text,
+          textCapitalization: TextCapitalization.sentences
+        ),
 
         // scored
         SurveyElementCreationWidget.buildCheckboxWidget("Scored", _scored, _onToggleScored, padding: EdgeInsets.zero),
@@ -280,7 +296,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
         label: 'Preview',
         borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
         backgroundColor: Styles().colors.surface,
-        textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+        textStyle: Styles().textStyles.getTextStyle('panel.survey.creation.button.large.fat'),
         onTap: _onTapPreview,
       ))),
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
@@ -288,7 +304,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           label: 'Save',
           borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
           backgroundColor: Styles().colors.surface,
-          textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+          textStyle: Styles().textStyles.getTextStyle('panel.survey.creation.button.large.fat'),
           onTap: _onTapSave,
           enabled: !_loading
         ),
