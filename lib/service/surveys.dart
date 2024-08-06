@@ -326,11 +326,11 @@ class Surveys /* with Service */ {
 
   // Accessories
 
-  Future<Response?> loadCreatorSurveysRequest() async => enabled ?
+  Future<Response?> loadCreatorSurveysResponse() async => enabled ?
     Network().get('${Config().surveysUrl}/creator/surveys', auth: Auth2()) : null;
 
   Future<List<Survey>?> loadCreatorSurveys() async {
-    Response? response = await loadCreatorSurveysRequest();
+    Response? response = await loadCreatorSurveysResponse();
     return (response?.statusCode == 200) ? Survey.listFromJson(JsonUtils.decodeList(response?.body)) : null;
   }
 
