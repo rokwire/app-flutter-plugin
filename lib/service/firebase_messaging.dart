@@ -15,7 +15,6 @@
  */
  
 import 'dart:async';
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart' as firebase_messaging;
@@ -27,6 +26,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:universal_io/io.dart';
 
 
 class FirebaseMessaging with Service {

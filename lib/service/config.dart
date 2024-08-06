@@ -590,6 +590,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   bool get supportsAnonymousAuth => true;
+  bool get enableLogging => true;
   bool get isAdmin => false;
   bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isDebugWeb => kIsWeb && kDebugMode;

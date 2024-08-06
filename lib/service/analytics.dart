@@ -321,7 +321,7 @@ class Analytics with Service implements NotificationsListener {
 
   @protected
   Future<bool> sendPacket(String? packet) async {
-    if (packet != null) {
+    if (packet != null && Config().enableLogging) {
       try {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
         //TBD: Remove this when logging service gets updated.

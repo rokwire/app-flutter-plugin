@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -22,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 class ImageUtils {
 
