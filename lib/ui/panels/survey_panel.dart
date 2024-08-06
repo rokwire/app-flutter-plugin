@@ -71,7 +71,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     if (widget.survey is Survey) {
       _setSurvey(widget.survey!);
     }
-    _backgroundColor = widget.backgroundColor ?? Styles().colors.background;
+    _backgroundColor = widget.backgroundColor ?? defaultBackgroundColor ?? Styles().colors.background;
     super.initState();
   }
 
@@ -104,7 +104,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
                 summarizeResultRules: widget.summarizeResultRules,
                 summarizeResultRulesWidget: widget.summarizeResultRulesWidget,
                 offlineWidget: widget.offlineWidget,
-                textStyles: widget.textStyles,
+                textStyles: widget.textStyles ?? defaultTextStyles,
               ),
             ),
           )),
@@ -160,4 +160,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
     }
     return false;
   }
+
+  Color? get defaultBackgroundColor => Styles().colors.surface;
+  SurveyWidgetTextStyles get defaultTextStyles => SurveyWidgetTextStyles.withDefaults(horizontalMultipleChoiceOption: Styles().textStyles.getTextStyle('widget.item.small.thin'));
 }

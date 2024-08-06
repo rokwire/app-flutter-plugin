@@ -298,11 +298,19 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   SurveyDataWidget? _buildTextSurveySection(SurveyQuestionText? survey, {bool readOnly = false}) {
     if (survey == null) return null;
 
-    return SurveyDataWidget(_buildTextFormFieldWidget("Response", readOnly: readOnly, maxLength: survey.maxLength, multipleLines: true,
-      initialValue: survey.response, inputType: TextInputType.multiline, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
+    TextInputType inputType = TextInputType.multiline;  //TODO: should this default have a different value?
+    for (TextInputType textInputType in TextInputType.values) {
+      if (textInputType.toJson()['name'] == 'TextInputType.${survey.style}') {
+        inputType = textInputType;
+        break;
+      }
+    }
+
+    return SurveyDataWidget(_buildTextFormFieldWidget(survey.text, readOnly: readOnly, maxLength: survey.maxLength, multipleLines: inputType == TextInputType.multiline,
+      hint: survey.moreInfo, initialValue: survey.response, inputType: inputType, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
       survey.response = value;
       _onChangeResponse(false);
-    }).widget);
+    }), containsMoreInfo: true);
   }
 
   SurveyDataWidget? _buildMultipleChoiceSurveySection(SurveyQuestionMultipleChoice? survey, {bool enabled = true}) {
@@ -600,7 +608,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         survey.response = val;
         _onChangeResponse(false);
       }
-    }).widget;
+    });
 
     return SurveyDataWidget(numericText);
   }
@@ -684,13 +692,13 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     );
   }
 
-  SurveyDataWidget _buildTextFormFieldWidget(String field, {bool readOnly = false, int? maxLength, bool multipleLines = false, String? initialValue, String? hint,
+  Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, int? maxLength, bool multipleLines = false, String? initialValue, String? hint,
     TextStyle? textStyle, TextInputType? inputType, Function(String)? onFieldSubmitted, Function(String)? onChanged, String? Function(String?)? validator,
     TextCapitalization textCapitalization= TextCapitalization.none, List<TextInputFormatter>? inputFormatters} ) {
-    return SurveyDataWidget(FormFieldText(field, readOnly: readOnly, maxLength: maxLength, multipleLines: multipleLines, style: textStyle ?? widget.textStyles.textInput,
-      inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator, initialValue: initialValue,
-      textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters,
-    ));
+    return FormFieldText(field, readOnly: readOnly, maxLength: maxLength, multipleLines: multipleLines, style: textStyle ?? widget.textStyles.textInput,
+      hintStyle: widget.textStyles.textInputHint, inputType: inputType, onFieldSubmitted: onFieldSubmitted, onChanged: onChanged, validator: validator,
+      initialValue: initialValue, textCapitalization: textCapitalization, hint: hint, inputFormatters: inputFormatters,
+    );
   }
 
   // SurveyDataWidget _buildPageWidget(SurveyDataPage? survey, /*{bool enabled = true}*/) {
@@ -1052,6 +1060,7 @@ class SurveyWidgetTextStyles {
   final TextStyle? sliderLabel;
   final TextStyle? radioButtonNumLabel;
   final TextStyle? textInput;
+  final TextStyle? textInputHint;
   final TextStyle? preview;
   final TextStyle? previewAction;
   final TextStyle? verticalMultipleChoiceSelected;
@@ -1061,13 +1070,13 @@ class SurveyWidgetTextStyles {
 
   const SurveyWidgetTextStyles({this.dateTaken, this.surveyMoreInfo, this.required, this.surveyText,
     this.dataMoreInfo, this.horizontalMultipleChoiceOption, this.sliderLabel, this.radioButtonNumLabel, this.textInput,
-    this.preview, this.previewAction, this.verticalMultipleChoiceSelected, this.verticalMultipleChoiceNotSelected,
-    this.correctAnswerLabel, this.correctAnswerValue});
+    this.textInputHint, this.preview, this.previewAction, this.verticalMultipleChoiceSelected,
+    this.verticalMultipleChoiceNotSelected, this.correctAnswerLabel, this.correctAnswerValue});
 
   factory SurveyWidgetTextStyles.withDefaults({TextStyle? dateTaken, TextStyle? surveyMoreInfo, TextStyle? required, TextStyle? surveyText,
     TextStyle? dataMoreInfo, TextStyle? horizontalMultipleChoiceOption, TextStyle? sliderLabel, TextStyle? radioButtonNumLabel, TextStyle? textInput,
-    TextStyle? preview, TextStyle? previewAction, TextStyle? verticalMultipleChoiceSelected, TextStyle? verticalMultipleChoiceNotSelected,
-    TextStyle? correctAnswerLabel, TextStyle? correctAnswerValue}) {
+    TextStyle? textInputHint, TextStyle? preview, TextStyle? previewAction, TextStyle? verticalMultipleChoiceSelected,
+    TextStyle? verticalMultipleChoiceNotSelected, TextStyle? correctAnswerLabel, TextStyle? correctAnswerValue}) {
 
     return SurveyWidgetTextStyles(
       dateTaken: dateTaken ?? Styles().textStyles.getTextStyle('widget.detail.regular'),
@@ -1079,6 +1088,7 @@ class SurveyWidgetTextStyles {
       sliderLabel: sliderLabel ?? Styles().textStyles.getTextStyle('headline3'),
       radioButtonNumLabel: radioButtonNumLabel ?? Styles().textStyles.getTextStyle('label'),
       textInput: textInput ?? Styles().textStyles.getTextStyle('widget.description.regular'),
+      textInputHint: textInputHint ?? Styles().textStyles.getTextStyle('widget.description.regular'),
       preview: preview ?? Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
       previewAction: previewAction ?? Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
       verticalMultipleChoiceSelected: verticalMultipleChoiceSelected ?? Styles().textStyles.getTextStyle('labelSelected'),

@@ -153,7 +153,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
           key: grandParentElement == null && (parentIndex ?? 0) > 0 && _handleScrolling ? (widget.targetWidgetKeys?[parentIndex! - 1]) : null,
           controller: parentElement == null ? widget.controller : null,
           iconColor: Styles().colors.getColor('fillColorSecondary'),
-          backgroundColor: Styles().colors.getColor('background'),
+          collapsedIconColor: Styles().colors.getColor('fillColorSecondary'),
+          backgroundColor: Styles().colors.getColor('surface'),
           collapsedBackgroundColor: Styles().colors.getColor('surface'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
@@ -330,6 +331,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         int numButtons = _numEntryManagementButtons(index, element: data, parentElement: parentElement, addRemove: addRemove);
         displayEntry = Card(
           key: _handleScrolling && parentElement == null && index > 0 ? (widget.targetWidgetKeys?[index - 1]) : null,
+          color: Styles().colors.surface,
           margin: const EdgeInsets.symmetric(vertical: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           child: InkWell(
