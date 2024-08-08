@@ -326,21 +326,12 @@ class Surveys /* with Service */ {
 
   // Accessories
 
+  Future<Response?> loadCreatorSurveysResponse() async => enabled ?
+    Network().get('${Config().surveysUrl}/creator/surveys', auth: Auth2()) : null;
+
   Future<List<Survey>?> loadCreatorSurveys() async {
-    if (enabled) {
-      String url = '${Config().surveysUrl}/creator/surveys';
-      Response? response = await Network().get(url, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
-        if (responseList != null) {
-          List<Survey>? surveys = Survey.listFromJson(responseList);
-          return surveys;
-        }
-      }
-    }
-    return null;
+    Response? response = await loadCreatorSurveysResponse();
+    return (response?.statusCode == 200) ? Survey.listFromJson(JsonUtils.decodeList(response?.body)) : null;
   }
 
   Future<List<Survey>?> loadSurveys(SurveysQueryParam queryParam) async {
@@ -478,9 +469,11 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<SurveyResponse>?> loadUserSurveyResponses(
-      {List<String>? surveyIDs, List<
-          String>? surveyTypes, DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+  Future<Response?> loadUserSurveyResponsesResponse({
+    List<String>? surveyIDs, List<String>? surveyTypes,
+    DateTime? startDate, DateTime? endDate, int?
+    limit, int? offset
+  }) async {
     if (enabled) {
       Map<String, String> queryParams = {};
       if (CollectionUtils.isNotEmpty(surveyIDs)) {
@@ -509,15 +502,22 @@ class Surveys /* with Service */ {
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }
-      Response? response = await Network().get(url, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        List<dynamic>? responseMap = JsonUtils.decodeList(responseBody);
-        return SurveyResponse.listFromJson(responseMap);
-      }
+      return Network().get(url, auth: Auth2());
     }
     return null;
+  }
+
+  Future<List<SurveyResponse>?> loadUserSurveyResponses({
+    List<String>? surveyIDs, List<String>? surveyTypes,
+    DateTime? startDate, DateTime? endDate,
+    int? limit, int? offset
+  }) async {
+    Response? response = await loadUserSurveyResponsesResponse(
+      surveyIDs: surveyIDs, surveyTypes: surveyTypes,
+      startDate: startDate, endDate: endDate,
+      limit: limit, offset: offset
+    );
+    return (response?.statusCode == 200) ? SurveyResponse.listFromJson(JsonUtils.decodeList(response?.body)) : null;
   }
 
   Future<bool> deleteSurveyResponses({List<String>? surveyIDs, List<

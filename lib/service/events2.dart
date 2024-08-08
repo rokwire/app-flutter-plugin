@@ -91,16 +91,20 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
+  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
+    Network().post(
+      "${Config().calendarUrl}/events/load",
+      body: JsonUtils.encode(query?.toQueryJson()),
+      headers: _jsonHeaders,
+      client: client,
+      auth: Auth2()
+    ) : null;
+
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
-    if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/events/load";
-      String? body = JsonUtils.encode(query?.toQueryJson());
-      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: null, auth: Auth2());
-      //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
-      return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
-    }
-    return null;
+    Response? response = await loadEventsResponse(query, client: client);
+    //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
+    return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
   }
 
   Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
