@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created notification for deletion of survey response [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+- Exposed low level APIs in services for accessing My Stored Data [#4264](https://github.com/rokwire/illinois-app/issues/4264).
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
 - Use ISO 8601/RFC 3339 strings for survey start & end dates [#4243](https://github.com/rokwire/illinois-app/issues/4243).
