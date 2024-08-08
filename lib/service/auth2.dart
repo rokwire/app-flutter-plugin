@@ -1696,7 +1696,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   Future<Response?> _refreshToken(String? refreshToken) {
-    if (Config().authBaseUrl != null && refreshToken != null) {
+    if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/refresh";
 
       Map<String, String> headers = {
@@ -1704,7 +1704,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Client-Version': Config().appVersion ?? '',
       };
       String? post;
-      if (!kIsWeb) {
+      if (!Config().isReleaseWeb) {
+        if (refreshToken == null) {
+          return Future.value(null);
+        }
         post = JsonUtils.encode({
           'api_key': Config().rokwireApiKey,
           'refresh_token': refreshToken
