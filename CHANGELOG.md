@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
+### Added
+- Introduce Groups.acceptMembershipMulti [#4268](https://github.com/rokwire/illinois-app/issues/4268).
 
 ## [1.7.0] - 2024-07-15
 ### Changed
