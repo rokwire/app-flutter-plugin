@@ -723,6 +723,28 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<bool> acceptMembershipMulti({Group? group, List<String>? ids}) async{
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && CollectionUtils.isNotEmpty(ids)) {
+      Map<String, dynamic> bodyMap = {
+          "user_ids": ids,
+          "status": 'member'};
+      String? body = JsonUtils.encode(bodyMap);
+      String url = '${Config().groupsUrl}/group/${group!.id}/members/multi-update';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        if((response?.statusCode ?? -1) == 200){
+          _notifyGroupUpdateWithStats(notifyGroupMembershipApproved, group);
+          _updateUserGroupsFromNetSync();
+          return true;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false;
+  }
+
   Future<bool> acceptMembership(Group? group, Member? member, bool? decision, String? reason) async{
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && StringUtils.isNotEmpty(member?.id) && decision != null) {
       Map<String, dynamic> bodyMap = {"approve": decision, "reject_reason": reason};
