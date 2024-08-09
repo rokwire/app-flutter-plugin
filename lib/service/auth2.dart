@@ -903,7 +903,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Storage().setAuth2AnonymousProfile(_anonymousProfile = null),
       Storage().setAuth2Account(account),
     ];
-    if (!kIsWeb) {
+    if (!Config().isReleaseWeb) {
       futures.add(Storage().setAuth2Token(token));
       futures.add(Storage().setAuth2OidcToken(oidcToken));
     }
@@ -1551,7 +1551,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty()),
       Storage().setAuth2Account(_account = null),
     ];
-    if (!kIsWeb) {
+    if (!Config().isReleaseWeb) {
       futures.add(Storage().setAuth2Token(_token));
       futures.add(Storage().setAuth2OidcToken(_oidcToken));
     }
@@ -1687,7 +1687,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     _token = token;
     _oidcToken = oidcToken;
-    if (!kIsWeb) {
+    if (!Config().isReleaseWeb) {
       await Future.wait([
         Storage().setAuth2Token(token),
         Storage().setAuth2OidcToken(oidcToken),

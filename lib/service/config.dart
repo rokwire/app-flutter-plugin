@@ -407,8 +407,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: Config Asset Acknowledgement
 
   String? get appConfigUrl {
+    if (kIsWeb) {
+      return "$authBaseUrl/app-configs";
+    }
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-configs" : null);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
   } 
   
   String? get rokwireApiKey          {
