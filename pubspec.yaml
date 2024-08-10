@@ -28,12 +28,12 @@ dependencies:
   flutter_timezone: ^2.1.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
-  shared_preferences: ^2.2.0
+  shared_preferences: ^2.3.1
   package_info_plus: ^4.0.2
   device_info: ^2.0.3
   url_launcher: ^6.1.8
   sprintf: ^7.0.0
-  flutter_local_notifications: ^16.1.0
+  flutter_local_notifications: ^17.2.2
   sqflite: ^2.1.0
   device_calendar: ^4.3.1
   image_picker: ^1.0.4
