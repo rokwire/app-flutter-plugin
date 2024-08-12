@@ -157,26 +157,26 @@ packages:
     dependency: transitive
     description:
       name: device_calendar
-      sha256: "991b55bb9e0a0850ec9367af8227fe25185210da4f5fa7bd15db4cc813b1e2e5"
+      sha256: "23e3746e7e99dcbf2695f21a7270e97c374e99dcc2ee909d061688b1df88854b"
       url: "https://pub.dev"
     source: hosted
-    version: "4.3.2"
-  device_info:
+    version: "4.3.3-20240801"
+  device_info_plus:
     dependency: transitive
     description:
-      name: device_info
-      sha256: f4a8156cb7b7480d969cb734907d18b333c8f0bc0b1ad0b342cdcecf30d62c48
+      name: device_info_plus
+      sha256: a7fd703482b391a87d60b6061d04dfdeab07826b96f9abd8f5ed98068acc0074
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.3"
-  device_info_platform_interface:
+    version: "10.1.2"
+  device_info_plus_platform_interface:
     dependency: transitive
     description:
-      name: device_info_platform_interface
-      sha256: b148e0bf9640145d09a4f8dea96614076f889e7f7f8b5ecab1c7e5c2dbc73c1b
+      name: device_info_plus_platform_interface
+      sha256: "282d3cf731045a2feb66abfe61bbc40870ae50a3ed10a4d3d217556c35c8c2ba"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "7.0.1"
   encrypt:
     dependency: transitive
     description:
@@ -286,14 +286,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_exif_rotation:
-    dependency: transitive
-    description:
-      name: flutter_exif_rotation
-      sha256: "642841fa8dbedb0ac7b7f005dd24a606ce237ab2de0fedef7b3419d58b97f2a7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.5.1"
   flutter_hooks:
     dependency: transitive
     description:
@@ -465,14 +457,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  gallery_saver:
-    dependency: transitive
-    description:
-      name: gallery_saver
-      sha256: df8b7e207ca12d64c71e0710a7ee3bc48aa7206d51cc720716fedb1543a66712
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.2"
   geolocator:
     dependency: transitive
     description:
@@ -633,6 +617,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
+  http_proxy_override:
+    dependency: transitive
+    description:
+      name: http_proxy_override
+      sha256: "703fc68d3e893f91fde09e7897db14a1fa5a01ad85d73894b8a06ef00a87f130"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   image_picker:
     dependency: transitive
     description:
@@ -801,14 +793,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  native_flutter_proxy:
-    dependency: transitive
-    description:
-      name: native_flutter_proxy
-      sha256: d8109940d3412ecb0e88e841b5c7efee2e4ef6016e0d2dc1ebaa07a87af7a45b
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.15"
   nm:
     dependency: transitive
     description:
@@ -1269,6 +1253,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.5.3"
+  win32_registry:
+    dependency: transitive
+    description:
+      name: win32_registry
+      sha256: "723b7f851e5724c55409bb3d5a32b203b3afe8587eaf5dafb93a5fed8ecda0d6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.4"
   window_to_front:
     dependency: transitive
     description:

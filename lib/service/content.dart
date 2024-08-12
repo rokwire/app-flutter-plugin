@@ -19,7 +19,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
+// import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
@@ -549,7 +549,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (StringUtils.isEmpty(filePath)) {
       return null;
     }
-    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    // TODO: See if this is still necessary and find an actively supported replacement if so
+    // File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    File rotatedImage = File(filePath); // TODO: Remove this placeholder if replacement is necessary
     return await rotatedImage.readAsBytes();
   }
 

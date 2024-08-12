@@ -17,7 +17,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:native_flutter_proxy/native_proxy_reader.dart';
+import 'package:http_proxy_override/http_proxy_override.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -69,12 +69,16 @@ class HttpProxy extends Service {
     }
     bool enabled = false;
     String? host;
-    int? port;
+    String? port;
     try {
-      ProxySetting settings = await NativeProxyReader.proxySetting;
-      enabled = settings.enabled;
-      host = settings.host;
-      port = settings.port;
+      HttpProxyOverride httpProxy = await HttpProxyOverride.createHttpProxy();
+      host = httpProxy.host;
+      port = httpProxy.port;
+      // TODO: See if this replacement works, find a better package if not
+      // enabled = settings.enabled;
+      if (host != null && port != null) {
+        enabled = true;
+      }
     } catch (e) {
       print(e);
     }
