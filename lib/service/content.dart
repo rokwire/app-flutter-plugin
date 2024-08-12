@@ -223,7 +223,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   Future<Map<String, dynamic>?> loadContentItems(List<String> categories) async {
     Map<String, dynamic>? result;
-    if (Config().contentUrl != null) {
+    if (Config().contentUrl != null && Auth2().isLoggedIn) {
       Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': categories}), auth: Auth2());
       List<dynamic>? responseList = (response?.statusCode == 200) ? await JsonUtils.decodeListAsync(response?.body)  : null;
       if (responseList != null) {
