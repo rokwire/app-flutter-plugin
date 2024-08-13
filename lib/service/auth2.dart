@@ -1917,13 +1917,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Account
 
+  Future<Response?> loadAccountResponse() async {
+    return ((Config().coreUrl != null) && (_token?.accessToken != null)) ?
+      Network().get("${Config().coreUrl}/services/account", auth: Auth2()) : null;
+  }
+
   Future<Auth2Account?> _loadAccount() async {
-    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
-      String url = "${Config().coreUrl}/services/account";
-      Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
-    }
-    return null;
+    Response? response = await loadAccountResponse();
+    return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
   }
 
   Future<void> _refreshAccount() async {
