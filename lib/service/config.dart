@@ -407,7 +407,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: Config Asset Acknowledgement
 
   String? get appConfigUrl {
-    if (kIsWeb) {
+    if (isReleaseWeb) {
       return "$authBaseUrl/app-configs";
     }
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;

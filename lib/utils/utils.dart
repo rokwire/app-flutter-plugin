@@ -1201,6 +1201,56 @@ class GeometryUtils {
   }
 }
 
+enum ScreenType { desktop, tablet, phone }
+
+class ScreenUtils {
+  ///
+  /// Differentiate screen type based on shortest side size
+  ///
+  static ScreenType getType(BuildContext? context) {
+    double width = context != null ? MediaQuery.of(context).size.width : 0;
+    if (width > 950) {
+      return ScreenType.desktop;
+    } else if (width > 600) {
+      return ScreenType.tablet;
+    } else {
+      return ScreenType.phone;
+    }
+  }
+
+  ///
+  /// Large screens are tablets and browsers
+  ///
+  static bool isLarge(BuildContext? context) {
+    if (context == null) {
+      return false;
+    } else {
+      ScreenType screenType = getType(context);
+      return screenType == ScreenType.desktop || screenType == ScreenType.tablet;
+    }
+  }
+
+  static EdgeInsets getMainPanelPadding(BuildContext? context) {
+    if (context != null) {
+      ScreenType screenType = getType(context);
+      double mainHorizontalPadding = 28; // default for phones
+      double mainVerticalPadding = 28; // default for phones
+      if (screenType == ScreenType.desktop) {
+        mainHorizontalPadding = 156;
+        mainVerticalPadding = 33;
+      } else if (screenType == ScreenType.tablet) {
+        mainHorizontalPadding = 48;
+        mainVerticalPadding = 31;
+      }
+      return EdgeInsets.symmetric(horizontal: mainHorizontalPadding, vertical: mainVerticalPadding);
+    } else {
+      return EdgeInsets.zero;
+    }
+  }
+
+  static bool isPhone(BuildContext? context) => (getType(context) == ScreenType.phone);
+}
+
 class BoolExpr {
   
   static bool eval(dynamic expr, bool? Function(dynamic)? evalArg) {
