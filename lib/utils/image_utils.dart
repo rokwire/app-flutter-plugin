@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 class ImageUtils {
 
@@ -34,6 +34,11 @@ class ImageUtils {
   ///
   static Future<bool?> saveToFs(Uint8List? imageBytes, String fileName) async {
     if ((imageBytes == null) || StringUtils.isEmpty(fileName)) {
+      return false;
+    }
+    if (kIsWeb) {
+      //TBD: DD - implement for web
+      debugPrint('WEB: implement downloading file to file system');
       return false;
     }
     final String dir = (await getApplicationDocumentsDirectory()).path;

@@ -1,6 +1,3 @@
-
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
@@ -295,7 +292,7 @@ class Inbox with Service implements NotificationsListener {
       String? body = JsonUtils.encode({
         'token': token,
         'previous_token': previousToken,
-        'app_platform': Platform.operatingSystem,
+        'app_platform': Config().operatingSystem,
         'app_version': Config().appVersion,
       });
       Response? response = await Network().post(url, body: body, auth: Auth2());

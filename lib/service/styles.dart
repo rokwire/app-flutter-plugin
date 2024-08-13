@@ -15,7 +15,6 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -31,6 +30,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:universal_io/io.dart';
 
 
 class Styles extends Service implements NotificationsListener{
@@ -103,7 +103,7 @@ class Styles extends Service implements NotificationsListener{
     _assetsDir = await getAssetsDir();
     _assetsManifest = await loadAssetsManifest();
     _assetsStyles = await loadFromAssets(assetsKey);
-    _appAssetsStyles = await loadFromAssets(appAssetsKey);
+    _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey);
     _netAssetsStyles = await loadFromCache(netCacheFileName);
     _debugAssetsStyles = await loadFromCache(debugCacheFileName);
 
@@ -217,7 +217,7 @@ class Styles extends Service implements NotificationsListener{
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }

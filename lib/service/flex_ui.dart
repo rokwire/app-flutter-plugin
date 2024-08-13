@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -32,6 +31,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
+import 'package:universal_io/io.dart';
 
 class FlexUI with Service implements NotificationsListener {
 
@@ -97,7 +97,7 @@ class FlexUI with Service implements NotificationsListener {
   Future<void> initService() async {
     _assetsDir = await getAssetsDir();
     _defContentSource = await loadFromAssets(assetsKey);
-    _appContentSource = await loadFromAssets(appAssetsKey);
+    _appContentSource = kIsWeb ? null : await loadFromAssets(appAssetsKey);
     _netContentSource = await loadFromCache(netCacheFileName);
     build();
     if (_defaultContent != null) {
@@ -218,7 +218,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   Future<String?> loadContentStringFromNet() async {
-    if (Config().assetsUrl != null) {
+    if (StringUtils.isNotEmpty(Config().assetsUrl)) {
       Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
       return (response?.statusCode == 200) ? response?.body : null;
     }
@@ -228,14 +228,16 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Future<void> updateFromNet() async {
     String? netContentSourceString = await loadContentStringFromNet();
-    Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
-    if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
-        ((netContentSource == null) && (_netContentSource != null)))
-    {
-      _netContentSource = netContentSource;
-      await saveToCache(netCacheFileName, netContentSourceString);
-      build();
-      NotificationService().notify(notifyChanged, null);
+    if (netContentSourceString != null) {
+      Map<String, dynamic>? netContentSource = JsonUtils.decodeMap(netContentSourceString);
+      if (((netContentSource != null) && !const DeepCollectionEquality().equals(netContentSource, _netContentSource)) ||
+          ((netContentSource == null) && (_netContentSource != null)))
+      {
+        _netContentSource = netContentSource;
+        await saveToCache(netCacheFileName, netContentSourceString);
+        build();
+        NotificationService().notify(notifyChanged, null);
+      }
     }
   }
 
@@ -670,7 +672,7 @@ class FlexUI with Service implements NotificationsListener {
         if (key is String) {
           String? target;
           if (key == 'os') {
-            target = Platform.operatingSystem;
+            target = Config().operatingSystem;
           }
           else if (key == 'environment') {
             target = configEnvToString(Config().configEnvironment);

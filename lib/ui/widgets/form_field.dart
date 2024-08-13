@@ -28,6 +28,8 @@ class FormFieldText extends StatefulWidget {
   final String? hint;
   final int? maxLength;
   final TextStyle? style;
+  final TextStyle? labelStyle;
+  final TextStyle? hintStyle;
   final TextInputType? inputType;
   final TextEditingController? controller;
   final Function(String)? onFieldSubmitted;
@@ -39,8 +41,8 @@ class FormFieldText extends StatefulWidget {
 
 
   const FormFieldText(this.label, {Key? key, this.padding = const EdgeInsets.only(bottom: 20), this.readOnly = false, this.multipleLines = false, 
-    this.required = false, this.initialValue, this.hint, this.maxLength, this.style, this.inputType, this.controller, this.onFieldSubmitted, this.onSaved,
-    this.onChanged, this.validator, this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
+    this.required = false, this.initialValue, this.hint, this.maxLength, this.style, this.labelStyle, this.hintStyle, this.inputType, this.controller, this.onFieldSubmitted,
+    this.onSaved, this.onChanged, this.validator, this.textCapitalization = TextCapitalization.none, this.inputFormatters}) : super(key: key);
 
   @override
   _FormFieldTextState createState() => _FormFieldTextState();
@@ -68,7 +70,9 @@ class _FormFieldTextState extends State<FormFieldText> {
           decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(24.0),
               labelText: widget.label,
+              labelStyle: widget.labelStyle,
               hintText: widget.hint,
+              hintStyle: widget.hintStyle,
               prefix: widget.required ? Text("* ", semanticsLabel: Localization().getStringEx("widget.form_field_text.required.hint", "Required"), style: Styles().textStyles.getTextStyle('widget.error.regular.fat')) : null,
               filled: true,
               fillColor: Colors.white,

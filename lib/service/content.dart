@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -35,6 +34,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
+import 'package:universal_io/io.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
@@ -164,7 +164,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   @protected
   Future<Directory?> getAppDocumentsDirectory() async {
     try {
-      return await getApplicationDocumentsDirectory();
+      return kIsWeb ? null : await getApplicationDocumentsDirectory();
     }
     catch(e) {
       debugPrint(e.toString());
@@ -223,7 +223,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   Future<Map<String, dynamic>?> loadContentItems(List<String> categories) async {
     Map<String, dynamic>? result;
-    if (Config().contentUrl != null) {
+    if (Config().contentUrl != null && Auth2().isLoggedIn) {
       Response? response = await Network().get("${Config().contentUrl}/content_items", body: JsonUtils.encode({'categories': categories}), auth: Auth2());
       List<dynamic>? responseList = (response?.statusCode == 200) ? await JsonUtils.decodeListAsync(response?.body)  : null;
       if (responseList != null) {

@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -30,7 +29,10 @@ import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class WebPanel extends StatefulWidget {
   final String? url;
@@ -139,7 +141,7 @@ class WebPanel extends StatefulWidget {
 }
 
 class WebPanelState extends State<WebPanel> implements NotificationsListener {
-
+  flutter_webview.WebViewController? _controller;
   bool? _isOnline;
   bool? _isTrackingEnabled;
   bool _isPageLoading = true;
@@ -152,9 +154,27 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
       AppLifecycle.notifyStateChanged,
       DeepLink.notifyUri,
     ]);
+    flutter_webview.PlatformWebViewControllerCreationParams? params;
     if (Platform.isAndroid) {
-      flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+      params = AndroidWebViewControllerCreationParams();
+    } else if (Platform.isIOS) {
+      params = WebKitWebViewControllerCreationParams();
     }
+
+    if (params != null) {
+      _controller = flutter_webview.WebViewController.fromPlatformCreationParams(params)
+        ..setJavaScriptMode(flutter_webview.JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(flutter_webview.NavigationDelegate(
+          onNavigationRequest: widget.processNavigation,
+          onPageFinished: (url) {
+            setState(() {
+              _isPageLoading = false;
+            });
+          },
+        ))
+        ..loadRequest(Uri.parse(widget.url ?? ''));
+    }
+
     widget.getOnline().then((bool isOnline) {
       setState(() {
         _isOnline = isOnline;
@@ -201,22 +221,16 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   }
 
   Widget _buildWebView() {
-    return Stack(children: [
+    return _controller != null ? Stack(children: [
       Visibility(visible: _isForeground,
-        child: flutter_webview.WebView(
-        initialUrl: widget.url,
-        javascriptMode: flutter_webview.JavascriptMode.unrestricted,
-        navigationDelegate: widget.processNavigation,
-        onPageFinished: (url) {
-          setState(() {
-            _isPageLoading = false;
-          });
-        },),),
+        child: flutter_webview.WebViewWidget(
+          controller: _controller!,
+        ),),
       Visibility(visible: _isPageLoading,
         child: const Center(
           child: CircularProgressIndicator(),
       )),
-    ],);
+    ],) : Container();
   }
 
   @override

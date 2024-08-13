@@ -158,6 +158,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
 
       // startTime (datetime picker?)
       dataContent.add(FormFieldText('Start Date',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["start_time"],
@@ -166,6 +168,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       ));
       // endTime (datetime picker?)
       dataContent.add(FormFieldText('End Date',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["end_time"],
@@ -180,9 +184,21 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       _textControllers["minimum"] ??= TextEditingController(text: (_data as SurveyQuestionNumeric).minimum?.toString());
       _textControllers["maximum"] ??= TextEditingController(text: (_data as SurveyQuestionNumeric).maximum?.toString());
       //minimum
-      dataContent.add(FormFieldText('Minimum', padding: const EdgeInsets.symmetric(vertical: 16), controller: _textControllers["minimum"], inputType: TextInputType.number,));
+      dataContent.add(FormFieldText('Minimum',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        controller: _textControllers["minimum"],
+        inputType: TextInputType.number,
+      ));
       //maximum
-      dataContent.add(FormFieldText('Maximum', padding: EdgeInsets.zero, controller: _textControllers["maximum"], inputType: TextInputType.number,));
+      dataContent.add(FormFieldText('Maximum',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: EdgeInsets.zero,
+        controller: _textControllers["maximum"],
+        inputType: TextInputType.number,
+      ));
 
       // wholeNum
       dataContent.add(SurveyElementCreationWidget.buildCheckboxWidget("Whole Number", (_data as SurveyQuestionNumeric).wholeNum, _onToggleWholeNumber));
@@ -195,9 +211,22 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       _textControllers["min_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).minLength.toString());
       _textControllers["max_length"] ??= TextEditingController(text: (_data as SurveyQuestionText).maxLength?.toString());
       //minLength*
-      dataContent.add(FormFieldText('Minimum Length', padding: const EdgeInsets.symmetric(vertical: 16), controller: _textControllers["min_length"], inputType: TextInputType.number, required: true));
+      dataContent.add(FormFieldText('Minimum Length',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        controller: _textControllers["min_length"],
+        inputType: TextInputType.number,
+        required: true
+      ));
       //maxLength
-      dataContent.add(FormFieldText('Maximum Length', padding: EdgeInsets.zero, controller: _textControllers["max_length"], inputType: TextInputType.number,));
+      dataContent.add(FormFieldText('Maximum Length',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: EdgeInsets.zero,
+        controller: _textControllers["max_length"],
+        inputType: TextInputType.number,
+      ));
     } else if (_data is SurveyDataResult && _data.type == 'survey_data.action') {
       // actions
       List<ActionData> actions = (_data as SurveyDataResult).actions ?? [];
@@ -243,11 +272,35 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       // ),
       
       // key*
-      FormFieldText('Reference Key', padding: const EdgeInsets.only(top: 16), controller: _textControllers["key"], inputType: TextInputType.text, required: true),
+      FormFieldText('Reference Key',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: const EdgeInsets.only(top: 16),
+        controller: _textControllers["key"],
+        inputType: TextInputType.text,
+        required: true
+      ),
       // question text*
-      FormFieldText(_data.isQuestion ? 'Question Text' : 'Title', padding: const EdgeInsets.only(top: 16), controller: _textControllers["text"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences, required: true),
+      FormFieldText(_data.isQuestion ? 'Question Text' : 'Title',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: const EdgeInsets.only(top: 16),
+        controller: _textControllers["text"],
+        multipleLines: true,
+        inputType: TextInputType.text,
+        textCapitalization: TextCapitalization.sentences,
+        required: true
+      ),
       // more info (Additional Info)
-      FormFieldText(_data.isQuestion ? 'Additional Info' : 'Text', padding: const EdgeInsets.only(top: 16), controller: _textControllers["more_info"], multipleLines: true, inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences,),
+      FormFieldText(_data.isQuestion ? 'Additional Info' : 'Text',
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+        padding: const EdgeInsets.only(top: 16),
+        controller: _textControllers["more_info"],
+        multipleLines: true,
+        inputType: TextInputType.text,
+        textCapitalization: TextCapitalization.sentences,
+      ),
 
       // allowSkip
       Visibility(visible: _data.isQuestion, child: SurveyElementCreationWidget.buildCheckboxWidget("Required", !_data.allowSkip, _onToggleRequired)),
@@ -320,7 +373,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
       label: 'Done',
       borderColor: Styles().colors.fillColorPrimaryVariant,
       backgroundColor: Styles().colors.surface,
-      textStyle: Styles().textStyles.getTextStyle('widget.detail.large.fat'),
+      textStyle: Styles().textStyles.getTextStyle('panel.survey.creation.button.large.fat'),
       onTap: _onTapDone,
     ));
   }

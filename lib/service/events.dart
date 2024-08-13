@@ -118,10 +118,10 @@ class Events with Service implements NotificationsListener {
       }
       String? responseBody = response?.body;
       if ((response != null) && (response.statusCode == 200)) {
-        //Directory appDocDir = await getApplicationDocumentsDirectory();
-        //String cacheFilePath = join(appDocDir.path, 'events.json');
-        //File cacheFile = File(cacheFilePath);
-        //cacheFile.writeAsString(responseBody, flush: true);
+        //Directory? appDocDir = kIsWeb ? null : await getApplicationDocumentsDirectory();
+        //String? cacheFilePath = (appDocDir != null) ? join(appDocDir.path, 'events.json') : null;
+        //File? cacheFile = (cacheFilePath != null) ? File(cacheFilePath) : null;
+        //cacheFile?.writeAsString(responseBody, flush: true);
         List<dynamic>? jsonList = JsonUtils.decode(responseBody);
         List<Event>? events = await buildEvents(eventsJsonList: jsonList, excludeRecurringEvents: excludeRecurring, eventFilter: eventFilter);
         return events;

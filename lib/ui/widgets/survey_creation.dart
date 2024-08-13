@@ -135,7 +135,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxLines: 3,
       ) : Text(
         label,
-        style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+        style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
         overflow: TextOverflow.ellipsis,
         maxLines: 3,
       )),
@@ -153,7 +153,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
           key: grandParentElement == null && (parentIndex ?? 0) > 0 && _handleScrolling ? (widget.targetWidgetKeys?[parentIndex! - 1]) : null,
           controller: parentElement == null ? widget.controller : null,
           iconColor: Styles().colors.getColor('fillColorSecondary'),
-          backgroundColor: Styles().colors.getColor('background'),
+          collapsedIconColor: Styles().colors.getColor('fillColorSecondary'),
+          backgroundColor: Styles().colors.getColor('surface'),
           collapsedBackgroundColor: Styles().colors.getColor('surface'),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
@@ -162,7 +163,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
             child: Text.rich(TextSpan(children: [
               TextSpan(
                 text: 'From ',
-                style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+                style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
               ),
               TextSpan(
                 text: widget.dataSubtitles![parentIndex]!,
@@ -203,7 +204,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       entryText = data;
     }
     
-    Widget dataKeyText = Text('${index + 1}. $entryText', style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+    Widget dataKeyText = Text('${index + 1}. $entryText', style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
     List<Widget> textWidgets = [dataKeyText];
     if (_handleScrolling && widget.dataSubtitles?[index] != null) {
       textWidgets.add(GestureDetector(
@@ -252,7 +253,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
   Widget _buildTextEntryWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
     Widget sectionTextEntry = TextField(
       controller: data as TextEditingController,
-      style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+      style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
       decoration: InputDecoration.collapsed(
         hintText: surveyElement == SurveyElement.sections ? "Section Name" : "Value",
         border: InputBorder.none,
@@ -312,7 +313,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
               child: Text.rich(TextSpan(children: [
                 TextSpan(
                   text: 'From ',
-                  style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+                  style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
                 ),
                 TextSpan(
                   text: widget.dataSubtitles![index]!,
@@ -324,12 +325,13 @@ class _SurveyElementListState extends State<SurveyElementList> {
           }
           textWidgets.add(Text.rich(TextSpan(children: _buildTextSpansForLink(summary, surveyElement)), overflow: TextOverflow.ellipsis, maxLines: 2,));
         } else {
-          textWidgets.add(Text(summary, style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
+          textWidgets.add(Text(summary, style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,));
         }
         Widget ruleText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
         int numButtons = _numEntryManagementButtons(index, element: data, parentElement: parentElement, addRemove: addRemove);
         displayEntry = Card(
           key: _handleScrolling && parentElement == null && index > 0 ? (widget.targetWidgetKeys?[index - 1]) : null,
+          color: Styles().colors.surface,
           margin: const EdgeInsets.symmetric(vertical: 4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           child: InkWell(
@@ -395,7 +397,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       }
       Widget optionDataText = Text(
         '${index + 1}. $entryText',
-        style: Styles().textStyles.getTextStyle(data.isCorrect ? 'widget.detail.medium.fat' : 'widget.detail.medium'),
+        style: Styles().textStyles.getTextStyle(data.isCorrect ? 'panel.survey.creation.item.medium.fat' : 'panel.survey.creation.item.medium'),
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
       );
@@ -434,14 +436,14 @@ class _SurveyElementListState extends State<SurveyElementList> {
 
   Widget _buildActionsWidget(int index, dynamic data, SurveyElement surveyElement, RuleElement? parentElement, int depth) {
     if (data is ActionData) {
-      Widget actionDataText = Text('${index + 1}. ${data.label ?? 'New Action'}', style: Styles().textStyles.getTextStyle('widget.detail.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
+      Widget actionDataText = Text('${index + 1}. ${data.label ?? 'New Action'}', style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'), overflow: TextOverflow.ellipsis, maxLines: 2,);
       List<Widget> textWidgets = [actionDataText];
       if (data.data != null) {
         String dataString = data.data.toString();
         if (dataString.isNotEmpty) {
           textWidgets.add(Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(dataString, style: Styles().textStyles.getTextStyle('widget.detail.medium'))
+            child: Text(dataString, style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'))
           ));
         }
       }
@@ -566,7 +568,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         }
         textSpans.add(TextSpan(
           text: text,
-          style: Styles().textStyles.getTextStyle('widget.detail.medium'),
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
         ));
         previousLink = false;
       }

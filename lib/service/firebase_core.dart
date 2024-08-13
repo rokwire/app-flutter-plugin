@@ -40,8 +40,6 @@ class FirebaseCore extends Service {
 
   @protected
   FirebaseCore.internal();
-
-
   
   // Service
 
@@ -62,8 +60,17 @@ class FirebaseCore extends Service {
     }
   }
 
-  Future<void> initFirebase() async{
-    _firebaseApp ??= await google.Firebase.initializeApp(options: _options);
+  Future<void> initFirebase() async {
+    //TBD: DD - implement for web - firebase options
+    google.FirebaseOptions? options = kIsWeb
+        ? google.FirebaseOptions(
+            apiKey: 'testApiKeyForUIUCWeb',
+            appId: 'testAppIdForUIUCWeb',
+            messagingSenderId: 'testMessagingSenderIdForUIUCWeb',
+            projectId: 'testProjectIdForUIUCWeb',
+          )
+        : _options;
+    _firebaseApp ??= await google.Firebase.initializeApp(options: options);
   }
 
   google.FirebaseApp? get app => _firebaseApp;

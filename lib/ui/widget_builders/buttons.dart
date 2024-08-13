@@ -10,6 +10,7 @@ class ButtonBuilder {
       backgroundColor: Styles().colors.surface,
       textStyle: Styles().textStyles.getTextStyle('widget.detail.dark.regular.fat'),
       onTap: onTap,
+      contentWeight: 0,
     );
   }
 }

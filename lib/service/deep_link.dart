@@ -42,19 +42,23 @@ class DeepLink with Service {
   @override
   Future<void> initService() async {
 
-    // 1. Initial Uri
-    getInitialUri().then((uri) {
-      if (uri != null) {
-        NotificationService().notify(notifyUri, uri);
-      }
-    });
+    if (!kIsWeb) {
+      // 1. Initial Uri
+      getInitialUri().then((uri) {
+        if (uri != null) {
+          NotificationService().notify(notifyUri, uri);
+        }
+      });
 
-    // 2. Updated uri
-    uriLinkStream.listen((Uri? uri) {
-      if (uri != null) {
-        NotificationService().notify(notifyUri, uri);
-      }
-    });
+      // 2. Updated uri
+      uriLinkStream.listen((Uri? uri) {
+        if (uri != null) {
+          NotificationService().notify(notifyUri, uri);
+        }
+      });
+    } else {
+      debugPrint('WEB: deepLinks - not implemented.');
+    }
 
     await super.initService();
   }

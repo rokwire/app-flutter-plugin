@@ -17,9 +17,9 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:core';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path/path.dart';
@@ -34,6 +34,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/events2.dart';
+import 'package:rokwire_plugin/service/firebase_messaging.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -42,8 +43,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/events.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-
-import 'firebase_messaging.dart';
+import 'package:universal_io/io.dart';
 
 enum GroupsContentType { all, my }
 enum ResearchProjectsContentType { open, my }
@@ -225,7 +225,7 @@ class Groups with Service implements NotificationsListener {
 
   Future<Directory?> _getAppDocumentsDirectory() async {
     try {
-      return await getApplicationDocumentsDirectory();
+      return kIsWeb ? null : await getApplicationDocumentsDirectory();
     }
     catch(e) {
       debugPrint(e.toString());
