@@ -177,7 +177,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: widget.textStyles.dateTaken,),
+      child: Text(AppDateTime().getDisplayDateTime(dateTaken, includeAtSuffix: true), style: widget.textStyles.dateTaken,),
     );
   }
 
@@ -306,7 +306,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       }
     }
 
-    return SurveyDataWidget(_buildTextFormFieldWidget(survey.text, readOnly: readOnly, maxLength: survey.maxLength, multipleLines: inputType == TextInputType.multiline,
+    return SurveyDataWidget(_buildTextFormFieldWidget('', readOnly: readOnly, maxLength: survey.maxLength, multipleLines: inputType == TextInputType.multiline,
       hint: survey.moreInfo, initialValue: survey.response, inputType: inputType, textCapitalization: TextCapitalization.sentences, onChanged: (value) {
       survey.response = value;
       _onChangeResponse(false);
@@ -1035,7 +1035,7 @@ class MultiSelectionList extends StatelessWidget {
                       ),
                       child: CheckboxListTile(
                         title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
-                        checkColor: Styles().colors.fillColorSecondary,
+                        checkColor: Styles().colors.surface,
                         activeColor: Styles().colors.fillColorSecondary,
                         tileColor: Styles().colors.surface,
                         value: isChecked?[index],

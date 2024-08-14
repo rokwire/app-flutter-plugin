@@ -256,6 +256,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
       decoration: InputDecoration.collapsed(
         hintText: surveyElement == SurveyElement.sections ? "Section Name" : "Value",
+        hintStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
         border: InputBorder.none,
       ),
     );
@@ -716,7 +717,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
   static dynamic parseTextForType(String text) {
     text = text.trim();
     bool? valueBool = text.toLowerCase() == 'true' ? true : (text.toLowerCase() == 'false' ? false : null);
-    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? (text == null.toString() ? null : text);
+    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? null;
   }
 }
 
