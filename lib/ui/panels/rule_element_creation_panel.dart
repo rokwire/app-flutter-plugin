@@ -411,7 +411,13 @@ class _RuleElementCreationPanelState extends State<RuleElementCreationPanel> {
 
       return Column(children: content,);
     } else if (_customValueSelection == 'custom_single') {
-      return FormFieldText('Value', padding: const EdgeInsets.only(top: 16.0), controller: _textControllers["custom_compare"], inputType: TextInputType.text, required: true);
+      return FormFieldText('Value',
+        style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+        padding: const EdgeInsets.only(top: 16.0),
+        controller: _textControllers["custom_compare"],
+        inputType: TextInputType.text,
+        required: true
+      );
     }
 
     return Padding(padding: const EdgeInsets.only(top: 16.0), child: SurveyElementList(

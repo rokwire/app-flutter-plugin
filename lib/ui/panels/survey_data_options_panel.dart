@@ -117,13 +117,35 @@ class _SurveyDataOptionsPanelState extends State<SurveyDataOptionsPanel> {
     if (_data is OptionData) {
       content.addAll([
         //title*
-        FormFieldText('Title', padding: EdgeInsets.zero, controller: _textControllers["title"], inputType: TextInputType.text, textCapitalization: TextCapitalization.words,),
+        FormFieldText('Title',
+          padding: EdgeInsets.zero,
+          controller: _textControllers["title"],
+          style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+          inputType: TextInputType.text,
+          textCapitalization: TextCapitalization.words,
+        ),
         //hint
-        FormFieldText('Hint', padding: const EdgeInsets.only(top: 16), controller: _textControllers["hint"], inputType: TextInputType.text, textCapitalization: TextCapitalization.sentences),
+        FormFieldText('Hint',
+          padding: const EdgeInsets.only(top: 16),
+          controller: _textControllers["hint"],
+          style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+          inputType: TextInputType.text,
+          textCapitalization: TextCapitalization.sentences
+        ),
         //value* (dynamic value = _value ?? title)
-        FormFieldText('Value', padding: const EdgeInsets.only(top: 16), controller: _textControllers["value"], inputType: TextInputType.text),
+        FormFieldText('Value',
+          padding: const EdgeInsets.only(top: 16),
+          controller: _textControllers["value"],
+          style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+          inputType: TextInputType.text
+        ),
         //score
-        FormFieldText('Score', padding: const EdgeInsets.only(top: 16), controller: _textControllers["score"], inputType: TextInputType.number,),
+        FormFieldText('Score',
+          padding: const EdgeInsets.only(top: 16),
+          controller: _textControllers["score"],
+          style: Styles().textStyles.getTextStyle('widget.detail.regular'),
+          inputType: TextInputType.number,
+        ),
       ],);
 
       // correct answer

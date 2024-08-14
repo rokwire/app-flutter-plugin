@@ -32,7 +32,7 @@ dependencies:
   device_info_plus: ^10.1.0
   url_launcher: ^6.1.8
   sprintf: ^7.0.0
-  flutter_local_notifications: ^16.1.0
+  flutter_local_notifications: ^17.2.2
   sqflite: ^2.1.0
   device_calendar: ^4.2.0
   image_picker: ^0.8.6+1

@@ -154,8 +154,8 @@ class _SurveyElementListState extends State<SurveyElementList> {
           controller: parentElement == null ? widget.controller : null,
           iconColor: Styles().colors.getColor('fillColorSecondary'),
           collapsedIconColor: Styles().colors.getColor('fillColorSecondary'),
-          backgroundColor: Styles().colors.getColor('surface'),
-          collapsedBackgroundColor: Styles().colors.getColor('surface'),
+          backgroundColor: Styles().colors.surface,
+          collapsedBackgroundColor: Styles().colors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
           title: useSubtitle ? GestureDetector(
@@ -220,7 +220,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     Widget displayEntry = Card(
       key: _handleScrolling ? (widget.targetWidgetKeys?[index]) : null,
       margin: const EdgeInsets.symmetric(vertical: 4),
-      color: Styles().colors.getColor('surface'),
+      color: Styles().colors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       child: InkWell(
         onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
@@ -236,7 +236,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       maxSimultaneousDrags: 1,
       feedback: Card(child: Container(
         padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.surface),
         child: Align(alignment: Alignment.centerLeft, child: dataKeyText),
       )),
       child: DragTarget<Pair<int, SurveyElement>>(
@@ -261,7 +261,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     );
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      color: Styles().colors.getColor('surface'),
+      color: Styles().colors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
           Expanded(flex: 3, child: Padding(padding: const EdgeInsets.only(left: 8), child: sectionTextEntry)),
@@ -274,7 +274,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
     if (data is Pair<String, bool>) {
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        color: Styles().colors.getColor('surface'),
+        color: Styles().colors.surface,
         child: SurveyElementCreationWidget.buildCheckboxWidget(data.left, data.right, widget.onChanged != null ? (value) => widget.onChanged!(index, value) : null, padding: EdgeInsets.zero)
       );
     }
@@ -369,7 +369,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       //   maxSimultaneousDrags: 1,
       //   feedback: Card(child: Container(
       //     padding: const EdgeInsets.all(16),
-      //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+      //     decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.surface),
       //     child: Align(alignment: Alignment.centerLeft, child: ruleText)
       //   )),
       //   child: DragTarget<String>(
@@ -403,6 +403,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       );
       Widget displayEntry = Card(
         margin: const EdgeInsets.symmetric(vertical: 4),
+        color: Styles().colors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
         child: InkWell(
           onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
@@ -418,7 +419,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.surface),
           child: optionDataText,
         )),
         child: DragTarget<int>(
@@ -450,6 +451,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
       Widget actionText = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textWidgets);
       Widget displayEntry = Card(
         margin: const EdgeInsets.symmetric(vertical: 4),
+        color: Styles().colors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
         child: InkWell(
           onTap: widget.onEdit != null ? () => widget.onEdit!(index, surveyElement, null, null) : null,
@@ -465,7 +467,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         maxSimultaneousDrags: 1,
         feedback: Card(child: Container(
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.surface),
           child: actionDataText,
         )),
         child: DragTarget<int>(
@@ -662,7 +664,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
   static Widget buildDropdownWidget<T>(Map<T?, String> supportedItems, String label, T? value, Function(T?)? onChanged,
     {EdgeInsetsGeometry padding = const EdgeInsets.symmetric(horizontal: 16), EdgeInsetsGeometry margin = const EdgeInsets.only(top: 16)}) {
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.getColor('surface')),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4.0), color: Styles().colors.surface),
       padding: padding,
       margin: margin,
       child: Row(children: [
@@ -675,7 +677,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
             items: buildDropdownItems<T>(supportedItems),
             value: value,
             onChanged: onChanged,
-            dropdownColor: Styles().colors.getColor('surface'),
+            dropdownColor: Styles().colors.surface,
           ),
         ),))],
       )
@@ -686,8 +688,8 @@ class SurveyElementCreationWidget extends StatefulWidget {
     return Padding(padding: padding, child: CheckboxListTile(
       title: Padding(padding: const EdgeInsets.only(left: 8), child: Text(label, style: Styles().textStyles.getTextStyle('widget.message.regular'))),
       contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
-      tileColor: Styles().colors.getColor('surface'),
-      checkColor: Styles().colors.getColor('surface'),
+      tileColor: Styles().colors.surface,
+      checkColor: Styles().colors.surface,
       activeColor: Styles().colors.getColor('fillColorPrimary'),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.0)),
       value: value,
