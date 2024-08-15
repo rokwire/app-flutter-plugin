@@ -901,11 +901,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     List<Future<dynamic>> futures = [
       Storage().setAuth2AnonymousPrefs(_anonymousPrefs = null),
       Storage().setAuth2AnonymousProfile(_anonymousProfile = null),
-      Storage().setAuth2Account(account),
     ];
     if (!Config().isReleaseWeb) {
-      futures.add(Storage().setAuth2Token(token));
-      futures.add(Storage().setAuth2OidcToken(oidcToken));
+      futures.addAll([
+        Storage().setAuth2Token(token),
+        Storage().setAuth2OidcToken(oidcToken),
+        Storage().setAuth2Account(account),
+      ]);
     }
     await Future.wait(futures);
 
@@ -1399,7 +1401,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
         String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
         if (identifiers != null) {
-          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+          _account = Auth2Account.fromOther(_account, identifiers: identifiers);
+          if (!kIsWeb) {
+            await Storage().setAuth2Account(_account);
+          }
           NotificationService().notify(notifyLinkChanged);
           return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
         }
@@ -1437,7 +1442,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
       if (identifiers != null) {
-        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers));
+        _account = Auth2Account.fromOther(_account, identifiers: identifiers);
+        if (!kIsWeb) {
+          await Storage().setAuth2Account(_account);
+        }
         NotificationService().notify(notifyLinkChanged);
         return true;
       }
@@ -1469,7 +1477,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         String? message = (responseJson != null) ? JsonUtils.stringValue(responseJson['message']) : null;
         // Map<String, dynamic>? requestJson = JsonUtils.decode(message ?? '');
         if (authTypes != null) {
-          await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
+          _account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes);
+          if (!kIsWeb) {
+            await Storage().setAuth2Account(_account);
+          }
           NotificationService().notify(notifyLinkChanged);
           return Auth2LinkResult(Auth2LinkResultStatus.succeeded, message: message);
         }
@@ -1508,7 +1519,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       List<Auth2Identifier>? identifiers = (responseJson != null) ? Auth2Identifier.listFromJson(JsonUtils.listValue(responseJson['identifiers'])) : null;
       List<Auth2Type>? authTypes = (responseJson != null) ? Auth2Type.listFromJson(JsonUtils.listValue(responseJson['auth_types'])) : null;
       if (authTypes != null) {
-        await Storage().setAuth2Account(_account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes));
+        _account = Auth2Account.fromOther(_account, identifiers: identifiers, authTypes: authTypes);
+        if (!kIsWeb) {
+          await Storage().setAuth2Account(_account);
+        }
         NotificationService().notify(notifyLinkChanged);
         return true;
       }
@@ -1534,26 +1548,29 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _log("Auth2: logout");
     _refreshTokenFailCounts.remove(_token?.refreshToken);
 
-    if (Config().authBaseUrl != null) {
+    if (Config().coreUrl != null) {
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? body = JsonUtils.encode({
         'all_sessions': false,
       });
-      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf());
+      Network().post("${Config().coreUrl}/services/auth/logout", headers: headers, body: body, auth: this);
     }
 
     _token = null;
     _oidcToken = null;
+    _account = null;
     List<Future<dynamic>> futures = [
       Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty()),
       Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty()),
-      Storage().setAuth2Account(_account = null),
     ];
-    if (!Config().isReleaseWeb) {
-      futures.add(Storage().setAuth2Token(_token));
-      futures.add(Storage().setAuth2OidcToken(_oidcToken));
+    if (!kIsWeb) {
+      futures.addAll([
+        Storage().setAuth2Token(_token),
+        Storage().setAuth2OidcToken(_oidcToken),
+        Storage().setAuth2Account(_account),
+      ]);
     }
     await Future.wait(futures);
 
@@ -1728,7 +1745,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       NotificationService().notify(notifyPrefsChanged);
     }
     else if (identical(prefs, _account?.prefs)) {
-      await Storage().setAuth2Account(_account);
+      if (!kIsWeb) {
+        await Storage().setAuth2Account(_account);
+      }
       NotificationService().notify(notifyPrefsChanged);
       return _saveAccountUserPrefs();
     }
@@ -1771,7 +1790,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<void> onAccountSecretsChanged(Map<String, dynamic>? secrets) async {
     if (identical(secrets, _account?.secrets)) {
-      await Storage().setAuth2Account(_account);
+      if (!kIsWeb) {
+        await Storage().setAuth2Account(_account);
+      }
       NotificationService().notify(notifySecretsChanged);
       return _saveAccountSecrets();
     }
@@ -1837,7 +1858,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       NotificationService().notify(notifyProfileChanged);
     }
     else if (identical(profile, _account?.profile)) {
-      await Storage().setAuth2Account(_account);
+      if (!kIsWeb) {
+        await Storage().setAuth2Account(_account);
+      }
       NotificationService().notify(notifyProfileChanged);
       _saveAccountUserProfile();
     }
@@ -1850,7 +1873,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
     if (await _saveExternalAccountUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
-        await Storage().setAuth2Account(_account);
+        if (!kIsWeb) {
+          await Storage().setAuth2Account(_account);
+        }
         NotificationService().notify(notifyProfileChanged);
       }
       return true;
@@ -1959,7 +1984,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
 
-      await Storage().setAuth2Account(_account = account);
+      _account = account;
+      if (!kIsWeb) {
+        await Storage().setAuth2Account(_account);
+      }
       NotificationService().notify(notifyAccountChanged);
 
       if (profileUpdated) {
@@ -2081,7 +2109,7 @@ class Auth2Csrf with NetworkAuthProvider {
   @override
   Map<String, String>? get networkAuthHeaders {
     String cookieName = _csrfTokenName;
-    if (Config().authBaseUrl?.contains("localhost") == false) {
+    if (Config().authBaseUrl?.contains("http://") == false) {
       cookieName = '__Host-' + cookieName;
     }
 

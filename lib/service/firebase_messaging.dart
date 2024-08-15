@@ -61,23 +61,32 @@ class FirebaseMessaging with Service {
 
   @override
   Future<void> initService() async {
-    await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    firebase_messaging.FirebaseMessaging.onMessage.listen((firebase_messaging.RemoteMessage message) {
-      Log.d('FCM: onMessage');
-      onFirebaseMessage(message);
-    });
+      firebase_messaging.FirebaseMessaging.onMessage.listen((firebase_messaging.RemoteMessage message) {
+        Log.d('FCM: onMessage');
+        onFirebaseMessage(message);
+      });
 
-    firebase_messaging.FirebaseMessaging.onMessageOpenedApp.listen((firebase_messaging.RemoteMessage message) {
-      Log.d('FCM: onMessageOpenedApp');
-      onFirebaseMessage(message);
-    });
+      firebase_messaging.FirebaseMessaging.onMessageOpenedApp.listen((firebase_messaging.RemoteMessage message) {
+        Log.d('FCM: onMessageOpenedApp');
+        onFirebaseMessage(message);
+      });
 
-    firebase_messaging.FirebaseMessaging.instance.getToken().then((String? token) => applyToken(token));
+      firebase_messaging.FirebaseMessaging.instance.getToken().then((String? token) => applyToken(token));
+    } catch (e) {
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.nonFatal,
+        title: 'FirebaseMessaging Initialization Failed',
+        description: 'Failed to initialize FirebaseMessaging service: ${e.toString()}.',
+      );
+    }
 
     await super.initService();
   }

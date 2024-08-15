@@ -353,11 +353,12 @@ class Groups with Service implements NotificationsListener {
       });
       
       try {
-        await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
-        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+        if (await _ensureLogin() == true) {
+          Response? response = await Network().get(url, body: post, auth: Auth2());
+          String? responseBody = (response?.statusCode == 200) ? response?.body : null;
+          //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+          return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+        }
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -406,10 +407,11 @@ class Groups with Service implements NotificationsListener {
       });
 
       try {
-        await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+        if (await _ensureLogin() == true) {
+          Response? response = await Network().get(url, body: post, auth: Auth2());
+          //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+          return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+        }
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -420,25 +422,26 @@ class Groups with Service implements NotificationsListener {
 
   Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
-      await _ensureLogin();
-      String? post = JsonUtils.encode({
-        'title': searchText, // Uri.encodeComponent(searchText)
-        'include_hidden': includeHidden,
-        'research_group': researchProjects,
-        'research_open': researchOpen,
-        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });
+      if (await _ensureLogin() == true) {
+        String? post = JsonUtils.encode({
+          'title': searchText, // Uri.encodeComponent(searchText)
+          'include_hidden': includeHidden,
+          'research_group': researchProjects,
+          'research_open': researchOpen,
+          'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+        });
 
 
-      String url = '${Config().groupsUrl}/v2/groups';
-      Response? response = await Network().get(url, auth: Auth2(), body: post);
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        return Group.listFromJson(JsonUtils.decodeList(responseBody));
-      } else {
-        debugPrint('Failed to search for groups. Reason: ');
-        debugPrint(responseBody);
+        String url = '${Config().groupsUrl}/v2/groups';
+        Response? response = await Network().get(url, auth: Auth2(), body: post);
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          return Group.listFromJson(JsonUtils.decodeList(responseBody));
+        } else {
+          debugPrint('Failed to search for groups. Reason: ');
+          debugPrint(responseBody);
+        }
       }
     }
     return null;
@@ -448,15 +451,16 @@ class Groups with Service implements NotificationsListener {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/v2/groups/$groupId';
       try {
-        await _ensureLogin();
-        Response? response = await Network().get(url, auth: Auth2(),);
-        int responseCode = response?.statusCode ?? -1;
-        String? responseBody = response?.body;
-        if (responseCode == 200) {
-          Map<String, dynamic>? groupsJson = JsonUtils.decodeMap(responseBody);
-          return Group.fromJson(groupsJson);
-        } else {
-          debugPrint('Failed to load group with id {$groupId}. Response: $responseCode $responseBody');
+        if (await _ensureLogin() == true) {
+          Response? response = await Network().get(url, auth: Auth2(),);
+          int responseCode = response?.statusCode ?? -1;
+          String? responseBody = response?.body;
+          if (responseCode == 200) {
+            Map<String, dynamic>? groupsJson = JsonUtils.decodeMap(responseBody);
+            return Group.fromJson(groupsJson);
+          } else {
+            debugPrint('Failed to load group with id {$groupId}. Response: $responseCode $responseBody');
+          }
         }
       } catch (e) {
         debugPrint(e.toString());
