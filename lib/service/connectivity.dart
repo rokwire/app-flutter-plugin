@@ -54,7 +54,7 @@ class Connectivity with Service {
 
   @override
   Future<void> initService() async {
-    _connectivityStatus = _statusFromResult(await connectivity.Connectivity().checkConnectivity());
+    _connectivityStatus = _statusFromResults(await connectivity.Connectivity().checkConnectivity());
 
     if (_connectivityStatus != null) {
       await super.initService();
@@ -75,8 +75,8 @@ class Connectivity with Service {
     _connectivitySubscription = null;
   }
 
-  void _onConnectivityChanged(connectivity.ConnectivityResult result) {
-    _setConnectivityStatus(_statusFromResult(result));
+  void _onConnectivityChanged(List<connectivity.ConnectivityResult> results) {
+    _setConnectivityStatus(_statusFromResults(results));
   }
 
   void _setConnectivityStatus(ConnectivityStatus? status) {
@@ -87,14 +87,16 @@ class Connectivity with Service {
     }
   }
 
-  ConnectivityStatus? _statusFromResult(connectivity.ConnectivityResult? result) {
-    switch(result) {
-      case connectivity.ConnectivityResult.wifi: return ConnectivityStatus.wifi;
-      case connectivity.ConnectivityResult.mobile: return ConnectivityStatus.mobile;
-      case connectivity.ConnectivityResult.none: return ConnectivityStatus.none;
-      default: break;
+  ConnectivityStatus? _statusFromResults(List<connectivity.ConnectivityResult> results) {
+    if (results.contains(connectivity.ConnectivityResult.wifi)) {
+      return ConnectivityStatus.wifi;
+    } else if (results.contains(connectivity.ConnectivityResult.mobile)) {
+      return ConnectivityStatus.mobile;
+    } else if (results.contains(connectivity.ConnectivityResult.none)) {
+      return ConnectivityStatus.none;
+    } else {
+      return null;
     }
-    return null;
   }
 
   // Connectivity
