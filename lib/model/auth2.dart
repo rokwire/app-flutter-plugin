@@ -2311,16 +2311,10 @@ class UserRole {
   static const prospectiveFaculty = UserRole._internal('prospective_faculty');
   static const staff = UserRole._internal('staff');
   static const prospectiveStaff = UserRole._internal('prospective_staff');
-
-  static const visitor = UserRole._internal('visitor');
-  static const fan = UserRole._internal('fan');
-  static const employee = UserRole._internal('employee');
-  static const alumni = UserRole._internal('alumni');
-  static const parent = UserRole._internal('parent');
-  static const gies = UserRole._internal('gies');
+  static const debug = UserRole._internal('debug');
 
   static List<UserRole> get values {
-    return [student, prospectiveStudent, faculty, staff, visitor, fan, employee, alumni, parent, gies];
+    return [student, prospectiveStudent, faculty, prospectiveFaculty, staff, prospectiveStaff, debug];
   }
 
   final String _value;

@@ -1558,13 +1558,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Network().post("${Config().coreUrl}/services/auth/logout", headers: headers, body: body, auth: this);
     }
 
-    _token = null;
-    _oidcToken = null;
-    _account = null;
     List<Future<dynamic>> futures = [
       Storage().setAuth2AnonymousPrefs(_anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty()),
       Storage().setAuth2AnonymousProfile(_anonymousProfile = Auth2UserProfile.empty()),
     ];
+
+    _token = null;
+    _oidcToken = null;
+    _account = null;
     if (!kIsWeb) {
       futures.addAll([
         Storage().setAuth2Token(_token),

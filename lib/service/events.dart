@@ -509,21 +509,19 @@ class Events with Service implements NotificationsListener {
     Set<String> targetAudiences = {};
     for (UserRole? role in roles) {
       if (role == UserRole.student) {
-        targetAudiences.add('students');
-      } else if (role == UserRole.alumni) {
-        targetAudiences.add('alumni');
+        targetAudiences.add('student');
+      } else if (role == UserRole.prospectiveStudent) {
+        targetAudiences.add('prospective_student');
       } else if (role == UserRole.faculty) {
         targetAudiences.add('faculty');
+      } else if (role == UserRole.prospectiveFaculty) {
+        targetAudiences.add('prospective_faculty');
       } else if (role == UserRole.staff) {
         targetAudiences.add('staff');
-      } else if (role == UserRole.fan) {
-        targetAudiences.add('public');
-      } else if (role == UserRole.parent) {
-        targetAudiences.add('parents');
-      } else if (role == UserRole.visitor) {
-        targetAudiences.add('public');
-      } else if (role == UserRole.prospectiveStudent) {
-
+      } else if (role == UserRole.prospectiveStaff) {
+        targetAudiences.add('prospective_staff');
+      } else if (role == UserRole.debug) {
+        targetAudiences.add('debug');
       }
     }
     return targetAudiences;
