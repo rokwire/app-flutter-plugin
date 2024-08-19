@@ -162,5 +162,8 @@ class _SurveyPanelState extends State<SurveyPanel> {
   }
 
   Color? get defaultBackgroundColor => Styles().colors.surface;
-  SurveyWidgetTextStyles get defaultTextStyles => SurveyWidgetTextStyles.withDefaults(horizontalMultipleChoiceOption: Styles().textStyles.getTextStyle('widget.item.small.thin'));
+  SurveyWidgetTextStyles get defaultTextStyles => SurveyWidgetTextStyles.withDefaults(
+    horizontalMultipleChoiceOption: Styles().textStyles.getTextStyle('widget.item.small.thin'),
+    radioButtonNumLabel: Styles().textStyles.getTextStyle('widget.item.small.thin'),
+  );
 }

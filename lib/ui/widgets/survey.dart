@@ -620,7 +620,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     double max = survey.maximum ?? 1.0;
     String label;
     if (survey.wholeNum && min >= 0 && max <= 10) {
-      return SurveyDataWidget(_buildDiscreteNumsSurveySection(survey, enabled: enabled));
+      return SurveyDataWidget(Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: _buildDiscreteNumsSurveySection(survey, enabled: enabled),
+      ));
     }
 
     double value = 0;
@@ -671,25 +674,22 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-       Text(i.toString(), style: widget.textStyles.radioButtonNumLabel),
-       Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
-         onChanged: enabled ? (Object? value) {
-           survey.response = value;
-           _onChangeResponse(false);
-         } : null
-       )
+        Text(i.toString(), style: widget.textStyles.radioButtonNumLabel),
+        Theme(
+          data: ThemeData(
+            unselectedWidgetColor: Styles().colors.fillColorPrimary,
+          ),
+          child: Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
+            onChanged: enabled ? (Object? value) {
+              survey.response = value;
+              _onChangeResponse(false);
+            } : null
+          ),
+        )
       ]));
     }
 
-    return Column(
-      children: [
-        Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
-        Padding(
-          padding: const EdgeInsets.only(top: 24.0),
-          child: Container(height: 1, color: Styles().colors.dividerLine),
-        )
-      ],
-    );
+    return Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons);
   }
 
   Widget _buildTextFormFieldWidget(String field, {bool readOnly = false, int? maxLength, bool multipleLines = false, String? initialValue, String? hint,
@@ -905,7 +905,7 @@ class CustomIconSelectionList extends StatelessWidget {
                       onTap: onChanged != null ? () => onChanged!(index) : null,
                       child: Theme(
                         data: ThemeData(
-                            unselectedWidgetColor: Styles().colors.textDark
+                            unselectedWidgetColor: Styles().colors.fillColorPrimary
                         ),
                         child: ListTile(
                           title: Transform.translate(offset: const Offset(-15, 0), child: Text(optionList[index].title, style: selected ? selectedStyle : notSelectedStyle)),
@@ -988,7 +988,7 @@ class SingleSelectionList extends StatelessWidget {
                 shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                 child: Theme(
                   data: ThemeData(
-                    unselectedWidgetColor: Styles().colors.textDark
+                    unselectedWidgetColor: Styles().colors.fillColorPrimary
                   ),
                   child: RadioListTile(
                     title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: Styles().textStyles.getTextStyle('widget.detail.regular'))),
@@ -1031,7 +1031,7 @@ class MultiSelectionList extends StatelessWidget {
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: Theme(
                       data: ThemeData(
-                          unselectedWidgetColor: Styles().colors.textDark
+                          unselectedWidgetColor: Styles().colors.fillColorPrimary
                       ),
                       child: CheckboxListTile(
                         title: Transform.translate(offset: const Offset(-15, 0), child: Text(selectionList[index].title, style: Styles().textStyles.getTextStyle('widget.detail.regular'))),

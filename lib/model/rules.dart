@@ -277,11 +277,11 @@ abstract class RuleResult extends RuleElement {
       }
       return RuleCases(cases: caseList);
     }
-    try {
-      return RuleActionResult.fromJson(json);
-    } catch (_) {
+    dynamic condition = json["condition"];
+    if (condition is Map<String, dynamic>) {
       return Rule.fromJson(json);
     }
+    return RuleActionResult.fromJson(json);
   }
 
   factory RuleResult.fromOther(RuleResult other) {

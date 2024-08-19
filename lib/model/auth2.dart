@@ -2305,16 +2305,14 @@ class Auth2VoterPrefs {
 // UserRole
 
 class UserRole {
-  static const student = UserRole._internal('student');
-  static const prospectiveStudent = UserRole._internal('prospective_student');
-  static const faculty = UserRole._internal('faculty');
-  static const prospectiveFaculty = UserRole._internal('prospective_faculty');
-  static const staff = UserRole._internal('staff');
-  static const prospectiveStaff = UserRole._internal('prospective_staff');
+  static const neomU = UserRole._internal('neom_u');
+  static const talentAcademy = UserRole._internal('talent_academy');
+  static const eriF = UserRole._internal('eri_f');
+  static const ec12 = UserRole._internal('ec_12');
   static const debug = UserRole._internal('debug');
 
   static List<UserRole> get values {
-    return [student, prospectiveStudent, faculty, prospectiveFaculty, staff, prospectiveStaff, debug];
+    return [neomU, talentAcademy, eriF, ec12, debug];
   }
 
   final String _value;
