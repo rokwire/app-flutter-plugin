@@ -507,7 +507,7 @@ class SurveyQuestionTrueFalse extends SurveyData {
       key: key,
       section: JsonUtils.stringValue(json['section']),
       sections: JsonUtils.stringListValue(json['sections']),
-      response: json['response'] ?? false,
+      response: json['response'],
       allowSkip: JsonUtils.boolValue(json['allow_skip']) ?? false,
       replace: JsonUtils.boolValue(json['replace']) ?? false,
       defaultFollowUpKey: JsonUtils.stringValue(json['default_follow_up_key']),
