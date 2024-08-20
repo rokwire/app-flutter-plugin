@@ -33,6 +33,7 @@ import 'package:rokwire_plugin/ui/widgets/expansion_tile.dart' as rokwire;
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -48,6 +49,13 @@ class SurveyCreationPanel extends StatefulWidget {
 }
 
 class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
+  static const String _dateTimeFormat = "MM-dd-yyyy";
+  static const String _surveyTitleKey = "title";
+  static const String _surveyMoreInfoKey = "more_info";
+  static const String _surveyStartDateKey = "start_date";
+  static const String _surveyEndDateKey = "end_date";
+  static const String _surveyEstimatedCompletionTimeKey = "estimated_completion_time";
+
   GlobalKey? dataKey;
   List<GlobalKey> _dataToRuleKeys = [];
   List<GlobalKey> _ruleToDataKeys = [];
@@ -65,6 +73,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   final List<SurveyData> _questionData = [];
   final List<SurveyData> _actionData = [];
   int _dataCount = 0;
+  bool _public = false;
   bool _scored = true;
   int _branchDepth = 0;
 
@@ -82,12 +91,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
   @override
   void initState() {
     _textControllers = {
-      "title": TextEditingController(),
-      "more_info": TextEditingController(),
+      _surveyTitleKey: TextEditingController(),
+      _surveyMoreInfoKey: TextEditingController(),
+      _surveyStartDateKey: TextEditingController(),
+      _surveyEndDateKey: TextEditingController(),
+      _surveyEstimatedCompletionTimeKey: TextEditingController(),
     };
 
     if (widget.survey != null) {
       _resultRules = widget.survey!.resultRules ?? [];
+      _public = widget.survey!.public ?? false;
       _scored = widget.survey!.scored;
 
       List<String> sections = [];
@@ -121,8 +134,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       _ruleToDataKeys = List.generate(_questionData.length, (index) => GlobalKey());
       _actionKeys = List.generate(_actionData.length, (index) => GlobalKey());
       _dataCount = _questionData.length + _actionData.length;
-      _textControllers["title"]!.text = widget.survey!.title;
-      _textControllers["more_info"]!.text = widget.survey!.moreInfo ?? '';
+
+      _textControllers[_surveyTitleKey]!.text = widget.survey!.title;
+      _textControllers[_surveyMoreInfoKey]!.text = widget.survey!.moreInfo ?? '';
+      _textControllers[_surveyStartDateKey]!.text = DateTimeUtils.utcDateTimeToString(widget.survey!.startDate, format: _dateTimeFormat, includeSuffix: false) ?? '';
+      _textControllers[_surveyEndDateKey]!.text = DateTimeUtils.utcDateTimeToString(widget.survey!.endDate, format: _dateTimeFormat, includeSuffix: false) ?? '';
+      _textControllers[_surveyEstimatedCompletionTimeKey]!.text = widget.survey!.estimatedCompletionTime?.toString() ?? '';
     }
 
     super.initState();
@@ -195,7 +212,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
           labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
           padding: const EdgeInsets.only(bottom: 16),
-          controller: _textControllers["title"],
+          controller: _textControllers[_surveyTitleKey],
           inputType: TextInputType.text,
           textCapitalization: TextCapitalization.words,
           required: true
@@ -205,11 +222,14 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
           labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
           padding: const EdgeInsets.only(bottom: 16),
-          controller: _textControllers["more_info"],
+          controller: _textControllers[_surveyMoreInfoKey],
           multipleLines: true,
           inputType: TextInputType.text,
           textCapitalization: TextCapitalization.sentences
         ),
+
+        // public
+        SurveyElementCreationWidget.buildCheckboxWidget("Public", _public, _onTogglePublic, padding: const EdgeInsets.only(bottom: 16.0)),
 
         // scored
         SurveyElementCreationWidget.buildCheckboxWidget("Scored", _scored, _onToggleScored, padding: EdgeInsets.zero),
@@ -285,6 +305,39 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           onRemove: _onTapRemove,
           onScroll: _onScroll,
         )),
+
+        // start_date (datetime picker?)
+        FormFieldText('Start Date',
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          inputType: TextInputType.datetime,
+          hint: _dateTimeFormat,
+          controller: _textControllers[_surveyStartDateKey],
+          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+
+        // end_date (datetime picker?)
+        FormFieldText('End Date',
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          inputType: TextInputType.datetime,
+          hint: _dateTimeFormat,
+          controller: _textControllers[_surveyEndDateKey],
+          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat),
+          padding: EdgeInsets.zero,
+        ),
+
+        // estimated_completion_time
+        FormFieldText('Estimated Completion Time (minutes)',
+          style: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          labelStyle: Styles().textStyles.getTextStyle('panel.survey.creation.item.medium'),
+          padding: const EdgeInsets.only(top: 16),
+          controller: _textControllers[_surveyEstimatedCompletionTimeKey],
+          inputType: TextInputType.number,
+          textCapitalization: TextCapitalization.none,
+          required: false
+        ),
       ],));
     }
     return Text("Maximum question branch depth ($_maxBranchDepth) exceeded. Your survey may not be shown correctly.", style: Styles().textStyles.getTextStyle('widget.error.regular.fat'));
@@ -294,7 +347,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: RoundedButton(
         label: 'Preview',
-        borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
+        borderColor: Styles().colors.fillColorPrimaryVariant,
         backgroundColor: Styles().colors.surface,
         textStyle: Styles().textStyles.getTextStyle('panel.survey.creation.button.large.fat'),
         onTap: _onTapPreview,
@@ -302,7 +355,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       Flexible(flex: 1, child: Padding(padding: const EdgeInsets.all(8.0), child: Stack(children: [
         RoundedButton(
           label: 'Save',
-          borderColor: Styles().colors.getColor("fillColorPrimaryVariant"),
+          borderColor: Styles().colors.fillColorPrimaryVariant,
           backgroundColor: Styles().colors.surface,
           textStyle: Styles().textStyles.getTextStyle('panel.survey.creation.button.large.fat'),
           onTap: _onTapSave,
@@ -570,6 +623,12 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
     }
   }
 
+  void _onTogglePublic(bool? value) {
+    setState(() {
+      _public = value ?? false;
+    });
+  }
+
   void _onToggleScored(bool? value) {
     setState(() {
       _scored = value ?? true;
@@ -605,12 +664,16 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
       id: widget.survey != null ? widget.survey!.id : '',
       data: data,
       type: widget.survey?.type ?? 'user',
+      public: _public,
       scored: _scored,
-      title: (_textControllers["title"]?.text.isNotEmpty ?? false) ? _textControllers["title"]!.text : 'New Survey',
-      moreInfo: _textControllers["more_info"]?.text,
+      title: _textControllers[_surveyTitleKey]!.text.isNotEmpty ? _textControllers[_surveyTitleKey]!.text : 'New Survey',
+      moreInfo: _textControllers[_surveyMoreInfoKey]!.text,
       defaultDataKey: defaultDataKey,
       defaultDataKeyRule: defaultDataKeyRule,
       resultRules: _resultRules,
+      startDate: DateTimeUtils.dateTimeFromString(_textControllers[_surveyStartDateKey]!.text, format: _dateTimeFormat, isUtc: true),
+      endDate: DateTimeUtils.dateTimeFromString(_textControllers[_surveyEndDateKey]!.text, format: _dateTimeFormat, isUtc: true),
+      estimatedCompletionTime: _textControllers[_surveyEstimatedCompletionTimeKey]!.text.isNotEmpty ? int.tryParse(_textControllers[_surveyEstimatedCompletionTimeKey]!.text) : null,
       // responseKeys: _responseKeys,
       // constants: _constants,
       // strings: _strings,

@@ -93,6 +93,16 @@ class SurveyWidget extends StatefulWidget {
           progress: controller.saving),
     ]);
   }
+
+  static String? validateDate(String? dateStr, {String? format}) {
+    format ??= "MM-dd-yyyy";
+    if (dateStr != null) {
+      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+        return "Invalid format: must be $format";
+      }
+    }
+    return null;
+  }
 }
 
 class _SurveyWidgetState extends State<SurveyWidget> {

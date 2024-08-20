@@ -1379,8 +1379,8 @@ class DateTimeUtils {
     return dateTime;
   }
 
-  static String? utcDateTimeToString(DateTime? dateTime, { String format  = defaultDateTimeFormat  }) {
-    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
+  static String? utcDateTimeToString(DateTime? dateTime, { String format  = defaultDateTimeFormat, bool includeSuffix = true }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + (includeSuffix ? 'Z' : '')) : null;
   }
 
   static String? localDateTimeToString(DateTime? dateTime, { String format  = defaultDateTimeFormat  }) {

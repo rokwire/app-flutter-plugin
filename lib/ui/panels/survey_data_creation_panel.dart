@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
 import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
+import 'package:rokwire_plugin/ui/widgets/survey.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -163,7 +164,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["start_time"],
-        validator: (value) => _validateDate(value, format: format),
+        validator: (value) => SurveyWidget.validateDate(value, format: format),
         padding: const EdgeInsets.symmetric(vertical: 16),
       ));
       // endTime (datetime picker?)
@@ -173,7 +174,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         inputType: TextInputType.datetime,
         hint: format,
         controller: _textControllers["end_time"],
-        validator: (value) => _validateDate(value, format: format),
+        validator: (value) => SurveyWidget.validateDate(value, format: format),
         padding: EdgeInsets.zero,
       ));
     } else if (_data is SurveyQuestionNumeric) {
@@ -697,16 +698,6 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
     setState(() {
       (_data as SurveyQuestionNumeric).wholeNum = value ?? false;
     });
-  }
-
-  String? _validateDate(String? dateStr, {String? format}) {
-    format ??= "MM-dd-yyyy";
-    if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
-        return "Invalid format: must be $format";
-      }
-    }
-    return null;
   }
 
   void _onTapDone() {
