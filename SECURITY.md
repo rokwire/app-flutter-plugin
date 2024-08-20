@@ -2,14 +2,14 @@
 
 ## Supported Versions
 
-Patches for [ **illinois-app** ] will only be applied to the following versions:
+Patches for [ **app-flutter-plugin** ] will only be applied to the following versions:
 
 | Version | Supported |
 |---------| ------------------ |
 | 1.8.0   | :white_check_mark: |
 | < 1.8.0 | :x: |
-| 1.7.0   | :white_check_mark: |
-| < 1.7.0 | :x: |
+| 1.7.1   | :white_check_mark: |
+| < 1.7.1 | :x: |
 | 1.6.3   | :white_check_mark: |
 | < 1.6.3 | :x: |
 | 1.5.4   | :white_check_mark: |
