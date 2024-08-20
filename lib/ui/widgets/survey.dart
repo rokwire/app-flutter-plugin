@@ -94,10 +94,10 @@ class SurveyWidget extends StatefulWidget {
     ]);
   }
 
-  static String? validateDate(String? dateStr, {String? format}) {
+  static String? validateDate(String? dateStr, {String? format, bool required = true}) {
     format ??= "MM-dd-yyyy";
-    if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+    if (required || StringUtils.isNotEmpty(dateStr)) {
+      if (DateTimeUtils.parseDateTime(dateStr!, format: format) == null) {
         return "Invalid format: must be $format";
       }
     }

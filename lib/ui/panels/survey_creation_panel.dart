@@ -49,7 +49,7 @@ class SurveyCreationPanel extends StatefulWidget {
 }
 
 class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
-  static const String _dateTimeFormat = "MM-dd-yyyy";
+  static const String _dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
   static const String _surveyTitleKey = "title";
   static const String _surveyMoreInfoKey = "more_info";
   static const String _surveyStartDateKey = "start_date";
@@ -313,7 +313,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           inputType: TextInputType.datetime,
           hint: _dateTimeFormat,
           controller: _textControllers[_surveyStartDateKey],
-          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat),
+          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat, required: false),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
 
@@ -324,7 +324,7 @@ class _SurveyCreationPanelState extends State<SurveyCreationPanel> {
           inputType: TextInputType.datetime,
           hint: _dateTimeFormat,
           controller: _textControllers[_surveyEndDateKey],
-          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat),
+          validator: (value) => SurveyWidget.validateDate(value, format: _dateTimeFormat, required: false),
           padding: EdgeInsets.zero,
         ),
 
