@@ -28,9 +28,14 @@ import 'package:rokwire_plugin/service/styles.dart';
 import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:universal_io/io.dart';
+import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
+// #docregion platform_imports
+// Import for Android features.
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+// Import for iOS features.
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+// #enddocregion platform_imports
 
 class WebPanel extends StatefulWidget {
   final String? url;
@@ -125,17 +130,6 @@ class WebPanel extends StatefulWidget {
     }
   }
 
-  @protected
-  FutureOr<flutter_webview.NavigationDecision> processNavigation(flutter_webview.NavigationRequest navigation) async {
-    String url = navigation.url;
-    if (UrlUtils.launchInternal(url)) {
-      return flutter_webview.NavigationDecision.navigate;
-    }
-    else {
-      launchUrlString(url);
-      return flutter_webview.NavigationDecision.prevent;
-    }
-  }
 }
 
 class WebPanelState extends State<WebPanel> implements NotificationsListener {
@@ -144,6 +138,8 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   bool? _isTrackingEnabled;
   bool _isPageLoading = true;
   bool _isForeground = true;
+  late final flutter_webview.WebViewController _controller;
+
 
   @override
   void initState() {
@@ -152,9 +148,58 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
       AppLivecycle.notifyStateChanged,
       DeepLink.notifyUri,
     ]);
-    if (Platform.isAndroid) {
-      flutter_webview.WebView.platform = flutter_webview.SurfaceAndroidWebView();
+
+    // #docregion platform_features
+    late final flutter_webview.PlatformWebViewControllerCreationParams params;
+    if (flutter_webview.WebViewPlatform.instance is WebKitWebViewPlatform) {
+      params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+    } else {
+      params = const flutter_webview.PlatformWebViewControllerCreationParams();
     }
+
+    final flutter_webview.WebViewController controller =
+      flutter_webview.WebViewController.fromPlatformCreationParams(params);
+    // #enddocregion platform_features
+
+    controller.setJavaScriptMode(flutter_webview.JavaScriptMode.unrestricted);
+    controller.setBackgroundColor(const Color(0x00FFFFFF));
+
+    controller.setNavigationDelegate(flutter_webview.NavigationDelegate(
+      onProgress: onPageProgress,
+      onPageStarted: onPageStarted,
+      onPageFinished: onPageFinished,
+      onWebResourceError: onPageWebResourceError,
+      onNavigationRequest: processPageNavigationRequest,
+      onHttpError: onPageHttpError,
+      onUrlChange: onPageUrlChange,
+      onHttpAuthRequest: onHttpAuthRequest,
+    ),);
+
+    controller.addJavaScriptChannel('Toaster',
+      onMessageReceived: (flutter_webview.JavaScriptMessage message) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message.message)),
+        );
+      },
+    );
+
+    Uri? uri = (widget.url != null) ? Uri.tryParse(widget.url!) : null;
+    if (uri != null) {
+      controller.loadRequest(uri);
+    }
+
+    // #docregion platform_features
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewController.enableDebugging(true);
+      (controller.platform as AndroidWebViewController).setMediaPlaybackRequiresUserGesture(false);
+    }
+    // #enddocregion platform_features
+
+    _controller = controller;
+
     widget.getOnline().then((bool isOnline) {
       setState(() {
         _isOnline = isOnline;
@@ -203,15 +248,10 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   Widget _buildWebView() {
     return Stack(children: [
       Visibility(visible: _isForeground,
-        child: flutter_webview.WebView(
-        initialUrl: widget.url,
-        javascriptMode: flutter_webview.JavascriptMode.unrestricted,
-        navigationDelegate: widget.processNavigation,
-        onPageFinished: (url) {
-          setState(() {
-            _isPageLoading = false;
-          });
-        },),),
+        child: flutter_webview.WebViewWidget(
+          controller: _controller,
+        ),
+      ),
       Visibility(visible: _isPageLoading,
         child: const Center(
           child: CircularProgressIndicator(),
@@ -242,6 +282,58 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
         RokwirePlugin.launchAppSettings();
       }
     }
+  }
+
+  @protected
+  void onPageProgress(int progress) {
+    debugPrint('WebView is loading (progress : $progress%)');
+  }
+
+  @protected
+  void onPageStarted(String url) {
+    debugPrint('Page started loading: $url');
+  }
+
+  @protected
+  void onPageFinished(String url) {
+    debugPrint('Page finished loading: $url');
+    if (mounted) {
+      setState(() {
+        _isPageLoading = false;
+      });
+    }
+  }
+
+  @protected
+  FutureOr<flutter_webview.NavigationDecision> processPageNavigationRequest(flutter_webview.NavigationRequest navigation) async {
+    String url = navigation.url;
+    if (UrlUtils.launchInternal(url)) {
+      return flutter_webview.NavigationDecision.navigate;
+    }
+    else {
+      launchUrlString(url);
+      return flutter_webview.NavigationDecision.prevent;
+    }
+  }
+
+  @protected
+  void onPageWebResourceError(flutter_webview.WebResourceError error) {
+    debugPrint('Page resource error:\n\tcode: ${error.errorCode}\n\tdescription: ${error.description}\n\terrorType: ${error.errorType}\n\tisForMainFrame: ${error.isForMainFrame}\n');
+  }
+
+  @protected
+  void onPageHttpError(flutter_webview.HttpResponseError error) {
+    debugPrint('Error occurred on page: ${error.response?.statusCode}');
+  }
+
+  @protected
+  void onPageUrlChange(flutter_webview.UrlChange change) {
+    debugPrint('url change to ${change.url}');
+  }
+
+  @protected
+  void onHttpAuthRequest(flutter_webview.HttpAuthRequest request) {
+    //TBD: openDialog();
   }
 }
 

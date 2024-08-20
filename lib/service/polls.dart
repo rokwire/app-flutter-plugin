@@ -119,16 +119,18 @@ class Polls with Service implements NotificationsListener {
         limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
+  Future<Response?> getPollsResponse(PollFilter pollsFilter) async =>
+    enabled ? Network().get(
+      '${Config().quickPollsUrl}/polls',
+      body: JsonUtils.encode(pollsFilter.toJson()),
+      auth: Auth2()) : null;
+
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
-    if (enabled) {
-      String? body = JsonUtils.encode(pollsFilter.toJson());
-      String url = '${Config().quickPollsUrl}/polls';
-      Response? response = await Network().get(url, body: body, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if ((response != null) && (responseCode == 200)) {
-        List<dynamic>? responseJson = JsonUtils.decode(responseBody);
+    Response? response = await getPollsResponse(pollsFilter);
+    if (response != null) {
+      if (response.statusCode == 200) {
+        List<dynamic>? responseJson = JsonUtils.decode(response.body);
         if (responseJson != null) {
           PollsCursor? pollsCursor = _increaseNextCursor(offset: pollsFilter.offset, limit: pollsFilter.limit, resultsCount: responseJson.length);
           return PollsChunk(polls: Poll.fromJsonList(responseJson), cursor: pollsCursor);
@@ -138,7 +140,7 @@ class Polls with Service implements NotificationsListener {
         }
       }
       else {
-        throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
+        throw PollsException(PollsError.serverResponse, '${response.statusCode} ${response.body}');
       }
     }
     return null;

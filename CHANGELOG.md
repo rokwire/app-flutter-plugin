@@ -5,13 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+<!-- The next version number should be the version from pubspec.yaml -->
+
 ### Added
 - Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created notification for deletion of survey response [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+- Exposed low level APIs in services for accessing My Stored Data [#4264](https://github.com/rokwire/illinois-app/issues/4264).
+### Changed
+- Upgraded outdated Flutter plugins [#4302](https://github.com/rokwire/illinois-app/issues/4302).
+- Upgraded Fluuter to 3.24.0 [#4302](https://github.com/rokwire/illinois-app/issues/4302).
+- 
+## [1.7.1] - 2024-08-15
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
 - Use ISO 8601/RFC 3339 strings for survey start & end dates [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+### Added
+- Introduce Groups.acceptMembershipMulti [#4268](https://github.com/rokwire/illinois-app/issues/4268).
 
 ## [1.7.0] - 2024-07-15
 ### Changed
