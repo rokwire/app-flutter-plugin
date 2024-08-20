@@ -344,8 +344,9 @@ class Surveys /* with Service */ {
         List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
         if (responseList != null) {
           List<Survey>? surveys = Survey.listFromJson(responseList);
-          return surveys;
+          return surveys ?? [];
         }
+        return [];
       } else {
         debugPrint('Failed to load surveys. Reason: $responseCode, $responseBody');
       }

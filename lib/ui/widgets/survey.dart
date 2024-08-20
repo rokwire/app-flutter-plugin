@@ -441,7 +441,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       )));
     }
 
-    return Padding(padding: const EdgeInsets.only(bottom: 16), child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons));
+    return Padding(padding: const EdgeInsets.only(top: 16), child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start, children: buttons));
   }
 
   SurveyDataWidget? _buildTrueFalseSurveySection(SurveyQuestionTrueFalse? survey, {bool enabled = true}) {
@@ -683,20 +683,26 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     List<Widget> buttons = [];
     for (int i = min; i <= max; i++) {
-      buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        Text(i.toString(), style: widget.textStyles.radioButtonNumLabel),
-        Theme(
-          data: ThemeData(
-            unselectedWidgetColor: Styles().colors.fillColorPrimary,
-          ),
-          child: Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
-            onChanged: enabled ? (Object? value) {
-              survey.response = value;
-              _onChangeResponse(false);
-            } : null
-          ),
-        )
-      ]));
+      buttons.add(Theme(
+        data: ThemeData(
+          unselectedWidgetColor: Styles().colors.fillColorPrimary,
+        ),
+        child: RadioButton<int>(
+          semanticsLabel: i.toString(),
+          value: i,
+          groupValue: value,
+          onChanged: (value) {
+            survey.response = value;
+            _onChangeResponse(false);
+          },
+          enabled: enabled,
+          textWidget: Text(i.toString(), style: widget.textStyles.horizontalMultipleChoiceOption, textAlign: TextAlign.center),
+          backgroundDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.surface),
+          borderDecoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorPrimaryVariant),
+          selectedWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.fillColorSecondary)),
+          disabledWidget: Container(alignment: Alignment.center, decoration: BoxDecoration(shape: BoxShape.circle, color: Styles().colors.textDisabled)),
+        ),
+      ));
     }
 
     return Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons);
