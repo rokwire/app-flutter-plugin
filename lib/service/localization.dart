@@ -27,6 +27,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class Localization with Service implements NotificationsListener {
   
@@ -174,7 +175,7 @@ class Localization with Service implements NotificationsListener {
   Future<void> initDefaultStirngs(String language) async {
     _defaultStrings = _buildStrings(
       asset: _defaultAssetsStrings = await loadAssetsStrings(language),
-      appAsset: _defaultAppAssetsStrings = await loadAssetsStrings(language, app: true),
+      appAsset: _defaultAppAssetsStrings = kIsWeb ? null : await loadAssetsStrings(language, app: true),
       net: _defaultNetStrings = await loadNetStringsFromCache(language));
     updateDefaultStrings();
   }
@@ -183,7 +184,7 @@ class Localization with Service implements NotificationsListener {
   Future<void> initLocaleStirngs(String language) async {
     _localeStrings = _buildStrings(
       asset: _localeAssetsStrings = await loadAssetsStrings(language),
-      appAsset: _localeAppAssetsStrings = await loadAssetsStrings(language, app: true),
+      appAsset: _localeAppAssetsStrings = kIsWeb ? null : await loadAssetsStrings(language, app: true),
       net: _localeNetStrings = await loadNetStringsFromCache(language));
     updateLocaleStrings();
   }
@@ -253,7 +254,7 @@ class Localization with Service implements NotificationsListener {
     Map<String, dynamic>? jsonData;
     try {
       String assetName = getNetworkAssetName(language);
-      http.Response? response = (Config().assetsUrl != null) ? await Network().get("${Config().assetsUrl}/$assetName") : null;
+      http.Response? response = StringUtils.isNotEmpty(Config().assetsUrl) ? await Network().get("${Config().assetsUrl}/$assetName") : null;
       String? jsonString = ((response != null) && (response.statusCode == 200)) ? response.body : null;
       jsonData = (jsonString != null) ? JsonUtils.decode(jsonString) : null;
       if ((jsonString != null) && (jsonData != null) && ((cache == null) || !const DeepCollectionEquality().equals(jsonData, cache))) {
