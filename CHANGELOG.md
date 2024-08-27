@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exposed low level APIs in services for accessing My Stored Data [#4264](https://github.com/rokwire/illinois-app/issues/4264).
 ### Changed
 - Upgraded outdated Flutter plugins [#4302](https://github.com/rokwire/illinois-app/issues/4302).
-- Upgraded Fluuter to 3.24.0 [#4302](https://github.com/rokwire/illinois-app/issues/4302).
-- 
+- Upgraded Flutter to 3.24.0 [#4302](https://github.com/rokwire/illinois-app/issues/4302).
+### Fixed
+- Android: crash on startup [#4320](https://github.com/rokwire/illinois-app/issues/4320).
+
 ## [1.7.1] - 2024-08-15
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
