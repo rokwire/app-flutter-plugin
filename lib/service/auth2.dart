@@ -186,7 +186,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         NotificationService().notify(Auth2.notifyLoginSucceeded, null);
       }
     } else {
-      _refreshAccount();
+      await _refreshAccount();
     }
 
     await super.initService();
