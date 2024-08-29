@@ -30,10 +30,12 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final String? leadingLabel;
   final String? leadingHint;
   final String? leadingIconKey;
+  final double? leadingWidth;
   final void Function()? onLeading;
     
   final Widget? titleWidget;
   final String? title;
+  final double? titleSpacing;
   final TextStyle? textStyle;
   final Color? textColor;
   final String? fontFamily;
@@ -52,10 +54,12 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingLabel,
     this.leadingHint,
     this.leadingIconKey,
+    this.leadingWidth,
     this.onLeading,
-    
+
     this.titleWidget,
     this.title,
+    this.titleSpacing,
     this.textStyle,
     this.textColor,
     this.fontFamily,
@@ -78,7 +82,9 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
       leading : leadingWidget ?? buildLeadingWidget(context),
+      leadingWidth: leadingWidth,
       title: titleWidget ?? buildTitleWidget(context),
+      titleSpacing: titleSpacing,
       centerTitle: centerTitle,
       actions: actions,
     );
@@ -152,6 +158,7 @@ class SliverToutHeaderBar extends StatelessWidget {
 
   final Widget? titleWidget;
   final String? title;
+  final double? titleSpacing;
   final TextStyle? textStyle;
   final Color? textColor;
   final String? fontFamily;
@@ -188,6 +195,7 @@ class SliverToutHeaderBar extends StatelessWidget {
 
     this.titleWidget,
     this.title,
+    this.titleSpacing,
     this.textStyle,
     this.textColor,
     this.fontFamily,
@@ -208,6 +216,7 @@ class SliverToutHeaderBar extends StatelessWidget {
       leading: leadingWidget ?? buildLeadingWidget(context),
       leadingWidth: leadingWidth,
       title: titleWidget ?? buildTitleWidget(context),
+      titleSpacing: titleSpacing,
       flexibleSpace: flexWidget ?? buildFlexibleSpace(context),
     );
   }
@@ -306,6 +315,7 @@ class SliverHeaderBar extends StatelessWidget {
     
   final Widget? titleWidget;
   final String? title;
+  final double? titleSpacing;
   final TextStyle? textStyle;
   final Color? textColor;
   final String? fontFamily;
@@ -333,6 +343,7 @@ class SliverHeaderBar extends StatelessWidget {
     
     this.titleWidget,
     this.title,
+    this.titleSpacing,
     this.textStyle,
     this.textColor,
     this.fontFamily,
@@ -360,6 +371,7 @@ class SliverHeaderBar extends StatelessWidget {
       leading : leadingWidget ?? buildLeadingWidget(context),
       leadingWidth: leadingWidth,
       title: titleWidget ?? buildTitleWidget(context),
+      titleSpacing: titleSpacing,
       centerTitle: centerTitle,
       actions: actions
     );
