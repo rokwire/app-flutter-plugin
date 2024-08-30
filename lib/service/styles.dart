@@ -84,6 +84,11 @@ class Styles extends Service implements NotificationsListener{
   // Initialization
 
   @override
+  Set<Service> get serviceDependsOn {
+    return { Storage() };
+  }
+
+  @override
   void createService() {
     NotificationService().subscribe(this, [
       Service.notifyInitialized,
@@ -135,7 +140,6 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void onNotification(String name, dynamic param) {
-
     if (name == Service.notifyInitialized) {
       onServiceInitialized(param is Service ? param : null);
     }
