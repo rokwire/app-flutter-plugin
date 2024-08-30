@@ -36,7 +36,7 @@ class Storage with Service {
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
-  WebOptions? _secureStorageWebOptions;
+  static final WebOptions _secureStorageWebOptions = WebOptions(dbName: 'edu.illinois.rokwire.storage.web.db', publicKey: 'edu.illinois.rokwire.storage.web.key.public');
   String? _encryptionKey;
   String? _encryptionIV;
 
@@ -61,9 +61,7 @@ class Storage with Service {
     _sharedPreferences = await SharedPreferences.getInstance();
     if (kIsWeb) {
       // Use this secure storage only for web for now
-      _secureStorage = await FlutterSecureStorage();
-      _secureStorageWebOptions =
-          WebOptions(dbName: 'edu.illinois.rokwire.storage.web.db', publicKey: 'edu.illinois.rokwire.storage.web.key.public');
+      _secureStorage = await FlutterSecureStorage(webOptions: _secureStorageWebOptions);
     }
     _encryptionKey = await _getEncryptionKey(identifier: encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
     _encryptionIV = await _getEncryptionKey(identifier: encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
@@ -125,7 +123,7 @@ class Storage with Service {
 
   Future<String?> _storeEncryptionKey({required String identifier, required int size}) async {
     String secureKey = AESCrypt.secureKey(size: size);
-    await _secureStorage?.write(key: identifier, value: secureKey);
+    await _secureStorage?.write(key: identifier, value: secureKey, webOptions: _secureStorageWebOptions);
     return secureKey;
   }
 
