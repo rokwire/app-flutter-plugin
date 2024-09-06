@@ -150,10 +150,10 @@ class Auth2Account {
       'identifiers': identifiers,
       'auth_types': authTypes,
       'system_configs': systemConfigs,
-      'date_created': dateCreated,
-      'date_updated': dateUpdated,
-      'last_login_date': lastLoginDate,
-      'last_access_token_date': lastAccessTokenDate,
+      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
+      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
+      'last_login_date': AppDateTime().dateTimeLocalToJson(lastLoginDate),
+      'last_access_token_date': AppDateTime().dateTimeLocalToJson(lastAccessTokenDate),
     };
   }
 
