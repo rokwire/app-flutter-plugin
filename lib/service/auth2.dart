@@ -147,7 +147,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     List<dynamic> results = await Future.wait(futures);
     _deviceId = results[0];
     _token = results[1];
-    _account = results[2];
+    // _account = results[2];
     _oidcToken = results[3];
 
     if (isAnonymousAuthenticationSupported) {
@@ -181,15 +181,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     if (kIsWeb && (_token == null)) {
-      refreshToken(ignoreUnauthorized: true).then((token) {
+      refreshToken(ignoreUnauthorized: true).then((token) async {
         if (token != null) {
-          refreshAccount();
+          if (_account == null) {
+            await refreshAccount();
+          } else {
+            refreshAccount();
+          }
           NotificationService().notify(notifyLoginSucceeded, null);
           NotificationService().notify(notifyLoginChanged);
         }
       });
     } else {
-      refreshAccount();
+      if (_account == null) {
+        await refreshAccount();
+      } else {
+        refreshAccount();
+      }
     }
 
     await super.initService();
