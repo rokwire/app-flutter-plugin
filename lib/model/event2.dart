@@ -692,25 +692,25 @@ class Event2Contact {
 
 class Event2PersonIdentifier {
   final String? accountId;
-  final String? exteralId;
+  final String? externalId;
 
   Event2PersonIdentifier({
     this.accountId,
-    this.exteralId,});
+    this.externalId,});
 
-  String? get netId => exteralId;
+  String? get netId => externalId;
 
   static Event2PersonIdentifier? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Event2PersonIdentifier(
       accountId: JsonUtils.stringValue(json['account_id']),
-      exteralId: JsonUtils.stringValue(json['external_id']),
+      externalId: JsonUtils.stringValue(json['external_id']),
     ) : null;
   }
 
   Map<String, dynamic> toJson() {
     return {
       "account_id": accountId,
-      "external_id": exteralId,
+      "external_id": externalId,
     };
   }
 
@@ -718,12 +718,12 @@ class Event2PersonIdentifier {
   bool operator ==(other) =>
       (other is Event2PersonIdentifier) &&
       (other.accountId == accountId) &&
-      (other.exteralId == exteralId);
+      (other.externalId == externalId);
 
   @override
   int get hashCode =>
       (accountId?.hashCode ?? 0) ^
-      (exteralId?.hashCode ?? 0);
+      (externalId?.hashCode ?? 0);
 
   static List<Event2PersonIdentifier>? listFromJson(List<dynamic>? jsonList) {
     List<Event2PersonIdentifier>? result;
