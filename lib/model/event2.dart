@@ -23,7 +23,8 @@ class Event2 with Explore, Favorite {
   final Event2Grouping? grouping;
   final Map<String, dynamic>? attributes;
   final Event2AuthorizationContext? authorizationContext;
-  
+  final Event2Context? context;
+
   final bool? canceled;
   final bool? published;
   final Event2UserRole? userRole;
@@ -48,7 +49,7 @@ class Event2 with Explore, Favorite {
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
     this.timezone, this.startTimeUtc, this.endTimeUtc, this.allDay,
     this.eventType, this.location, this.onlineDetails, 
-    this.grouping, this.attributes, this.authorizationContext,
+    this.grouping, this.attributes, this.authorizationContext, this.context,
     this.canceled, this.published, this.userRole,
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
@@ -78,6 +79,7 @@ class Event2 with Explore, Favorite {
       grouping: Event2Grouping.fromJson(JsonUtils.mapValue(json['grouping'])),
       attributes: JsonUtils.mapValue(json['attributes']),
       authorizationContext: Event2AuthorizationContext.fromJson(JsonUtils.mapValue(json['authorization_context'])),
+      context: Event2Context.fromJson(JsonUtils.mapValue(json['context'])),
 
       canceled: JsonUtils.boolValue(json['canceled']),
       published: JsonUtils.boolValue(json['published']),
@@ -118,8 +120,9 @@ class Event2 with Explore, Favorite {
 
     'grouping': grouping?.toJson(),
     'attributes': attributes,
-    'authorizationContext': authorizationContext?.toJson(),
-    
+    'authorization_context': authorizationContext?.toJson(),
+    'context': context?.toJson(),
+
     'canceled': canceled,
     'published': published,
     'role': event2UserRoleToString(userRole),
@@ -163,7 +166,8 @@ class Event2 with Explore, Favorite {
     (grouping == other.grouping) &&
     (const DeepCollectionEquality().equals(attributes, other.attributes)) &&
     (authorizationContext == other.authorizationContext) &&
-    
+    (context == other.context) &&
+
     (canceled == other.canceled) &&
     (published == other.published) &&
     (userRole == other.userRole) &&
@@ -203,6 +207,7 @@ class Event2 with Explore, Favorite {
     (grouping?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attributes)) ^
     (authorizationContext?.hashCode ?? 0) ^
+    (context?.hashCode ?? 0) ^
 
     (canceled?.hashCode ?? 0) ^
     (published?.hashCode ?? 0) ^
@@ -299,11 +304,46 @@ class Event2 with Explore, Favorite {
 }
 
 ///////////////////////////////
+/// Event2Context
+
+class Event2Context {
+  final List<Event2ContextItem>? items;
+
+  Event2Context({this.items});
+
+  static Event2Context? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Event2Context(items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
+  }
+
+  factory Event2Context.fromIdentifiers({List<String>? identifiers}) {
+    List<Event2ContextItem>? items;
+    if (identifiers != null) {
+      items = <Event2ContextItem>[];
+      for (String identifier in identifiers) {
+        items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: identifier));
+      }
+    }
+    return Event2Context(items: items);
+  }
+
+  Map<String, dynamic> toJson() => {'items': Event2ContextItem.listToJson(items)};
+
+  @override
+  bool operator ==(other) => (other is Event2Context) && const DeepCollectionEquality().equals(other.items, items);
+
+  @override
+  int get hashCode => (const DeepCollectionEquality().hash(items));
+}
+
+///////////////////////////////
 /// Event2AuthorizationContext
 
 class Event2AuthorizationContext {
   final Event2AuthorizationContextStatus? status;
-  final List<Event2AuthorizationContextItem>? items;
+  final List<Event2ContextItem>? items;
 
   Event2AuthorizationContext({this.status, this.items});
 
@@ -313,17 +353,17 @@ class Event2AuthorizationContext {
     }
     return Event2AuthorizationContext(
         status: event2AuthorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
-        items: Event2AuthorizationContextItem.listFromJson(JsonUtils.listValue(json['items'])));
+        items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
   factory Event2AuthorizationContext.none() => Event2AuthorizationContext(status: Event2AuthorizationContextStatus.none);
 
   factory Event2AuthorizationContext.groupMember({List<String>? groupIds}) {
-    List<Event2AuthorizationContextItem>? items;
+    List<Event2ContextItem>? items;
     if (groupIds != null) {
-      items = <Event2AuthorizationContextItem>[];
+      items = <Event2ContextItem>[];
       for (String groupId in groupIds) {
-        items.add(Event2AuthorizationContextItem(name: Event2AuthorizationContextItemName.group_member, identifier: groupId));
+        items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
       }
     }
     return Event2AuthorizationContext(status: Event2AuthorizationContextStatus.active, items: items);
@@ -331,14 +371,14 @@ class Event2AuthorizationContext {
 
   factory Event2AuthorizationContext.registeredUser() => Event2AuthorizationContext(
       status: Event2AuthorizationContextStatus.active,
-      items: [Event2AuthorizationContextItem(name: Event2AuthorizationContextItemName.registered_user)]);
+      items: [Event2ContextItem(name: Event2ContextItemName.registered_user)]);
 
   Map<String, dynamic> toJson() =>
-      {'authorization_status': event2AuthorizationContextStatusToString(status), 'items': Event2AuthorizationContextItem.listToJson(items)};
+      {'authorization_status': event2AuthorizationContextStatusToString(status), 'items': Event2ContextItem.listToJson(items)};
 
   bool get isPublic => ((status == null) || status == Event2AuthorizationContextStatus.none);
-  bool get isRegisteredUser => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2AuthorizationContextItemName.registered_user));
-  bool get isGroupMember => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2AuthorizationContextItemName.group_member));
+  bool get isRegisteredUser => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2ContextItemName.registered_user));
+  bool get isGroupMember => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2ContextItemName.group_member));
 
   @override
   bool operator ==(other) => (other is Event2AuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
@@ -348,47 +388,47 @@ class Event2AuthorizationContext {
 }
 
 ///////////////////////////////
-/// Event2AuthorizationContextItem
+/// Event2ContextItem
 
-class Event2AuthorizationContextItem {
-  final Event2AuthorizationContextItemName? name;
+class Event2ContextItem {
+  final Event2ContextItemName? name;
   final String? identifier;
 
-  Event2AuthorizationContextItem({this.name, this.identifier});
+  Event2ContextItem({this.name, this.identifier});
 
-  static Event2AuthorizationContextItem? fromJson(Map<String, dynamic>? json) {
+  static Event2ContextItem? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
-    return Event2AuthorizationContextItem(
-        name: event2AuthorizationContextItemNameFromString(JsonUtils.stringValue(json['name'])),
+    return Event2ContextItem(
+        name: event2ContextItemNameFromString(JsonUtils.stringValue(json['name'])),
         identifier: JsonUtils.stringValue(json['identifier']));
   }
 
-  Map<String, dynamic> toJson() => {'name': event2AuthorizationContextItemNameToString(name), 'identifier': identifier};
+  Map<String, dynamic> toJson() => {'name': event2ContextItemNameToString(name), 'identifier': identifier};
 
   @override
-  bool operator ==(other) => (other is Event2AuthorizationContextItem) && (other.name == name) && (other.identifier == identifier);
+  bool operator ==(other) => (other is Event2ContextItem) && (other.name == name) && (other.identifier == identifier);
 
   @override
   int get hashCode => (name?.hashCode ?? 0) ^ (identifier?.hashCode ?? 0);
 
-  static List<Event2AuthorizationContextItem>? listFromJson(List<dynamic>? jsonList) {
-    List<Event2AuthorizationContextItem>? result;
+  static List<Event2ContextItem>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2ContextItem>? result;
     if (jsonList != null) {
-      result = <Event2AuthorizationContextItem>[];
+      result = <Event2ContextItem>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(result, Event2AuthorizationContextItem.fromJson(JsonUtils.mapValue(jsonEntry)));
+        ListUtils.add(result, Event2ContextItem.fromJson(JsonUtils.mapValue(jsonEntry)));
       }
     }
     return result;
   }
 
-  static List<dynamic>? listToJson(List<Event2AuthorizationContextItem>? contentList) {
+  static List<dynamic>? listToJson(List<Event2ContextItem>? contentList) {
     List<dynamic>? jsonList;
     if (contentList != null) {
       jsonList = <dynamic>[];
-      for (Event2AuthorizationContextItem contentEntry in contentList) {
+      for (Event2ContextItem contentEntry in contentList) {
         ListUtils.add(jsonList, contentEntry.toJson());
       }
     }
@@ -422,26 +462,26 @@ String? event2AuthorizationContextStatusToString(Event2AuthorizationContextStatu
 }
 
 ///////////////////////////////
-/// Event2AuthorizationContextItemName
+/// Event2ContextItemName
 
-enum Event2AuthorizationContextItemName { group_member, registered_user }
+enum Event2ContextItemName { group_member, registered_user }
 
-Event2AuthorizationContextItemName? event2AuthorizationContextItemNameFromString(String? value) {
+Event2ContextItemName? event2ContextItemNameFromString(String? value) {
   if (value == 'groups-bb_group') {
-    return Event2AuthorizationContextItemName.group_member;
+    return Event2ContextItemName.group_member;
   }
   else if (value == 'registered-people') {
-    return Event2AuthorizationContextItemName.registered_user;
+    return Event2ContextItemName.registered_user;
   }
   else {
     return null;
   }
 }
 
-String? event2AuthorizationContextItemNameToString(Event2AuthorizationContextItemName? value) {
+String? event2ContextItemNameToString(Event2ContextItemName? value) {
   switch (value) {
-    case Event2AuthorizationContextItemName.group_member: return 'groups-bb_group';
-    case Event2AuthorizationContextItemName.registered_user: return 'registered-people';
+    case Event2ContextItemName.group_member: return 'groups-bb_group';
+    case Event2ContextItemName.registered_user: return 'registered-people';
     default: return null;
   }
 }
