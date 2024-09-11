@@ -181,7 +181,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/event";
+      String url = "${Config().calendarUrl}/v2/event";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -198,7 +198,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> updateEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/event/${source.id}";
+      String url = "${Config().calendarUrl}/v2/event/${source.id}";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -216,8 +216,8 @@ class Events2 with Service implements NotificationsListener {
 
   // Returns error message, true if successful
   Future<dynamic> deleteEvent(String eventId) async{
-    if (Config().calendarUrl != null) { //TBD this is deprecated API. Hook to the new one when available
-      String url = "${Config().calendarUrl}/event/$eventId";
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/v2/event/$eventId";
       Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);

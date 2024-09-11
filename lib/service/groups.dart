@@ -1199,6 +1199,7 @@ class Groups with Service implements NotificationsListener {
     return (groupIds != null) ? await _loadAllGroupsEx(groupIds: groupIds) : result1;
   }
 
+  //TBD: DD - remove after all tests pass and if they are successful
   Future<dynamic> saveUserGroupsHavingEvent(String eventId, { Set<String>? groupIds, Set<String>? previousGroupIds } ) async {
     String? groupsUrl = Config().groupsUrl;
     if ((groupsUrl != null) && (groupIds != null)) {
