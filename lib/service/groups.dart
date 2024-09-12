@@ -33,7 +33,6 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -1058,7 +1057,8 @@ class Groups with Service implements NotificationsListener {
     return deleteResult;
   }*/
 
-  // Events V3
+  /***
+   * Groups BB Events V3 is Deprecated. Use Calendar/events2 v2 load API instead.
 
   Future<Events2ListResult?> loadEventsV3 (String? groupId, {
     Event2TimeFilter timeFilter = Event2TimeFilter.upcoming,
@@ -1084,7 +1084,7 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null; // fail
-  }
+  }*/
 
   /*List<Event2>? _buildEventsV3(List<Event2>? sourceEvents) {
     if (sourceEvents != null) {

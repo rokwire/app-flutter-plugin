@@ -94,7 +94,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/events/load";
+      String url = "${Config().calendarUrl}/v2/events/load";
       String? body = JsonUtils.encode(query?.toQueryJson());
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: null, auth: Auth2());
       //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
@@ -108,12 +108,20 @@ class Events2 with Service implements NotificationsListener {
     return (result is Events2ListResult) ? result : null;
   }
 
+  Future<Events2ListResult?> loadGroupEvents({String? groupId, int? offset, int? limit}) async {
+    if (StringUtils.isEmpty(groupId)) {
+      return null;
+    }
+    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, offset: offset, limit: limit);
+    return await loadEvents(groupQuery);
+  }
+
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;
 
   Future<dynamic> loadEventEx(String eventId) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/events/load";
+      String url = "${Config().calendarUrl}/v2/events/load";
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -440,6 +448,7 @@ class Events2Query {
   final DateTime? customStartTimeUtc;
   final DateTime? customEndTimeUtc;
   final Map<String, dynamic>? attributes;
+  final Set<String>? groupIds;
   final Event2SortType? sortType;
   final Event2SortOrder? sortOrder;
   final int? offset;
@@ -448,7 +457,7 @@ class Events2Query {
   Events2Query({this.ids, this.grouping, this.groupings, this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
-    this.attributes,
+    this.attributes, this.groupIds,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
     this.offset = 0, this.limit
   });
@@ -487,6 +496,10 @@ class Events2Query {
       //   "values": ...
       // }
       options['attributes'] = attributes;
+    }
+
+    if (CollectionUtils.isNotEmpty(groupIds)) {
+      options['context'] = Event2Context.fromIdentifiers(identifiers: groupIds!.toList()).toJson();
     }
 
     if (sortType != null) {
@@ -528,10 +541,10 @@ class Events2Query {
     }
 
     if (types.contains(Event2TypeFilter.public)) {
-      options['private'] = false;
+      options['authorization_context'] = Event2AuthorizationContext.none();
     }
     else if (types.contains(Event2TypeFilter.private)) {
-      options['private'] = true;
+      options['authorization_context'] = Event2AuthorizationContext.registeredUser();
     }
 
     if (types.contains(Event2TypeFilter.superEvent)) {
