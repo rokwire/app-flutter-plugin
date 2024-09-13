@@ -12,6 +12,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
+import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -236,6 +237,15 @@ class Events2 with Service implements NotificationsListener {
       }
     }
     return null;
+  }
+
+  Future<bool> deleteGroupEvent({required String eventId, required String groupId}) async {
+    dynamic deleteResult = await deleteEvent(eventId);
+    bool succeeded = (deleteResult == true);
+    if (succeeded) {
+      NotificationService().notify(Groups.notifyGroupUpdated, groupId);
+    }
+    return succeeded;
   }
 
   // Returns error message, Event2 if successful
