@@ -223,6 +223,41 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  Future<bool> linkEventToGroup({required Event2 event, required String groupId}) async {
+    Event2AuthorizationContext? authorizationContext = event.authorizationContext;
+    if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
+      List<Event2ContextItem>? items = authorizationContext!.items;
+      if (items == null) {
+        items = <Event2ContextItem>[];
+      }
+      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
+      authorizationContext.items = items;
+      event.authorizationContext = authorizationContext;
+    }
+
+    Event2Context? event2Context = event.context;
+    if (event2Context == null) {
+      event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
+    } else {
+      List<Event2ContextItem>? items = event2Context.items;
+      if (items == null) {
+        items = <Event2ContextItem>[];
+      }
+      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
+      event2Context.items = items;
+      event.context = event2Context;
+    }
+
+    dynamic updateResult = await updateEvent(event);
+    bool succeeded = (updateResult == true);
+    if (succeeded) {
+      NotificationService().notify(Groups.notifyGroupUpdated, groupId);
+    } else {
+      debugPrint('Failed to link event to group. Reason: $updateResult');
+    }
+    return succeeded;
+  }
+
   // Returns error message, true if successful
   Future<dynamic> deleteEvent(String eventId) async{
     if (Config().calendarUrl != null) {
@@ -244,6 +279,8 @@ class Events2 with Service implements NotificationsListener {
     bool succeeded = (deleteResult == true);
     if (succeeded) {
       NotificationService().notify(Groups.notifyGroupUpdated, groupId);
+    } else {
+      debugPrint('Failed to delete event from group. Reason: $deleteResult');
     }
     return succeeded;
   }

@@ -22,8 +22,9 @@ class Event2 with Explore, Favorite {
 
   final Event2Grouping? grouping;
   final Map<String, dynamic>? attributes;
-  final Event2AuthorizationContext? authorizationContext;
-  final Event2Context? context;
+
+  Event2AuthorizationContext? authorizationContext;
+  Event2Context? context;
 
   final bool? canceled;
   final bool? published;
@@ -307,7 +308,7 @@ class Event2 with Explore, Favorite {
 /// Event2Context
 
 class Event2Context {
-  final List<Event2ContextItem>? items;
+  List<Event2ContextItem>? items;
 
   Event2Context({this.items});
 
@@ -343,7 +344,7 @@ class Event2Context {
 
 class Event2AuthorizationContext {
   final Event2AuthorizationContextStatus? status;
-  final List<Event2ContextItem>? items;
+  List<Event2ContextItem>? items;
 
   Event2AuthorizationContext({this.status, this.items});
 

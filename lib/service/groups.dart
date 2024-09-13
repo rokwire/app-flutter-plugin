@@ -936,6 +936,9 @@ class Groups with Service implements NotificationsListener {
     return null;
   }*/
 
+  /**
+   *  Deprecated
+   */
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
