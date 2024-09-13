@@ -33,6 +33,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
+import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -1179,6 +1180,16 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null;
+  }
+
+  // Events2
+
+  Future<Events2ListResult?> loadGroupEvents({String? groupId, int? offset, int? limit}) async {
+    if (StringUtils.isEmpty(groupId)) {
+      return null;
+    }
+    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, offset: offset, limit: limit);
+    return await Events2().loadEvents(groupQuery);
   }
 
   Future<dynamic> loadUserGroupsHavingEvent(String eventId) async {
