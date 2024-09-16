@@ -113,7 +113,7 @@ class Events2 with Service implements NotificationsListener {
     if (StringUtils.isEmpty(groupId)) {
       return null;
     }
-    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, offset: offset, limit: limit);
+    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, groupings: Event2Grouping.individualEvents(), offset: offset, limit: limit);
     return await loadEvents(groupQuery);
   }
 
