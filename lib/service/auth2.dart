@@ -1510,7 +1510,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String? body = JsonUtils.encode({
         'all_sessions': false,
       });
-      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf(useAccessToken: true));
+      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2());
     }
 
     await Future.wait([
@@ -1991,9 +1991,7 @@ class _OidcLogin {
 }
 
 class Auth2Csrf with NetworkAuthProvider {
-  bool useAccessToken;
-
-  Auth2Csrf({this.useAccessToken = false});
+  Auth2Csrf();
 
   static const String csrfTokenName = 'rokwire-csrf-token';
 
@@ -2010,16 +2008,12 @@ class Auth2Csrf with NetworkAuthProvider {
       headers[csrfTokenName] = cookieValue;
     }
 
-    if (useAccessToken && StringUtils.isNotEmpty(Auth2().token?.accessToken)) {
-      String tokenType = Auth2().token!.tokenType ?? 'Bearer';
-      headers['Authorization'] = "$tokenType ${Auth2().token!.accessToken}";
-    }
     return headers;
   }
 
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response) async {
-    if ((response?.statusCode == 401) && (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
+    if (kIsWeb && (response?.statusCode == 401) && (!(Config().coreUrl?.contains('http://') ?? true) || (response?.request?.url.origin.contains('http://') ?? false))) {
       return (await Auth2().refreshToken() != null);
     }
     return false;
