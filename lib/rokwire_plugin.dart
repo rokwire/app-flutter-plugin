@@ -79,6 +79,12 @@ class RokwirePlugin {
     return false;
   }
 
+  static Future<bool?> clearSafariVC() async {
+    try { return await _channel.invokeMethod('clearSafariVC'); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  }
+
   static Future<bool?> launchApp(Map<String, dynamic> params) async {
     try { return await _channel.invokeMethod('launchApp', params); }
     catch(e) { debugPrint(e.toString()); }

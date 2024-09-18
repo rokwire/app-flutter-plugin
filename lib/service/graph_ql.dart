@@ -45,7 +45,8 @@ class GraphQL with Service {
   GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {},
     Map<String, String> defaultHeaders = const {}, AuthLink? authLink,
     FetchPolicy? defaultFetchPolicy, bool useCache = true}) {
-    Link link = HttpLink(url, defaultHeaders: defaultHeaders);
+    Link link = HttpLink(url, defaultHeaders: defaultHeaders,
+        parser: GraphQLResponseParser());
     if (authLink != null) {
       link = authLink.concat(link);
     }
@@ -74,6 +75,44 @@ class GraphQL with Service {
 
   ValueNotifier<GraphQLClient> getNotifier(GraphQLClient client) {
     return ValueNotifier(client);
+  }
+}
+
+class GraphQLResponseParser extends ResponseParser {
+  @override
+  Response parseResponse(Map<String, dynamic> body) => Response(
+    errors: (body["errors"] as List?)
+        ?.map(
+          (dynamic error) {
+            if (error is Map<String, dynamic>) {
+              return parseError(error);
+            }
+            return GraphQLError(message: error.toString());
+          },
+    ).toList(),
+    data: body["data"] as Map<String, dynamic>?,
+    response: body,
+    context: Context().withEntry(
+      ResponseExtensions(
+        body["extensions"],
+      ),
+    ),
+  );
+
+  @override
+  GraphQLError parseError(Map<String, dynamic> error) {
+    dynamic extensions = error["extensions"];
+    return GraphQLError(
+      message: error["message"] as String,
+      path: error["path"] as List?,
+      locations: (error["locations"] as List?)
+          ?.map(
+            (dynamic location) =>
+            parseLocation(location as Map<String, dynamic>),
+      )
+          .toList(),
+      extensions: extensions is Map<String, dynamic>? ? extensions : null,
+    );
   }
 }
 

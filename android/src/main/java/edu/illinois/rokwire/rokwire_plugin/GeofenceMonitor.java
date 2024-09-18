@@ -54,10 +54,6 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.plugin.common.BinaryMessenger;
-import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 public class GeofenceMonitor implements BeaconConsumer {
@@ -88,12 +84,16 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     public void init() {
         Context activityContext = RokwirePlugin.getInstance().getActivity();
-        if ((activityContext != null) &&
-                (ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
-                (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            Log.d(TAG, "Location Permissions Granted.");
-            initGeofenceClient();
-            initBeaconManager();
+        if (activityContext != null) {
+            if ((ContextCompat.checkSelfPermission(activityContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) &&
+                    (ContextCompat.checkSelfPermission(activityContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Location Permissions Granted - init geofence client.");
+                initGeofenceClient();
+            }
+            if ((ContextCompat.checkSelfPermission(activityContext, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED)) {
+                Log.d(TAG, "Bluetooth_scan permissions Granted - init beacon manager.");
+                initBeaconManager();
+            }
         }
     }
 
@@ -353,13 +353,11 @@ public class GeofenceMonitor implements BeaconConsumer {
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(geofenceList);
         GeofencingRequest geofencingRequest = builder.build();
-        Context context = RokwirePlugin.getInstance().getActivity();
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+        if (ContextCompat.checkSelfPermission(RokwirePlugin.getInstance().getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            geofencingClient.addGeofences(geofencingRequest, getGeofencePendingIntent()).
+                    addOnSuccessListener(addGeofencesSuccessListener).
+                    addOnFailureListener(addGeofencesFailureListener);
         }
-        geofencingClient.addGeofences(geofencingRequest, getGeofencePendingIntent()).
-                addOnSuccessListener(addGeofencesSuccessListener).
-                addOnFailureListener(addGeofencesFailureListener);
     }
 
     private void stopMonitorGeofenceRegions(List<String> geofenceIdList) {
@@ -380,7 +378,7 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         Intent intent = new Intent(RokwirePlugin.getInstance().getActivity(), GeofenceBroadcastReceiver.class);
         geofencePendingIntent = PendingIntent.getBroadcast(RokwirePlugin.getInstance().getActivity(), 0,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                intent, PendingIntent.FLAG_IMMUTABLE);
         return geofencePendingIntent;
     }
 
@@ -466,8 +464,8 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         for (Region region : beaconRegions) {
             try {
-                beaconManager.startMonitoringBeaconsInRegion(region);
-            } catch (RemoteException e) {
+                beaconManager.startMonitoring(region);
+            } catch (Exception e) {
                 Log.e(TAG, "Failed to start monitor beacon region with id: " + region.getUniqueId());
                 e.printStackTrace();
             }
@@ -483,8 +481,8 @@ public class GeofenceMonitor implements BeaconConsumer {
         }
         for (Region region : beaconRegions) {
             try {
-                beaconManager.stopMonitoringBeaconsInRegion(region);
-            } catch (RemoteException e) {
+                beaconManager.stopMonitoring(region);
+            } catch (Exception e) {
                 Log.e(TAG, "Failed to stop monitor beacon region with id: " + region.getUniqueId());
                 e.printStackTrace();
             }

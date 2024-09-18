@@ -84,6 +84,11 @@ class Styles extends Service implements NotificationsListener{
   // Initialization
 
   @override
+  Set<Service> get serviceDependsOn {
+    return { Storage() };
+  }
+
+  @override
   void createService() {
     NotificationService().subscribe(this, [
       Service.notifyInitialized,
@@ -135,7 +140,6 @@ class Styles extends Service implements NotificationsListener{
 
   @override
   void onNotification(String name, dynamic param) {
-
     if (name == Service.notifyInitialized) {
       onServiceInitialized(param is Service ? param : null);
     }
@@ -555,6 +559,7 @@ class UiColors {
   Color get mango                      => colorMap['mango'] ?? const Color(0xFFf29835);
   @Deprecated("Use AppColors instead")
   Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
+  Color get blueAccent                 => colorMap['blueAccent'] ?? const Color(0xFF0058A7);
 
   @Deprecated("Use AppColors instead")
   Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);

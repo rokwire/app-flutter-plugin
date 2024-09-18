@@ -19,7 +19,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
+// import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
@@ -54,16 +55,18 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   DateTime?  _pausedDateTime;
 
   Map<String, dynamic>? _contentItems;
-  
+
   ContentAttributes? _contentAttributes;
   final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
+  Map<String, Uint8List?> _fileContentCache = {};
+  Map<String, Future<Response?>?> _fileContentFutures = {};
 
   // Singletone Factory
 
   static Content? _instance;
 
   static Content? get instance => _instance;
-  
+
   @protected
   static set instance(Content? value) => _instance = value;
 
@@ -122,7 +125,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Config() };
+    return { Config(), Storage(), Auth2() };
   }
 
   // NotificationsListener
@@ -225,7 +228,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
             if ((category != null) && (data != null)) {
               dynamic existingCategoryEntry = result[category];
               if (existingCategoryEntry == null) {
-                result[category] = data;  
+                result[category] = data;
               }
               else if (existingCategoryEntry is List) {
                 if (data is List) {
@@ -546,7 +549,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (StringUtils.isEmpty(filePath)) {
       return null;
     }
-    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    // TODO: See if this is still necessary and find an actively supported replacement if so
+    // File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    File rotatedImage = File(filePath); // TODO: Remove this placeholder if replacement is necessary
     return await rotatedImage.readAsBytes();
   }
 
@@ -636,20 +641,33 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<Uint8List?> getFileContentItem(String fileName, String category) async {
+    String key = '${fileName}_${category}';
+    if (_fileContentCache[key] != null) {
+      return _fileContentCache[key];
+    }
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
-      Map<String, String> queryParams = {
-        'fileName': fileName,
-        'category': category,
-      };
-      String url = "${Config().contentUrl}/files";
-      if (queryParams.isNotEmpty) {
-        url = UrlUtils.addQueryParameters(url, queryParams);
-      }
+      Response? response;
+      if (_fileContentFutures[key] == null) {
+        Map<String, String> queryParams = {
+          'fileName': fileName,
+          'category': category,
+        };
+        String url = "${Config().contentUrl}/files";
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
 
-      Response? response = await Network().get(url, auth: Auth2());
+        _fileContentFutures[key] = Network().get(url, auth: Auth2());
+      }
+      response = await _fileContentFutures[key];
+      _fileContentFutures[key] = null;
+
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        return response?.bodyBytes;
+        Uint8List? fileContent = response?.bodyBytes;
+        if (fileContent != null) {
+          return _fileContentCache[key] = fileContent;
+        }
       } else {
         String? responseString = response?.body;
         debugPrint("Failed to get file content item. Reason: $responseCode $responseString");

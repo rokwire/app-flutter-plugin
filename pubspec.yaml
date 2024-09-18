@@ -1,6 +1,6 @@
 name: rokwire_plugin
 description: Rokwire Flutter plugin
-version: 1.7.0
+version: 1.8.0
 homepage:
 
 environment:
@@ -13,10 +13,11 @@ dependencies:
 
   logger: ^1.1.0
   connectivity_plus: ^3.0.0
+  gal: ^2.3.0
   app_links: ^3.5.0
   fluttertoast: ^8.2.2
   path: ^1.8.2
-  gallery_saver: ^2.3.2
+#  gallery_saver: ^2.3.2
   path_provider: ^2.0.12
   asn1lib: ^1.0.3
   pointycastle: ^3.5.0
@@ -24,29 +25,30 @@ dependencies:
   intl: ^0.19.0
   http: ^0.13.5
   timezone: ^0.9.2
-  flutter_timezone: 1.0.8
+  flutter_timezone: ^2.1.0
   geolocator: ^9.0.2
   cookie_jar: ^3.0.1
-  shared_preferences: ^2.2.0
+  shared_preferences: ^2.3.1
   package_info_plus: ^4.0.2
-  device_info: ^2.0.3
+  device_info_plus: ^10.1.2
   url_launcher: ^6.1.8
   sprintf: ^7.0.0
-  flutter_local_notifications: ^16.1.0
+  flutter_local_notifications: ^17.2.2
   sqflite: ^2.1.0
-  device_calendar: ^4.3.1
+  device_calendar: ^4.3.3-20240801
   image_picker: ^1.0.4
   mime_type: ^1.0.0
   uuid: ^3.0.7
   flutter_html: ^3.0.0-beta.2
-  webview_flutter: ^4.0.5
-  flutter_exif_rotation: ^0.5.1
-  flutter_secure_storage: ^9.0.0
+  webview_flutter: ^4.8.0
+#  flutter_exif_rotation: ^0.5.1
+  flutter_secure_storage: ^9.2.2
   universal_html: ^2.2.3
   flutter_web_auth_2: ^2.1.4
   pinch_zoom: ^2.0.0
   graphql_flutter: ^5.1.2
-  native_flutter_proxy: ^0.1.15
+  http_proxy_override: ^1.0.1
+#  native_flutter_proxy: ^0.1.15
   font_awesome_flutter: ^10.6.0 # published plugin - uncomment if used
 #  font_awesome_flutter: '>= 4.7.0' # comment if published plugin is used
 
@@ -54,9 +56,9 @@ dependencies:
     git: https://github.com/rokmetro/flutter_passkey.git
 
   #Firebase
-  firebase_core: ^2.13.0
-  firebase_crashlytics: ^3.3.1
-#  firebase_messaging: ^14.6.1 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
+  firebase_core: ^3.3.0
+  firebase_crashlytics: ^4.0.4
+#  firebase_messaging: ^15.0.3 # This is breaking Airship notifications on iOS DO NOT RE-ENABLE
   #End Firebase
 
 dev_dependencies:

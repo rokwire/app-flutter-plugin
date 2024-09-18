@@ -34,6 +34,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/events2.dart';
+import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
@@ -56,6 +57,9 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
   static const String notifyGroupUpdated              = "edu.illinois.rokwire.group.updated";
   static const String notifyGroupDeleted              = "edu.illinois.rokwire.group.deleted";
+  static const String notifyGroupPostCreated          = "edu.illinois.rokwire.group.post.created";
+  static const String notifyGroupPostUpdated          = "edu.illinois.rokwire.group.post.updated";
+  static const String notifyGroupPostDeleted          = "edu.illinois.rokwire.group.post.deleted";
   static const String notifyGroupPostsUpdated         = "edu.illinois.rokwire.group.posts.updated";
   static const String notifyGroupPostReactionsUpdated = "edu.illinois.rokwire.group.post.reactions.updated";
   static const String notifyGroupDetail               = "edu.illinois.rokwire.group.detail";
@@ -231,8 +235,16 @@ class Groups with Service implements NotificationsListener {
 
   // Content Attributes
 
-  ContentAttributes? get contentAttributes => Content().contentAttributes('groups');
+  static const String contentAttributesScope = 'groups';
 
+  ContentAttributes? get contentAttributes =>
+    Content().contentAttributes(contentAttributesScope);
+
+  bool isContentAttributeEnabled(ContentAttribute? attribute) =>
+    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope);
+
+  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) =>
+    contentAttributes?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope, complete: complete);
 
   // Categories APIs
   // TBD: REMOVE
@@ -1199,9 +1211,10 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post.toJson(create: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
       Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
-        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? 1 : null);
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+      if (responsePost != null) {
+        NotificationService().notify(notifyGroupPostCreated, responsePost);
+        NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to create group post. Response: ${response?.body}');
@@ -1216,8 +1229,9 @@ class Groups with Service implements NotificationsListener {
       String? requestBody = JsonUtils.encode(post!.toJson(update: true));
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
+      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+      if (responsePost != null) {
+        NotificationService().notify(notifyGroupPostUpdated, responsePost);
         NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
@@ -1232,9 +1246,9 @@ class Groups with Service implements NotificationsListener {
       await _ensureLogin();
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
       Response? response = await Network().delete(requestUrl, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      if (responseCode == 200) {
-        NotificationService().notify(notifyGroupPostsUpdated, (post.parentId == null) ? -1 : null);
+      if (response?.statusCode == 200) {
+        NotificationService().notify(notifyGroupPostDeleted, post);
+        NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to delete group post. Response: ${response?.body}');
@@ -1243,9 +1257,13 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
-  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {int? offset, int? limit, GroupSortOrder? order}) async {
+  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly}) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String urlParams = "";
+      if (type != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "type=${groupPostTypeToString(type)}";
+      }
       if (offset != null) {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
         urlParams += "offset=$offset";
@@ -1257,6 +1275,10 @@ class Groups with Service implements NotificationsListener {
       if (order != null) {
         urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
         urlParams += "order=${groupSortOrderToString(order)}";
+      }
+      if (scheduledOnly != null) {
+        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+        urlParams += "scheduled_only=$scheduledOnly";
       }
       
       await _ensureLogin();
@@ -1683,14 +1705,31 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  Future<bool> reportAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async {
+  Future<bool> reportAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async =>
+      StringUtils.isNotEmpty(postId) ?
+        reportPostAbuse(groupId: groupId, postId: postId, comment: comment, reportToDeanOfStudents: reportToDeanOfStudents, reportToGroupAdmins: reportToGroupAdmins) :
+        reportGroupAbuse(groupId: groupId, comment: comment);
+
+  Future<bool> reportPostAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse';
       String? body = JsonUtils.encode({
         'comment': comment,
         'send_to_dean_of_students': reportToDeanOfStudents,
         'send_to_group_admins': reportToGroupAdmins,
-        
+      });
+      _ensureLogin();
+      Response? response = await Network().put(url, body: body, auth: Auth2());
+      return (response?.statusCode == 200);
+    }
+    return false;
+  }
+
+  Future<bool> reportGroupAbuse({String? groupId, String? comment}) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/group/$groupId/report/abuse';
+      String? body = JsonUtils.encode({
+        'comment': comment,
       });
       _ensureLogin();
       Response? response = await Network().put(url, body: body, auth: Auth2());
@@ -1720,6 +1759,23 @@ String? groupSortOrderToString(GroupSortOrder? value) {
     case GroupSortOrder.asc:  return 'asc';
     case GroupSortOrder.desc: return 'desc';
     default: return null;
+  }
+}
+
+enum GroupPostType { post, message }
+
+GroupPostType? groupPostTypeFromString(String? value) {
+  switch(value) {
+    case 'post': return GroupPostType.post;
+    case 'message': return GroupPostType.message;
+    default: return null;
+  }
+}
+
+String groupPostTypeToString(GroupPostType value) {
+  switch(value) {
+    case GroupPostType.post: return 'post';
+    case GroupPostType.message: return 'message';
   }
 }
 

@@ -65,6 +65,9 @@ static RokwirePlugin *_sharedInstance = nil;
   else if ([firstMethodComponent isEqualToString:@"dismissSafariVC"]) {
   	[self dismissSafariViewControllerWithParameters:parameters result:result];
   }
+  else if ([firstMethodComponent isEqualToString:@"clearSafariVC"]) {
+  	[self clearSafariViewControllerWithParameters:parameters result:result];
+  }
   else if ([firstMethodComponent isEqualToString:@"launchApp"]) {
     [self launchAppWithParameters:parameters result:result];
   }
@@ -152,6 +155,18 @@ static RokwirePlugin *_sharedInstance = nil;
 	UIViewController *presentedController = UIApplication.sharedApplication.keyWindow.rootViewController.presentedViewController;
 	if ([presentedController isKindOfClass:[SFSafariViewController class]]) {
 		[presentedController dismissViewControllerAnimated:YES completion:^{
+			result(@(YES));
+		}];
+	}
+	else {
+		result(@(NO));
+	}
+}
+
+- (void)clearSafariViewControllerWithParameters:(NSDictionary*)parameters result:(FlutterResult)result {
+//NS_CLASS_AVAILABLE
+	if (@available(iOS 16.0, *)) {
+		[SFSafariViewControllerDataStore.defaultDataStore clearWebsiteDataWithCompletionHandler:^{
 			result(@(YES));
 		}];
 	}

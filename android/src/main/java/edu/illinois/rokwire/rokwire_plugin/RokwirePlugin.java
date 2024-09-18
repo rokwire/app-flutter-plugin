@@ -134,7 +134,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
 
     switch (firstMethodComponent) {
       case "getPlatformVersion":
-        result.success("Android " + Build.VERSION.RELEASE);
+        result.success("Android " + android.os.Build.VERSION.RELEASE);
         break;
       case "createAndroidNotificationChannel":
         result.success(createNotificationChannel(call));
@@ -149,6 +149,9 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
         result.success(getEncryptionKey(call.arguments));
         break;
       case "dismissSafariVC":
+        result.success(null); // Safari VV not available in Android
+        break;
+      case "clearSafariVC":
         result.success(null); // Safari VV not available in Android
         break;
       case "launchApp":
@@ -266,7 +269,7 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
 
         Intent intent = new Intent(application, activity.getClass());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(application, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(application, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         //if (title == null) {
         //  title = this.getString(R.string.app_name);

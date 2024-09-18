@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
@@ -37,6 +38,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyPrefsSaved           = "edu.illinois.rokwire.auth2.prefs.saved";
   static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
   static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
@@ -179,15 +181,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     if (kIsWeb && (_token == null)) {
-      refreshToken(ignoreUnauthorized: true).then((token) {
+      refreshToken(ignoreUnauthorized: true).then((token) async {
         if (token != null) {
-          _refreshAccount();
+          if (_account == null) {
+            await refreshAccount();
+          } else {
+            refreshAccount();
+          }
           NotificationService().notify(notifyLoginSucceeded, null);
           NotificationService().notify(notifyLoginChanged);
         }
       });
     } else {
-      _refreshAccount();
+      if (_account == null) {
+        await refreshAccount();
+      } else {
+        refreshAccount();
+      }
     }
 
     await super.initService();
@@ -233,7 +243,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          _refreshAccount();
+          refreshAccount();
         }
       }
     }
@@ -357,12 +367,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return phoneStrings;
   }
 
-  bool get isEventEditor => hasRole("event approvers");
-  bool get isStadiumPollManager => hasRole("stadium poll manager");
-  bool get isDebugManager => hasRole("debug");
-  bool get isGroupsAccess => hasRole("groups access");
+  bool get isCalendarAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.calendar_admin', defaults: 'calendar_admin'));
+  bool get isManagedGroupAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.managed_group_admin', defaults: 'managed_group_admin'));
+  bool get isResearchProjectAdmin => hasPermission(Config().stringPathEntry('settings.auth.permissions.research_group_admin', defaults: 'research_group_admin'));
 
-  bool hasRole(String role) => _account?.hasRole(role) ?? false;
+  bool get isStadiumPollManager => hasRole(Config().stringPathEntry('settings.auth.roles.stadium_poll_manager', defaults: 'stadium poll manager'));
+  bool get isDebugManager => hasRole(Config().stringPathEntry('settings.auth.roles.debug', defaults: 'debug'));
+
+  bool get isEventEditor => hasRole(Config().stringPathEntry('settings.auth.roles.event_approvers', defaults: 'event approvers')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.event_approvers', defaults: 'event_approvers'));
+
+  bool get isGroupsAccess => hasRole(Config().stringPathEntry('settings.auth.roles.groups_access', defaults: 'groups access')) ||
+    hasPermission(Config().stringPathEntry('settings.auth.permissions.groups_access', defaults: 'groups_access'));
+
+  bool hasRole(String? role) => _account?.hasRole(role) == true;
+  bool hasPermission(String? permission) => _account?.hasPermission(permission) == true;
+  bool belongsToGroup(String? group) => _account?.belongsToGroup(group) == true;
 
   bool isShibbolethMemberOf(String group) => _account?.authType?.uiucUser?.groupsMembership?.contains(group) ?? false;
 
@@ -733,7 +753,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcScope = scope;
           _oidcLink = link;
           _oidcLoginInProgress = true;
-          _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
+          await _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
         }
         else {
           _oidcLoginInProgress = false;
@@ -1643,9 +1663,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (identical(prefs, _account?.prefs)) {
       await Storage().setAuth2Account(_account);
       NotificationService().notify(notifyPrefsChanged);
-      return _saveAccountUserPrefs();
+      _saveAccountUserPrefs();
     }
-    return;
   }
 
   Future<void> _saveAccountUserPrefs() async {
@@ -1664,6 +1683,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       
       if (identical(client, _updateUserPrefsClient)) {
         if (response?.statusCode == 200) {
+          NotificationService().notify(notifyPrefsSaved);
           _updateUserPrefsTimer?.cancel();
           _updateUserPrefsTimer = null;
         }
@@ -1836,7 +1856,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       String? bodyJson = JsonUtils.encode(body);
       Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: bodyJson);
       if (response?.statusCode == 200) {
-        _refreshAccount();
+        refreshAccount();
         return true;
       }
     }
@@ -1864,14 +1884,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<void> _refreshAccount() async {
+  @protected
+  Future<void> refreshAccount() async {
     Auth2Account? account = await _loadAccount();
     if ((account != null) && (account != _account)) {
       
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
 
-      await Storage().setAuth2Account(_account = account);
+      await Storage().setAuth2Account(_account = Auth2Account.fromOther(account));
       NotificationService().notify(notifyAccountChanged);
 
       if (profileUpdated) {
