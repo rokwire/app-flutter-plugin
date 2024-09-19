@@ -374,6 +374,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   bool get isStadiumPollManager => hasRole(Config().stringPathEntry('settings.auth.roles.stadium_poll_manager', defaults: 'stadium poll manager'));
   bool get isDebugManager => hasRole(Config().stringPathEntry('settings.auth.roles.debug', defaults: 'debug'));
+  bool get isAppAdmin => hasRole(Config().stringPathEntry('settings.auth.roles.app_admin', defaults: 'app admin'));
 
   bool get isEventEditor => hasRole(Config().stringPathEntry('settings.auth.roles.event_approvers', defaults: 'event approvers')) ||
     hasPermission(Config().stringPathEntry('settings.auth.permissions.event_approvers', defaults: 'event_approvers'));

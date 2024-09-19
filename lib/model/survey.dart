@@ -95,6 +95,7 @@ class Survey extends RuleEngine {
   @override final String type;
   final Map<String, SurveyData> data;
   final bool scored;
+  final bool? sensitive;
   final bool? public;
   final bool? archived;
   final bool? completed;
@@ -114,7 +115,7 @@ class Survey extends RuleEngine {
   String? calendarEventId;
 
   Survey({required this.id, required this.data, required this.type,
-    this.scored = true, this.public, this.archived, this.completed,
+    this.scored = true, this.sensitive, this.public, this.archived, this.completed,
     this.estimatedCompletionTime,
     required this.title, this.moreInfo,
     this.defaultDataKey, this.defaultDataKeyRule, this.resultRules,
@@ -131,6 +132,7 @@ class Survey extends RuleEngine {
       data: SurveyData.mapFromJson(JsonUtils.mapValue(json['data']) ?? {}),
       type: JsonUtils.stringValue(json['type']) ?? '',
       scored: JsonUtils.boolValue(json['scored']) ?? true,
+      sensitive: JsonUtils.boolValue(json['sensitive']),
       public: JsonUtils.boolValue(json['public']),
       archived: JsonUtils.boolValue(json['archived']),
       completed: JsonUtils.boolValue(json['completed']),
@@ -160,6 +162,7 @@ class Survey extends RuleEngine {
       'data': SurveyData.mapToJson(data),
       'type': type,
       'scored': scored,
+      'sensitive': sensitive,
       'public': public,
       'archived': archived,
       'completed': completed,
@@ -193,6 +196,7 @@ class Survey extends RuleEngine {
       data: data,
       type: other.type,
       scored: other.scored,
+      sensitive: other.sensitive,
       public: other.public,
       archived: other.archived,
       completed: other.completed,
@@ -255,6 +259,8 @@ class Survey extends RuleEngine {
       });
     }
   }
+
+  bool get isSensitive => (sensitive == true);
 }
 
 class SurveyStats {
