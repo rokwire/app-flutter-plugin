@@ -522,7 +522,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get contentUrl       => JsonUtils.stringValue(platformBuildingBlocks["content_url"]);
   String? get calendarUrl      => JsonUtils.stringValue(platformBuildingBlocks["calendar_url"]);
   String? get surveysUrl       => JsonUtils.stringValue(platformBuildingBlocks["surveys_url"]);
-  String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]) ?? "http://10.0.2.2:5001/places/api";
+  String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
   String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
