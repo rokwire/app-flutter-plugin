@@ -195,6 +195,7 @@ class Events2 with Service implements NotificationsListener {
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: source.groupIds);
         return Event2.fromJson(JsonUtils.decodeMap(response?.body));
       }
       else {
@@ -205,15 +206,20 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> updateEvent(Event2 source) async {
+  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/v2/event/${source.id}";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        Set<String> notifyGroupIds = source.groupIds ?? <String>{};
+        if (CollectionUtils.isNotEmpty(initialGroupIds)) {
+          notifyGroupIds = notifyGroupIds.union(initialGroupIds!);
+        }
         NotificationService().notify(notifyUpdated, event);
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: notifyGroupIds);
         return event;
       }
       else {
@@ -250,21 +256,21 @@ class Events2 with Service implements NotificationsListener {
 
     dynamic updateResult = await updateEvent(event);
     bool succeeded = (updateResult == true);
-    if (succeeded) {
+    if (!succeeded) {
       NotificationService().notify(Groups.notifyGroupUpdated, groupId);
-    } else {
       debugPrint('Failed to link event to group. Reason: $updateResult');
     }
     return succeeded;
   }
 
   // Returns error message, true if successful
-  Future<dynamic> deleteEvent(String eventId) async{
+  Future<dynamic> deleteEvent({required String eventId, Set<String>? groupIds}) async{
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/v2/event/$eventId";
       Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: groupIds);
         return true;
       }
       else {
@@ -272,17 +278,6 @@ class Events2 with Service implements NotificationsListener {
       }
     }
     return null;
-  }
-
-  Future<bool> deleteGroupEvent({required String eventId, required String groupId}) async {
-    dynamic deleteResult = await deleteEvent(eventId);
-    bool succeeded = (deleteResult == true);
-    if (succeeded) {
-      NotificationService().notify(Groups.notifyGroupUpdated, groupId);
-    } else {
-      debugPrint('Failed to delete event from group. Reason: $deleteResult');
-    }
-    return succeeded;
   }
 
   // Returns error message, Event2 if successful
@@ -430,6 +425,14 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Helpers
+
+  void _notifyGroupsForModifiedEvents({Set<String>? groupIds}) {
+    if (CollectionUtils.isNotEmpty(groupIds)) {
+      for (String groupId in groupIds!) {
+        NotificationService().notify(Groups.notifyGroupEventsUpdated, groupId);
+      }
+    }
+  }
 
   Map<String, String?> get _jsonHeaders => {"Accept": "application/json", "Content-type": "application/json"};
 
