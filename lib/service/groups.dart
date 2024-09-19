@@ -1158,7 +1158,7 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false;
-  }*/
+  }
 
   Future<dynamic> loadUserGroupsHavingEvent(String eventId) async {
     String? groupsUrl = Config().groupsUrl;
@@ -1172,15 +1172,14 @@ class Groups with Service implements NotificationsListener {
     }
   }
 
-  Future<dynamic> loadUserGroupsHavingEventEx(String eventId) async {
-    dynamic result1 = await loadUserGroupsHavingEvent(eventId);
-    List<String>? groupIds = JsonUtils.listStringsValue(result1);
-    return (groupIds != null) ? await _loadAllGroupsEx(groupIds: groupIds) : result1;
-  }
-
   Set<String>? _decodeGroupIds(String? responseText) {
     Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseText);
     return (responseMap != null) ? JsonUtils.setStringsValue(responseMap['group_ids']) : null;
+  }*/
+
+  Future<dynamic> loadGroupsByIds({Set<String>? groupIds}) async {
+    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroupsEx(groupIds: groupIds!.toList()) : null;
+    return result;
   }
 
   // Group Posts and Replies

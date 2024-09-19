@@ -253,6 +253,7 @@ class Event2 with Explore, Favorite {
   bool get isGuestListOnly => authorizationContext?.isGuestListOnly ?? false;
   bool get isPrivate => isGroupMembersOnly || isGuestListOnly;
   bool get isGroupEvent => (context?.isGroupEvent == true);
+  Set<String>? get groupIds => context?.groupIds;
 
   // JSON list searialization
 
@@ -344,6 +345,19 @@ class Event2Context {
 
   bool get isGroupEvent =>
       (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == Event2ContextItemName.group_member)) != null));
+
+  Set<String>? get groupIds {
+    Set<String>? groupIds;
+    if (isGroupEvent) {
+      groupIds = <String>{};
+      for (Event2ContextItem item in items!) {
+        if ((item.name == Event2ContextItemName.group_member) && StringUtils.isNotEmpty(item.identifier)) {
+          groupIds.add(item.identifier!);
+        }
+      }
+    }
+    return groupIds;
+  }
 
   @override
   bool operator ==(other) => (other is Event2Context) && const DeepCollectionEquality().equals(other.items, items);
