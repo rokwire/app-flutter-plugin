@@ -1030,7 +1030,7 @@ class JsonUtils {
   static T? cast<T>(dynamic value) =>
     (value is T) ? value : null;
 
-  static void addValue({required Map<String, dynamic> json, required String key, dynamic value}) {
+  static void addNonNullValue({required Map<String, dynamic> json, required String key, dynamic value}) {
     if (value != null) {
       json[key] = value;
     }

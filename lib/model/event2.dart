@@ -104,45 +104,45 @@ class Event2 with Explore, Favorite {
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    JsonUtils.addValue(json: json, key: 'id', value: id);
-    JsonUtils.addValue(json: json, key: 'name', value: name);
-    JsonUtils.addValue(json: json, key: 'description', value: description);
-    JsonUtils.addValue(json: json, key: 'instructions', value: instructions);
-    JsonUtils.addValue(json: json, key: 'image_url', value: imageUrl);
-    JsonUtils.addValue(json: json, key: 'event_url', value: eventUrl);
+    JsonUtils.addNonNullValue(json: json, key: 'id', value: id);
+    JsonUtils.addNonNullValue(json: json, key: 'name', value: name);
+    JsonUtils.addNonNullValue(json: json, key: 'description', value: description);
+    JsonUtils.addNonNullValue(json: json, key: 'instructions', value: instructions);
+    JsonUtils.addNonNullValue(json: json, key: 'image_url', value: imageUrl);
+    JsonUtils.addNonNullValue(json: json, key: 'event_url', value: eventUrl);
 
-    JsonUtils.addValue(json: json, key: 'timezone', value: timezone);
-    JsonUtils.addValue(json: json, key: 'start', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(startTimeUtc));
-    JsonUtils.addValue(json: json, key: 'end', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(endTimeUtc));
-    JsonUtils.addValue(json: json, key: 'all_day', value: allDay);
+    JsonUtils.addNonNullValue(json: json, key: 'timezone', value: timezone);
+    JsonUtils.addNonNullValue(json: json, key: 'start', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(startTimeUtc));
+    JsonUtils.addNonNullValue(json: json, key: 'end', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(endTimeUtc));
+    JsonUtils.addNonNullValue(json: json, key: 'all_day', value: allDay);
 
-    JsonUtils.addValue(json: json, key: 'event_type', value: event2TypeToString(eventType));
-    JsonUtils.addValue(json: json, key: 'location', value: location?.toJson());
-    JsonUtils.addValue(json: json, key: 'online_details', value: onlineDetails?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'event_type', value: event2TypeToString(eventType));
+    JsonUtils.addNonNullValue(json: json, key: 'location', value: location?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'online_details', value: onlineDetails?.toJson());
 
-    JsonUtils.addValue(json: json, key: 'grouping', value: grouping?.toJson());
-    JsonUtils.addValue(json: json, key: 'attributes', value: attributes);
+    JsonUtils.addNonNullValue(json: json, key: 'grouping', value: grouping?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'attributes', value: attributes);
 
-    JsonUtils.addValue(json: json, key: 'authorization_context', value: authorizationContext?.toJson());
-    JsonUtils.addValue(json: json, key: 'context', value: context?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'authorization_context', value: authorizationContext?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'context', value: context?.toJson());
 
-    JsonUtils.addValue(json: json, key: 'canceled', value: canceled);
-    JsonUtils.addValue(json: json, key: 'published', value: published);
-    JsonUtils.addValue(json: json, key: 'role', value: event2UserRoleToString(userRole));
+    JsonUtils.addNonNullValue(json: json, key: 'canceled', value: canceled);
+    JsonUtils.addNonNullValue(json: json, key: 'published', value: published);
+    JsonUtils.addNonNullValue(json: json, key: 'role', value: event2UserRoleToString(userRole));
 
-    JsonUtils.addValue(json: json, key: 'free', value: free);
-    JsonUtils.addValue(json: json, key: 'cost', value: cost);
+    JsonUtils.addNonNullValue(json: json, key: 'free', value: free);
+    JsonUtils.addNonNullValue(json: json, key: 'cost', value: cost);
 
-    JsonUtils.addValue(json: json, key: 'registration_details', value: registrationDetails?.toJson());
-    JsonUtils.addValue(json: json, key: 'attendance_details', value: attendanceDetails?.toJson());
-    JsonUtils.addValue(json: json, key: 'survey_details', value: surveyDetails?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'registration_details', value: registrationDetails?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'attendance_details', value: attendanceDetails?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'survey_details', value: surveyDetails?.toJson());
 
-    JsonUtils.addValue(json: json, key: 'sponsor', value: sponsor);
-    JsonUtils.addValue(json: json, key: 'speaker', value: speaker);
-    JsonUtils.addValue(json: json, key: 'contacts', value: Event2Contact.listToJson(contacts));
+    JsonUtils.addNonNullValue(json: json, key: 'sponsor', value: sponsor);
+    JsonUtils.addNonNullValue(json: json, key: 'speaker', value: speaker);
+    JsonUtils.addNonNullValue(json: json, key: 'contacts', value: Event2Contact.listToJson(contacts));
 
-    JsonUtils.addValue(json: json, key: 'source', value: event2SourceToString(source));
-    JsonUtils.addValue(json: json, key: 'data', value: data);
+    JsonUtils.addNonNullValue(json: json, key: 'source', value: event2SourceToString(source));
+    JsonUtils.addNonNullValue(json: json, key: 'data', value: data);
 
     return json;
   }
@@ -380,8 +380,8 @@ class Event2AuthorizationContext {
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    JsonUtils.addValue(json: json, key: 'authorization_status', value: event2AuthorizationContextStatusToString(status));
-    JsonUtils.addValue(json: json, key: 'items', value: Event2ContextItem.listToJson(items));
+    JsonUtils.addNonNullValue(json: json, key: 'authorization_status', value: event2AuthorizationContextStatusToString(status));
+    JsonUtils.addNonNullValue(json: json, key: 'items', value: Event2ContextItem.listToJson(items));
     return json;
   }
 
