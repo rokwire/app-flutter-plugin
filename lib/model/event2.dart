@@ -126,6 +126,11 @@ class Event2 with Explore, Favorite {
     JsonUtils.addNonNullValue(json: json, key: 'authorization_context', value: authorizationContext?.toJson());
     JsonUtils.addNonNullValue(json: json, key: 'context', value: context?.toJson());
 
+    //TBD: DD - remove after tests
+    // Start
+    JsonUtils.addNonNullValue(json: json, key: 'private', value: isPrivate);
+    // End
+
     JsonUtils.addNonNullValue(json: json, key: 'canceled', value: canceled);
     JsonUtils.addNonNullValue(json: json, key: 'published', value: published);
     JsonUtils.addNonNullValue(json: json, key: 'role', value: event2UserRoleToString(userRole));
@@ -244,9 +249,10 @@ class Event2 with Explore, Favorite {
   bool get isSportEvent => (source == Event2Source.sports_bb);
 
   bool get isPublic => authorizationContext?.isPublic ?? true;
-  bool get isGroupMembersOnly => authorizationContext?.isGroupMember ?? false;
-  bool get isRegisteredUsersOnly => authorizationContext?.isRegisteredUser ?? false;
-  bool get isPrivate => isGroupMembersOnly || isRegisteredUsersOnly;
+  bool get isGroupMembersOnly => authorizationContext?.isGroupMembersOnly ?? false;
+  bool get isGuestListOnly => authorizationContext?.isGuestListOnly ?? false;
+  bool get isPrivate => isGroupMembersOnly || isGuestListOnly;
+  bool get isGroupEvent => (context?.isGroupEvent == true);
 
   // JSON list searialization
 
@@ -336,6 +342,9 @@ class Event2Context {
 
   Map<String, dynamic> toJson() => {'items': Event2ContextItem.listToJson(items)};
 
+  bool get isGroupEvent =>
+      (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == Event2ContextItemName.group_member)) != null));
+
   @override
   bool operator ==(other) => (other is Event2Context) && const DeepCollectionEquality().equals(other.items, items);
 
@@ -386,8 +395,14 @@ class Event2AuthorizationContext {
   }
 
   bool get isPublic => ((status == null) || status == Event2AuthorizationContextStatus.none);
-  bool get isRegisteredUser => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2ContextItemName.registered_user));
-  bool get isGroupMember => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2ContextItemName.group_member));
+
+  bool get isGuestListOnly =>
+      ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) &&
+          (items!.firstWhereOrNull((item) => (item.name == Event2ContextItemName.registered_user)) != null));
+
+  bool get isGroupMembersOnly =>
+      ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) &&
+          (items!.firstWhereOrNull((item) => (item.name == Event2ContextItemName.group_member)) != null));
 
   @override
   bool operator ==(other) => (other is Event2AuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
