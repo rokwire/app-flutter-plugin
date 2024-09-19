@@ -102,46 +102,50 @@ class Event2 with Explore, Favorite {
 
     ) : null;
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'instructions': instructions,
-    'image_url': imageUrl,
-    'event_url': eventUrl,
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    JsonUtils.addValue(json: json, key: 'id', value: id);
+    JsonUtils.addValue(json: json, key: 'name', value: name);
+    JsonUtils.addValue(json: json, key: 'description', value: description);
+    JsonUtils.addValue(json: json, key: 'instructions', value: instructions);
+    JsonUtils.addValue(json: json, key: 'image_url', value: imageUrl);
+    JsonUtils.addValue(json: json, key: 'event_url', value: eventUrl);
 
-    'timezone': timezone,
-    'start': DateTimeUtils.dateTimeToSecondsSinceEpoch(startTimeUtc),
-    'end': DateTimeUtils.dateTimeToSecondsSinceEpoch(endTimeUtc),
-    'all_day': allDay,
+    JsonUtils.addValue(json: json, key: 'timezone', value: timezone);
+    JsonUtils.addValue(json: json, key: 'start', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(startTimeUtc));
+    JsonUtils.addValue(json: json, key: 'end', value: DateTimeUtils.dateTimeToSecondsSinceEpoch(endTimeUtc));
+    JsonUtils.addValue(json: json, key: 'all_day', value: allDay);
 
-    'event_type': event2TypeToString(eventType),
-    'location': location?.toJson(),
-    'online_details': onlineDetails?.toJson(),
+    JsonUtils.addValue(json: json, key: 'event_type', value: event2TypeToString(eventType));
+    JsonUtils.addValue(json: json, key: 'location', value: location?.toJson());
+    JsonUtils.addValue(json: json, key: 'online_details', value: onlineDetails?.toJson());
 
-    'grouping': grouping?.toJson(),
-    'attributes': attributes,
-    'authorization_context': authorizationContext?.toJson(),
-    'context': context?.toJson(),
+    JsonUtils.addValue(json: json, key: 'grouping', value: grouping?.toJson());
+    JsonUtils.addValue(json: json, key: 'attributes', value: attributes);
 
-    'canceled': canceled,
-    'published': published,
-    'role': event2UserRoleToString(userRole),
+    JsonUtils.addValue(json: json, key: 'authorization_context', value: authorizationContext?.toJson());
+    JsonUtils.addValue(json: json, key: 'context', value: context?.toJson());
 
-    'free': free,
-    'cost': cost,
+    JsonUtils.addValue(json: json, key: 'canceled', value: canceled);
+    JsonUtils.addValue(json: json, key: 'published', value: published);
+    JsonUtils.addValue(json: json, key: 'role', value: event2UserRoleToString(userRole));
 
-    'registration_details': registrationDetails?.toJson(),
-    'attendance_details': attendanceDetails?.toJson(),
-    'survey_details': surveyDetails?.toJson(),
+    JsonUtils.addValue(json: json, key: 'free', value: free);
+    JsonUtils.addValue(json: json, key: 'cost', value: cost);
 
-    'sponsor': sponsor,
-    'speaker': speaker,
-    'contacts': Event2Contact.listToJson(contacts),
+    JsonUtils.addValue(json: json, key: 'registration_details', value: registrationDetails?.toJson());
+    JsonUtils.addValue(json: json, key: 'attendance_details', value: attendanceDetails?.toJson());
+    JsonUtils.addValue(json: json, key: 'survey_details', value: surveyDetails?.toJson());
 
-    'source': event2SourceToString(source),
-    'data': data,
-  };
+    JsonUtils.addValue(json: json, key: 'sponsor', value: sponsor);
+    JsonUtils.addValue(json: json, key: 'speaker', value: speaker);
+    JsonUtils.addValue(json: json, key: 'contacts', value: Event2Contact.listToJson(contacts));
+
+    JsonUtils.addValue(json: json, key: 'source', value: event2SourceToString(source));
+    JsonUtils.addValue(json: json, key: 'data', value: data);
+
+    return json;
+  }
 
   // Equality
 
