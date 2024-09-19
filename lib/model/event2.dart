@@ -374,8 +374,12 @@ class Event2AuthorizationContext {
       status: Event2AuthorizationContextStatus.active,
       items: [Event2ContextItem(name: Event2ContextItemName.registered_user)]);
 
-  Map<String, dynamic> toJson() =>
-      {'authorization_status': event2AuthorizationContextStatusToString(status), 'items': Event2ContextItem.listToJson(items)};
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    JsonUtils.addValue(json: json, key: 'authorization_status', value: event2AuthorizationContextStatusToString(status));
+    JsonUtils.addValue(json: json, key: 'items', value: Event2ContextItem.listToJson(items));
+    return json;
+  }
 
   bool get isPublic => ((status == null) || status == Event2AuthorizationContextStatus.none);
   bool get isRegisteredUser => ((status == Event2AuthorizationContextStatus.active) && CollectionUtils.isNotEmpty(items) && (items!.first.name == Event2ContextItemName.registered_user));
@@ -406,7 +410,7 @@ class Event2ContextItem {
         identifier: JsonUtils.stringValue(json['identifier']));
   }
 
-  Map<String, dynamic> toJson() => {'name': event2ContextItemNameToString(name), 'identifier': identifier};
+  Map<String, dynamic> toJson() => {'name': event2ContextItemNameToString(name), 'identifier': StringUtils.ensureNotEmpty(identifier)};
 
   @override
   bool operator ==(other) => (other is Event2ContextItem) && (other.name == name) && (other.identifier == identifier);
