@@ -45,12 +45,12 @@ class PlacesService {
 
   /// Updates the 'visited' status of a place.
   Future<Place?> updatePlaceVisited(String id, bool visited) async {
-    Uri uri = Uri.parse('${Config().placesUrl}/places/$id/visited');
-    Map<String, dynamic> body = {'visited': visited};
+    Map<String, String> queryParams = {'visited': visited.toString()};
+
+    Uri uri = Uri.parse('${Config().placesUrl}/places/visited/$id').replace(queryParameters: queryParams);
 
     final response = await Network().put(
-      uri,
-      body: JsonUtils.encode(body),
+      uri.toString(),
       headers: {'Content-Type': 'application/json'},
       auth: Auth2(),
     );
