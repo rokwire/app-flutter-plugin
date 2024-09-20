@@ -255,7 +255,7 @@ class Events2 with Service implements NotificationsListener {
     }
 
     dynamic updateResult = await updateEvent(event);
-    bool succeeded = (updateResult == true);
+    bool succeeded = (updateResult is Event2);
     if (!succeeded) {
       NotificationService().notify(Groups.notifyGroupUpdated, groupId);
       debugPrint('Failed to link event to group. Reason: $updateResult');
