@@ -126,7 +126,7 @@ class Event2 with Explore, Favorite {
     JsonUtils.addNonNullValue(json: json, key: 'authorization_context', value: authorizationContext?.toJson());
     JsonUtils.addNonNullValue(json: json, key: 'context', value: context?.toJson());
 
-    //TBD: DD - remove after tests
+    //TBD: DD - the backend crashes if the field is missing. Leave it until it is fixed
     // Start
     JsonUtils.addNonNullValue(json: json, key: 'private', value: isPrivate);
     // End
