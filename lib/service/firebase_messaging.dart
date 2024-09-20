@@ -120,7 +120,7 @@ class FirebaseMessaging with Service {
 
   @protected
   Future<dynamic> onFirebaseMessage(firebase_messaging.RemoteMessage message) async {
-    Log.d("FCM: onFirebaseMessage: $message");
+    Log.d("FCM: onFirebaseMessage: ${message.data}");
     try {
       if ((AppLivecycle.instance?.state == AppLifecycleState.resumed) && StringUtils.isNotEmpty(message.notification?.body)) {
         NotificationService().notify(notifyForegroundMessage, {
