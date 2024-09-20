@@ -622,11 +622,11 @@ class UrlUtils {
     return null;
   }
 
-  static String addQueryParameters(String url, Map<String, String> queryParameters) {
+  static String addQueryParameters(String url, Map<String, dynamic> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
       Uri? uri = Uri.tryParse(url);
       if (uri != null) {
-        Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
+        Map<String, dynamic> urlParams = Map<String, dynamic>.from(uri.queryParameters);
         queryParameters.addAll(urlParams);
         uri = uri.replace(queryParameters: queryParameters);
         url = uri.toString();
