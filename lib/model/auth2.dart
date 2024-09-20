@@ -304,6 +304,20 @@ class Auth2Account {
     }
     NotificationService().notify(notifySecretsChanged, secrets);
   }
+
+  static List<Auth2Account>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2Account>? result;
+    if (jsonList != null) {
+      result = <Auth2Account>[];
+      for (dynamic jsonEntry in jsonList) {
+        Map<String, dynamic>? accountJson = JsonUtils.mapValue(jsonEntry);
+        Auth2UserProfile profile = Auth2UserProfile(
+            firstName: JsonUtils.stringValue(accountJson?['first_name']), lastName: JsonUtils.stringValue(accountJson?['last_name']));
+        ListUtils.add(result, Auth2Account.fromJson(accountJson, profile: profile));
+      }
+    }
+    return result;
+  }
 }
 
 class Auth2AccountScope {

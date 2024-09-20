@@ -48,7 +48,7 @@ class SurveyPanel extends StatefulWidget {
   @override
   _SurveyPanelState createState() => _SurveyPanelState();
 
-  @protected PreferredSizeWidget? buildHeaderBar(String? title) => HeaderBar(title: title);
+  @protected PreferredSizeWidget? buildHeaderBar(BuildContext context, Survey? survey) => HeaderBar(title: survey?.title);
 }
 
 class _SurveyPanelState extends State<SurveyPanel> {
@@ -79,7 +79,7 @@ class _SurveyPanelState extends State<SurveyPanel> {
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback(_checkScroll);
     return Scaffold(
-      appBar: widget.headerBar ?? widget.buildHeaderBar(_survey?.title),
+      appBar: widget.headerBar ?? widget.buildHeaderBar(context, _survey),
       bottomNavigationBar: widget.tabBar,
       backgroundColor: _backgroundColor,
       body: Column(

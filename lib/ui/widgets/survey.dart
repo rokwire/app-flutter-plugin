@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/rules.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -759,7 +760,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.beforeComplete?.call();
     Surveys().evaluate(_survey!, evalResultRules: true, summarizeResultRules: widget.summarizeResultRules).then((result) {
       if (result is! SurveyResponse && !widget.summarizeResultRules) {
-        result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
+        result = SurveyResponse('', Auth2().accountId, _survey!, DateTime.now().toUtc(), null);
       }
       widget.controller.onComplete?.call(result);
       _setSaving(false);

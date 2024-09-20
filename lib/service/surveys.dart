@@ -436,7 +436,7 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<SurveyResponse>?> loadAllSurveyResponses(String surveyId, {DateTime? startDate, DateTime? endDate, int? limit, int? offset}) async {
+  Future<List<SurveyResponse>?> loadAllSurveyResponses(String surveyId, {DateTime? startDate, DateTime? endDate, int? limit, int? offset, bool admin = false}) async {
     if (enabled) {
       Map<String, String> queryParams = {};
       if (startDate != null) {
@@ -455,7 +455,11 @@ class Surveys /* with Service */ {
         queryParams['offset'] = offset.toString();
       }
 
-      String url = '${Config().surveysUrl}/surveys/$surveyId/responses';
+      String? baseUrl = Config().surveysUrl;
+      if (admin) {
+        baseUrl = '$baseUrl/admin';
+      }
+      String url = '$baseUrl/surveys/$surveyId/responses';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }

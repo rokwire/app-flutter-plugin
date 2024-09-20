@@ -21,17 +21,20 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyResponse {
   final String id;
+  final String? userId;
   final Survey survey;
   final DateTime dateCreated;
   final DateTime? dateUpdated;
 
   DateTime get dateTaken => dateUpdated ?? dateCreated;
+  DateTime? get dateTakenLocal => dateTaken.toLocal();
 
-  SurveyResponse(this.id, this.survey, this.dateCreated, this.dateUpdated);
+  SurveyResponse(this.id, this.userId, this.survey, this.dateCreated, this.dateUpdated);
 
   factory SurveyResponse.fromJson(Map<String, dynamic> json) {
     return SurveyResponse(
       JsonUtils.stringValue(json["id"]) ?? "",
+      JsonUtils.stringValue(json['user_id']) ?? '',
       Survey.fromJson(json['survey']),
       AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
       AppDateTime().dateTimeLocalFromJson(json['date_updated']),
@@ -41,6 +44,7 @@ class SurveyResponse {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'user_id': userId,
       'survey': survey.toJson(),
       'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
