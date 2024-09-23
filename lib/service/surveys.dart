@@ -455,11 +455,12 @@ class Surveys /* with Service */ {
         queryParams['offset'] = offset.toString();
       }
 
-      String? baseUrl = Config().surveysUrl;
+      String? url = Config().surveysUrl;
       if (admin) {
-        baseUrl = '$baseUrl/admin';
+        url = '$url/admin/surveys/$surveyId/response';
+      } else {
+        url = '$url/surveys/$surveyId/responses';
       }
-      String url = '$baseUrl/surveys/$surveyId/responses';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }

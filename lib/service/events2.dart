@@ -115,9 +115,10 @@ class Events2 with Service implements NotificationsListener {
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;
 
-  Future<dynamic> loadEventEx(String eventId) async {
+  Future<dynamic> loadEventEx(String eventId, {bool admin = false}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/events/load";
+      String? url = Config().calendarUrl;
+      url = admin ? '$url/admin/events' : '$url/events/load';
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -131,8 +132,8 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  Future<Event2?> loadEvent(String eventId) async {
-    dynamic result = await loadEventEx(eventId);
+  Future<Event2?> loadEvent(String eventId, {bool admin = false}) async {
+    dynamic result = await loadEventEx(eventId, admin: admin);
     return (result is Event2) ? result : null;
   }
 
