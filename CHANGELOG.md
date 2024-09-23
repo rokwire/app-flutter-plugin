@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 
+## [1.7.2] - 2024-09-20
+### Fixed
+- Show sub-events for group members [#474](https://github.com/rokwire/app-flutter-plugin/issues/474).
+
 ## [1.7.1] - 2024-08-15
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
