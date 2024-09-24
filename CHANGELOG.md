@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Upgraded url_launcher plugin to resolve build issue on Xcode 16.
+- Survey Card widgets color explicitly set to be white [#4385](https://github.com/rokwire/illinois-app/issues/4385).
 
 ## [1.7.2] - 2024-09-20
 ### Fixed
