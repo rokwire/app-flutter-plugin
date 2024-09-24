@@ -12,6 +12,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
+import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -93,7 +94,7 @@ class Events2 with Service implements NotificationsListener {
 
   Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
     Network().post(
-      "${Config().calendarUrl}/events/load",
+      "${Config().calendarUrl}/v2/events/load",
       body: JsonUtils.encode(query?.toQueryJson()),
       headers: _jsonHeaders,
       client: client,
@@ -112,12 +113,20 @@ class Events2 with Service implements NotificationsListener {
     return (result is Events2ListResult) ? result : null;
   }
 
+  Future<Events2ListResult?> loadGroupEvents({String? groupId, int? offset, int? limit}) async {
+    if (StringUtils.isEmpty(groupId)) {
+      return null;
+    }
+    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, groupings: Event2Grouping.individualEvents(), offset: offset, limit: limit);
+    return await loadEvents(groupQuery);
+  }
+
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;
 
   Future<dynamic> loadEventEx(String eventId) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/events/load";
+      String url = "${Config().calendarUrl}/v2/events/load";
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -185,11 +194,12 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/event";
+      String url = "${Config().calendarUrl}/v2/event";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: source.groupIds);
         return Event2.fromJson(JsonUtils.decodeMap(response?.body));
       }
       else {
@@ -200,15 +210,20 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> updateEvent(Event2 source) async {
+  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/event/${source.id}";
+      String url = "${Config().calendarUrl}/v2/event/${source.id}";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        Set<String> notifyGroupIds = source.groupIds ?? <String>{};
+        if (CollectionUtils.isNotEmpty(initialGroupIds)) {
+          notifyGroupIds = notifyGroupIds.union(initialGroupIds!);
+        }
         NotificationService().notify(notifyUpdated, event);
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: notifyGroupIds);
         return event;
       }
       else {
@@ -218,13 +233,48 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  Future<bool> linkEventToGroup({required Event2 event, required String groupId}) async {
+    Event2AuthorizationContext? authorizationContext = event.authorizationContext;
+    if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
+      List<Event2ContextItem>? items = authorizationContext!.items;
+      if (items == null) {
+        items = <Event2ContextItem>[];
+      }
+      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
+      authorizationContext.items = items;
+      event.authorizationContext = authorizationContext;
+    }
+
+    Event2Context? event2Context = event.context;
+    if (event2Context == null) {
+      event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
+    } else {
+      List<Event2ContextItem>? items = event2Context.items;
+      if (items == null) {
+        items = <Event2ContextItem>[];
+      }
+      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
+      event2Context.items = items;
+      event.context = event2Context;
+    }
+
+    dynamic updateResult = await updateEvent(event);
+    bool succeeded = (updateResult is Event2);
+    if (!succeeded) {
+      NotificationService().notify(Groups.notifyGroupUpdated, groupId);
+      debugPrint('Failed to link event to group. Reason: $updateResult');
+    }
+    return succeeded;
+  }
+
   // Returns error message, true if successful
-  Future<dynamic> deleteEvent(String eventId) async{
-    if (Config().calendarUrl != null) { //TBD this is deprecated API. Hook to the new one when available
-      String url = "${Config().calendarUrl}/event/$eventId";
+  Future<dynamic> deleteEvent({required String eventId, Set<String>? groupIds}) async{
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/v2/event/$eventId";
       Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: groupIds);
         return true;
       }
       else {
@@ -380,6 +430,14 @@ class Events2 with Service implements NotificationsListener {
 
   // Helpers
 
+  void _notifyGroupsForModifiedEvents({Set<String>? groupIds}) {
+    if (CollectionUtils.isNotEmpty(groupIds)) {
+      for (String groupId in groupIds!) {
+        NotificationService().notify(Groups.notifyGroupEventsUpdated, groupId);
+      }
+    }
+  }
+
   Map<String, String?> get _jsonHeaders => {"Accept": "application/json", "Content-type": "application/json"};
 
   // DeepLinks
@@ -444,6 +502,7 @@ class Events2Query {
   final DateTime? customStartTimeUtc;
   final DateTime? customEndTimeUtc;
   final Map<String, dynamic>? attributes;
+  final Set<String>? groupIds;
   final Event2SortType? sortType;
   final Event2SortOrder? sortOrder;
   final int? offset;
@@ -452,7 +511,7 @@ class Events2Query {
   Events2Query({this.ids, this.grouping, this.groupings, this.searchText,
     this.types, this.location,
     this.timeFilter = Event2TimeFilter.upcoming, this.customStartTimeUtc, this.customEndTimeUtc,
-    this.attributes,
+    this.attributes, this.groupIds,
     this.sortType, this.sortOrder = Event2SortOrder.ascending,
     this.offset = 0, this.limit
   });
@@ -491,6 +550,10 @@ class Events2Query {
       //   "values": ...
       // }
       options['attributes'] = attributes;
+    }
+
+    if (CollectionUtils.isNotEmpty(groupIds)) {
+      options['context'] = Event2Context.fromIdentifiers(identifiers: groupIds!.toList()).toJson();
     }
 
     if (sortType != null) {
@@ -532,10 +595,10 @@ class Events2Query {
     }
 
     if (types.contains(Event2TypeFilter.public)) {
-      options['private'] = false;
+      options['authorization_context'] = Event2AuthorizationContext.none();
     }
     else if (types.contains(Event2TypeFilter.private)) {
-      options['private'] = true;
+      options['authorization_context'] = Event2AuthorizationContext.registeredUser();
     }
 
     if (types.contains(Event2TypeFilter.superEvent)) {
