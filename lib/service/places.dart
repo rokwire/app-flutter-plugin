@@ -65,7 +65,7 @@ class PlacesService {
 
     Uri uri;
     try {
-      uri = Uri.parse('${Config().placesUrl}/places/visited/$id').replace(queryParameters: queryParams);
+      uri = Uri.parse('${Config().placesUrl}/places/$id/visited').replace(queryParameters: queryParams);
     } catch (e) {
       debugPrint('Failed to parse URI: $e');
       return null;
