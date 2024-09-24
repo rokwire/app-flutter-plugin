@@ -626,9 +626,10 @@ class UrlUtils {
     if (StringUtils.isNotEmpty(url)) {
       Uri? uri = Uri.tryParse(url);
       if (uri != null) {
-        Map<String, dynamic> urlParams = Map<String, dynamic>.from(uri.queryParameters);
-        queryParameters.addAll(urlParams);
-        uri = uri.replace(queryParameters: queryParameters);
+        Map<String, dynamic> urlParams = {};
+        urlParams.addAll(queryParameters);
+        urlParams.addAll(uri.queryParametersAll);
+        uri = uri.replace(queryParameters: urlParams);
         url = uri.toString();
       }
     }
