@@ -882,6 +882,7 @@ class CustomIconSelectionList extends StatelessWidget {
 
               return Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
+                    color: Styles().colors.white,
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
                       child: ListTile(
@@ -960,6 +961,7 @@ class SingleSelectionList extends StatelessWidget {
           String title = selectionList[index].title;
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
+                color: Styles().colors.white,
                 clipBehavior: Clip.hardEdge,
                 child: RadioListTile(
                   title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /*, color: Styles().colors.headlineText */))),
@@ -995,6 +997,7 @@ class MultiSelectionList extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
+                  color: Styles().colors.white,
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
                     child: CheckboxListTile(
