@@ -47,9 +47,9 @@ Map<String, dynamic> _$PlaceToJson(Place instance) => <String, dynamic>{
 
 UserPlace _$UserPlaceFromJson(Map<String, dynamic> json) => UserPlace(
       id: json['id'] as String,
-      visited: json['visited'] == null
-          ? null
-          : DateTime.parse(json['visited'] as String),
+      visited: (json['visited'] as List<dynamic>?)
+          ?.map((e) => DateTime.parse(e as String))
+          .toList(),
       dateCreated: json['date_created'] == null
           ? null
           : DateTime.parse(json['date_created'] as String),
@@ -60,7 +60,7 @@ UserPlace _$UserPlaceFromJson(Map<String, dynamic> json) => UserPlace(
 
 Map<String, dynamic> _$UserPlaceToJson(UserPlace instance) => <String, dynamic>{
       'id': instance.id,
-      'visited': instance.visited?.toIso8601String(),
+      'visited': instance.visited?.map((e) => e.toIso8601String()).toList(),
       'date_created': instance.dateCreated?.toIso8601String(),
       'date_updated': instance.dateUpdated?.toIso8601String(),
     };

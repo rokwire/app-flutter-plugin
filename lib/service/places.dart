@@ -15,9 +15,9 @@ class PlacesService {
 
   /// Retrieves all places based on provided filters.
   Future<List<Place>?> getAllPlaces({
-    List<String>? ids,
-    List<String>? types,
-    List<String>? tags,
+    Set<String>? ids,
+    Set<String>? types,
+    Set<String>? tags,
   }) async {
     Map<String, String> queryParams = {};
 
@@ -98,6 +98,38 @@ class PlacesService {
     } catch (e) {
       debugPrint('Network error while updating place visited status: $e');
       return null;
+    }
+  }
+
+  /// Deletes a visited place record.
+  Future<bool> deleteVisitedPlace(String id, DateTime visited) async {
+    Map<String, String> queryParams = {
+      'visited': visited.toIso8601String(),
+    };
+
+    Uri uri;
+    try {
+      uri = Uri.parse('${Config().placesUrl}/places/$id/visited').replace(queryParameters: queryParams);
+    } catch (e) {
+      debugPrint('Failed to parse URI: $e');
+      return false;
+    }
+
+    try {
+      final response = await Network().delete(
+        uri.toString(),
+        auth: Auth2(),
+      );
+
+      if (response?.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Failed to delete visited place: ${response?.statusCode} ${response?.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Network error while deleting visited place: $e');
+      return false;
     }
   }
 }

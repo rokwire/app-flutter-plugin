@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
 
 part 'places.g.dart';
 
@@ -70,7 +69,7 @@ class Place {
 @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
 class UserPlace {
   String id;
-  DateTime? visited;
+  List<DateTime>? visited;
   DateTime? dateCreated;
   DateTime? dateUpdated;
 
