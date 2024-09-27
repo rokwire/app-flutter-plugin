@@ -26,7 +26,6 @@ import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
-import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/model/group.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 
@@ -34,7 +33,6 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -939,6 +937,9 @@ class Groups with Service implements NotificationsListener {
     return null;
   }*/
 
+  /**
+   *  Deprecated
+   */
   Future<bool> linkEventToGroup({String? groupId, String? eventId, List<Member>? toMembers}) async {
     if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events';
@@ -983,23 +984,6 @@ class Groups with Service implements NotificationsListener {
     return false; // fail
   }
 
-  Future<bool> _removeEventFromGroup({String? groupId, String? eventId}) async {
-    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
-      String url = '${Config().groupsUrl}/group/$groupId/event/$eventId';
-      try {
-        await _ensureLogin();
-        Response? response = await Network().delete(url, auth: Auth2());
-        if((response?.statusCode ?? -1) == 200){
-          NotificationService().notify(notifyGroupUpdated, groupId);
-          return true;
-        }
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return false;
-  }
-
   Future<List<Member>?> loadGroupEventMemberSelection(groupId, eventId) async{
     if(StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
       String url = '${Config().groupsUrl}/group/$groupId/events/v2';
@@ -1035,31 +1019,10 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  /*Future<String?> updateGroupEvents(Event2 event) async {
-    String? id = await Events2().updateEvent(event);
-    if (StringUtils.isNotEmpty(id)) {
-      NotificationService().notify(Groups.notifyGroupEventsUpdated);
-    }
-    return id;
-  }*/
-
-  /*Future<bool?> deleteEventFromGroup({String? groupId, required Event2 event}) async {
-    bool? deleteResult = false;
-    if (await _removeEventFromGroup(groupId: groupId, eventId: event.id) ) {
-      // String? creatorGroupId = event.createdByGroupId;
-      // if(creatorGroupId!=null){
-      if(event.userRole == Event2UserRole.admin){ //event.canUserDelete
-        Group? creatorGroup = await loadGroup(groupId);
-        if(creatorGroup!=null && creatorGroup.currentUserIsAdmin){
-          deleteResult = await Events().deleteEvent(event.id);
-        }
-      }
-      NotificationService().notify(Groups.notifyGroupEventsUpdated);
-    }
-    return deleteResult;
-  }*/
-
-  // Events V3
+  /***
+   * Groups BB Events V3 is Deprecated. Use Calendar/events2 v2 APIs instead.
+   * TBD: DD - delete commented code once the new implementation is verified and working.
+   *
 
   Future<Events2ListResult?> loadEventsV3 (String? groupId, {
     Event2TimeFilter timeFilter = Event2TimeFilter.upcoming,
@@ -1087,28 +1050,6 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  /*List<Event2>? _buildEventsV3(List<Event2>? sourceEvents) {
-    if (sourceEvents != null) {
-
-      // Filter
-      List<Event2> events = <Event2>[];
-      DateTime nowUtc = DateTime.now().toUtc();
-      for (Event2 event in sourceEvents) {
-        DateTime? eventEndTime = event.endTimeUtc ?? event.startTimeUtc;
-        if ((eventEndTime != null) && nowUtc.isBefore(eventEndTime)) {
-          events.add(event);
-        }
-      }
-      
-      // Sort
-      events.sort((Event2 event1, Event2 event2) =>
-        SortUtils.compare(event1.startTimeUtc, event2.startTimeUtc)
-      );
-      return events;
-    }
-    return null;
-  }*/
-
   Future<dynamic> createEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
     if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
       String url = '${Config().groupsUrl}/group/$groupId/events/v3';
@@ -1132,6 +1073,7 @@ class Groups with Service implements NotificationsListener {
     }
     return null;
   }
+
   Future<dynamic> updateEventForGroupV3(Event2? event, { String? groupId, List<Member>? toMembers }) async {
     if ((Config().groupsUrl != null) && (groupId != null) && (event != null)) {
       String url = '${Config().groupsUrl}/group/$groupId/events/v3';
@@ -1156,10 +1098,6 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<bool> deleteEventForGroupV3({String? groupId, String? eventId}) =>
-    _removeEventFromGroup(groupId: groupId, eventId: eventId);
-
-
   Future<dynamic> createEventForGroupsV3(Event2? event, { Set<String>? groupIds }) async {
     if ((Config().groupsUrl != null) && (groupIds != null) && groupIds.isNotEmpty && (event != null)) {
       String url = '${Config().groupsUrl}/group/events/v3';
@@ -1180,24 +1118,6 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null;
-  }
-
-  Future<dynamic> loadUserGroupsHavingEvent(String eventId) async {
-    String? groupsUrl = Config().groupsUrl;
-    if (groupsUrl != null) {
-      String url = '$groupsUrl/user/event/$eventId/groups';
-      Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode  == 200) ? _decodeGroupIds(response?.body) : response?.errorText;
-    }
-    else {
-      return null;
-    }
-  }
-
-  Future<dynamic> loadUserGroupsHavingEventEx(String eventId) async {
-    dynamic result1 = await loadUserGroupsHavingEvent(eventId);
-    List<String>? groupIds = JsonUtils.listStringsValue(result1);
-    return (groupIds != null) ? await _loadAllGroupsEx(groupIds: groupIds) : result1;
   }
 
   Future<dynamic> saveUserGroupsHavingEvent(String eventId, { Set<String>? groupIds, Set<String>? previousGroupIds } ) async {
@@ -1221,9 +1141,46 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
+  Future<bool> deleteEventForGroupV3({String? groupId, String? eventId}) =>
+      _removeEventFromGroup(groupId: groupId, eventId: eventId);
+
+  Future<bool> _removeEventFromGroup({String? groupId, String? eventId}) async {
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(eventId)) {
+      String url = '${Config().groupsUrl}/group/$groupId/event/$eventId';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().delete(url, auth: Auth2());
+        if((response?.statusCode ?? -1) == 200){
+          NotificationService().notify(notifyGroupUpdated, groupId);
+          return true;
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return false;
+  }
+
+  Future<dynamic> loadUserGroupsHavingEvent(String eventId) async {
+    String? groupsUrl = Config().groupsUrl;
+    if (groupsUrl != null) {
+      String url = '$groupsUrl/user/event/$eventId/groups';
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode  == 200) ? _decodeGroupIds(response?.body) : response?.errorText;
+    }
+    else {
+      return null;
+    }
+  }
+
   Set<String>? _decodeGroupIds(String? responseText) {
     Map<String, dynamic>? responseMap = JsonUtils.decodeMap(responseText);
     return (responseMap != null) ? JsonUtils.setStringsValue(responseMap['group_ids']) : null;
+  }*/
+
+  Future<dynamic> loadGroupsByIds({Set<String>? groupIds}) async {
+    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroupsEx(groupIds: groupIds!.toList()) : null;
+    return result;
   }
 
   // Group Posts and Replies
@@ -1846,6 +1803,11 @@ extension _ResponseExt on Response {
   }
 }
 
+/***
+ * Groups BB Events V3 is Deprecated. Use Calendar/events2 v2 APIs instead.
+ * TBD: DD - delete commented code once the new implementation is verified and working.
+ *
+
 class CreateEventForGroupsV3Param {
   final Event2? event;
   final Set<String>? groupIds;
@@ -1862,4 +1824,4 @@ class CreateEventForGroupsV3Param {
     'event': event?.toJson(),
     'group_ids': groupIds?.toList(),
   };
-}
+}*/
