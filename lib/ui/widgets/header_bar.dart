@@ -304,6 +304,7 @@ class SliverHeaderBar extends StatelessWidget {
   final bool floating;
   final double? elevation;
   final double toolbarHeight;
+  final double? expandedHeight;
   final Color? backgroundColor;
 
   final Widget? leadingWidget;
@@ -326,12 +327,15 @@ class SliverHeaderBar extends StatelessWidget {
   final bool? centerTitle;
 
   final List<Widget>? actions;
+  final Widget? flexibleSpace;
+  final PreferredSizeWidget? bottom;
 
   const SliverHeaderBar({Key? key,
     this.pinned = false,
     this.floating = false,
     this.elevation,
     this.toolbarHeight = kToolbarHeight,
+    this.expandedHeight,
     this.backgroundColor,
 
     this.leadingWidget,
@@ -354,6 +358,8 @@ class SliverHeaderBar extends StatelessWidget {
     this.centerTitle,
 
     this.actions,
+    this.flexibleSpace,
+    this.bottom,
   }) : super(key: key);
 
   @override
@@ -366,6 +372,7 @@ class SliverHeaderBar extends StatelessWidget {
       pinned: pinned,
       floating: floating,
       toolbarHeight: toolbarHeight,
+      expandedHeight: expandedHeight,
       backgroundColor: backgroundColor,
       elevation: 0,
       leading : leadingWidget ?? buildLeadingWidget(context),
@@ -373,7 +380,9 @@ class SliverHeaderBar extends StatelessWidget {
       title: titleWidget ?? buildTitleWidget(context),
       titleSpacing: titleSpacing,
       centerTitle: centerTitle,
-      actions: actions
+      actions: actions,
+      flexibleSpace: flexibleSpace,
+      bottom: bottom,
     );
   }
 
