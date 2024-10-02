@@ -7,8 +7,9 @@ part 'places.g.dart';
 class Place {
   String id;
   String? name;
+  String? subtitle;
   String? address;
-  List<String>? imageUrls;
+  List<Image>? images;
   String? description;
   double latitude;
   double longitude;
@@ -21,8 +22,9 @@ class Place {
   Place({
     required this.id,
     this.name,
+    this.subtitle,
     this.address,
-    this.imageUrls,
+    this.images,
     this.description,
     required this.latitude,
     required this.longitude,
@@ -42,11 +44,10 @@ class Place {
     if (jsonList != null) {
       result = [];
       for (dynamic jsonEntry in jsonList) {
-        try{
+        try {
           Place place = Place.fromJson(jsonEntry);
           result.add(place);
-        }
-        catch(e){
+        } catch (e) {
           debugPrint("Error decoding places list $e");
         }
       }
@@ -58,8 +59,8 @@ class Place {
     List<dynamic>? jsonList;
     if (contentList != null) {
       jsonList = <dynamic>[];
-      for (dynamic contentEntry in contentList) {
-        jsonList.add(contentEntry?.toJson());
+      for (Place contentEntry in contentList) {
+        jsonList.add(contentEntry.toJson());
       }
     }
     return jsonList;
@@ -83,4 +84,19 @@ class UserPlace {
   factory UserPlace.fromJson(Map<String, dynamic> json) => _$UserPlaceFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserPlaceToJson(this);
+}
+
+@JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
+class Image {
+  String imageUrl;
+  String? caption;
+
+  Image({
+    required this.imageUrl,
+    this.caption,
+  });
+
+  factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ImageToJson(this);
 }
