@@ -94,7 +94,7 @@ class Events2 with Service implements NotificationsListener {
 
   Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
     Network().post(
-      "${Config().calendarUrl}/v2/events/load",
+      "${Config().calendarUrl}/events/load",
       body: JsonUtils.encode(query?.toQueryJson()),
       headers: _jsonHeaders,
       client: client,
@@ -127,7 +127,7 @@ class Events2 with Service implements NotificationsListener {
   Future<dynamic> loadEventEx(String eventId, {bool admin = false}) async {
     if (Config().calendarUrl != null) {
       String? url = Config().calendarUrl;
-      url = admin ? '$url/admin/events' : '$url/v2/events/load';
+      url = admin ? '$url/admin/events' : '$url/events/load';
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -195,7 +195,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> createEvent(Event2 source) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event";
+      String url = "${Config().calendarUrl}/event";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -213,7 +213,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns Event2 in case of success, String description in case of error
   Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event/${source.id}";
+      String url = "${Config().calendarUrl}/event/${source.id}";
       String? body = JsonUtils.encode(source.toJson());
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -271,7 +271,7 @@ class Events2 with Service implements NotificationsListener {
   // Returns error message, true if successful
   Future<dynamic> deleteEvent({required String eventId, Set<String>? groupIds}) async{
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event/$eventId";
+      String url = "${Config().calendarUrl}/event/$eventId";
       Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
