@@ -15,7 +15,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:rokwire_plugin/model/alert.dart';
-import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';

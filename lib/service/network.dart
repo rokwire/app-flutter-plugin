@@ -26,7 +26,6 @@ import 'package:rokwire_plugin/service/firebase_crashlytics.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:universal_io/io.dart';
 
 abstract class NetworkAuthProvider {
   Map<String, String>? get networkAuthHeaders;

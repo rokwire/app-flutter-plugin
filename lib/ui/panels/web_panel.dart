@@ -29,7 +29,6 @@ import 'package:flutter_html/flutter_html.dart' as flutter_html;
 import 'package:sprintf/sprintf.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:universal_io/io.dart';
 import 'package:webview_flutter/webview_flutter.dart' as flutter_webview;
 // #docregion platform_imports
 // Import for Android features.

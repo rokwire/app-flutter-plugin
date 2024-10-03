@@ -32,7 +32,6 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/events2.dart';
 import 'package:rokwire_plugin/service/firebase_messaging.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/log.dart';
