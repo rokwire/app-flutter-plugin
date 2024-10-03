@@ -917,6 +917,7 @@ class CustomIconSelectionList extends StatelessWidget {
 
               return Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
+                    color: Styles().colors.surface,
                     shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                     child: InkWell(
                       onTap: onChanged != null ? () => onChanged!(index) : null,
@@ -1001,6 +1002,7 @@ class SingleSelectionList extends StatelessWidget {
           String title = selectionList[index].title;
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
+                color: Styles().colors.surface,
                 clipBehavior: Clip.hardEdge,
                 shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                 child: Theme(
@@ -1043,6 +1045,7 @@ class MultiSelectionList extends StatelessWidget {
         itemBuilder: (BuildContext context, int index) {
           return Padding(padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Card(
+                  color: Styles().colors.surface,
                   shape: RoundedRectangleBorder(side: BorderSide(width: 1), borderRadius: BorderRadius.circular(12.0)),
                   child: InkWell(
                     onTap: onChanged != null ? () => onChanged!(index) : null,
