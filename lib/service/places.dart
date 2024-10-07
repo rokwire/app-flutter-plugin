@@ -60,7 +60,7 @@ class PlacesService {
   }
 
   /// Updates the 'visited' status of a place.
-  Future<Place?> updatePlaceVisited(String id, bool visited) async {
+  Future<UserPlace?> updatePlaceVisited(String id, bool visited) async {
     Map<String, String> queryParams = {'visited': visited.toString()};
 
     Uri uri;
@@ -82,7 +82,7 @@ class PlacesService {
         Map<String, dynamic>? jsonMap = JsonUtils.decodeMap(response?.body);
         if (jsonMap != null) {
           try {
-            return Place.fromJson(jsonMap);
+            return UserPlace.fromJson(jsonMap);
           } catch (e) {
             debugPrint('Failed to parse place from JSON: $e');
             return null;

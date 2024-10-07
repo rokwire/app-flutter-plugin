@@ -70,7 +70,7 @@ class Place {
 @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
 class UserPlace {
   String id;
-  List<DateTime>? visited;
+  List<DateTime?>? visited;
   DateTime? dateCreated;
   DateTime? dateUpdated;
 
