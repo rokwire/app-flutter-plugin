@@ -234,38 +234,79 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
-  Future<bool> linkEventToGroup({required Event2 event, required String groupId}) async {
-    Event2AuthorizationContext? authorizationContext = event.authorizationContext;
-    if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
-      List<Event2ContextItem>? items = authorizationContext!.items;
-      if (items == null) {
-        items = <Event2ContextItem>[];
+  Future<bool> linkEventToGroup({required Event2 event, required groupId, required bool link}) async {
+    if (Config().calendarUrl != null) {
+      Event2ContextItem groupItem = Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId);
+      Event2AuthorizationContext? authorizationContext = event.authorizationContext;
+      // 1 Add or remove authorization item based on the action (link / unlink)
+      if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
+        List<Event2ContextItem>? items = authorizationContext!.items;
+        if (items == null) {
+          items = <Event2ContextItem>[];
+        }
+        // 1.1 Unlink event from group - e.g. remove context item
+        if (link == false) {
+          if (items.contains(groupItem)) {
+            items.remove(groupItem);
+          }
+          if (CollectionUtils.isEmpty(items)) {
+            // Make the event public if there are no more items so that an admin can view and edit the event
+            authorizationContext.status = Event2AuthorizationContextStatus.none;
+          }
+        } else {
+          // 1.2 Link event to group - e.g. add context item
+          items.add(groupItem);
+        }
+        authorizationContext.items = items;
       }
-      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
-      authorizationContext.items = items;
-      event.authorizationContext = authorizationContext;
-    }
-
-    Event2Context? event2Context = event.context;
-    if (event2Context == null) {
-      event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
-    } else {
-      List<Event2ContextItem>? items = event2Context.items;
-      if (items == null) {
-        items = <Event2ContextItem>[];
+      // 2 Add or remove context item based on the action (link / unlink)
+      Event2Context? event2Context = event.context;
+      // 2.1 Unlink event from group - e.g. remove context item
+      if (link == false) {
+        List<Event2ContextItem>? items = event2Context?.items;
+        if (items?.contains(groupItem) ?? false) {
+          items!.remove(groupItem);
+          event2Context!.items = items;
+        }
+      } else {
+        // 2.2 Link event to group - e.g. add context item
+        if (event2Context == null) {
+          event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
+        } else {
+          List<Event2ContextItem>? items = event2Context.items;
+          if (items == null) {
+            items = <Event2ContextItem>[];
+          }
+          items.add(groupItem);
+          event2Context.items = items;
+        }
       }
-      items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
-      event2Context.items = items;
-      event.context = event2Context;
-    }
 
-    dynamic updateResult = await updateEvent(event);
-    bool succeeded = (updateResult is Event2);
-    if (!succeeded) {
-      NotificationService().notify(Groups.notifyGroupUpdated, groupId);
-      debugPrint('Failed to link event to group. Reason: $updateResult');
+      // 3 Update the event contexts
+      Map<String, dynamic> requestBody = {};
+      if (authorizationContext != null) {
+        requestBody['authorization_context'] = authorizationContext.toJson();
+      }
+      if (event2Context != null) {
+        requestBody['context'] = event2Context.toJson();
+      }
+
+      String url = "${Config().calendarUrl}/event/${event.id}/context";
+      String? body = JsonUtils.encode(requestBody);
+      Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      String? responseString = response?.body;
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        Event2? event = Event2.fromJson(JsonUtils.decodeMap(responseString));
+        NotificationService().notify(notifyUpdated, event);
+        NotificationService().notify(notifyChanged);
+        _notifyGroupsForModifiedEvents(groupIds: {groupId});
+        return true;
+      } else {
+        debugPrint(responseString);
+      }
     }
-    return succeeded;
+    return false;
   }
 
   // Returns error message, true if successful
