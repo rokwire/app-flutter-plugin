@@ -192,7 +192,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   void onDeepLinkUri(Uri? uri) {
-    print('TESTDEBUGLOGUIUCWEB: onDeepLinkUri: uri: ${uri?.toString()}');
     if (uri != null) {
       if (!kIsWeb) {
         Uri? redirectUri = Uri.tryParse(oidcRedirectUrl);
@@ -366,7 +365,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         NotificationService().notify(notifyLoginStarted, oidcLoginType);
 
         _OidcLogin? oidcLogin = await getOidcData();
-        print('TESTDEBUGLOGUIUCWEB: authenticateWithOidc: OidcLogic ${oidcLogin?.toJson().toString()}');
         if (oidcLogin?.loginUrl != null) {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
@@ -376,7 +374,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           await _launchUrl(_preprocessOidcLoginUrl(_oidcLogin?.loginUrl));
         }
         else {
-          print('TESTDEBUGLOGUIUCWEB: call completeOidcAuthentication: Auth2OidcAuthenticateResult.failed from authenticateWithOidc');
           completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
           return Auth2OidcAuthenticateResult.failed;
         }
@@ -404,22 +401,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
     }
     else {
-      print('TESTDEBUGLOGUIUCWEB: await processOidcAuthentication: uri: ${uri.toString()}');
       bool processResult = await processOidcAuthentication(uri);
-      print('TESTDEBUGLOGUIUCWEB: await processOidcAuthentication: processResult: ${processResult}');
-
       result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
     }
     _processingOidcAuthentication = false;
 
-    print('TESTDEBUGLOGUIUCWEB: call completeOidcAuthentication: ${result} from handleOidcAuthentication');
     completeOidcAuthentication(result);
     return result;
   }
 
   @protected
   Future<bool> processOidcAuthentication(Uri? uri) async {
-    print('TESTDEBUGLOGUIUCWEB: call processOidcAuthentication: uri: ${uri?.toString()} where _oidcLogin: ${_oidcLogin?.toJson().toString()}');
     if (Config().authBaseUrl != null) {
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
@@ -524,7 +516,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         _oidcAuthenticationTimer!.cancel();
       }
       _oidcAuthenticationTimer = Timer(const Duration(milliseconds: 100), () {
-        print('TESTDEBUGLOGUIUCWEB: call completeOidcAuthentication: null from createOidcAuthenticationTimerIfNeeded');
         completeOidcAuthentication(null);
         _oidcAuthenticationTimer = null;
       });
@@ -541,7 +532,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   void completeOidcAuthentication(Auth2OidcAuthenticateResult? result) {
-    print('TESTDEBUGLOGUIUCWEB: completeOidcAuthentication: ${result}');
     _notifyLogin(oidcLoginType, result == Auth2OidcAuthenticateResult.succeeded);
 
     _oidcLogin = null;
