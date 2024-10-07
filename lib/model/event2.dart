@@ -370,7 +370,7 @@ class Event2Context {
 /// Event2AuthorizationContext
 
 class Event2AuthorizationContext {
-  final Event2AuthorizationContextStatus? status;
+  Event2AuthorizationContextStatus? status;
   List<Event2ContextItem>? items;
 
   Event2AuthorizationContext({this.status, this.items});
