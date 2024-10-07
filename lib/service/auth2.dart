@@ -519,7 +519,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   void createOidcAuthenticationTimerIfNeeded() {
-    if ((_oidcAuthenticationCompleters != null) && (_processingOidcAuthentication != true)) {
+    if ((_oidcAuthenticationCompleters != null) && (_processingOidcAuthentication != true) && !kIsWeb) { //Do not start timer for the web app.
       if (_oidcAuthenticationTimer != null) {
         _oidcAuthenticationTimer!.cancel();
       }
