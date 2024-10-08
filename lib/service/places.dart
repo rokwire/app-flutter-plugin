@@ -6,12 +6,12 @@ import 'auth2.dart';
 import 'config.dart';
 import 'network.dart';
 
-class PlacesService {
-  static final PlacesService _instance = PlacesService._internal();
+class Places {
+  static final Places _instance = Places._internal();
 
-  factory PlacesService() => _instance;
+  factory Places() => _instance;
 
-  PlacesService._internal();
+  Places._internal();
 
   /// Retrieves all places based on provided filters.
   Future<List<Place>?> getAllPlaces({
