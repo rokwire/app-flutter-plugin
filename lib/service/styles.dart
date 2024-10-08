@@ -320,12 +320,13 @@ class UiColors {
   Color get fillColorSecondary         => colorMap['fillColorSecondary'] ?? const Color(0xFFE84A27);
   Color get fillColorSecondaryVariant  => colorMap['fillColorSecondaryVariant'] ?? const Color(0xFFCF3C1B);
   Color get gradientColorPrimary       => colorMap['gradientColorPrimary'] ?? const Color(0xFF244372);
-  Color get buttonColorVariarnt       => colorMap['buttonColorVariarnt'] ?? const Color(0xFFF1EFE0);
+  Color get buttonColorVariant         => colorMap['buttonColorVariant'] ?? const Color(0xFFF1EFE0);
 
   Color get surface                    => colorMap['surface'] ?? const Color(0xFFFFFFFF);
   Color get surfaceAccent              => colorMap['surfaceAccent'] ?? const Color(0xFFDADDE1);
   Color get background                 => colorMap['background'] ?? const Color(0xFFF5F5F5);
   Color get backgroundVariant          => colorMap['backgroundVariant'] ?? const Color(0xFFE8E9EA);
+  Color get backgroundAccent           => colorMap['backgroundAccent'] ?? const Color(0xFF525252);
 
   Color get textPrimary                => colorMap['textPrimary'] ?? const Color(0xFF000000);
   Color get textAccent                 => colorMap['textAccent'] ?? const Color(0xFF000000);
