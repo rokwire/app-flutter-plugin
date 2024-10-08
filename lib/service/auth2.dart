@@ -1203,7 +1203,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         'Content-Type': 'application/json'
       };
       String? post;
-      if (!kIsWeb) {
+      if (kIsWeb) {
+        headers.addAll(Auth2Csrf().networkRefreshAuthHeaders);
+      } else {
         if (refreshToken == null) {
           return null;
         }
@@ -1488,6 +1490,7 @@ class Auth2Csrf with NetworkAuthProvider {
   Auth2Csrf({this.token});
 
   static const String _csrfTokenName = 'rokwire-csrf-token';
+  static const String _refreshTokenName = 'rokwire-refresh-token';
 
   @override
   Map<String, String>? get networkAuthHeaders {
@@ -1518,6 +1521,25 @@ class Auth2Csrf with NetworkAuthProvider {
       return (await Auth2().refreshToken(token: token) != null);
     }
     return false;
+  }
+
+  Map<String, String> get networkRefreshAuthHeaders {
+    String cookieName = _csrfTokenName;
+    if (Config().authBaseUrl?.contains("localhost") == false) {
+      cookieName = '__Host-' + cookieName;
+    }
+
+    Map<String, String> headers = {};
+    String cookieValue = WebUtils.getCookie(cookieName);
+    if (cookieValue.isNotEmpty) {
+      headers[_refreshTokenName] = cookieValue;
+    }
+
+    if (StringUtils.isNotEmpty(token?.accessToken)) {
+      String tokenType = token!.tokenType ?? 'Bearer';
+      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+    }
+    return headers;
   }
 }
 
