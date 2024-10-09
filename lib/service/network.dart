@@ -582,4 +582,16 @@ class Network  {
   static String? _urlStringFromUri(dynamic uri) {
     return (uri is String) ? uri : uri.toString();
   }
+
+  static Map<String, String>? corsWebHeaders() {
+    Map<String, String>? headers;
+    if (kIsWeb) {
+      headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST',
+        'Access-Control-Allow-Headers': 'X-Requested-With'
+      };
+    }
+    return headers;
+  }
 }
