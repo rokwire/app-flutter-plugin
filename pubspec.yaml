@@ -35,7 +35,7 @@ dependencies:
   sprintf: ^7.0.0
   flutter_local_notifications: ^17.2.2
   sqflite: ^2.1.0
-  device_calendar: ^4.3.3-20240801
+  device_calendar: ^4.3.3
   image_picker: ^1.0.4
   mime_type: ^1.0.0
   uuid: ^3.0.7
