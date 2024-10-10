@@ -26,6 +26,7 @@ import 'package:rokwire_plugin/service/firebase_crashlytics.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:universal_html/html.dart' as html;
 
 abstract class NetworkAuthProvider {
   Map<String, String>? get networkAuthHeaders;
@@ -580,5 +581,18 @@ class Network  {
 
   static String? _urlStringFromUri(dynamic uri) {
     return (uri is String) ? uri : uri.toString();
+  }
+
+  static Map<String, String>? corsWebHeaders() {
+    Map<String, String>? headers;
+    if (kIsWeb) {
+      headers = {
+        // 'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': html.window.location.origin,
+        'Access-Control-Allow-Methods': 'GET',
+        // 'Access-Control-Allow-Headers': 'X-Requested-With'
+      };
+    }
+    return headers;
   }
 }

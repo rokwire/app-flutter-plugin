@@ -254,7 +254,7 @@ class Localization with Service implements NotificationsListener {
     Map<String, dynamic>? jsonData;
     try {
       String assetName = getNetworkAssetName(language);
-      http.Response? response = StringUtils.isNotEmpty(Config().assetsUrl) ? await Network().get("${Config().assetsUrl}/$assetName") : null;
+      http.Response? response = StringUtils.isNotEmpty(Config().assetsUrl) ? await Network().get("${Config().assetsUrl}/$assetName", headers: Network.corsWebHeaders()) : null;
       String? jsonString = ((response != null) && (response.statusCode == 200)) ? response.body : null;
       jsonData = (jsonString != null) ? JsonUtils.decode(jsonString) : null;
       if ((jsonString != null) && (jsonData != null) && ((cache == null) || !const DeepCollectionEquality().equals(jsonData, cache))) {
