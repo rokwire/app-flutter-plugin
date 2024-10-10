@@ -25,7 +25,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:collection/collection.dart';
 import 'package:url_launcher/url_launcher_string.dart';
-import 'package:universal_io/io.dart';
 
 /*
   "emergency": {
