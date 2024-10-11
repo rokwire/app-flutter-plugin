@@ -344,10 +344,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
 
-  String? get appId {
-    //TBD: DD - implement web - read it from a config or any resource
-    return kIsWeb ? 'edu.illinois.rokwire' : _packageInfo?.packageName;
-  }
+  String? get appId => _packageInfo?.packageName;
 
   String? get appCanonicalId {
     if (_appCanonicalId == null) {
