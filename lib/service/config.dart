@@ -94,7 +94,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   @override
   Future<void> initService() async {
 
-    _configEnvironment = configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
+    _configEnvironment = kIsWeb ? _webConfigEnvironment : configEnvFromString(Storage().configEnvironment) ?? _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
     _packageInfo = await PackageInfo.fromPlatform();
     if (!kIsWeb) {
@@ -467,6 +467,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Environment
 
   set configEnvironment(ConfigEnvironment? configEnvironment) {
+    if (kIsWeb) {
+      debugPrint('WEB: Changing environment is not allowed.');
+      return;
+    }
     if (_configEnvironment != configEnvironment) {
       _configEnvironment = configEnvironment;
       Storage().configEnvironment = configEnvToString(_configEnvironment);
@@ -576,6 +580,32 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   bool get isAdmin => false;
   bool get bypassLogin => true; // Bypass login for testing web layouts
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
+
+  ConfigEnvironment? get _webConfigEnvironment {
+    if (kDebugMode) {
+      debugPrint('WEB: Debug mode -> dev env.');
+      return ConfigEnvironment.dev;
+    }
+    String? webAppHost = webIdentifierOrigin;
+    if (webAppHost?.startsWith('http://localhost') ?? false) {
+      debugPrint('WEB: localhost -> dev env.');
+      return ConfigEnvironment.dev;
+    }
+    for (MapEntry<String, String> webAppEnvironment in _webEnvHosts().entries) {
+      if (webAppHost == webAppEnvironment.value) {
+        ConfigEnvironment? selectedEnvironment = configEnvFromString(webAppEnvironment.key);
+        debugPrint('WEB: selected environment: ${configEnvToString(selectedEnvironment)}');
+        return selectedEnvironment;
+      }
+    }
+    return null;
+  }
+
+  static Map<String, String> _webEnvHosts() => {
+    'dev': 'https://api-dev.rokwire.illinois.edu',
+    'test': 'https://api-test.rokwire.illinois.edu',
+    'prod': 'https://api.rokwire.illinois.edu'
+  };
 }
 
 enum ConfigEnvironment { production, test, dev }
