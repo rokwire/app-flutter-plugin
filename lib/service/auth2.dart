@@ -135,13 +135,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     if (kIsWeb && (_token == null)) {
       _log('WEB: Auth2().initService(): refreshToken(ignoreUnauthorized: true) START');
-      refreshToken(ignoreUnauthorized: true).then((token) {
-        _log('WEB: Auth2().initService(): refreshToken(ignoreUnauthorized: true) END. Has token: ${token?.toJson().toString()}');
-        if (token != null) {
-          _refreshAccount();
-          NotificationService().notify(Auth2.notifyLoginSucceeded, null);
-        }
-      });
+      Auth2Token? token = await refreshToken(ignoreUnauthorized: true);
+      _log('WEB: Auth2().initService(): refreshToken(ignoreUnauthorized: true) END. Has token: ${token?.toJson().toString()}');
+      if (token != null) {
+        _refreshAccount();
+        NotificationService().notify(Auth2.notifyLoginSucceeded, null);
+      }
     } else {
       _refreshAccount();
     }
