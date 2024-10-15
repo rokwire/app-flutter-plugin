@@ -103,9 +103,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @override
   Future<void> initService() async {
     _token = Storage().auth2Token;
-    _log('WEB: Auth2().initService(): _token: ${_token?.toJson().toString()}');
     _account = Storage().auth2Account;
-    _log('WEB: Auth2().initService(): _account: ${_account?.toJson().toString()}');
 
     _anonymousId = Storage().auth2AnonymousId;
     _anonymousToken = Storage().auth2AnonymousToken;
@@ -134,9 +132,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     if (kIsWeb && (_token == null)) {
-      _log('WEB: Auth2().initService(): refreshToken(ignoreUnauthorized: true) START');
       Auth2Token? token = await refreshToken(ignoreUnauthorized: true);
-      _log('WEB: Auth2().initService(): refreshToken(ignoreUnauthorized: true) END. Has token: ${token?.toJson().toString()}');
       if (token != null) {
         _refreshAccount();
         NotificationService().notify(Auth2.notifyLoginSucceeded, null);
@@ -1147,22 +1143,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _refreshTokenFutures.remove(token?.refreshToken);
 
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-          _log('WEB: Auth2.refreshToken(): responseJson: ${responseJson?.toString()}');
           if (responseJson != null) {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
               _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token?.refreshToken}");
               _refreshTokenFailCounts.remove(token?.refreshToken);
-              _log('WEB: Auth2.refreshToken(): token: ${token?.toJson().toString()}');
-              _log('WEB: Auth2.refreshToken(): _token: ${_token?.toJson().toString()}');
 
               if (token == _token) {
-                _log('WEB: Auth2.refreshToken(): will applyToken');
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
                 return responseToken;
               }
               else if (token == _anonymousToken) {
-                _log('WEB: Auth2.refreshToken(): sets anonymous token');
                 Storage().auth2AnonymousToken = _anonymousToken = responseToken;
                 return responseToken;
               }
