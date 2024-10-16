@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/foundation.dart';
 import "package:asn1lib/asn1lib.dart";
 import "package:pointycastle/export.dart";
@@ -382,4 +383,18 @@ bool _verifyRSAKeyPair(AsymmetricKeyPair<PublicKey, PrivateKey> rsaKeyPair) {
     return (decryptedAESKey == aesKey);
   }
   return false;
+}
+
+class HMACCrypt {
+
+  static String sha256(String secret, String message) {
+    Uint8List key = utf8.encode(secret);
+    Uint8List bytes = utf8.encode(message);
+
+    crypto.Hmac hmacSha256 = crypto.Hmac(crypto.sha256, key);
+    crypto.Digest digest = hmacSha256.convert(bytes);
+
+    return digest.toString();
+  }
+
 }
