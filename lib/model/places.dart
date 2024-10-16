@@ -42,13 +42,13 @@ class Place with Explore{
   Map<String, dynamic> toJson() => _$PlaceToJson(this);
 
   @override
-  String?   get exploreId => id;
+  String? get exploreId => id;
   @override
-  String?   get exploreTitle => name;
+  String? get exploreTitle => name;
   @override
-  String?   get exploreDescription => description;
+  String? get exploreDescription => description;
   @override
-  String?   get exploreImageURL => images?.firstOrNull?.imageUrl;
+  String? get exploreImageURL => images?.isNotEmpty == true ? images?.first.imageUrl : null;
   @override
   ExploreLocation? get exploreLocation => ExploreLocation(id: id,
       longitude: longitude, latitude: latitude, fullAddress: address,
