@@ -37,9 +37,11 @@ class ImageUtils {
     if ((imageBytes == null) || StringUtils.isEmpty(fileName)) {
       return false;
     }
+    final String fileExtension = 'png';
     bool? saveResult = false;
     if (kIsWeb) {
       // prepare
+      fileName += '.$fileExtension';
       final blob = html.Blob([imageBytes]);
       final url = html.Url.createObjectUrlFromBlob(blob);
       final anchor = html.document.createElement('a') as html.AnchorElement
@@ -57,7 +59,7 @@ class ImageUtils {
       saveResult = true;
     } else {
       final String dir = (await getApplicationDocumentsDirectory()).path;
-      final String fullPath = '$dir/$fileName.png';
+      final String fullPath = '$dir/$fileName.$fileExtension';
       File capturedFile = File(fullPath);
       await capturedFile.writeAsBytes(imageBytes);
       try {
