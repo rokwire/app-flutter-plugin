@@ -19,6 +19,7 @@ import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
+import 'package:rokwire_plugin/ui/widgets/triangle_header_image.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 // HeaderBar
@@ -217,38 +218,10 @@ class SliverToutHeaderBar extends StatelessWidget {
   Widget? buildFlexibleSpace(BuildContext context) =>
     Semantics(container: true, excludeSemantics: true, child:
       FlexibleSpaceBar(background:
-        Container(color: flexBackColor, child:
-          Stack(alignment: Alignment.bottomCenter, children: <Widget>[
-                buildFlexibleInterior(context),
-                buildFlexibleLeftToRightTriangle(context),
-                buildFlexibleLeftTriangle(context),
-              ],
-            ),
-          ))
+        TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl,
+        flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
+        flexRightToLeftTriangleColor: flexRightToLeftTriangleColor, flexRightToLeftTriangleHeight: flexRightToLeftTriangleHeight,))
       );
-
-  @protected
-  Widget buildFlexibleInterior(BuildContext context) {
-    Widget? image;
-    if (flexImageUrl != null) {
-      image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true);
-    } else if (flexImageKey != null) {
-      image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
-    }
-    return (image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
-  }
-
-  @protected
-  Widget buildFlexibleLeftToRightTriangle(BuildContext context) => CustomPaint(
-    painter: TrianglePainter(painterColor: flexLeftToRightTriangleColor, horzDir: TriangleHorzDirection.leftToRight),
-    child: Container(height: flexLeftToRightTriangleHeight,),
-  );
-
-  @protected
-  Widget buildFlexibleLeftTriangle(BuildContext context) => CustomPaint(
-    painter: TrianglePainter(painterColor: flexRightToLeftTriangleColor),
-    child: Container(height: flexRightToLeftTriangleHeight,),
-  );
 
   //Leading
   @protected

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Link / Unlink event to group [#481](https://github.com/rokwire/app-flutter-plugin/issues/481).
 ### Added
 - Added Places model and service [#475](https://github.com/rokwire/app-flutter-plugin/issues/475).
+- Create a triangle header image widget [#488](https://github.com/rokwire/app-flutter-plugin/issues/488)
 
 ## [1.7.2] - 2024-09-20
 ### Fixed
