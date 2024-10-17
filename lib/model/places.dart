@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:json_annotation/json_annotation.dart';
 
+import 'explore.dart';
+
 part 'places.g.dart';
 
 @JsonSerializable(explicitToJson: true, fieldRename: FieldRename.snake)
-class Place {
+class Place with Explore{
   String id;
   String? name;
   String? subtitle;
@@ -38,6 +40,19 @@ class Place {
   factory Place.fromJson(Map<String, dynamic> json) => _$PlaceFromJson(json);
 
   Map<String, dynamic> toJson() => _$PlaceToJson(this);
+
+  @override
+  String? get exploreId => id;
+  @override
+  String? get exploreTitle => name;
+  @override
+  String? get exploreDescription => description;
+  @override
+  String? get exploreImageURL => images?.isNotEmpty == true ? images?.first.imageUrl : null;
+  @override
+  ExploreLocation? get exploreLocation => ExploreLocation(id: id,
+      longitude: longitude, latitude: latitude, fullAddress: address,
+      name: name, description: description);
 
   static List<Place>? listFromJson(List<dynamic>? jsonList) {
     List<Place>? result;
