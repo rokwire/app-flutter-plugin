@@ -184,15 +184,19 @@ class StringUtils {
 
   static String base64UrlDecode(String value) => utf8.fuse(base64Url).decode(value);
 
-  static String generatePassword({bool letter = true, bool isNumber = true, bool isSpecial = true}) {
-    final length = 20;
+  static String generatePassword({bool letter = true,
+    bool lowercase = true, bool uppercase = true,
+    bool isNumber = true, bool isSpecial = true, int length = 20}) {
     final letterLowerCase = "abcdefghijklmnopqrstuvwxyz";
     final letterUpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     final number = '0123456789';
     final special = '@#%^*>\$@?/[]=+';
 
     String chars = "";
-    if (letter) chars += '$letterLowerCase$letterUpperCase';
+    if (letter) {
+      if (lowercase) chars += '$letterLowerCase';
+      if (uppercase) chars += '$letterUpperCase';
+    }
     if (isNumber) chars += '$number';
     if (isSpecial) chars += '$special';
     return List.generate(length, (index) {
