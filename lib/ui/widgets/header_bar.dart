@@ -216,9 +216,11 @@ class SliverToutHeaderBar extends StatelessWidget {
     Semantics(container: true, excludeSemantics: true, child:
       FlexibleSpaceBar(background:
         TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl,
-        flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
-        flexRightToLeftTriangleColor: flexRightToLeftTriangleColor, flexRightToLeftTriangleHeight: flexRightToLeftTriangleHeight,))
-      );
+          flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
+          flexRightToLeftTriangleColor: flexRightToLeftTriangleColor, flexRightToLeftTriangleHeight: flexRightToLeftTriangleHeight,
+        ),
+      ),
+    );
 
   //Leading
   @protected
