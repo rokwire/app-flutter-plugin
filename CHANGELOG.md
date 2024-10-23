@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added Places model and service [#475](https://github.com/rokwire/app-flutter-plugin/issues/475).
 - Create a triangle header image widget [#488](https://github.com/rokwire/app-flutter-plugin/issues/488)
+- Add deeplinking support to places [#491](https://github.com/rokwire/app-flutter-plugin/issues/491)
 
 ## [1.7.2] - 2024-09-20
 ### Fixed
