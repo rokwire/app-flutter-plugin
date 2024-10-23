@@ -1,17 +1,91 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/places.dart';
+import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'auth2.dart';
 import 'config.dart';
+import 'deep_link.dart';
 import 'network.dart';
 
-class Places {
+class Places extends Service implements NotificationsListener {
+
   static final Places _instance = Places._internal();
 
   factory Places() => _instance;
 
   Places._internal();
+
+
+  static String get placesDetailUrl => '${DeepLink().appUrl}/places';
+  static const String notifyPlacesDetail = "edu.illinois.rokwire.places.detail";
+
+  List<Uri>? _deepLinkUrisCache;
+
+  @override
+  void createService() {
+    super.createService();
+    NotificationService().subscribe(this, [
+      DeepLink.notifyUri,
+    ]);
+    _deepLinkUrisCache = <Uri>[];
+  }
+
+  @override
+  void destroyService() {
+    super.destroyService();
+    NotificationService().unsubscribe(this);
+  }
+
+  @override
+  void initServiceUI() {
+    super.initServiceUI();
+    _processCachedDeepLinkUris();
+  }
+
+  @override
+  Set<Service> get serviceDependsOn {
+    return { DeepLink() };
+  }
+
+  void _onDeepLinkUri(Uri? uri) {
+    if (uri != null) {
+      if (_deepLinkUrisCache != null) {
+        _cacheDeepLinkUri(uri);
+      } else {
+        _processDeepLinkUri(uri);
+      }
+    }
+  }
+
+  void _processDeepLinkUri(Uri uri) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(placesDetailUrl))) {
+      NotificationService().notify(notifyPlacesDetail, uri.queryParameters.cast<String, dynamic>());
+    }
+  }
+
+  void _cacheDeepLinkUri(Uri uri) {
+    _deepLinkUrisCache?.add(uri);
+  }
+
+  void _processCachedDeepLinkUris() {
+    if (_deepLinkUrisCache != null) {
+      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
+      _deepLinkUrisCache = null;
+
+      for (Uri deepLinkUri in deepLinkUrisCache) {
+        _processDeepLinkUri(deepLinkUri);
+      }
+    }
+  }
+
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == DeepLink.notifyUri) {
+      _onDeepLinkUri(param);
+    }
+  }
 
   /// Retrieves all places based on provided filters.
   Future<List<Place>?> getAllPlaces({
