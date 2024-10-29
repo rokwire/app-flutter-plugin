@@ -1,17 +1,110 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/places.dart';
+import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'auth2.dart';
 import 'config.dart';
+import 'deep_link.dart';
 import 'network.dart';
 
-class Places {
-  static final Places _instance = Places._internal();
+class Places extends Service implements NotificationsListener {
 
-  factory Places() => _instance;
+  static const String notifyPlacesDetail = "edu.illinois.rokwire.places.detail";
 
-  Places._internal();
+  List<Uri>? _deepLinkUrisCache;
+
+  // Singletone Factory
+
+  static Places? _instance;
+
+  factory Places() => _instance ?? (_instance = Places.internal());
+
+  @protected
+  static set instance(Places? value) => _instance = value;
+
+  @protected
+  Places.internal();
+
+  // Service
+
+  @override
+  void createService() {
+    NotificationService().subscribe(this, [
+      DeepLink.notifyUri,
+    ]);
+    _deepLinkUrisCache = <Uri>[];
+    super.createService();
+  }
+
+  @override
+  void destroyService() {
+    NotificationService().unsubscribe(this);
+    super.destroyService();
+  }
+
+  @override
+  void initServiceUI() {
+    processCachedDeepLinkUris();
+    super.initServiceUI();
+  }
+
+  @override
+  Set<Service> get serviceDependsOn {
+    return { DeepLink() };
+  }
+
+  // NotificationsListener
+
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == DeepLink.notifyUri) {
+      onDeepLinkUri(param);
+    }
+  }
+
+  // DeepLinks
+
+  static String get placeDetailRawUrl => '${DeepLink().appUrl}/place_detail';
+  static String placeDetailUrl(Place? place) => UrlUtils.buildWithQueryParameters(placeDetailRawUrl, <String, String>{'place_id' : "${place?.id}"});
+
+  @protected
+  void onDeepLinkUri(Uri? uri) {
+    if (uri != null) {
+      if (_deepLinkUrisCache != null) {
+        cacheDeepLinkUri(uri);
+      } else {
+        processDeepLinkUri(uri);
+      }
+    }
+  }
+
+  @protected
+  void processDeepLinkUri(Uri uri) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(placeDetailRawUrl))) {
+      NotificationService().notify(notifyPlacesDetail, uri.queryParameters.cast<String, dynamic>());
+    }
+  }
+
+  @protected
+  void cacheDeepLinkUri(Uri uri) {
+    _deepLinkUrisCache?.add(uri);
+  }
+
+  @protected
+  void processCachedDeepLinkUris() {
+    if (_deepLinkUrisCache != null) {
+      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
+      _deepLinkUrisCache = null;
+
+      for (Uri deepLinkUri in deepLinkUrisCache) {
+        processDeepLinkUri(deepLinkUri);
+      }
+    }
+  }
+
+  // Implementation
 
   /// Retrieves all places based on provided filters.
   Future<List<Place>?> getAllPlaces({
