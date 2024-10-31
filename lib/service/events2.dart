@@ -748,9 +748,10 @@ class Events2Query {
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
-      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowLocal)) ? customStartTimeUtc : nowLocal;
-      options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_after_null_end_time'] = (startTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      if (customStartTimeUtc != null) {
+        options['end_time_after'] = customStartTimeUtc.millisecondsSinceEpoch ~/ 1000;
+        options['start_time_after_null_end_time'] = (customStartTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      }
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }
