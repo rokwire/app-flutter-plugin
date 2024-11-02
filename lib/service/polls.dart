@@ -119,11 +119,13 @@ class Polls with Service implements NotificationsListener {
         limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
-  Future<Response?> getPollsResponse(PollFilter pollsFilter) async =>
-    enabled ? Network().get(
-      '${Config().quickPollsUrl}/polls',
-      body: JsonUtils.encode(pollsFilter.toJson()),
-      auth: Auth2()) : null;
+  Future<Response?> getPollsResponse(PollFilter pollsFilter) async {
+    if (enabled) {
+      String url = UrlUtils.addQueryParameters('${Config().quickPollsUrl}/polls', pollsFilter.urlParams);
+      return Network().get(url, auth: Auth2());
+    }
+    return null;
+  }
 
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {

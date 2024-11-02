@@ -480,4 +480,42 @@ class PollFilter {
     json.removeWhere((key, value) => value == null);
     return json;
   }
+
+  Map<String, String> get urlParams {
+    Map<String, String> queryParams = {};
+
+    if (CollectionUtils.isNotEmpty(pollIds)) {
+      queryParams['poll_ids'] = pollIds!.join(',');
+    }
+
+    if (CollectionUtils.isNotEmpty(groupIds)) {
+      queryParams['group_ids'] = groupIds!.join(',');
+    }
+
+    if (CollectionUtils.isNotEmpty(statuses)) {
+      queryParams['statuses'] = statuses!.join(',');
+    }
+
+    if (pinCode != null) {
+      queryParams['pin'] = pinCode.toString();
+    }
+
+    if (myPolls != null) {
+      queryParams['my_polls'] = myPolls.toString();
+    }
+
+    if (respondedPolls != null) {
+      queryParams['responded_polls'] = respondedPolls.toString();
+    }
+
+    if (offset != null) {
+      queryParams['offset'] = offset.toString();
+    }
+
+    if (limit != null) {
+      queryParams['limit'] = limit.toString();
+    }
+
+    return queryParams;
+  }
 }
