@@ -735,7 +735,7 @@ class Polls with Service implements NotificationsListener {
 
   @protected
   String getPollNotificationMessage(Poll poll) {
-    String creator = poll.creatorUserName ?? 'Someone';
+    String creator = StringUtils.isNotEmpty(poll.creatorUserName) ? poll.creatorUserName! : 'Someone';
     return sprintf('%s wants to know', [creator]);
   }
 
