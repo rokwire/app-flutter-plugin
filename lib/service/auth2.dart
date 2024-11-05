@@ -147,7 +147,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     List<dynamic> results = await Future.wait(futures);
     _deviceId = results[0];
     _token = results[1];
-    // _account = results[2];
+    _account = results[2];
     _oidcToken = results[3];
 
     if (isAnonymousAuthenticationSupported) {
