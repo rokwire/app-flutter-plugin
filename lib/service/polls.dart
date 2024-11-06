@@ -304,7 +304,7 @@ class Polls with Service implements NotificationsListener {
         PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
         String? body = JsonUtils.encode(pollsFilter.toJson());
         String url = '${Config().quickPollsUrl}/polls';
-        Response? response = await Network().get(url, body: body, auth: Auth2());
+        Response? response = await getPollsResponse(pollsFilter);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {

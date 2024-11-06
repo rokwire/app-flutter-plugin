@@ -493,7 +493,8 @@ class PollFilter {
     }
 
     if (CollectionUtils.isNotEmpty(statuses)) {
-      queryParams['statuses'] = statuses!.join(',');
+      List<String> statusStrings = List.generate(statuses!.length, (i) => Poll.pollStatusToString(statuses!.elementAt(i)) ?? '');
+      queryParams['statuses'] = statusStrings.join(',');
     }
 
     if (pinCode != null) {
