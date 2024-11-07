@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
+- Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+
+## [1.7.3] - 2024-10-23
+### Changed
 - Upgraded url_launcher plugin to resolve build issue on Xcode 16.
 - Survey Card widgets color explicitly set to be white [#4385](https://github.com/rokwire/illinois-app/issues/4385).
 ### Fixed
 - Link / Unlink event to group [#481](https://github.com/rokwire/app-flutter-plugin/issues/481).
+### Added
+- Added Places model and service [#475](https://github.com/rokwire/app-flutter-plugin/issues/475).
+- Create a triangle header image widget [#488](https://github.com/rokwire/app-flutter-plugin/issues/488).
+- Added deeplinking support to Places [#491](https://github.com/rokwire/app-flutter-plugin/issues/491).
 
 ## [1.7.2] - 2024-09-20
 ### Fixed
