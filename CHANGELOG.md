@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+
+## [1.7.4] - 2024-11-07
 ### Fixed
 - Fixed possible unhandled exception when parsing URLs.
 
