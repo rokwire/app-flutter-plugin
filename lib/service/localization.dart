@@ -19,6 +19,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -254,7 +255,7 @@ class Localization with Service implements NotificationsListener {
     Map<String, dynamic>? jsonData;
     try {
       String assetName = getNetworkAssetName(language);
-      http.Response? response = StringUtils.isNotEmpty(Config().assetsUrl) ? await Network().get("${Config().assetsUrl}/$assetName") : null;
+      http.Response? response = StringUtils.isNotEmpty(Config().assetsUrl) ? await Network().get("${Config().assetsUrl}/$assetName", auth: Auth2()) : null;
       String? jsonString = ((response != null) && (response.statusCode == 200)) ? response.body : null;
       jsonData = (jsonString != null) ? JsonUtils.decode(jsonString) : null;
       if ((jsonString != null) && (jsonData != null) && ((cache == null) || !const DeepCollectionEquality().equals(jsonData, cache))) {

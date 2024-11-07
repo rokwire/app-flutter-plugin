@@ -210,12 +210,47 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Map<String, String>? get networkAuthHeaders {
+    Map<String, String>? headers;
+    if (kIsWeb) {
+      headers = {};
+      String cookieName = WebUtils.csrfTokenHeaderName;
+      if (Config().authBaseUrl?.contains("localhost") == false) {
+        cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
+      }
+
+      String cookieValue = WebUtils.getCookie(cookieName);
+      if (cookieValue.isNotEmpty) {
+        headers[WebUtils.csrfTokenHeaderName] = cookieValue;
+      }
+    }
     String? accessToken = token?.accessToken;
     if ((accessToken != null) && accessToken.isNotEmpty) {
+      if (headers == null) {
+        headers = {};
+      }
       String? tokenType = token?.tokenType ?? 'Bearer';
-      return { HttpHeaders.authorizationHeader : "$tokenType $accessToken" };
+      headers[HttpHeaders.authorizationHeader] = "$tokenType $accessToken";
     }
-    return null;
+    return headers;
+  }
+
+  Map<String, String> get webNetworkRefreshAuthHeaders {
+    String cookieName = WebUtils.refreshTokenHeaderName;
+    if (Config().authBaseUrl?.contains("localhost") == false) {
+      cookieName = '__Host-' + cookieName;
+    }
+
+    Map<String, String> headers = {};
+    String cookieValue = WebUtils.getCookie(cookieName);
+    if (cookieValue.isNotEmpty) {
+      headers[WebUtils.refreshTokenHeaderName] = cookieValue;
+    }
+
+    if (StringUtils.isNotEmpty(token?.accessToken)) {
+      String tokenType = token!.tokenType ?? 'Bearer';
+      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+    }
+    return headers;
   }
 
   @override
@@ -335,7 +370,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return false;
       }
       
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       if (responseJson != null) {
         Auth2Token? anonymousToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
@@ -432,7 +467,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
       _oidcLogin = null;
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       Log.d("Login: ${response?.statusCode}, ${response?.body}", lineLength: 512);
       Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
       bool result = await processLoginResponse(responseJson, scope: _oidcScope);
@@ -502,7 +537,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       } else {
         return null;
       }
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
     }
     return null;
@@ -573,7 +608,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PhoneRequestCodeResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         return Auth2PhoneRequestCodeResult.succeeded;
       }
@@ -607,7 +642,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2PhoneSendCodeResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(phoneLoginType, result);
@@ -652,7 +687,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailSignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(emailLoginType, result);
@@ -702,7 +737,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailSignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         return Auth2EmailSignUpResult.succeeded;
       }
@@ -730,7 +765,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         //TBD: handle Auth2EmailAccountState.unverified
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2EmailAccountState.verified : Auth2EmailAccountState.nonExistent;
@@ -757,7 +792,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2EmailForgotPasswordResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         return Auth2EmailForgotPasswordResult.succeeded;
       }
@@ -792,7 +827,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return false;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       return (response?.statusCode == 200);
     }
     return false;
@@ -829,7 +864,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2UsernameSignInResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(usernameLoginType, result);
@@ -875,7 +910,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return Auth2UsernameSignUpResult.failed;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
         _notifyLogin(usernameLoginType, result);
@@ -905,7 +940,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         //TBD: handle Auth2EmailAccountState.unverified
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))! ? Auth2UsernameAccountState.exists : Auth2UsernameAccountState.nonExistent;
@@ -942,7 +977,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }
@@ -967,7 +1002,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         return null;
       }
 
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
+      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2());
       if (response?.statusCode == 200) {
         return JsonUtils.boolValue(JsonUtils.decode(response?.body))!;
       }
@@ -1069,7 +1104,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         String? body = JsonUtils.encode({
           'all_sessions': false,
         });
-        Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf(token: token));
+        Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2());
       }
 
       Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
@@ -1111,7 +1146,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<bool> _deleteUserAccount() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account";
-      Response? response = await Network().delete(url, auth: kIsWeb ? Auth2Csrf(token: _token) : Auth2());
+      Response? response = await Network().delete(url, auth: Auth2());
       return response?.statusCode == 200;
     }
     return false;
@@ -1203,7 +1238,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       String? post;
       if (kIsWeb) {
-        headers.addAll(Auth2Csrf().networkRefreshAuthHeaders);
+        headers.addAll(Auth2().webNetworkRefreshAuthHeaders);
       } else {
         if (refreshToken == null) {
           return null;
@@ -1214,7 +1249,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         });
       }
 
-      return Network().post(url, headers: headers, body: post, auth: Auth2Csrf());
+      return Network().post(url, headers: headers, body: post, auth: Auth2());
     }
     return null;
   }
@@ -1382,7 +1417,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<Response?> loadAccountResponse() async {
     return ((Config().coreUrl != null) && (_token?.accessToken != null)) ?
-      Network().get("${Config().coreUrl}/services/account", auth: Auth2Csrf(token: _token)) : null;
+      Network().get("${Config().coreUrl}/services/account", auth: Auth2()) : null;
   }
 
   Future<Auth2Account?> _loadAccount() async {
@@ -1484,65 +1519,6 @@ class _OidcLogin {
       'login_url' : loginUrl,
       'params': params
     };
-  }
-}
-
-class Auth2Csrf with NetworkAuthProvider {
-  Auth2Token? token;
-
-  Auth2Csrf({this.token});
-
-  static const String _csrfTokenName = 'rokwire-csrf-token';
-  static const String _refreshTokenName = 'rokwire-refresh-token';
-
-  @override
-  Map<String, String>? get networkAuthHeaders {
-    String cookieName = _csrfTokenName;
-    if (Config().authBaseUrl?.contains("localhost") == false) {
-      cookieName = '__Host-' + cookieName;
-    }
-
-    Map<String, String> headers = {};
-    String cookieValue = WebUtils.getCookie(cookieName);
-    if (cookieValue.isNotEmpty) {
-      headers[_csrfTokenName] = cookieValue;
-    }
-
-    if (StringUtils.isNotEmpty(token?.accessToken)) {
-      String tokenType = token!.tokenType ?? 'Bearer';
-      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
-    }
-    return headers;
-  }
-
-  @override
-  dynamic get networkAuthToken => token;
-
-  @override
-  Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    if ((response?.statusCode == 401) && (token is Auth2Token) && (Auth2().token == token)) {
-      return (await Auth2().refreshToken(token: token) != null);
-    }
-    return false;
-  }
-
-  Map<String, String> get networkRefreshAuthHeaders {
-    String cookieName = _csrfTokenName;
-    if (Config().authBaseUrl?.contains("localhost") == false) {
-      cookieName = '__Host-' + cookieName;
-    }
-
-    Map<String, String> headers = {};
-    String cookieValue = WebUtils.getCookie(cookieName);
-    if (cookieValue.isNotEmpty) {
-      headers[_refreshTokenName] = cookieValue;
-    }
-
-    if (StringUtils.isNotEmpty(token?.accessToken)) {
-      String tokenType = token!.tokenType ?? 'Bearer';
-      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
-    }
-    return headers;
   }
 }
 

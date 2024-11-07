@@ -20,7 +20,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_livecycle.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -142,11 +141,25 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @override
   Map<String, String>? get networkAuthHeaders {
-    String? value = rokwireApiKey;
-    if ((value != null) && value.isNotEmpty) {
-      return { _rokwireApiKey : value };
+    if (kIsWeb) {
+      String cookieName = WebUtils.csrfTokenHeaderName;
+      if (Config().authBaseUrl?.contains("localhost") == false) {
+        cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
+      }
+
+      Map<String, String> headers = {};
+      String cookieValue = WebUtils.getCookie(cookieName);
+      if (cookieValue.isNotEmpty) {
+        headers[WebUtils.csrfTokenHeaderName] = cookieValue;
+      }
+      return headers;
+    } else {
+      String? value = rokwireApiKey;
+      if ((value != null) && value.isNotEmpty) {
+        return {_rokwireApiKey: value};
+      }
+      return null;
     }
-    return null;
   }
 
   // Implementation
@@ -198,7 +211,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   Future<String?> loadAsStringFromAppConfig() async {
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: kIsWeb ? Auth2Csrf(): this);
+      http.Response? response = await Network().get(appConfigUrl, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -219,7 +232,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
 
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: Auth2Csrf());
+      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());

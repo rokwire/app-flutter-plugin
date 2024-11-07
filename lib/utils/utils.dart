@@ -1533,6 +1533,11 @@ extension UriUtilsExt on Uri {
 }
 
 class WebUtils {
+
+  static const String csrfPrefixTokenHeaderName = '__Host-';
+  static const String csrfTokenHeaderName = 'rokwire-csrf-token';
+  static const String refreshTokenHeaderName = 'rokwire-refresh-token';
+
   static String getCookie(String name) {
     String? cookie = html.document.cookie;
     if (StringUtils.isNotEmpty(cookie)) {
