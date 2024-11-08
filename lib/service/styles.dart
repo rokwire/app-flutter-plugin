@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -218,7 +219,7 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<String?> loadContentStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().assetsUrl)) {
-      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
+      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName", auth: Auth2());
       return (response?.statusCode == 200) ? response?.body : null;
     }
     return null;
