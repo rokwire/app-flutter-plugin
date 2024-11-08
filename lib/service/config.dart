@@ -210,8 +210,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   Future<String?> loadAsStringFromAppConfig() async {
+    String? configUrl = kIsWeb ? '$appConfigUrl?version=$appVersion' : appConfigUrl;
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: this);
+      http.Response? response = await Network().get(configUrl, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -242,6 +243,14 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<Map<String, dynamic>?> configFromJsonString(String? configJsonString) async {
+    return kIsWeb ? _configFromJsonMapString(configJsonString) : await _configFromJsonListString(configJsonString);
+  }
+
+  Map<String, dynamic>? _configFromJsonMapString(String? configJsonString) {
+    return JsonUtils.decodeMap(configJsonString);
+  }
+
+  Future<Map<String, dynamic>?> _configFromJsonListString(String? configJsonString) async {
     List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
       
@@ -406,7 +415,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-configs" : null);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-config" : null);
   } 
   
   String? get rokwireApiKey          {
