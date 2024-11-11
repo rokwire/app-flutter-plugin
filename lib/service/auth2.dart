@@ -212,16 +212,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Map<String, String>? get networkAuthHeaders {
     Map<String, String>? headers;
     if (kIsWeb) {
-      headers = {};
-      String cookieName = WebUtils.csrfTokenHeaderName;
-      if (Config().authBaseUrl?.contains("localhost") == false) {
-        cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
-      }
-
-      String cookieValue = WebUtils.getCookie(cookieName);
-      if (cookieValue.isNotEmpty) {
-        headers[WebUtils.csrfTokenHeaderName] = cookieValue;
-      }
+      headers = webNetworkAuthHeaders;
     }
     String? accessToken = token?.accessToken;
     if ((accessToken != null) && accessToken.isNotEmpty) {
@@ -249,6 +240,23 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (StringUtils.isNotEmpty(token?.accessToken)) {
       String tokenType = token!.tokenType ?? 'Bearer';
       headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
+    }
+    return headers;
+  }
+
+  Map<String, String>? get webNetworkAuthHeaders {
+    Map<String, String>? headers;
+    if (kIsWeb) {
+      headers = {};
+      String cookieName = WebUtils.csrfTokenHeaderName;
+      if (Config().authBaseUrl?.contains("localhost") == false) {
+        cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
+      }
+
+      String cookieValue = WebUtils.getCookie(cookieName);
+      if (cookieValue.isNotEmpty) {
+        headers[WebUtils.csrfTokenHeaderName] = cookieValue;
+      }
     }
     return headers;
   }

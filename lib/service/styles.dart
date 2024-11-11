@@ -219,7 +219,7 @@ class Styles extends Service implements NotificationsListener{
   @protected
   Future<String?> loadContentStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().assetsUrl)) {
-      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName", auth: Auth2());
+      http.Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName", headers: Auth2().webNetworkAuthHeaders);
       return (response?.statusCode == 200) ? response?.body : null;
     }
     return null;
