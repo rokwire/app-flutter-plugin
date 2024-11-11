@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+### Changed
+- Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+
+## [1.7.4] - 2024-11-07
+### Fixed
+- Fixed possible unhandled exception when parsing URLs.
 
 ## [1.7.3] - 2024-10-23
 ### Changed

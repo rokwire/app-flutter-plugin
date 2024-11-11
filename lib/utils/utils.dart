@@ -555,13 +555,13 @@ class AppVersion {
 class UrlUtils {  
 
   static bool isPdf(String? url) {
-    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
     return (ext == '.pdf');
   }
 
   static bool isWebScheme(String? url) {
-    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
