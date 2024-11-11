@@ -237,7 +237,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Map<String, String> get webNetworkRefreshAuthHeaders {
     String cookieName = WebUtils.refreshTokenHeaderName;
     if (Config().authBaseUrl?.contains("localhost") == false) {
-      cookieName = '__Host-' + cookieName;
+      cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
     }
 
     Map<String, String> headers = {};
