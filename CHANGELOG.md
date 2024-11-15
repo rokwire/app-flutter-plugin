@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+- Added getTextStyleEx to UiTextStyles.
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
