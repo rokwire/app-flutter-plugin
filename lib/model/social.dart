@@ -207,12 +207,12 @@ class SocialContext {
 
   Map<String, dynamic> toJson() => {'items': SocialContextItem.listToJson(items)};
 
-  bool get isGroupEvent =>
-      (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == SocialContextItemName.group_member)) != null));
+  bool get isGroupPost =>
+      (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == SocialContextItemName.groups_bb_group)) != null));
 
   Set<String>? get groupIds {
     Set<String>? groupIds;
-    if (isGroupEvent) {
+    if (isGroupPost) {
       groupIds = <String>{};
       for (SocialContextItem item in items!) {
         if ((item.name == SocialContextItemName.groups_bb_group) && StringUtils.isNotEmpty(item.identifier)) {
