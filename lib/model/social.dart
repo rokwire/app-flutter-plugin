@@ -182,6 +182,8 @@ class AuthorizationContext {
   int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
 }
 
+enum PostType { post, direct_message }
+
 class SocialContext {
   List<ContextItem>? items;
 
@@ -194,13 +196,15 @@ class SocialContext {
     return SocialContext(items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  factory SocialContext.fromIdentifiers({List<String>? identifiers}) {
-    List<ContextItem>? items;
-    if (identifiers != null) {
-      items = <ContextItem>[];
-      for (String identifier in identifiers) {
-        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: identifier));
-      }
+  static SocialContext? fromIdentifier(String? identifier) => (identifier != null) ? SocialContext.fromIdentifiers([identifier]) : null;
+
+  static SocialContext? fromIdentifiers(List<String>? identifiers) {
+    if (CollectionUtils.isEmpty(identifiers)) {
+      return null;
+    }
+    List<ContextItem>? items = <ContextItem>[];
+    for (String identifier in identifiers!) {
+      items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: identifier));
     }
     return SocialContext(items: items);
   }

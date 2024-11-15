@@ -136,9 +136,13 @@ class Social with Service implements NotificationsListener {
     }
   }
 
+  //TBD: DD - implement with type and authorizationContext
+  // Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly})
+
   Future<List<Post>?> loadPosts(
-      {AuthorizationContext? authorizationContext,
-      Set<String>? ids,
+      {String? groupId,
+      PostType? type,
+      Set<String>? postIds,
       PostStatus? status,
       int limit = 0,
       int offset = 0,
@@ -155,11 +159,12 @@ class Social with Service implements NotificationsListener {
       'order': _sortOrderToString(order),
       'sort_by': _sortByToString(sortBy)
     };
-    if (CollectionUtils.isNotEmpty(ids)) {
-      requestBody['ids'] = ids;
+    if (CollectionUtils.isNotEmpty(postIds)) {
+      requestBody['ids'] = postIds;
     }
-    if (authorizationContext != null) {
-      requestBody['authorization_context'] = authorizationContext.toJson();
+    if (groupId != null) {
+      SocialContext? context = SocialContext.fromIdentifier(groupId);
+      requestBody['context'] = context?.toJson();
     }
     if (status != null) {
       requestBody['status'] = postStatusToString(status);
