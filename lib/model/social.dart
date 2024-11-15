@@ -17,13 +17,13 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class SocialPost {
+class Post {
   static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
 
   final String? id;
   final PostStatus? status;
 
-  final SocialAuthorizationContext? authorizationContext;
+  final AuthorizationContext? authorizationContext;
   final SocialContext? context;
 
   final String? body;
@@ -36,7 +36,7 @@ class SocialPost {
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
 
-  SocialPost(
+  Post(
       {this.id,
       this.status,
       this.authorizationContext,
@@ -49,15 +49,15 @@ class SocialPost {
       this.dateCreatedUtc,
       this.dateUpdatedUtc});
 
-  static SocialPost? fromJson(Map<String, dynamic>? json) {
+  static Post? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
 
-    return SocialPost(
+    return Post(
       id: JsonUtils.stringValue(json['id']),
       status: postStatusFromString(JsonUtils.stringValue(json['status'])),
-      authorizationContext: SocialAuthorizationContext.fromJson(JsonUtils.mapValue(json['authorization_context'])),
+      authorizationContext: AuthorizationContext.fromJson(JsonUtils.mapValue(json['authorization_context'])),
       context: SocialContext.fromJson(JsonUtils.mapValue(json['context'])),
       body: JsonUtils.stringValue(json['body']),
       subject: JsonUtils.stringValue(json['subject']),
@@ -83,7 +83,7 @@ class SocialPost {
 
   @override
   bool operator ==(other) =>
-      (other is SocialPost) &&
+      (other is Post) &&
       (other.id == id) &&
       (other.status == status) &&
       (other.authorizationContext == authorizationContext) &&
@@ -110,22 +110,22 @@ class SocialPost {
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
 
-  static List<SocialPost>? listFromJson(List<dynamic>? jsonList) {
-    List<SocialPost>? items;
+  static List<Post>? listFromJson(List<dynamic>? jsonList) {
+    List<Post>? items;
     if (jsonList != null) {
-      items = <SocialPost>[];
+      items = <Post>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(items, SocialPost.fromJson(jsonEntry));
+        ListUtils.add(items, Post.fromJson(jsonEntry));
       }
     }
     return items;
   }
 
-  static List<dynamic>? listToJson(List<SocialPost>? values) {
+  static List<dynamic>? listToJson(List<Post>? values) {
     List<dynamic>? json;
     if (values != null) {
       json = <dynamic>[];
-      for (SocialPost? value in values) {
+      for (Post? value in values) {
         ListUtils.add(json, value?.toJson());
       }
     }
@@ -133,57 +133,57 @@ class SocialPost {
   }
 }
 
-class SocialAuthorizationContext {
-  SocialAuthorizationContextStatus? status;
-  List<SocialContextItem>? items;
+class AuthorizationContext {
+  AuthorizationContextStatus? status;
+  List<ContextItem>? items;
 
-  SocialAuthorizationContext({this.status, this.items});
+  AuthorizationContext({this.status, this.items});
 
-  static SocialAuthorizationContext? fromJson(Map<String, dynamic>? json) {
+  static AuthorizationContext? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
-    return SocialAuthorizationContext(
-        status: socialAuthorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
-        items: SocialContextItem.listFromJson(JsonUtils.listValue(json['items'])));
+    return AuthorizationContext(
+        status: authorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
+        items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  factory SocialAuthorizationContext.none() => SocialAuthorizationContext(status: SocialAuthorizationContextStatus.none);
+  factory AuthorizationContext.none() => AuthorizationContext(status: AuthorizationContextStatus.none);
 
-  factory SocialAuthorizationContext.group({List<String>? groupIds}) {
-    List<SocialContextItem>? items;
+  factory AuthorizationContext.group({List<String>? groupIds}) {
+    List<ContextItem>? items;
     if (groupIds != null) {
-      items = <SocialContextItem>[];
+      items = <ContextItem>[];
       for (String groupId in groupIds) {
-        items.add(SocialContextItem(name: SocialContextItemName.groups_bb_group, identifier: groupId));
+        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId));
       }
     }
-    return SocialAuthorizationContext(status: SocialAuthorizationContextStatus.active, items: items);
+    return AuthorizationContext(status: AuthorizationContextStatus.active, items: items);
   }
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    JsonUtils.addNonNullValue(json: json, key: 'authorization_status', value: socialAuthorizationContextStatusToString(status));
-    JsonUtils.addNonNullValue(json: json, key: 'items', value: SocialContextItem.listToJson(items));
+    JsonUtils.addNonNullValue(json: json, key: 'authorization_status', value: authorizationContextStatusToString(status));
+    JsonUtils.addNonNullValue(json: json, key: 'items', value: ContextItem.listToJson(items));
     return json;
   }
 
-  bool get isPublic => ((status == null) || status == SocialAuthorizationContextStatus.none);
+  bool get isPublic => ((status == null) || status == AuthorizationContextStatus.none);
 
-  bool get isGroupMembersOnly => ((status == SocialAuthorizationContextStatus.active) &&
+  bool get isGroupPost => ((status == AuthorizationContextStatus.active) &&
       CollectionUtils.isNotEmpty(items) &&
-      (items!.firstWhereOrNull((item) => (item.name == SocialContextItemName.groups_bb_group)) != null));
+      (items!.firstWhereOrNull((item) => (item.name == ContextItemName.groups_bb_group)) != null));
 
   @override
   bool operator ==(other) =>
-      (other is SocialAuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
+      (other is AuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
 
   @override
   int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
 }
 
 class SocialContext {
-  List<SocialContextItem>? items;
+  List<ContextItem>? items;
 
   SocialContext({this.items});
 
@@ -191,31 +191,31 @@ class SocialContext {
     if (json == null) {
       return null;
     }
-    return SocialContext(items: SocialContextItem.listFromJson(JsonUtils.listValue(json['items'])));
+    return SocialContext(items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
   factory SocialContext.fromIdentifiers({List<String>? identifiers}) {
-    List<SocialContextItem>? items;
+    List<ContextItem>? items;
     if (identifiers != null) {
-      items = <SocialContextItem>[];
+      items = <ContextItem>[];
       for (String identifier in identifiers) {
-        items.add(SocialContextItem(name: SocialContextItemName.groups_bb_group, identifier: identifier));
+        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: identifier));
       }
     }
     return SocialContext(items: items);
   }
 
-  Map<String, dynamic> toJson() => {'items': SocialContextItem.listToJson(items)};
+  Map<String, dynamic> toJson() => {'items': ContextItem.listToJson(items)};
 
   bool get isGroupPost =>
-      (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == SocialContextItemName.groups_bb_group)) != null));
+      (CollectionUtils.isNotEmpty(items) && (items!.firstWhereOrNull((item) => (item.name == ContextItemName.groups_bb_group)) != null));
 
   Set<String>? get groupIds {
     Set<String>? groupIds;
     if (isGroupPost) {
       groupIds = <String>{};
-      for (SocialContextItem item in items!) {
-        if ((item.name == SocialContextItemName.groups_bb_group) && StringUtils.isNotEmpty(item.identifier)) {
+      for (ContextItem item in items!) {
+        if ((item.name == ContextItemName.groups_bb_group) && StringUtils.isNotEmpty(item.identifier)) {
           groupIds.add(item.identifier!);
         }
       }
@@ -230,49 +230,49 @@ class SocialContext {
   int get hashCode => (const DeepCollectionEquality().hash(items));
 }
 
-class SocialContextItem {
-  final SocialContextItemName? name;
-  final SocialContextItemMembers? members;
+class ContextItem {
+  final ContextItemName? name;
+  final ContextItemMembers? members;
   final String? identifier;
 
-  SocialContextItem({this.name, this.members, this.identifier});
+  ContextItem({this.name, this.members, this.identifier});
 
-  static SocialContextItem? fromJson(Map<String, dynamic>? json) {
+  static ContextItem? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
-    return SocialContextItem(
-        name: socialContextItemNameFromString(JsonUtils.stringValue(json['name'])),
-        members: SocialContextItemMembers.fromJson(JsonUtils.mapValue(json['members'])),
+    return ContextItem(
+        name: contextItemNameFromString(JsonUtils.stringValue(json['name'])),
+        members: ContextItemMembers.fromJson(JsonUtils.mapValue(json['members'])),
         identifier: JsonUtils.stringValue(json['identifier']));
   }
 
   Map<String, dynamic> toJson() =>
-      {'name': socialContextItemNameToString(name), 'members': members?.toJson(), 'identifier': StringUtils.ensureNotEmpty(identifier)};
+      {'name': contextItemNameToString(name), 'members': members?.toJson(), 'identifier': StringUtils.ensureNotEmpty(identifier)};
 
   @override
   bool operator ==(other) =>
-      (other is SocialContextItem) && (other.name == name) && (other.members == members) && (other.identifier == identifier);
+      (other is ContextItem) && (other.name == name) && (other.members == members) && (other.identifier == identifier);
 
   @override
   int get hashCode => (name?.hashCode ?? 0) ^ (members?.hashCode ?? 0) ^ (identifier?.hashCode ?? 0);
 
-  static List<SocialContextItem>? listFromJson(List<dynamic>? jsonList) {
-    List<SocialContextItem>? result;
+  static List<ContextItem>? listFromJson(List<dynamic>? jsonList) {
+    List<ContextItem>? result;
     if (jsonList != null) {
-      result = <SocialContextItem>[];
+      result = <ContextItem>[];
       for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(result, SocialContextItem.fromJson(JsonUtils.mapValue(jsonEntry)));
+        ListUtils.add(result, ContextItem.fromJson(JsonUtils.mapValue(jsonEntry)));
       }
     }
     return result;
   }
 
-  static List<dynamic>? listToJson(List<SocialContextItem>? contentList) {
+  static List<dynamic>? listToJson(List<ContextItem>? contentList) {
     List<dynamic>? jsonList;
     if (contentList != null) {
       jsonList = <dynamic>[];
-      for (SocialContextItem contentEntry in contentList) {
+      for (ContextItem contentEntry in contentList) {
         ListUtils.add(jsonList, contentEntry.toJson());
       }
     }
@@ -280,98 +280,98 @@ class SocialContextItem {
   }
 }
 
-class SocialContextItemMembers {
-  SocialContextItemMembersType? type;
+class ContextItemMembers {
+  ContextItemMembersType? type;
   List<String>? members;
 
-  SocialContextItemMembers({this.type, this.members});
+  ContextItemMembers({this.type, this.members});
 
-  static SocialContextItemMembers? fromJson(Map<String, dynamic>? json) {
+  static ContextItemMembers? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
-    return SocialContextItemMembers(
-        type: socialContextItemMembersTypeFromString(JsonUtils.stringValue(json['type'])),
+    return ContextItemMembers(
+        type: contextItemMembersTypeFromString(JsonUtils.stringValue(json['type'])),
         members: JsonUtils.stringListValue(json['members']));
   }
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
-    JsonUtils.addNonNullValue(json: json, key: 'type', value: socialContextItemMembersTypeToString(type));
+    JsonUtils.addNonNullValue(json: json, key: 'type', value: contextItemMembersTypeToString(type));
     JsonUtils.addNonNullValue(json: json, key: 'members', value: members);
     return json;
   }
 
   @override
   bool operator ==(other) =>
-      (other is SocialContextItemMembers) && (other.type == type) && const DeepCollectionEquality().equals(other.members, members);
+      (other is ContextItemMembers) && (other.type == type) && const DeepCollectionEquality().equals(other.members, members);
 
   @override
   int get hashCode => (type?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(members));
 }
 
-enum SocialContextItemMembersType { all, listed_accounts }
+enum ContextItemMembersType { all, listed_accounts }
 
-SocialContextItemMembersType? socialContextItemMembersTypeFromString(String? value) {
+ContextItemMembersType? contextItemMembersTypeFromString(String? value) {
   switch (value) {
     case 'all':
-      return SocialContextItemMembersType.all;
+      return ContextItemMembersType.all;
     case 'listed-accounts':
-      return SocialContextItemMembersType.listed_accounts;
+      return ContextItemMembersType.listed_accounts;
     default:
       return null;
   }
 }
 
-String? socialContextItemMembersTypeToString(SocialContextItemMembersType? type) {
+String? contextItemMembersTypeToString(ContextItemMembersType? type) {
   switch (type) {
-    case SocialContextItemMembersType.all:
+    case ContextItemMembersType.all:
       return 'all';
-    case SocialContextItemMembersType.listed_accounts:
+    case ContextItemMembersType.listed_accounts:
       return 'listed-accounts';
     default:
       return null;
   }
 }
 
-enum SocialAuthorizationContextStatus { active, none }
+enum AuthorizationContextStatus { active, none }
 
-SocialAuthorizationContextStatus? socialAuthorizationContextStatusFromString(String? value) {
+AuthorizationContextStatus? authorizationContextStatusFromString(String? value) {
   switch (value) {
     case 'NONE':
-      return SocialAuthorizationContextStatus.none;
+      return AuthorizationContextStatus.none;
     case 'ACTIVE':
-      return SocialAuthorizationContextStatus.active;
+      return AuthorizationContextStatus.active;
     default:
       return null;
   }
 }
 
-String? socialAuthorizationContextStatusToString(SocialAuthorizationContextStatus? value) {
+String? authorizationContextStatusToString(AuthorizationContextStatus? value) {
   switch (value) {
-    case SocialAuthorizationContextStatus.none:
+    case AuthorizationContextStatus.none:
       return 'NONE';
-    case SocialAuthorizationContextStatus.active:
+    case AuthorizationContextStatus.active:
       return 'ACTIVE';
     default:
       return null;
   }
 }
 
-enum SocialContextItemName { groups_bb_group }
+enum ContextItemName { groups_bb_group }
 
-SocialContextItemName? socialContextItemNameFromString(String? value) {
+ContextItemName? contextItemNameFromString(String? value) {
   switch (value) {
     case 'groups-bb_group':
-      return SocialContextItemName.groups_bb_group;
+      return ContextItemName.groups_bb_group;
     default:
       return null;
   }
 }
 
-String? socialContextItemNameToString(SocialContextItemName? value) {
+String? contextItemNameToString(ContextItemName? value) {
   switch (value) {
-    case SocialContextItemName.groups_bb_group:
+    case ContextItemName.groups_bb_group:
       return 'groups-bb_group';
     default:
       return null;

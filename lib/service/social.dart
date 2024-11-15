@@ -67,7 +67,7 @@ class Social with Service implements NotificationsListener {
 
   // APIs
 
-  Future<bool> createPost({required SocialPost post}) async {
+  Future<bool> createPost({required Post post}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create social post. Reason: missing social url.');
@@ -78,7 +78,7 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      SocialPost? result = SocialPost.fromJson(JsonUtils.decodeMap(responseBody));
+      Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostCreated, result);
       return true;
     } else {
@@ -87,7 +87,7 @@ class Social with Service implements NotificationsListener {
     }
   }
 
-  Future<bool> updatePost({required SocialPost post}) async {
+  Future<bool> updatePost({required Post post}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to update social post. Reason: missing social url.');
@@ -103,7 +103,7 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      SocialPost? result = SocialPost.fromJson(JsonUtils.decodeMap(responseBody));
+      Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostUpdated, result);
       return true;
     } else {
@@ -112,7 +112,7 @@ class Social with Service implements NotificationsListener {
     }
   }
 
-  Future<bool> deletePost({required SocialPost post}) async {
+  Future<bool> deletePost({required Post post}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to delete social post. Reason: missing social url.');
@@ -127,7 +127,7 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      SocialPost? result = SocialPost.fromJson(JsonUtils.decodeMap(responseBody));
+      Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostDeleted, result);
       return true;
     } else {
@@ -136,8 +136,8 @@ class Social with Service implements NotificationsListener {
     }
   }
 
-  Future<List<SocialPost>?> loadPosts(
-      {SocialAuthorizationContext? authorizationContext,
+  Future<List<Post>?> loadPosts(
+      {AuthorizationContext? authorizationContext,
       Set<String>? ids,
       PostStatus? status,
       int limit = 0,
@@ -168,7 +168,7 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      List<SocialPost>? posts = SocialPost.listFromJson(JsonUtils.decodeList(responseBody));
+      List<Post>? posts = Post.listFromJson(JsonUtils.decodeList(responseBody));
       return posts;
     } else {
       Log.e('Failed to load social posts. Reason: $responseCode, $responseBody');
