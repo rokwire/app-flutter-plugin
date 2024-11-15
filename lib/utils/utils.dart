@@ -668,13 +668,13 @@ class UrlUtils {
     }
   }
 
-  static String? fixUrl(String url) {
+  static String? fixUrl(String url, {String scheme = 'http'}) {
     Uri? uri = parseUri(url);
-    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    Uri? fixedUri = (uri != null) ? fixUri(uri, scheme: scheme) : null;
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? buildUri(uri, scheme: 'http') : null;
+  static Uri? fixUri(Uri uri, {String scheme = 'http'}) => uri.scheme.isEmpty ? buildUri(uri, scheme: scheme) : null;
 
   static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
     if (uri.scheme.isEmpty) {
