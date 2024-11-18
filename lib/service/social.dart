@@ -148,7 +148,7 @@ class Social with Service implements NotificationsListener {
       PostStatus status = PostStatus.active,
       int limit = 0,
       int offset = 0,
-      PostSortOrder? order,
+      PostSortOrder order = PostSortOrder.desc,
       PostSortBy? sortBy}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
