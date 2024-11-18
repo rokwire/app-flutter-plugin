@@ -173,7 +173,8 @@ class Social with Service implements NotificationsListener {
       List<String>? groupIds = (groupId != null) ? [groupId] : null;
       requestBody['authorization_context'] = AuthorizationContext.fromPostType(type: type, groupIds: groupIds);
     }
-    Response? response = await Network().post('$socialUrl/posts/load', body: JsonUtils.encode(requestBody), auth: Auth2());
+    String? encodedBody = JsonUtils.encode(requestBody);
+    Response? response = await Network().post('$socialUrl/posts/load', body: encodedBody, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
@@ -212,20 +213,16 @@ class Social with Service implements NotificationsListener {
 
   String _sortByToString(PostSortBy? sortBy) {
     switch (sortBy) {
-      case PostSortBy.start_time:
-        return 'start_time';
-      case PostSortBy.end_time:
-        return 'end_time';
-      case PostSortBy.name:
-        return 'name';
-      case PostSortBy.proximity:
-        return 'proximity';
+      case PostSortBy.date_created:
+        return 'date_created';
+      case PostSortBy.activation_date:
+        return 'activation_date';
       default:
-        return 'start_time';
+        return 'date_created';
     }
   }
 }
 
 enum PostSortOrder { asc, desc }
 
-enum PostSortBy { start_time, end_time, name, proximity }
+enum PostSortBy { date_created, activation_date }
