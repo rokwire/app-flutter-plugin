@@ -55,10 +55,11 @@ class Groups with Service implements NotificationsListener {
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
   static const String notifyGroupUpdated              = "edu.illinois.rokwire.group.updated";
   static const String notifyGroupDeleted              = "edu.illinois.rokwire.group.deleted";
-  static const String notifyGroupPostCreated          = "edu.illinois.rokwire.group.post.created";
-  static const String notifyGroupPostUpdated          = "edu.illinois.rokwire.group.post.updated";
-  static const String notifyGroupPostDeleted          = "edu.illinois.rokwire.group.post.deleted";
-  static const String notifyGroupPostsUpdated         = "edu.illinois.rokwire.group.posts.updated";
+  //TBD: DDGS - remove after Social BB is integrated
+  // static const String notifyGroupPostCreated          = "edu.illinois.rokwire.group.post.created";
+  // static const String notifyGroupPostUpdated          = "edu.illinois.rokwire.group.post.updated";
+  // static const String notifyGroupPostDeleted          = "edu.illinois.rokwire.group.post.deleted";
+  // static const String notifyGroupPostsUpdated         = "edu.illinois.rokwire.group.posts.updated";
   static const String notifyGroupPostReactionsUpdated = "edu.illinois.rokwire.group.post.reactions.updated";
   static const String notifyGroupDetail               = "edu.illinois.rokwire.group.detail";
 
@@ -1192,8 +1193,9 @@ class Groups with Service implements NotificationsListener {
       Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
       GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       if (responsePost != null) {
-        NotificationService().notify(notifyGroupPostCreated, responsePost);
-        NotificationService().notify(notifyGroupPostsUpdated);
+        //TBD: DDGS - implement - use Social
+        // NotificationService().notify(notifyGroupPostCreated, responsePost);
+        // NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to create group post. Response: ${response?.body}');
@@ -1210,8 +1212,9 @@ class Groups with Service implements NotificationsListener {
       Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
       GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       if (responsePost != null) {
-        NotificationService().notify(notifyGroupPostUpdated, responsePost);
-        NotificationService().notify(notifyGroupPostsUpdated);
+        //TBD: DDGS - implement - use Social
+        // NotificationService().notify(notifyGroupPostUpdated, responsePost);
+        // NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to update group post. Response: ${response?.body}');
@@ -1226,8 +1229,9 @@ class Groups with Service implements NotificationsListener {
       String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
       Response? response = await Network().delete(requestUrl, auth: Auth2());
       if (response?.statusCode == 200) {
-        NotificationService().notify(notifyGroupPostDeleted, post);
-        NotificationService().notify(notifyGroupPostsUpdated);
+        //TBD: DDGS - implement - use Social
+        // NotificationService().notify(notifyGroupPostDeleted, post);
+        // NotificationService().notify(notifyGroupPostsUpdated);
         return true;
       } else {
         Log.e('Failed to delete group post. Response: ${response?.body}');
@@ -1236,63 +1240,64 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
-  Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly}) async {
-    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
-      String urlParams = "";
-      if (type != null) {
-        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "type=${groupPostTypeToString(type)}";
-      }
-      if (offset != null) {
-        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "offset=$offset";
-      }
-      if (limit != null) {
-        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "limit=$limit";
-      }
-      if (order != null) {
-        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "order=${groupSortOrderToString(order)}";
-      }
-      if (scheduledOnly != null) {
-        urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
-        urlParams += "scheduled_only=$scheduledOnly";
-      }
-      
-      await _ensureLogin();
-      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts$urlParams';
-      Response? response = await Network().get(requestUrl, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseString = response?.body;
-      if (responseCode == 200) {
-        List<GroupPost>? posts = GroupPost.fromJsonList(JsonUtils.decodeList(responseString));
-        return posts;
-      } else {
-        Log.e('Failed to retrieve group posts. Response: ${response?.body}');
-      }
-    }
-    return null;
-  }
-
-  Future<GroupPost?> loadGroupPost({required String? groupId, required String? postId}) async {
-    if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(postId)) {
-      return null;
-    }
-
-    await _ensureLogin();
-    String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId';
-    Response? response = await Network().get(requestUrl, auth: Auth2());
-    int responseCode = response?.statusCode ?? -1;
-    String? responseString = response?.body;
-    if (responseCode == 200) {
-      GroupPost? post = GroupPost.fromJson(JsonUtils.decodeMap(responseString));
-      return post;
-    } else {
-      Log.e('Failed to retrieve group post for id $postId. Response: ${response?.body}');
-      return null;
-    }
-  }
+  //TBD: DDGS - remove after Social BB is integrated
+  // Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly}) async {
+  //   if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
+  //     String urlParams = "";
+  //     if (type != null) {
+  //       urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+  //       urlParams += "type=${groupPostTypeToString(type)}";
+  //     }
+  //     if (offset != null) {
+  //       urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+  //       urlParams += "offset=$offset";
+  //     }
+  //     if (limit != null) {
+  //       urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+  //       urlParams += "limit=$limit";
+  //     }
+  //     if (order != null) {
+  //       urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+  //       urlParams += "order=${groupSortOrderToString(order)}";
+  //     }
+  //     if (scheduledOnly != null) {
+  //       urlParams = urlParams.isEmpty ? "?" : "$urlParams&";
+  //       urlParams += "scheduled_only=$scheduledOnly";
+  //     }
+  //
+  //     await _ensureLogin();
+  //     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts$urlParams';
+  //     Response? response = await Network().get(requestUrl, auth: Auth2());
+  //     int responseCode = response?.statusCode ?? -1;
+  //     String? responseString = response?.body;
+  //     if (responseCode == 200) {
+  //       List<GroupPost>? posts = GroupPost.fromJsonList(JsonUtils.decodeList(responseString));
+  //       return posts;
+  //     } else {
+  //       Log.e('Failed to retrieve group posts. Response: ${response?.body}');
+  //     }
+  //   }
+  //   return null;
+  // }
+  //
+  // Future<GroupPost?> loadGroupPost({required String? groupId, required String? postId}) async {
+  //   if (StringUtils.isEmpty(groupId) || StringUtils.isEmpty(postId)) {
+  //     return null;
+  //   }
+  //
+  //   await _ensureLogin();
+  //   String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/$postId';
+  //   Response? response = await Network().get(requestUrl, auth: Auth2());
+  //   int responseCode = response?.statusCode ?? -1;
+  //   String? responseString = response?.body;
+  //   if (responseCode == 200) {
+  //     GroupPost? post = GroupPost.fromJson(JsonUtils.decodeMap(responseString));
+  //     return post;
+  //   } else {
+  //     Log.e('Failed to retrieve group post for id $postId. Response: ${response?.body}');
+  //     return null;
+  //   }
+  // }
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     const String templatesCategory = 'gies_post_templates';

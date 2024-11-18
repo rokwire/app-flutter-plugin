@@ -25,9 +25,11 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Social with Service implements NotificationsListener {
-  static const String notifyGroupPostCreated = 'edu.illinois.rokwire.social.post.created';
-  static const String notifyGroupPostUpdated = 'edu.illinois.rokwire.social.post.updated';
-  static const String notifyGroupPostDeleted = 'edu.illinois.rokwire.social.post.deleted';
+  //TBD: DDGS - rename / remove group
+  static const String notifyGroupPostCreated  = 'edu.illinois.rokwire.social.post.created';
+  static const String notifyGroupPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
+  static const String notifyGroupPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
+  static const String notifyGroupPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
   // Singleton Factory
 
@@ -80,6 +82,7 @@ class Social with Service implements NotificationsListener {
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostCreated, result);
+      NotificationService().notify(notifyGroupPostsUpdated);
       return true;
     } else {
       Log.e('Failed to create social post. Reason: $responseCode, $responseBody');
@@ -105,6 +108,7 @@ class Social with Service implements NotificationsListener {
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostUpdated, result);
+      NotificationService().notify(notifyGroupPostsUpdated);
       return true;
     } else {
       Log.e('Failed to update social post. Reason: $responseCode, $responseBody');
@@ -129,6 +133,7 @@ class Social with Service implements NotificationsListener {
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyGroupPostDeleted, result);
+      NotificationService().notify(notifyGroupPostsUpdated);
       return true;
     } else {
       Log.e('Failed to delete social post. Reason: $responseCode, $responseBody');
@@ -136,24 +141,22 @@ class Social with Service implements NotificationsListener {
     }
   }
 
-  //TBD: DD - implement with type and authorizationContext
-  // Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly})
-
   Future<List<Post>?> loadPosts(
       {String? groupId,
       PostType? type,
       Set<String>? postIds,
-      PostStatus? status,
+      PostStatus status = PostStatus.active,
       int limit = 0,
       int offset = 0,
-      SortOrder? order,
-      SortBy? sortBy}) async {
+      PostSortOrder? order,
+      PostSortBy? sortBy}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load social posts. Reason: missing social url.');
       return null;
     }
     Map<String, dynamic> requestBody = {
+      'status': postStatusToString(status),
       'offset': offset,
       'limit': limit,
       'order': _sortOrderToString(order),
@@ -166,8 +169,9 @@ class Social with Service implements NotificationsListener {
       SocialContext? context = SocialContext.fromIdentifier(groupId);
       requestBody['context'] = context?.toJson();
     }
-    if (status != null) {
-      requestBody['status'] = postStatusToString(status);
+    if (type != null) {
+      List<String>? groupIds = (groupId != null) ? [groupId] : null;
+      requestBody['authorization_context'] = AuthorizationContext.fromPostType(type: type, groupIds: groupIds);
     }
     Response? response = await Network().post('$socialUrl/posts/load', body: JsonUtils.encode(requestBody), auth: Auth2());
     int? responseCode = response?.statusCode;
@@ -181,26 +185,40 @@ class Social with Service implements NotificationsListener {
     }
   }
 
-  String _sortOrderToString(SortOrder? order) {
+  Future<Post?> loadSinglePost({required String postId, String? groupId}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load single post. Reason: missing social url.');
+      return null;
+    }
+    List<Post>? resultPosts = await loadPosts(groupId: groupId, postIds: {postId});
+    if (resultPosts == null) {
+      Log.e('Failed to load single post {$postId} for group {$groupId}.');
+      return null;
+    }
+    return (resultPosts.length >= 1) ? resultPosts.first : null;
+  }
+
+  String _sortOrderToString(PostSortOrder? order) {
     switch (order) {
-      case SortOrder.asc:
+      case PostSortOrder.asc:
         return 'asc';
-      case SortOrder.desc:
+      case PostSortOrder.desc:
         return 'desc';
       default:
         return 'desc';
     }
   }
 
-  String _sortByToString(SortBy? sortBy) {
+  String _sortByToString(PostSortBy? sortBy) {
     switch (sortBy) {
-      case SortBy.start_time:
+      case PostSortBy.start_time:
         return 'start_time';
-      case SortBy.end_time:
+      case PostSortBy.end_time:
         return 'end_time';
-      case SortBy.name:
+      case PostSortBy.name:
         return 'name';
-      case SortBy.proximity:
+      case PostSortBy.proximity:
         return 'proximity';
       default:
         return 'start_time';
@@ -208,6 +226,6 @@ class Social with Service implements NotificationsListener {
   }
 }
 
-enum SortOrder { asc, desc }
+enum PostSortOrder { asc, desc }
 
-enum SortBy { start_time, end_time, name, proximity }
+enum PostSortBy { start_time, end_time, name, proximity }

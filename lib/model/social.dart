@@ -15,6 +15,7 @@
  */
 
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
@@ -131,6 +132,8 @@ class Post {
     }
     return json;
   }
+
+  bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
 
 class AuthorizationContext {
@@ -148,17 +151,29 @@ class AuthorizationContext {
         items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  factory AuthorizationContext.none() => AuthorizationContext(status: AuthorizationContextStatus.none);
+  //TBD: DDGS - check if we need this, otherwise - delete it.
+  // factory AuthorizationContext.groupPost({required String groupId}) {
+  //   return fromPostType(type: PostType.post, groupIds: [groupId]);
+  // }
+  //
+  // factory AuthorizationContext.groupDirectMessage({required String groupId}) {
+  //   return fromPostType(type: PostType.direct_message, groupIds: [groupId]);
+  // }
 
-  factory AuthorizationContext.group({List<String>? groupIds}) {
+  static AuthorizationContext fromPostType({PostType? type, List<String>? groupIds}) {
     List<ContextItem>? items;
     if (groupIds != null) {
       items = <ContextItem>[];
+      String? memberAccountId = Auth2().accountId;
+      List<String>? membersAccountIds = (memberAccountId != null) ? [memberAccountId] : null;
       for (String groupId in groupIds) {
-        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId));
+        ContextItemMembersType? membersType = _getMemberTypeBy(type: type);
+        ContextItemMembers members = ContextItemMembers(type: membersType, members: membersAccountIds);
+        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: members));
       }
     }
-    return AuthorizationContext(status: AuthorizationContextStatus.active, items: items);
+    AuthorizationContextStatus status = _getAuthStatusBy(type: type);
+    return AuthorizationContext(status: status, items: items);
   }
 
   Map<String, dynamic> toJson() {
@@ -180,6 +195,28 @@ class AuthorizationContext {
 
   @override
   int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
+
+  static ContextItemMembersType? _getMemberTypeBy({PostType? type}) {
+    switch (type) {
+      case PostType.post:
+        return ContextItemMembersType.all;
+      case PostType.direct_message:
+        return ContextItemMembersType.listed_accounts;
+      default:
+        return null;
+    }
+  }
+
+  static AuthorizationContextStatus _getAuthStatusBy({PostType? type}) {
+    switch (type) {
+      case PostType.post:
+        return AuthorizationContextStatus.none;
+      case PostType.direct_message:
+        return AuthorizationContextStatus.active;
+      default:
+        return AuthorizationContextStatus.none;
+    }
+  }
 }
 
 enum PostType { post, direct_message }
