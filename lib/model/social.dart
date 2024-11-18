@@ -23,6 +23,7 @@ class Post {
 
   final String? id;
   final PostStatus? status;
+  final PostReportStatus? reportStatus;
 
   final AuthorizationContext? authorizationContext;
   final SocialContext? context;
@@ -40,6 +41,7 @@ class Post {
   Post(
       {this.id,
       this.status,
+      this.reportStatus,
       this.authorizationContext,
       this.context,
       this.body,
@@ -58,6 +60,7 @@ class Post {
     return Post(
       id: JsonUtils.stringValue(json['id']),
       status: postStatusFromString(JsonUtils.stringValue(json['status'])),
+      reportStatus: postReportStatusFromString(JsonUtils.stringValue(json['report_status'])),
       authorizationContext: AuthorizationContext.fromJson(JsonUtils.mapValue(json['authorization_context'])),
       context: SocialContext.fromJson(JsonUtils.mapValue(json['context'])),
       body: JsonUtils.stringValue(json['body']),
@@ -87,6 +90,7 @@ class Post {
       (other is Post) &&
       (other.id == id) &&
       (other.status == status) &&
+      (other.reportStatus == reportStatus) &&
       (other.authorizationContext == authorizationContext) &&
       (other.context == context) &&
       (other.body == body) &&
@@ -101,6 +105,7 @@ class Post {
   int get hashCode =>
       (id?.hashCode ?? 0) ^
       (status?.hashCode ?? 0) ^
+      (reportStatus?.hashCode ?? 0) ^
       (authorizationContext?.hashCode ?? 0) ^
       (context?.hashCode ?? 0) ^
       (body?.hashCode ?? 0) ^
@@ -151,15 +156,6 @@ class AuthorizationContext {
         items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  //TBD: DDGS - check if we need this, otherwise - delete it.
-  // factory AuthorizationContext.groupPost({required String groupId}) {
-  //   return fromPostType(type: PostType.post, groupIds: [groupId]);
-  // }
-  //
-  // factory AuthorizationContext.groupDirectMessage({required String groupId}) {
-  //   return fromPostType(type: PostType.direct_message, groupIds: [groupId]);
-  // }
-
   static AuthorizationContext fromPostType({PostType? type, List<String>? groupIds}) {
     List<ContextItem>? items;
     if (groupIds != null) {
@@ -183,12 +179,6 @@ class AuthorizationContext {
     return json;
   }
 
-  bool get isPublic => ((status == null) || status == AuthorizationContextStatus.none);
-
-  bool get isGroupPost => ((status == AuthorizationContextStatus.active) &&
-      CollectionUtils.isNotEmpty(items) &&
-      (items!.firstWhereOrNull((item) => (item.name == ContextItemName.groups_bb_group)) != null));
-
   @override
   bool operator ==(other) =>
       (other is AuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
@@ -208,13 +198,14 @@ class AuthorizationContext {
   }
 
   static AuthorizationContextStatus _getAuthStatusBy({PostType? type}) {
+    // All post auth statuses are "active" for now because they are part of a group
     switch (type) {
       case PostType.post:
-        return AuthorizationContextStatus.none;
+        return AuthorizationContextStatus.active;
       case PostType.direct_message:
         return AuthorizationContextStatus.active;
       default:
-        return AuthorizationContextStatus.none;
+        return AuthorizationContextStatus.active;
     }
   }
 }
@@ -541,6 +532,30 @@ PostStatus? postStatusFromString(String? value) {
       return PostStatus.reported_as_abuse;
     case 'confirmed-as-abuse':
       return PostStatus.confirmed_as_abuse;
+    default:
+      return null;
+  }
+}
+
+enum PostReportStatus { reported_as_abuse, confirmed_as_abuse }
+
+String? postReportStatusToString(PostReportStatus? status) {
+  switch (status) {
+    case PostReportStatus.reported_as_abuse:
+      return 'reported-as-abuse';
+    case PostReportStatus.confirmed_as_abuse:
+      return 'confirmed-as-abuse';
+    default:
+      return null;
+  }
+}
+
+PostReportStatus? postReportStatusFromString(String? value) {
+  switch (value) {
+    case 'reported-as-abuse':
+      return PostReportStatus.reported_as_abuse;
+    case 'confirmed-as-abuse':
+      return PostReportStatus.confirmed_as_abuse;
     default:
       return null;
   }
