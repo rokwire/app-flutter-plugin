@@ -25,11 +25,10 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Social with Service implements NotificationsListener {
-  //TBD: DDGS - rename / remove group
-  static const String notifyGroupPostCreated  = 'edu.illinois.rokwire.social.post.created';
-  static const String notifyGroupPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
-  static const String notifyGroupPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
-  static const String notifyGroupPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
+  static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
+  static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
+  static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
+  static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
   // Singleton Factory
 
@@ -81,8 +80,8 @@ class Social with Service implements NotificationsListener {
     String? responseBody = response?.body;
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
-      NotificationService().notify(notifyGroupPostCreated, result);
-      NotificationService().notify(notifyGroupPostsUpdated);
+      NotificationService().notify(notifyPostCreated, result);
+      NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to create social post. Reason: $responseCode, $responseBody');
@@ -107,8 +106,8 @@ class Social with Service implements NotificationsListener {
     String? responseBody = response?.body;
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
-      NotificationService().notify(notifyGroupPostUpdated, result);
-      NotificationService().notify(notifyGroupPostsUpdated);
+      NotificationService().notify(notifyPostUpdated, result);
+      NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to update social post. Reason: $responseCode, $responseBody');
@@ -132,8 +131,8 @@ class Social with Service implements NotificationsListener {
     String? responseBody = response?.body;
     if (responseCode == 200) {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
-      NotificationService().notify(notifyGroupPostDeleted, result);
-      NotificationService().notify(notifyGroupPostsUpdated);
+      NotificationService().notify(notifyPostDeleted, result);
+      NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to delete social post. Reason: $responseCode, $responseBody');
