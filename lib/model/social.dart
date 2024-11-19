@@ -15,7 +15,6 @@
  */
 
 import 'package:collection/collection.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
@@ -32,7 +31,7 @@ class Post {
   final String? subject;
   final String? imageUrl;
 
-  final List<PostNotification>? notifications;
+  final PostNotification? notification;
 
   final DateTime? dateActivatedUtc;
   final DateTime? dateCreatedUtc;
@@ -47,7 +46,7 @@ class Post {
       this.body,
       this.subject,
       this.imageUrl,
-      this.notifications,
+      this.notification,
       this.dateActivatedUtc,
       this.dateCreatedUtc,
       this.dateUpdatedUtc});
@@ -66,7 +65,7 @@ class Post {
       body: JsonUtils.stringValue(json['body']),
       subject: JsonUtils.stringValue(json['subject']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
-      notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
+      notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), format: _dateFormat, isUtc: true),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
@@ -80,7 +79,7 @@ class Post {
       'body': body,
       'subject': subject,
       'image_url': imageUrl,
-      'notifications': PostNotification.listToJson(notifications),
+      'notification': notification?.toJson(),
       'activation_date': DateTimeUtils.utcDateTimeToString(dateActivatedUtc),
     };
   }
@@ -96,7 +95,7 @@ class Post {
       (other.body == body) &&
       (other.subject == subject) &&
       (other.imageUrl == imageUrl) &&
-      const DeepCollectionEquality().equals(other.notifications, notifications) &&
+      (other.notification == notification) &&
       (other.dateActivatedUtc == dateActivatedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
@@ -111,7 +110,7 @@ class Post {
       (body?.hashCode ?? 0) ^
       (subject?.hashCode ?? 0) ^
       (imageUrl?.hashCode ?? 0) ^
-      (const DeepCollectionEquality().hash(notifications)) ^
+      (notification?.hashCode ?? 0) ^
       (dateActivatedUtc?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
@@ -138,6 +137,39 @@ class Post {
     return json;
   }
 
+  factory Post.forGroup(
+      {required String groupId,
+      required String subject,
+      String? body,
+      List<String>? memberAccountIds,
+      String? imageUrl,
+      DateTime? dateActivatedUtc}) {
+    SocialContext context = SocialContext.forGroup(groupId: groupId);
+    AuthorizationContext? authContext = AuthorizationContext.forGroups(groupIds: [groupId], memberAccountIds: memberAccountIds);
+    return Post(
+        subject: subject,
+        body: body,
+        imageUrl: imageUrl,
+        dateActivatedUtc: dateActivatedUtc,
+        notification: PostNotification.simple(),
+        context: context,
+        authorizationContext: authContext);
+  }
+
+  factory Post.forGroups(
+      {required List<String> groupIds, required String subject, String? body, String? imageUrl, DateTime? dateActivatedUtc}) {
+    SocialContext context = SocialContext.forGroups(groupIds: groupIds);
+    AuthorizationContext authContext = AuthorizationContext.forGroups(groupIds: groupIds);
+    return Post(
+        subject: subject,
+        body: body,
+        imageUrl: imageUrl,
+        dateActivatedUtc: dateActivatedUtc,
+        notification: PostNotification.simple(),
+        context: context,
+        authorizationContext: authContext);
+  }
+
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
 
@@ -156,20 +188,19 @@ class AuthorizationContext {
         items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  static AuthorizationContext fromPostType({PostType? type, List<String>? groupIds}) {
+  static AuthorizationContext forGroups({List<String>? groupIds, List<String>? memberAccountIds}) {
     List<ContextItem>? items;
     if (groupIds != null) {
       items = <ContextItem>[];
-      String? memberAccountId = Auth2().accountId;
-      List<String>? membersAccountIds = (memberAccountId != null) ? [memberAccountId] : null;
       for (String groupId in groupIds) {
-        ContextItemMembersType? membersType = _getMemberTypeBy(type: type);
-        ContextItemMembers members = ContextItemMembers(type: membersType, members: membersAccountIds);
+        ContextItemMembersType membersType =
+            CollectionUtils.isNotEmpty(memberAccountIds) ? ContextItemMembersType.listed_accounts : ContextItemMembersType.all;
+        ContextItemMembers members = ContextItemMembers(type: membersType, members: memberAccountIds);
         items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: members));
       }
     }
-    AuthorizationContextStatus status = _getAuthStatusBy(type: type);
-    return AuthorizationContext(status: status, items: items);
+    // All post auth statuses are "active" for now because they are part of a group
+    return AuthorizationContext(status: AuthorizationContextStatus.active, items: items);
   }
 
   Map<String, dynamic> toJson() {
@@ -185,29 +216,6 @@ class AuthorizationContext {
 
   @override
   int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
-
-  static ContextItemMembersType? _getMemberTypeBy({PostType? type}) {
-    switch (type) {
-      case PostType.post:
-        return ContextItemMembersType.all;
-      case PostType.direct_message:
-        return ContextItemMembersType.listed_accounts;
-      default:
-        return null;
-    }
-  }
-
-  static AuthorizationContextStatus _getAuthStatusBy({PostType? type}) {
-    // All post auth statuses are "active" for now because they are part of a group
-    switch (type) {
-      case PostType.post:
-        return AuthorizationContextStatus.active;
-      case PostType.direct_message:
-        return AuthorizationContextStatus.active;
-      default:
-        return AuthorizationContextStatus.active;
-    }
-  }
 }
 
 enum PostType { post, direct_message }
@@ -224,14 +232,11 @@ class SocialContext {
     return SocialContext(items: ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
   }
 
-  static SocialContext? fromIdentifier(String? identifier) => (identifier != null) ? SocialContext.fromIdentifiers([identifier]) : null;
+  factory SocialContext.forGroup({required String groupId}) => SocialContext.forGroups(groupIds: [groupId]);
 
-  static SocialContext? fromIdentifiers(List<String>? identifiers) {
-    if (CollectionUtils.isEmpty(identifiers)) {
-      return null;
-    }
-    List<ContextItem>? items = <ContextItem>[];
-    for (String identifier in identifiers!) {
+  factory SocialContext.forGroups({required List<String> groupIds}) {
+    List<ContextItem> items = <ContextItem>[];
+    for (String identifier in groupIds) {
       items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: identifier));
     }
     return SocialContext(items: items);
@@ -426,6 +431,9 @@ class PostNotification {
         type: postNotificationTypeFromString(JsonUtils.stringValue(json['type'])),
         usePostData: JsonUtils.boolValue(json['use_post_data']));
   }
+
+  factory PostNotification.simple() =>
+      PostNotification(policyType: PostNotificationPolicyType.all, type: PostNotificationType.post_published, usePostData: true);
 
   Map<String, dynamic> toJson() {
     return {

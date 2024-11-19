@@ -165,13 +165,23 @@ class Social with Service implements NotificationsListener {
     if (CollectionUtils.isNotEmpty(postIds)) {
       requestBody['ids'] = postIds;
     }
-    if (groupId != null) {
-      SocialContext? context = SocialContext.fromIdentifier(groupId);
-      requestBody['context'] = context?.toJson();
+    bool hasGroupId = (groupId != null);
+    if (hasGroupId) {
+      SocialContext context = SocialContext.forGroup(groupId: groupId);
+      requestBody['context'] = context.toJson();
     }
     if (type != null) {
-      List<String>? groupIds = (groupId != null) ? [groupId] : null;
-      requestBody['authorization_context'] = AuthorizationContext.fromPostType(type: type, groupIds: groupIds);
+      List<String>? groupIds = hasGroupId ? [groupId] : null;
+      List<String>? memberAccountIds;
+      switch (type) {
+        case PostType.post:
+          memberAccountIds = null; // Post is for all group members
+          break;
+        case PostType.direct_message:
+          memberAccountIds = (Auth2().accountId != null) ? [Auth2().accountId!] : null; // direct messages are for the current user.
+          break;
+      }
+      requestBody['authorization_context'] = AuthorizationContext.forGroups(groupIds: groupIds, memberAccountIds: memberAccountIds);
     }
     String? encodedBody = JsonUtils.encode(requestBody);
     Response? response = await Network().post('$socialUrl/posts/load', body: encodedBody, auth: Auth2());
