@@ -130,8 +130,7 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
-      NotificationService().notify(notifyPostDeleted, result);
+      NotificationService().notify(notifyPostDeleted, post);
       NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {

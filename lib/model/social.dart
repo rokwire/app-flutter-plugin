@@ -177,6 +177,10 @@ class Post {
   }
 
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
+
+  bool get isLinkedToMoreThanOneGroup => ((_groupIds?.length ?? 0) > 1);
+
+  Set<String>? get _groupIds => context?.groupIds;
 }
 
 class Creator {
