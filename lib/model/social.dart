@@ -31,6 +31,8 @@ class Post {
   final String? subject;
   final String? imageUrl;
 
+  final Creator? creator;
+
   final PostNotification? notification;
 
   final DateTime? dateActivatedUtc;
@@ -46,6 +48,7 @@ class Post {
       this.body,
       this.subject,
       this.imageUrl,
+      this.creator,
       this.notification,
       this.dateActivatedUtc,
       this.dateCreatedUtc,
@@ -65,6 +68,7 @@ class Post {
       body: JsonUtils.stringValue(json['body']),
       subject: JsonUtils.stringValue(json['subject']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
+      creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), format: _dateFormat, isUtc: true),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
@@ -95,6 +99,7 @@ class Post {
       (other.body == body) &&
       (other.subject == subject) &&
       (other.imageUrl == imageUrl) &&
+      (other.creator == creator) &&
       (other.notification == notification) &&
       (other.dateActivatedUtc == dateActivatedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
@@ -110,6 +115,7 @@ class Post {
       (body?.hashCode ?? 0) ^
       (subject?.hashCode ?? 0) ^
       (imageUrl?.hashCode ?? 0) ^
+      (creator?.hashCode ?? 0) ^
       (notification?.hashCode ?? 0) ^
       (dateActivatedUtc?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
@@ -171,6 +177,26 @@ class Post {
   }
 
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
+}
+
+class Creator {
+  final String? accountId;
+  final String? name;
+
+  Creator({this.accountId, this.name});
+
+  static Creator? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Creator(accountId: JsonUtils.stringValue(json['account_id']), name: JsonUtils.stringValue(json['name']));
+  }
+
+  @override
+  bool operator ==(other) => (other is Creator) && (other.accountId == accountId) && (other.name == name);
+
+  @override
+  int get hashCode => (accountId?.hashCode ?? 0) ^ (name?.hashCode ?? 0);
 }
 
 class AuthorizationContext {
