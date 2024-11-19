@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
-- Added getTextStyleEx to UiTextStyles.
-- Added scheme parameter to UrlUtils.fixUrl.
+- Added UiTextStyles.getTextStyleEx helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added scheme parameter to UrlUtils.fixUrl [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added StringUtils.firstNotEmpty helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed

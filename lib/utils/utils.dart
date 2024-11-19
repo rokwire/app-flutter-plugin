@@ -178,6 +178,27 @@ class StringUtils {
   static bool isUinValid(String? uin) {
     return isNotEmpty(uin) && RegExp(_uinPattern).hasMatch(uin!);
   }
+
+  static String? firstNotEmpty(String? str, [String? str2 = null, String? str3 = null, String? str4 = null, String? str5 = null]) {
+    if (str?.isNotEmpty == true) {
+      return str;
+    }
+    else if (str2?.isNotEmpty == true) {
+      return str2;
+    }
+    else if (str3?.isNotEmpty == true) {
+      return str3;
+    }
+    else if (str4?.isNotEmpty == true) {
+      return str4;
+    }
+    else if (str5?.isNotEmpty == true) {
+      return str5;
+    }
+    else {
+      return null;
+    }
+  }
 }
 
 class CollectionUtils {
