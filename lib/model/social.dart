@@ -631,3 +631,75 @@ PostReportStatus? postReportStatusFromString(String? value) {
       return null;
   }
 }
+
+class Comment {
+  static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
+
+  final String? id;
+  final String? parentId;
+  String? body;
+
+  final Creator? creator;
+  final DateTime? dateCreatedUtc;
+  final DateTime? dateUpdatedUtc;
+
+  Comment({this.id, this.parentId, this.body, this.creator, this.dateCreatedUtc, this.dateUpdatedUtc});
+
+  static Comment? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return Comment(
+      id: JsonUtils.stringValue(json['id']),
+      parentId: JsonUtils.stringValue(json['parent_id']),
+      body: JsonUtils.stringValue(json['body']),
+      creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'body': body, 'parent_id': parentId};
+
+  @override
+  bool operator ==(other) =>
+      (other is Comment) &&
+      (other.id == id) &&
+      (other.parentId == parentId) &&
+      (other.body == body) &&
+      (other.creator == creator) &&
+      (other.dateCreatedUtc == dateCreatedUtc) &&
+      (other.dateUpdatedUtc == dateUpdatedUtc);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (parentId?.hashCode ?? 0) ^
+      (body?.hashCode ?? 0) ^
+      (creator?.hashCode ?? 0) ^
+      (dateCreatedUtc?.hashCode ?? 0) ^
+      (dateUpdatedUtc?.hashCode ?? 0);
+
+  static List<Comment>? listFromJson(List<dynamic>? jsonList) {
+    List<Comment>? items;
+    if (jsonList != null) {
+      items = <Comment>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Comment.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<Comment>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (Comment? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+}

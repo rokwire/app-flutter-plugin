@@ -146,8 +146,8 @@ class Social with Service implements NotificationsListener {
       PostStatus status = PostStatus.active,
       int limit = 0,
       int offset = 0,
-      PostSortOrder order = PostSortOrder.desc,
-      PostSortBy? sortBy}) async {
+      SocialSortOrder order = SocialSortOrder.desc,
+      SocialSortBy? sortBy}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load social posts. Reason: missing social url.');
@@ -157,8 +157,8 @@ class Social with Service implements NotificationsListener {
       'status': postStatusToString(status),
       'offset': offset,
       'limit': limit,
-      'order': _sortOrderToString(order),
-      'sort_by': _sortByToString(sortBy)
+      'order': _socialSortOrderToString(order),
+      'sort_by': _socialSortByToString(sortBy)
     };
     if (CollectionUtils.isNotEmpty(postIds)) {
       requestBody['ids'] = postIds;
@@ -208,22 +208,111 @@ class Social with Service implements NotificationsListener {
     return (resultPosts.length >= 1) ? resultPosts.first : null;
   }
 
-  String _sortOrderToString(PostSortOrder? order) {
+  Future<bool> createComment({required Comment comment}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to create social comment. Reason: missing social url.');
+      return false;
+    }
+    String? parentId = comment.parentId;
+    if (StringUtils.isEmpty(parentId)) {
+      Log.e('Failed to create social comment. Reason: missing parent id.');
+      return false;
+    }
+    String? requestBody = JsonUtils.encode(comment.toJson());
+    Response? response = await Network().post('$socialUrl/posts/$parentId/comments', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      //TBD: DDGS - check if we have to send notification for that
+      // Comment? result = Comment.fromJson(JsonUtils.decodeMap(responseBody));
+      // NotificationService().notify(notifyPostCreated, result);
+      // NotificationService().notify(notifyPostsUpdated);
+      return true;
+    } else {
+      Log.e('Failed to create social comment. Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+  Future<bool> updateComment({required Comment comment}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to update social comment. Reason: missing social url.');
+      return false;
+    }
+    String? commentId = comment.id;
+    if (StringUtils.isEmpty(commentId)) {
+      Log.e('Failed to update social comment. Reason: missing comment id.');
+      return false;
+    }
+    String? parentId = comment.parentId;
+    if (StringUtils.isEmpty(parentId)) {
+      Log.e('Failed to update social comment. Reason: missing parent id.');
+      return false;
+    }
+    String? requestBody = JsonUtils.encode(comment.toJson());
+    Response? response = await Network().put('$socialUrl/posts/$parentId/comments/$commentId', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      //TBD: DDGS - check if we have to send notification for that
+      // Comment? result = Comment.fromJson(JsonUtils.decodeMap(responseBody));
+      // NotificationService().notify(notifyPostUpdated, result);
+      // NotificationService().notify(notifyPostsUpdated);
+      return true;
+    } else {
+      Log.e('Failed to update social comment. Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+  Future<bool> deleteComment({required Comment comment}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete social comment. Reason: missing social url.');
+      return false;
+    }
+    String? commentId = comment.id;
+    if (StringUtils.isEmpty(commentId)) {
+      Log.e('Failed to delete social comment. Reason: missing comment id.');
+      return false;
+    }
+    String? parentId = comment.parentId;
+    if (StringUtils.isEmpty(parentId)) {
+      Log.e('Failed to delete social comment. Reason: missing parent id.');
+      return false;
+    }
+    Response? response = await Network().delete('$socialUrl/posts/$parentId/comments/$commentId', auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      //TBD: DDGS - check if we have to send notification for that
+      // NotificationService().notify(notifyPostDeleted, comment);
+      // NotificationService().notify(notifyPostsUpdated);
+      return true;
+    } else {
+      Log.e('Failed to delete social post. Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+  String _socialSortOrderToString(SocialSortOrder? order) {
     switch (order) {
-      case PostSortOrder.asc:
+      case SocialSortOrder.asc:
         return 'asc';
-      case PostSortOrder.desc:
+      case SocialSortOrder.desc:
         return 'desc';
       default:
         return 'desc';
     }
   }
 
-  String _sortByToString(PostSortBy? sortBy) {
+  String _socialSortByToString(SocialSortBy? sortBy) {
     switch (sortBy) {
-      case PostSortBy.date_created:
+      case SocialSortBy.date_created:
         return 'date_created';
-      case PostSortBy.activation_date:
+      case SocialSortBy.activation_date:
         return 'activation_date';
       default:
         return 'date_created';
@@ -231,6 +320,6 @@ class Social with Service implements NotificationsListener {
   }
 }
 
-enum PostSortOrder { asc, desc }
+enum SocialSortOrder { asc, desc }
 
-enum PostSortBy { date_created, activation_date }
+enum SocialSortBy { date_created, activation_date }
