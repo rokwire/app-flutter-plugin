@@ -27,16 +27,16 @@ class Post {
   final AuthorizationContext? authorizationContext;
   final SocialContext? context;
 
-  final String? body;
-  final String? subject;
-  final String? imageUrl;
+  String? body;
+  String? subject;
+  String? imageUrl;
 
   final Creator? creator;
 
   final PostNotification? notification;
   final List<PostNotification>? notifications;
 
-  final DateTime? dateActivatedUtc;
+  DateTime? dateActivatedUtc;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
 
@@ -181,6 +181,23 @@ class Post {
         authorizationContext: authContext);
   }
 
+  List<String>? getMemberAccountIds({required String groupId}) {
+    ContextItem? groupItem = authorizationContext?.getItemFor(name: ContextItemName.groups_bb_group, identifier: groupId);
+    return groupItem?.members?.members;
+  }
+
+  void setMemberAccountIds({required String groupId, List<String>? accountIds}) {
+    ContextItem? groupItem = authorizationContext?.getItemFor(name: ContextItemName.groups_bb_group, identifier: groupId);
+    bool hasAccountIds = CollectionUtils.isNotEmpty(accountIds);
+    ContextItemMembers itemMembers = ContextItemMembers(
+        type: (hasAccountIds ? ContextItemMembersType.listed_accounts : ContextItemMembersType.all), members: accountIds);
+    if (groupItem == null) {
+      groupItem = ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: itemMembers);
+    } else {
+      groupItem.members = itemMembers;
+    }
+  }
+
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 
   bool get isLinkedToMoreThanOneGroup => ((_groupIds?.length ?? 0) > 1);
@@ -251,6 +268,17 @@ class AuthorizationContext {
 
   @override
   int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
+
+  ContextItem? getItemFor({required ContextItemName name, required String identifier}) {
+    if (CollectionUtils.isNotEmpty(items)) {
+      for (ContextItem item in items!) {
+        if ((item.name == name) && (item.identifier == identifier)) {
+          return item;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 enum PostType { post, direct_message }
@@ -304,7 +332,7 @@ class SocialContext {
 
 class ContextItem {
   final ContextItemName? name;
-  final ContextItemMembers? members;
+  ContextItemMembers? members;
   final String? identifier;
 
   ContextItem({this.name, this.members, this.identifier});
