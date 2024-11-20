@@ -1223,22 +1223,23 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
-  Future<bool> deletePost(String? groupId, GroupPost? post) async {
-    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
-      await _ensureLogin();
-      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
-      Response? response = await Network().delete(requestUrl, auth: Auth2());
-      if (response?.statusCode == 200) {
-        //TBD: DDGS - implement - use Social
-        // NotificationService().notify(notifyGroupPostDeleted, post);
-        // NotificationService().notify(notifyGroupPostsUpdated);
-        return true;
-      } else {
-        Log.e('Failed to delete group post. Response: ${response?.body}');
-      }
-    }
-    return false;
-  }
+  //TBD: DDGS - remove after Social BB is integrated
+  // Future<bool> deletePost(String? groupId, GroupPost? post) async {
+  //   if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
+  //     await _ensureLogin();
+  //     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post!.id}';
+  //     Response? response = await Network().delete(requestUrl, auth: Auth2());
+  //     if (response?.statusCode == 200) {
+  //       //TBD: DDGS - implement - use Social
+  //       // NotificationService().notify(notifyGroupPostDeleted, post);
+  //       // NotificationService().notify(notifyGroupPostsUpdated);
+  //       return true;
+  //     } else {
+  //       Log.e('Failed to delete group post. Response: ${response?.body}');
+  //     }
+  //   }
+  //   return false;
+  // }
 
   //TBD: DDGS - remove after Social BB is integrated
   // Future<List<GroupPost>?> loadGroupPosts(String? groupId, {GroupPostType? type, int? offset, int? limit, GroupSortOrder? order, bool? scheduledOnly}) async {

@@ -34,6 +34,7 @@ class Post {
   final Creator? creator;
 
   final PostNotification? notification;
+  final List<PostNotification>? notifications;
 
   final DateTime? dateActivatedUtc;
   final DateTime? dateCreatedUtc;
@@ -50,6 +51,7 @@ class Post {
       this.imageUrl,
       this.creator,
       this.notification,
+      this.notifications,
       this.dateActivatedUtc,
       this.dateCreatedUtc,
       this.dateUpdatedUtc});
@@ -70,6 +72,7 @@ class Post {
       imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
+      notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
       dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), format: _dateFormat, isUtc: true),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
@@ -101,6 +104,7 @@ class Post {
       (other.imageUrl == imageUrl) &&
       (other.creator == creator) &&
       (other.notification == notification) &&
+      const DeepCollectionEquality().equals(other.notifications, notifications) &&
       (other.dateActivatedUtc == dateActivatedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
@@ -117,6 +121,7 @@ class Post {
       (imageUrl?.hashCode ?? 0) ^
       (creator?.hashCode ?? 0) ^
       (notification?.hashCode ?? 0) ^
+      (const DeepCollectionEquality().hash(notifications)) ^
       (dateActivatedUtc?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
