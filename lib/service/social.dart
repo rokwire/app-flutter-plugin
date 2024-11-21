@@ -161,7 +161,7 @@ class Social with Service implements NotificationsListener {
       'sort_by': _socialSortByToString(sortBy)
     };
     if (CollectionUtils.isNotEmpty(postIds)) {
-      requestBody['ids'] = postIds;
+      requestBody['ids'] = postIds!.toList();
     }
     bool hasGroupId = (groupId != null);
     if (hasGroupId) {
