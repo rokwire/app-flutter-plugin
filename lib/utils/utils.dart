@@ -462,6 +462,45 @@ class MapUtils {
     }
   }
 
+  static Map<K, T>? apply<K, T>(Map<K, T>? target, Map<K, T>? source, { Set<K>? scope }) {
+    Map<K, T>? result = (target != null) ? Map<K, T>.from(target) : null;
+    if (source != null) {
+      for (K key in source.keys) {
+        if ((source[key] != result?[key]) && (
+            (scope?.contains(key) == true) ||
+            (_applyIsNotEmpty(source[key]) && _applyIsEmpty(result?[key]))
+        )) {
+          result ??= <K, T>{};
+          result[key] = source[key]!;
+        }
+      }
+    }
+    return result;
+  }
+
+  static bool _applyIsEmpty<T>(T value) {
+    if (value is String) {
+      return value.isEmpty;
+    }
+    else if (value is num) {
+      return value == 0;
+    }
+    else {
+      return value == null;
+    }
+  }
+
+  static bool _applyIsNotEmpty<T>(T value) {
+    if (value is String) {
+      return value.isNotEmpty;
+    }
+    else if (value is num) {
+      return value != 0;
+    }
+    else {
+      return value != null;
+    }
+  }
 }
 
 class ColorUtils {

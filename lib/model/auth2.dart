@@ -443,21 +443,21 @@ class Auth2UserProfile {
         modified = true;
       }*/
       if ((profile._firstName != _firstName) && (
-          (scope?.contains(Auth2UserProfileScope.firstName) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.firstName) == true) ||
           ((profile._firstName?.isNotEmpty ?? false) && (_firstName?.isEmpty ?? true))
       )) {
         _firstName = profile._firstName;
         modified = true;
       }
       if ((profile._middleName != _middleName) && (
-          (scope?.contains(Auth2UserProfileScope.middleName) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.middleName) == true) ||
           ((profile._middleName?.isNotEmpty ?? false) && (_middleName?.isEmpty ?? true))
       )) {
         _middleName = profile._middleName;
         modified = true;
       }
       if ((profile._lastName != _lastName) && (
-          (scope?.contains(Auth2UserProfileScope.lastName) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.lastName) == true) ||
           ((profile._lastName?.isNotEmpty ?? false) && (_lastName?.isEmpty ?? true))
       )) {
         _lastName = profile._lastName;
@@ -465,28 +465,28 @@ class Auth2UserProfile {
       }
       
       if ((profile._birthYear != _birthYear) && (
-          (scope?.contains(Auth2UserProfileScope.birthYear) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.birthYear) == true) ||
           (((profile._birthYear ?? 0) != 0) && ((_birthYear ?? 0) == 0))
       )) {
         _birthYear = profile._birthYear;
         modified = true;
       }
       if ((profile._photoUrl != _photoUrl) && (
-          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.phone) == true) ||
           ((profile._photoUrl?.isNotEmpty ?? false) && (_photoUrl?.isEmpty ?? true))
       )) {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
       if ((profile._email != _email) && (
-          (scope?.contains(Auth2UserProfileScope.email) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.email) == true) ||
           ((profile._email?.isNotEmpty ?? false) && (_email?.isEmpty ?? true))
       )) {
         _email = profile._email;
         modified = true;
       }
       if ((profile._phone != _phone) && (
-          (scope?.contains(Auth2UserProfileScope.phone) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.phone) == true) ||
           ((profile._phone?.isNotEmpty ?? false) && (_phone?.isEmpty ?? true))
       )) {
         _phone = profile._phone;
@@ -494,40 +494,40 @@ class Auth2UserProfile {
       }
 
       if ((profile._address != _address) && (
-          (scope?.contains(Auth2UserProfileScope.address) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.address) == true) ||
           ((profile._address?.isNotEmpty ?? false) && (_address?.isEmpty ?? true))
       )) {
         _address = profile._address;
         modified = true;
       }
       if ((profile._state != _state) && (
-          (scope?.contains(Auth2UserProfileScope.state) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.state) == true) ||
           ((profile._state?.isNotEmpty ?? false) && (_state?.isEmpty ?? true))
       )) {
         _state = profile._state;
         modified = true;
       }
       if ((profile._zip != _zip) && (
-          (scope?.contains(Auth2UserProfileScope.zip) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.zip) == true) ||
           ((profile._zip?.isNotEmpty ?? false) && (_zip?.isEmpty ?? true))
       )) {
         _zip = profile._zip;
         modified = true;
       }
       if ((profile._country != _country) && (
-          (scope?.contains(Auth2UserProfileScope.country) ?? false) ||
+          (scope?.contains(Auth2UserProfileScope.country) == true) ||
           ((profile._country?.isNotEmpty ?? false) && (_country?.isEmpty ?? true))
       )) {
         _country = profile._country;
         modified = true;
       }
 
-      if (!const DeepCollectionEquality().equals(profile._data, _data) && (
-          (scope?.contains(Auth2UserProfileScope.data) ?? false) ||
-          ((profile._data?.isNotEmpty ?? false) && (_data?.isEmpty ?? true))
-      )) {
-        _data = MapUtils.combine(_data, profile._data);
-        modified = true;
+      if (!const DeepCollectionEquality().equals(profile._data, _data)) {
+        Map<String, dynamic>? data = MapUtils.apply(_data, profile._data);
+        if (!const DeepCollectionEquality().equals(_data, data)) {
+          _data = data;
+          modified = true;
+        }
       }
     }
     return modified;
@@ -853,7 +853,7 @@ class Auth2Group extends Auth2Role {
 ////////////////////////////////
 // Auth2UserProfileScope
 
-enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, data }
+enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, }
 
 ////////////////////////////////
 // Auth2Type
