@@ -297,6 +297,24 @@ class Social with Service implements NotificationsListener {
     }
   }
 
+  Future<List<Comment>?> loadComments({required String postId}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load social comments. Reason: missing social url.');
+      return null;
+    }
+    Response? response = await Network().get('$socialUrl/posts/$postId/comments', auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      List<Comment>? posts = Comment.listFromJson(JsonUtils.decodeList(responseBody));
+      return posts;
+    } else {
+      Log.e('Failed to load social comments. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
   String _socialSortOrderToString(SocialSortOrder? order) {
     switch (order) {
       case SocialSortOrder.asc:

@@ -637,13 +637,15 @@ class Comment {
 
   final String? id;
   final String? parentId;
+
   String? body;
+  String? imageUrl;
 
   final Creator? creator;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
 
-  Comment({this.id, this.parentId, this.body, this.creator, this.dateCreatedUtc, this.dateUpdatedUtc});
+  Comment({this.id, this.parentId, this.body, this.imageUrl, this.creator, this.dateCreatedUtc, this.dateUpdatedUtc});
 
   static Comment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -654,13 +656,14 @@ class Comment {
       id: JsonUtils.stringValue(json['id']),
       parentId: JsonUtils.stringValue(json['parent_id']),
       body: JsonUtils.stringValue(json['body']),
+      imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
     );
   }
 
-  Map<String, dynamic> toJson() => {'body': body, 'parent_id': parentId};
+  Map<String, dynamic> toJson() => {'body': body, 'parent_id': parentId, 'image_url': imageUrl};
 
   @override
   bool operator ==(other) =>
@@ -668,6 +671,7 @@ class Comment {
       (other.id == id) &&
       (other.parentId == parentId) &&
       (other.body == body) &&
+      (other.imageUrl == imageUrl) &&
       (other.creator == creator) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
@@ -677,6 +681,7 @@ class Comment {
       (id?.hashCode ?? 0) ^
       (parentId?.hashCode ?? 0) ^
       (body?.hashCode ?? 0) ^
+      (imageUrl?.hashCode ?? 0) ^
       (creator?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
@@ -702,4 +707,6 @@ class Comment {
     }
     return json;
   }
+
+  bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
