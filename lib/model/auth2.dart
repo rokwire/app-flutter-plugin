@@ -281,6 +281,16 @@ class Auth2UserProfile {
   static const String notifyDataChanged          = "edu.illinois.rokwire.user.profile.data.changed";
   static const String notifyChanged              = "edu.illinois.rokwire.user.profile.changed";
 
+  // Known unstructured_properties entries
+  static const String researchQuestionnaireAnswersDataKey = 'research_questionnaire_answers';
+  static const String pronounDataKey = 'pronoun';
+  static const String titleDataKey = 'title';
+  static const String pronunciationUrlDataKey = 'pronunciation_url';
+  static const String collegeDataKey = 'college';
+  static const String departmentDataKey = 'department';
+  static const String majorDataKey = 'major';
+  static const String email2DataKey = 'email2';
+  static const String websiteDataKey = 'website';
 
   String? _id;
   String? _firstName;
@@ -551,21 +561,32 @@ class Auth2UserProfile {
   Map<String, dynamic>? get data => _data;
 
   bool   get isValid => StringUtils.isNotEmpty(id);
-  String? get fullName => StringUtils.fullName([firstName, lastName]);
+  String? get fullName => StringUtils.fullName([firstName, middleName, lastName]);
+
+  // Other Data dields
+
+  String? get pronoun => JsonUtils.stringValue(_data?[pronounDataKey]);
+  String? get title => JsonUtils.stringValue(_data?[titleDataKey]);
+  String? get pronunciationUrl => JsonUtils.stringValue(_data?[pronunciationUrlDataKey]);
+
+  String? get college => JsonUtils.stringValue(_data?[collegeDataKey]);
+  String? get department => JsonUtils.stringValue(_data?[departmentDataKey]);
+  String? get major => JsonUtils.stringValue(_data?[majorDataKey]);
+
+  String? get email2 => JsonUtils.stringValue(_data?[email2DataKey]);
+  String? get website => JsonUtils.stringValue(_data?[websiteDataKey]);
 
   // Research Questionnaire Answers
 
-  static const String researchQuestionnaireAnswersKey = 'research_questionnaire_answers';
-
-  Map<String, dynamic>? get researchQuestionnaireAnswers => JsonUtils.mapValue(MapUtils.get(_data, researchQuestionnaireAnswersKey));
+  Map<String, dynamic>? get researchQuestionnaireAnswers => JsonUtils.mapValue(MapUtils.get(_data, researchQuestionnaireAnswersDataKey));
 
   set researchQuestionnaireAnswers(Map<String, dynamic>? value) {
     if (value != null) {
       _data ??= <String, dynamic>{};
-      _data![researchQuestionnaireAnswersKey] = value;
+      _data![researchQuestionnaireAnswersDataKey] = value;
     }
     else if (_data != null) {
-      _data?.remove(researchQuestionnaireAnswersKey);
+      _data?.remove(researchQuestionnaireAnswersDataKey);
     }
   }
 
@@ -579,7 +600,7 @@ class Auth2UserProfile {
     if (!const DeepCollectionEquality().equals(answersJson, lastAnswersJson)) {
       researchQuestionnaireAnswers ??= <String, dynamic>{};
       MapUtils.set(researchQuestionnaireAnswers, questionnaireId, answersJson);
-      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersKey);
+      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersDataKey);
       NotificationService().notify(notifyChanged, this);
     }
   }
@@ -587,9 +608,33 @@ class Auth2UserProfile {
   void clearAllResearchQuestionnaireAnswers() {
     if (researchQuestionnaireAnswers?.isNotEmpty ?? false) {
       researchQuestionnaireAnswers?.clear();
-      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersKey);
+      NotificationService().notify(notifyDataChanged, researchQuestionnaireAnswersDataKey);
       NotificationService().notify(notifyChanged, this);
     }
+  }
+
+  // JSON List Serialization
+
+  static List<Auth2UserProfile>? listFromJson(List<dynamic>? json) {
+    List<Auth2UserProfile>? values;
+    if (json != null) {
+      values = <Auth2UserProfile>[];
+      for (dynamic entry in json) {
+        ListUtils.add(values, Auth2UserProfile.fromJson(JsonUtils.mapValue(entry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2UserProfile>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = [];
+      for (Auth2UserProfile value in values) {
+        json.add(value.toJson());
+      }
+    }
+    return json;
   }
 }
 
