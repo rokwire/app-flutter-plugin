@@ -224,10 +224,6 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      //TBD: DDGS - check if we have to send notification for that
-      // Comment? result = Comment.fromJson(JsonUtils.decodeMap(responseBody));
-      // NotificationService().notify(notifyPostCreated, result);
-      // NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to create social comment. Reason: $responseCode, $responseBody');
@@ -256,10 +252,6 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      //TBD: DDGS - check if we have to send notification for that
-      // Comment? result = Comment.fromJson(JsonUtils.decodeMap(responseBody));
-      // NotificationService().notify(notifyPostUpdated, result);
-      // NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to update social comment. Reason: $responseCode, $responseBody');
@@ -287,9 +279,6 @@ class Social with Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      //TBD: DDGS - check if we have to send notification for that
-      // NotificationService().notify(notifyPostDeleted, comment);
-      // NotificationService().notify(notifyPostsUpdated);
       return true;
     } else {
       Log.e('Failed to delete social post. Reason: $responseCode, $responseBody');
