@@ -255,6 +255,19 @@ class AuthorizationContext {
     return AuthorizationContext(status: AuthorizationContextStatus.active, items: items);
   }
 
+  static AuthorizationContext forMembersType({required ContextItemMembersType membersType, List<String>? groupIds}) {
+    List<ContextItem>? items;
+    if (groupIds != null) {
+      items = <ContextItem>[];
+      for (String groupId in groupIds) {
+        ContextItemMembers members = ContextItemMembers(type: membersType);
+        items.add(ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: members));
+      }
+    }
+    // All post auth statuses are "active" for now because they are part of a group
+    return AuthorizationContext(status: AuthorizationContextStatus.active, items: items);
+  }
+
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     JsonUtils.addNonNullValue(json: json, key: 'authorization_status', value: authorizationContextStatusToString(status));

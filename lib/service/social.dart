@@ -30,6 +30,12 @@ class Social with Service {
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
   static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
+  // Filtering keys
+  static const String _operationKey = 'operation';
+  static const String _criteriaItemsKey = 'criteria_items';
+  static const String _operationAndValue = 'and';
+  static const String _operationOrValue = 'or';
+
   // Singleton Factory
 
   static Social? _instance;
@@ -146,23 +152,20 @@ class Social with Service {
       Log.e('Failed to load social posts. Reason: missing social url.');
       return null;
     }
-    Map<String, dynamic> requestBody = {
-      'status': postStatusToString(status),
-      'offset': offset,
-      'limit': limit,
-      'order': _socialSortOrderToString(order),
-      'sort_by': _socialSortByToString(sortBy)
-    };
+
+    // 1. Receiver criteria
+    String? statusToString = postStatusToString(status);
+    Map<String, dynamic> receiverItem = {'status': statusToString};
     if (CollectionUtils.isNotEmpty(postIds)) {
-      requestBody['ids'] = postIds!.toList();
+      receiverItem['ids'] = postIds!.toList();
     }
     bool hasGroupId = (groupId != null);
     if (hasGroupId) {
       SocialContext context = SocialContext.forGroup(groupId: groupId);
-      requestBody['context'] = context.toJson();
+      receiverItem['context'] = context.toJson();
     }
+    List<String>? groupIds = hasGroupId ? [groupId] : null;
     if (type != null) {
-      List<String>? groupIds = hasGroupId ? [groupId] : null;
       List<String>? memberAccountIds;
       switch (type) {
         case PostType.post:
@@ -172,8 +175,41 @@ class Social with Service {
           memberAccountIds = (Auth2().accountId != null) ? [Auth2().accountId!] : null; // direct messages are for the current user.
           break;
       }
-      requestBody['authorization_context'] = AuthorizationContext.forGroups(groupIds: groupIds, memberAccountIds: memberAccountIds);
+      receiverItem['authorization_context'] =
+          AuthorizationContext.forGroups(groupIds: groupIds, memberAccountIds: memberAccountIds);
     }
+
+    List<dynamic> mainCriteriaItems = <dynamic>[];
+
+    Map<String, dynamic> receiverCriteria = {_operationKey: _operationAndValue, _criteriaItemsKey: receiverItem};
+    mainCriteriaItems.add(receiverCriteria);
+
+    late String mainOperation;
+    if (type == PostType.direct_message) {
+      // 2. Created_By criteria
+      mainOperation = _operationOrValue;
+      Map<String, dynamic> createdByItem = {
+        'status': statusToString,
+        'created_by': Auth2().accountId,
+        'authorization_context':
+            AuthorizationContext.forMembersType(membersType: ContextItemMembersType.listed_accounts, groupIds: groupIds)
+      };
+      Map<String, dynamic> createdByCriteria = {_operationKey: _operationAndValue, _criteriaItemsKey: createdByItem};
+      mainCriteriaItems.add(createdByCriteria);
+    } else {
+      mainOperation = _operationAndValue;
+    }
+
+    // 3. Request Body
+    Map<String, dynamic> requestBody = {
+      'offset': offset,
+      'limit': limit,
+      'order': _socialSortOrderToString(order),
+      'sort_by': _socialSortByToString(sortBy)
+    };
+    requestBody[_operationKey] = mainOperation;
+    requestBody[_criteriaItemsKey] = mainCriteriaItems;
+
     String? encodedBody = JsonUtils.encode(requestBody);
     Response? response = await Network().post('$socialUrl/posts/load', body: encodedBody, auth: Auth2());
     int? responseCode = response?.statusCode;
