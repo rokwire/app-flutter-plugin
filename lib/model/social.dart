@@ -715,3 +715,74 @@ class Comment {
 
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
+
+class Reaction {
+  final String? id;
+  final String? commentId;
+  final String? postId;
+  final String? type;
+  final ReactionSource? source;
+
+  Reaction({this.id, this.commentId, this.postId, this.type, this.source});
+
+  static Reaction? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return Reaction(
+        id: JsonUtils.stringValue(json['id']),
+        commentId: JsonUtils.stringValue(json['comment_id']),
+        postId: JsonUtils.stringValue(json['post_id']),
+        type: JsonUtils.stringValue(json['type']),
+        source: reactionSourceFromString(JsonUtils.stringValue(json['source'])));
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Reaction) &&
+      (other.id == id) &&
+      (other.postId == postId) &&
+      (other.commentId == commentId) &&
+      (other.type == type) &&
+      (other.source == source);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^ (commentId?.hashCode ?? 0) ^ (postId?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (source?.hashCode ?? 0);
+
+  static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
+    List<Reaction>? items;
+    if (jsonList != null) {
+      items = <Reaction>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Reaction.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+}
+
+enum ReactionSource { post, comment }
+
+String? reactionSourceToString(ReactionSource? source) {
+  switch (source) {
+    case ReactionSource.comment:
+      return 'comment';
+    case ReactionSource.post:
+      return 'post';
+    default:
+      return null;
+  }
+}
+
+ReactionSource? reactionSourceFromString(String? value) {
+  switch (value) {
+    case 'comment':
+      return ReactionSource.comment;
+    case 'post':
+      return ReactionSource.post;
+    default:
+      return null;
+  }
+}
