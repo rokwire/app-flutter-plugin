@@ -17,13 +17,13 @@ class Auth2Token {
   
   Auth2Token({this.accessToken, this.refreshToken, this.idToken, this.tokenType});
 
-  static Auth2Token? fromOther(Auth2Token? value, {String? idToken, String? accessToken, String? refreshToken, String? tokenType }) {
-    return (value != null) ? Auth2Token(
-      idToken: idToken ?? value.idToken,
-      accessToken: accessToken ?? value.accessToken,
-      refreshToken: refreshToken ?? value.refreshToken,
-      tokenType: tokenType ?? value.tokenType,
-    ) : null;
+  factory Auth2Token.fromOther(Auth2Token? value, {String? idToken, String? accessToken, String? refreshToken, String? tokenType }) {
+    return Auth2Token(
+      idToken: idToken ?? value?.idToken,
+      accessToken: accessToken ?? value?.accessToken,
+      refreshToken: refreshToken ?? value?.refreshToken,
+      tokenType: tokenType ?? value?.tokenType,
+    );
   }
 
   static Auth2Token? fromJson(Map<String, dynamic>? json) {
@@ -122,20 +122,22 @@ class Auth2Account {
   final String? username;
   final Auth2UserProfile? profile;
   final Auth2UserPrefs? prefs;
+  final Auth2UserPrivacy? privacy;
   final List<Auth2Permission>? permissions;
   final List<Auth2Role>? roles;
   final List<Auth2Group>? groups;
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
   
-  Auth2Account({this.id, this.username, this.profile, this.prefs, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
+  Auth2Account({this.id, this.username, this.profile, this.prefs, this.privacy, this.permissions, this.roles, this.groups, this.authTypes, this.systemConfigs});
 
-  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+  factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username, Auth2UserProfile? profile, Auth2UserPrefs? prefs, Auth2UserPrivacy? privacy, List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
     return Auth2Account(
       id: id ?? other?.id,
       username: username ?? other?.username,
       profile: profile ?? other?.profile,
       prefs: prefs ?? other?.prefs,
+      privacy: privacy ?? other?.privacy,
       permissions: permissions ?? other?.permissions,
       roles: roles ?? other?.roles,
       groups: groups ?? other?.groups,
@@ -144,12 +146,13 @@ class Auth2Account {
     );
   }
 
-  static Auth2Account? fromJson(Map<String, dynamic>? json, { Auth2UserPrefs? prefs, Auth2UserProfile? profile }) {
+  static Auth2Account? fromJson(Map<String, dynamic>? json, { Auth2UserPrefs? prefs, Auth2UserProfile? profile, Auth2UserPrivacy? privacy }) {
     return (json != null) ? Auth2Account(
       id: JsonUtils.stringValue(json['id']),
       username: JsonUtils.stringValue(json['username']),
       profile: Auth2UserProfile.fromJson(JsonUtils.mapValue(json['profile'])) ?? profile,
       prefs: Auth2UserPrefs.fromJson(JsonUtils.mapValue(json['preferences'])) ?? prefs, //TBD Auth2
+      privacy: Auth2UserPrivacy.fromJson(JsonUtils.mapValue(json['privacy'])) ?? privacy,
       permissions: Auth2Permission.listFromJson(JsonUtils.listValue(json['permissions'])),
       roles: Auth2Role.listFromJson(JsonUtils.listValue(json['roles'])),
       groups: Auth2Group.listFromJson(JsonUtils.listValue(json['groups'])),
@@ -164,6 +167,7 @@ class Auth2Account {
       'username' : username,
       'profile': profile?.toJson(),
       'preferences': prefs?.toJson(),
+      'privacy': privacy?.toJson(),
       'permissions': Auth2StringEntry.listToJson(permissions),
       'roles': Auth2StringEntry.listToJson(roles),
       'groups': Auth2StringEntry.listToJson(groups),
@@ -178,6 +182,7 @@ class Auth2Account {
       (other.id == id) &&
       (other.username == username) &&
       (other.profile == profile) &&
+      (other.privacy == privacy) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
       const DeepCollectionEquality().equals(other.groups, groups) &&
@@ -189,6 +194,7 @@ class Auth2Account {
     (id?.hashCode ?? 0) ^
     (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
+    (privacy?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
     (const DeepCollectionEquality().hash(groups)) ^
@@ -266,6 +272,66 @@ class Auth2Account {
   bool get isAnalyticsProcessed => (MapUtils.get(systemConfigs, 'analytics_processed_date') != null);
 }
 
+////////////////////////////////
+// Auth2AccountPrivacy
+
+class Auth2UserPrivacy {
+  final bool? public;
+  final Auth2AccountFieldsVisibility? fieldsVisibility;
+
+  Auth2UserPrivacy({this.public, this.fieldsVisibility});
+  
+  static Auth2UserPrivacy? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2UserPrivacy(
+    public: JsonUtils.boolValue(json['public']),
+    fieldsVisibility: Auth2AccountFieldsVisibility.fromJson(JsonUtils.mapValue(json['field_visibility'])),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'public': public,
+    'field_visibility': fieldsVisibility?.toJson(),
+  };
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2UserPrivacy) &&
+      (other.public == public) &&
+      (other.fieldsVisibility == fieldsVisibility);
+
+  @override
+  int get hashCode =>
+    (public?.hashCode ?? 0) ^
+    (fieldsVisibility?.hashCode ?? 0);
+}
+
+////////////////////////////////
+// Auth2AccountFieldsVisibility
+
+class Auth2AccountFieldsVisibility {
+  final Auth2UserProfileFieldsVisibility? profile;
+  
+  Auth2AccountFieldsVisibility({this.profile});
+
+  static Auth2AccountFieldsVisibility? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2AccountFieldsVisibility(
+    profile: Auth2UserProfileFieldsVisibility.fromJson(JsonUtils.mapValue(json['profile']))
+  ) : null;
+  
+  Map<String, dynamic> toJson() => {
+    'profile': profile?.toJson(),
+  };
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2AccountFieldsVisibility) &&
+    (other.profile == profile);
+
+  @override
+  int get hashCode =>
+    (profile?.hashCode ?? 0);
+}
+
+////////////////////////////////
+// Auth2AccountScope
+
 class Auth2AccountScope {
   final Set<Auth2UserPrefsScope>? prefs;
   final Set<Auth2UserProfileScope>? profile;
@@ -309,7 +375,8 @@ class Auth2UserProfile {
 
   Map<String, dynamic>? _data;
   
-  Auth2UserProfile({String? id, String? firstName, String? middleName, String? lastName,
+  Auth2UserProfile({String? id,
+    String? firstName, String? middleName, String? lastName,
     int? birthYear, String? photoUrl, String? email, String? phone,
     String? address, String? state, String? zip, String? country,
     Map<String, dynamic>? data
@@ -331,7 +398,59 @@ class Auth2UserProfile {
 
     _data = data;
 
-  
+  factory Auth2UserProfile.fromOther(Auth2UserProfile? other, {
+    String? id, String? firstName, String? middleName, String? lastName,
+    int? birthYear, String? photoUrl, String? email, String? phone,
+    String? address, String? state, String? zip, String? country,
+    Map<String, dynamic>? data}) {
+
+    return Auth2UserProfile(
+      id: id ?? other?._id,
+      firstName: firstName ?? other?._firstName,
+      middleName: middleName ?? other?._middleName,
+      lastName: lastName ?? other?._lastName,
+      birthYear: birthYear ?? other?._birthYear,
+      photoUrl: photoUrl ?? other?._photoUrl,
+
+      email: email ?? other?._email,
+      phone: phone ?? other?._phone,
+
+      address: address ?? other?._address,
+      state: state ?? other?._state,
+      zip: zip ?? other?._zip,
+      country: country ?? other?._country,
+
+      data: MapUtils.combine(other?._data, data),
+    );
+  }
+
+  static Auth2UserProfile? fromFieldVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
+    Set<Auth2FieldVisibility> permitted = const <Auth2FieldVisibility>{Auth2FieldVisibility.public}
+  }) {
+
+    return (source != null) ? Auth2UserProfile(
+      id: source._id,
+      firstName: permitted.contains(visibility?.firstName) ? source._firstName : null,
+      middleName: permitted.contains(visibility?.middleName) ? source._middleName : null,
+      lastName: permitted.contains(visibility?.lastName) ? source._lastName : null,
+      birthYear: permitted.contains(visibility?.birthYear) ? source._birthYear : null,
+      photoUrl: permitted.contains(visibility?.photoUrl) ? source._photoUrl : null,
+
+      email: permitted.contains(visibility?.email) ? source._email : null,
+      phone: permitted.contains(visibility?.phone) ? source._phone : null,
+
+      address: permitted.contains(visibility?.address) ? source._address : null,
+      state: permitted.contains(visibility?.state) ? source._state : null,
+      zip: permitted.contains(visibility?.zip) ? source._zip : null,
+      country: permitted.contains(visibility?.country) ? source._country : null,
+
+      data: Auth2UserProfileFieldsVisibility.buildPermitted(source._data, visibility?.data , permitted: permitted),
+    ) : null;
+  }
+
+  factory Auth2UserProfile.empty() {
+    return Auth2UserProfile();
+  }
 
   static Auth2UserProfile? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2UserProfile(
@@ -352,36 +471,6 @@ class Auth2UserProfile {
 
       data: JsonUtils.mapValue(json['unstructured_properties']),
 
-    ) : null;
-  }
-
-  factory Auth2UserProfile.empty() {
-    return Auth2UserProfile();
-  }
-
-  static Auth2UserProfile? fromOther(Auth2UserProfile? other, {
-    String? id, String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
-    String? address, String? state, String? zip, String? country,
-    Map<String, dynamic>? data}) {
-
-    return (other != null) ? Auth2UserProfile(
-      id: id ?? other._id,
-      firstName: firstName ?? other._firstName,
-      middleName: middleName ?? other._middleName,
-      lastName: lastName ?? other._lastName,
-      birthYear: birthYear ?? other._birthYear,
-      photoUrl: photoUrl ?? other._photoUrl,
-
-      email: email ?? other._email,
-      phone: phone ?? other._phone,
-  
-      address: address ?? other._address,
-      state: state ?? other._state,
-      zip: zip ?? other._zip,
-      country: country ?? other._country,
-
-      data: MapUtils.combine(other._data, data),
     ) : null;
   }
 
@@ -563,7 +652,7 @@ class Auth2UserProfile {
   bool   get isValid => StringUtils.isNotEmpty(id);
   String? get fullName => StringUtils.fullName([firstName, middleName, lastName]);
 
-  // Other Data dields
+  // Other Data Fields
 
   String? get pronoun => JsonUtils.stringValue(_data?[pronounDataKey]);
   String? get title => JsonUtils.stringValue(_data?[titleDataKey]);
@@ -637,6 +726,162 @@ class Auth2UserProfile {
     return json;
   }
 }
+
+////////////////////////////////
+// Auth2UserProfilePrivacy
+
+class Auth2UserProfileFieldsVisibility {
+
+  final Auth2FieldVisibility? firstName;
+  final Auth2FieldVisibility? middleName;
+  final Auth2FieldVisibility? lastName;
+  final Auth2FieldVisibility? birthYear;
+  final Auth2FieldVisibility? photoUrl;
+
+  final Auth2FieldVisibility? email;
+  final Auth2FieldVisibility? phone;
+
+  final Auth2FieldVisibility? address;
+  final Auth2FieldVisibility? state;
+  final Auth2FieldVisibility? zip;
+  final Auth2FieldVisibility? country;
+
+  final Map<String, Auth2FieldVisibility?>? data;
+
+  Auth2UserProfileFieldsVisibility({
+    this.firstName, this.middleName, this.lastName,
+    this.birthYear, this.photoUrl, this.email, this.phone,
+    this.address, this.state, this.zip, this.country,
+    this.data
+  });
+
+  factory Auth2UserProfileFieldsVisibility.fromOther(Auth2UserProfileFieldsVisibility? other, {
+    Auth2FieldVisibility? firstName,
+    Auth2FieldVisibility? middleName,
+    Auth2FieldVisibility? lastName,
+
+    Auth2FieldVisibility? birthYear,
+    Auth2FieldVisibility? photoUrl,
+    Auth2FieldVisibility? email,
+    Auth2FieldVisibility? phone,
+
+    Auth2FieldVisibility? address,
+    Auth2FieldVisibility? state,
+    Auth2FieldVisibility? zip,
+    Auth2FieldVisibility? country,
+
+    Map<String, Auth2FieldVisibility>? data
+  }) => Auth2UserProfileFieldsVisibility(
+    firstName: firstName ?? other?.firstName,
+    middleName: middleName ?? other?.middleName,
+    lastName: lastName ?? other?.lastName,
+    birthYear: birthYear ?? other?.birthYear,
+    photoUrl: photoUrl ?? other?.photoUrl,
+
+    email: email ?? other?.email,
+    phone: phone ?? other?.phone,
+
+    address: address ?? other?.address,
+    state: state ?? other?.state,
+    zip: zip ?? other?.zip,
+    country: country ?? other?.country,
+
+    data: MapUtils.combine(other?.data, data),
+  );
+
+  static Auth2UserProfileFieldsVisibility? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2UserProfileFieldsVisibility(
+    firstName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['first_name'])),
+    middleName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['middle_name'])),
+    lastName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['last_name'])),
+
+    birthYear: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['birth_year'])),
+    photoUrl: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['photo_url'])),
+    email: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['email'])),
+    phone: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['phone'])),
+
+    address: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['address'])),
+    state: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['state'])),
+    zip: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['zip_code'])),
+    country: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['country'])),
+
+    data: Auth2FieldVisibilityImpl.mapFromJson(JsonUtils.mapValue(json['unstructured_properties'])),
+  ) : null;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'first_name': firstName?.toJson(),
+      'middle_name': middleName?.toJson(),
+      'last_name': lastName?.toJson(),
+
+      'birth_year': birthYear?.toJson(),
+      'photo_url': photoUrl?.toJson(),
+      'email': email?.toJson(),
+      'phone': phone?.toJson(),
+
+      'address': address?.toJson(),
+      'state': state?.toJson(),
+      'zip_code': zip?.toJson(),
+      'country': country?.toJson(),
+
+      'unstructured_properties': Auth2FieldVisibilityImpl.mapToJson(data),
+    };
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is Auth2UserProfileFieldsVisibility) &&
+      (other.firstName == firstName) &&
+      (other.middleName == middleName) &&
+      (other.lastName == lastName) &&
+
+      (other.birthYear == birthYear) &&
+      (other.photoUrl == photoUrl) &&
+      (other.email == email) &&
+      (other.phone == phone) &&
+
+      (other.address == address) &&
+      (other.state == state) &&
+      (other.zip == zip) &&
+      (other.country == country) &&
+
+      const DeepCollectionEquality().equals(other.data, data);
+
+  @override
+  int get hashCode =>
+    (firstName?.hashCode ?? 0) ^
+    (middleName?.hashCode ?? 0) ^
+    (lastName?.hashCode ?? 0) ^
+
+    (birthYear?.hashCode ?? 0) ^
+    (photoUrl?.hashCode ?? 0) ^
+    (email?.hashCode ?? 0) ^
+    (phone?.hashCode ?? 0) ^
+
+    (address?.hashCode ?? 0) ^
+    (state?.hashCode ?? 0) ^
+    (zip?.hashCode ?? 0) ^
+    (country?.hashCode ?? 0) ^
+
+    (const DeepCollectionEquality().hash(data));
+
+  // Other Data dields
+
+  Auth2FieldVisibility? get pronoun => data?[Auth2UserProfile.pronounDataKey];
+  Auth2FieldVisibility? get title => data?[Auth2UserProfile.titleDataKey];
+  Auth2FieldVisibility? get pronunciationUrl => data?[Auth2UserProfile.pronunciationUrlDataKey];
+
+  Auth2FieldVisibility? get college => data?[Auth2UserProfile.collegeDataKey];
+  Auth2FieldVisibility? get department => data?[Auth2UserProfile.departmentDataKey];
+  Auth2FieldVisibility? get major => data?[Auth2UserProfile.majorDataKey];
+
+  Auth2FieldVisibility? get email2 => data?[Auth2UserProfile.email2DataKey];
+  Auth2FieldVisibility? get website => data?[Auth2UserProfile.websiteDataKey];
+
+  static Map<String, dynamic>? buildPermitted(Map<String, dynamic>? source, Map<String, Auth2FieldVisibility?>? visibility, {
+    required Set<Auth2FieldVisibility> permitted
+  }) => (source != null) ? source.map((String key, dynamic value) => MapEntry(key, permitted.contains(visibility?[key]) ? value : null)) : null;
+}
+
 
 ////////////////////////////////
 // Auth2StringEntry
@@ -2239,3 +2484,39 @@ class FavoriteItem implements Favorite {
 // Auth2PhoneVerificationMethod
 
 enum Auth2PhoneVerificationMethod { call, sms }
+
+////////////////////////////////
+// Auth2FieldVisibility
+
+enum Auth2FieldVisibility { private, connections, public }
+
+extension Auth2FieldVisibilityImpl on Auth2FieldVisibility {
+
+  // JSON Serialization
+
+  static Auth2FieldVisibility? fromJson(String? value) {
+    switch (value) {
+      case 'private': return Auth2FieldVisibility.private;
+      case 'connections': return Auth2FieldVisibility.connections;
+      case 'public': return Auth2FieldVisibility.public;
+      default: return null;
+    }
+  }
+
+  String toJson() {
+    switch (this) {
+      case Auth2FieldVisibility.private: return 'private';
+      case Auth2FieldVisibility.connections: return 'connections';
+      case Auth2FieldVisibility.public: return 'public';
+    }
+  }
+
+  // JSON Map Serialization
+
+  static Map<String, Auth2FieldVisibility?>? mapFromJson(Map<String, dynamic>? json) => (json != null) ?
+    json.map<String, Auth2FieldVisibility?>((String key, dynamic value) => MapEntry(key, Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(value)))) : null;
+
+  static Map<String, dynamic>? mapToJson(Map<String, Auth2FieldVisibility?>? map) => (map != null) ?
+    map.map<String, dynamic>((String key, Auth2FieldVisibility? value) => MapEntry(key, value?.toJson())) : null;
+
+}
