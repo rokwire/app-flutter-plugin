@@ -1185,45 +1185,46 @@ class Groups with Service implements NotificationsListener {
 
   // Group Posts and Replies
 
-  Future<bool> createPost(String? groupId, GroupPost? post) async {
-    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && (post != null)) {
-      await _ensureLogin();
-      String? requestBody = JsonUtils.encode(post.toJson(create: true));
-      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
-      Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
-      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
-      if (responsePost != null) {
-        //TBD: DDGS - implement - use Social
-        // NotificationService().notify(notifyGroupPostCreated, responsePost);
-        // NotificationService().notify(notifyGroupPostsUpdated);
-        return true;
-      } else {
-        Log.e('Failed to create group post. Response: ${response?.body}');
-      }
-    }
-    return false;
-  }
-
-  Future<bool> updatePost(String? groupId, GroupPost? post) async {
-    if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
-      await _ensureLogin();
-      String? requestBody = JsonUtils.encode(post!.toJson(update: true));
-      String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
-      Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
-      GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
-      if (responsePost != null) {
-        //TBD: DDGS - implement - use Social
-        // NotificationService().notify(notifyGroupPostUpdated, responsePost);
-        // NotificationService().notify(notifyGroupPostsUpdated);
-        return true;
-      } else {
-        Log.e('Failed to update group post. Response: ${response?.body}');
-      }
-    }
-    return false;
-  }
-
   //TBD: DDGS - remove after Social BB is integrated
+  // Future<bool> createPost(String? groupId, GroupPost? post) async {
+  //   if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && (post != null)) {
+  //     await _ensureLogin();
+  //     String? requestBody = JsonUtils.encode(post.toJson(create: true));
+  //     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts';
+  //     Response? response = await Network().post(requestUrl, auth: Auth2(), body: requestBody);
+  //     GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+  //     if (responsePost != null) {
+  //       //TBD: DDGS - implement - use Social
+  //       // NotificationService().notify(notifyGroupPostCreated, responsePost);
+  //       // NotificationService().notify(notifyGroupPostsUpdated);
+  //       return true;
+  //     } else {
+  //       Log.e('Failed to create group post. Response: ${response?.body}');
+  //     }
+  //   }
+  //   return false;
+  // }
+  //
+  // Future<bool> updatePost(String? groupId, GroupPost? post) async {
+  //   if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
+  //     await _ensureLogin();
+  //     String? requestBody = JsonUtils.encode(post!.toJson(update: true));
+  //     String requestUrl = '${Config().groupsUrl}/group/$groupId/posts/${post.id}';
+  //     Response? response = await Network().put(requestUrl, auth: Auth2(), body: requestBody);
+  //     GroupPost? responsePost = (response?.statusCode == 200) ? GroupPost.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+  //     if (responsePost != null) {
+  //       //TBD: DDGS - implement - use Social
+  //       // NotificationService().notify(notifyGroupPostUpdated, responsePost);
+  //       // NotificationService().notify(notifyGroupPostsUpdated);
+  //       return true;
+  //     } else {
+  //       Log.e('Failed to update group post. Response: ${response?.body}');
+  //     }
+  //   }
+  //   return false;
+  // }
+  //
+  //
   // Future<bool> deletePost(String? groupId, GroupPost? post) async {
   //   if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId) && StringUtils.isNotEmpty(post?.id)) {
   //     await _ensureLogin();
