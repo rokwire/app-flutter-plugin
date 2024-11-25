@@ -576,7 +576,7 @@ PostNotificationPolicyType? postNotificationPolicyTypeFromString(String? value) 
   }
 }
 
-enum PostStatus { draft, active, reported_as_abuse, confirmed_as_abuse }
+enum PostStatus { draft, active }
 
 String? postStatusToString(PostStatus? status) {
   switch (status) {
@@ -584,10 +584,6 @@ String? postStatusToString(PostStatus? status) {
       return 'active';
     case PostStatus.draft:
       return 'draft';
-    case PostStatus.reported_as_abuse:
-      return 'reported-as-abuse';
-    case PostStatus.confirmed_as_abuse:
-      return 'confirmed-as-abuse';
     default:
       return null;
   }
@@ -599,10 +595,6 @@ PostStatus? postStatusFromString(String? value) {
       return PostStatus.active;
     case 'draft':
       return PostStatus.draft;
-    case 'reported-as-abuse':
-      return PostStatus.reported_as_abuse;
-    case 'confirmed-as-abuse':
-      return PostStatus.confirmed_as_abuse;
     default:
       return null;
   }
