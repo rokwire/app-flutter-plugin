@@ -24,7 +24,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Social with Service implements NotificationsListener {
+class Social with Service {
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
   static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
@@ -57,13 +57,6 @@ class Social with Service implements NotificationsListener {
   @override
   Future<void> initService() async {
     super.initService();
-  }
-
-  // Notification Listener
-
-  @override
-  void onNotification(String name, param) {
-    // TODO: implement onNotification
   }
 
   // APIs
