@@ -2,7 +2,6 @@ import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:timezone/timezone.dart';
 
 class Event2 with Explore, Favorite {
   final String? id;
