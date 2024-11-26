@@ -1223,6 +1223,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return await _loadAccountUserProfile();
   }
 
+  Future<bool> saveUserProfile(Auth2UserProfile? profile) async {
+    return await saveAccountUserProfile(profile);
+  }
+
   Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
     if (await _saveExternalAccountUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
@@ -1311,10 +1315,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool?> saveUserPrivacy(Auth2UserPrivacy? privacy) =>
-      _saveAccountUserPrivacy(privacy);
+  Future<bool> saveUserPrivacy(Auth2UserPrivacy? privacy) =>
+    _saveAccountUserPrivacy(privacy);
 
-  Future<bool?> _saveAccountUserPrivacy(Auth2UserPrivacy? privacy) async {
+  Future<bool> _saveAccountUserPrivacy(Auth2UserPrivacy? privacy) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";
       Map<String, String> headers = {
@@ -1330,13 +1334,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         }
         return true;
       }
-      else {
-        return false;
-      }
     }
-    else {
-      return null;
-    }
+    return false;
   }
 
   // Account

@@ -280,6 +280,14 @@ class Auth2UserPrivacy {
   final Auth2AccountFieldsVisibility? fieldsVisibility;
 
   Auth2UserPrivacy({this.public, this.fieldsVisibility});
+
+  factory Auth2UserPrivacy.fromOther(Auth2UserPrivacy? other, {
+    bool? public,
+    Auth2AccountFieldsVisibility? fieldsVisibility,
+  }) => Auth2UserPrivacy(
+    public: public ?? other?.public,
+    fieldsVisibility: fieldsVisibility ?? other?.fieldsVisibility,
+  );
   
   static Auth2UserPrivacy? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2UserPrivacy(
     public: JsonUtils.boolValue(json['public']),
@@ -308,8 +316,14 @@ class Auth2UserPrivacy {
 
 class Auth2AccountFieldsVisibility {
   final Auth2UserProfileFieldsVisibility? profile;
-  
+
   Auth2AccountFieldsVisibility({this.profile});
+
+  factory Auth2AccountFieldsVisibility.fromOther(Auth2AccountFieldsVisibility? other, {
+    Auth2UserProfileFieldsVisibility? profile,
+  }) => Auth2AccountFieldsVisibility(
+    profile: profile ?? other?.profile,
+  );
 
   static Auth2AccountFieldsVisibility? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2AccountFieldsVisibility(
     profile: Auth2UserProfileFieldsVisibility.fromJson(JsonUtils.mapValue(json['profile']))
@@ -770,7 +784,7 @@ class Auth2UserProfileFieldsVisibility {
     Auth2FieldVisibility? zip,
     Auth2FieldVisibility? country,
 
-    Map<String, Auth2FieldVisibility>? data
+    Map<String, Auth2FieldVisibility?>? data
   }) => Auth2UserProfileFieldsVisibility(
     firstName: firstName ?? other?.firstName,
     middleName: middleName ?? other?.middleName,
