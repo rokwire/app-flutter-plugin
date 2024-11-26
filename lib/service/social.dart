@@ -31,10 +31,10 @@ class Social with Service {
   static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
   // Filtering keys
-  static const String _operationKey = 'operation';
-  static const String _criteriaItemsKey = 'criteria_items';
-  static const String _operationAndValue = 'and';
-  static const String _operationOrValue = 'or';
+  static const String _postsOperationKey = 'operation';
+  static const String _postsOperationAndValue = 'and';
+  static const String _postsOperationOrValue = 'or';
+  static const String _postsCriteriaItemsKey = 'criteria_items';
 
   // Singleton Factory
 
@@ -181,23 +181,23 @@ class Social with Service {
 
     List<dynamic> mainCriteriaItems = <dynamic>[];
 
-    Map<String, dynamic> receiverCriteria = {_operationKey: _operationAndValue, _criteriaItemsKey: receiverItem};
+    Map<String, dynamic> receiverCriteria = {_postsOperationKey: _postsOperationAndValue, _postsCriteriaItemsKey: receiverItem};
     mainCriteriaItems.add(receiverCriteria);
 
     late String mainOperation;
     if (type == PostType.direct_message) {
       // 2. Created_By criteria
-      mainOperation = _operationOrValue;
+      mainOperation = _postsOperationOrValue;
       Map<String, dynamic> createdByItem = {
         'status': statusToString,
         'created_by': Auth2().accountId,
         'authorization_context':
             AuthorizationContext.forMembersType(membersType: ContextItemMembersType.listed_accounts, groupIds: groupIds)
       };
-      Map<String, dynamic> createdByCriteria = {_operationKey: _operationAndValue, _criteriaItemsKey: createdByItem};
+      Map<String, dynamic> createdByCriteria = {_postsOperationKey: _postsOperationAndValue, _postsCriteriaItemsKey: createdByItem};
       mainCriteriaItems.add(createdByCriteria);
     } else {
-      mainOperation = _operationAndValue;
+      mainOperation = _postsOperationAndValue;
     }
 
     // 3. Request Body
@@ -207,8 +207,8 @@ class Social with Service {
       'order': _socialSortOrderToString(order),
       'sort_by': _socialSortByToString(sortBy)
     };
-    requestBody[_operationKey] = mainOperation;
-    requestBody[_criteriaItemsKey] = mainCriteriaItems;
+    requestBody[_postsOperationKey] = mainOperation;
+    requestBody[_postsCriteriaItemsKey] = mainCriteriaItems;
 
     String? encodedBody = JsonUtils.encode(requestBody);
     Response? response = await Network().post('$socialUrl/posts/load', body: encodedBody, auth: Auth2());
