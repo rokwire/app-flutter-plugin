@@ -333,7 +333,7 @@ class Social with Service {
     }
   }
 
-  Future<bool> react({required String? entityId, required ReactionSource source}) async {
+  Future<bool> react({required String entityId, required ReactionSource source}) async {
     String? sourceString = reactionSourceToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
