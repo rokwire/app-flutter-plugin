@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
 ### Added
 - Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
-- Acknowledge event.notification_settings field and APIs [#4478] (https://github.com/rokwire/illinois-app/issues/4478).
+- Acknowledge event.notification_settings field and APIs [#4478](https://github.com/rokwire/illinois-app/issues/4478).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
