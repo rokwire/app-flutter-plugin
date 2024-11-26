@@ -333,6 +333,47 @@ class Social with Service {
     }
   }
 
+  Future<bool> react({required String? entityId, required ReactionSource source}) async {
+    String? sourceString = reactionSourceToString(source);
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to react on $sourceString with id $entityId. Reason: missing social url.');
+      return false;
+    }
+    Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    String? encodedBody = JsonUtils.encode(requestJson);
+    Response? response = await Network().post('$socialUrl/reactions/alter', auth: Auth2(), body: encodedBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      Log.e('Failed to react on $sourceString with id $entityId. Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+  Future<ReactionsResult?> loadReactions({required String entityId, required ReactionSource source}) async {
+    String? sourceString = reactionSourceToString(source);
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: missing social url.');
+      return null;
+    }
+    Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    String? encodedBody = JsonUtils.encode(requestJson);
+    Response? response = await Network().post('$socialUrl/reactions', auth: Auth2(), body: encodedBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      ReactionsResult? reactionsResult = ReactionsResult.fromJson(JsonUtils.decodeMap(responseBody));
+      return reactionsResult;
+    } else {
+      Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
   String _socialSortOrderToString(SocialSortOrder? order) {
     switch (order) {
       case SocialSortOrder.asc:
