@@ -1270,7 +1270,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode(profile!.toJson());
+      String? post = JsonUtils.encode(profile.toJson());
       Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: client);
       return (response?.statusCode == 200);
     }
@@ -1309,6 +1309,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
+  // ignore: unused_element
   Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";
