@@ -18,8 +18,6 @@ import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
-  static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
-
   final String? id;
   final PostStatus? status;
   final PostReportStatus? reportStatus;
@@ -73,9 +71,9 @@ class Post {
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
-      dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), format: _dateFormat, isUtc: true),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
+      dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), isUtc: true),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
@@ -638,8 +636,6 @@ PostReportStatus? postReportStatusFromString(String? value) {
 }
 
 class Comment {
-  static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
-
   final String? id;
   final String? parentId;
 
@@ -663,8 +659,8 @@ class Comment {
       body: JsonUtils.stringValue(json['body']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
