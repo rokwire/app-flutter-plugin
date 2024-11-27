@@ -1018,7 +1018,7 @@ class Groups with Service implements NotificationsListener {
     return result;
   }
 
-  // Group Posts and Replies
+  // Nudges
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     const String templatesCategory = 'gies_post_templates';
@@ -1456,45 +1456,6 @@ class Groups with Service implements NotificationsListener {
     
 }
 
-enum GroupSortOrder { asc, desc }
-
-GroupSortOrder? groupSortOrderFromString(String? value) {
-  if (value == 'asc') {
-    return GroupSortOrder.asc;
-  }
-  else if (value == 'desc') {
-    return GroupSortOrder.desc;
-  }
-  else {
-    return null;
-  }
-}
-
-String? groupSortOrderToString(GroupSortOrder? value) {
-  switch(value) {
-    case GroupSortOrder.asc:  return 'asc';
-    case GroupSortOrder.desc: return 'desc';
-    default: return null;
-  }
-}
-
-enum GroupPostType { post, message }
-
-GroupPostType? groupPostTypeFromString(String? value) {
-  switch(value) {
-    case 'post': return GroupPostType.post;
-    case 'message': return GroupPostType.message;
-    default: return null;
-  }
-}
-
-String groupPostTypeToString(GroupPostType value) {
-  switch(value) {
-    case GroupPostType.post: return 'post';
-    case GroupPostType.message: return 'message';
-  }
-}
-
 extension _ResponseExt on Response {
   String? get errorText {
     String? responseBody = body;
@@ -1512,26 +1473,3 @@ extension _ResponseExt on Response {
 
   }
 }
-
-/***
- * Groups BB Events V3 is Deprecated. Use Calendar/events2 v2 APIs instead.
- * TBD: DD - delete commented code once the new implementation is verified and working.
- *
-
-class CreateEventForGroupsV3Param {
-  final Event2? event;
-  final Set<String>? groupIds;
-  
-  CreateEventForGroupsV3Param({this.event, this.groupIds});
-
-  static CreateEventForGroupsV3Param? fromJson(Map<String, dynamic>? json) => (json != null) ?
-    CreateEventForGroupsV3Param(
-      event: Event2.fromJson(JsonUtils.mapValue(json['event'])),
-      groupIds: JsonUtils.setStringsValue(json['group_ids'])
-    ) : null;
-
-  Map<String, dynamic> toJson() => {
-    'event': event?.toJson(),
-    'group_ids': groupIds?.toList(),
-  };
-}*/
