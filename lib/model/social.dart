@@ -755,25 +755,25 @@ class Reaction {
   }
 }
 
-enum ReactionSource { post, comment }
+enum SocialEntityType { post, comment }
 
-String? reactionSourceToString(ReactionSource? source) {
-  switch (source) {
-    case ReactionSource.comment:
+String? socialEntityTypeToString(SocialEntityType? type) {
+  switch (type) {
+    case SocialEntityType.comment:
       return 'comment';
-    case ReactionSource.post:
+    case SocialEntityType.post:
       return 'post';
     default:
       return null;
   }
 }
 
-ReactionSource? reactionSourceFromString(String? value) {
+SocialEntityType? socialEntityTypeFromString(String? value) {
   switch (value) {
     case 'comment':
-      return ReactionSource.comment;
+      return SocialEntityType.comment;
     case 'post':
-      return ReactionSource.post;
+      return SocialEntityType.post;
     default:
       return null;
   }

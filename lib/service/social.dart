@@ -333,8 +333,8 @@ class Social with Service {
     }
   }
 
-  Future<bool> react({required String entityId, required ReactionSource source}) async {
-    String? sourceString = reactionSourceToString(source);
+  Future<bool> react({required String entityId, required SocialEntityType source}) async {
+    String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: missing social url.');
@@ -353,8 +353,8 @@ class Social with Service {
     }
   }
 
-  Future<List<Reaction>?> loadReactions({required String entityId, required ReactionSource source}) async {
-    String? sourceString = reactionSourceToString(source);
+  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source}) async {
+    String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: missing social url.');
@@ -371,6 +371,39 @@ class Social with Service {
     } else {
       Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: $responseCode, $responseBody');
       return null;
+    }
+  }
+
+  //TBD: DDGS - implement report or check if it works when it is ready
+  Future<bool> reportAbuse(
+      {String? groupId,
+      String? entityId,
+      SocialEntityType? source,
+      String? reportMsg,
+      bool reportToDeanOfStudents = false,
+      bool reportToGroupAdmins = false}) async {
+    String? sourceString = socialEntityTypeToString(source);
+    if (StringUtils.isEmpty(Config().socialUrl)) {
+      Log.e('Failed to report abuse for $sourceString with id $entityId. Reason: missing social url.');
+      return false;
+    }
+    Map<String, dynamic> requestBody = {
+      'comment': reportMsg,
+      'identifier': entityId,
+      'report_to_dean': reportToDeanOfStudents,
+      'report_to_admins': reportToGroupAdmins,
+      'source': sourceString
+    };
+    String? encodedBody = JsonUtils.encode(requestBody);
+    String url = '${Config().socialUrl}/abuse/report';
+    Response? response = await Network().put(url, body: encodedBody, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      Log.e('Failed to report abuse for $sourceString with id $entityId. Reason: $responseCode, $responseBody.');
+      return false;
     }
   }
 
