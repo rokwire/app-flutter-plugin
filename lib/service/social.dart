@@ -353,7 +353,7 @@ class Social with Service {
     }
   }
 
-  Future<ReactionsResult?> loadReactions({required String entityId, required ReactionSource source}) async {
+  Future<List<Reaction>?> loadReactions({required String entityId, required ReactionSource source}) async {
     String? sourceString = reactionSourceToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -366,8 +366,8 @@ class Social with Service {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      ReactionsResult? reactionsResult = ReactionsResult.fromJson(JsonUtils.decodeMap(responseBody));
-      return reactionsResult;
+      List<Reaction>? reactions = Reaction.listFromJson(JsonUtils.decodeList(responseBody));
+      return reactions;
     } else {
       Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: $responseCode, $responseBody');
       return null;

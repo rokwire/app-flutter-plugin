@@ -716,45 +716,47 @@ class Comment {
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
 
-class ReactionsResult {
-  final LikesResult? likes;
+class Reaction {
+  final String? id;
+  final ReactionType? type;
+  final Creator? engager;
+  final DateTime? dateCreatedUtc;
 
-  ReactionsResult({this.likes});
+  Reaction({this.id, this.type, this.engager, this.dateCreatedUtc});
 
-  static ReactionsResult? fromJson(Map<String, dynamic>? json) {
+  static Reaction? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
 
-    return ReactionsResult(likes: LikesResult.fromJson(JsonUtils.mapValue(json['likes'])));
+    return Reaction(
+        id: JsonUtils.stringValue(json['id']),
+        type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
+        engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
+        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
   }
 
   @override
-  bool operator ==(other) => (other is ReactionsResult) && (other.likes == likes);
+  bool operator ==(other) =>
+      (other is Reaction) &&
+      (other.id == id) &&
+      (other.type == type) &&
+      (other.engager == engager) &&
+      (other.dateCreatedUtc == dateCreatedUtc);
 
   @override
-  int get hashCode => (likes?.hashCode ?? 0);
-}
+  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0);
 
-class LikesResult {
-  final int? count;
-  final bool? reacted;
-
-  LikesResult({this.count, this.reacted});
-
-  static LikesResult? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
+  static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
+    List<Reaction>? items;
+    if (jsonList != null) {
+      items = <Reaction>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Reaction.fromJson(jsonEntry));
+      }
     }
-
-    return LikesResult(count: JsonUtils.intValue(json['count']), reacted: JsonUtils.boolValue(json['reacted']));
+    return items;
   }
-
-  @override
-  bool operator ==(other) => (other is LikesResult) && (other.count == count) && (other.reacted == reacted);
-
-  @override
-  int get hashCode => (count?.hashCode ?? 0) ^ (reacted?.hashCode ?? 0);
 }
 
 enum ReactionSource { post, comment }
@@ -776,6 +778,26 @@ ReactionSource? reactionSourceFromString(String? value) {
       return ReactionSource.comment;
     case 'post':
       return ReactionSource.post;
+    default:
+      return null;
+  }
+}
+
+enum ReactionType { like }
+
+String? reactionTypeToString(ReactionType? type) {
+  switch (type) {
+    case ReactionType.like:
+      return 'like';
+    default:
+      return null;
+  }
+}
+
+ReactionType? reactionTypeFromString(String? value) {
+  switch (value) {
+    case 'like':
+      return ReactionType.like;
     default:
       return null;
   }
