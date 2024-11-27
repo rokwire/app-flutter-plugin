@@ -438,7 +438,7 @@ class Auth2UserProfile {
     );
   }
 
-  static Auth2UserProfile? fromFieldVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
+  static Auth2UserProfile? fromFieldsVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
     Set<Auth2FieldVisibility> permitted = const <Auth2FieldVisibility>{Auth2FieldVisibility.public}
   }) {
 
