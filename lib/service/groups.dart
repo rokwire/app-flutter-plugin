@@ -1060,7 +1060,6 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  //TBD: DDGS - implement deleting posts, comments, reactions etc on Social
   //Delete User
   Future<bool?> deleteUserData() async{
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
@@ -1075,29 +1074,31 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<Response?> loadUserStatsResponse() async {
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
-      try {
-        await _ensureLogin();
-        return await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
-      } catch (e) {
-        Log.e(e.toString());
-      }
-    }
+  //TBD: DDGS - remove after this API is available in Social BB
+  // Future<Response?> loadUserStatsResponse() async {
+  //   if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+  //     try {
+  //       await _ensureLogin();
+  //       return await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
+  //     } catch (e) {
+  //       Log.e(e.toString());
+  //     }
+  //   }
+  //
+  //   return null;
+  // }
 
-    return null;
-  }
+  //TBD: DDGS - remove after this API is available in Social BB
+  // Future<Map<String, dynamic>?> loadUserStats() async {
+  //   Response? response = await loadUserStatsResponse();
+  //   return (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+  // }
 
-  Future<Map<String, dynamic>?> loadUserStats() async {
-    Response? response = await loadUserStatsResponse();
-    return (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-  }
-
-  //TBD: DDGS - implement loading posts count from Social
-  Future<int> getUserPostCount() async{
-    Map<String, dynamic>? stats = await loadUserStats();
-    return stats != null ? (JsonUtils.intValue(stats["posts_count"]) ?? -1) : -1;
-  }
+  //TBD: DDGS - remove after this API is available in Social BB
+  // Future<int> getUserPostCount() async{
+  //   Map<String, dynamic>? stats = await loadUserStats();
+  //   return stats != null ? (JsonUtils.intValue(stats["posts_count"]) ?? -1) : -1;
+  // }
 
   /////////////////////////
   // DeepLinks

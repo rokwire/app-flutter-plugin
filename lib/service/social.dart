@@ -408,13 +408,19 @@ class Social with Service {
   }
 
   //TBD: DDGS - (on blind) adjust to the backend when available
-  Future<SocialStats?> loadStats() async {
+  Future<Response?> loadStatsResponse() async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
-      Log.e('Failed to load stats. Reason: missing social url.');
+      Log.e('Failed to load stats response. Reason: missing social url.');
       return null;
     }
     Response? response = await Network().get("$socialUrl/stats", auth: Auth2());
+    return response;
+  }
+
+  //TBD: DDGS - (on blind) adjust to the backend when available
+  Future<SocialStats?> loadStats() async {
+    Response? response = await loadStatsResponse();
     int? responseCode = response?.statusCode;
     String? responseString = response?.body;
     if (responseCode == 200) {
@@ -424,6 +430,11 @@ class Social with Service {
       Log.e('Failed to load stats. Reason: $responseCode, $responseString.');
       return null;
     }
+  }
+
+  Future<int> getUserPostsCount() async {
+    SocialStats? stats = await loadStats();
+    return stats?.posts ?? 0;
   }
 
   //TBD: DDGS - (on blind) adjust and check if it is working when available
