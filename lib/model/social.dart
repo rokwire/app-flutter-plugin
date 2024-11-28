@@ -755,6 +755,32 @@ class Reaction {
   }
 }
 
+class SocialStats {
+  final int? posts;
+  final int? comments;
+  final int? reactions;
+
+  SocialStats({this.posts, this.comments, this.reactions});
+
+  static SocialStats? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return SocialStats(
+        posts: JsonUtils.intValue(json['posts']),
+        comments: JsonUtils.intValue(json['comments']),
+        reactions: JsonUtils.intValue(json['reactions']));
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is SocialStats) && (other.posts == posts) && (other.comments == comments) && (other.reactions == reactions);
+
+  @override
+  int get hashCode => (posts?.hashCode ?? 0) ^ (comments?.hashCode ?? 0) ^ (reactions?.hashCode ?? 0);
+}
+
 enum SocialEntityType { post, comment }
 
 String? socialEntityTypeToString(SocialEntityType? type) {

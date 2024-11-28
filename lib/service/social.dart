@@ -407,6 +407,42 @@ class Social with Service {
     }
   }
 
+  //TBD: DDGS - (on blind) adjust to the backend when available
+  Future<SocialStats?> loadStats() async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load stats. Reason: missing social url.');
+      return null;
+    }
+    Response? response = await Network().get("$socialUrl/stats", auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      SocialStats? stats = SocialStats.fromJson(JsonUtils.decodeMap(responseString));
+      return stats;
+    } else {
+      Log.e('Failed to load stats. Reason: $responseCode, $responseString.');
+      return null;
+    }
+  }
+
+  //TBD: DDGS - (on blind) adjust and check if it is working when available
+  Future<bool> deleteContributions() async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete user contributions. Reason: missing social url.');
+      return false;
+    }
+    Response? response = await Network().delete("$socialUrl/contributions", auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      Log.e('Failed to delete user contributions. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
+  }
+
   String _socialSortOrderToString(SocialSortOrder? order) {
     switch (order) {
       case SocialSortOrder.asc:
