@@ -1318,6 +1318,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       };
       String? post = JsonUtils.encode(privacy.toJson());
       Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      String? s = response?.body;
       return (response?.statusCode == 200);
     }
     return false;
