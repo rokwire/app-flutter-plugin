@@ -486,7 +486,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<ImagesResult> deleteCurrentUserProfileImage() async {
+  Future<ImagesResult> deleteUserPhoto() async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing content BB url.');
@@ -504,45 +504,34 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> loadDefaultUserProfileImage({String? accountId}) async {
-    return loadUserProfileImage(UserProfileImageType.defaultType, accountId: accountId);
+  Future<Uint8List?> loadDefaultUserPhoto({String? accountId}) async {
+    return loadUserPhoto(UserProfileImageType.defaultType, accountId: accountId);
   }
 
-  Future<Uint8List?> loadSmallUserProfileImage({String? accountId}) async {
-    return loadUserProfileImage(UserProfileImageType.small, accountId: accountId);
+  Future<Uint8List?> loadSmallUserPhoto({String? accountId}) async {
+    return loadUserPhoto(UserProfileImageType.small, accountId: accountId);
   }
 
-  Future<Uint8List?> loadUserProfileImage(UserProfileImageType type, {String? accountId}) async {
-    String? url = getUserProfileImage(accountId: accountId, type: type);
-    if (StringUtils.isEmpty(url)) {
-      debugPrint('Failed to construct user profile image url.');
-      return null;
+  Future<Uint8List?> loadUserPhoto(UserProfileImageType type, { String? accountId }) async {
+    String? url = getUserPhotoUrl(accountId: accountId, type: type);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? response!.bodyBytes : null;
     }
-    Response? response = await Network().get(url, auth: Auth2());
-    int? responseCode = response?.statusCode;
-    if (responseCode == 200) {
-      return response!.bodyBytes;
-    } else {
-      debugPrint('Failed to retrieve user profile picture for user {$accountId} and image type {${_profileImageTypeToKeyString(type)}}}. \nReason: $responseCode: ${response?.body}');
+    else {
       return null;
     }
   }
 
-  String? getUserProfileImage({String? accountId, UserProfileImageType? type = UserProfileImageType.small}) {
+  String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type = UserProfileImageType.small }) {
     String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isEmpty(serviceUrl)) {
-      debugPrint('Missing content service url.');
+    if (StringUtils.isNotEmpty(serviceUrl)) {
+      String imageUrl = (accountId != null) ? '$serviceUrl/profile_photo/$accountId' : '$serviceUrl/profile_photo';
+      return (type != null) ? '$imageUrl?size=${_profileImageTypeToString(type)}' : imageUrl;
+    }
+    else {
       return null;
     }
-
-    String? userAccountId = accountId ?? Auth2().accountId;
-    if (StringUtils.isEmpty(userAccountId)) {
-      debugPrint('Missing account id.');
-      return null;
-    }
-    String typeToString = _profileImageTypeToKeyString(type!);
-    String imageUrl = '$serviceUrl/profile_photo/$userAccountId?size=$typeToString';
-    return imageUrl;
   }
 
   Future<Uint8List?> _rotateImage(String filePath) async {
@@ -558,7 +547,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return contentType.startsWith("image/");
   }
 
-  static String _profileImageTypeToKeyString(UserProfileImageType type) {
+  static String _profileImageTypeToString(UserProfileImageType type) {
     switch (type) {
       case UserProfileImageType.defaultType:
         return 'default';
@@ -570,7 +559,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   //Profile Voice Record
-  Future<AudioResult> uploadVoiceRecord(Uint8List? audioFile) async{ //TBD return type
+  Future<AudioResult> uploadUserNamePronunciation(Uint8List? audioFile) async{ //TBD return type
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
@@ -600,27 +589,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<AudioResult?> retrieveVoiceRecord({Map<String, String>? authHeaders}) async {
-    String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isEmpty(serviceUrl)) {
-      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
-    }
-    String url = "$serviceUrl/voice_record";
-    Response? response = await Network().get(
-        url,
-        headers: authHeaders,
-        auth: authHeaders == null ? Auth2() : null);
-
-    int? responseCode = response?.statusCode;
-    if (responseCode == 200) {
-      return AudioResult.succeed(response?.bodyBytes);
-    } else {
-      debugPrint('Failed to retrieve user audio voice_record');
-      return AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
-    }
-  }
-
-  Future<AudioResult?> deleteVoiceRecord() async {
+  Future<AudioResult?> deleteUserNamePronunciation() async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
@@ -635,6 +604,27 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       String? responseString = response?.body;
       debugPrint("Failed to delete user's profile voice record. Reason: $responseCode $responseString");
       return AudioResult.error(AudioErrorType.deleteFailed, "Failed to delete user's profile voice record.", responseString);
+    }
+  }
+
+  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) async {
+    String? url = getUserNamePronunciationUrl(accountId: accountId);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2());
+      return  (response?.statusCode == 200) ? AudioResult.succeed(response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
+    }
+    else {
+      return null;
+    }
+  }
+
+  String? getUserNamePronunciationUrl({ String? accountId }) {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isNotEmpty(serviceUrl)) {
+      return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
+    }
+    else {
+      return null;
     }
   }
 
