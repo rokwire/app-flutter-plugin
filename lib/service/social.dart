@@ -407,18 +407,16 @@ class Social with Service {
     }
   }
 
-  //TBD: DDGS - (on blind) adjust to the backend when available
   Future<Response?> loadStatsResponse() async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load stats response. Reason: missing social url.');
       return null;
     }
-    Response? response = await Network().get("$socialUrl/stats", auth: Auth2());
+    Response? response = await Network().get('$socialUrl/statistics', auth: Auth2());
     return response;
   }
 
-  //TBD: DDGS - (on blind) adjust to the backend when available
   Future<SocialStats?> loadStats() async {
     Response? response = await loadStatsResponse();
     int? responseCode = response?.statusCode;

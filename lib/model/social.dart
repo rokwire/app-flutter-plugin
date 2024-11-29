@@ -768,9 +768,9 @@ class SocialStats {
     }
 
     return SocialStats(
-        posts: JsonUtils.intValue(json['posts']),
-        comments: JsonUtils.intValue(json['comments']),
-        reactions: JsonUtils.intValue(json['reactions']));
+        posts: JsonUtils.intValue(json['posts_count']),
+        comments: JsonUtils.intValue(json['comments_count']),
+        reactions: JsonUtils.intValue(json['reactions_count']));
   }
 
   @override
