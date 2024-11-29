@@ -61,6 +61,11 @@ class Social with Service {
   }
 
   @override
+  Set<Service> get serviceDependsOn {
+    return {Config(), Auth2()};
+  }
+
+  @override
   Future<void> initService() async {
     super.initService();
   }
