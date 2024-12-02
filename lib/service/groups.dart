@@ -1396,7 +1396,7 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  Future<bool> reportGroupAbuse({String? groupId, String? comment}) async {
+  Future<bool> reportGroupAbuse({required String groupId, String? comment}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/group/$groupId/report/abuse';
       String? body = JsonUtils.encode({
