@@ -1396,27 +1396,6 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  //TBD: DDGS - remove report post abuse when implemented. Leave only report group abuse
-  Future<bool> reportAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async =>
-      StringUtils.isNotEmpty(postId) ?
-        reportPostAbuse(groupId: groupId, postId: postId, comment: comment, reportToDeanOfStudents: reportToDeanOfStudents, reportToGroupAdmins: reportToGroupAdmins) :
-        reportGroupAbuse(groupId: groupId, comment: comment);
-
-  Future<bool> reportPostAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async {
-    if (Config().groupsUrl != null) {
-      String url = '${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse';
-      String? body = JsonUtils.encode({
-        'comment': comment,
-        'send_to_dean_of_students': reportToDeanOfStudents,
-        'send_to_group_admins': reportToGroupAdmins,
-      });
-      _ensureLogin();
-      Response? response = await Network().put(url, body: body, auth: Auth2());
-      return (response?.statusCode == 200);
-    }
-    return false;
-  }
-
   Future<bool> reportGroupAbuse({String? groupId, String? comment}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/group/$groupId/report/abuse';

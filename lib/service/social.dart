@@ -379,7 +379,6 @@ class Social with Service {
     }
   }
 
-  //TBD: DDGS - implement report or check if it works when it is ready
   Future<bool> reportAbuse(
       {String? groupId,
       String? entityId,
