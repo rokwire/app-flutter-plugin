@@ -439,7 +439,6 @@ class Social with Service {
     return stats?.posts ?? 0;
   }
 
-  //TBD: DDGS - (on blind) adjust and check if it is working when available
   Future<bool> deleteUser() async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
