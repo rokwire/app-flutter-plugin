@@ -607,8 +607,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) async {
-    String? url = getUserNamePronunciationUrl(accountId: accountId);
+  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) =>
+      loadUserNamePronunciationFromUrl(getUserNamePronunciationUrl(accountId: accountId));
+
+  Future<AudioResult?> loadUserNamePronunciationFromUrl(String? url) async {
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
       return  (response?.statusCode == 200) ? AudioResult.succeed(response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
