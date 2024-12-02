@@ -61,6 +61,11 @@ class Social with Service {
   }
 
   @override
+  Set<Service> get serviceDependsOn {
+    return {Config(), Auth2()};
+  }
+
+  @override
   Future<void> initService() async {
     super.initService();
   }
@@ -333,8 +338,8 @@ class Social with Service {
     }
   }
 
-  Future<bool> react({required String entityId, required ReactionSource source}) async {
-    String? sourceString = reactionSourceToString(source);
+  Future<bool> react({required String entityId, required SocialEntityType source}) async {
+    String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: missing social url.');
@@ -353,8 +358,8 @@ class Social with Service {
     }
   }
 
-  Future<ReactionsResult?> loadReactions({required String entityId, required ReactionSource source}) async {
-    String? sourceString = reactionSourceToString(source);
+  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source}) async {
+    String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: missing social url.');
@@ -366,11 +371,87 @@ class Social with Service {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      ReactionsResult? reactionsResult = ReactionsResult.fromJson(JsonUtils.decodeMap(responseBody));
-      return reactionsResult;
+      List<Reaction>? reactions = Reaction.listFromJson(JsonUtils.decodeList(responseBody));
+      return reactions;
     } else {
       Log.e('Failed to load reactions for $sourceString with id $entityId. Reason: $responseCode, $responseBody');
       return null;
+    }
+  }
+
+  Future<bool> reportAbuse(
+      {String? groupId,
+      String? entityId,
+      SocialEntityType? source,
+      String? reportMsg,
+      bool reportToDeanOfStudents = false,
+      bool reportToGroupAdmins = false}) async {
+    String? sourceString = socialEntityTypeToString(source);
+    if (StringUtils.isEmpty(Config().socialUrl)) {
+      Log.e('Failed to report abuse for $sourceString with id $entityId. Reason: missing social url.');
+      return false;
+    }
+    Map<String, dynamic> requestBody = {
+      'comment': reportMsg,
+      'identifier': entityId,
+      'report_to_dean': reportToDeanOfStudents,
+      'report_to_admins': reportToGroupAdmins,
+      'source': sourceString
+    };
+    String? encodedBody = JsonUtils.encode(requestBody);
+    String url = '${Config().socialUrl}/abuse/report';
+    Response? response = await Network().put(url, body: encodedBody, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      Log.e('Failed to report abuse for $sourceString with id $entityId. Reason: $responseCode, $responseBody.');
+      return false;
+    }
+  }
+
+  Future<Response?> loadStatsResponse() async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load stats response. Reason: missing social url.');
+      return null;
+    }
+    Response? response = await Network().get('$socialUrl/statistics', auth: Auth2());
+    return response;
+  }
+
+  Future<SocialStats?> loadStats() async {
+    Response? response = await loadStatsResponse();
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      SocialStats? stats = SocialStats.fromJson(JsonUtils.decodeMap(responseString));
+      return stats;
+    } else {
+      Log.e('Failed to load stats. Reason: $responseCode, $responseString.');
+      return null;
+    }
+  }
+
+  Future<int> getUserPostsCount() async {
+    SocialStats? stats = await loadStats();
+    return stats?.posts ?? 0;
+  }
+
+  Future<bool> deleteUser() async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete user. Reason: missing social url.');
+      return false;
+    }
+    Response? response = await Network().delete("$socialUrl/user", auth: Auth2());
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      return true;
+    } else {
+      Log.e('Failed to delete user. Reason: $responseCode, ${response?.body}.');
+      return false;
     }
   }
 

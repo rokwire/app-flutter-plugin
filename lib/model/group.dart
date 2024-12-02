@@ -654,8 +654,6 @@ String? groupMemberStatusToString(GroupMemberStatus? value) {
   return null;
 }
 
-
-
 //////////////////////////////
 // MemberNotificationsPreferences
 
@@ -956,105 +954,6 @@ class GroupMembershipAnswer {
       }
     }
     return result;
-  }
-}
-
-//////////////////////////////
-// GroupPost
-
-class GroupPost {
-  final String? id;
-  final String? parentId;
-  final String? topParentId;//main post for sub reply thread
-  final Member? member;
-  final String? subject;
-  final String? body;
-  final DateTime? dateCreatedUtc;
-  final DateTime? dateUpdatedUtc;
-  final DateTime? dateScheduledUtc;
-  final bool? private;
-  final List<GroupPost>? replies;
-  final List<Member>? members;
-  final String? imageUrl;
-  final Map<String, List<String>> reactions;
-
-  GroupPost({this.id, this.parentId, this.topParentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.dateScheduledUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
-
-  static GroupPost? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-
-    Map<String, List<String>> reactions = {};
-    Map<String, dynamic>? reactionsRaw = JsonUtils.mapValue(json['reactions']);
-    if (reactionsRaw != null) {
-      for (MapEntry<String, dynamic> reaction in reactionsRaw.entries) {
-        List<String>? ids = JsonUtils.listStringsValue(reaction.value);
-        if (ids != null) {
-          reactions[reaction.key] = ids;
-        }
-      }
-    }
-
-    return GroupPost(
-        id: json['id'],
-        parentId: json['parent_id'],
-        topParentId: json['top_parent_id'],
-        member: Member.fromJson(json['member']),
-        subject: json['subject'],
-        body: json['body'],
-        dateCreatedUtc: groupUtcDateTimeFromString(json['date_created']),
-        dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
-        dateScheduledUtc:  groupUtcDateTimeFromString(json['date_scheduled']),
-        private: json['private'],
-        imageUrl: JsonUtils.stringValue(json["image_url"]),
-        replies: GroupPost.fromJsonList(json['replies']),
-        members: Member.listFromJson(json['to_members']),
-        reactions: reactions,
-      );
-
-  }
-
-  Map<String, dynamic> toJson({bool create = false, bool update = false}) {
-    // MV: This does not look well at all!
-    Map<String, dynamic> json = {'body': body, 'private': private};
-    if ((parentId != null) && create) {
-      json['parent_id'] = parentId;
-    }
-    if ((topParentId != null) && create) {
-      json['top_parent_id'] = parentId;
-    }
-    if ((id != null) && update) {
-      json['id'] = id;
-    }
-    if (subject != null) {
-      json['subject'] = subject;
-    }
-    if(imageUrl!=null){
-      json['image_url'] = imageUrl;
-    }
-    if(members!=null){
-      json['to_members'] = Member.listToJson(members);
-    }
-    if(dateScheduledUtc!=null) {
-      json['date_scheduled'] = groupUtcDateTimeToString(dateScheduledUtc);
-    }
-    return json;
-  }
-
-  bool get isUpdated {
-    return (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
-  }
-
-  static List<GroupPost>? fromJsonList(List<dynamic>? jsonList) {
-    List<GroupPost>? posts;
-    if (jsonList != null) {
-      posts = <GroupPost>[];
-      for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(posts, GroupPost.fromJson(jsonEntry));
-      }
-    }
-    return posts;
   }
 }
 
