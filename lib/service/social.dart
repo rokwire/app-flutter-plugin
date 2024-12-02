@@ -440,18 +440,18 @@ class Social with Service {
   }
 
   //TBD: DDGS - (on blind) adjust and check if it is working when available
-  Future<bool> deleteContributions() async {
+  Future<bool> deleteUser() async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
-      Log.e('Failed to delete user contributions. Reason: missing social url.');
+      Log.e('Failed to delete user. Reason: missing social url.');
       return false;
     }
-    Response? response = await Network().delete("$socialUrl/contributions", auth: Auth2());
+    Response? response = await Network().delete("$socialUrl/user", auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return true;
     } else {
-      Log.e('Failed to delete user contributions. Reason: $responseCode, ${response?.body}.');
+      Log.e('Failed to delete user. Reason: $responseCode, ${response?.body}.');
       return false;
     }
   }
