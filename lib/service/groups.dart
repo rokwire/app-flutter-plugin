@@ -1018,7 +1018,7 @@ class Groups with Service implements NotificationsListener {
     return result;
   }
 
-  // Group Posts and Replies
+  // Nudges
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
     const String templatesCategory = 'gies_post_templates';
@@ -1060,7 +1060,6 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  //TBD: DDGS - implement deleting posts, comments, reactions etc on Social
   //Delete User
   Future<bool?> deleteUserData() async{
     if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
@@ -1073,30 +1072,6 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return null;
-  }
-
-  Future<Response?> loadUserStatsResponse() async {
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
-      try {
-        await _ensureLogin();
-        return await Network().get("${Config().groupsUrl}/user/stats", auth: Auth2());
-      } catch (e) {
-        Log.e(e.toString());
-      }
-    }
-
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> loadUserStats() async {
-    Response? response = await loadUserStatsResponse();
-    return (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-  }
-
-  //TBD: DDGS - implement loading posts count from Social
-  Future<int> getUserPostCount() async{
-    Map<String, dynamic>? stats = await loadUserStats();
-    return stats != null ? (JsonUtils.intValue(stats["posts_count"]) ?? -1) : -1;
   }
 
   /////////////////////////
@@ -1421,27 +1396,7 @@ class Groups with Service implements NotificationsListener {
 
   // Report Abuse
 
-  Future<bool> reportAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async =>
-      StringUtils.isNotEmpty(postId) ?
-        reportPostAbuse(groupId: groupId, postId: postId, comment: comment, reportToDeanOfStudents: reportToDeanOfStudents, reportToGroupAdmins: reportToGroupAdmins) :
-        reportGroupAbuse(groupId: groupId, comment: comment);
-
-  Future<bool> reportPostAbuse({String? groupId, String? postId, String? comment, bool reportToDeanOfStudents = false, bool reportToGroupAdmins = false}) async {
-    if (Config().groupsUrl != null) {
-      String url = '${Config().groupsUrl}/group/$groupId/posts/$postId/report/abuse';
-      String? body = JsonUtils.encode({
-        'comment': comment,
-        'send_to_dean_of_students': reportToDeanOfStudents,
-        'send_to_group_admins': reportToGroupAdmins,
-      });
-      _ensureLogin();
-      Response? response = await Network().put(url, body: body, auth: Auth2());
-      return (response?.statusCode == 200);
-    }
-    return false;
-  }
-
-  Future<bool> reportGroupAbuse({String? groupId, String? comment}) async {
+  Future<bool> reportGroupAbuse({required String groupId, String? comment}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/group/$groupId/report/abuse';
       String? body = JsonUtils.encode({
@@ -1454,45 +1409,6 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
     
-}
-
-enum GroupSortOrder { asc, desc }
-
-GroupSortOrder? groupSortOrderFromString(String? value) {
-  if (value == 'asc') {
-    return GroupSortOrder.asc;
-  }
-  else if (value == 'desc') {
-    return GroupSortOrder.desc;
-  }
-  else {
-    return null;
-  }
-}
-
-String? groupSortOrderToString(GroupSortOrder? value) {
-  switch(value) {
-    case GroupSortOrder.asc:  return 'asc';
-    case GroupSortOrder.desc: return 'desc';
-    default: return null;
-  }
-}
-
-enum GroupPostType { post, message }
-
-GroupPostType? groupPostTypeFromString(String? value) {
-  switch(value) {
-    case 'post': return GroupPostType.post;
-    case 'message': return GroupPostType.message;
-    default: return null;
-  }
-}
-
-String groupPostTypeToString(GroupPostType value) {
-  switch(value) {
-    case GroupPostType.post: return 'post';
-    case GroupPostType.message: return 'message';
-  }
 }
 
 extension _ResponseExt on Response {
@@ -1512,26 +1428,3 @@ extension _ResponseExt on Response {
 
   }
 }
-
-/***
- * Groups BB Events V3 is Deprecated. Use Calendar/events2 v2 APIs instead.
- * TBD: DD - delete commented code once the new implementation is verified and working.
- *
-
-class CreateEventForGroupsV3Param {
-  final Event2? event;
-  final Set<String>? groupIds;
-  
-  CreateEventForGroupsV3Param({this.event, this.groupIds});
-
-  static CreateEventForGroupsV3Param? fromJson(Map<String, dynamic>? json) => (json != null) ?
-    CreateEventForGroupsV3Param(
-      event: Event2.fromJson(JsonUtils.mapValue(json['event'])),
-      groupIds: JsonUtils.setStringsValue(json['group_ids'])
-    ) : null;
-
-  Map<String, dynamic> toJson() => {
-    'event': event?.toJson(),
-    'group_ids': groupIds?.toList(),
-  };
-}*/

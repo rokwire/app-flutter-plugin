@@ -18,8 +18,6 @@ import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
-  static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
-
   final String? id;
   final PostStatus? status;
   final PostReportStatus? reportStatus;
@@ -73,9 +71,9 @@ class Post {
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
-      dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), format: _dateFormat, isUtc: true),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
+      dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), isUtc: true),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
@@ -638,8 +636,6 @@ PostReportStatus? postReportStatusFromString(String? value) {
 }
 
 class Comment {
-  static String _dateFormat = 'yyyy-MM-ddTHH:mm:ssZ';
-
   final String? id;
   final String? parentId;
 
@@ -663,8 +659,8 @@ class Comment {
       body: JsonUtils.stringValue(json['body']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), format: _dateFormat, isUtc: true),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), format: _dateFormat, isUtc: true),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
@@ -716,66 +712,114 @@ class Comment {
   bool get isUpdated => (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
 }
 
-class ReactionsResult {
-  final LikesResult? likes;
+class Reaction {
+  final String? id;
+  final ReactionType? type;
+  final Creator? engager;
+  final DateTime? dateCreatedUtc;
 
-  ReactionsResult({this.likes});
+  Reaction({this.id, this.type, this.engager, this.dateCreatedUtc});
 
-  static ReactionsResult? fromJson(Map<String, dynamic>? json) {
+  static Reaction? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
 
-    return ReactionsResult(likes: LikesResult.fromJson(JsonUtils.mapValue(json['likes'])));
+    return Reaction(
+        id: JsonUtils.stringValue(json['id']),
+        type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
+        engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
+        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
   }
 
   @override
-  bool operator ==(other) => (other is ReactionsResult) && (other.likes == likes);
+  bool operator ==(other) =>
+      (other is Reaction) &&
+      (other.id == id) &&
+      (other.type == type) &&
+      (other.engager == engager) &&
+      (other.dateCreatedUtc == dateCreatedUtc);
 
   @override
-  int get hashCode => (likes?.hashCode ?? 0);
+  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0);
+
+  static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
+    List<Reaction>? items;
+    if (jsonList != null) {
+      items = <Reaction>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Reaction.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
 }
 
-class LikesResult {
-  final int? count;
-  final bool? reacted;
+class SocialStats {
+  final int? posts;
+  final int? comments;
+  final int? reactions;
 
-  LikesResult({this.count, this.reacted});
+  SocialStats({this.posts, this.comments, this.reactions});
 
-  static LikesResult? fromJson(Map<String, dynamic>? json) {
+  static SocialStats? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
 
-    return LikesResult(count: JsonUtils.intValue(json['count']), reacted: JsonUtils.boolValue(json['reacted']));
+    return SocialStats(
+        posts: JsonUtils.intValue(json['posts_count']),
+        comments: JsonUtils.intValue(json['comments_count']),
+        reactions: JsonUtils.intValue(json['reactions_count']));
   }
 
   @override
-  bool operator ==(other) => (other is LikesResult) && (other.count == count) && (other.reacted == reacted);
+  bool operator ==(other) =>
+      (other is SocialStats) && (other.posts == posts) && (other.comments == comments) && (other.reactions == reactions);
 
   @override
-  int get hashCode => (count?.hashCode ?? 0) ^ (reacted?.hashCode ?? 0);
+  int get hashCode => (posts?.hashCode ?? 0) ^ (comments?.hashCode ?? 0) ^ (reactions?.hashCode ?? 0);
 }
 
-enum ReactionSource { post, comment }
+enum SocialEntityType { post, comment }
 
-String? reactionSourceToString(ReactionSource? source) {
-  switch (source) {
-    case ReactionSource.comment:
+String? socialEntityTypeToString(SocialEntityType? type) {
+  switch (type) {
+    case SocialEntityType.comment:
       return 'comment';
-    case ReactionSource.post:
+    case SocialEntityType.post:
       return 'post';
     default:
       return null;
   }
 }
 
-ReactionSource? reactionSourceFromString(String? value) {
+SocialEntityType? socialEntityTypeFromString(String? value) {
   switch (value) {
     case 'comment':
-      return ReactionSource.comment;
+      return SocialEntityType.comment;
     case 'post':
-      return ReactionSource.post;
+      return SocialEntityType.post;
+    default:
+      return null;
+  }
+}
+
+enum ReactionType { like }
+
+String? reactionTypeToString(ReactionType? type) {
+  switch (type) {
+    case ReactionType.like:
+      return 'like';
+    default:
+      return null;
+  }
+}
+
+ReactionType? reactionTypeFromString(String? value) {
+  switch (value) {
+    case 'like':
+      return ReactionType.like;
     default:
       return null;
   }
