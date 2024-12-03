@@ -19,9 +19,9 @@ class Directory {
     String? followingId, String? followerId,
     int? offset, int? limit}) async {
 
-    return _sampleAccounts;
+    //TMP: return _sampleAccounts;
+    //TMP: // ignore: dead_code
 
-    // ignore: dead_code
     if (Config().coreUrl != null) {
       String url = UrlUtils.addQueryParameters("${Config().coreUrl}/services/accounts/public", <String, String>{
         if (search != null)
@@ -51,6 +51,7 @@ class Directory {
     return null;
   }
 
+  // ignore: unused_element
   List<Auth2PublicAccount> get _sampleAccounts {
     List<String> manPhotos = <String>[
       'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=250&h=150&dpr=2',
