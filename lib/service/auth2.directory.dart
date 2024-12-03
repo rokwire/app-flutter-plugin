@@ -17,23 +17,11 @@ extension Auh2Directory on Auth2 {
     String? followingId, String? followerId,
     int? offset, int? limit}) async {
 
-    //TMP: return _sampleAccounts;
-    if (_sampleDirectoryAccounts == null) {
-      _sampleDirectoryAccounts = _buildSampleDirectoryAccounts();
-    }
+    //TMP:
+    //return _sampleAccounts;
 
-    int sampleAccountsCount = _sampleDirectoryAccounts?.length ?? 0;
-
-    int start = offset ?? 0;
-    start = min(start, sampleAccountsCount - 1);
-    start = max(start, 0);
-
-    int end = (limit != null) ? (start + limit) : sampleAccountsCount;
-    end = min(end, sampleAccountsCount);
-    end = max(end, 0);
-
-    return ((0 <= start) && (start < sampleAccountsCount) && (0 <= end) && (end <= sampleAccountsCount) && (start < end)) ?
-      _sampleDirectoryAccounts?.sublist(start, end) : [];
+    //TMP:
+    //return _loadSampleDirectoryAccounts(offset: offset, limit: limit);
 
     // ignore: dead_code
     if (Config().coreUrl != null) {
@@ -63,6 +51,29 @@ extension Auh2Directory on Auth2 {
       return (response?.statusCode == 200) ? Auth2PublicAccount.listFromJson(JsonUtils.decodeList(response?.body)) : null;
     }
     return null;
+  }
+
+  // ignore: unused_element
+  Future<List<Auth2PublicAccount>?> _loadSampleDirectoryAccounts({int? offset, int? limit}) async
+  {
+    if (_sampleDirectoryAccounts == null) {
+      _sampleDirectoryAccounts = _buildSampleDirectoryAccounts();
+    }
+
+    int sampleAccountsCount = _sampleDirectoryAccounts?.length ?? 0;
+
+    int start = offset ?? 0;
+    start = min(start, sampleAccountsCount - 1);
+    start = max(start, 0);
+
+    int end = (limit != null) ? (start + limit) : sampleAccountsCount;
+    end = min(end, sampleAccountsCount);
+    end = max(end, 0);
+
+    await Future.delayed(Duration(milliseconds: 1500));
+
+    return ((0 <= start) && (start < sampleAccountsCount) && (0 <= end) && (end <= sampleAccountsCount) && (start < end)) ?
+      _sampleDirectoryAccounts?.sublist(start, end) : [];
   }
 
   List<Auth2PublicAccount> _buildSampleDirectoryAccounts() {
@@ -167,8 +178,8 @@ extension Auh2Directory on Auth2 {
     int photoIndex = 0;
     int collegeIndex = 0;
     List<Auth2PublicAccount> result = <Auth2PublicAccount>[];
-    for (String firstName in firstNames) {
-      for (String familyName in familyNames) {
+    for (String familyName in familyNames) {
+      for (String firstName in firstNames) {
         String lowerFirstName = firstName.toLowerCase();
         String college = colleges[collegeIndex];
         List<String> collegeDepartments = departments[college] ?? [];
