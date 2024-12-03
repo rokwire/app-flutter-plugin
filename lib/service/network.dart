@@ -566,11 +566,13 @@ class Network  {
   }
 
   static Uri? _buildWebProxyUriFromUrlIfNeeded(dynamic url) {
-    Uri? uri = _uriFromUrlString(url);
-    if (kIsWeb && (uri != null) && (uri.origin != Config().webIdentifierOrigin)) {
+    Uri? uri;
+    if (kIsWeb && (url is String) && url.startsWith(Config.configUrlPathPrefix)) {
       // Construct the proxy uri with the original url as query param to prevent CORS
-      String proxyUrl = UrlUtils.addQueryParameters('${Config().authBaseUrl}/proxy', {'proxy_url': uri.toString()});
-      uri = _uriFromUrlString(proxyUrl)!;
+      String? proxyUrl = UrlUtils.addQueryParameters('${Config().authBaseUrl}/proxy', {'proxy_url': url});
+      uri = _uriFromUrlString(proxyUrl);
+    } else {
+      uri = _uriFromUrlString(url);
     }
     return uri;
   }

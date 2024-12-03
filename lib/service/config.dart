@@ -47,6 +47,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   static const String _rokwireApiKey       = 'ROKWIRE-API-KEY';
 
+  static const String _platformBuildingBlocksPathPrefix = 'platformBuildingBlocks';
+  static const String _otherUniversityServicesPathPrefix = 'otherUniversityServices';
+  static const String configUrlPathPrefix = 'config';
+  static const String _configPlatformBuildingBlocksUrlPathPrefix = '$configUrlPathPrefix.$_platformBuildingBlocksPathPrefix';
+  static const String _configOtherUniversityServicesUrlPathPrefix = '$configUrlPathPrefix.$_otherUniversityServicesPathPrefix';
+
   Map<String, dynamic>? _config;
   Map<String, dynamic>? _configAsset;
   Map<String, dynamic>? _encryptionKeys;
@@ -362,6 +368,16 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
+  @protected
+  String? getPlatformBuildingBlocksUrl({required String key}) {
+    return kIsWeb ? "$_configPlatformBuildingBlocksUrlPathPrefix.$key" : JsonUtils.stringValue(platformBuildingBlocks[key]);
+  }
+
+  @protected
+  String? getOtherServicesUrl({required String key}) {
+    return kIsWeb ? "$_configOtherUniversityServicesUrlPathPrefix.$key" : JsonUtils.stringValue(otherUniversityServices[key]);
+  }
+
   // App Id & Version
 
   String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
@@ -545,8 +561,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Map<String, dynamic> get secretRokwire           => JsonUtils.mapValue(secretKeys['rokwire']) ?? {};
   Map<String, dynamic> get secretCore              => JsonUtils.mapValue(secretKeys['core'])  ?? {};
 
-  Map<String, dynamic> get otherUniversityServices => JsonUtils.mapValue(content['otherUniversityServices']) ?? {};
-  Map<String, dynamic> get platformBuildingBlocks  => JsonUtils.mapValue(content['platformBuildingBlocks']) ?? {};
+  Map<String, dynamic> get otherUniversityServices => JsonUtils.mapValue(content[_otherUniversityServicesPathPrefix]) ?? {};
+  Map<String, dynamic> get platformBuildingBlocks  => JsonUtils.mapValue(content[_platformBuildingBlocksPathPrefix]) ?? {};
   
   Map<String, dynamic> get settings                => JsonUtils.mapValue(content['settings'])  ?? {};
   Map<String, dynamic> get upgradeInfo             => JsonUtils.mapValue(content['upgrade']) ?? {};
