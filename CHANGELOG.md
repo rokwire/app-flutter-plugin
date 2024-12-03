@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+- Added UiTextStyles.getTextStyleEx helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added scheme parameter to UrlUtils.fixUrl [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added StringUtils.firstNotEmpty helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+### Added
+- Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
+- Acknowledge event.notification_settings field and APIs [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Prepared for directory content access and privacy edit in Core BB [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
