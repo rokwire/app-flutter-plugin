@@ -41,6 +41,8 @@ class Event2 with Explore, Favorite {
   final String? speaker;
   final List<Event2Contact>? contacts;
 
+  final List<Event2NotificationSetting>? notificationSettings;
+
   String? assignedImageUrl;
 
   final Event2Source? source;
@@ -55,7 +57,7 @@ class Event2 with Explore, Favorite {
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
     this.sponsor, this.speaker, this.contacts,
-    this.data, this.source
+    this.data, this.source, this.notificationSettings
   });
 
   // JSON serialization
@@ -92,6 +94,7 @@ class Event2 with Explore, Favorite {
       registrationDetails: Event2RegistrationDetails.fromJson(JsonUtils.mapValue(json['registration_details'])),
       attendanceDetails: Event2AttendanceDetails.fromJson(JsonUtils.mapValue(json['attendance_details'])),
       surveyDetails: Event2SurveyDetails.fromJson(JsonUtils.mapValue(json['survey_details'])),
+      notificationSettings: Event2NotificationSetting.listFromJson(JsonUtils.listValue(json['notification_settings'])),
 
       sponsor: JsonUtils.stringValue(json['sponsor']),
       speaker: JsonUtils.stringValue(json['speaker']),
@@ -141,6 +144,7 @@ class Event2 with Explore, Favorite {
     JsonUtils.addNonNullValue(json: json, key: 'registration_details', value: registrationDetails?.toJson());
     JsonUtils.addNonNullValue(json: json, key: 'attendance_details', value: attendanceDetails?.toJson());
     JsonUtils.addNonNullValue(json: json, key: 'survey_details', value: surveyDetails?.toJson());
+    JsonUtils.addNonNullValue(json: json, key: 'notification_settings', value: Event2NotificationSetting.listToJson(notificationSettings));
 
     JsonUtils.addNonNullValue(json: json, key: 'sponsor', value: sponsor);
     JsonUtils.addNonNullValue(json: json, key: 'speaker', value: speaker);
@@ -189,6 +193,7 @@ class Event2 with Explore, Favorite {
     //(registrationDetails == other.registrationDetails) &&
     (attendanceDetails == other.attendanceDetails) &&
     (surveyDetails == other.surveyDetails) &&
+    (notificationSettings == other.notificationSettings) &&
 
     (sponsor == other.sponsor) &&
     (speaker == other.speaker) &&
@@ -229,6 +234,7 @@ class Event2 with Explore, Favorite {
     (registrationDetails?.hashCode ?? 0) ^
     (attendanceDetails?.hashCode ?? 0) ^
     (surveyDetails?.hashCode ?? 0) ^
+    (notificationSettings?.hashCode ?? 0) ^
 
     (sponsor?.hashCode ?? 0) ^
     (speaker?.hashCode ?? 0) ^
@@ -1554,4 +1560,118 @@ class Events2ListResult {
   int get hashCode =>
     (const DeepCollectionEquality().hash(events)) ^
     (totalCount?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Events2NotificationSettings
+class Event2NotificationSetting {
+  final String? id;
+  bool sendToFavorited;
+  bool sendToRegistered;
+  bool sendToPublishedInGroups;
+  String? sendTimezone;
+  DateTime? sendDateTimeUtc;
+  String? subject;
+  String? body;
+
+  Event2NotificationSetting(
+      {this.id, this.sendToFavorited = false, this.sendToRegistered = false, this.sendToPublishedInGroups = false, this.sendDateTimeUtc, this.sendTimezone, this.subject, this.body});
+
+  static Event2NotificationSetting? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Event2NotificationSetting(
+        id: JsonUtils.stringValue(json['id']),
+        sendToFavorited: JsonUtils.boolValue(json['send_to_favorited']) ?? false,
+        sendToRegistered: JsonUtils.boolValue(json['send_to_registrered']) ?? false,
+        sendToPublishedInGroups: JsonUtils.boolValue(json['send_to_published_in_groups']) ?? false,
+        sendDateTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['send_date_time']), isUtc: true),
+        sendTimezone: JsonUtils.stringValue(json['send_timezone']),
+        subject: JsonUtils.stringValue(json['subject']),
+        body: JsonUtils.stringValue(json['body']));
+  }
+
+  static List<Event2NotificationSetting>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2NotificationSetting>? result;
+    if (jsonList != null) {
+      result = <Event2NotificationSetting>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2NotificationSetting.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  static Event2NotificationSetting? fromOther(Event2NotificationSetting? other) {
+    if (other == null) {
+      return null;
+    }
+    return Event2NotificationSetting(
+        sendToFavorited: other.sendToFavorited,
+        sendToRegistered: other.sendToRegistered,
+        sendToPublishedInGroups: other.sendToPublishedInGroups,
+        sendTimezone: other.sendTimezone,
+        sendDateTimeUtc: other.sendDateTimeUtc,
+        subject: other.subject,
+        body: other.body);
+  }
+
+  static List<Event2NotificationSetting>? listFromOther(List<Event2NotificationSetting>? values) {
+    List<Event2NotificationSetting>? result;
+    if (values != null) {
+      result = <Event2NotificationSetting>[];
+      for (Event2NotificationSetting value in values) {
+        ListUtils.add(result, Event2NotificationSetting.fromOther(value));
+      }
+    }
+    return result;
+  }
+
+  static List<dynamic>? listToJson(List<dynamic>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (dynamic contentEntry in contentList) {
+        ListUtils.add(jsonList, contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'send_to_favorited': sendToFavorited,
+    'send_to_registrered': sendToRegistered,
+    'send_to_published_in_groups': sendToPublishedInGroups,
+    'send_timezone': sendTimezone,
+    'send_date_time': DateTimeUtils.dateTimeToSecondsSinceEpoch(sendDateTimeUtc),
+    'subject': subject,
+    'body': body
+  };
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2NotificationSetting) &&
+          (id == other.id) &&
+          (sendToFavorited == other.sendToFavorited) &&
+          (sendToRegistered == other.sendToRegistered) &&
+          (sendToPublishedInGroups == other.sendToPublishedInGroups) &&
+          (sendTimezone == other.sendTimezone) &&
+          (sendDateTimeUtc == other.sendDateTimeUtc) &&
+          (subject == other.subject) &&
+          (body == other.body);
+
+  @override
+  int get hashCode =>
+      (id?.hashCode ?? 0) ^
+      (sendToFavorited.hashCode) ^
+      (sendToRegistered.hashCode) ^
+      (sendToPublishedInGroups.hashCode) ^
+      (sendTimezone?.hashCode ?? 0) ^
+      (sendDateTimeUtc?.hashCode ?? 0) ^
+      (subject?.hashCode ?? 0) ^
+      (body?.hashCode ?? 0);
+
+  bool get hasAudience => (sendToFavorited || sendToRegistered || sendToPublishedInGroups);
 }
