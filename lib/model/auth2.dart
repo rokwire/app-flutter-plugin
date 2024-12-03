@@ -903,40 +903,25 @@ class Auth2UserProfileFieldsVisibility {
   // PUT services/account/privacy does not accept null field values but accepts their omission.
   Map<String, dynamic> toJson() {
     return {
-      if (firstName != null)
-        'first_name': firstName?.toJson(),
-      if (middleName != null)
-        'middle_name': middleName?.toJson(),
-      if (lastName != null)
-        'last_name': lastName?.toJson(),
-      if (pronouns != null)
-        'pronouns': pronouns?.toJson(),
+      'first_name': firstName?.toJson(),
+      'middle_name': middleName?.toJson(),
+      'last_name': lastName?.toJson(),
+      'pronouns': pronouns?.toJson(),
 
-      if (birthYear != null)
-        'birth_year': birthYear?.toJson(),
-      if (photoUrl != null)
-        'photo_url': photoUrl?.toJson(),
-      if (pronunciationUrl != null)
-        'pronunciation_url': pronunciationUrl?.toJson(),
+      'birth_year': birthYear?.toJson(),
+      'photo_url': photoUrl?.toJson(),
+      'pronunciation_url': pronunciationUrl?.toJson(),
 
-      if (email != null)
-        'email': email?.toJson(),
-      if (phone != null)
-        'phone': phone?.toJson(),
-      if (website != null)
-        'website': website?.toJson(),
+      'email': email?.toJson(),
+      'phone': phone?.toJson(),
+      'website': website?.toJson(),
 
-      if (address != null)
-        'address': address?.toJson(),
-      if (state != null)
-        'state': state?.toJson(),
-      if (zip != null)
-        'zip_code': zip?.toJson(),
-      if (country != null)
-        'country': country?.toJson(),
+      'address': address?.toJson(),
+      'state': state?.toJson(),
+      'zip_code': zip?.toJson(),
+      'country': country?.toJson(),
 
-      if (data != null)
-        'unstructured_properties': Auth2FieldVisibilityImpl.mapToJson(data),
+      'unstructured_properties': Auth2FieldVisibilityImpl.mapToJson(data),
     };
   }
 
