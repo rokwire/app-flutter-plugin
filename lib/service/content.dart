@@ -623,7 +623,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   String? getUserNamePronunciationUrl({ String? accountId }) {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isNotEmpty(serviceUrl)) {
-      return ((accountId != null) && false /* TMP */) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
+      return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
     }
     else {
       return null;
