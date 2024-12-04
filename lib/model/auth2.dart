@@ -432,7 +432,7 @@ class Auth2UserProfile {
       firstName: (override != null) ? Auth2UserProfileScope.firstName.pickString(override.firstName, other?._firstName, scope: scope) : other?._firstName,
       middleName: (override != null) ? Auth2UserProfileScope.middleName.pickString(override.middleName, other?._middleName, scope: scope) : other?._middleName,
       lastName: (override != null) ? Auth2UserProfileScope.lastName.pickString(override.lastName, other?._lastName, scope: scope) : other?._lastName,
-      pronouns: (override != null) ? Auth2UserProfileScope.pronouns.pickString(override.pronouns, other?._pronouns, scope: scope) : other?._lastName,
+      pronouns: (override != null) ? Auth2UserProfileScope.pronouns.pickString(override.pronouns, other?._pronouns, scope: scope) : other?._pronouns,
 
       birthYear: (override != null) ? Auth2UserProfileScope.birthYear.pickInt(override.birthYear, other?._birthYear, scope: scope) : other?._birthYear,
       photoUrl: (override != null) ? Auth2UserProfileScope.photoUrl.pickString(override.photoUrl, other?._photoUrl, scope: scope) : other?._photoUrl,
