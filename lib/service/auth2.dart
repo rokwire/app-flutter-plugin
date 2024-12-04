@@ -1304,15 +1304,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   Future<Auth2UserProfile?> loadUserProfile() async {
-    return await _loadAccountUserProfile();
+    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+      String url = "${Config().coreUrl}/services/account/profile";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Auth2UserProfile.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+    }
+    return null;
   }
 
   Future<bool> saveUserProfile(Auth2UserProfile? profile) async {
-    return await saveAccountUserProfile(profile);
-  }
-
-  Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
-    if (await _saveExternalAccountUserProfile(profile)) {
+    if (await _saveUserProfile(profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
         NotificationService().notify(notifyProfileChanged);
@@ -1322,31 +1323,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
-  Future<Auth2UserProfile?> _loadAccountUserProfile() async {
-    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
-      String url = "${Config().coreUrl}/services/account/profile";
-      Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode == 200) ? Auth2UserProfile.fromJson(JsonUtils.decodeMap(response?.body)) : null;
-    }
-    return null;
-  }
-
   Future<void> _saveAccountUserProfile() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.profile != null)) {
-      String url = "${Config().coreUrl}/services/account/profile";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode(profile!.toJson());
-
       Client client = Client();
       _updateUserProfileClient?.close();
       _updateUserProfileClient = client;
 
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: _updateUserProfileClient);
+      bool result = await _saveUserProfile(_account?.profile, client: _updateUserProfileClient);
 
       if (identical(client, _updateUserProfileClient)) {
-        if (response?.statusCode == 200) {
+        if (result) {
           _updateUserProfileTimer?.cancel();
           _updateUserProfileTimer = null;
         }
@@ -1362,21 +1348,21 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  Future<bool> _saveExternalAccountUserProfile(Auth2UserProfile? profile) async {
-    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+  Future<bool> _saveUserProfile(Auth2UserProfile? profile, { Client? client }) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (profile != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode(profile!.toJson());
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      String? post = JsonUtils.encode(profile.toJson());
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: client);
       return (response?.statusCode == 200);
     }
     return false;
   }
 
   /*Future<void> _refreshAccountUserProfile() async {
-    Auth2UserProfile? profile = await _loadAccountUserProfile();
+    Auth2UserProfile? profile = await loadUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
@@ -1387,10 +1373,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Privacy
 
-  Future<Auth2UserPrivacy?> loadUserPrivacy() =>
-    _loadAccountUserPrivacy();
-
-  Future<Auth2UserPrivacy?> _loadAccountUserPrivacy() async {
+  Future<Auth2UserPrivacy?> loadUserPrivacy() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";
       Response? response = await Network().get(url, auth: Auth2());
@@ -1399,25 +1382,27 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
-  Future<bool> saveUserPrivacy(Auth2UserPrivacy? privacy) =>
-    _saveAccountUserPrivacy(privacy);
+  Future<bool> saveUserPrivacy(Auth2UserPrivacy? privacy) async {
+    if (await _saveUserPrivacy(privacy)) {
+      if (_account?.privacy != privacy) {
+        Storage().auth2Account = _account = Auth2Account.fromOther(_account, privacy: privacy);
+        NotificationService().notify(notifyPrivacyChanged);
+      }
+      return true;
+    }
+    return false;
+  }
 
-  Future<bool> _saveAccountUserPrivacy(Auth2UserPrivacy? privacy) async {
+  // ignore: unused_element
+  Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
       String? post = JsonUtils.encode(privacy.toJson());
-
       Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        if (_account?.privacy != privacy) {
-          _account = Auth2Account.fromOther(_account, privacy: privacy);
-          NotificationService().notify(notifyPrivacyChanged);
-        }
-        return true;
-      }
+      return (response?.statusCode == 200);
     }
     return false;
   }
