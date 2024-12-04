@@ -363,25 +363,28 @@ class Auth2UserProfile {
 
   // Known unstructured_properties entries
   static const String researchQuestionnaireAnswersDataKey = 'research_questionnaire_answers';
-  static const String pronounDataKey = 'pronoun';
-  static const String titleDataKey = 'title';
-  static const String pronunciationUrlDataKey = 'pronunciation_url';
+
   static const String collegeDataKey = 'college';
   static const String departmentDataKey = 'department';
   static const String majorDataKey = 'major';
+  static const String titleDataKey = 'title';
   static const String email2DataKey = 'email2';
-  static const String websiteDataKey = 'website';
 
   String? _id;
+
   String? _firstName;
   String? _middleName;
   String? _lastName;
+  String? _pronouns;
+
   int?    _birthYear;
   String? _photoUrl;
+  String? _pronunciationUrl;
 
   String? _email;
   String? _phone;
-  
+  String? _website;
+
   String? _address;
   String? _state;
   String? _zip;
@@ -390,21 +393,27 @@ class Auth2UserProfile {
   Map<String, dynamic>? _data;
   
   Auth2UserProfile({String? id,
-    String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
+    String? firstName, String? middleName, String? lastName, String? pronouns,
+    int? birthYear, String? photoUrl, String? pronunciationUrl,
+    String? email, String? phone, String? website,
     String? address, String? state, String? zip, String? country,
     Map<String, dynamic>? data
   }):
     _id = id,
+
     _firstName = firstName,
     _middleName = middleName,
     _lastName = lastName,
+    _pronouns = pronouns,
 
     _birthYear = birthYear,
     _photoUrl = photoUrl,
+    _pronunciationUrl = pronunciationUrl,
+
     _email = email,
     _phone = phone,
-    
+    _website = website,
+
     _address = address,
     _state  = state,
     _zip  = zip,
@@ -412,22 +421,28 @@ class Auth2UserProfile {
 
     _data = data;
 
-  factory Auth2UserProfile.fromOther(Auth2UserProfile? other, {
-    String? id, String? firstName, String? middleName, String? lastName,
-    int? birthYear, String? photoUrl, String? email, String? phone,
+  factory Auth2UserProfile.fromOther(Auth2UserProfile? other, {String? id,
+    String? firstName, String? middleName, String? lastName, String? pronouns,
+    int? birthYear, String? photoUrl, String? pronunciationUrl,
+    String? email, String? phone, String? website,
     String? address, String? state, String? zip, String? country,
     Map<String, dynamic>? data}) {
 
     return Auth2UserProfile(
       id: id ?? other?._id,
+
       firstName: firstName ?? other?._firstName,
       middleName: middleName ?? other?._middleName,
       lastName: lastName ?? other?._lastName,
+      pronouns: pronouns ?? other?._pronouns,
+
       birthYear: birthYear ?? other?._birthYear,
       photoUrl: photoUrl ?? other?._photoUrl,
+      pronunciationUrl: pronunciationUrl ?? other?._pronunciationUrl,
 
       email: email ?? other?._email,
       phone: phone ?? other?._phone,
+      website: website ?? other?._website,
 
       address: address ?? other?._address,
       state: state ?? other?._state,
@@ -438,20 +453,25 @@ class Auth2UserProfile {
     );
   }
 
-  static Auth2UserProfile? fromFieldVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
+  static Auth2UserProfile? fromFieldsVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
     Set<Auth2FieldVisibility> permitted = const <Auth2FieldVisibility>{Auth2FieldVisibility.public}
   }) {
 
     return (source != null) ? Auth2UserProfile(
       id: source._id,
+
       firstName: permitted.contains(visibility?.firstName) ? source._firstName : null,
       middleName: permitted.contains(visibility?.middleName) ? source._middleName : null,
       lastName: permitted.contains(visibility?.lastName) ? source._lastName : null,
+      pronouns: permitted.contains(visibility?.pronouns) ? source._pronouns : null,
+
       birthYear: permitted.contains(visibility?.birthYear) ? source._birthYear : null,
       photoUrl: permitted.contains(visibility?.photoUrl) ? source._photoUrl : null,
+      pronunciationUrl: permitted.contains(visibility?.pronunciationUrl) ? source._pronunciationUrl : null,
 
       email: permitted.contains(visibility?.email) ? source._email : null,
       phone: permitted.contains(visibility?.phone) ? source._phone : null,
+      website: permitted.contains(visibility?.website) ? source._website : null,
 
       address: permitted.contains(visibility?.address) ? source._address : null,
       state: permitted.contains(visibility?.state) ? source._state : null,
@@ -469,36 +489,45 @@ class Auth2UserProfile {
   static Auth2UserProfile? fromJson(Map<String, dynamic>? json) {
     return (json != null) ? Auth2UserProfile(
       id: JsonUtils.stringValue(json['id']),
+
       firstName: JsonUtils.stringValue(json['first_name']),
       middleName: JsonUtils.stringValue(json['middle_name']),
       lastName: JsonUtils.stringValue(json['last_name']),
+      pronouns: JsonUtils.stringValue(json['pronouns']),
 
       birthYear: JsonUtils.intValue(json['birth_year']),
       photoUrl: JsonUtils.stringValue(json['photo_url']),
+      pronunciationUrl: JsonUtils.stringValue(json['pronunciation_url']),
+
       email: JsonUtils.stringValue(json['email']),
       phone: JsonUtils.stringValue(json['phone']),
-  
+      website: JsonUtils.stringValue(json['website']),
+
       address: JsonUtils.stringValue(json['address']),
       state: JsonUtils.stringValue(json['state']),
       zip: JsonUtils.stringValue(json['zip_code']),
       country: JsonUtils.stringValue(json['country']),
 
       data: JsonUtils.mapValue(json['unstructured_properties']),
-
     ) : null;
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id' : _id,
+
       'first_name': _firstName,
       'middle_name': _middleName,
       'last_name': _lastName,
+      'pronouns': _pronouns,
 
       'birth_year': _birthYear,
       'photo_url': _photoUrl,
+      'pronunciation_url': _pronunciationUrl,
+
       'email': _email,
       'phone': _phone,
+      'website': _website,
 
       'address': _address,
       'state': _state,
@@ -513,14 +542,19 @@ class Auth2UserProfile {
   bool operator ==(other) =>
     (other is Auth2UserProfile) &&
       (other._id == _id) &&
+
       (other._firstName == _firstName) &&
       (other._middleName == _middleName) &&
       (other._lastName == _lastName) &&
+      (other._pronouns == _pronouns) &&
 
       (other._birthYear == _birthYear) &&
       (other._photoUrl == _photoUrl) &&
+      (other._pronunciationUrl == _pronunciationUrl) &&
+
       (other._email == _email) &&
       (other._phone == _phone) &&
+      (other._website == _website) &&
 
       (other._address == _address) &&
       (other._state == _state) &&
@@ -532,14 +566,19 @@ class Auth2UserProfile {
   @override
   int get hashCode =>
     (_id?.hashCode ?? 0) ^
+
     (_firstName?.hashCode ?? 0) ^
     (_middleName?.hashCode ?? 0) ^
     (_lastName?.hashCode ?? 0) ^
+    (_pronouns?.hashCode ?? 0) ^
 
     (_birthYear?.hashCode ?? 0) ^
     (_photoUrl?.hashCode ?? 0) ^
+    (_pronunciationUrl?.hashCode ?? 0) ^
+
     (_email?.hashCode ?? 0) ^
     (_phone?.hashCode ?? 0) ^
+    (_website?.hashCode ?? 0) ^
 
     (_address?.hashCode ?? 0) ^
     (_state?.hashCode ?? 0) ^
@@ -576,7 +615,14 @@ class Auth2UserProfile {
         _lastName = profile._lastName;
         modified = true;
       }
-      
+      if ((profile._pronouns != _pronouns) && (
+          (scope?.contains(Auth2UserProfileScope.pronouns) == true) ||
+          ((profile._pronouns?.isNotEmpty ?? false) && (_pronouns?.isEmpty ?? true))
+      )) {
+        _pronouns = profile._pronouns;
+        modified = true;
+      }
+
       if ((profile._birthYear != _birthYear) && (
           (scope?.contains(Auth2UserProfileScope.birthYear) == true) ||
           (((profile._birthYear ?? 0) != 0) && ((_birthYear ?? 0) == 0))
@@ -591,6 +637,14 @@ class Auth2UserProfile {
         _photoUrl = profile._photoUrl;
         modified = true;
       }
+      if ((profile._pronunciationUrl != _pronunciationUrl) && (
+          (scope?.contains(Auth2UserProfileScope.pronunciationUrl) == true) ||
+          ((profile._pronunciationUrl?.isNotEmpty ?? false) && (_pronunciationUrl?.isEmpty ?? true))
+      )) {
+        _pronunciationUrl = profile._pronunciationUrl;
+        modified = true;
+      }
+
       if ((profile._email != _email) && (
           (scope?.contains(Auth2UserProfileScope.email) == true) ||
           ((profile._email?.isNotEmpty ?? false) && (_email?.isEmpty ?? true))
@@ -603,6 +657,13 @@ class Auth2UserProfile {
           ((profile._phone?.isNotEmpty ?? false) && (_phone?.isEmpty ?? true))
       )) {
         _phone = profile._phone;
+        modified = true;
+      }
+      if ((profile._website != _website) && (
+          (scope?.contains(Auth2UserProfileScope.website) == true) ||
+          ((profile._website?.isNotEmpty ?? false) && (_website?.isEmpty ?? true))
+      )) {
+        _website = profile._website;
         modified = true;
       }
 
@@ -650,12 +711,16 @@ class Auth2UserProfile {
   String? get firstName => _firstName;
   String? get middleName => _middleName;
   String? get lastName => _lastName;
+  String? get pronouns => _pronouns;
 
   int?    get birthYear => _birthYear;
   String? get photoUrl => _photoUrl;
+  String? get pronunciationUrl => _pronunciationUrl;
+
   String? get email => _email;
   String? get phone => _phone;
-  
+  String? get website => _website;
+
   String? get address => _address;
   String? get state => _state;
   String? get zip => _zip;
@@ -668,16 +733,13 @@ class Auth2UserProfile {
 
   // Other Data Fields
 
-  String? get pronoun => JsonUtils.stringValue(_data?[pronounDataKey]);
-  String? get title => JsonUtils.stringValue(_data?[titleDataKey]);
-  String? get pronunciationUrl => JsonUtils.stringValue(_data?[pronunciationUrlDataKey]);
 
   String? get college => JsonUtils.stringValue(_data?[collegeDataKey]);
   String? get department => JsonUtils.stringValue(_data?[departmentDataKey]);
   String? get major => JsonUtils.stringValue(_data?[majorDataKey]);
+  String? get title => JsonUtils.stringValue(_data?[titleDataKey]);
 
   String? get email2 => JsonUtils.stringValue(_data?[email2DataKey]);
-  String? get website => JsonUtils.stringValue(_data?[websiteDataKey]);
 
   // Research Questionnaire Answers
 
@@ -749,11 +811,15 @@ class Auth2UserProfileFieldsVisibility {
   final Auth2FieldVisibility? firstName;
   final Auth2FieldVisibility? middleName;
   final Auth2FieldVisibility? lastName;
+  final Auth2FieldVisibility? pronouns;
+
   final Auth2FieldVisibility? birthYear;
   final Auth2FieldVisibility? photoUrl;
+  final Auth2FieldVisibility? pronunciationUrl;
 
   final Auth2FieldVisibility? email;
   final Auth2FieldVisibility? phone;
+  final Auth2FieldVisibility? website;
 
   final Auth2FieldVisibility? address;
   final Auth2FieldVisibility? state;
@@ -763,8 +829,9 @@ class Auth2UserProfileFieldsVisibility {
   final Map<String, Auth2FieldVisibility?>? data;
 
   Auth2UserProfileFieldsVisibility({
-    this.firstName, this.middleName, this.lastName,
-    this.birthYear, this.photoUrl, this.email, this.phone,
+    this.firstName, this.middleName, this.lastName, this.pronouns,
+    this.birthYear, this.photoUrl, this.pronunciationUrl,
+    this.email, this.phone, this.website,
     this.address, this.state, this.zip, this.country,
     this.data
   });
@@ -773,11 +840,15 @@ class Auth2UserProfileFieldsVisibility {
     Auth2FieldVisibility? firstName,
     Auth2FieldVisibility? middleName,
     Auth2FieldVisibility? lastName,
+    Auth2FieldVisibility? pronouns,
 
     Auth2FieldVisibility? birthYear,
     Auth2FieldVisibility? photoUrl,
+    Auth2FieldVisibility? pronunciationUrl,
+
     Auth2FieldVisibility? email,
     Auth2FieldVisibility? phone,
+    Auth2FieldVisibility? website,
 
     Auth2FieldVisibility? address,
     Auth2FieldVisibility? state,
@@ -789,11 +860,15 @@ class Auth2UserProfileFieldsVisibility {
     firstName: firstName ?? other?.firstName,
     middleName: middleName ?? other?.middleName,
     lastName: lastName ?? other?.lastName,
+    pronouns: pronouns ?? other?.pronouns,
+
     birthYear: birthYear ?? other?.birthYear,
     photoUrl: photoUrl ?? other?.photoUrl,
+    pronunciationUrl: photoUrl ?? other?.pronunciationUrl,
 
     email: email ?? other?.email,
     phone: phone ?? other?.phone,
+    website: website ?? other?.website,
 
     address: address ?? other?.address,
     state: state ?? other?.state,
@@ -807,11 +882,15 @@ class Auth2UserProfileFieldsVisibility {
     firstName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['first_name'])),
     middleName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['middle_name'])),
     lastName: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['last_name'])),
+    pronouns: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['pronouns'])),
 
     birthYear: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['birth_year'])),
     photoUrl: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['photo_url'])),
+    pronunciationUrl: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['pronunciation_url'])),
+
     email: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['email'])),
     phone: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['phone'])),
+    website: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['website'])),
 
     address: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['address'])),
     state: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['state'])),
@@ -821,16 +900,21 @@ class Auth2UserProfileFieldsVisibility {
     data: Auth2FieldVisibilityImpl.mapFromJson(JsonUtils.mapValue(json['unstructured_properties'])),
   ) : null;
 
+  // PUT services/account/privacy does not accept null field values but accepts their omission.
   Map<String, dynamic> toJson() {
     return {
       'first_name': firstName?.toJson(),
       'middle_name': middleName?.toJson(),
       'last_name': lastName?.toJson(),
+      'pronouns': pronouns?.toJson(),
 
       'birth_year': birthYear?.toJson(),
       'photo_url': photoUrl?.toJson(),
+      'pronunciation_url': pronunciationUrl?.toJson(),
+
       'email': email?.toJson(),
       'phone': phone?.toJson(),
+      'website': website?.toJson(),
 
       'address': address?.toJson(),
       'state': state?.toJson(),
@@ -847,11 +931,15 @@ class Auth2UserProfileFieldsVisibility {
       (other.firstName == firstName) &&
       (other.middleName == middleName) &&
       (other.lastName == lastName) &&
+      (other.pronouns == pronouns) &&
 
       (other.birthYear == birthYear) &&
       (other.photoUrl == photoUrl) &&
+      (other.pronunciationUrl == pronunciationUrl) &&
+
       (other.email == email) &&
       (other.phone == phone) &&
+      (other.website == website) &&
 
       (other.address == address) &&
       (other.state == state) &&
@@ -865,11 +953,15 @@ class Auth2UserProfileFieldsVisibility {
     (firstName?.hashCode ?? 0) ^
     (middleName?.hashCode ?? 0) ^
     (lastName?.hashCode ?? 0) ^
+    (pronouns?.hashCode ?? 0) ^
 
     (birthYear?.hashCode ?? 0) ^
     (photoUrl?.hashCode ?? 0) ^
+    (pronunciationUrl?.hashCode ?? 0) ^
+
     (email?.hashCode ?? 0) ^
     (phone?.hashCode ?? 0) ^
+    (website?.hashCode ?? 0) ^
 
     (address?.hashCode ?? 0) ^
     (state?.hashCode ?? 0) ^
@@ -880,16 +972,12 @@ class Auth2UserProfileFieldsVisibility {
 
   // Other Data dields
 
-  Auth2FieldVisibility? get pronoun => data?[Auth2UserProfile.pronounDataKey];
-  Auth2FieldVisibility? get title => data?[Auth2UserProfile.titleDataKey];
-  Auth2FieldVisibility? get pronunciationUrl => data?[Auth2UserProfile.pronunciationUrlDataKey];
-
   Auth2FieldVisibility? get college => data?[Auth2UserProfile.collegeDataKey];
   Auth2FieldVisibility? get department => data?[Auth2UserProfile.departmentDataKey];
   Auth2FieldVisibility? get major => data?[Auth2UserProfile.majorDataKey];
+  Auth2FieldVisibility? get title => data?[Auth2UserProfile.titleDataKey];
 
   Auth2FieldVisibility? get email2 => data?[Auth2UserProfile.email2DataKey];
-  Auth2FieldVisibility? get website => data?[Auth2UserProfile.websiteDataKey];
 
   static Map<String, dynamic>? buildPermitted(Map<String, dynamic>? source, Map<String, Auth2FieldVisibility?>? visibility, {
     required Set<Auth2FieldVisibility> permitted
@@ -1157,7 +1245,12 @@ class Auth2Group extends Auth2Role {
 ////////////////////////////////
 // Auth2UserProfileScope
 
-enum Auth2UserProfileScope { firstName, middleName, lastName, birthYear, photoUrl, email, phone, address, state, zip, country, }
+enum Auth2UserProfileScope {
+  firstName, middleName, lastName, pronouns,
+  birthYear, photoUrl, pronunciationUrl,
+  email, phone, website,
+  address, state, zip, country,
+}
 
 ////////////////////////////////
 // Auth2Type
