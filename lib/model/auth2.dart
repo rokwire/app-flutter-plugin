@@ -421,35 +421,33 @@ class Auth2UserProfile {
 
     _data = data;
 
-  factory Auth2UserProfile.fromOther(Auth2UserProfile? other, {String? id,
-    String? firstName, String? middleName, String? lastName, String? pronouns,
-    int? birthYear, String? photoUrl, String? pronunciationUrl,
-    String? email, String? phone, String? website,
-    String? address, String? state, String? zip, String? country,
-    Map<String, dynamic>? data}) {
+  factory Auth2UserProfile.fromOther(Auth2UserProfile? other, {
+    Auth2UserProfile? override,
+    Set<Auth2UserProfileScope>? scope
+  }) {
 
     return Auth2UserProfile(
-      id: id ?? other?._id,
+      id: override?.id ?? other?._id,
 
-      firstName: firstName ?? other?._firstName,
-      middleName: middleName ?? other?._middleName,
-      lastName: lastName ?? other?._lastName,
-      pronouns: pronouns ?? other?._pronouns,
+      firstName: (override != null) ? Auth2UserProfileScope.firstName.pickString(override.firstName, other?._firstName, scope: scope) : other?._firstName,
+      middleName: (override != null) ? Auth2UserProfileScope.middleName.pickString(override.middleName, other?._middleName, scope: scope) : other?._middleName,
+      lastName: (override != null) ? Auth2UserProfileScope.lastName.pickString(override.lastName, other?._lastName, scope: scope) : other?._lastName,
+      pronouns: (override != null) ? Auth2UserProfileScope.pronouns.pickString(override.pronouns, other?._pronouns, scope: scope) : other?._pronouns,
 
-      birthYear: birthYear ?? other?._birthYear,
-      photoUrl: photoUrl ?? other?._photoUrl,
-      pronunciationUrl: pronunciationUrl ?? other?._pronunciationUrl,
+      birthYear: (override != null) ? Auth2UserProfileScope.birthYear.pickInt(override.birthYear, other?._birthYear, scope: scope) : other?._birthYear,
+      photoUrl: (override != null) ? Auth2UserProfileScope.photoUrl.pickString(override.photoUrl, other?._photoUrl, scope: scope) : other?._photoUrl,
+      pronunciationUrl: (override != null) ? Auth2UserProfileScope.pronunciationUrl.pickString(override.pronunciationUrl, other?._pronunciationUrl, scope: scope) : other?._pronunciationUrl,
 
-      email: email ?? other?._email,
-      phone: phone ?? other?._phone,
-      website: website ?? other?._website,
+      email: (override != null) ? Auth2UserProfileScope.email.pickString(override.email, other?._email, scope: scope) : other?._email,
+      phone: (override != null) ? Auth2UserProfileScope.phone.pickString(override.phone, other?._phone, scope: scope) : other?._phone,
+      website: (override != null) ? Auth2UserProfileScope.website.pickString(override.website, other?._website, scope: scope) : other?._website,
 
-      address: address ?? other?._address,
-      state: state ?? other?._state,
-      zip: zip ?? other?._zip,
-      country: country ?? other?._country,
+      address: (override != null) ? Auth2UserProfileScope.address.pickString(override.address, other?._address, scope: scope) : other?._address,
+      state: (override != null) ? Auth2UserProfileScope.state.pickString(override.state, other?._state, scope: scope) : other?._state,
+      zip: (override != null) ? Auth2UserProfileScope.zip.pickString(override.zip, other?._zip, scope: scope) : other?._zip,
+      country: (override != null) ? Auth2UserProfileScope.country.pickString(override.country, other?._country, scope: scope) : other?._country,
 
-      data: MapUtils.combine(other?._data, data),
+      data: (override != null) ? MapUtils.combine(other?._data, override.data) : other?._data,
     );
   }
 
@@ -1250,6 +1248,21 @@ enum Auth2UserProfileScope {
   birthYear, photoUrl, pronunciationUrl,
   email, phone, website,
   address, state, zip, country,
+}
+
+typedef Auth2UserProfileScopeSet = Set<Auth2UserProfileScope>;
+
+extension Auth2UserProfileScopeImpl on Auth2UserProfileScope {
+  static Set<Auth2UserProfileScope> get fullScope => Set<Auth2UserProfileScope>.from(Auth2UserProfileScope.values);
+
+  T? pick<T>(T? v, T? d, { Set<Auth2UserProfileScope>? scope }) =>
+    (scope != null) ? (scope.contains(this) ? v : d) : (v ?? d);
+
+  String? pickString(String? v, String? d, { Set<Auth2UserProfileScope>? scope }) =>
+    (scope != null) ? (scope.contains(this) ? v : d) : ((v?.isNotEmpty == true) ? v : d);
+
+  int? pickInt(int? v, int? d, { Set<Auth2UserProfileScope>? scope }) =>
+    (scope != null) ? (scope.contains(this) ? v : d) : (((v ?? 0) != 0) ? v : d);
 }
 
 ////////////////////////////////
@@ -2338,6 +2351,10 @@ class Auth2UserPrefs {
 }
 
 enum Auth2UserPrefsScope { privacyLevel, roles, favorites, interests, foodFilters, tags, settings, voter }
+
+extension Auth2UserPrefsScopeImpl on Auth2UserPrefsScope {
+  static Set<Auth2UserPrefsScope> get fullScope => Set<Auth2UserPrefsScope>.from(Auth2UserPrefsScope.values);
+}
 
 class Auth2VoterPrefs {
   bool? _registeredVoter;
