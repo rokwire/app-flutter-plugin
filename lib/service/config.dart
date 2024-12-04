@@ -583,7 +583,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
-  String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get assetsUrl => getOtherServicesUrl(key: 'assets_url');
 
   // Getters: secretKeys
   String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
