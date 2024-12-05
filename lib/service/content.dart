@@ -44,7 +44,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String notifyContentImagesChanged          = "edu.illinois.rokwire.content.images.changed";
   static const String notifyContentWidgetsChanged         = "edu.illinois.rokwire.content.widgetss.changed";
   static const String notifyUserProfilePictureChanged     = "edu.illinois.rokwire.content.user.picture_profile.changed";
-  static const String notifyUserProfileVoiceRecordChanged = "edu.illinois.rokwire.content.user.voice_record_profile.changed";
 
   static const String _attributesContentCategory = "attributes";
   static const String _imagesContentCategory = "images";
@@ -581,7 +580,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     int responseCode = response?.statusCode ?? -1;
     String? responseString = (await response?.stream.bytesToString());
     if (responseCode == 200) {
-      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
       return AudioResult.succeed(responseString);
     } else {
       debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
@@ -598,7 +596,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     Response? response = await Network().delete(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      NotificationService().notify(Content.notifyUserProfileVoiceRecordChanged, null);
       return AudioResult.succeed('User profile voice record deleted.');
     } else {
       String? responseString = response?.body;
