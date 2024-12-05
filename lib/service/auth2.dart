@@ -1299,8 +1299,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (identical(profile, _account?.profile)) {
       Storage().auth2Account = _account;
       NotificationService().notify(notifyProfileChanged);
+      onUserAccountProfileChanged(profile);
       _saveAccountUserProfile();
     }
+  }
+
+  @protected
+  void onUserAccountProfileChanged(Auth2UserProfile? profile) {
   }
 
   Future<Auth2UserProfile?> loadUserProfile() async {
@@ -1314,9 +1319,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<bool> saveUserProfile(Auth2UserProfile? profile) async {
     if (await _saveUserProfile(profile)) {
-      if (_account?.profile?.apply(profile) ?? false) {
+      if (_account?.profile?.apply(profile, scope: Auth2UserProfileScopeImpl.fullScope) ?? false) {
         Storage().auth2Account = _account;
         NotificationService().notify(notifyProfileChanged);
+        onUserAccountProfileChanged(profile);
       }
       return true;
     }
