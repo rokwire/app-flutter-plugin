@@ -3,14 +3,21 @@ import 'dart:math';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/auth2.directory.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 List<Auth2PublicAccount>? _sampleDirectoryAccounts;
 
 extension Auh2Directory on Auth2 {
+
+  static const String attributesScope = 'app-directory';
+
+  ContentAttributes? get directoryAttributes =>
+    Content().contentAttributes(attributesScope);
 
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
     String? userName, String? firstName, String? lastName,
