@@ -503,15 +503,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> loadDefaultUserPhoto({String? accountId}) async {
-    return loadUserPhoto(UserProfileImageType.defaultType, accountId: accountId);
-  }
-
-  Future<Uint8List?> loadSmallUserPhoto({String? accountId}) async {
-    return loadUserPhoto(UserProfileImageType.small, accountId: accountId);
-  }
-
-  Future<Uint8List?> loadUserPhoto(UserProfileImageType type, { String? accountId }) async {
+  Future<Uint8List?> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
     String? url = getUserPhotoUrl(accountId: accountId, type: type);
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
@@ -522,11 +514,19 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type = UserProfileImageType.small }) {
+  String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type, Map<String, String>? params }) {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isNotEmpty(serviceUrl)) {
       String imageUrl = (accountId != null) ? '$serviceUrl/profile_photo/$accountId' : '$serviceUrl/profile_photo';
-      return (type != null) ? '$imageUrl?size=${_profileImageTypeToString(type)}' : imageUrl;
+      Map<String, String>? urlParams;
+      if (type != null) {
+        urlParams = (params != null) ? Map<String, String>.from(params) : {};
+        urlParams['size'] = _profileImageTypeToString(type);
+      }
+      else {
+        urlParams = params;
+      }
+      return (urlParams != null) ? UrlUtils.buildWithQueryParameters(imageUrl, urlParams) : imageUrl;
     }
     else {
       return null;
