@@ -49,9 +49,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   static const String _platformBuildingBlocksPathPrefix = 'platformBuildingBlocks';
   static const String _otherUniversityServicesPathPrefix = 'otherUniversityServices';
+  static const String _secretKeysPathPrefix = 'secretKeys';
   static const String configUrlPathPrefix = 'config';
   static const String _configPlatformBuildingBlocksUrlPathPrefix = '$configUrlPathPrefix.$_platformBuildingBlocksPathPrefix';
   static const String _configOtherUniversityServicesUrlPathPrefix = '$configUrlPathPrefix.$_otherUniversityServicesPathPrefix';
+  static const String configSecretKeysPathPrefix = '$configUrlPathPrefix.$_secretKeysPathPrefix';
 
   Map<String, dynamic>? _config;
   Map<String, dynamic>? _configAsset;
