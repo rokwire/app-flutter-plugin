@@ -1250,9 +1250,10 @@ enum Auth2UserProfileScope {
   address, state, zip, country,
 }
 
-typedef Auth2UserProfileScopeSet = Set<Auth2UserProfileScope>;
-
 extension Auth2UserProfileScopeImpl on Auth2UserProfileScope {
+
+  static Auth2UserProfileScope? fromString(String value) => Auth2UserProfileScope.values.firstWhereOrNull((field) => (field.toString() == value));
+
   static Set<Auth2UserProfileScope> get fullScope => Set<Auth2UserProfileScope>.from(Auth2UserProfileScope.values);
 
   T? pick<T>(T? v, T? d, { Set<Auth2UserProfileScope>? scope }) =>
