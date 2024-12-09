@@ -3,14 +3,21 @@ import 'dart:math';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/auth2.directory.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 List<Auth2PublicAccount>? _sampleDirectoryAccounts;
 
 extension Auh2Directory on Auth2 {
+
+  static const String attributesScope = 'app-directory';
+
+  ContentAttributes? get directoryAttributes =>
+    Content().contentAttributes(attributesScope);
 
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
     String? userName, String? firstName, String? lastName,
@@ -160,16 +167,7 @@ extension Auh2Directory on Auth2 {
     sampleAccounts.addAll(_buildSampleAccounts(sampleAccounts.length + 1, firstNames: manNames, familyNames: familyNames, photos: manPhotos, colleges: colleges, departments: departments));
     sampleAccounts.addAll(_buildSampleAccounts(sampleAccounts.length + 1, firstNames: womanNames, familyNames: familyNames, photos: womanPhotos, colleges: colleges, departments: departments));
 
-    sampleAccounts.sort((Auth2PublicAccount account1, Auth2PublicAccount account2) {
-      int result = SortUtils.compare(account1.profile?.lastName?.toUpperCase(), account2.profile?.lastName?.toUpperCase());
-      if (result == 0) {
-        result = SortUtils.compare(account1.profile?.firstName?.toUpperCase(), account2.profile?.firstName?.toUpperCase());
-      }
-      if (result == 0) {
-        result = SortUtils.compare(account1.profile?.middleName?.toUpperCase(), account2.profile?.middleName?.toUpperCase());
-      }
-      return result;
-    });
+    sampleAccounts.sortByLastName();
     return sampleAccounts;
   }
 
@@ -225,7 +223,7 @@ extension Auh2Directory on Auth2 {
 
     String pronunciationUrl = 'https://api-dev.rokwire.illinois.edu/content/voice_record';
 
-    return [
+    List<Auth2PublicAccount> sampleAccounts = [
       Auth2PublicAccount(id:  '1', profile: Auth2UserProfile(id:  '1', firstName: 'James',      lastName: 'Smith',     pronunciationUrl: pronunciationUrl, pronouns: 'he',  email: 'james@illinois.edu',    photoUrl: manPhotos[0],   website: 'linkedin.com/james',    data: {'college': 'Academic Affairs', 'department': 'Campus Honors Program'})),
       Auth2PublicAccount(id:  '2', profile: Auth2UserProfile(id:  '2', firstName: 'Mary',       lastName: 'Johnson',   pronunciationUrl: pronunciationUrl, pronouns: 'she', email: 'mary@illinois.edu',     photoUrl: womanPhotos[0], website: 'linkedin.com/mary',     data: {'college': 'Chancellor',       'department': 'Academic Human Resources'})),
       Auth2PublicAccount(id:  '3', profile: Auth2UserProfile(id:  '3', firstName: 'Michael',    lastName: 'Williams',  pronunciationUrl: pronunciationUrl, pronouns: 'he',  email: 'michael@illinois.edu',  photoUrl: manPhotos[1],   website: 'linkedin.com/michael',  data: {'college': 'Armed Forces',     'department': 'Air Force Aerospace Studies'})),
@@ -267,6 +265,22 @@ extension Auh2Directory on Auth2 {
       Auth2PublicAccount(id: '39', profile: Auth2UserProfile(id: '39', firstName: 'Joshua',     lastName: 'Flores',    pronunciationUrl: pronunciationUrl, pronouns: 'he',  email: 'joshua@illinois.edu',   photoUrl: manPhotos[3],   website: 'linkedin.com/joshua',   data: {'college': 'Academic Affairs', 'department': 'Provost/VCAA Admin'})),
       Auth2PublicAccount(id: '40', profile: Auth2UserProfile(id: '40', firstName: 'Michelle',   lastName: 'Green',     pronunciationUrl: pronunciationUrl, pronouns: 'she', email: 'michelle@illinois.edu', photoUrl: womanPhotos[4], website: 'linkedin.com/michelle', data: {'college': 'Law',              'department': 'Law Library'})),
     ];
+    sampleAccounts.sortByLastName();
+    return sampleAccounts;
   }
 
+}
+
+extension _Auth2PublicAccountListUtils on List<Auth2PublicAccount> {
+  void sortByLastName() =>
+    sort((Auth2PublicAccount account1, Auth2PublicAccount account2) {
+      int result = SortUtils.compare(account1.profile?.lastName?.toUpperCase(), account2.profile?.lastName?.toUpperCase());
+      if (result == 0) {
+        result = SortUtils.compare(account1.profile?.firstName?.toUpperCase(), account2.profile?.firstName?.toUpperCase());
+      }
+      if (result == 0) {
+        result = SortUtils.compare(account1.profile?.middleName?.toUpperCase(), account2.profile?.middleName?.toUpperCase());
+      }
+      return result;
+    });
 }
