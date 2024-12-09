@@ -56,7 +56,7 @@ class FirebaseCore extends Service {
   }
 
   Future<void> initFirebase() async {
-    //TBD: DD - implement for web - firebase options
+    //TBD: DDWEB - implement for web - firebase options
     google.FirebaseOptions? firebaseOptions = kIsWeb
         ? google.FirebaseOptions(
             apiKey: 'testApiKeyForUIUCWeb',
