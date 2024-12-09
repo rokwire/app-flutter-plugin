@@ -380,6 +380,16 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return kIsWeb ? "$_configOtherUniversityServicesUrlPathPrefix.$key" : JsonUtils.stringValue(otherUniversityServices[key]);
   }
 
+  String? wrapWebProxyUrl({required String sourceUrl}) {
+    if (kIsWeb) {
+      String? proxyUrl = UrlUtils.addQueryParameters(
+          '${Config().authBaseUrl}/proxy', {'proxy_url': sourceUrl, 'version': StringUtils.ensureNotEmpty(Config().appVersion)});
+      return proxyUrl;
+    } else {
+      return sourceUrl;
+    }
+  }
+
   // App Id & Version
 
   String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
