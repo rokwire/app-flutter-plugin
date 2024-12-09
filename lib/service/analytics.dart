@@ -324,8 +324,14 @@ class Analytics with Service implements NotificationsListener {
     if (packet != null) {
       try {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
+        late NetworkAuthProvider authProvider; //workaround for short condition
+        if (kIsWeb) {
+          authProvider = Auth2();
+        } else {
+          authProvider = Config();
+        }
         //TBD: Remove this when logging service gets updated.
-        final response = await Network().post(Config().loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: kIsWeb ? Auth2Csrf() : Config(), sendAnalytics: false);
+        final response = await Network().post(Config().loggingUrl, body: packet, headers: { "Accept": "application/json", "Content-type": "application/json" }, auth: authProvider, sendAnalytics: false);
         return (response != null) && ((response.statusCode == 200) || (response.statusCode == 201));
       }
       catch (e) {

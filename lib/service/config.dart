@@ -20,7 +20,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:rokwire_plugin/service/app_livecycle.dart';
-import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -47,6 +46,14 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   static const String _configKeysAsset    = "config.keys.json";
 
   static const String _rokwireApiKey       = 'ROKWIRE-API-KEY';
+
+  static const String _platformBuildingBlocksPathPrefix = 'platformBuildingBlocks';
+  static const String _otherUniversityServicesPathPrefix = 'otherUniversityServices';
+  static const String _secretKeysPathPrefix = 'secretKeys';
+  static const String configUrlPathPrefix = 'config';
+  static const String _configPlatformBuildingBlocksUrlPathPrefix = '$configUrlPathPrefix.$_platformBuildingBlocksPathPrefix';
+  static const String _configOtherUniversityServicesUrlPathPrefix = '$configUrlPathPrefix.$_otherUniversityServicesPathPrefix';
+  static const String configSecretKeysPathPrefix = '$configUrlPathPrefix.$_secretKeysPathPrefix';
 
   Map<String, dynamic>? _config;
   Map<String, dynamic>? _configAsset;
@@ -142,11 +149,25 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @override
   Map<String, String>? get networkAuthHeaders {
-    String? value = rokwireApiKey;
-    if ((value != null) && value.isNotEmpty) {
-      return { _rokwireApiKey : value };
+    if (kIsWeb) {
+      String cookieName = WebUtils.csrfTokenHeaderName;
+      if (Config().authBaseUrl?.contains("localhost") == false) {
+        cookieName = WebUtils.csrfPrefixTokenHeaderName + cookieName;
+      }
+
+      Map<String, String> headers = {};
+      String cookieValue = WebUtils.getCookie(cookieName);
+      if (cookieValue.isNotEmpty) {
+        headers[WebUtils.csrfTokenHeaderName] = cookieValue;
+      }
+      return headers;
+    } else {
+      String? value = rokwireApiKey;
+      if ((value != null) && value.isNotEmpty) {
+        return {_rokwireApiKey: value};
+      }
+      return null;
     }
-    return null;
   }
 
   // Implementation
@@ -197,8 +218,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   Future<String?> loadAsStringFromAppConfig() async {
+    String? configUrl = kIsWeb ? '$appConfigUrl?version=$appVersion' : appConfigUrl;
     try {
-      http.Response? response = await Network().get(appConfigUrl, auth: kIsWeb ? Auth2Csrf(): this);
+      http.Response? response = await Network().get(configUrl, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -219,7 +241,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
 
     try {
-      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: Auth2Csrf());
+      http.Response? response = await Network().post(appConfigUrl, body: JsonUtils.encode(body), headers: {'content-type': 'application/json'}, auth: this);
       return ((response != null) && (response.statusCode == 200)) ? response.body : null;
     } catch (e) {
       debugPrint(e.toString());
@@ -229,6 +251,14 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   Future<Map<String, dynamic>?> configFromJsonString(String? configJsonString) async {
+    return kIsWeb ? _configFromJsonMapString(configJsonString) : await _configFromJsonListString(configJsonString);
+  }
+
+  Map<String, dynamic>? _configFromJsonMapString(String? configJsonString) {
+    return JsonUtils.decodeMap(configJsonString);
+  }
+
+  Future<Map<String, dynamic>?> _configFromJsonListString(String? configJsonString) async {
     List<dynamic>? jsonList = await JsonUtils.decodeListAsync(configJsonString);
     if (jsonList != null) {
       
@@ -340,6 +370,26 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
+  @protected
+  String? getPlatformBuildingBlocksUrl({required String key}) {
+    return kIsWeb ? "$_configPlatformBuildingBlocksUrlPathPrefix.$key" : JsonUtils.stringValue(platformBuildingBlocks[key]);
+  }
+
+  @protected
+  String? getOtherServicesUrl({required String key}) {
+    return kIsWeb ? "$_configOtherUniversityServicesUrlPathPrefix.$key" : JsonUtils.stringValue(otherUniversityServices[key]);
+  }
+
+  String? wrapWebProxyUrl({required String sourceUrl}) {
+    if (kIsWeb) {
+      String? proxyUrl = UrlUtils.addQueryParameters(
+          '${Config().authBaseUrl}/proxy', {'proxy_url': sourceUrl, 'version': StringUtils.ensureNotEmpty(Config().appVersion)});
+      return proxyUrl;
+    } else {
+      return sourceUrl;
+    }
+  }
+
   // App Id & Version
 
   String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
@@ -393,7 +443,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String? get appConfigUrl {
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
-    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-configs" : null);
+    return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']) ?? (kIsWeb ? "$authBaseUrl/app-config" : null);
   } 
   
   String? get rokwireApiKey          {
@@ -523,8 +573,8 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   Map<String, dynamic> get secretRokwire           => JsonUtils.mapValue(secretKeys['rokwire']) ?? {};
   Map<String, dynamic> get secretCore              => JsonUtils.mapValue(secretKeys['core'])  ?? {};
 
-  Map<String, dynamic> get otherUniversityServices => JsonUtils.mapValue(content['otherUniversityServices']) ?? {};
-  Map<String, dynamic> get platformBuildingBlocks  => JsonUtils.mapValue(content['platformBuildingBlocks']) ?? {};
+  Map<String, dynamic> get otherUniversityServices => JsonUtils.mapValue(content[_otherUniversityServicesPathPrefix]) ?? {};
+  Map<String, dynamic> get platformBuildingBlocks  => JsonUtils.mapValue(content[_platformBuildingBlocksPathPrefix]) ?? {};
   
   Map<String, dynamic> get settings                => JsonUtils.mapValue(content['settings'])  ?? {};
   Map<String, dynamic> get upgradeInfo             => JsonUtils.mapValue(content['upgrade']) ?? {};
@@ -545,7 +595,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
-  String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get assetsUrl => getOtherServicesUrl(key: 'assets_url');
 
   // Getters: secretKeys
   String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);

@@ -219,7 +219,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   Future<String?> loadContentStringFromNet() async {
     if (StringUtils.isNotEmpty(Config().assetsUrl)) {
-      Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName");
+      Response? response = await Network().get("${Config().assetsUrl}/$netAssetFileName", headers: Auth2().webNetworkAuthHeaders);
       return (response?.statusCode == 200) ? response?.body : null;
     }
     return null;
