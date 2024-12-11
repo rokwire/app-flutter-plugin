@@ -2102,9 +2102,7 @@ class _OidcLogin {
 }
 
 class Auth2Csrf with NetworkAuthProvider {
-  Auth2Token? token;
-
-  Auth2Csrf({this.token});
+  Auth2Csrf();
 
   static const String _csrfTokenName = 'rokwire-csrf-token';
 
@@ -2121,15 +2119,11 @@ class Auth2Csrf with NetworkAuthProvider {
       headers[_csrfTokenName] = cookieValue;
     }
 
-    if (StringUtils.isNotEmpty(token?.accessToken)) {
-      String tokenType = token!.tokenType ?? 'Bearer';
-      headers[HttpHeaders.authorizationHeader] = "$tokenType ${token!.accessToken}";
-    }
     return headers;
   }
 
   @override
-  dynamic get networkAuthToken => token;
+  dynamic get networkAuthToken => null;
 
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
