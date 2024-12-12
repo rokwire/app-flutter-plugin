@@ -55,7 +55,7 @@ extension Auh2Directory on Auth2 {
           'limit': limit.toString(),
         
         if (attriutes != null)
-          ...attriutes.map((k, v) => MapEntry(k, v.toString()))
+          ...attriutes.map((k, v) => MapEntry(k, (v is List) ? v.join(',') : v.toString()))
       });
 
       Response? response = await Network().get(url, auth: Auth2());
