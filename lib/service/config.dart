@@ -372,24 +372,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   String? getPlatformBuildingBlocksUrl({required String key}) {
-    if (kIsWeb) {
-      String url = "$_configPlatformBuildingBlocksUrlPathPrefix.$key";
-      String? proxyUrl = wrapWebProxyUrl(sourceUrl: url);
-      return proxyUrl;
-    } else {
-      return JsonUtils.stringValue(platformBuildingBlocks[key]);
-    }
+    return kIsWeb ? "$_configPlatformBuildingBlocksUrlPathPrefix.$key" : JsonUtils.stringValue(platformBuildingBlocks[key]);
   }
 
   @protected
   String? getOtherServicesUrl({required String key}) {
-    if (kIsWeb) {
-      String url = "$_configOtherUniversityServicesUrlPathPrefix.$key";
-      String? proxyUrl = wrapWebProxyUrl(sourceUrl: url);
-      return proxyUrl;
-    } else {
-      return JsonUtils.stringValue(otherUniversityServices[key]);
-    }
+    return kIsWeb ? "$_configOtherUniversityServicesUrlPathPrefix.$key" : JsonUtils.stringValue(otherUniversityServices[key]);
   }
 
   String? wrapWebProxyUrl({required String sourceUrl}) {
