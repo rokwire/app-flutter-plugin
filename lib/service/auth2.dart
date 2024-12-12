@@ -1074,7 +1074,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         String? body = JsonUtils.encode({
           'all_sessions': false,
         });
-        Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2());
+        Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf());
       }
 
       Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
