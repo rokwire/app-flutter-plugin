@@ -21,7 +21,6 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/firebase_crashlytics.dart';
 import 'package:rokwire_plugin/service/log.dart';
@@ -60,7 +59,7 @@ class Network  {
   Future<http.Response?> _get2(dynamic url, { String? body, Encoding? encoding, Map<String, String?>? headers, int? timeout, http.Client? client }) async {
     try {
       
-      Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+      Uri? uri = _uriFromUrlString(url);
 
       if (uri != null) {
         
@@ -110,7 +109,7 @@ class Network  {
   Future<http.Response?> _get(url, { String? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout, http.Client? client} ) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         if (uri != null) {
 
           Map<String, String>? requestHeaders = await _prepareHeaders(headers, auth, uri);
@@ -167,7 +166,7 @@ class Network  {
   Future<http.Response?> _post(url, { Object? body, Encoding? encoding, Map<String, String?>? headers, http.Client? client, NetworkAuthProvider? auth, int? timeout}) async{
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<http.Response?>? response = (uri != null) ?
           ((client != null) ?
             client.post(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) :
@@ -209,7 +208,7 @@ class Network  {
   Future<http.Response?> _put(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout, http.Client? client }) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<http.Response?>? response = (uri != null) ?
           ((client != null) ?
             client.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) :
@@ -251,7 +250,7 @@ class Network  {
   Future<http.Response?> _patch(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout }) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<http.Response?>? response = (uri != null) ? http.patch(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
@@ -289,7 +288,7 @@ class Network  {
   Future<http.Response?> _delete(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout }) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<http.Response?>? response = (uri != null) ? http.delete(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
@@ -326,7 +325,7 @@ class Network  {
   Future<String?> _read(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<String>? response = (uri != null) ? http.read(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
       } catch (e) {
@@ -351,7 +350,7 @@ class Network  {
   Future<Uint8List?> _readBytes(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async{
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<Uint8List?>? response = (uri != null) ? http.readBytes(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseBytesHandler) : response;
       } catch (e) {
@@ -393,7 +392,7 @@ class Network  {
   Future<http.StreamedResponse?> _multipartPost({String? url, String? fileKey, List<int>? fileBytes, String? fileName, String? contentType, Map<String, String?>? headers, Map<String, String?>? fields, NetworkAuthProvider? auth}) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         if (uri != null) {
           Map<String, String>? preparedHeaders = await _prepareHeaders(headers, auth, uri);
           http.MultipartRequest request = http.MultipartRequest("POST", uri);
@@ -423,7 +422,7 @@ class Network  {
   Future<http.Response?> _head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async {
     if (Connectivity().isNotOffline) {
       try {
-        Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
+        Uri? uri = _uriFromUrlString(url);
         Future<http.Response?>? response = (uri != null) ? http.head(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
       } catch (e) {
@@ -563,26 +562,6 @@ class Network  {
       notifyHttpRequestMethod: response?.request?.method,
       notifyHttpResponseCode: response?.statusCode,
     } : response;
-  }
-
-  static Uri? _buildWebProxyUriFromUrlIfNeeded(dynamic url) {
-    Uri? uri;
-    dynamic resultUrl = url;
-    // Construct the proxy uri with the original url as query param to prevent CORS and pass app version
-    if (kIsWeb) {
-      // 1 Check for config values
-      if ((url is String) && url.startsWith(Config.configUrlPathPrefix)) {
-        resultUrl = Config().wrapWebProxyUrl(sourceUrl: url);
-      }
-    }
-    uri = _uriFromUrlString(resultUrl);
-    // 2 Check for value from different origins
-    if (kIsWeb && (uri != null) && (uri.origin != Config().webIdentifierOrigin)) {
-      resultUrl = Config().wrapWebProxyUrl(sourceUrl: uri.toString());
-      uri = _uriFromUrlString(resultUrl)!;
-    }
-
-    return uri;
   }
 
   static Uri? _uriFromUrlString(dynamic url) {

@@ -326,7 +326,7 @@ class Analytics with Service implements NotificationsListener {
         //TMP: Temporarly use ConfugApiKeyNetworkAuth auth until logging service gets updated to acknowledge the new Core BB token.
         late NetworkAuthProvider authProvider; //workaround for short condition
         if (kIsWeb) {
-          authProvider = Auth2();
+          authProvider = Auth2Csrf();
         } else {
           authProvider = Config();
         }
