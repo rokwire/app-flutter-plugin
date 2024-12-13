@@ -383,7 +383,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     widgetsContentCategory,
   ];
 
-  // Implementation
+  // Images
 
   Future<ImagesResult> useUrl({String? storageDir, required String url, int? width}) async {
     // 1. first check if the url gives an image
@@ -409,6 +409,11 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
+  bool _isValidImage(String? contentType) {
+    if (contentType == null) return false;
+    return contentType.startsWith("image/");
+  }
+
   Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width, bool? isUserPic}) async {
     XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) {
@@ -432,6 +437,14 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       debugPrint(e.toString());
     }
     return null;
+  }
+
+  Future<Uint8List?> _rotateImage(String filePath) async {
+    if (StringUtils.isEmpty(filePath)) {
+      return null;
+    }
+    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
+    return await rotatedImage.readAsBytes();
   }
 
   Future<ImagesResult> uploadImage(
@@ -473,17 +486,22 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
-      Map<String, dynamic>? json = JsonUtils.decode(responseString);
-      String? imageUrl = (json != null) ? json['url'] : null;
       if (isUserPic == true) {
         NotificationService().notify(notifyUserProfilePictureChanged, null);
+        Map<String, dynamic>? json = JsonUtils.decodeMap(responseString);
+        String? imageUrl = (json != null) ? JsonUtils.stringValue(json['url']) : null;
+        return ImagesResult.succeed(imageUrl);
       }
-      return ImagesResult.succeed(imageUrl);
+      else {
+        return ImagesResult.succeed(imageBytes);
+      }
     } else {
       debugPrint("Failed to upload image. Reason: $responseCode $responseString");
       return ImagesResult.error(ImagesErrorType.uploadFailed, "Failed to upload image.", response);
     }
   }
+
+  // User Photo
 
   Future<ImagesResult> deleteUserPhoto() async {
     String? serviceUrl = Config().contentUrl;
@@ -514,6 +532,17 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
+  Future<bool?> checkUserPhoto({ String? accountId }) async {
+    String? url = getUserPhotoUrl(accountId: accountId);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2()); //TBD: use HEAD Http reqiest.
+      return (response?.statusCode == 200);
+    }
+    else {
+      return null;
+    }
+  }
+
   String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type, Map<String, String>? params }) {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isNotEmpty(serviceUrl)) {
@@ -533,19 +562,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> _rotateImage(String filePath) async {
-    if (StringUtils.isEmpty(filePath)) {
-      return null;
-    }
-    File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
-    return await rotatedImage.readAsBytes();
-  }
-
-  bool _isValidImage(String? contentType) {
-    if (contentType == null) return false;
-    return contentType.startsWith("image/");
-  }
-
   static String _profileImageTypeToString(UserProfileImageType type) {
     switch (type) {
       case UserProfileImageType.defaultType:
@@ -557,7 +573,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  //Profile Voice Record
+  // Profile Voice Record
+
   Future<AudioResult> uploadUserNamePronunciation(Uint8List? audioFile) async{ //TBD return type
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
@@ -578,10 +595,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     );
 
     int responseCode = response?.statusCode ?? -1;
-    String? responseString = (await response?.stream.bytesToString());
     if (responseCode == 200) {
-      return AudioResult.succeed(responseString);
+      return AudioResult.succeed(audioFile);
     } else {
+      String? responseString = (await response?.stream.bytesToString());
       debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
       return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio. $responseString", response);
     }
@@ -611,6 +628,17 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
       return  (response?.statusCode == 200) ? AudioResult.succeed(response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
+    }
+    else {
+      return null;
+    }
+  }
+
+  Future<bool?> checkUserNamePronunciation({ String? accountId }) async {
+    String? url = getUserNamePronunciationUrl(accountId: accountId);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2()); //TBD: use HEAD Http reqiest.
+      return (response?.statusCode == 200);
     }
     else {
       return null;
