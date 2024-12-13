@@ -103,8 +103,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-    _token = Storage().auth2Token;
-    _account = Storage().auth2Account;
+    if (!kIsWeb) {
+      _token = Storage().auth2Token;
+      _account = Storage().auth2Account;
+    }
 
     _anonymousId = Storage().auth2AnonymousId;
     _anonymousToken = Storage().auth2AnonymousToken;
