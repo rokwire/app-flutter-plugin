@@ -470,8 +470,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs, scope: scope?.prefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile, scope: scope?.profile);
-    Storage().auth2Token = _token = token;
-    Storage().auth2Account = _account = account;
+    _token = token;
+    _account = account;
+    if (!kIsWeb) {
+      Storage().auth2Token = _token;
+      Storage().auth2Account = _account;
+    }
     Storage().auth2AnonymousPrefs = _anonymousPrefs = null;
     Storage().auth2AnonymousProfile = _anonymousProfile = null;
 
@@ -1079,11 +1083,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     _token = null;
     _account = null;
-    //TBD: DDWEB - do not store when in web
-    // if (!kIsWeb) {
+    if (!kIsWeb) {
       Storage().auth2Token = _token;
       Storage().auth2Account = _account;
-    // }
+    }
 
     _updateUserPrefsTimer?.cancel();
     _updateUserPrefsTimer = null;
