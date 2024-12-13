@@ -1062,44 +1062,45 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Logout
 
-  void logout({ Auth2UserPrefs? prefs }) {
-    if (_token != null) {
-      _log("Auth2: logout");
-      _refreshTokenFailCounts.remove(_token?.refreshToken);
+  void logout({Auth2UserPrefs? prefs}) {
+    _log("Auth2: logout");
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
-      if (Config().authBaseUrl != null) {
-        Map<String, String> headers = {
-          'Content-Type': 'application/json'
-        };
-        String? body = JsonUtils.encode({
-          'all_sessions': false,
-        });
-        Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf());
-      }
-
-      Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
-      Storage().auth2AnonymousProfile = _anonymousProfile = Auth2UserProfile.empty();
-      Storage().auth2Token = _token = null;
-      Storage().auth2Account = _account = null;
-
-      _updateUserPrefsTimer?.cancel();
-      _updateUserPrefsTimer = null;
-
-      _updateUserPrefsClient?.close();
-      _updateUserPrefsClient = null;
-
-      _updateUserProfileTimer?.cancel();
-      _updateUserProfileTimer = null;
-
-      _updateUserProfileClient?.close();
-      _updateUserProfileClient = null;
-
-      NotificationService().notify(notifyProfileChanged);
-      NotificationService().notify(notifyPrefsChanged);
-      NotificationService().notify(notifyPrivacyChanged);
-      NotificationService().notify(notifyLoginChanged);
-      NotificationService().notify(notifyLogout);
+    if (Config().coreUrl != null) {
+      Map<String, String> headers = {'Content-Type': 'application/json'};
+      String? body = JsonUtils.encode({
+        'all_sessions': false,
+      });
+      Network().post("${Config().coreUrl}/services/auth/logout", headers: headers, body: body, auth: this);
     }
+
+    Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
+    Storage().auth2AnonymousProfile = _anonymousProfile = Auth2UserProfile.empty();
+
+    _token = null;
+    _account = null;
+    //TBD: DDWEB - do not store when in web
+    // if (!kIsWeb) {
+      Storage().auth2Token = _token;
+      Storage().auth2Account = _account;
+    // }
+
+    _updateUserPrefsTimer?.cancel();
+    _updateUserPrefsTimer = null;
+
+    _updateUserPrefsClient?.close();
+    _updateUserPrefsClient = null;
+
+    _updateUserProfileTimer?.cancel();
+    _updateUserProfileTimer = null;
+
+    _updateUserProfileClient?.close();
+    _updateUserProfileClient = null;
+
+    NotificationService().notify(notifyProfileChanged);
+    NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyLoginChanged);
+    NotificationService().notify(notifyLogout);
   }
 
   // Delete
