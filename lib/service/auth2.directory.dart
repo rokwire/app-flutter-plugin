@@ -22,6 +22,7 @@ extension Auh2Directory on Auth2 {
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
     String? userName, String? firstName, String? lastName,
     String? followingId, String? followerId,
+    Map<String, dynamic>? attriutes,
     int? offset, int? limit}) async {
 
     //TMP:
@@ -52,6 +53,9 @@ extension Auh2Directory on Auth2 {
           'offset': offset.toString(),
         if (limit != null)
           'limit': limit.toString(),
+        
+        if (attriutes != null)
+          ...attriutes.map((k, v) => MapEntry(k, (v is List) ? v.join(',') : v.toString()))
       });
 
       Response? response = await Network().get(url, auth: Auth2());
