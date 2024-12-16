@@ -518,11 +518,11 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
+  Future<ImagesResult?> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
     String? url = getUserPhotoUrl(accountId: accountId, type: type);
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode == 200) ? response!.bodyBytes : null;
+      return (response?.statusCode == 200) ? ImagesResult.succeed(imageData: response?.bodyBytes) : ImagesResult.error(ImagesErrorType.retrieveFailed, response?.body);
     }
     else {
       return null;
@@ -711,6 +711,7 @@ enum ImagesErrorType {
   mediaTypeNotSupplied,
   uploadFailed,
   deleteFailed,
+  retrieveFailed,
 }
 
 class ImagesResult {
@@ -737,7 +738,7 @@ class ImagesResult {
 enum UserProfileImageType { defaultType, medium, small }
 
 enum AudioResultType { error, cancelled, succeeded }
-enum AudioErrorType {serviceNotAvailable, fileNameNotSupplied, uploadFailed, retrieveFailed, deleteFailed}
+enum AudioErrorType {serviceNotAvailable, fileNameNotSupplied, uploadFailed, deleteFailed, retrieveFailed}
 
 class AudioResult {
   final AudioResultType resultType;
@@ -756,7 +757,7 @@ class AudioResult {
   factory AudioResult.succeed({ Uint8List? audioData }) =>
     AudioResult(AudioResultType.succeeded, audioData: audioData);
 
-  bool get succeeded => (resultType == ImagesResultType.succeeded);
+  bool get succeeded => (resultType == AudioResultType.succeeded);
 }
 
 extension FileExtention on FileSystemEntity{ //file.name
