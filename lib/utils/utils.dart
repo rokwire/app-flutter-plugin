@@ -963,6 +963,24 @@ class JsonUtils {
     return null;
   }
 
+  static Uint8List? listUint8Value(dynamic value) {
+    try {
+      if (value is Uint8List) {
+        return value;
+      }
+      else if (value is List) {
+        return Uint8List.fromList(value.cast<int>());
+      }
+      else if (value is Set) {
+        return Uint8List.fromList(List<int>.from(value.cast<int>()));
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
   static Set<String>? setStringsValue(dynamic value) {
     try {
       if (value is Set) {

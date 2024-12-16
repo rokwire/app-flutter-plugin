@@ -424,8 +424,14 @@ class Network  {
     if (Connectivity().isNotOffline) {
       try {
         Uri? uri = _buildWebProxyUriFromUrlIfNeeded(url);
-        Future<http.Response?>? response = (uri != null) ? http.head(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
-        return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
+        if (uri != null) {
+          Map<String, String>? requestHeaders = await _prepareHeaders(headers, auth, uri);
+          Future<http.Response?> response = http.head(uri, headers: requestHeaders);
+          if (timeout != null) {
+            response = response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler);
+          }
+          return response;
+        }
       } catch (e) {
         Log.d(e.toString());
         FirebaseCrashlytics().recordError(e, null);
