@@ -476,6 +476,172 @@ class Social with Service {
         return 'date_created';
     }
   }
+
+  // Conversations
+
+  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? muted, DateTime? fromTime, DateTime? toTime}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load conversations. Reason: missing social url.');
+      return null;
+    }
+
+    Map<String, String> queryParams = {
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
+    if (StringUtils.isNotEmpty(name)) {
+      queryParams['name'] = name!;
+    }
+    if (muted != null) {
+      queryParams['mute'] = muted.toString();
+    }
+    if (fromTime != null) {
+      String? fromTimeStr = DateTimeUtils.utcDateTimeToString(fromTime);
+      if (fromTimeStr != null) {
+        queryParams['from-time'] = fromTimeStr;
+      }
+    }
+    if (toTime != null) {
+      String? toTimeStr = DateTimeUtils.utcDateTimeToString(toTime);
+      if (toTimeStr != null) {
+        queryParams['to-time'] = toTimeStr;
+      }
+    }
+
+    socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations', queryParams);
+
+    Response? response = await Network().get(socialUrl, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return Conversation.listFromJson(JsonUtils.decodeList(responseBody));
+    } else {
+      Log.e('Failed to load conversations. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  Future<Conversation?> createConversation({required List<String> memberIds}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to create conversation. Reason: missing social url.');
+      return null;
+    }
+    if (memberIds.isEmpty) {
+      Log.e('Failed to create conversation. Reason: missing members.');
+      return null;
+    }
+    String? requestBody = JsonUtils.encode({
+      'members': memberIds
+    });
+    Response? response = await Network().post('$socialUrl/conversations', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return Conversation.fromJson(JsonUtils.decodeMap(responseBody));
+    } else {
+      Log.e('Failed to create conversation. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  Future<Conversation?> updateConverstion({required String conversationId, bool? muted}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to update conversation $conversationId. Reason: missing social url.');
+      return null;
+    }
+    String? requestBody = JsonUtils.encode({
+      'muted': muted
+    });
+    Response? response = await Network().put('$socialUrl/conversations/$conversationId', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return Conversation.fromJson(JsonUtils.decodeMap(responseBody));
+    } else {
+      Log.e('Failed to update conversation $conversationId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  //TODO: verify this implmentation against Social BB
+  Future<List<Message>?> loadConversationMessages({required String conversationId}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
+      return null;
+    }
+
+    Response? response = await Network().get('$socialUrl/conversations/$conversationId', auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return Message.listFromJson(JsonUtils.decodeList(responseBody));
+    } else {
+      Log.e('Failed to load messages for conversation $conversationId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  //TODO: verify this implmentation against Social BB
+  Future<Message?> createConversationMessage({required String conversationId, required String message}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
+      return null;
+    }
+    if (message.isEmpty) {
+      Log.e('Failed to create message for conversation $conversationId. Reason: missing message.');
+      return null;
+    }
+    String? requestBody = JsonUtils.encode({
+      'message': message
+    });
+    Response? response = await Network().post('$socialUrl/conversations/$conversationId', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return Message.fromJson(JsonUtils.decodeMap(responseBody));
+    } else {
+      Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  // find users
+
+  Future<List<ConversationMember>?> loadAccounts({int limit = 20, int offset = 0, String? firstName, String? lastName}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to load accounts. Reason: missing social url.');
+      return null;
+    }
+
+    Map<String, String> queryParams = {
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
+    if (StringUtils.isNotEmpty(firstName)) {
+      queryParams['first-name'] = firstName!;
+    }
+    if (StringUtils.isNotEmpty(lastName)) {
+      queryParams['last-name'] = lastName!;
+    }
+
+    socialUrl = UrlUtils.addQueryParameters('$socialUrl/accounts', queryParams);
+
+    Response? response = await Network().get(socialUrl, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      return ConversationMember.listFromJson(JsonUtils.decodeList(responseBody));
+    } else {
+      Log.e('Failed to load accounts. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
 }
 
 enum SocialSortOrder { asc, desc }

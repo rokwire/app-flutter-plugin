@@ -956,6 +956,32 @@ class Conversation {
       'date_created': DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
     };
   }
+
+  static List<Conversation>? listFromJson(List<dynamic>? jsonList) {
+    List<Conversation>? items;
+    if (jsonList != null) {
+      items = <Conversation>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Conversation.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<Conversation>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (Conversation? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+
+  bool get isGroupConversation => (members?.length ?? 0) > 1;
+
+  String? get membersString => List.generate(members?.length ?? 0, (index) => members?[index].name ?? '').join(', ');
 }
 
 class ConversationInfo {
