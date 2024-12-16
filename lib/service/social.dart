@@ -566,15 +566,21 @@ class Social with Service {
     }
   }
 
-  //TODO: verify this implmentation against Social BB
-  Future<List<Message>?> loadConversationMessages({required String conversationId}) async {
+  Future<List<Message>?> loadConversationMessages({required String conversationId, int limit = 100, int offset = 0}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
       return null;
     }
 
-    Response? response = await Network().get('$socialUrl/conversations/$conversationId', auth: Auth2());
+    Map<String, String> queryParams = {
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    };
+
+    socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations', queryParams);
+
+    Response? response = await Network().get('$socialUrl/conversations/$conversationId/messages', auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
@@ -585,7 +591,6 @@ class Social with Service {
     }
   }
 
-  //TODO: verify this implmentation against Social BB
   Future<Message?> createConversationMessage({required String conversationId, required String message}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -599,7 +604,7 @@ class Social with Service {
     String? requestBody = JsonUtils.encode({
       'message': message
     });
-    Response? response = await Network().post('$socialUrl/conversations/$conversationId', auth: Auth2(), body: requestBody);
+    Response? response = await Network().post('$socialUrl/conversations/$conversationId/messages/send', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {

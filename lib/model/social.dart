@@ -827,19 +827,19 @@ ReactionType? reactionTypeFromString(String? value) {
 
 class Message {
   final String? id;
+  final String? globalId;
   final String? conversationId;
 
-  final Sender? sender;
+  final ConversationMember? sender;
   final ConversationMember? recipient;
 
   final String? message;
   final bool? read;
 
   final DateTime? dateSentUtc;
-  final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
 
-  Message({this.id, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateCreatedUtc, this.dateUpdatedUtc});
+  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateUpdatedUtc});
 
   static Message? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -848,13 +848,13 @@ class Message {
 
     return Message(
       id: JsonUtils.stringValue(json['id']),
+      globalId: JsonUtils.stringValue(json['global_id']),
       conversationId: JsonUtils.stringValue(json['conversation_id']),
-      sender: Sender.fromJson(JsonUtils.mapValue(json['sender'])),
+      sender: ConversationMember.fromJson(JsonUtils.mapValue(json['sender'])),
       recipient: ConversationMember.fromJson(json['recipient']),
       message: JsonUtils.stringValue(json['message']),
       read: JsonUtils.boolValue(json['read']),
       dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
@@ -862,13 +862,13 @@ class Message {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'global_id': globalId,
       'conversation_id': conversationId,
       'sender': sender?.toJson(),
       'recipient': recipient?.toJson(),
       'message': message,
       'read': read,
       'date_sent': DateTimeUtils.utcDateTimeToString(dateSentUtc),
-      'date_created': DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
       'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdatedUtc),
     };
   }
@@ -896,40 +896,15 @@ class Message {
   }
 }
 
-class Sender {
-  final String? type;
-  final ConversationMember? member;
-
-  Sender({this.type, this.member});
-
-  static Sender? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-
-    return Sender(
-      type: JsonUtils.stringValue(json['type']),
-      member: ConversationMember.fromJson(JsonUtils.mapValue(json['member'])),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'member': member?.toJson(),
-    };
-  }
-}
-
 class Conversation {
   final String? id;
-  final ConversationInfo? info;
+  final String? lastMessage;
   final DateTime? lastActivityTimeUtc;
   final bool? mute;
   final List<ConversationMember>? members;
   final DateTime? dateCreatedUtc;
 
-  Conversation({this.id, this.info, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc});
+  Conversation({this.id, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc});
 
   static Conversation? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -938,7 +913,7 @@ class Conversation {
 
     return Conversation(
       id: JsonUtils.stringValue(json['id']),
-      info: ConversationInfo.fromJson(JsonUtils.mapValue(json['info'])),
+      lastMessage: JsonUtils.stringValue(json['info']),
       lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
       mute: JsonUtils.boolValue(json['mute']),
       members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
@@ -949,7 +924,7 @@ class Conversation {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'info': info?.toJson(),
+      'info': lastMessage,
       'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
       'mute': mute,
       'members': ConversationMember.listToJson(members),
@@ -982,28 +957,6 @@ class Conversation {
   bool get isGroupConversation => (members?.length ?? 0) > 1;
 
   String? get membersString => List.generate(members?.length ?? 0, (index) => members?[index].name ?? '').join(', ');
-}
-
-class ConversationInfo {
-  final Message? lastMessage;
-
-  ConversationInfo({this.lastMessage});
-
-  static ConversationInfo? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-
-    return ConversationInfo(
-      lastMessage: Message.fromJson(JsonUtils.mapValue(json['last_message'])),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'last_message': lastMessage?.toJson(),
-    };
-  }
 }
 
 class ConversationMember {
