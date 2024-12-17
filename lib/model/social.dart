@@ -955,8 +955,8 @@ class Conversation {
   }
 
   bool get isGroupConversation => (members?.length ?? 0) > 1;
-
   String? get membersString => List.generate(members?.length ?? 0, (index) => members?[index].name ?? '').join(', ');
+  List<String>? get memberIds => List.generate(members?.length ?? 0, (index) => members?[index].accountId ?? '');
 }
 
 class ConversationMember {
