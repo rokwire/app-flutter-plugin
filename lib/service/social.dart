@@ -481,25 +481,6 @@ class Social with Service {
 
   Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? muted, DateTime? fromTime, DateTime? toTime}) async {
     String accountId = Auth2().accountId ?? '';
-
-    //TODO: test data for showing UI only (remove once error response from Social BB for createConversation is resolved)
-    List<Conversation> conversations = await Future.value([
-      Conversation(id: "1", lastMessage: 'Test Message', members: [
-        ConversationMember(name: 'Stephen Hurwit'), ConversationMember(name: 'Ryan Oberlander', accountId: accountId)
-      ], lastActivityTimeUtc: DateTime.now().toUtc().subtract(Duration(hours: 1))),
-      Conversation(id: "2", lastMessage: 'Test Message 2', members: [
-        ConversationMember(name: 'John Paul'), ConversationMember(name: 'Ryan Oberlander', accountId: accountId)
-      ], lastActivityTimeUtc: DateTime.now().toUtc().subtract(Duration(hours: 2))),
-      Conversation(id: "3", lastMessage: 'Test Message 3', members: [
-        ConversationMember(name: 'Stephen Hurwit'), ConversationMember(name: 'John Paul'), ConversationMember(name: 'Mark Hennessy'), ConversationMember(name: 'Ryan Oberlander', accountId: accountId)
-      ], lastActivityTimeUtc: DateTime.now().toUtc().subtract(Duration(hours: 3)))
-    ]);
-    conversations.forEach((conversation) {
-      conversation.members?.removeWhere((member) => member.accountId == accountId);
-    });
-    return conversations;
-
-    /*
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load conversations. Reason: missing social url.');
@@ -544,7 +525,6 @@ class Social with Service {
       Log.e('Failed to load conversations. Reason: $responseCode, $responseBody');
       return null;
     }
-    */
   }
 
   Future<Conversation?> createConversation({required List<String> memberIds}) async {
@@ -609,9 +589,9 @@ class Social with Service {
       'offset': offset.toString(),
     };
 
-    socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations', queryParams);
+    socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations/$conversationId/messages', queryParams);
 
-    Response? response = await Network().get('$socialUrl/conversations/$conversationId/messages', auth: Auth2());
+    Response? response = await Network().get(socialUrl, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
