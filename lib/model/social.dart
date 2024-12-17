@@ -824,3 +824,184 @@ ReactionType? reactionTypeFromString(String? value) {
       return null;
   }
 }
+
+class Message {
+  final String? id;
+  final String? globalId;
+  final String? conversationId;
+
+  final ConversationMember? sender;
+  final ConversationMember? recipient;
+
+  final String? message;
+  final bool? read;
+
+  final DateTime? dateSentUtc;
+  final DateTime? dateUpdatedUtc;
+
+  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateUpdatedUtc});
+
+  static Message? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return Message(
+      id: JsonUtils.stringValue(json['id']),
+      globalId: JsonUtils.stringValue(json['global_id']),
+      conversationId: JsonUtils.stringValue(json['conversation_id']),
+      sender: ConversationMember.fromJson(JsonUtils.mapValue(json['sender'])),
+      recipient: ConversationMember.fromJson(json['recipient']),
+      message: JsonUtils.stringValue(json['message']),
+      read: JsonUtils.boolValue(json['read']),
+      dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'global_id': globalId,
+      'conversation_id': conversationId,
+      'sender': sender?.toJson(),
+      'recipient': recipient?.toJson(),
+      'message': message,
+      'read': read,
+      'date_sent': DateTimeUtils.utcDateTimeToString(dateSentUtc),
+      'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdatedUtc),
+    };
+  }
+
+  static List<Message>? listFromJson(List<dynamic>? jsonList) {
+    List<Message>? items;
+    if (jsonList != null) {
+      items = <Message>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Message.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<Message>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (Message? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+}
+
+class Conversation {
+  final String? id;
+  final String? lastMessage;
+  final DateTime? lastActivityTimeUtc;
+  final bool? mute;
+  final List<ConversationMember>? members;
+  final DateTime? dateCreatedUtc;
+
+  Conversation({this.id, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc});
+
+  static Conversation? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return Conversation(
+      id: JsonUtils.stringValue(json['id']),
+      lastMessage: JsonUtils.stringValue(json['info']),
+      lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
+      mute: JsonUtils.boolValue(json['mute']),
+      members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'info': lastMessage,
+      'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
+      'mute': mute,
+      'members': ConversationMember.listToJson(members),
+      'date_created': DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
+    };
+  }
+
+  static List<Conversation>? listFromJson(List<dynamic>? jsonList) {
+    List<Conversation>? items;
+    if (jsonList != null) {
+      items = <Conversation>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, Conversation.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<Conversation>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (Conversation? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+
+  bool get isGroupConversation => (members?.length ?? 0) > 1;
+  String? get membersString => List.generate(members?.length ?? 0, (index) => members?[index].name ?? '').join(', ');
+  List<String>? get memberIds => List.generate(members?.length ?? 0, (index) => members?[index].accountId ?? '');
+}
+
+class ConversationMember {
+  final String? accountId;
+  final String? name;
+
+  ConversationMember({this.accountId, this.name});
+
+  static ConversationMember? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return ConversationMember(
+      accountId: JsonUtils.stringValue(json['account_id']),
+      name: JsonUtils.stringValue(json['name']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'account_id': accountId,
+      'name': name,
+    };
+  }
+
+  static List<ConversationMember>? listFromJson(List<dynamic>? jsonList) {
+    List<ConversationMember>? items;
+    if (jsonList != null) {
+      items = <ConversationMember>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, ConversationMember.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<ConversationMember>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (ConversationMember? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+}
