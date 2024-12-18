@@ -30,6 +30,8 @@ class Social with Service {
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
   static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
+  static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
+
   // Filtering keys
   static const String _postsOperationKey = 'operation';
   static const String _postsOperationAndValue = 'and';
@@ -547,6 +549,8 @@ class Social with Service {
     if (responseCode == 200) {
       Conversation? conversation = Conversation.fromJson(JsonUtils.decodeMap(responseBody));
       conversation?.members?.removeWhere((member) => member.accountId == accountId);
+
+      NotificationService().notify(notifyConversationsUpdated);
       return conversation;
     } else {
       Log.e('Failed to create conversation. Reason: $responseCode, $responseBody');
@@ -570,6 +574,8 @@ class Social with Service {
     if (responseCode == 200) {
       Conversation? conversation = Conversation.fromJson(JsonUtils.decodeMap(responseBody));
       conversation?.members?.removeWhere((member) => member.accountId == accountId);
+
+      NotificationService().notify(notifyConversationsUpdated);
       return conversation;
     } else {
       Log.e('Failed to update conversation $conversationId. Reason: $responseCode, $responseBody');
@@ -602,7 +608,7 @@ class Social with Service {
     }
   }
 
-  Future<Message?> createConversationMessage({required String conversationId, required String message}) async {
+  Future<List<Message>?> createConversationMessage({required String conversationId, required String message}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
@@ -619,7 +625,7 @@ class Social with Service {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      return Message.fromJson(JsonUtils.decodeMap(responseBody));
+      return Message.listFromJson(JsonUtils.decodeList(responseBody));
     } else {
       Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
       return null;

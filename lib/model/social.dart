@@ -894,6 +894,15 @@ class Message {
     }
     return json;
   }
+
+  static void sortListByDateSent(List<Message> messages) {
+    DateTime now = DateTime.now();
+    messages.sort((Message msg1, Message msg2) {
+      DateTime time1 = msg1.dateSentUtc ?? now;
+      DateTime time2 = msg2.dateSentUtc ?? now;
+      return time1.compareTo(time2);  // chronological
+    });
+  }
 }
 
 class Conversation {
@@ -952,6 +961,15 @@ class Conversation {
       }
     }
     return json;
+  }
+
+  static void sortListByLastActivityTime(List<Conversation> conversations) {
+    DateTime now = DateTime.now();
+    conversations.sort((Conversation conv1, Conversation conv2) {
+      DateTime time1 = conv1.lastActivityTimeUtc ?? now;
+      DateTime time2 = conv2.lastActivityTimeUtc ?? now;
+      return time2.compareTo(time1);  // reverse chronological
+    });
   }
 
   bool get isGroupConversation => (members?.length ?? 0) > 1;
