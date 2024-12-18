@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added directory content access and privacy edit in Auth2 [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Removed voice recording caching in Auth2, improved user profiles coping and merging [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Add Messages model and service [#506](https://github.com/rokwire/app-flutter-plugin/issues/506).
+### Fixed
+- Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
