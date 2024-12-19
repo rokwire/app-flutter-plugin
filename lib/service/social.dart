@@ -31,6 +31,7 @@ class Social with Service {
   static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
+  static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
 
   // Filtering keys
   static const String _postsOperationKey = 'operation';
@@ -625,7 +626,9 @@ class Social with Service {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      return Message.listFromJson(JsonUtils.decodeList(responseBody));
+      List<Message>? messages = Message.listFromJson(JsonUtils.decodeList(responseBody));
+      NotificationService().notify(notifyMessageSent);
+      return messages;
     } else {
       Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
       return null;
