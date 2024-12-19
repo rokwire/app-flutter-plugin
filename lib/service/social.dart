@@ -89,10 +89,10 @@ class Social extends Service implements NotificationsListener {
   }
 
   // Deep Link Setup
-  static String get postDetailRawUrl => '${DeepLink().appUrl}/social_detail';
-  static String postDetailUrl(Post? post) => UrlUtils.buildWithQueryParameters(
-      postDetailRawUrl,
-      <String, String>{'post_id': "${post?.id}"}
+  static String get conversationDetailRawUrl => '${DeepLink().appUrl}/social_detail';
+  static String postDetailUrl(Conversation? conversation) => UrlUtils.buildWithQueryParameters(
+      conversationDetailRawUrl,
+      <String, String>{'conversation_id': "${conversation?.id}"}
   );
 
   // NotificationsListener
@@ -114,7 +114,7 @@ class Social extends Service implements NotificationsListener {
   }
 
   void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(postDetailRawUrl))) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(conversationDetailRawUrl))) {
       NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>());
     }
   }
