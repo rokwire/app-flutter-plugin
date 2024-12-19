@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
@@ -419,7 +420,7 @@ class ImageSlantHeader extends StatelessWidget {
         headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
     }
 
-    double displayHeight = (image as Image?)?.height ?? 240;
+    double displayHeight = (image as Image?)?.height ?? (kIsWeb ? 0 : 240);
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
       image!=null ?
           ModalImageHolder(child: image,)
