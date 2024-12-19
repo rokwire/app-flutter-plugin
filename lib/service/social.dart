@@ -482,7 +482,7 @@ class Social with Service {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? muted, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -497,8 +497,8 @@ class Social with Service {
     if (StringUtils.isNotEmpty(name)) {
       queryParams['name'] = name!;
     }
-    if (muted != null) {
-      queryParams['mute'] = muted.toString();
+    if (mute != null) {
+      queryParams['mute'] = mute.toString();
     }
     if (fromTime != null) {
       String? fromTimeStr = DateTimeUtils.utcDateTimeToString(fromTime);
@@ -559,7 +559,7 @@ class Social with Service {
     }
   }
 
-  Future<Conversation?> updateConverstion({required String conversationId, bool? muted}) async {
+  Future<Conversation?> updateConverstion({required String conversationId, bool? mute}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -567,7 +567,7 @@ class Social with Service {
       return null;
     }
     String? requestBody = JsonUtils.encode({
-      'muted': muted
+      'mute': mute
     });
     Response? response = await Network().put('$socialUrl/conversations/$conversationId', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
