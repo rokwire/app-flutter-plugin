@@ -18,19 +18,26 @@ import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/social.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
+import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'dart:async';
 
-class Social with Service {
+class Social extends Service implements NotificationsListener {
+
+  static const String notifySocialDetail = "edu.illinois.rokwire.social.post.detail";
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
   static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
   static const String notifyPostsUpdated = "edu.illinois.rokwire.social.posts.updated";
 
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
+  static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
+
+  List<Uri>? _deepLinkUrisCache;
 
   // Filtering keys
   static const String _postsOperationKey = 'operation';
@@ -39,7 +46,6 @@ class Social with Service {
   static const String _postsCriteriaItemsKey = 'criteria_items';
 
   // Singleton Factory
-
   static Social? _instance;
 
   static Social? get instance => _instance;
@@ -51,28 +57,84 @@ class Social with Service {
   Social.internal();
 
   // Service
-
   @override
   void createService() {
+    NotificationService().subscribe(this, [
+      DeepLink.notifyUri,
+    ]);
+    _deepLinkUrisCache = <Uri>[];
     super.createService();
   }
 
   @override
   void destroyService() {
+    NotificationService().unsubscribe(this);
     super.destroyService();
   }
 
   @override
   Set<Service> get serviceDependsOn {
-    return {Config(), Auth2()};
+    return {Config(), Auth2(), DeepLink()};
   }
 
   @override
   Future<void> initService() async {
-    super.initService();
+    await super.initService();
   }
 
-  // APIs
+  @override
+  void initServiceUI() {
+    processCachedDeepLinkUris();
+    super.initServiceUI();
+  }
+
+  // Deep Link Setup
+  static String get postDetailRawUrl => '${DeepLink().appUrl}/social_detail';
+  static String postDetailUrl(Post? post) => UrlUtils.buildWithQueryParameters(
+      postDetailRawUrl,
+      <String, String>{'post_id': "${post?.id}"}
+  );
+
+  // NotificationsListener
+  @override
+  void onNotification(String name, dynamic param) {
+    if (name == DeepLink.notifyUri) {
+      onDeepLinkUri(param);
+    }
+  }
+
+  void onDeepLinkUri(Uri? uri) {
+    if (uri != null) {
+      if (_deepLinkUrisCache != null) {
+        cacheDeepLinkUri(uri);
+      } else {
+        processDeepLinkUri(uri);
+      }
+    }
+  }
+
+  void processDeepLinkUri(Uri uri) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(postDetailRawUrl))) {
+      NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>());
+    }
+  }
+
+  void cacheDeepLinkUri(Uri uri) {
+    _deepLinkUrisCache?.add(uri);
+  }
+
+  void processCachedDeepLinkUris() {
+    if (_deepLinkUrisCache != null) {
+      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
+      _deepLinkUrisCache = null;
+
+      for (Uri deepLinkUri in deepLinkUrisCache) {
+        processDeepLinkUri(deepLinkUri);
+      }
+    }
+  }
+
+  //APIs
 
   Future<bool> createPost({required Post post}) async {
     String? socialUrl = Config().socialUrl;
@@ -481,7 +543,7 @@ class Social with Service {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? muted, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -496,8 +558,8 @@ class Social with Service {
     if (StringUtils.isNotEmpty(name)) {
       queryParams['name'] = name!;
     }
-    if (muted != null) {
-      queryParams['mute'] = muted.toString();
+    if (mute != null) {
+      queryParams['mute'] = mute.toString();
     }
     if (fromTime != null) {
       String? fromTimeStr = DateTimeUtils.utcDateTimeToString(fromTime);
@@ -558,7 +620,7 @@ class Social with Service {
     }
   }
 
-  Future<Conversation?> updateConverstion({required String conversationId, bool? muted}) async {
+  Future<Conversation?> updateConverstion({required String conversationId, bool? mute}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -566,7 +628,7 @@ class Social with Service {
       return null;
     }
     String? requestBody = JsonUtils.encode({
-      'muted': muted
+      'mute': mute
     });
     Response? response = await Network().put('$socialUrl/conversations/$conversationId', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
@@ -625,7 +687,9 @@ class Social with Service {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      return Message.listFromJson(JsonUtils.decodeList(responseBody));
+      List<Message>? messages = Message.listFromJson(JsonUtils.decodeList(responseBody));
+      NotificationService().notify(notifyMessageSent);
+      return messages;
     } else {
       Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
       return null;
