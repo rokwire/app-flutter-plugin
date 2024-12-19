@@ -381,6 +381,7 @@ class SectionRibbonHeader extends StatelessWidget {
 class ImageSlantHeader extends StatelessWidget {
   final String? imageUrl;
   final String? imageKey;
+  final double? imageWidth;
   final Widget? child;
 
   final String slantImageKey;
@@ -396,6 +397,7 @@ class ImageSlantHeader extends StatelessWidget {
   const ImageSlantHeader({Key? key,
     this.imageUrl,
     this.imageKey,
+    this.imageWidth,
     this.child,
 
     required this.slantImageKey,
@@ -411,21 +413,22 @@ class ImageSlantHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double width = this.imageWidth ?? MediaQuery.of(context).size.width;
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
-      image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
-        networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+      image = Styles().images.getImage(imageKey!, source: imageUrl, width: width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
+        networkHeaders: (kIsWeb ? null : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
-      image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
-        headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+      image = Image.network(imageUrl!, width: width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
+        headers: (kIsWeb ? null : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     }
 
-    double displayHeight = (image as Image?)?.height ?? (kIsWeb ? 0 : 240);
+    double displayHeight = (image as Image?)?.height ?? 0;
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
       image!=null ?
           ModalImageHolder(child: image,)
         :Container(),
-      Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
+      Padding(padding: EdgeInsets.only(top: (displayHeight * 0.75)), child:
         Stack(alignment: Alignment.topCenter, children: <Widget>[
           Column(children: <Widget>[
             Container(height: slantImageHeadingHeight, color: _slantImageColor,),
