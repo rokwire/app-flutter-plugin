@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up Image & Audio Result data dispatch [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 ### Added
+- Add deep links for messages [#516](https://github.com/rokwire/app-flutter-plugin/issues/516)
 - Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
 - Acknowledge event.notification_settings field and APIs [#4478](https://github.com/rokwire/illinois-app/issues/4478).
 - Prepared for directory content access and privacy edit in Core BB [#4402](https://github.com/rokwire/illinois-app/issues/4402).
