@@ -1590,12 +1590,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _updateUserProfileClient?.close();
     _updateUserProfileClient = null;
 
-      NotificationService().notify(notifyProfileChanged);
-      NotificationService().notify(notifyPrefsChanged);
-      NotificationService().notify(notifyPrivacyChanged);
-      NotificationService().notify(notifyLoginChanged);
-      NotificationService().notify(notifyLogout);
-    }
+    NotificationService().notify(notifyProfileChanged);
+    NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyPrivacyChanged);
+    NotificationService().notify(notifyLoginChanged);
+    NotificationService().notify(notifyLogout);
   }
 
   // Delete
