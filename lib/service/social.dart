@@ -28,7 +28,7 @@ import 'dart:async';
 
 class Social extends Service implements NotificationsListener {
 
-  static const String notifySocialDetail = "edu.illinois.rokwire.social.post.detail";
+  static const String notifySocialDetail = "edu.illinois.rokwire.social.generic.detail";
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
   static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
@@ -89,10 +89,12 @@ class Social extends Service implements NotificationsListener {
   }
 
   // Deep Link Setup
-  static String get postDetailRawUrl => '${DeepLink().appUrl}/social_detail';
-  static String postDetailUrl(Post? post) => UrlUtils.buildWithQueryParameters(
-      postDetailRawUrl,
-      <String, String>{'post_id': "${post?.id}"}
+  static String get detailRawUrl => '${DeepLink().appUrl}/social_detail';
+  static String detailDetailUrl({String? conversationId}) => UrlUtils.buildWithQueryParameters(
+      detailRawUrl, <String, String>{
+        if (conversationId != null)
+          'conversation_id': "$conversationId"
+      }
   );
 
   // NotificationsListener
@@ -114,7 +116,7 @@ class Social extends Service implements NotificationsListener {
   }
 
   void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(postDetailRawUrl))) {
+    if (uri.matchDeepLinkUri(Uri.tryParse(detailRawUrl))) {
       NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>());
     }
   }
