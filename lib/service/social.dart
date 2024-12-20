@@ -543,7 +543,7 @@ class Social extends Service implements NotificationsListener {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({Iterable<String>? ids, int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -555,6 +555,9 @@ class Social extends Service implements NotificationsListener {
       'limit': limit.toString(),
       'offset': offset.toString(),
     };
+    if ((ids != null) && ids.isNotEmpty) {
+      queryParams['ids'] = ids.join(',');
+    }
     if (StringUtils.isNotEmpty(name)) {
       queryParams['name'] = name!;
     }
@@ -589,6 +592,11 @@ class Social extends Service implements NotificationsListener {
       Log.e('Failed to load conversations. Reason: $responseCode, $responseBody');
       return null;
     }
+  }
+
+  Future<Conversation?> loadConversation(String? id) async {
+    List<Conversation>? conversations = (id != null) ? await loadConversations(ids: [id], offset: 0, limit: 1) : null;
+    return ((conversations != null) && conversations.isNotEmpty) ? conversations.first : null;
   }
 
   Future<Conversation?> createConversation({required List<String> memberIds}) async {
