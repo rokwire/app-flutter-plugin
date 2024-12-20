@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Changed
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+- Added UiTextStyles.getTextStyleEx helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added scheme parameter to UrlUtils.fixUrl [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added StringUtils.firstNotEmpty helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Cleaned up Image & Audio Result data dispatch [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+### Added
+- Add deep links for messages [#516](https://github.com/rokwire/app-flutter-plugin/issues/516)
+- Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
+- Acknowledge event.notification_settings field and APIs [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Prepared for directory content access and privacy edit in Core BB [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added directory content access and privacy edit in Auth2 [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Removed voice recording caching in Auth2, improved user profiles coping and merging [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added Messages model and service [#506](https://github.com/rokwire/app-flutter-plugin/issues/506).
+- Added Socal.loadConversation API [#4536](https://github.com/rokwire/illinois-app/issues/4536).
+### Fixed
+- Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
+- Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
+
+## [1.7.4] - 2024-11-07
+### Fixed
+- Fixed possible unhandled exception when parsing URLs.
 
 ## [1.7.3] - 2024-10-23
 ### Changed

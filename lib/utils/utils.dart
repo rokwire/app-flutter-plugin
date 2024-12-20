@@ -192,6 +192,27 @@ class StringUtils {
     return isNotEmpty(uin) && RegExp(_uinPattern).hasMatch(uin!);
   }
 
+  static String? firstNotEmpty(String? str, [String? str2 = null, String? str3 = null, String? str4 = null, String? str5 = null]) {
+    if (str?.isNotEmpty == true) {
+      return str;
+    }
+    else if (str2?.isNotEmpty == true) {
+      return str2;
+    }
+    else if (str3?.isNotEmpty == true) {
+      return str3;
+    }
+    else if (str4?.isNotEmpty == true) {
+      return str4;
+    }
+    else if (str5?.isNotEmpty == true) {
+      return str5;
+    }
+    else {
+      return null;
+    }
+  }
+
   static String base64UrlEncode(String value) => utf8.fuse(base64Url).encode(value);
 
   static String base64UrlDecode(String value) => utf8.fuse(base64Url).decode(value);
@@ -458,6 +479,45 @@ class MapUtils {
     }
   }
 
+  static Map<K, T>? apply<K, T>(Map<K, T>? target, Map<K, T>? source, { Set<K>? scope }) {
+    Map<K, T>? result = (target != null) ? Map<K, T>.from(target) : null;
+    if (source != null) {
+      for (K key in source.keys) {
+        if ((source[key] != result?[key]) && (
+            (scope?.contains(key) == true) ||
+            (_applyIsNotEmpty(source[key]) && _applyIsEmpty(result?[key]))
+        )) {
+          result ??= <K, T>{};
+          result[key] = source[key]!;
+        }
+      }
+    }
+    return result;
+  }
+
+  static bool _applyIsEmpty<T>(T value) {
+    if (value is String) {
+      return value.isEmpty;
+    }
+    else if (value is num) {
+      return value == 0;
+    }
+    else {
+      return value == null;
+    }
+  }
+
+  static bool _applyIsNotEmpty<T>(T value) {
+    if (value is String) {
+      return value.isNotEmpty;
+    }
+    else if (value is num) {
+      return value != 0;
+    }
+    else {
+      return value != null;
+    }
+  }
 }
 
 class ColorUtils {
@@ -571,13 +631,13 @@ class AppVersion {
 class UrlUtils {  
 
   static bool isPdf(String? url) {
-    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
     return (ext == '.pdf');
   }
 
   static bool isWebScheme(String? url) {
-    Uri? uri = (url != null) ? Uri.parse(url) : null;
+    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
@@ -685,13 +745,13 @@ class UrlUtils {
     }
   }
 
-  static String? fixUrl(String url) {
+  static String? fixUrl(String url, {String scheme = 'http'}) {
     Uri? uri = parseUri(url);
-    Uri? fixedUri = (uri != null) ? fixUri(uri) : null;
+    Uri? fixedUri = (uri != null) ? fixUri(uri, scheme: scheme) : null;
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? fixUri(Uri uri) => uri.scheme.isEmpty ? buildUri(uri, scheme: 'http') : null;
+  static Uri? fixUri(Uri uri, {String scheme = 'http'}) => uri.scheme.isEmpty ? buildUri(uri, scheme: scheme) : null;
 
   static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
     if (uri.scheme.isEmpty) {
@@ -911,6 +971,24 @@ class JsonUtils {
       }
       else if (value is Set) {
         return List<int>.from(value.cast<int>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Uint8List? listUint8Value(dynamic value) {
+    try {
+      if (value is Uint8List) {
+        return value;
+      }
+      else if (value is List) {
+        return Uint8List.fromList(value.cast<int>());
+      }
+      else if (value is Set) {
+        return Uint8List.fromList(List<int>.from(value.cast<int>()));
       }
     }
     catch(e) {
@@ -1368,7 +1446,7 @@ DayPart? dayPartFromString(String? value) {
 class DateTimeUtils {
 
   static const String defaultDateTimeFormat = 'yyyy-MM-ddTHH:mm:ss.SSS';
-  
+
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
       return null;
@@ -1393,8 +1471,8 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
-  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds) =>
-    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000) : null;
+  static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds, {bool isUtc = false}) =>
+    (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: isUtc) : null;
   
   static int? dateTimeToSecondsSinceEpoch(DateTime? dateTime) =>
     (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;

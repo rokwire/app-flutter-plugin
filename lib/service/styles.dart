@@ -536,6 +536,31 @@ class UiTextStyles {
     return styleMap[key];
   }
 
+  TextStyle? getTextStyleEx(String key, {
+    String? fontFamily, double? fontSize, double? fontHeight, FontWeight? fontWeight, Color? color,
+    TextOverflow? textOverflow, double? letterSpacing, double? wordSpacing, bool? inherit,
+    TextDecoration? textDecoration, TextDecorationStyle? decorationStyle, double? decorationThickness, Color? decorationColor,
+  }){
+    TextStyle? textStyle = getTextStyle(key);
+    return (textStyle != null) ? TextStyle(
+      fontFamily: fontFamily ?? textStyle.fontFamily,
+      fontSize: fontSize ?? textStyle.fontSize,
+      height: fontHeight ?? textStyle.height,
+      fontWeight: fontWeight ?? textStyle.fontWeight,
+      color: color ?? textStyle.color,
+
+      overflow: textOverflow ?? textStyle.overflow,
+      letterSpacing: letterSpacing ?? textStyle.letterSpacing,
+      wordSpacing: wordSpacing ?? textStyle.wordSpacing,
+      inherit: inherit ?? textStyle.inherit,
+
+      decoration: textDecoration ?? textStyle.decoration,
+      decorationStyle: decorationStyle ?? textStyle.decorationStyle,
+      decorationThickness: decorationThickness ?? textStyle.decorationThickness,
+      decorationColor: decorationColor ?? textStyle.decorationColor,
+    ) : null;
+  }
+
   static TextStyle? constructTextStyle(Map<String, dynamic>? style, { Map<String, dynamic>? stylesJson, UiColors? colors, UiFontFamilies? fontFamilies}){
     if(style == null){
       return null;

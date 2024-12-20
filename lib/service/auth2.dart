@@ -38,6 +38,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyAccountChanged       = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged       = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged         = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyPrivacyChanged       = "edu.illinois.rokwire.auth2.privacy.changed";
   static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
   static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
@@ -922,6 +923,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     NotificationService().notify(notifyProfileChanged);
     NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyPrivacyChanged);
     NotificationService().notify(notifyLoginChanged);
   }
 
@@ -1588,10 +1590,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _updateUserProfileClient?.close();
     _updateUserProfileClient = null;
 
-    NotificationService().notify(notifyProfileChanged);
-    NotificationService().notify(notifyPrefsChanged);
-    NotificationService().notify(notifyLoginChanged);
-    NotificationService().notify(notifyLogout);
+      NotificationService().notify(notifyProfileChanged);
+      NotificationService().notify(notifyPrefsChanged);
+      NotificationService().notify(notifyPrivacyChanged);
+      NotificationService().notify(notifyLoginChanged);
+      NotificationService().notify(notifyLogout);
+    }
   }
 
   // Delete
@@ -1864,28 +1868,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         await Storage().setAuth2Account(_account);
       }
       NotificationService().notify(notifyProfileChanged);
+      onUserAccountProfileChanged(profile);
       _saveAccountUserProfile();
     }
   }
 
+  @protected
+  void onUserAccountProfileChanged(Auth2UserProfile? profile) {
+  }
+
   Future<Auth2UserProfile?> loadUserProfile() async {
-    return await _loadAccountUserProfile();
-  }
-
-  Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
-    if (await _saveExternalAccountUserProfile(profile)) {
-      if (_account?.profile?.apply(profile) ?? false) {
-        if (!kIsWeb) {
-          await Storage().setAuth2Account(_account);
-        }
-        NotificationService().notify(notifyProfileChanged);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  Future<Auth2UserProfile?> _loadAccountUserProfile() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Response? response = await Network().get(url, auth: Auth2());
@@ -1894,22 +1886,30 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
+  Future<bool> saveUserProfile(Auth2UserProfile? profile) async {
+    if (await _saveUserProfile(profile)) {
+      if (_account?.profile?.apply(profile, scope: Auth2UserProfileScopeImpl.fullScope) ?? false) {
+        if (!kIsWeb) {
+          await Storage().setAuth2Account(_account);
+        }
+        NotificationService().notify(notifyProfileChanged);
+        onUserAccountProfileChanged(profile);
+      }
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _saveAccountUserProfile() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.profile != null)) {
-      String url = "${Config().coreUrl}/services/account/profile";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode(profile!.toJson());
-
       Client client = Client();
       _updateUserProfileClient?.close();
       _updateUserProfileClient = client;
 
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      bool result = await _saveUserProfile(_account?.profile, client: _updateUserProfileClient);
 
       if (identical(client, _updateUserProfileClient)) {
-        if (response?.statusCode == 200) {
+        if (result) {
           _updateUserProfileTimer?.cancel();
           _updateUserProfileTimer = null;
         }
@@ -1925,14 +1925,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  Future<bool> _saveExternalAccountUserProfile(Auth2UserProfile? profile) async {
-    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+  Future<bool> _saveUserProfile(Auth2UserProfile? profile, { Client? client }) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (profile != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode(profile!.toJson());
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      String? post = JsonUtils.encode(profile.toJson());
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: client);
       return (response?.statusCode == 200);
     }
     return false;
@@ -1958,7 +1958,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   /*Future<void> _refreshAccountUserProfile() async {
-    Auth2UserProfile? profile = await _loadAccountUserProfile();
+    Auth2UserProfile? profile = await loadUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
@@ -1966,6 +1966,45 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
     }
   }*/
+
+  // Privacy
+
+  Future<Auth2UserPrivacy?> loadUserPrivacy() async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+      String url = "${Config().coreUrl}/services/account/privacy";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Auth2UserPrivacy.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+    }
+    return null;
+  }
+
+  Future<bool> saveUserPrivacy(Auth2UserPrivacy? privacy) async {
+    if (await _saveUserPrivacy(privacy)) {
+      if (_account?.privacy != privacy) {
+        _account = Auth2Account.fromOther(_account, privacy: privacy);
+        if (!kIsWeb) {
+          await Storage().setAuth2Account(_account);
+        }
+        NotificationService().notify(notifyPrivacyChanged);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // ignore: unused_element
+  Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
+      String url = "${Config().coreUrl}/services/account/privacy";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode(privacy.toJson());
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      return (response?.statusCode == 200);
+    }
+    return false;
+  }
 
   // Account
 
@@ -1985,6 +2024,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
+      bool privacyChanged = (account.privacy != _account?.privacy);
 
       _account = account;
       if (!kIsWeb) {
@@ -1997,6 +2037,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
       if (prefsUpdated) {
         NotificationService().notify(notifyPrefsChanged);
+      }
+      if (privacyChanged) {
+        NotificationService().notify(notifyPrivacyChanged);
       }
     }
   }

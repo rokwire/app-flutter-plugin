@@ -25,6 +25,7 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
+  static const String notifyNotificationsUpdated  = "edu.illinois.rokwire.event2.notifications.updated";
 
   static const String sportEventCategory = 'Big 10 Athletics';
 
@@ -468,6 +469,81 @@ class Events2 with Service implements NotificationsListener {
       return (response?.statusCode == 200) ? true : response?.errorText;
     }
     return null;
+  }
+
+  // Event Custom Notifications
+  Future<dynamic> saveNotificationSettings({required String eventId, List<dynamic>? notificationSettings}) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/notification-settings";
+      String? body = JsonUtils.encode(Event2NotificationSetting.listToJson(notificationSettings));
+      Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2(),);
+
+      if(response?.statusCode == 200){
+        NotificationService().notify(Events2.notifyNotificationsUpdated);
+        return true;
+      } else
+        return response?.errorText;
+    }
+    return null;
+  }
+
+  Future<dynamic> loadNotificationSettings({required String eventId}) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/notification-settings";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2NotificationSetting.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
+  ///
+  /// Returns null if delete is successful, error String message - otherwise
+  ///
+  Future<String?> deleteAllNotification({required String eventId, required List<String> notificationIds}) async {
+    //TBD probably we can delete them at once (pass list of notificationIds to BB)
+    if (Config().calendarUrl == null) {
+      return 'Missing calendar url.';
+    }
+    if (CollectionUtils.isEmpty(notificationIds)) {
+      return 'Please, select at least one notification.';
+    }
+    List<String?>? errorMsgs;
+    for (String notificationId in notificationIds) {
+      String? notificationDeleteError = await _deleteNotification(eventId: eventId, notificationId: notificationId);
+      if (notificationDeleteError != null) {
+        if (errorMsgs == null) {
+          errorMsgs = <String?>[];
+        }
+        ListUtils.add(errorMsgs, notificationDeleteError);
+        break;
+      }
+    }
+    if (CollectionUtils.isNotEmpty(errorMsgs)) {
+      return errorMsgs!.join('\n\n'); // split error messages by new line
+    } else {
+      NotificationService().notify(Events2.notifyNotificationsUpdated, null);
+      return null;
+    }
+  }
+
+  ///
+  /// Returns null if delete is successful, error String message - otherwise
+  ///
+  Future<String?> _deleteNotification({required String eventId, required String notificationId}) async {
+    if (Config().calendarUrl == null) {
+      return 'Missing calendar url.';
+    }
+    String url = "${Config().calendarUrl}/event/$eventId/notification-settings/$notificationId";
+    Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return null;
+    } else {
+      String errorText = 'Failed to delete event notification. Reason: $responseCode, $responseString';
+      debugPrint(errorText);
+      return errorText;
+    }
   }
 
   // Helpers
