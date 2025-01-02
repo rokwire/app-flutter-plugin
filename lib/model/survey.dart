@@ -112,6 +112,7 @@ class Survey extends RuleEngine {
   SurveyStats? stats;
 
   String? calendarEventId;
+  Map<String, dynamic>? unstructuredProperties;
 
   Survey({required this.id, required this.data, required this.type,
     this.scored = true, this.public, this.archived, this.completed,
@@ -121,7 +122,7 @@ class Survey extends RuleEngine {
     this.responseKeys,
     this.startDate, this.endDate,
     this.dateUpdated, this.dateCreated,
-    this.stats, this.calendarEventId,
+    this.stats, this.calendarEventId, this.unstructuredProperties,
     dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
@@ -180,6 +181,7 @@ class Survey extends RuleEngine {
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
       'calendar_event_id': calendarEventId,
+      'unstructured_properties': unstructuredProperties
     };
   }
 
