@@ -565,6 +565,52 @@ class Surveys /* with Service */ {
     return false;
   }
 
+  Future<Score?> getScore() async {
+    if (enabled) {
+      String url = '${Config().surveysUrl}/score';
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        Map<String, dynamic>? responseJson = JsonUtils.decode(responseBody);
+        if (responseJson != null) {
+          return Score.fromJson(responseJson);
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<List<Score>?> getScores({int? limit, int? offset}) async {
+    if (enabled) {
+      String? url = Config().surveysUrl;
+      if (url != null && url.isNotEmpty) {
+        url += '/scores';
+
+        Map<String, String> queryParams = {};
+        if (limit != null) {
+          queryParams['limit'] = limit.toString();
+        }
+        if (offset != null) {
+          queryParams['offset'] = offset.toString();
+        }
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+        if (responseList != null) {
+          return Score.listFromJson(responseList);
+        }
+      }
+    }
+    return null;
+  }
+
   /////////////////////////
   // Enabled
 
