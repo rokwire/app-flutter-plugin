@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed voice recording caching in Auth2, improved user profiles coping and merging [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Added Messages model and service [#506](https://github.com/rokwire/app-flutter-plugin/issues/506).
 - Added Socal.loadConversation API [#4536](https://github.com/rokwire/illinois-app/issues/4536).
+- Added urls parameter to Auth2.loadDirectoryAccounts API [#4558](https://github.com/rokwire/illinois-app/issues/4558).
 ### Fixed
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
