@@ -29,8 +29,6 @@ class Events2 with Service implements NotificationsListener {
 
   static const String sportEventCategory = 'Big 10 Athletics';
 
-  List<Uri>? _deepLinkUrisCache;
-
   // Singletone Factory
 
   static Events2? _instance;
@@ -48,20 +46,14 @@ class Events2 with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this,[
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _deepLinkUrisCache = <Uri>[];
   }
 
   @override
   void destroyService() {
     NotificationService().unsubscribe(this);
     super.destroyService();
-  }
-
-  @override
-  void initServiceUI() {
-    processCachedDeepLinkUris();
   }
 
   @override
@@ -73,8 +65,8 @@ class Events2 with Service implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
@@ -568,38 +560,13 @@ class Events2 with Service implements NotificationsListener {
   @protected
   void onDeepLinkUri(Uri? uri) {
     if (uri != null) {
-      if (_deepLinkUrisCache != null) {
-        cacheDeepLinkUri(uri);
+      if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailRawUrl))) {
+        try { NotificationService().notify(notifyLaunchDetail, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
       }
-      else {
-        processDeepLinkUri(uri);
-      }
-    }
-  }
-
-  @protected
-  void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailRawUrl))) {
-      NotificationService().notify(notifyLaunchDetail, uri.queryParameters);
-    }
-    else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
-      NotificationService().notify(notifyLaunchQuery, uri.queryParameters);
-    }
-  }
-
-  @protected
-  void cacheDeepLinkUri(Uri uri) {
-    _deepLinkUrisCache?.add(uri);
-  }
-
-  @protected
-  void processCachedDeepLinkUris() {
-    if (_deepLinkUrisCache != null) {
-      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
-      _deepLinkUrisCache = null;
-
-      for (Uri deepLinkUri in deepLinkUrisCache) {
-        processDeepLinkUri(deepLinkUri);
+      else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
+        try { NotificationService().notify(notifyLaunchQuery, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
       }
     }
   }

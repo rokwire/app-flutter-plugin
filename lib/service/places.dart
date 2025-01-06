@@ -13,8 +13,6 @@ class Places extends Service implements NotificationsListener {
 
   static const String notifyPlacesDetail = "edu.illinois.rokwire.places.detail";
 
-  List<Uri>? _deepLinkUrisCache;
-
   // Singletone Factory
 
   static Places? _instance;
@@ -32,9 +30,8 @@ class Places extends Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _deepLinkUrisCache = <Uri>[];
     super.createService();
   }
 
@@ -42,12 +39,6 @@ class Places extends Service implements NotificationsListener {
   void destroyService() {
     NotificationService().unsubscribe(this);
     super.destroyService();
-  }
-
-  @override
-  void initServiceUI() {
-    processCachedDeepLinkUris();
-    super.initServiceUI();
   }
 
   @override
@@ -59,8 +50,8 @@ class Places extends Service implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
@@ -71,36 +62,9 @@ class Places extends Service implements NotificationsListener {
 
   @protected
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      if (_deepLinkUrisCache != null) {
-        cacheDeepLinkUri(uri);
-      } else {
-        processDeepLinkUri(uri);
-      }
-    }
-  }
-
-  @protected
-  void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(placeDetailRawUrl))) {
-      NotificationService().notify(notifyPlacesDetail, uri.queryParameters.cast<String, dynamic>());
-    }
-  }
-
-  @protected
-  void cacheDeepLinkUri(Uri uri) {
-    _deepLinkUrisCache?.add(uri);
-  }
-
-  @protected
-  void processCachedDeepLinkUris() {
-    if (_deepLinkUrisCache != null) {
-      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
-      _deepLinkUrisCache = null;
-
-      for (Uri deepLinkUri in deepLinkUrisCache) {
-        processDeepLinkUri(deepLinkUri);
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(placeDetailRawUrl))) {
+      try { NotificationService().notify(notifyPlacesDetail, uri.queryParameters.cast<String, dynamic>()); }
+      catch (e) { print(e.toString()); }
     }
   }
 

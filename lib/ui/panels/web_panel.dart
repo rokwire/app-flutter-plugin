@@ -272,15 +272,8 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   }
 
   void _onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      Uri? settingsUri = Uri.tryParse(widget.appSettingsUrl);
-      if ((settingsUri != null) &&
-          (settingsUri.scheme == uri.scheme) &&
-          (settingsUri.authority == uri.authority) &&
-          (settingsUri.path == uri.path))
-      {
-        RokwirePlugin.launchAppSettings();
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(widget.appSettingsUrl))) {
+      RokwirePlugin.launchAppSettings();
     }
   }
 
