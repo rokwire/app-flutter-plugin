@@ -267,7 +267,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
       });
     }
     else if (name == DeepLink.notifyUri) {
-      _onDeepLinkUri(param);
+      _onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
