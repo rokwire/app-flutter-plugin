@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/social.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -37,8 +38,6 @@ class Social extends Service implements NotificationsListener {
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
   static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
 
-  List<Uri>? _deepLinkUrisCache;
-
   // Filtering keys
   static const String _postsOperationKey = 'operation';
   static const String _postsOperationAndValue = 'and';
@@ -60,9 +59,8 @@ class Social extends Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _deepLinkUrisCache = <Uri>[];
     super.createService();
   }
 
@@ -82,12 +80,6 @@ class Social extends Service implements NotificationsListener {
     await super.initService();
   }
 
-  @override
-  void initServiceUI() {
-    processCachedDeepLinkUris();
-    super.initServiceUI();
-  }
-
   // Deep Link Setup
   static String get detailRawUrl => '${DeepLink().appUrl}/social_detail';
   static String detailDetailUrl({String? conversationId}) => UrlUtils.buildWithQueryParameters(
@@ -100,39 +92,15 @@ class Social extends Service implements NotificationsListener {
   // NotificationsListener
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      if (_deepLinkUrisCache != null) {
-        cacheDeepLinkUri(uri);
-      } else {
-        processDeepLinkUri(uri);
-      }
-    }
-  }
-
-  void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(detailRawUrl))) {
-      NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>());
-    }
-  }
-
-  void cacheDeepLinkUri(Uri uri) {
-    _deepLinkUrisCache?.add(uri);
-  }
-
-  void processCachedDeepLinkUris() {
-    if (_deepLinkUrisCache != null) {
-      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
-      _deepLinkUrisCache = null;
-
-      for (Uri deepLinkUri in deepLinkUrisCache) {
-        processDeepLinkUri(deepLinkUri);
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(detailRawUrl))) {
+      try { NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>()); }
+      catch (e) { debugPrint(e.toString()); }
     }
   }
 

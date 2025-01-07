@@ -45,8 +45,6 @@ class Events with Service implements NotificationsListener {
 
   static const int _defaultLocationRadiusInMeters = 1000;
 
-  List<Map<String, dynamic>>? _eventDetailsCache;
-  
   // Singletone Factory
 
   static Events? _instance;
@@ -66,20 +64,14 @@ class Events with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this,[
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _eventDetailsCache = [];
   }
 
   @override
   void destroyService() {
     NotificationService().unsubscribe(this);
     super.destroyService();
-  }
-
-  @override
-  void initServiceUI() {
-    processCachedEventDetails();
   }
 
   @override
@@ -91,8 +83,8 @@ class Events with Service implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
@@ -602,51 +594,9 @@ class Events with Service implements NotificationsListener {
 
   @protected
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      Uri? eventUri = Uri.tryParse(eventDetailUrl);
-      if ((eventUri != null) &&
-          (eventUri.scheme == uri.scheme) &&
-          (eventUri.authority == uri.authority) &&
-          (eventUri.path == uri.path))
-      {
-        try { handleEventDetail(uri.queryParameters.cast<String, dynamic>()); }
-        catch (e) { debugPrint(e.toString()); }
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(eventDetailUrl))) {
+      try { NotificationService().notify(notifyEventDetail, uri.queryParameters.cast<String, dynamic>()); }
+      catch (e) { debugPrint(e.toString()); }
     }
   }
-
-  @protected
-  void handleEventDetail(Map<String, dynamic>? params) {
-    if ((params != null) && params.isNotEmpty) {
-      if (_eventDetailsCache != null) {
-        cacheEventDetail(params);
-      }
-      else {
-        processEventDetail(params);
-      }
-    }
-  }
-
-  @protected
-  void processEventDetail(Map<String, dynamic> params) {
-    NotificationService().notify(notifyEventDetail, params);
-  }
-
-  @protected
-  void cacheEventDetail(Map<String, dynamic> params) {
-    _eventDetailsCache?.add(params);
-  }
-
-  @protected
-  void processCachedEventDetails() {
-    if (_eventDetailsCache != null) {
-      List<Map<String, dynamic>> eventDetailsCache = _eventDetailsCache!;
-      _eventDetailsCache = null;
-
-      for (Map<String, dynamic> eventDetail in eventDetailsCache) {
-        processEventDetail(eventDetail);
-      }
-    }
-  }
-
 }

@@ -72,9 +72,6 @@ class Groups with Service implements NotificationsListener {
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
 
-  List<Map<String, dynamic>>? _launchGroupDetailsCache;
-  List<Map<String, dynamic>>? get launchGroupDetailsCache => _launchGroupDetailsCache;
-
   Directory? _appDocDir;
 
   List<Group>? _userGroups;
@@ -108,13 +105,12 @@ class Groups with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this,[
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
       Auth2.notifyLoginChanged,
       AppLivecycle.notifyStateChanged,
       FirebaseMessaging.notifyGroupsNotification,
       Connectivity.notifyStatusChanged
     ]);
-    _launchGroupDetailsCache = [];
     super.createService();
   }
 
@@ -147,21 +143,16 @@ class Groups with Service implements NotificationsListener {
   }
 
   @override
-  void initServiceUI() {
-    processCachedLaunchGroupDetails();
-  }
-
-  @override
   Set<Service> get serviceDependsOn {
-    return { DeepLink(), Config(), Auth2() };
+    return { Config(), Auth2(), DeepLink() };
   }
 
   // NotificationsListener
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
     else if (name == Auth2.notifyLoginChanged) {
       _onLoginChanged();
@@ -1083,50 +1074,9 @@ class Groups with Service implements NotificationsListener {
 
   @protected
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      Uri? eventUri = Uri.tryParse(groupDetailUrl);
-      if ((eventUri != null) &&
-          (eventUri.scheme == uri.scheme) &&
-          (eventUri.authority == uri.authority) &&
-          (eventUri.path == uri.path))
-      {
-        try { handleLaunchGroupDetail(uri.queryParameters.cast<String, dynamic>()); }
-        catch (e) { debugPrint(e.toString()); }
-      }
-    }
-  }
-
-  @protected
-  void handleLaunchGroupDetail(Map<String, dynamic>? params) {
-    if ((params != null) && params.isNotEmpty) {
-      if (_launchGroupDetailsCache != null) {
-        cacheLaunchGroupDetail(params);
-      }
-      else {
-        processLaunchGroupDetail(params);
-      }
-    }
-  }
-
-  @protected
-  void processLaunchGroupDetail(Map<String, dynamic> params) {
-    NotificationService().notify(notifyGroupDetail, params);
-  }
-
-  @protected
-  void cacheLaunchGroupDetail(Map<String, dynamic> params) {
-    _launchGroupDetailsCache?.add(params);
-  }
-
-  @protected
-  void processCachedLaunchGroupDetails() {
-    if (_launchGroupDetailsCache != null) {
-      List<Map<String, dynamic>> groupDetailsCache = _launchGroupDetailsCache!;
-      _launchGroupDetailsCache = null;
-
-      for (Map<String, dynamic> groupDetail in groupDetailsCache) {
-        processLaunchGroupDetail(groupDetail);
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(groupDetailUrl))) {
+      try { NotificationService().notify(notifyGroupDetail, uri.queryParameters.cast<String, dynamic>()); }
+      catch (e) { debugPrint(e.toString()); }
     }
   }
 
