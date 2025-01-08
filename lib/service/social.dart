@@ -29,7 +29,7 @@ import 'dart:async';
 
 class Social extends Service implements NotificationsListener {
 
-  static const String notifySocialDetail = "edu.illinois.rokwire.social.generic.detail";
+  static const String notifyMessageDetail = "edu.illinois.rokwire.social.message.detail";
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
   static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
@@ -81,11 +81,13 @@ class Social extends Service implements NotificationsListener {
   }
 
   // Deep Link Setup
-  static String get detailRawUrl => '${DeepLink().appUrl}/social_detail';
-  static String detailDetailUrl({String? conversationId}) => UrlUtils.buildWithQueryParameters(
-      detailRawUrl, <String, String>{
+  static String get messageDetailRawUrl => '${DeepLink().appUrl}/social_message';
+  static String messageDetailUrl({String? conversationId, String? messageId}) => UrlUtils.buildWithQueryParameters(
+      messageDetailRawUrl, <String, String>{
         if (conversationId != null)
-          'conversation_id': "$conversationId"
+          'conversation_id': "$conversationId",
+        if (messageId != null)
+          'message_id': "$messageId",
       }
   );
 
@@ -98,8 +100,8 @@ class Social extends Service implements NotificationsListener {
   }
 
   void onDeepLinkUri(Uri? uri) {
-    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(detailRawUrl))) {
-      try { NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>()); }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(messageDetailRawUrl))) {
+      try { NotificationService().notify(notifyMessageDetail, uri.queryParameters.cast<String, dynamic>()); }
       catch (e) { debugPrint(e.toString()); }
     }
   }
@@ -623,7 +625,7 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<List<Message>?> loadConversationMessages({required String conversationId, int limit = 100, int offset = 0}) async {
+  Future<List<Message>?> loadConversationMessages({required String conversationId, int offset = 0, int limit = 100, String? extendLimitToMessageId}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
@@ -633,6 +635,8 @@ class Social extends Service implements NotificationsListener {
     Map<String, String> queryParams = {
       'limit': limit.toString(),
       'offset': offset.toString(),
+      if (extendLimitToMessageId != null)
+        'extend-limit-to-message-id': extendLimitToMessageId,
     };
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations/$conversationId/messages', queryParams);
