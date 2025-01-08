@@ -357,7 +357,7 @@ class Auth2UserPrivacy {
   bool operator ==(other) =>
     (other is Auth2UserPrivacy) &&
       (other.public == public) &&
-      (other.fieldsVisibility == fieldsVisibility);
+      DeepCollectionEquality().equals(other.fieldsVisibility, fieldsVisibility);
 
   @override
   int get hashCode =>
@@ -370,31 +370,58 @@ class Auth2UserPrivacy {
 
 class Auth2AccountFieldsVisibility {
   final Auth2UserProfileFieldsVisibility? profile;
+  final Map<String, Auth2FieldVisibility>? identifiers;
 
-  Auth2AccountFieldsVisibility({this.profile});
+  Auth2AccountFieldsVisibility({this.profile, this.identifiers});
 
   factory Auth2AccountFieldsVisibility.fromOther(Auth2AccountFieldsVisibility? other, {
-    Auth2UserProfileFieldsVisibility? profile,
+    Auth2UserProfileFieldsVisibility? profile, Map<String, Auth2FieldVisibility>? identifiers,
   }) => Auth2AccountFieldsVisibility(
     profile: profile ?? other?.profile,
+    identifiers: identifiers ?? other?.identifiers,
   );
 
-  static Auth2AccountFieldsVisibility? fromJson(Map<String, dynamic>? json) => (json != null) ? Auth2AccountFieldsVisibility(
-    profile: Auth2UserProfileFieldsVisibility.fromJson(JsonUtils.mapValue(json['profile']))
-  ) : null;
+  static Auth2AccountFieldsVisibility? fromJson(Map<String, dynamic>? json) {
+    if (json != null) {
+      Map<String, Auth2FieldVisibility>? identifiers;
+      Map<String, dynamic>? identifiersJson = JsonUtils.mapValue(json['identifiers']);
+      for (MapEntry<String, dynamic> item in identifiersJson?.entries ?? []) {
+        if (item.value is String) {
+          identifiers ??= {};
+          identifiers[item.key] = Auth2FieldVisibilityImpl.fromJson(item.value) ?? Auth2FieldVisibility.private;
+        }
+      }
 
-  Map<String, dynamic> toJson() => {
-    'profile': profile?.toJson(),
-  };
+      return Auth2AccountFieldsVisibility(
+        profile: Auth2UserProfileFieldsVisibility.fromJson(JsonUtils.mapValue(json['profile'])),
+        identifiers: identifiers,
+      );
+    }
+    return null;
+  }
+
+  Map<String, dynamic> toJson() {
+    Map<String, String>? identifiersJson;
+    for (MapEntry<String, Auth2FieldVisibility> item in identifiers?.entries ?? []) {
+      identifiersJson ??= {};
+      identifiersJson[item.key] = item.value.toJson();
+    }
+    return {
+      'profile': profile?.toJson(),
+      'identifiers': identifiersJson,
+    };
+  }
 
   @override
   bool operator ==(other) =>
     (other is Auth2AccountFieldsVisibility) &&
-    (other.profile == profile);
+    (other.profile == profile) &&
+    DeepCollectionEquality().equals(other.identifiers, identifiers);
 
   @override
   int get hashCode =>
-    (profile?.hashCode ?? 0);
+    (profile?.hashCode ?? 0) ^
+    (identifiers?.hashCode ?? 0);
 }
 
 ////////////////////////////////

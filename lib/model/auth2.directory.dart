@@ -99,32 +99,47 @@ class Auth2PublicAccount {
 // Auth2PublicAccountIdentifier
 
 class Auth2PublicAccountIdentifier {
+  final String? id;
   final String? code;
   final String? identifier;
 
-  Auth2PublicAccountIdentifier({this.code, this.identifier});
+  Auth2PublicAccountIdentifier({this.id, this.code, this.identifier});
 
   static Auth2PublicAccountIdentifier? fromJson(Map<String, dynamic>? json) => (json != null) ?
     Auth2PublicAccountIdentifier(
+      id: JsonUtils.stringValue(json['id']),
       code: JsonUtils.stringValue(json['code']),
       identifier: JsonUtils.stringValue(json['identifier']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
+    'id' : id,
     'code' : code,
     'identifier' : identifier,
   };
+
+  factory Auth2PublicAccountIdentifier.fromUserIdentifier(Auth2Identifier other, {
+    String? id,
+    String? code,
+    String? identifier,
+  }) => Auth2PublicAccountIdentifier(
+    id: id ?? other.id,
+    code: code ?? other.code,
+    identifier: identifier ?? other.identifier,
+  );
 
   // Equality
 
   @override
   bool operator==(Object other) =>
     (other is Auth2PublicAccountIdentifier) &&
-    (code == other.code) &&
-    (identifier == other.identifier);
+      (id == other.id) &&
+      (code == other.code) &&
+      (identifier == other.identifier);
 
   @override
   int get hashCode =>
+    (id?.hashCode ?? 0) ^
     (code?.hashCode ?? 0) ^
     (identifier?.hashCode ?? 0);
 
@@ -150,5 +165,15 @@ class Auth2PublicAccountIdentifier {
       }
     }
     return json;
+  }
+
+  static List<Auth2PublicAccountIdentifier> listForType(List<Auth2PublicAccountIdentifier>? identifiers, String type) {
+    List<Auth2PublicAccountIdentifier> typeIdentifiers = [];
+    for (Auth2PublicAccountIdentifier publicIdentifier in identifiers ?? []) {
+      if (publicIdentifier.code == type) {
+        typeIdentifiers.add(publicIdentifier);
+      }
+    }
+    return typeIdentifiers;
   }
 }
