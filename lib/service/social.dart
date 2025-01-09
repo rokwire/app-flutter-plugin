@@ -82,12 +82,14 @@ class Social extends Service implements NotificationsListener {
 
   // Deep Link Setup
   static String get messageDetailRawUrl => '${DeepLink().appUrl}/social_message';
-  static String messageDetailUrl({String? conversationId, String? messageId}) => UrlUtils.buildWithQueryParameters(
+  static String messageDetailUrl({String? conversationId, String? messageId, String? messageGlobalId}) => UrlUtils.buildWithQueryParameters(
       messageDetailRawUrl, <String, String>{
         if (conversationId != null)
           'conversation_id': "$conversationId",
         if (messageId != null)
           'message_id': "$messageId",
+        if (messageGlobalId != null)
+          'message_global_id': "$messageGlobalId",
       }
   );
 
@@ -625,7 +627,10 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<List<Message>?> loadConversationMessages({required String conversationId, int offset = 0, int limit = 100, String? extendLimitToMessageId}) async {
+  Future<List<Message>?> loadConversationMessages({required String conversationId,
+    int offset = 0, int limit = 100,
+    String? extendLimitToMessageId, String? extendLimitToGlobalMessageId}) async
+  {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
@@ -637,6 +642,8 @@ class Social extends Service implements NotificationsListener {
       'offset': offset.toString(),
       if (extendLimitToMessageId != null)
         'extend-limit-to-message-id': extendLimitToMessageId,
+      if (extendLimitToGlobalMessageId != null)
+        'extend-limit-to-global-message-id': extendLimitToGlobalMessageId,
     };
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations/$conversationId/messages', queryParams);
