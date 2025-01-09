@@ -54,7 +54,15 @@ class Connectivity with Service {
 
   @override
   Future<void> initService() async {
-    _connectivityStatus = _statusFromResults(await connectivity.Connectivity().checkConnectivity());
+    List<connectivity.ConnectivityResult> results = await connectivity.Connectivity().checkConnectivity();
+    if (kIsWeb) {
+      // Fallback for an issue in the plugin - https://github.com/fluttercommunity/plus_plugins/issues/852 - reproducible for web
+      if (results.isEmpty || ((results.length == 1) && results.contains(connectivity.ConnectivityResult.none))) {
+        // Explicitly tell that the connectivity is via WiFi because the plugin fails to determine correct results
+        results = [connectivity.ConnectivityResult.wifi];
+      }
+    }
+    _connectivityStatus = _statusFromResults(results);
 
     if (_connectivityStatus != null) {
       await super.initService();
