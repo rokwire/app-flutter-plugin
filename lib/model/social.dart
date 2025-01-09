@@ -715,10 +715,11 @@ class Comment {
 class Reaction {
   final String? id;
   final ReactionType? type;
+  final String? data;
   final Creator? engager;
   final DateTime? dateCreatedUtc;
 
-  Reaction({this.id, this.type, this.engager, this.dateCreatedUtc});
+  Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc});
 
   static Reaction? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -727,6 +728,7 @@ class Reaction {
 
     return Reaction(
         id: JsonUtils.stringValue(json['id']),
+        data: JsonUtils.stringValue(json['data']),
         type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
         engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
         dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
@@ -738,10 +740,11 @@ class Reaction {
       (other.id == id) &&
       (other.type == type) &&
       (other.engager == engager) &&
+      (other.data == data) &&
       (other.dateCreatedUtc == dateCreatedUtc);
 
   @override
-  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0);
+  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0) ^ (data?.hashCode ?? 0);
 
   static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
     List<Reaction>? items;
@@ -805,12 +808,14 @@ SocialEntityType? socialEntityTypeFromString(String? value) {
   }
 }
 
-enum ReactionType { like }
+enum ReactionType { like, emoji }
 
 String? reactionTypeToString(ReactionType? type) {
   switch (type) {
     case ReactionType.like:
       return 'like';
+    case ReactionType.emoji:
+      return 'emoji';
     default:
       return null;
   }
@@ -820,6 +825,8 @@ ReactionType? reactionTypeFromString(String? value) {
   switch (value) {
     case 'like':
       return ReactionType.like;
+    case 'emoji':
+      return ReactionType.emoji;
     default:
       return null;
   }
