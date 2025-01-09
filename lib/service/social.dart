@@ -627,7 +627,10 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<List<Message>?> loadConversationMessages({required String conversationId, int offset = 0, int limit = 100, String? extendLimitToMessageId}) async {
+  Future<List<Message>?> loadConversationMessages({required String conversationId,
+    int offset = 0, int limit = 100,
+    String? extendLimitToMessageId, String? extendLimitToGlobalMessageId}) async
+  {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
@@ -639,6 +642,8 @@ class Social extends Service implements NotificationsListener {
       'offset': offset.toString(),
       if (extendLimitToMessageId != null)
         'extend-limit-to-message-id': extendLimitToMessageId,
+      if (extendLimitToGlobalMessageId != null)
+        'extend-limit-to-global-message-id': extendLimitToGlobalMessageId,
     };
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations/$conversationId/messages', queryParams);
