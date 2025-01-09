@@ -203,7 +203,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @override
   void onNotification(String name, dynamic param) {
     if (name == DeepLink.notifyUri && !kIsWeb) {
-      onDeepLinkUri(param);
+      onDeepLinkUri(JsonUtils.cast(param));
     }
     else if (name == Auth2UserProfile.notifyChanged) {
       onUserProfileChanged(param);
@@ -244,14 +244,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   void onDeepLinkUri(Uri? uri) {
     if (uri != null) {
-      if (!kIsWeb) {
-        Uri? redirectUri = Uri.tryParse(oidcRedirectUrl);
-        if ((redirectUri == null) ||
-            (redirectUri.scheme != uri.scheme) ||
-            (redirectUri.authority != uri.authority) ||
-            (redirectUri.path != uri.path)) {
-          return;
-        }
+      if (!kIsWeb && !uri.matchDeepLinkUri(Uri.tryParse(oidcRedirectUrl))) {
+        return;
       }
 
       handleOidcAuthentication(uri);

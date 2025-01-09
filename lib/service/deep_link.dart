@@ -22,6 +22,9 @@ import 'package:uni_links/uni_links.dart';
 class DeepLink with Service {
   
   static const String notifyUri  = "edu.illinois.rokwire.deeplink.uri";
+  static const String notifyUiUri  = "edu.illinois.rokwire.deeplink.uri.ui";
+
+  List<Uri>? _uriCache;
 
   // Singletone Factory
 
@@ -44,24 +47,25 @@ class DeepLink with Service {
 
     if (!kIsWeb) {
       // 1. Initial Uri
-      getInitialUri().then((uri) {
-        if (uri != null) {
-          NotificationService().notify(notifyUri, uri);
-        }
-      });
+      getInitialUri().then((Uri? uri) => handleUri(uri));
 
       // 2. Updated uri
-      uriLinkStream.listen((Uri? uri) {
-        if (uri != null) {
-          NotificationService().notify(notifyUri, uri);
-        }
-      });
+      uriLinkStream.listen((Uri? uri) => handleUri(uri));
     } else {
       debugPrint('WEB: deepLinks - not implemented.');
     }
 
+    _uriCache = <Uri>[];
+
     await super.initService();
   }
+
+  @override
+  void initServiceUI() {
+    processUriCache();
+  }
+
+  // App URI
 
   String? get appScheme => null;
   String? get appHost => null;
@@ -83,6 +87,42 @@ class DeepLink with Service {
   void launchUri(Uri? uri) {
     if (uri != null) {
       NotificationService().notify(notifyUri, uri);
+    }
+  }
+
+  // URI cahcing
+  @protected
+  void handleUri(Uri? uri) {
+    if (uri != null) {
+      NotificationService().notify(notifyUri, uri);
+      if (_uriCache != null) {
+        cacheUri(uri);
+      }
+      else {
+        processUri(uri);
+      }
+    }
+  }
+
+  @protected
+  void processUri(Uri uri) {
+    NotificationService().notify(notifyUiUri, uri);
+  }
+
+  @protected
+  void cacheUri(Uri uri) {
+    _uriCache?.add(uri);
+  }
+
+  @protected
+  void processUriCache() {
+    if (_uriCache != null) {
+      List<Uri> uriCache = _uriCache!;
+      _uriCache = null;
+
+      for (Uri uri in uriCache) {
+        processUri(uri);
+      }
     }
   }
 }

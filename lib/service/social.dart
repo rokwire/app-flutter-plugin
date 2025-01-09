@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/social.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -28,7 +29,7 @@ import 'dart:async';
 
 class Social extends Service implements NotificationsListener {
 
-  static const String notifySocialDetail = "edu.illinois.rokwire.social.generic.detail";
+  static const String notifyMessageDetail = "edu.illinois.rokwire.social.message.detail";
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';
   static const String notifyPostUpdated  = 'edu.illinois.rokwire.social.post.updated';
   static const String notifyPostDeleted  = 'edu.illinois.rokwire.social.post.deleted';
@@ -36,8 +37,6 @@ class Social extends Service implements NotificationsListener {
 
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
   static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
-
-  List<Uri>? _deepLinkUrisCache;
 
   // Filtering keys
   static const String _postsOperationKey = 'operation';
@@ -60,9 +59,8 @@ class Social extends Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this, [
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _deepLinkUrisCache = <Uri>[];
     super.createService();
   }
 
@@ -82,57 +80,31 @@ class Social extends Service implements NotificationsListener {
     await super.initService();
   }
 
-  @override
-  void initServiceUI() {
-    processCachedDeepLinkUris();
-    super.initServiceUI();
-  }
-
   // Deep Link Setup
-  static String get detailRawUrl => '${DeepLink().appUrl}/social_detail';
-  static String detailDetailUrl({String? conversationId}) => UrlUtils.buildWithQueryParameters(
-      detailRawUrl, <String, String>{
+  static String get messageDetailRawUrl => '${DeepLink().appUrl}/social_message';
+  static String messageDetailUrl({String? conversationId, String? messageId, String? messageGlobalId}) => UrlUtils.buildWithQueryParameters(
+      messageDetailRawUrl, <String, String>{
         if (conversationId != null)
-          'conversation_id': "$conversationId"
+          'conversation_id': "$conversationId",
+        if (messageId != null)
+          'message_id': "$messageId",
+        if (messageGlobalId != null)
+          'message_global_id': "$messageGlobalId",
       }
   );
 
   // NotificationsListener
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      if (_deepLinkUrisCache != null) {
-        cacheDeepLinkUri(uri);
-      } else {
-        processDeepLinkUri(uri);
-      }
-    }
-  }
-
-  void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(detailRawUrl))) {
-      NotificationService().notify(notifySocialDetail, uri.queryParameters.cast<String, dynamic>());
-    }
-  }
-
-  void cacheDeepLinkUri(Uri uri) {
-    _deepLinkUrisCache?.add(uri);
-  }
-
-  void processCachedDeepLinkUris() {
-    if (_deepLinkUrisCache != null) {
-      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
-      _deepLinkUrisCache = null;
-
-      for (Uri deepLinkUri in deepLinkUrisCache) {
-        processDeepLinkUri(deepLinkUri);
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(messageDetailRawUrl))) {
+      try { NotificationService().notify(notifyMessageDetail, uri.queryParameters.cast<String, dynamic>()); }
+      catch (e) { debugPrint(e.toString()); }
     }
   }
 
@@ -655,7 +627,10 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<List<Message>?> loadConversationMessages({required String conversationId, int limit = 100, int offset = 0}) async {
+  Future<List<Message>?> loadConversationMessages({required String conversationId,
+    int offset = 0, int limit = 100,
+    String? extendLimitToMessageId, String? extendLimitToGlobalMessageId}) async
+  {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load messages for conversation $conversationId. Reason: missing social url.');
@@ -665,6 +640,10 @@ class Social extends Service implements NotificationsListener {
     Map<String, String> queryParams = {
       'limit': limit.toString(),
       'offset': offset.toString(),
+      if (extendLimitToMessageId != null)
+        'extend-limit-to-message-id': extendLimitToMessageId,
+      if (extendLimitToGlobalMessageId != null)
+        'extend-limit-to-global-message-id': extendLimitToGlobalMessageId,
     };
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations/$conversationId/messages', queryParams);
