@@ -82,12 +82,14 @@ class Social extends Service implements NotificationsListener {
 
   // Deep Link Setup
   static String get messageDetailRawUrl => '${DeepLink().appUrl}/social_message';
-  static String messageDetailUrl({String? conversationId, String? messageId}) => UrlUtils.buildWithQueryParameters(
+  static String messageDetailUrl({String? conversationId, String? messageId, String? messageGlobalId}) => UrlUtils.buildWithQueryParameters(
       messageDetailRawUrl, <String, String>{
         if (conversationId != null)
           'conversation_id': "$conversationId",
         if (messageId != null)
           'message_id': "$messageId",
+        if (messageGlobalId != null)
+          'message_global_id': "$messageGlobalId",
       }
   );
 
