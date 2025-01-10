@@ -112,6 +112,7 @@ class Survey extends RuleEngine {
   SurveyStats? stats;
 
   String? calendarEventId;
+  Map<String, dynamic>? unstructuredProperties;
 
   Survey({required this.id, required this.data, required this.type,
     this.scored = true, this.public, this.archived, this.completed,
@@ -121,7 +122,7 @@ class Survey extends RuleEngine {
     this.responseKeys,
     this.startDate, this.endDate,
     this.dateUpdated, this.dateCreated,
-    this.stats, this.calendarEventId,
+    this.stats, this.calendarEventId, this.unstructuredProperties,
     dynamic resultData, Map<String, dynamic> constants = const {}, Map<String, Map<String, String>> strings = const {}, Map<String, Rule> subRules = const {}})
       : super(constants: constants, strings: strings, subRules: subRules, resultData: resultData);
 
@@ -180,6 +181,7 @@ class Survey extends RuleEngine {
       'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
       'stats': stats?.toJson(),
       'calendar_event_id': calendarEventId,
+      'unstructured_properties': unstructuredProperties
     };
   }
 
@@ -1152,4 +1154,47 @@ class SurveysQueryParam {
     return queryParams;
   }
 
+}
+
+class Score {
+  final String? surveyType;
+  final String? externalProfileId;
+  final int? score;
+  final int? responseCount;
+  final int? currentStreak;
+  final double? streakMultiplier;
+  final int? answerCount;
+  final int? correctAnswerCount;
+
+  Score(this.surveyType, this.externalProfileId, this.score, this.responseCount,
+       this.currentStreak, this.streakMultiplier, this.answerCount,
+      this.correctAnswerCount);
+
+  factory Score.fromJson(Map<String, dynamic> json) {
+    return Score(
+      JsonUtils.stringValue(json['survey_type']),
+      JsonUtils.stringValue(json["external_profile_id"]),
+      JsonUtils.intValue(json['score']),
+      JsonUtils.intValue(json['response_count']),
+      JsonUtils.intValue(json['current_streak']),
+      JsonUtils.doubleValue(json['streak_multiplier']),
+      JsonUtils.intValue(json['answer_count']),
+      JsonUtils.intValue(json['correct_answer_count'])
+    );
+  }
+
+  static List<Score> listFromJson(List<dynamic>? jsonList) {
+    List<Score> result = [];
+    for (dynamic jsonEntry in jsonList ?? []) {
+      Map<String, dynamic>? mapVal = JsonUtils.mapValue(jsonEntry);
+      if (mapVal != null) {
+        try {
+          ListUtils.add(result, Score.fromJson(mapVal));
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+    return result;
+  }
 }

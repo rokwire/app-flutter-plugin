@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
 
 ### Added
 - Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
