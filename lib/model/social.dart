@@ -848,23 +848,35 @@ class Message {
 
   Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateUpdatedUtc});
 
-  static Message? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
+  factory Message.fromOther(Message? other, {
+    String? id, String? globalId, String? conversationId,
+    ConversationMember? sender, ConversationMember? recipient,
+    String? message, bool? read,
+    DateTime? dateSentUtc,
+    DateTime? dateUpdatedUtc
+  }) => Message(
+    id: id ?? other?.id,
+    globalId: globalId ?? other?.globalId,
+    conversationId: conversationId ?? other?.conversationId,
+    sender: sender ?? other?.sender,
+    recipient: recipient ?? other?.recipient,
+    message: message ?? other?.message,
+    read: read ?? other?.read,
+    dateSentUtc: dateSentUtc ?? other?.dateSentUtc,
+    dateUpdatedUtc: dateUpdatedUtc ?? other?.dateUpdatedUtc,
+  );
 
-    return Message(
-      id: JsonUtils.stringValue(json['id']),
-      globalId: JsonUtils.stringValue(json['global_id']),
-      conversationId: JsonUtils.stringValue(json['conversation_id']),
-      sender: ConversationMember.fromJson(JsonUtils.mapValue(json['sender'])),
-      recipient: ConversationMember.fromJson(json['recipient']),
-      message: JsonUtils.stringValue(json['message']),
-      read: JsonUtils.boolValue(json['read']),
-      dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
-    );
-  }
+  static Message? fromJson(Map<String, dynamic>? json) => (json != null) ? Message(
+    id: JsonUtils.stringValue(json['id']),
+    globalId: JsonUtils.stringValue(json['global_id']),
+    conversationId: JsonUtils.stringValue(json['conversation_id']),
+    sender: ConversationMember.fromJson(JsonUtils.mapValue(json['sender'])),
+    recipient: ConversationMember.fromJson(json['recipient']),
+    message: JsonUtils.stringValue(json['message']),
+    read: JsonUtils.boolValue(json['read']),
+    dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
+    dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
+  ) : null;
 
   Map<String, dynamic> toJson() {
     return {
