@@ -148,7 +148,7 @@ class Post {
 
   factory Post.forGroup(
       {required String groupId,
-      required String subject,
+      String? subject,
       String? body,
       List<String>? memberAccountIds,
       String? imageUrl,
@@ -166,7 +166,7 @@ class Post {
   }
 
   factory Post.forGroups(
-      {required List<String> groupIds, required String subject, String? body, String? imageUrl, DateTime? dateActivatedUtc}) {
+      {required List<String> groupIds, String? subject, String? body, String? imageUrl, DateTime? dateActivatedUtc}) {
     SocialContext context = SocialContext.forGroups(groupIds: groupIds);
     AuthorizationContext authContext = AuthorizationContext.forGroups(groupIds: groupIds);
     return Post(
