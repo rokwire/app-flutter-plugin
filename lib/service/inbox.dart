@@ -19,6 +19,7 @@ class Inbox with Service implements NotificationsListener {
 
   static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
   static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
+  static const String notifyInboxMessagesDeleted             = "edu.illinois.rokwire.inbox.messages.deleted";
   static const String notifyInboxMessageRead                 = "edu.illinois.rokwire.inbox.message.read";
 
   String?   _fcmToken;
@@ -179,6 +180,10 @@ class Inbox with Service implements NotificationsListener {
     }
   }
 
+  Future<bool> deleteMessage(String messageId) async {
+    return await deleteMessages([messageId]);
+  }
+
   Future<bool> deleteMessages(Iterable<String>? messageIds) async {
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages" : null;
     String? body = JsonUtils.encode({
@@ -186,7 +191,14 @@ class Inbox with Service implements NotificationsListener {
     });
 
     Response? response = await Network().delete(url, body: body, auth: Auth2());
-    return (response?.statusCode == 200);
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      NotificationService().notify(notifyInboxMessagesDeleted);
+      return true;
+    } else {
+      debugPrint('Failed to delete messages with ids {${messageIds}. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
   }
 
   Future<bool> sendMessage(InboxMessage? message) async {
