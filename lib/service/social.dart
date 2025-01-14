@@ -659,6 +659,44 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
+  Future<bool> updateConversationMessage({required String conversationId, required String globalMessageId, required String newText,}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to update conversation message. Reason: missing social url.');
+      return false;
+    }
+    if (StringUtils.isEmpty(conversationId) || StringUtils.isEmpty(globalMessageId)) {
+      Log.e('Failed to update conversation message. Reason: missing conversationId or globalMessageId.');
+      return false;
+    }
+    if (StringUtils.isEmpty(newText)) {
+      Log.e('Failed to update conversation message. Reason: missing message text.');
+      return false;
+    }
+
+    String? requestBody = JsonUtils.encode({'message': newText});
+
+    String url = '$socialUrl/conversations/$conversationId/messages/$globalMessageId/update';
+
+    Response? response = await Network().put(
+      url,
+      auth: Auth2(),
+      body: requestBody,
+    );
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200 || responseCode == 204) {
+      Log.d('updateConversationMessage: success (code $responseCode) for $globalMessageId');
+      return true;
+    } else {
+      Log.e('Failed to update conversation message ($conversationId). Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+
+
   Future<List<Message>?> createConversationMessage({required String conversationId, required String message}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
