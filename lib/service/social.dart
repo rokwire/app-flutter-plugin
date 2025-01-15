@@ -269,7 +269,12 @@ class Social extends Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      List<Post>? posts = Post.listFromJson(JsonUtils.decodeList(responseBody));
+      Map<String, dynamic>? jsonResponse = JsonUtils.decodeMap(responseBody);
+      List<dynamic>? detailsJsonList = JsonUtils.listValue(jsonResponse?['details']);
+      List<dynamic>? postsJsonList = JsonUtils.listValue(jsonResponse?['posts']);
+
+      List<PostDetails>? detailsList = PostDetails.listFromJson(detailsJsonList);
+      List<Post>? posts = Post.listFrom(json: postsJsonList, detailsList: detailsList);
       return posts;
     } else {
       Log.e('Failed to load social posts. Reason: $responseCode, $responseBody');
