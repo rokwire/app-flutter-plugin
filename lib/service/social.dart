@@ -186,6 +186,7 @@ class Social extends Service implements NotificationsListener {
       PostType? type,
       Set<String>? postIds,
       PostStatus status = PostStatus.active,
+      bool showCommentsCount = false,
       int limit = 0,
       int offset = 0,
       SocialSortOrder order = SocialSortOrder.desc,
@@ -243,13 +244,23 @@ class Social extends Service implements NotificationsListener {
       mainOperation = _postsOperationAndValue;
     }
 
-    // 3. Request Body
+    // 3. Common
+
+    List<String>? details;
+    if (showCommentsCount) {
+      details = ['comments-count'];
+    }
+
+    // 4. Request Body
     Map<String, dynamic> requestBody = {
       'offset': offset,
       'limit': limit,
       'order': _socialSortOrderToString(order),
       'sort_by': _socialSortByToString(sortBy)
     };
+    if (details != null) {
+      requestBody['details'] = details;
+    }
     requestBody[_postsOperationKey] = mainOperation;
     requestBody[_postsCriteriaItemsKey] = mainCriteriaItems;
 
