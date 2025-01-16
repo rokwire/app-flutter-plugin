@@ -57,7 +57,7 @@ dependencies:
   permission_handler: ^11.3.1
   flutter_secure_storage: ^9.2.2
   universal_io: ^2.2.2
-  sqflite_common_ffi_web: ^0.4.3+1
+  sqflite_common_ffi_web: ^0.4.5+4
   universal_html: ^2.2.3
   flutter_web_auth_2: ^3.1.2
 
