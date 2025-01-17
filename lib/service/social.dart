@@ -186,6 +186,7 @@ class Social extends Service implements NotificationsListener {
       PostType? type,
       Set<String>? postIds,
       PostStatus status = PostStatus.active,
+      bool showCommentsCount = false,
       int limit = 0,
       int offset = 0,
       SocialSortOrder order = SocialSortOrder.desc,
@@ -243,13 +244,23 @@ class Social extends Service implements NotificationsListener {
       mainOperation = _postsOperationAndValue;
     }
 
-    // 3. Request Body
+    // 3. Common
+
+    List<String>? details;
+    if (showCommentsCount) {
+      details = ['comments-count'];
+    }
+
+    // 4. Request Body
     Map<String, dynamic> requestBody = {
       'offset': offset,
       'limit': limit,
       'order': _socialSortOrderToString(order),
       'sort_by': _socialSortByToString(sortBy)
     };
+    if (details != null) {
+      requestBody['details'] = details;
+    }
     requestBody[_postsOperationKey] = mainOperation;
     requestBody[_postsCriteriaItemsKey] = mainCriteriaItems;
 
@@ -258,7 +269,12 @@ class Social extends Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      List<Post>? posts = Post.listFromJson(JsonUtils.decodeList(responseBody));
+      Map<String, dynamic>? jsonResponse = JsonUtils.decodeMap(responseBody);
+      List<dynamic>? detailsJsonList = JsonUtils.listValue(jsonResponse?['details']);
+      List<dynamic>? postsJsonList = JsonUtils.listValue(jsonResponse?['posts']);
+
+      List<PostDetails>? detailsList = PostDetails.listFromJson(detailsJsonList);
+      List<Post>? posts = Post.listFrom(json: postsJsonList, detailsList: detailsList);
       return posts;
     } else {
       Log.e('Failed to load social posts. Reason: $responseCode, $responseBody');

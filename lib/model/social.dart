@@ -34,6 +34,8 @@ class Post {
   final PostNotification? notification;
   final List<PostNotification>? notifications;
 
+  final PostDetails? details;
+
   DateTime? dateActivatedUtc;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
@@ -50,11 +52,12 @@ class Post {
       this.creator,
       this.notification,
       this.notifications,
+      this.details,
       this.dateActivatedUtc,
       this.dateCreatedUtc,
       this.dateUpdatedUtc});
 
-  static Post? fromJson(Map<String, dynamic>? json) {
+  static Post? fromJson(Map<String, dynamic>? json, {PostDetails? details}) {
     if (json == null) {
       return null;
     }
@@ -71,6 +74,7 @@ class Post {
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
+      details: details,
       dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), isUtc: true),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
@@ -103,6 +107,7 @@ class Post {
       (other.creator == creator) &&
       (other.notification == notification) &&
       const DeepCollectionEquality().equals(other.notifications, notifications) &&
+      (other.details == details) &&
       (other.dateActivatedUtc == dateActivatedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
@@ -120,16 +125,19 @@ class Post {
       (creator?.hashCode ?? 0) ^
       (notification?.hashCode ?? 0) ^
       (const DeepCollectionEquality().hash(notifications)) ^
+      (details?.hashCode ?? 0) ^
       (dateActivatedUtc?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
 
-  static List<Post>? listFromJson(List<dynamic>? jsonList) {
+  static List<Post>? listFrom({List<dynamic>? json, List<PostDetails>? detailsList}) {
     List<Post>? items;
-    if (jsonList != null) {
+    if (json != null) {
       items = <Post>[];
-      for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(items, Post.fromJson(jsonEntry));
+      for (dynamic jsonEntry in json) {
+        String? id = JsonUtils.stringValue(jsonEntry['id']);
+        PostDetails? details = PostDetails.findInList(detailsList, postId: id);
+        ListUtils.add(items, Post.fromJson(jsonEntry, details: details));
       }
     }
     return items;
@@ -486,6 +494,48 @@ String? contextItemNameToString(ContextItemName? value) {
       return 'groups-bb_group';
     default:
       return null;
+  }
+}
+
+class PostDetails {
+  final String? postId;
+  final int? commentsCount;
+
+  PostDetails({this.postId, this.commentsCount});
+
+  static PostDetails? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return PostDetails(postId: JsonUtils.stringValue(json['post_id']), commentsCount: JsonUtils.intValue(json['comments_count']));
+  }
+
+  @override
+  bool operator ==(other) => (other is PostDetails) && (other.postId == postId) && (other.commentsCount == commentsCount);
+
+  @override
+  int get hashCode => (postId?.hashCode ?? 0) ^ (commentsCount?.hashCode ?? 0);
+
+  static List<PostDetails>? listFromJson(List<dynamic>? jsonList) {
+    List<PostDetails>? items;
+    if (jsonList != null) {
+      items = <PostDetails>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, PostDetails.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static PostDetails? findInList(List<PostDetails>? values, {String? postId}) {
+    if (values != null) {
+      for (PostDetails value in values) {
+        if ((postId != null) && (value.postId == postId)) {
+          return value;
+        }
+      }
+    }
+    return null;
   }
 }
 
