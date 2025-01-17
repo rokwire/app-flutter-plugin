@@ -629,7 +629,7 @@ class Groups with Service implements NotificationsListener {
       try {
         await _ensureLogin();
         String? body = JsonUtils.encode(params);
-        Response? response = await Network().get(url, auth: Auth2(), body: body);
+        Response? response = await (kIsWeb ? Network().post('$url/v2', auth: Auth2(), body: body) : Network().get(url, auth: Auth2(), body: body));
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {
