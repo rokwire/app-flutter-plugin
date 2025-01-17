@@ -30,6 +30,7 @@ import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 
@@ -61,7 +62,7 @@ class FlexUI with Service implements NotificationsListener {
   static FlexUI? _instance;
 
   static FlexUI? get instance => _instance;
-  
+
   @protected
   static set instance(FlexUI? value) => _instance = value;
 
@@ -136,7 +137,7 @@ class FlexUI with Service implements NotificationsListener {
       updateContent();
     }
     else if (name == AppLivecycle.notifyStateChanged) {
-      onAppLivecycleStateChanged(param); 
+      onAppLivecycleStateChanged(param);
     }
   }
 
@@ -183,7 +184,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   Future<Map<String, dynamic>?> loadFromCache(String cacheFileName) async {
-    try { 
+    try {
       if (_assetsDir != null) {
         String cacheFilePath = join(_assetsDir!.path, cacheFileName);
         File cacheFile = File(cacheFilePath);
@@ -198,7 +199,7 @@ class FlexUI with Service implements NotificationsListener {
 
   @protected
   Future<void> saveToCache(String cacheFileName, String? content) async {
-    try { 
+    try {
       if (_assetsDir != null) {
         String cacheFilePath = join(_assetsDir!.path, cacheFileName);
         File cacheFile = File(cacheFilePath);
@@ -367,7 +368,7 @@ class FlexUI with Service implements NotificationsListener {
 
       result = {};
       contents.forEach((String key, dynamic contentEntry) {
-        
+
         if (contentEntry is Map) {
           for (String contentEntryKey in contentEntry.keys) {
             if (localeIsEntryAvailable(contentEntryKey, group: key, rules: rules)) {
@@ -425,13 +426,13 @@ class FlexUI with Service implements NotificationsListener {
     if ((privacyRule != null) && !localeEvalPrivacyRule(privacyRule)) {
       return false;
     }
-    
+
     Map<String, dynamic>? authRules = rules['auth'];
     dynamic authRule = (authRules != null) ? (((pathEntry != null) ? authRules[pathEntry] : null) ?? authRules[entry])  : null;
     if ((authRule != null) && !localeEvalAuthRule(authRule)) {
       return false;
     }
-    
+
     Map<String, dynamic>? platformRules = rules['platform'];
     dynamic platformRule = (platformRules != null) ? (((pathEntry != null) ? platformRules[pathEntry] : null) ?? platformRules[entry])  : null;
     if ((platformRule != null) && !localeEvalPlatformRule(platformRule)) {
@@ -443,7 +444,7 @@ class FlexUI with Service implements NotificationsListener {
     if ((enableRule != null) && !localeEvalEnableRule(enableRule)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -461,7 +462,7 @@ class FlexUI with Service implements NotificationsListener {
         else if (any = argument.endsWith('?')) {
           argument = argument.substring(0, argument.length - 1);
         }
-        
+
         Set<UserRole>? userRoles = localeEvalRolesSetParam(argument);
         if (userRoles != null) {
           if (not == true) {
@@ -573,20 +574,6 @@ class FlexUI with Service implements NotificationsListener {
     }
     return null;
   }
-
-  @protected
-  dynamic localeEvalStringReference(String? stringRef) {
-    if (stringRef != null) {
-      String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
-      if (stringRef.startsWith(configPrefix)) {
-        return Config().pathEntry(stringRef.substring(configPrefix.length));
-      }
-    }
-    return null;
-  }
-
-  @protected
-  String get configReferenceKey => 'config';
 
   @protected
   bool localeEvalPrivacyRule(dynamic privacyRule) {
@@ -718,4 +705,26 @@ class FlexUI with Service implements NotificationsListener {
     }
     return null;
   }
+
+  // External Refs
+
+  @protected
+  String get configReferenceKey => 'config';
+  String get appStorageReferenceKey => 'app.storage';
+
+  @protected
+  dynamic localeEvalStringReference(String? stringRef) {
+    if (stringRef != null) {
+      String configPrefix = '$configReferenceKey${MapPathKey.pathDelimiter}';
+      if (stringRef.startsWith(configPrefix)) {
+        return Config().pathEntry(stringRef.substring(configPrefix.length));
+      }
+      String appPrefix = '$appStorageReferenceKey${MapPathKey.pathDelimiter}';
+      if (stringRef.startsWith(appPrefix)) {
+        return Storage()[stringRef.substring(appPrefix.length)];
+      }
+    }
+    return null;
+  }
+
 }
