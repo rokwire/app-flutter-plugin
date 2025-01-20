@@ -1403,6 +1403,10 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
+  static String? localDateTimeFileStampToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH_mm_ss.SSS'  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
   static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds, {bool isUtc = false}) =>
     (seconds != null) ? DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: isUtc) : null;
   
