@@ -711,6 +711,36 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
+  Future<bool> deleteConversationMessage({
+    required String conversationId,
+    required String globalMessageId,
+  }) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete conversation message. Reason: missing social url.');
+      return false;
+    }
+    if (StringUtils.isEmpty(conversationId) || StringUtils.isEmpty(globalMessageId)) {
+      Log.e('Failed to delete conversation message. Reason: missing conversationId or globalMessageId.');
+      return false;
+    }
+
+    String url = '$socialUrl/conversations/$conversationId/messages/$globalMessageId/delete';
+    Response? response = await Network().delete(url, auth: Auth2());
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+
+    if ((responseCode == 200) || (responseCode == 204)) {
+      Log.d('deleteConversationMessage: success (code $responseCode) for $globalMessageId');
+      return true;
+    } else {
+      Log.e('Failed to delete conversation message ($conversationId). Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
+
 
 
   Future<List<Message>?> createConversationMessage({required String conversationId, required String message}) async {
