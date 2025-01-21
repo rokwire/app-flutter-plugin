@@ -94,7 +94,7 @@ class StringUtils {
     return value.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll(RegExp(r'&[^;]+;'), ' ');
   }
 
-  static String? fullName(List<String?> names) {
+  static String? fullName(List<String?> names, { String delimiter = ' '}) {
     String? fullName;
     for (String? name in names) {
       if ((name != null) && name.isNotEmpty) {
@@ -102,7 +102,7 @@ class StringUtils {
           fullName = name;
         }
         else {
-          fullName += ' $name';
+          fullName += '$delimiter$name';
         }
       }
     }
