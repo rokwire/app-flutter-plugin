@@ -1064,10 +1064,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     if (Config().coreUrl != null) {
       Map<String, String> headers = {'Content-Type': 'application/json'};
+      headers.addAll(Auth2().networkAuthHeaders ?? {}); // Core BB expects the user's auth token
       String? body = JsonUtils.encode({
         'all_sessions': false,
       });
-      Network().post("${Config().coreUrl}/services/auth/logout", headers: headers, body: body, auth: this);
+      Network().post("${Config().authBaseUrl}/auth/logout", headers: headers, body: body, auth: Auth2Csrf());
     }
 
     Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
