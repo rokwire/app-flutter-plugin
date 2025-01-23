@@ -565,9 +565,17 @@ class Surveys /* with Service */ {
     return false;
   }
 
-  Future<Score?> getScore() async {
+  Future<Score?> getScore({String? externalProfileId}) async {
     if (enabled) {
+      Map<String, String> queryParams = {};
+      if (externalProfileId != null) {
+        queryParams['external_profile_id'] = externalProfileId;
+      }
+
       String url = '${Config().surveysUrl}/score';
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
       Response? response = await Network().get(url, auth: Auth2());
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
