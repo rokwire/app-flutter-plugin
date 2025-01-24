@@ -339,7 +339,7 @@ class Groups with Service implements NotificationsListener {
       
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
+        Response? response = await Network().post(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
@@ -377,7 +377,6 @@ class Groups with Service implements NotificationsListener {
         limit: limit,
     ));
 
-  //TBD: DDWEB - implement this API with http POST method
   Future<dynamic> _loadAllGroupsEx({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
@@ -393,7 +392,7 @@ class Groups with Service implements NotificationsListener {
 
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
+        Response? response = await Network().post(url, body: post, auth: Auth2());
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
       } catch (e) {
@@ -417,7 +416,7 @@ class Groups with Service implements NotificationsListener {
 
 
       String url = '${Config().groupsUrl}/v2/groups';
-      Response? response = await Network().get(url, auth: Auth2(), body: post);
+      Response? response = await Network().post(url, auth: Auth2(), body: post);
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
       if (responseCode == 200) {
@@ -1137,7 +1136,7 @@ class Groups with Service implements NotificationsListener {
       String? post = JsonUtils.encode({
         'research_group': false,
       });
-      return Network().get(url, body: post, auth: Auth2());
+      return Network().post(url, body: post, auth: Auth2());
     }
     return null;
   }
@@ -1161,7 +1160,7 @@ class Groups with Service implements NotificationsListener {
       String? post = JsonUtils.encode({
         'research_group': false,
       });
-      Response? response = await Network().get(url, body: post, auth: Auth2());
+      Response? response = await Network().post(url, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         return response?.body;
       }
