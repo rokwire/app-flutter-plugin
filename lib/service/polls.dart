@@ -120,8 +120,8 @@ class Polls with Service implements NotificationsListener {
   }
 
   Future<Response?> getPollsResponse(PollFilter pollsFilter) async =>
-    enabled ? Network().get(
-      '${Config().quickPollsUrl}/polls',
+    enabled ? Network().post(
+      '${Config().quickPollsUrl}/polls/load',
       body: JsonUtils.encode(pollsFilter.toJson()),
       auth: Auth2()) : null;
 
@@ -301,8 +301,8 @@ class Polls with Service implements NotificationsListener {
       if (pollPin != null) {
         PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
         String? body = JsonUtils.encode(pollsFilter.toJson());
-        String url = '${Config().quickPollsUrl}/polls';
-        Response? response = await Network().get(url, body: body, auth: Auth2());
+        String url = '${Config().quickPollsUrl}/polls/load';
+        Response? response = await Network().post(url, body: body, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {
