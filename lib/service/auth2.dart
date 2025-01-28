@@ -113,7 +113,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     _anonymousPrefs = Storage().auth2AnonymousPrefs;
     _anonymousProfile = Storage().auth2AnonymousProfile;
 
-    _deviceId = kIsWeb ? '' : await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+    _deviceId = kIsWeb ? 'web' : await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
 
     if ((_account == null) && (_anonymousPrefs == null)) {
       Storage().auth2AnonymousPrefs = _anonymousPrefs = defaultAnonimousPrefs;
@@ -1051,7 +1051,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Map<String, dynamic> get deviceInfo {
     return {
       'type': kIsWeb ? 'web' : 'mobile',
-      'device_id': kIsWeb ? 'web' : _deviceId,
+      'device_id': _deviceId,
       'os': Config().operatingSystem,
     };
   }
