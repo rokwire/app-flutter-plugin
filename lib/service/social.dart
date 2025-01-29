@@ -37,6 +37,8 @@ class Social extends Service implements NotificationsListener {
 
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
   static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
+  static const String notifyMessageEdited = "edu.illinois.rokwire.social.message.edited";
+  static const String notifyMessageDeleted = "edu.illinois.rokwire.social.message.deleted";
 
   // Filtering keys
   static const String _postsOperationKey = 'operation';
@@ -704,6 +706,7 @@ class Social extends Service implements NotificationsListener {
     String? responseBody = response?.body;
     if (responseCode == 200 || responseCode == 204) {
       Log.d('updateConversationMessage: success (code $responseCode) for $globalMessageId');
+      NotificationService().notify(notifyMessageEdited);
       return true;
     } else {
       Log.e('Failed to update conversation message ($conversationId). Reason: $responseCode, $responseBody');
@@ -733,6 +736,7 @@ class Social extends Service implements NotificationsListener {
 
     if ((responseCode == 200) || (responseCode == 204)) {
       Log.d('deleteConversationMessage: success (code $responseCode) for $globalMessageId');
+      NotificationService().notify(notifyMessageDeleted);
       return true;
     } else {
       Log.e('Failed to delete conversation message ($conversationId). Reason: $responseCode, $responseBody');
