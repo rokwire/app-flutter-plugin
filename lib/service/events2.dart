@@ -13,6 +13,7 @@ import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/groups.dart';
+import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -85,14 +86,23 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
-    Network().post(
-      "${Config().calendarUrl}/v2/events/load",
-      body: JsonUtils.encode(query?.toQueryJson()),
-      headers: _jsonHeaders,
-      client: client,
-      auth: Auth2()
-    ) : null;
+  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async {
+    if (Config().calendarUrl == null) {
+      debugPrint('Failed to load events - missing calendar url.');
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode(query?.toQueryJson());
+    Response? response = await Network()
+        .post("${Config().calendarUrl}/v2/events/load", body: requestBody, headers: _jsonHeaders, client: client, auth: Auth2());
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode != 200) {
+      debugPrint('Failed to load events. Reason: $responseCode, $responseBody');
+    }
+    return response;
+  }
 
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
