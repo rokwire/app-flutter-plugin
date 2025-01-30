@@ -200,6 +200,29 @@ class StringUtils {
       return null;
     }
   }
+
+  static List<T> split<T>(String template, {
+    required List<String> macros,
+    required T Function(String entry) builder,
+  }) {
+    List<T> resultList = <T>[];
+    if (macros.isNotEmpty) {
+      String topMacro = macros.first;
+      List<String> trailMacros = macros.sublist(1);
+
+      final List<String> items = template.split(topMacro);
+      if (0 < items.length)
+        resultList.addAll(split(items.first, macros: trailMacros, builder: builder));
+      for (int index = 1; index < items.length; index++) {
+        resultList.add(builder(topMacro));
+        resultList.addAll(split(items[index], macros: trailMacros, builder: builder));
+      }
+    }
+    else {
+      resultList.add(builder(template));
+    }
+    return resultList;
+  }
 }
 
 class CollectionUtils {
