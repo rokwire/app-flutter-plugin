@@ -785,14 +785,27 @@ class Event2Grouping {
     superEventId: id,
   );
 
-  factory Event2Grouping.recurrence(String? id) => Event2Grouping(
+  factory Event2Grouping.recurrence(String? id, {bool? individual}) => Event2Grouping(
     type: Event2GroupingType.recurrence,
     recurrenceId: id,
+    displayAsIndividual: individual,
   );
 
-  static List<Event2Grouping> superEvents() => <Event2Grouping>[
-    Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue)
-  ];
+  static List<Event2Grouping> superEvents({String? superEventId}) => <Event2Grouping>[
+    Event2Grouping(
+            type: Event2GroupingType.superEvent,
+            superEventId: (superEventId != null) ? superEventId : _noneFieldValue,
+            recurrenceId: _ignoreFieldValue,
+            displayAsIndividual: _ignoreFieldValue)
+      ];
+
+  static List<Event2Grouping> recurringEvents({String? groupId, bool? individual}) => <Event2Grouping>[
+        Event2Grouping(
+            type: Event2GroupingType.recurrence,
+            superEventId: _ignoreFieldValue,
+            recurrenceId: (groupId != null) ? groupId : _ignoreFieldValue,
+            displayAsIndividual: (individual != null) ? individual.toString() : _ignoreFieldValue)
+      ];
 
   static List<Event2Grouping> individualEvents() => <Event2Grouping>[
     // Events without grouping type
@@ -802,7 +815,7 @@ class Event2Grouping {
     // Sub Events when display as individual is true
     Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'), //explicitly String
     // Main Recurring events
-    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _ignoreFieldValue, recurrenceId: _noneFieldValue, displayAsIndividual: _ignoreFieldValue)
+    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true')
   ];
 
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
