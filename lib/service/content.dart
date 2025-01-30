@@ -660,11 +660,20 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> getFileContentItem(String fileName, String category) async {
-    String key = '${fileName}_${category}';
-    if (_fileContentCache[key] != null) {
-      return _fileContentCache[key];
+  Future<Uint8List?> getFileContentItems(List<String> fileNames, String category) async {
+    List<Uint8List> cached = [];
+    List<String> load = [];
+    for (String fileName in fileNames) {
+      String key = '${fileName}_${category}';
+      if (_fileContentCache[key] != null) {
+        cached.add(_fileContentCache[key]!);
+      } else if (_fileContentFutures[key] == null) {
+        load.add(fileName);
+      }
     }
+
+    List<String> urls = getFileContentDownloadUrls(fileNames, category);
+
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Response? response;
       if (_fileContentFutures[key] == null) {
@@ -681,6 +690,69 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
       response = await _fileContentFutures[key];
       _fileContentFutures[key] = null;
+
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        Uint8List? fileContent = response?.bodyBytes;
+        if (fileContent != null) {
+          return _fileContentCache[key] = fileContent;
+        }
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+
+  Future<List<String>?> uploadFileContentItems(Map<String, Uint8List> files, String category) async {
+    List<String> uploaded = [];
+
+    //TODO: implement number of files limit per upload
+    if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
+      List<String>? urls = await getFileContentUploadUrls(files.keys.toList(), category);
+      if ((urls?.length ?? 0) == files.length) {
+        List<Future<StreamedResponse?>> responseFutures = [];
+        for (int i = 0; i < files.keys.length; i++) {
+          String url = urls![i];
+          String name = files.keys.elementAt(i);
+          responseFutures.add(Network().multipartPost(
+              url: url,
+              fileKey: 'file',
+              fileName: name,
+              fileBytes: files[name],
+          ));
+        }
+
+        List<StreamedResponse?> responses = await Future.wait(responseFutures);
+        for (StreamedResponse? response in responses) {
+          int responseCode = response?.statusCode ?? -1;
+          if (responseCode == 200) {
+            return AudioResult.succeed(audioData: audioFile);
+          } else {
+            String? responseString = (await response?.stream.bytesToString());
+            debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
+            return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio: $responseString");
+          }
+        }
+
+
+      }
+    }
+    return uploaded;
+  }
+
+  Future<List<String>?> getFileContentUploadUrls(List<String> fileNames, String category) async {
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileNames': fileNames.join(','),
+        'category': category,
+      };
+      String url = "${Config().contentUrl}/files/upload";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
 
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
