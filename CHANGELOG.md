@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up Image & Audio Result data dispatch [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
+- Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
 ### Added
 - Add notifications for editing/deleting conversation [#541](https://github.com/rokwire/app-flutter-plugin/issues/541)
 - Add delete message support to Social BB [#534](https://github.com/rokwire/app-flutter-plugin/issues/534)
