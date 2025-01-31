@@ -129,7 +129,7 @@ class Events2 with Service implements NotificationsListener {
   Future<dynamic> loadEventEx(String eventId, {bool admin = false}) async {
     if (Config().calendarUrl != null) {
       String? url = Config().calendarUrl;
-      url = admin ? '$url/admin/events' : '$url/events/load';
+      url = admin ? '$url/admin/events' : '$url/v2/events/load';
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
