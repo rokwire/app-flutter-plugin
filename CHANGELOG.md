@@ -14,7 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up Image & Audio Result data dispatch [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
+- Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
 ### Added
+- Add notifications for editing/deleting conversation [#541](https://github.com/rokwire/app-flutter-plugin/issues/541)
+- Add delete message support to Social BB [#534](https://github.com/rokwire/app-flutter-plugin/issues/534)
 - Add support for editing messages on the social block [#529](https://github.com/rokwire/app-flutter-plugin/issues/529)
 - Add deep links for messages [#516](https://github.com/rokwire/app-flutter-plugin/issues/516)
 - Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
@@ -28,9 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added URL caching support in DeepLink service, removed it from other services [#4561](https://github.com/rokwire/illinois-app/issues/4561).
 - Acknowledge post replies count [#531](https://github.com/rokwire/app-flutter-plugin/issues/531).
 - Added reference to app Storage settings in FlexUI [#4531](https://github.com/rokwire/illinois-app/issues/4531).
+- Added DateTimeUtils.localDateTimeFileStampToString [#4605](https://github.com/rokwire/illinois-app/issues/4605).
+- Added delimiter paramterer to StringUtils.fullName [#4605](https://github.com/rokwire/illinois-app/issues/4605).
+- Added StringUtils.split API [#4695](https://github.com/rokwire/illinois-app/issues/4695).
 ### Fixed
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
+- Fixed DeepLink.notifyUri API [#4561](https://github.com/rokwire/illinois-app/issues/4561).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
