@@ -107,7 +107,7 @@ class StringUtils {
     return value.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll(RegExp(r'&[^;]+;'), ' ');
   }
 
-  static String? fullName(List<String?> names) {
+  static String? fullName(List<String?> names, { String delimiter = ' '}) {
     String? fullName;
     for (String? name in names) {
       if ((name != null) && name.isNotEmpty) {
@@ -115,7 +115,7 @@ class StringUtils {
           fullName = name;
         }
         else {
-          fullName += ' $name';
+          fullName += '$delimiter$name';
         }
       }
     }
@@ -211,6 +211,29 @@ class StringUtils {
     else {
       return null;
     }
+  }
+
+  static List<T> split<T>(String template, {
+    required List<String> macros,
+    required T Function(String entry) builder,
+  }) {
+    List<T> resultList = <T>[];
+    if (macros.isNotEmpty) {
+      String topMacro = macros.first;
+      List<String> trailMacros = macros.sublist(1);
+
+      final List<String> items = template.split(topMacro);
+      if (0 < items.length)
+        resultList.addAll(split(items.first, macros: trailMacros, builder: builder));
+      for (int index = 1; index < items.length; index++) {
+        resultList.add(builder(topMacro));
+        resultList.addAll(split(items[index], macros: trailMacros, builder: builder));
+      }
+    }
+    else {
+      resultList.add(builder(template));
+    }
+    return resultList;
   }
 
   static String base64UrlEncode(String value) => utf8.fuse(base64Url).encode(value);
@@ -1468,6 +1491,10 @@ class DateTimeUtils {
   }
 
   static String? localDateTimeToString(DateTime? dateTime, { String format  = defaultDateTimeFormat  }) {
+    return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
+  static String? localDateTimeFileStampToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH_mm_ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 

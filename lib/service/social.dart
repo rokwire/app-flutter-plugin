@@ -37,6 +37,8 @@ class Social extends Service implements NotificationsListener {
 
   static const String notifyConversationsUpdated = "edu.illinois.rokwire.social.conversations.updated";
   static const String notifyMessageSent = "edu.illinois.rokwire.social.message.sent";
+  static const String notifyMessageEdited = "edu.illinois.rokwire.social.message.edited";
+  static const String notifyMessageDeleted = "edu.illinois.rokwire.social.message.deleted";
 
   // Filtering keys
   static const String _postsOperationKey = 'operation';
@@ -704,12 +706,44 @@ class Social extends Service implements NotificationsListener {
     String? responseBody = response?.body;
     if (responseCode == 200 || responseCode == 204) {
       Log.d('updateConversationMessage: success (code $responseCode) for $globalMessageId');
+      NotificationService().notify(notifyMessageEdited);
       return true;
     } else {
       Log.e('Failed to update conversation message ($conversationId). Reason: $responseCode, $responseBody');
       return false;
     }
   }
+
+  Future<bool> deleteConversationMessage({
+    required String conversationId,
+    required String globalMessageId,
+  }) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete conversation message. Reason: missing social url.');
+      return false;
+    }
+    if (StringUtils.isEmpty(conversationId) || StringUtils.isEmpty(globalMessageId)) {
+      Log.e('Failed to delete conversation message. Reason: missing conversationId or globalMessageId.');
+      return false;
+    }
+
+    String url = '$socialUrl/conversations/$conversationId/messages/$globalMessageId/delete';
+    Response? response = await Network().delete(url, auth: Auth2());
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+
+    if ((responseCode == 200) || (responseCode == 204)) {
+      Log.d('deleteConversationMessage: success (code $responseCode) for $globalMessageId');
+      NotificationService().notify(notifyMessageDeleted);
+      return true;
+    } else {
+      Log.e('Failed to delete conversation message ($conversationId). Reason: $responseCode, $responseBody');
+      return false;
+    }
+  }
+
 
 
 

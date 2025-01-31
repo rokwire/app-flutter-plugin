@@ -86,7 +86,7 @@ class DeepLink with Service {
 
   void launchUri(Uri? uri) {
     if (uri != null) {
-      NotificationService().notify(notifyUri, uri);
+      NotificationService().notify(notifyUiUri, uri);
     }
   }
 

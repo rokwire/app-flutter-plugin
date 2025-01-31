@@ -85,14 +85,23 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
-    Network().post(
-      "${Config().calendarUrl}/events/load",
-      body: JsonUtils.encode(query?.toQueryJson()),
-      headers: _jsonHeaders,
-      client: client,
-      auth: Auth2()
-    ) : null;
+  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async {
+    if (Config().calendarUrl == null) {
+      debugPrint('Failed to load events - missing calendar url.');
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode(query?.toQueryJson());
+    Response? response = await Network()
+        .post("${Config().calendarUrl}/v2/events/load", body: requestBody, headers: _jsonHeaders, client: client, auth: Auth2());
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode != 200) {
+      debugPrint('Failed to load events. Reason: $responseCode, $responseBody');
+    }
+    return response;
+  }
 
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
@@ -120,7 +129,7 @@ class Events2 with Service implements NotificationsListener {
   Future<dynamic> loadEventEx(String eventId, {bool admin = false}) async {
     if (Config().calendarUrl != null) {
       String? url = Config().calendarUrl;
-      url = admin ? '$url/admin/events' : '$url/events/load';
+      url = admin ? '$url/admin/events' : '$url/v2/events/load';
       String? body = JsonUtils.encode({"ids":[eventId]});
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
