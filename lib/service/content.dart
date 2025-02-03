@@ -660,7 +660,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> getFileContentItems(List<String> fileNames, String category) async {
+  Future<Uint8List?> getFileContentItems(List<String> fileNames, String category, {String? entityId}) async {
     List<Uint8List> cached = [];
     List<String> load = [];
     for (String fileName in fileNames) {
@@ -672,7 +672,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
     }
 
-    List<String> urls = getFileContentDownloadUrls(fileNames, category);
+    List<String>? urls = await getFileContentDownloadUrls(fileNames, category, entityId: entityId);
 
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Response? response;
@@ -705,12 +705,42 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return null;
   }
 
-  Future<List<String>?> uploadFileContentItems(Map<String, Uint8List> files, String category) async {
+  Future<List<String>?> getFileContentDownloadUrls(List<String> fileNames, String category, {String? entityId}) async {
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileNames': fileNames.join(','),
+        'category': category,
+      };
+      if (entityId != null) {
+        queryParams['entityID'] = entityId;
+      }
+      String url = "${Config().contentUrl}/files/download";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        String? responseBody = response?.body;
+        if (responseBody != null) {
+          return JsonUtils.listStringsValue(responseBody);
+        }
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get URLs for file content downloads. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+
+  Future<List<String>?> uploadFileContentItems(Map<String, Uint8List> files, String category, {String? entityId}) async {
     List<String> uploaded = [];
 
     //TODO: implement number of files limit per upload
+    //TODO: what to do about files with same category, entityID that already exist in storage?
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
-      List<String>? urls = await getFileContentUploadUrls(files.keys.toList(), category);
+      List<String>? urls = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
       if ((urls?.length ?? 0) == files.length) {
         List<Future<StreamedResponse?>> responseFutures = [];
         for (int i = 0; i < files.keys.length; i++) {
@@ -725,29 +755,32 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         }
 
         List<StreamedResponse?> responses = await Future.wait(responseFutures);
-        for (StreamedResponse? response in responses) {
+        for (int i = 0; i < responses.length; i++) {
+          StreamedResponse? response = responses[i];
           int responseCode = response?.statusCode ?? -1;
-          if (responseCode == 200) {
-            return AudioResult.succeed(audioData: audioFile);
+          String name = files.keys.elementAt(i);
+          if (responseCode ~/ 100 == 2) {
+            // response code 2xx
+            uploaded.add(name);
           } else {
             String? responseString = (await response?.stream.bytesToString());
-            debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
-            return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio: $responseString");
+            debugPrint("Failed to upload $name. Reason: $responseCode $responseString");
           }
         }
-
-
       }
     }
     return uploaded;
   }
 
-  Future<List<String>?> getFileContentUploadUrls(List<String> fileNames, String category) async {
+  Future<List<String>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileNames': fileNames.join(','),
         'category': category,
       };
+      if (entityId != null) {
+        queryParams['entityID'] = entityId;
+      }
       String url = "${Config().contentUrl}/files/upload";
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
@@ -756,13 +789,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
       int? responseCode = response?.statusCode;
       if (responseCode == 200) {
-        Uint8List? fileContent = response?.bodyBytes;
-        if (fileContent != null) {
-          return _fileContentCache[key] = fileContent;
+        String? responseBody = response?.body;
+        if (responseBody != null) {
+          return JsonUtils.listStringsValue(responseBody);
         }
       } else {
         String? responseString = response?.body;
-        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
+        debugPrint("Failed to get URLs for file content uploads. Reason: $responseCode $responseString");
       }
     }
     return null;
