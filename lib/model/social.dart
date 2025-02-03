@@ -892,16 +892,17 @@ class Message {
 
   final String? message;
   final bool? read;
+  final bool? draft;
 
   final DateTime? dateSentUtc;
   final DateTime? dateUpdatedUtc;
 
-  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateUpdatedUtc});
+  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.draft, this.dateSentUtc, this.dateUpdatedUtc});
 
   factory Message.fromOther(Message? other, {
     String? id, String? globalId, String? conversationId,
     ConversationMember? sender, ConversationMember? recipient,
-    String? message, bool? read,
+    String? message, bool? read, bool? draft,
     DateTime? dateSentUtc,
     DateTime? dateUpdatedUtc
   }) => Message(
@@ -912,6 +913,7 @@ class Message {
     recipient: recipient ?? other?.recipient,
     message: message ?? other?.message,
     read: read ?? other?.read,
+    draft: draft ?? other?.draft,
     dateSentUtc: dateSentUtc ?? other?.dateSentUtc,
     dateUpdatedUtc: dateUpdatedUtc ?? other?.dateUpdatedUtc,
   );
@@ -924,6 +926,7 @@ class Message {
     recipient: ConversationMember.fromJson(json['recipient']),
     message: JsonUtils.stringValue(json['message']),
     read: JsonUtils.boolValue(json['read']),
+    draft: JsonUtils.boolValue(json['draft']),
     dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
     dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
   ) : null;
@@ -937,6 +940,7 @@ class Message {
       'recipient': recipient?.toJson(),
       'message': message,
       'read': read,
+      'draft': draft,
       'date_sent': DateTimeUtils.utcDateTimeToString(dateSentUtc),
       'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdatedUtc),
     };
