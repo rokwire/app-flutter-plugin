@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
 - Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
+- Bring Admin functionality to UIUC app in progress [#4478](https://github.com/rokwire/illinois-app/issues/4478).
 ### Added
 - Add "Past" event filter [#546](https://github.com/rokwire/app-flutter-plugin/issues/546)
 - Add notifications for editing/deleting conversation [#541](https://github.com/rokwire/app-flutter-plugin/issues/541)
