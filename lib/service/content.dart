@@ -660,52 +660,53 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Uint8List?> getFileContentItems(List<String> fileNames, String category, {String? entityId}) async {
-    List<Uint8List> cached = [];
+  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileNames, String category, {String? entityId}) async {
+    Map<String, Uint8List> files = {};
     List<String> load = [];
     for (String fileName in fileNames) {
       String key = '${fileName}_${category}';
       if (_fileContentCache[key] != null) {
-        cached.add(_fileContentCache[key]!);
+        files[_fileContentCache[key]!];
       } else if (_fileContentFutures[key] == null) {
         load.add(fileName);
       }
     }
 
-    List<String>? urls = await getFileContentDownloadUrls(fileNames, category, entityId: entityId);
+    if (load.isNotEmpty) {
+      Map<String, String>? urls = await getFileContentDownloadUrls(fileNames, category, entityId: entityId);
 
-    if (StringUtils.isNotEmpty(Config().contentUrl)) {
-      Response? response;
-      if (_fileContentFutures[key] == null) {
-        Map<String, String> queryParams = {
-          'fileName': fileName,
-          'category': category,
-        };
-        String url = "${Config().contentUrl}/files";
-        if (queryParams.isNotEmpty) {
-          url = UrlUtils.addQueryParameters(url, queryParams);
+      if (StringUtils.isNotEmpty(Config().contentUrl)) {
+        List<Future<Response?>> responseFutures = [];
+        for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
+          responseFutures.add(_fileContentFutures[urlEntry.key] = Network().get(urlEntry.key,));
         }
 
-        _fileContentFutures[key] = Network().get(url, auth: Auth2());
-      }
-      response = await _fileContentFutures[key];
-      _fileContentFutures[key] = null;
-
-      int? responseCode = response?.statusCode;
-      if (responseCode == 200) {
-        Uint8List? fileContent = response?.bodyBytes;
-        if (fileContent != null) {
-          return _fileContentCache[key] = fileContent;
+        List<Response?> responses = await Future.wait(responseFutures);
+        for (Response? response in responses) {
+          int responseCode = response?.statusCode ?? -1;
+          String? requestUrl = response?.request?.url.toString();
+          String fileName = urls?[requestUrl] ?? '';
+          if (fileName.isNotEmpty) {
+            _fileContentFutures[requestUrl!] = null;
+            // response code 2xx
+            if (responseCode ~/ 100 == 2) {
+              Uint8List? fileContent = response?.bodyBytes;
+              if (fileContent != null) {
+                files[fileName] = _fileContentCache[requestUrl] = fileContent;
+              }
+            } else {
+              debugPrint("Failed to download $fileName. Reason: $responseCode ${response?.body}");
+            }
+          } else {
+            debugPrint("Missing file name for download URL $requestUrl. Response: $responseCode ${response?.body}");
+          }
         }
-      } else {
-        String? responseString = response?.body;
-        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
       }
     }
-    return null;
+    return files;
   }
 
-  Future<List<String>?> getFileContentDownloadUrls(List<String> fileNames, String category, {String? entityId}) async {
+  Future<Map<String, String>?> getFileContentDownloadUrls(List<String> fileNames, String category, {String? entityId}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileNames': fileNames.join(','),
@@ -724,7 +725,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          return JsonUtils.listStringsValue(responseBody);
+          Map<String, dynamic>? urlsJson = JsonUtils.mapValue(responseBody);
+          return JsonUtils.mapOfStringToStringValue(urlsJson);
         }
       } else {
         String? responseString = response?.body;
@@ -738,14 +740,13 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     List<String> uploaded = [];
 
     //TODO: implement number of files limit per upload
-    //TODO: what to do about files with same category, entityID that already exist in storage?
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
-      List<String>? urls = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
+      Map<String, String>? urls = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
       if ((urls?.length ?? 0) == files.length) {
         List<Future<StreamedResponse?>> responseFutures = [];
-        for (int i = 0; i < files.keys.length; i++) {
-          String url = urls![i];
-          String name = files.keys.elementAt(i);
+        for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
+          String url = urlEntry.key;
+          String name = urlEntry.value;
           responseFutures.add(Network().multipartPost(
               url: url,
               fileKey: 'file',
@@ -755,16 +756,21 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         }
 
         List<StreamedResponse?> responses = await Future.wait(responseFutures);
-        for (int i = 0; i < responses.length; i++) {
-          StreamedResponse? response = responses[i];
+        for (StreamedResponse? response in responses) {
           int responseCode = response?.statusCode ?? -1;
-          String name = files.keys.elementAt(i);
-          if (responseCode ~/ 100 == 2) {
+          String? requestUrl = response?.request?.url.toString();
+          String fileName = urls?[requestUrl] ?? '';
+          if (fileName.isNotEmpty) {
             // response code 2xx
-            uploaded.add(name);
+            if (responseCode ~/ 100 == 2) {
+              uploaded.add(fileName);
+            } else {
+              String? responseString = (await response?.stream.bytesToString());
+              debugPrint("Failed to upload $fileName. Reason: $responseCode $responseString");
+            }
           } else {
             String? responseString = (await response?.stream.bytesToString());
-            debugPrint("Failed to upload $name. Reason: $responseCode $responseString");
+            debugPrint("Missing file name for upload URL $requestUrl. Response: $responseCode $responseString");
           }
         }
       }
@@ -772,7 +778,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return uploaded;
   }
 
-  Future<List<String>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId}) async {
+  Future<Map<String, String>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileNames': fileNames.join(','),
@@ -791,7 +797,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          return JsonUtils.listStringsValue(responseBody);
+          Map<String, dynamic>? urlsJson = JsonUtils.mapValue(responseBody);
+          return JsonUtils.mapOfStringToStringValue(urlsJson);
         }
       } else {
         String? responseString = response?.body;
