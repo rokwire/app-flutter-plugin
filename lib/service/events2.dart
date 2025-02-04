@@ -728,8 +728,11 @@ class Events2Query {
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
     TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
-    
-    if (timeFilter == Event2TimeFilter.upcoming) {
+
+    if (timeFilter == Event2TimeFilter.past) {
+      options['start_time_before'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+    }
+    else if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
       options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
     }
