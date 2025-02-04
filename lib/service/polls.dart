@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -119,7 +120,7 @@ class Polls with Service implements NotificationsListener {
         limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
-  Future<Response?> getPollsResponse(PollFilter pollsFilter) async =>
+  Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
     enabled ? Network().post(
       '${Config().quickPollsUrl}/polls/load',
       body: JsonUtils.encode(pollsFilter.toJson()),
@@ -127,7 +128,7 @@ class Polls with Service implements NotificationsListener {
 
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
-    Response? response = await getPollsResponse(pollsFilter);
+    Response? response = await _getPollsResponse(pollsFilter);
     if (response != null) {
       if (response.statusCode == 200) {
         List<dynamic>? responseJson = JsonUtils.decode(response.body);
@@ -800,6 +801,14 @@ class Polls with Service implements NotificationsListener {
 
   int _getLimit(int? limit) {
     return limit ?? 5;
+  }
+
+  /////////////////////////
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().quickPollsUrl != null) ? await Network().get("${Config().quickPollsUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }
 

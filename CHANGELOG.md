@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
 - Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
+- Bring Admin functionality to UIUC app in progress [#4478](https://github.com/rokwire/illinois-app/issues/4478).
 ### Added
 - Add "Past" event filter [#546](https://github.com/rokwire/app-flutter-plugin/issues/546)
 - Add notifications for editing/deleting conversation [#541](https://github.com/rokwire/app-flutter-plugin/issues/541)
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added DateTimeUtils.localDateTimeFileStampToString [#4605](https://github.com/rokwire/illinois-app/issues/4605).
 - Added delimiter paramterer to StringUtils.fullName [#4605](https://github.com/rokwire/illinois-app/issues/4605).
 - Added StringUtils.split API [#4695](https://github.com/rokwire/illinois-app/issues/4695).
+- Added loadUserDataJson API to number of services, make old Response dispatch APIs private [#4264](https://github.com/rokwire/illinois-app/issues/4264).
 ### Fixed
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
