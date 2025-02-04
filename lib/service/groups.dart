@@ -555,6 +555,20 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<GroupResult> syncAuthmanGroups({Map<String, dynamic>? params}) async{
+    if(Config().groupsUrl != null) {
+      await _ensureLogin();
+      String url = '${Config().groupsUrl}/authman/synchronize';
+      String? body = JsonUtils.encode(params);
+      Response? response = await Network().post(url, auth: Auth2(), body: body);
+      int? responseCode = response?.statusCode;
+      return responseCode == 200 ?
+                  GroupResult.success() :
+                  GroupResult.fail(error: response?.errorText);
+    }
+    return GroupResult.fail(error: "Missing Config url");
+  }
+
   // Group Stats
 
   Future<GroupStats?> loadGroupStats(String? groupId) async {
