@@ -555,6 +555,20 @@ class Groups with Service implements NotificationsListener {
     return false;
   }
 
+  Future<GroupResult> syncAuthmanGroups({Map<String, dynamic>? params}) async{
+    if(Config().groupsUrl != null) {
+      await _ensureLogin();
+      String url = '${Config().groupsUrl}/authman/synchronize';
+      String? body = JsonUtils.encode(params);
+      Response? response = await Network().post(url, auth: Auth2(), body: body);
+      int? responseCode = response?.statusCode;
+      return responseCode == 200 ?
+                  GroupResult.success() :
+                  GroupResult.fail(error: response?.errorText);
+    }
+    return GroupResult.fail(error: "Missing Config url");
+  }
+
   // Group Stats
 
   Future<GroupStats?> loadGroupStats(String? groupId) async {
@@ -708,6 +722,28 @@ class Groups with Service implements NotificationsListener {
       }
     }
     return false;
+  }
+
+  Future<GroupResult> addMembers({Group? group, List<Member>? members}) async{
+    if((Config().groupsUrl != null) && StringUtils.isNotEmpty(group?.id) && CollectionUtils.isNotEmpty(members)) {
+      Map<String, dynamic>? bodyJson = {"members": Member.listToJson(members)};
+      String? body = JsonUtils.encode(bodyJson);
+      String url = '${Config().groupsUrl}/group/${group!.id}/members/multi-create';
+      try {
+        await _ensureLogin();
+        Response? response = await Network().put(url, auth: Auth2(), body: body);
+        if((response?.statusCode ?? -1) == 200){
+          _notifyGroupUpdateWithStats(notifyGroupMembershipApproved, group);
+          _updateUserGroupsFromNetSync();
+          return GroupResult.success();
+        } else {
+          return GroupResult.fail(error: response?.errorText);
+        }
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+    return GroupResult.fail();
   }
 
   Future<bool> acceptMembershipMulti({Group? group, List<String>? ids}) async{
@@ -1364,6 +1400,19 @@ class Groups with Service implements NotificationsListener {
     
 }
 
+class GroupResult<T>{
+  String? error;
+  T? data;
+
+  GroupResult({String? this.error, this.data});
+
+  static GroupResult<T> fail<T>({String? error}) => GroupResult(error: error ?? "");
+
+  static GroupResult<T> success<T>({T? data}) => GroupResult(data: data);
+
+  bool get successful => this.error == null;
+}
+
 extension _ResponseExt on Response {
   String? get errorText {
     String? responseBody = body;
@@ -1378,6 +1427,5 @@ extension _ResponseExt on Response {
     else {
       return StringUtils.isNotEmpty(reasonPhrase) ? "$statusCode $reasonPhrase" : "$statusCode";
     }
-
   }
 }
