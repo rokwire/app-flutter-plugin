@@ -15,6 +15,7 @@
  */
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
@@ -155,7 +156,17 @@ class Storage with Service {
       if (removeFirst) {
         await _secureStorage?.delete(key: name);
       }
-      await _secureStorage?.write(key: name, value: value);
+      try {
+        await _secureStorage?.write(key: name, value: value);
+      } catch(e) {
+        if (e is PlatformException && e.details == -25299) {
+          // The specified item already exists in the keychain.
+          await _secureStorage?.delete(key: name);
+          await _secureStorage?.write(key: name, value: value);
+        } else {
+          rethrow;
+        }
+      }
     } else {
       await _secureStorage?.delete(key: name);
     }
