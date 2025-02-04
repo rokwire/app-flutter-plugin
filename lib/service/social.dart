@@ -16,6 +16,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/social.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -467,7 +468,7 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<Response?> loadStatsResponse() async {
+  Future<Response?> _loadStatsResponse() async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load stats response. Reason: missing social url.');
@@ -478,7 +479,7 @@ class Social extends Service implements NotificationsListener {
   }
 
   Future<SocialStats?> loadStats() async {
-    Response? response = await loadStatsResponse();
+    Response? response = await _loadStatsResponse();
     int? responseCode = response?.statusCode;
     String? responseString = response?.body;
     if (responseCode == 200) {
@@ -804,6 +805,13 @@ class Social extends Service implements NotificationsListener {
       Log.e('Failed to load accounts. Reason: $responseCode, $responseBody');
       return null;
     }
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().socialUrl != null) ? await Network().get("${Config().socialUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }
 
