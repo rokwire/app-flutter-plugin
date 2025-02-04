@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -338,7 +339,7 @@ class Inbox with Service implements NotificationsListener {
   }
 
   //UserInfo
-  Future<Response?> loadUserInfoResponse() async {
+  Future<Response?> _loadUserInfoResponse() async {
     try {
       return (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user", auth: Auth2()) : null;
     } catch (e) {
@@ -350,7 +351,7 @@ class Inbox with Service implements NotificationsListener {
 
   Future<void> _loadUserInfo() async {
     try {
-      Response? response = await loadUserInfoResponse();
+      Response? response = await _loadUserInfoResponse();
       if (response?.statusCode == 200) {
         Map<String, dynamic>? jsonData = JsonUtils.decode(response?.body);
         InboxUserInfo? userInfo = InboxUserInfo.fromJson(jsonData);
@@ -440,5 +441,12 @@ class Inbox with Service implements NotificationsListener {
 
   int get unreadMessagesCount {
     return _unreadMessagesCount ?? 0;
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }

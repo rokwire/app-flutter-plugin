@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
@@ -1324,13 +1324,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Account
 
-  Future<Response?> loadAccountResponse() async {
+  Future<Response?> _loadAccountResponse() async {
     return ((Config().coreUrl != null) && (_token?.accessToken != null)) ?
       Network().get("${Config().coreUrl}/services/account", auth: Auth2()) : null;
   }
 
   Future<Auth2Account?> _loadAccount() async {
-    Response? response = await loadAccountResponse();
+    Response? response = await _loadAccountResponse();
     return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
   }
 
@@ -1355,6 +1355,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         NotificationService().notify(notifyPrivacyChanged);
       }
     }
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().coreUrl != null) ? await Network().get("${Config().coreUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 
   // Helpers
