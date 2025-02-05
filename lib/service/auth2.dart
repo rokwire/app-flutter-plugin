@@ -1360,7 +1360,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   // User Data
 
   Future<Map<String, dynamic>?> loadUserDataJson() async {
-    Response? response = (Config().coreUrl != null) ? await Network().get("${Config().coreUrl}/user-data", auth: Auth2()) : null;
+    Response? response = (Config().coreUrl != null) ? await Network().get("${Config().coreUrl}/services/user-data", auth: Auth2()) : null;
     return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 

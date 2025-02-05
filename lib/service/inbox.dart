@@ -446,7 +446,7 @@ class Inbox with Service implements NotificationsListener {
   // User Data
 
   Future<Map<String, dynamic>?> loadUserDataJson() async {
-    Response? response = (Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/user-data", auth: Auth2()) : null;
+    Response? response = (Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user-data", auth: Auth2()) : null;
     return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }
