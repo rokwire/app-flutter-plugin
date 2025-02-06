@@ -977,12 +977,13 @@ class Message {
 class Conversation {
   final String? id;
   final String? lastMessage;
+  final Message? lastMessageInfo;
   final DateTime? lastActivityTimeUtc;
   final bool? mute;
   final List<ConversationMember>? members;
   final DateTime? dateCreatedUtc;
 
-  Conversation({this.id, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc});
+  Conversation({this.id, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc, this.lastMessageInfo});
 
   static Conversation? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -992,6 +993,7 @@ class Conversation {
     return Conversation(
       id: JsonUtils.stringValue(json['id']),
       lastMessage: JsonUtils.stringValue(json['info']),
+      lastMessageInfo: Message.fromJson(json['last_message']),
       lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
       mute: JsonUtils.boolValue(json['mute']),
       members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
@@ -1003,6 +1005,7 @@ class Conversation {
     return {
       'id': id,
       'info': lastMessage,
+      'last_message': lastMessageInfo,
       'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
       'mute': mute,
       'members': ConversationMember.listToJson(members),
