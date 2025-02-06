@@ -508,6 +508,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
     String url = '$serviceUrl/profile_photo';
     Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       NotificationService().notify(notifyUserProfilePictureChanged, null);
@@ -610,6 +611,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
     String url = "$serviceUrl/voice_record";
     Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return AudioResult.succeed();
