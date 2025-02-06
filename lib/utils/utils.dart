@@ -829,7 +829,7 @@ class JsonUtils {
       try {
         jsonContent = json.decode(jsonString!);
       } catch (e) {
-        debugPrint(e.toString());
+        // debugPrint(e.toString());
       }
     }
     return jsonContent;
