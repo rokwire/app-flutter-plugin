@@ -119,8 +119,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         description: 'Failed to initialize Content service.',
       );
     }
-
-    await super.initService();
   }
 
   @override
