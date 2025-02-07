@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
 - Fixed DeepLink.notifyUri API [#4561](https://github.com/rokwire/illinois-app/issues/4561).
+- Do not call Content.initService twice [#4756](https://github.com/rokwire/illinois-app/issues/4756).
 
 ## [1.7.4] - 2024-11-07
 ### Fixed
