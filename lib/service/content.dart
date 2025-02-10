@@ -50,7 +50,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String _widgetsContentCategory = "widgets";
   static const String _contentItemsCacheFileName = "contentItems.json";
 
-  static const String conversationsContentCategory = "conservations";
+  static const String conversationsContentCategory = "conversations";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
@@ -727,7 +727,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          Map<String, dynamic>? urlsJson = JsonUtils.mapValue(responseBody);
+          Map<String, dynamic>? urlsJson = JsonUtils.decodeMap(responseBody);
           return JsonUtils.mapOfStringToStringValue(urlsJson);
         }
       } else {
@@ -799,7 +799,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          Map<String, dynamic>? urlsJson = JsonUtils.mapValue(responseBody);
+          Map<String, dynamic>? urlsJson = JsonUtils.decodeMap(responseBody);
           return JsonUtils.mapOfStringToStringValue(urlsJson);
         }
       } else {

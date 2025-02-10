@@ -747,7 +747,7 @@ class Social extends Service implements NotificationsListener {
 
 
 
-  Future<List<Message>?> createConversationMessage({required String conversationId, required String message}) async {
+  Future<List<Message>?> createConversationMessage({required String conversationId, required String message, List<FileAttachment>? fileAttachments}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
@@ -758,7 +758,8 @@ class Social extends Service implements NotificationsListener {
       return null;
     }
     String? requestBody = JsonUtils.encode({
-      'message': message
+      'message': message,
+      'file_attachments': FileAttachment.listToJson(fileAttachments),
     });
     Response? response = await Network().post('$socialUrl/conversations/$conversationId/messages/send', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
