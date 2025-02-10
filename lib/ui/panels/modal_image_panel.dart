@@ -86,7 +86,8 @@ class ModalImagePanel extends StatelessWidget {
             Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
                 Expanded(child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                    Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget)) : Container()
+                    Expanded(child: Center(
+                      child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget)) : Container(),)
                     ),
                   ],)
                 ),
