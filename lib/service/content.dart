@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -118,8 +119,6 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         description: 'Failed to initialize Content service.',
       );
     }
-
-    await super.initService();
   }
 
   @override
@@ -507,6 +506,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
     String url = '$serviceUrl/profile_photo';
     Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       NotificationService().notify(notifyUserProfilePictureChanged, null);
@@ -522,6 +522,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     String? url = getUserPhotoUrl(accountId: accountId, type: type);
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
+      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
       return (response?.statusCode == 200) ? ImagesResult.succeed(imageData: response?.bodyBytes) : ImagesResult.error(ImagesErrorType.retrieveFailed, response?.body);
     }
     else {
@@ -608,6 +609,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
     String url = "$serviceUrl/voice_record";
     Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
       return AudioResult.succeed();
@@ -619,11 +621,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) =>
-      loadUserNamePronunciationFromUrl(getUserNamePronunciationUrl(accountId: accountId));
+    loadUserNamePronunciationFromUrl(getUserNamePronunciationUrl(accountId: accountId));
 
   Future<AudioResult?> loadUserNamePronunciationFromUrl(String? url) async {
     if (StringUtils.isNotEmpty(url)) {
       Response? response = await Network().get(url, auth: Auth2());
+      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
       return  (response?.statusCode == 200) ? AudioResult.succeed(audioData: response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
     }
     else {

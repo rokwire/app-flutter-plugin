@@ -793,19 +793,19 @@ class Event2Grouping {
 
   static List<Event2Grouping> superEvents({String? superEventId}) => <Event2Grouping>[
     Event2Grouping(
-            type: Event2GroupingType.superEvent,
-            superEventId: (superEventId != null) ? superEventId : _noneFieldValue,
-            recurrenceId: _ignoreFieldValue,
-            displayAsIndividual: _ignoreFieldValue)
-      ];
+      type: Event2GroupingType.superEvent,
+      superEventId: (superEventId != null) ? superEventId : _noneFieldValue,
+      recurrenceId: _ignoreFieldValue,
+      displayAsIndividual: _ignoreFieldValue
+    )];
 
   static List<Event2Grouping> recurringEvents({String? groupId, bool? individual}) => <Event2Grouping>[
-        Event2Grouping(
-            type: Event2GroupingType.recurrence,
-            superEventId: _ignoreFieldValue,
-            recurrenceId: (groupId != null) ? groupId : _ignoreFieldValue,
-            displayAsIndividual: (individual != null) ? individual.toString() : _ignoreFieldValue)
-      ];
+    Event2Grouping(
+      type: Event2GroupingType.recurrence,
+      superEventId: _ignoreFieldValue,
+      recurrenceId: (groupId != null) ? groupId : _ignoreFieldValue,
+      displayAsIndividual: (individual != null) ? individual.toString() : _ignoreFieldValue)
+    ];
 
   static List<Event2Grouping> individualEvents() => <Event2Grouping>[
     // Events without grouping type
@@ -1207,10 +1207,13 @@ String? event2TypeToString(Event2Type? value) {
 ///////////////////////////////
 /// Event2TimeFilter
 
-enum Event2TimeFilter { upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
+enum Event2TimeFilter { past, upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
 
 Event2TimeFilter? event2TimeFilterFromString(String? value) {
-  if (value == 'upcoming') {
+  if (value == 'past') {
+    return Event2TimeFilter.past;
+  }
+  else if (value == 'upcoming') {
     return Event2TimeFilter.upcoming;
   }
   else if (value == 'today') {
@@ -1247,6 +1250,7 @@ Event2TimeFilter? event2TimeFilterFromString(String? value) {
 
 String? event2TimeFilterToString(Event2TimeFilter? value) {
   switch (value) {
+    case Event2TimeFilter.past: return 'past';
     case Event2TimeFilter.upcoming: return 'upcoming';
     case Event2TimeFilter.today: return 'today';
     case Event2TimeFilter.tomorrow: return 'tomorrow';
