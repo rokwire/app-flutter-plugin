@@ -793,19 +793,19 @@ class Event2Grouping {
 
   static List<Event2Grouping> superEvents({String? superEventId}) => <Event2Grouping>[
     Event2Grouping(
-            type: Event2GroupingType.superEvent,
-            superEventId: (superEventId != null) ? superEventId : _noneFieldValue,
-            recurrenceId: _ignoreFieldValue,
-            displayAsIndividual: _ignoreFieldValue)
-      ];
+      type: Event2GroupingType.superEvent,
+      superEventId: (superEventId != null) ? superEventId : _noneFieldValue,
+      recurrenceId: _ignoreFieldValue,
+      displayAsIndividual: _ignoreFieldValue
+    )];
 
   static List<Event2Grouping> recurringEvents({String? groupId, bool? individual}) => <Event2Grouping>[
-        Event2Grouping(
-            type: Event2GroupingType.recurrence,
-            superEventId: _ignoreFieldValue,
-            recurrenceId: (groupId != null) ? groupId : _ignoreFieldValue,
-            displayAsIndividual: (individual != null) ? individual.toString() : _ignoreFieldValue)
-      ];
+    Event2Grouping(
+      type: Event2GroupingType.recurrence,
+      superEventId: _ignoreFieldValue,
+      recurrenceId: (groupId != null) ? groupId : _ignoreFieldValue,
+      displayAsIndividual: (individual != null) ? individual.toString() : _ignoreFieldValue)
+    ];
 
   static List<Event2Grouping> individualEvents() => <Event2Grouping>[
     // Events without grouping type
