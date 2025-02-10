@@ -50,6 +50,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String _widgetsContentCategory = "widgets";
   static const String _contentItemsCacheFileName = "contentItems.json";
 
+  static const String conversationsContentCategory = "conservations";
+
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
 
