@@ -16,7 +16,9 @@
 
 import 'package:firebase_core/firebase_core.dart' as google;
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class FirebaseCore extends Service {
 
@@ -55,14 +57,26 @@ class FirebaseCore extends Service {
     }
   }
 
+  // This is required for the web app
+  @override
+  Set<Service> get serviceDependsOn => { Config() };
+
   Future<void> initFirebase() async {
     //TBD: DDWEB - implement for web - firebase options
+    String? firebaseApiKey = Config().firebaseApiKey;
+    String? firebaseAppId = Config().firebaseAppId;
+    String? firebaseMessagingSenderId = Config().firebaseMessagingSenderId;
+    String? firebaseProjectId = Config().firebaseProjectId;
+    print('DDWEB: firebaseApiKey=$firebaseApiKey');
+    print('DDWEB: firebaseAppId=$firebaseAppId');
+    print('DDWEB: firebaseMessagingSenderId=$firebaseMessagingSenderId');
+    print('DDWEB: firebaseProjectId=$firebaseProjectId');
     google.FirebaseOptions? firebaseOptions = kIsWeb
         ? google.FirebaseOptions(
-            apiKey: 'testApiKeyForUIUCWeb',
-            appId: 'testAppIdForUIUCWeb',
-            messagingSenderId: 'testMessagingSenderIdForUIUCWeb',
-            projectId: 'testProjectIdForUIUCWeb',
+            apiKey: StringUtils.ensureNotEmpty(firebaseApiKey),
+            appId: StringUtils.ensureNotEmpty(firebaseAppId),
+            messagingSenderId: StringUtils.ensureNotEmpty(firebaseMessagingSenderId),
+            projectId: StringUtils.ensureNotEmpty(firebaseProjectId),
           )
         : null;
     _firebaseApp ??= await google.Firebase.initializeApp(options: firebaseOptions);

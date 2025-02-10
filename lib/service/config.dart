@@ -617,6 +617,13 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
 
+  // Getters: Firebase
+  //TBD: DDWEB - read these from the config when available
+  String? get firebaseApiKey => 'illinoisWebFirebaseKey';
+  String? get firebaseAppId => 'illinoisWebFirebaseAppId';
+  String? get firebaseMessagingSenderId => 'illinoisWebFirebaseMessagingSenderId';
+  String? get firebaseProjectId => 'illinoisWebFirebaseProjectId';
+
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
