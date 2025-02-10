@@ -415,7 +415,7 @@ class Groups with Service implements NotificationsListener {
 
 
       String url = '${Config().groupsUrl}/v2/groups';
-      Response? response = await Network().get(url, auth: Auth2(), body: post);
+      Response? response = await Network().post(url, auth: Auth2(), body: post);
       int responseCode = response?.statusCode ?? -1;
       String? responseBody = response?.body;
       if (responseCode == 200) {
