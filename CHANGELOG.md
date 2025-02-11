@@ -44,7 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
 - Fixed DeepLink.notifyUri API [#4561](https://github.com/rokwire/illinois-app/issues/4561).
 - Do not call Content.initService twice [#4756](https://github.com/rokwire/illinois-app/issues/4756).
-
+- Fixed loadResearchProjects for open research projects [#4699](https://github.com/rokwire/illinois-app/issues/4699).
+  
 ## [1.7.4] - 2024-11-07
 ### Fixed
 - Fixed possible unhandled exception when parsing URLs.
