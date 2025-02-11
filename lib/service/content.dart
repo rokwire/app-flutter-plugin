@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
@@ -741,7 +742,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return null;
   }
 
-  Future<List<String>?> uploadFileContentItems(Map<String, Uint8List> files, String category, {String? entityId}) async {
+  Future<List<String>?> uploadFileContentItems(Map<String, FutureOr<Uint8List>> files, String category, {String? entityId}) async {
     List<String> uploaded = [];
 
     //TODO: implement number of files limit per upload
@@ -752,7 +753,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
           String url = urlEntry.key;
           String name = urlEntry.value;
-          responseFutures.add(Network().put(url, body: files[name],));
+          Uint8List? bytes = await files[name];
+          if (bytes != null) {
+            responseFutures.add(Network().put(url, body: bytes));
+          }
         }
 
         List<Response?> responses = await Future.wait(responseFutures);
