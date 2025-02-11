@@ -745,20 +745,15 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
       Map<String, String>? urls = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
       if ((urls?.length ?? 0) == files.length) {
-        List<Future<StreamedResponse?>> responseFutures = [];
+        List<Future<Response?>> responseFutures = [];
         for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
           String url = urlEntry.key;
           String name = urlEntry.value;
-          responseFutures.add(Network().multipartPost(
-              url: url,
-              fileKey: 'file',
-              fileName: name,
-              fileBytes: files[name],
-          ));
+          responseFutures.add(Network().put(url, body: files[name],));
         }
 
-        List<StreamedResponse?> responses = await Future.wait(responseFutures);
-        for (StreamedResponse? response in responses) {
+        List<Response?> responses = await Future.wait(responseFutures);
+        for (Response? response in responses) {
           int responseCode = response?.statusCode ?? -1;
           String? requestUrl = response?.request?.url.toString();
           String fileName = urls?[requestUrl] ?? '';
@@ -767,11 +762,11 @@ class Content with Service implements NotificationsListener, ContentItemCategory
             if (responseCode ~/ 100 == 2) {
               uploaded.add(fileName);
             } else {
-              String? responseString = (await response?.stream.bytesToString());
+              String? responseString = response?.body;
               debugPrint("Failed to upload $fileName. Reason: $responseCode $responseString");
             }
           } else {
-            String? responseString = (await response?.stream.bytesToString());
+            String? responseString = response?.body;
             debugPrint("Missing file name for upload URL $requestUrl. Response: $responseCode $responseString");
           }
         }
