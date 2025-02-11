@@ -578,7 +578,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   
   Map<String, dynamic> get settings                => JsonUtils.mapValue(content['settings'])  ?? {};
   Map<String, dynamic> get upgradeInfo             => JsonUtils.mapValue(content['upgrade']) ?? {};
-  
+
+  Map<String, dynamic> get firebase {
+    Map<String, dynamic> firebaseMap = JsonUtils.mapValue(content['firebase']) ?? {};
+    return JsonUtils.mapValue(firebaseMap[operatingSystem]) ?? {};
+  }
+
   List<dynamic>? get supportedLocales              => JsonUtils.listValue(content['languages']);
 
   // Getters: platformBuildingBlocks
@@ -618,11 +623,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   // Getters: Firebase
-  //TBD: DDWEB - read these from the config when available
-  String? get firebaseApiKey => 'illinoisWebFirebaseKey';
-  String? get firebaseAppId => 'illinoisWebFirebaseAppId';
-  String? get firebaseMessagingSenderId => 'illinoisWebFirebaseMessagingSenderId';
-  String? get firebaseProjectId => 'illinoisWebFirebaseProjectId';
+  String? get firebaseApiKey => JsonUtils.stringValue(firebase['firebaseApiKey']);
+  String? get firebaseAppId => JsonUtils.stringValue(firebase['firebaseAppId']);
+  String? get firebaseMessagingSenderId => JsonUtils.stringValue(firebase['firebaseMessagingSenderId']);
+  String? get firebaseProjectId => JsonUtils.stringValue(firebase['firebaseProjectId']);
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;

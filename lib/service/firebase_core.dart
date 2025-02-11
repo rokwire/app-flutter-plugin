@@ -62,23 +62,21 @@ class FirebaseCore extends Service {
   Set<Service> get serviceDependsOn => { Config() };
 
   Future<void> initFirebase() async {
-    //TBD: DDWEB - implement for web - firebase options
-    String? firebaseApiKey = Config().firebaseApiKey;
-    String? firebaseAppId = Config().firebaseAppId;
-    String? firebaseMessagingSenderId = Config().firebaseMessagingSenderId;
-    String? firebaseProjectId = Config().firebaseProjectId;
-    print('DDWEB: firebaseApiKey=$firebaseApiKey');
-    print('DDWEB: firebaseAppId=$firebaseAppId');
-    print('DDWEB: firebaseMessagingSenderId=$firebaseMessagingSenderId');
-    print('DDWEB: firebaseProjectId=$firebaseProjectId');
-    google.FirebaseOptions? firebaseOptions = kIsWeb
-        ? google.FirebaseOptions(
-            apiKey: StringUtils.ensureNotEmpty(firebaseApiKey),
-            appId: StringUtils.ensureNotEmpty(firebaseAppId),
-            messagingSenderId: StringUtils.ensureNotEmpty(firebaseMessagingSenderId),
-            projectId: StringUtils.ensureNotEmpty(firebaseProjectId),
-          )
-        : null;
+    google.FirebaseOptions? firebaseOptions;
+    if (kIsWeb) {
+      String? firebaseApiKey = Config().firebaseApiKey;
+      String? firebaseAppId = Config().firebaseAppId;
+      String? firebaseMessagingSenderId = Config().firebaseMessagingSenderId;
+      String? firebaseProjectId = Config().firebaseProjectId;
+
+      firebaseOptions = google.FirebaseOptions(
+        apiKey: StringUtils.ensureNotEmpty(firebaseApiKey),
+        appId: StringUtils.ensureNotEmpty(firebaseAppId),
+        messagingSenderId: StringUtils.ensureNotEmpty(firebaseMessagingSenderId),
+        projectId: StringUtils.ensureNotEmpty(firebaseProjectId),
+      );
+    }
+
     _firebaseApp ??= await google.Firebase.initializeApp(options: firebaseOptions);
   }
 
