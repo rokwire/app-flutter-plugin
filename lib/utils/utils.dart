@@ -285,6 +285,8 @@ extension StringCompareGit4143 on String {
 }
 
 class ListUtils {
+  static final RegExp commonDelimiterRegExp = RegExp(r'[\s,;]+');
+
   static List<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? List<T>.from(elements) : null;
   }
@@ -844,7 +846,7 @@ class JsonUtils {
       try {
         jsonContent = json.decode(jsonString!);
       } catch (e) {
-        debugPrint(e.toString());
+        // debugPrint(e.toString());
       }
     }
     return jsonContent;

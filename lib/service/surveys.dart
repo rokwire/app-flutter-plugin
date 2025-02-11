@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
@@ -326,11 +327,11 @@ class Surveys /* with Service */ {
 
   // Accessories
 
-  Future<Response?> loadCreatorSurveysResponse() async => enabled ?
+  Future<Response?> _loadCreatorSurveysResponse() async => enabled ?
     Network().get('${Config().surveysUrl}/creator/surveys', auth: Auth2()) : null;
 
   Future<List<Survey>?> loadCreatorSurveys() async {
-    Response? response = await loadCreatorSurveysResponse();
+    Response? response = await _loadCreatorSurveysResponse();
     return (response?.statusCode == 200) ? Survey.listFromJson(JsonUtils.decodeList(response?.body)) : null;
   }
 
@@ -475,7 +476,7 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<Response?> loadUserSurveyResponsesResponse({
+  Future<Response?> _loadUserSurveyResponsesResponse({
     List<String>? surveyIDs, List<String>? surveyTypes,
     DateTime? startDate, DateTime? endDate, int?
     limit, int? offset
@@ -518,7 +519,7 @@ class Surveys /* with Service */ {
     DateTime? startDate, DateTime? endDate,
     int? limit, int? offset
   }) async {
-    Response? response = await loadUserSurveyResponsesResponse(
+    Response? response = await _loadUserSurveyResponsesResponse(
       surveyIDs: surveyIDs, surveyTypes: surveyTypes,
       startDate: startDate, endDate: endDate,
       limit: limit, offset: offset
@@ -575,4 +576,12 @@ class Surveys /* with Service */ {
   // Enabled
 
   bool get enabled => StringUtils.isNotEmpty(Config().surveysUrl);
+
+  /////////////////////////
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().surveysUrl != null) ? await Network().get("${Config().surveysUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
+  }
 }

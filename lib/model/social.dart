@@ -1030,13 +1030,14 @@ class FileAttachment {
 
 class Conversation {
   final String? id;
-  final String? lastMessage;
+  final String? lastMessageText;
+  final Message? lastMessage;
   final DateTime? lastActivityTimeUtc;
   final bool? mute;
   final List<ConversationMember>? members;
   final DateTime? dateCreatedUtc;
 
-  Conversation({this.id, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc});
+  Conversation({this.id, this.lastMessageText, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc });
 
   static Conversation? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -1045,7 +1046,8 @@ class Conversation {
 
     return Conversation(
       id: JsonUtils.stringValue(json['id']),
-      lastMessage: JsonUtils.stringValue(json['info']),
+      lastMessageText: JsonUtils.stringValue(json['info']),
+      lastMessage: Message.fromJson(json['last_message']),
       lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
       mute: JsonUtils.boolValue(json['mute']),
       members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
@@ -1056,7 +1058,8 @@ class Conversation {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'info': lastMessage,
+      'info': lastMessageText,
+      'last_message': lastMessage,
       'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
       'mute': mute,
       'members': ConversationMember.listToJson(members),

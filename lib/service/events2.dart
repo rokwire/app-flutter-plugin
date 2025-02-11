@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
@@ -85,7 +86,7 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
-  Future<Response?> loadEventsResponse(Events2Query? query, {Client? client}) async {
+  Future<Response?> _loadEventsResponse(Events2Query? query, {Client? client}) async {
     if (Config().calendarUrl == null) {
       debugPrint('Failed to load events - missing calendar url.');
       return null;
@@ -105,7 +106,7 @@ class Events2 with Service implements NotificationsListener {
 
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
-    Response? response = await loadEventsResponse(query, client: client);
+    Response? response = await _loadEventsResponse(query, client: client);
     //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
     return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
   }
@@ -547,6 +548,13 @@ class Events2 with Service implements NotificationsListener {
     }
   }
 
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().calendarUrl != null) ? await Network().get("${Config().calendarUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
+  }
+
   // Helpers
 
   void _notifyGroupsForModifiedEvents({Set<String>? groupIds}) {
@@ -729,8 +737,11 @@ class Events2Query {
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
     TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
-    
-    if (timeFilter == Event2TimeFilter.upcoming) {
+
+    if (timeFilter == Event2TimeFilter.past) {
+      options['start_time_before'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+    }
+    else if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
       options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
     }
