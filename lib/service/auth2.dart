@@ -23,6 +23,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   static const String notifyLoginStarted      = "edu.illinois.rokwire.auth2.login.started";
   static const String notifyLoginSucceeded    = "edu.illinois.rokwire.auth2.login.succeeded";
+  static const String notifyLoginAnonymousSucceeded = "edu.illinois.rokwire.auth2.login.anonymous.succeeded";
   static const String notifyLoginFailed       = "edu.illinois.rokwire.auth2.login.failed";
   static const String notifyLoginChanged      = "edu.illinois.rokwire.auth2.login.changed";
   static const String notifyLoginFinished     = "edu.illinois.rokwire.auth2.login.finished";
@@ -342,6 +343,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           Storage().auth2AnonymousId = _anonymousId = anonymousId;
           Storage().auth2AnonymousToken = _anonymousToken = anonymousToken;
           _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
+          if (kIsWeb) {
+            NotificationService().notify(notifyLoginAnonymousSucceeded);
+          }
           return true;
         }
       }
