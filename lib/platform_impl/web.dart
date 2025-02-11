@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:html';
+
+import 'package:flutter/foundation.dart';
 import 'package:js/js.dart';
 import 'package:js/js_util.dart';
 import 'package:rokwire_plugin/platform_impl/base.dart';
@@ -39,5 +42,26 @@ class PasskeyImpl extends BasePasskey {
   @override
   Future<String?> createPasskey(String? optionsJson) {
     return promiseToFuture<String?>(createPasskeyJS(optionsJson));
+  }
+}
+
+class FileImpl extends BaseFile {
+  Future<bool> saveDownload(String name, Uint8List data) async {
+    // setup
+    final blob = Blob([data]);
+    final url = Url.createObjectUrlFromBlob(blob);
+    final anchor = document.createElement('a') as AnchorElement
+      ..href = url
+      ..style.display = 'none'
+      ..download = name;
+    document.body?.children.add(anchor);
+
+    // download file
+    anchor.click();
+
+    // cleanup
+    document.body?.children.remove(anchor);
+    Url.revokeObjectUrl(url);
+    return true;
   }
 }

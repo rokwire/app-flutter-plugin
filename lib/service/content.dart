@@ -671,7 +671,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     for (String fileName in fileNames) {
       String key = '${fileName}_${category}';
       if (_fileContentCache[key] != null) {
-        files[_fileContentCache[key]!];
+        files[fileName] = _fileContentCache[key]!;
       } else if (_fileContentFutures[key] == null) {
         load.add(fileName);
       }
@@ -697,7 +697,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
             if (responseCode ~/ 100 == 2) {
               Uint8List? fileContent = response?.bodyBytes;
               if (fileContent != null) {
-                files[fileName] = _fileContentCache[requestUrl] = fileContent;
+                files[fileName] = _fileContentCache['${fileName}_${category}'] = fileContent;
               }
             } else {
               debugPrint("Failed to download $fileName. Reason: $responseCode ${response?.body}");

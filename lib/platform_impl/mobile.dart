@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
 import 'package:rokwire_plugin/platform_impl/base.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:flutter_passkey/flutter_passkey.dart';
+import 'package:path_provider/path_provider.dart';
 
 class PasskeyImpl extends BasePasskey {
   final flutterPasskeyPlugin = FlutterPasskey();
@@ -45,5 +49,19 @@ class PasskeyImpl extends BasePasskey {
     }
 
     return null;
+  }
+}
+
+class FileImpl extends BaseFile {
+  Future<bool> saveDownload(String name, Uint8List data) async {
+    if (Platform.isAndroid) {
+      Directory downloadsDir = Directory("/storage/emulated/0/Download");
+      File downloadsFile = File('${downloadsDir.path}/$name');
+      downloadsFile = await downloadsFile.writeAsBytes(data);
+      FileStat stats = await downloadsFile.stat();
+      return stats.size > 0;
+    }
+    //TODO: implement for iOS
+    return false;
   }
 }

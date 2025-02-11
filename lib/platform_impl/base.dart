@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:flutter/foundation.dart';
+
 abstract class BasePasskey {
   Future<bool> arePasskeysSupported();
   Future<String?> getPasskey(String? optionsJson);
   Future<String?> createPasskey(String? optionsJson);
+}
+
+abstract class BaseFile {
+  Future<bool> saveDownload(String name, Uint8List data);
 }
