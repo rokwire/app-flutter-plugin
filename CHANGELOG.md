@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added delimiter paramterer to StringUtils.fullName [#4605](https://github.com/rokwire/illinois-app/issues/4605).
 - Added StringUtils.split API [#4695](https://github.com/rokwire/illinois-app/issues/4695).
 - Added loadUserDataJson API to number of services, make old Response dispatch APIs private [#4264](https://github.com/rokwire/illinois-app/issues/4264).
+- Acknowledge GroupSettings: "content_items": GroupContentItem.listToJson(contentItems) [4697](https://github.com/rokwire/illinois-app/issues/4697).
 ### Fixed
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
