@@ -623,10 +623,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   // Getters: Firebase
-  String? get firebaseApiKey => JsonUtils.stringValue(firebase['firebaseApiKey']);
-  String? get firebaseAppId => JsonUtils.stringValue(firebase['firebaseAppId']);
-  String? get firebaseMessagingSenderId => JsonUtils.stringValue(firebase['firebaseMessagingSenderId']);
-  String? get firebaseProjectId => JsonUtils.stringValue(firebase['firebaseProjectId']);
+  String? get firebaseApiKey => JsonUtils.stringValue(firebase['apiKey']);
+  String? get firebaseAppId => JsonUtils.stringValue(firebase['appId']);
+  String? get firebaseMessagingSenderId => JsonUtils.stringValue(firebase['messagingSenderId']);
+  String? get firebaseProjectId => JsonUtils.stringValue(firebase['projectId']);
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
