@@ -1034,8 +1034,9 @@ class GroupError {
 class GroupSettings { //TBD move the rest setting in this section
   MemberInfoPreferences? memberInfoPreferences;
   MemberPostPreferences? memberPostPreferences;
+  List<GroupContentItem>? contentItems;
 
-  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences});
+  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences, this.contentItems});
 
   static GroupSettings? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -1044,13 +1045,15 @@ class GroupSettings { //TBD move the rest setting in this section
     return GroupSettings(
       memberInfoPreferences: MemberInfoPreferences.fromJson(JsonUtils.mapValue(json['member_info_preferences'])),
       memberPostPreferences: MemberPostPreferences.fromJson(JsonUtils.mapValue(json['post_preferences'])),
+      contentItems: GroupContentItem.listFromJson(JsonUtils.listValue(json['content_items']))
     );
   }
 
   static GroupSettings? fromOther(GroupSettings? other) {
     return (other != null) ? GroupSettings(
       memberInfoPreferences: MemberInfoPreferences.fromOther(other.memberInfoPreferences),
-      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences)
+      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences),
+      contentItems: other.contentItems != null ? List<GroupContentItem>.from(other.contentItems!) : null
     ) : null;
   }
 
@@ -1058,6 +1061,7 @@ class GroupSettings { //TBD move the rest setting in this section
     return {
       "member_info_preferences": memberInfoPreferences?.toJson(),
       "post_preferences": memberPostPreferences?.toJson(),
+      "content_items": GroupContentItem.listToJson(contentItems)
     };
   }
 
@@ -1065,17 +1069,73 @@ class GroupSettings { //TBD move the rest setting in this section
   bool operator ==(other) =>
       (other is GroupSettings) &&
           (other.memberInfoPreferences == memberInfoPreferences) &&
-          (other.memberPostPreferences == memberPostPreferences);
+          (other.memberPostPreferences == memberPostPreferences)&&
+          (other.contentItems == contentItems);
 
 
   @override
   int get hashCode =>
       (memberInfoPreferences?.hashCode ?? 0) ^
-      (memberPostPreferences?.hashCode ?? 0);
+      (memberPostPreferences?.hashCode ?? 0) ^
+      (contentItems?.hashCode ?? 0);
 }
 
 /////////////////////////////
 //Group Settings - Member Info Preferences
+
+class GroupContentItem {
+  final String? code;
+
+  GroupContentItem({this.code});
+
+  static GroupContentItem? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return GroupContentItem(
+        code: JsonUtils.stringValue(json['code'])
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "code": code,
+    };
+  }
+
+  static List<GroupContentItem>? listFromJson(List<dynamic>? json) {
+    List<GroupContentItem>? values;
+    if (json != null) {
+      values = <GroupContentItem>[];
+      for (dynamic entry in json) {
+        ListUtils.add(values, GroupContentItem.fromJson(JsonUtils.mapValue(entry)));
+      }
+    }
+    return values;
+  }
+
+  static List<Map<String,dynamic>?>? listToJson(List<GroupContentItem>? values) {
+    List<Map<String,dynamic>>? result;
+    if (values != null) {
+      result = <Map<String,dynamic>>[];
+      for (GroupContentItem value in values) {
+        ListUtils.add(result, value.toJson());
+      }
+    }
+    return result;
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is GroupContentItem) &&
+          (other.code == code);
+
+
+  @override
+  int get hashCode =>
+      (code?.hashCode ?? 0);
+}
 
 class MemberInfoPreferences {
   bool? allowMemberInfo;

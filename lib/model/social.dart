@@ -36,6 +36,8 @@ class Post {
 
   final PostDetails? details;
 
+  final bool? pinned;
+
   DateTime? dateActivatedUtc;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
@@ -53,6 +55,7 @@ class Post {
       this.notification,
       this.notifications,
       this.details,
+      this.pinned,
       this.dateActivatedUtc,
       this.dateCreatedUtc,
       this.dateUpdatedUtc});
@@ -75,6 +78,7 @@ class Post {
       notification: PostNotification.fromJson(JsonUtils.mapValue(json['notification'])),
       notifications: PostNotification.listFromJson(JsonUtils.listValue(json['notifications'])),
       details: details,
+      pinned: JsonUtils.boolValue(json['pinned']),
       dateActivatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['activation_date']), isUtc: true),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
@@ -89,6 +93,7 @@ class Post {
       'subject': subject,
       'image_url': imageUrl,
       'notification': notification?.toJson(),
+      'pinned': pinned,
       'activation_date': DateTimeUtils.utcDateTimeToString(dateActivatedUtc),
     };
   }
@@ -108,6 +113,7 @@ class Post {
       (other.notification == notification) &&
       const DeepCollectionEquality().equals(other.notifications, notifications) &&
       (other.details == details) &&
+      (other.pinned == pinned) &&
       (other.dateActivatedUtc == dateActivatedUtc) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
@@ -126,6 +132,7 @@ class Post {
       (notification?.hashCode ?? 0) ^
       (const DeepCollectionEquality().hash(notifications)) ^
       (details?.hashCode ?? 0) ^
+      (pinned?.hashCode ?? 0) ^
       (dateActivatedUtc?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);

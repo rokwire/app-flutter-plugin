@@ -41,7 +41,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyPrivacyChanged       = "edu.illinois.rokwire.auth2.privacy.changed";
   static const String notifySecretsChanged       = "edu.illinois.rokwire.auth2.secrets.changed";
   static const String notifyUserDeleted          = "edu.illinois.rokwire.auth2.user.deleted";
-  static const String notifyPrepareUserDelete    = "edu.illinois.rokwire.auth2.user.prepare.delete";
 
 
   //TODO: Remove if not needed
@@ -275,6 +274,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     return false;
   }
+
+  // Auth2TokenNetworkAuthProvider
+
+  NetworkAuthProvider? get networkAuthProvider =>
+    (token != null) ? Auth2TokenNetworkAuthProvider(token: token) : null;
 
   // Getters
   Auth2Token? get token => _token ?? _anonymousToken;
@@ -1593,23 +1597,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Delete
 
-  Future<bool> deleteUser() async {
-    NotificationService().notify(notifyPrepareUserDelete);
-    if (await _deleteUserAccount()) {
+  Future<bool?> deleteUser() async {
+    bool? result = await _deleteUserAccount();
+    if (result == true) {
       logout(prefs: Auth2UserPrefs.empty());
       NotificationService().notify(notifyUserDeleted);
-      return true;
     }
-    return false;
+    return result;
   }
 
-  Future<bool> _deleteUserAccount() async {
+  Future<bool?> _deleteUserAccount() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account";
       Response? response = await Network().delete(url, auth: Auth2());
       return response?.statusCode == 200;
     }
-    return false;
+    return null;
   }
 
   // Refresh
@@ -2175,6 +2178,27 @@ class Auth2Csrf with NetworkAuthProvider {
     }
     return false;
   }
+}
+
+// Auth2TokenNetworkAuthProvider
+
+class Auth2TokenNetworkAuthProvider with NetworkAuthProvider {
+
+  final Auth2Token? token;
+  Auth2TokenNetworkAuthProvider({this.token});
+
+  @override
+  Map<String, String>? get networkAuthHeaders {
+    String? accessToken = token?.accessToken;
+    if ((accessToken != null) && accessToken.isNotEmpty) {
+      String? tokenType = token?.tokenType ?? 'Bearer';
+      return { HttpHeaders.authorizationHeader : "$tokenType $accessToken" };
+    }
+    return null;
+  }
+
+  @override
+  dynamic get networkAuthToken => token;
 }
 
 // Auth2PasskeySignUpResult

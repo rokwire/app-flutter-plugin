@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
 - Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
 - Bring Admin functionality to UIUC app in progress [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Cleaned up delete user APIs [#4766](https://github.com/rokwire/illinois-app/issues/4766).
 ### Added
 - Add last message info to conversation [#553](https://github.com/rokwire/app-flutter-plugin/issues/553)
 - Add "Past" event filter [#546](https://github.com/rokwire/app-flutter-plugin/issues/546)
@@ -38,12 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added delimiter paramterer to StringUtils.fullName [#4605](https://github.com/rokwire/illinois-app/issues/4605).
 - Added StringUtils.split API [#4695](https://github.com/rokwire/illinois-app/issues/4695).
 - Added loadUserDataJson API to number of services, make old Response dispatch APIs private [#4264](https://github.com/rokwire/illinois-app/issues/4264).
+- Acknowledge GroupSettings: "content_items": GroupContentItem.listToJson(contentItems) [4697](https://github.com/rokwire/illinois-app/issues/4697).
+- Acknowledge Social: pinPost API [4629](https://github.com/rokwire/illinois-app/issues/4629).
 ### Fixed
 - Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
 - Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
 - Fixed DeepLink.notifyUri API [#4561](https://github.com/rokwire/illinois-app/issues/4561).
 - Do not call Content.initService twice [#4756](https://github.com/rokwire/illinois-app/issues/4756).
-
+- Fixed loadResearchProjects for open research projects [#4699](https://github.com/rokwire/illinois-app/issues/4699).
+  
 ## [1.7.4] - 2024-11-07
 ### Fixed
 - Fixed possible unhandled exception when parsing URLs.

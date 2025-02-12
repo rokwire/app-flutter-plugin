@@ -321,7 +321,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+    if ((Config().groupsUrl != null) && ((contentType != ResearchProjectsContentType.my) || Auth2().isLoggedIn)) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
         'title': title,
@@ -1091,14 +1091,15 @@ class Groups with Service implements NotificationsListener {
   }
 
   //Delete User
-  Future<bool?> deleteUserData() async{
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
-      try {
-        await _ensureLogin();
-        Response? response =  await Network().delete("${Config().groupsUrl}/user", auth: Auth2());
-        return (response?.statusCode == 200);
-      } catch (e) {
-        Log.e(e.toString());
+  Future<bool?> deleteUserData({NetworkAuthProvider? auth}) async{
+    if ((Config().groupsUrl != null) && ((auth != null) || Auth2().isLoggedIn)) {
+      await _ensureLogin();
+      Response? response =  await Network().delete("${Config().groupsUrl}/user", auth: auth ?? Auth2());
+      if (response?.statusCode == 200) {
+        return true;
+      } else {
+        Log.e('Groups: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
       }
     }
     return null;
