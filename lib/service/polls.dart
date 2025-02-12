@@ -142,8 +142,8 @@ class Polls with Service implements NotificationsListener {
   }
 
   Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
-      enabled ? Network().get(
-          '${Config().quickPollsUrl}/polls',
+      enabled ? Network().post(
+          '${Config().quickPollsUrl}/polls/load',
           body: JsonUtils.encode(pollsFilter.toJson()),
           auth: Auth2()) : null;
 
