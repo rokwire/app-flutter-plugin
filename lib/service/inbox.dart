@@ -52,7 +52,6 @@ class Inbox with Service implements NotificationsListener {
     NotificationService().subscribe(this, [
       FirebaseMessaging.notifyToken,
       Auth2.notifyLoginChanged,
-      Auth2.notifyPrepareUserDelete,
       AppLivecycle.notifyStateChanged,
     ]);
   }
@@ -94,8 +93,6 @@ class Inbox with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param); 
-    } else if (name == Auth2.notifyPrepareUserDelete){
-      _deleteUser();
     }
   }
 
@@ -393,18 +390,22 @@ class Inbox with Service implements NotificationsListener {
   }
 
   //Delete User
-  void _deleteUser() async {
-    try {
+  Future<bool?> deleteUser({NetworkAuthProvider? auth}) async {
+    if ((Config().notificationsUrl != null) && ((auth != null) || Auth2().isLoggedIn)) {
       String? body = JsonUtils.encode({
         'notifications_disabled': true,
       });
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().delete("${Config().notificationsUrl}/api/user", auth: Auth2(), body: body) : null;
+      Response? response =  await Network().delete("${Config().notificationsUrl}/api/user", auth: auth ?? Auth2(), body: body);
       if (response?.statusCode == 200) {
         _applyUserInfo(null);
+        return true;
+      } else {
+        Log.e('Inbox: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
       }
-    } catch (e) {
-      Log.e('Failed to delete inbox user info');
-      Log.e(e.toString());
+    }
+    else {
+      return null;
     }
   }
 

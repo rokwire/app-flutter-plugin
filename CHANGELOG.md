@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
 - Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
 - Bring Admin functionality to UIUC app in progress [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Cleaned up delete user APIs [#4766](https://github.com/rokwire/illinois-app/issues/4766).
 ### Added
 - Add last message info to conversation [#553](https://github.com/rokwire/app-flutter-plugin/issues/553)
 - Add "Past" event filter [#546](https://github.com/rokwire/app-flutter-plugin/issues/546)

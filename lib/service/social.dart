@@ -519,20 +519,18 @@ class Social extends Service implements NotificationsListener {
     return stats?.posts ?? 0;
   }
 
-  Future<bool> deleteUser() async {
+  Future<bool?> deleteUser({NetworkAuthProvider? auth}) async {
     String? socialUrl = Config().socialUrl;
-    if (StringUtils.isEmpty(socialUrl)) {
-      Log.e('Failed to delete user. Reason: missing social url.');
-      return false;
+    if (StringUtils.isNotEmpty(socialUrl) && ((auth != null) || Auth2().isLoggedIn)) {
+      Response? response = await Network().delete("$socialUrl/user", auth: auth ?? Auth2());
+      if (response?.statusCode == 200) {
+        return true;
+      } else {
+        Log.e('Social: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
+      }
     }
-    Response? response = await Network().delete("$socialUrl/user", auth: Auth2());
-    int? responseCode = response?.statusCode;
-    if (responseCode == 200) {
-      return true;
-    } else {
-      Log.e('Failed to delete user. Reason: $responseCode, ${response?.body}.');
-      return false;
-    }
+    return null;
   }
 
   String _socialSortOrderToString(SocialSortOrder? order) {
