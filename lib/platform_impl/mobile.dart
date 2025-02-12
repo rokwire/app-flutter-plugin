@@ -56,6 +56,9 @@ class FileImpl extends BaseFile {
   Future<bool> saveDownload(String name, Uint8List data) async {
     if (Platform.isAndroid) {
       Directory downloadsDir = Directory("/storage/emulated/0/Download");
+      if (!await downloadsDir.exists()) {
+        downloadsDir = await getExternalStorageDirectory();
+      }
       File downloadsFile = File('${downloadsDir.path}/$name');
       downloadsFile = await downloadsFile.writeAsBytes(data);
       FileStat stats = await downloadsFile.stat();
