@@ -113,11 +113,34 @@ class Social extends Service implements NotificationsListener {
 
   //APIs
 
-  Future<bool> createPost({required Post post}) async {
+  Future<Post?> pinPost({required String postId, bool pinned = true}) async{
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create social post. Reason: missing social url.');
-      return false;
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode({"pinned": pinned});
+    Response? response = await Network().put('$socialUrl/posts/$postId/pinned-update', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
+      NotificationService().notify(notifyPostUpdated, result);
+      NotificationService().notify(notifyPostsUpdated);
+      return result;
+    } else {
+      Log.e('Failed to pin social post. Reason: $responseCode, $responseBody');
+      return null;
+    }
+
+  }
+
+  Future<Post?> createPost({required Post post}) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to create social post. Reason: missing social url.');
+      return null;
     }
     String? requestBody = JsonUtils.encode(post.toJson());
     Response? response = await Network().post('$socialUrl/posts', auth: Auth2(), body: requestBody);
@@ -127,10 +150,10 @@ class Social extends Service implements NotificationsListener {
       Post? result = Post.fromJson(JsonUtils.decodeMap(responseBody));
       NotificationService().notify(notifyPostCreated, result);
       NotificationService().notify(notifyPostsUpdated);
-      return true;
+      return result;
     } else {
       Log.e('Failed to create social post. Reason: $responseCode, $responseBody');
-      return false;
+      return null;
     }
   }
 
@@ -496,20 +519,18 @@ class Social extends Service implements NotificationsListener {
     return stats?.posts ?? 0;
   }
 
-  Future<bool> deleteUser() async {
+  Future<bool?> deleteUser({NetworkAuthProvider? auth}) async {
     String? socialUrl = Config().socialUrl;
-    if (StringUtils.isEmpty(socialUrl)) {
-      Log.e('Failed to delete user. Reason: missing social url.');
-      return false;
+    if (StringUtils.isNotEmpty(socialUrl) && ((auth != null) || Auth2().isLoggedIn)) {
+      Response? response = await Network().delete("$socialUrl/user", auth: auth ?? Auth2());
+      if (response?.statusCode == 200) {
+        return true;
+      } else {
+        Log.e('Social: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
+      }
     }
-    Response? response = await Network().delete("$socialUrl/user", auth: Auth2());
-    int? responseCode = response?.statusCode;
-    if (responseCode == 200) {
-      return true;
-    } else {
-      Log.e('Failed to delete user. Reason: $responseCode, ${response?.body}.');
-      return false;
-    }
+    return null;
   }
 
   String _socialSortOrderToString(SocialSortOrder? order) {

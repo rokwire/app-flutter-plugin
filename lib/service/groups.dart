@@ -321,7 +321,7 @@ class Groups with Service implements NotificationsListener {
   }
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
+    if ((Config().groupsUrl != null) && ((contentType != ResearchProjectsContentType.my) || Auth2().isLoggedIn)) {
       String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
         'title': title,
@@ -338,7 +338,7 @@ class Groups with Service implements NotificationsListener {
       
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
+        Response? response = await Network().post(url, body: post, auth: Auth2());
         String? responseBody = (response?.statusCode == 200) ? response?.body : null;
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
@@ -391,7 +391,7 @@ class Groups with Service implements NotificationsListener {
 
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
+        Response? response = await Network().post(url, body: post, auth: Auth2());
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
         return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
       } catch (e) {
@@ -646,7 +646,7 @@ class Groups with Service implements NotificationsListener {
       try {
         await _ensureLogin();
         String? body = JsonUtils.encode(params);
-        Response? response = await (kIsWeb ? Network().post('$url/v2', auth: Auth2(), body: body) : Network().get(url, auth: Auth2(), body: body));
+        Response? response = await Network().post('$url/v2', auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {
@@ -1091,14 +1091,15 @@ class Groups with Service implements NotificationsListener {
   }
 
   //Delete User
-  Future<bool?> deleteUserData() async{
-    if ((Config().groupsUrl != null) && Auth2().isLoggedIn) {
-      try {
-        await _ensureLogin();
-        Response? response =  await Network().delete("${Config().groupsUrl}/user", auth: Auth2());
-        return (response?.statusCode == 200);
-      } catch (e) {
-        Log.e(e.toString());
+  Future<bool?> deleteUserData({NetworkAuthProvider? auth}) async{
+    if ((Config().groupsUrl != null) && ((auth != null) || Auth2().isLoggedIn)) {
+      await _ensureLogin();
+      Response? response =  await Network().delete("${Config().groupsUrl}/user", auth: auth ?? Auth2());
+      if (response?.statusCode == 200) {
+        return true;
+      } else {
+        Log.e('Groups: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
       }
     }
     return null;
@@ -1174,7 +1175,7 @@ class Groups with Service implements NotificationsListener {
       String? post = JsonUtils.encode({
         'research_group': false,
       });
-      return Network().get(url, body: post, auth: Auth2());
+      return Network().post(url, body: post, auth: Auth2());
     }
     return null;
   }
@@ -1198,7 +1199,7 @@ class Groups with Service implements NotificationsListener {
       String? post = JsonUtils.encode({
         'research_group': false,
       });
-      Response? response = await Network().get(url, body: post, auth: Auth2());
+      Response? response = await Network().post(url, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
         return response?.body;
       }
