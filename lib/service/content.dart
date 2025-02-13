@@ -37,6 +37,8 @@ import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
+//import 'package:flutter/services.dart' show rootBundle;
+
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
 
@@ -255,6 +257,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<dynamic> loadContentItem(String category) async {
+    //TMP:
+    //return JsonUtils.decode(await rootBundle.loadString('assets/privacy.json'));
     Map<String, dynamic>? contentItems = await loadContentItems([category]);
     return (contentItems != null) ? contentItems[category] : null;
   }
