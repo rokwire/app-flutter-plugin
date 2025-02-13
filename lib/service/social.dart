@@ -678,7 +678,7 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<bool> updateConversationMessage({required String conversationId, required String globalMessageId, required String newText,}) async {
+  Future<bool> updateConversationMessage({required String conversationId, required String globalMessageId, required String newText, bool draft = false}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to update conversation message. Reason: missing social url.');
@@ -693,7 +693,7 @@ class Social extends Service implements NotificationsListener {
       return false;
     }
 
-    String? requestBody = JsonUtils.encode({'message': newText});
+    String? requestBody = JsonUtils.encode({'message': newText, 'draft': draft});
 
     String url = '$socialUrl/conversations/$conversationId/messages/$globalMessageId/update';
 
