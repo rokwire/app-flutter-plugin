@@ -195,15 +195,18 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> createEvent(Event2 source) async {
+  Future<dynamic> createEvent(Event2 source, {List<dynamic>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event";
+      String? body = JsonUtils.encode({
+          "event": source.toJson(),
+          "admins_identifiers": adminIdentifiers ?? []
+      });
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
         _notifyGroupsForModifiedEvents(groupIds: source.groupIds);
-        return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        return Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
       }
       else {
         return response?.errorText;
