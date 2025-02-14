@@ -195,12 +195,12 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> createEvent(Event2 source, {List<dynamic>? adminIdentifiers}) async {
+  Future<dynamic> createEvent(Event2 source, {List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/v3/event";
       String? body = JsonUtils.encode({
           "event": source.toJson(),
-          "admins_identifiers": adminIdentifiers ?? []
+          "admins_identifiers": Event2PersonIdentifier.listToJson(adminIdentifiers) ?? []
       });
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -216,10 +216,13 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
+  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds, List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event/${source.id}";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event/${source.id}";
+      String? body = JsonUtils.encode({
+        "event": source.toJson(),
+        "admins_identifiers": Event2PersonIdentifier.listToJson(adminIdentifiers) ?? []
+      });
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
