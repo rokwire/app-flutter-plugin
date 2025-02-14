@@ -742,7 +742,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return null;
   }
 
-  Future<List<String>?> uploadFileContentItems(Map<String, FutureOr<Uint8List>> files, String category, {String? entityId}) async {
+  Future<List<String>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {String? entityId}) async {
     List<String> uploaded = [];
 
     //TODO: implement number of files limit per upload
