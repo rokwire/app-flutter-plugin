@@ -666,45 +666,50 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileNames, String category, {String? entityId}) async {
+  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileIds, String category, {String? entityId}) async {
     Map<String, Uint8List> files = {};
     List<String> load = [];
-    for (String fileName in fileNames) {
-      String key = '${fileName}_${category}';
+    for (String fileId in fileIds) {
+      String key = '${fileId}_${category}';
       if (_fileContentCache[key] != null) {
-        files[fileName] = _fileContentCache[key]!;
+        files[fileId] = _fileContentCache[key]!;
       } else if (_fileContentFutures[key] == null) {
-        load.add(fileName);
+        load.add(fileId);
       }
     }
 
     if (load.isNotEmpty) {
-      Map<String, String>? urls = await getFileContentDownloadUrls(fileNames, category, entityId: entityId);
+      List<FileContentItemReference>? fileRefs = await getFileContentDownloadUrls(fileIds, category, entityId: entityId);
 
       if (StringUtils.isNotEmpty(Config().contentUrl)) {
         List<Future<Response?>> responseFutures = [];
-        for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
-          responseFutures.add(_fileContentFutures[urlEntry.key] = Network().get(urlEntry.key,));
+        for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
+          String? url = fileRefs![i].url;
+          if (url != null) {
+            responseFutures.add(_fileContentFutures[url] = Network().get(url,));
+          }
         }
 
         List<Response?> responses = await Future.wait(responseFutures);
-        for (Response? response in responses) {
+        for (int i = 0; i < responses.length; i++) {
+          Response? response = responses[i];
+          FileContentItemReference? fileRef = fileRefs?[i];
           int responseCode = response?.statusCode ?? -1;
-          String? requestUrl = response?.request?.url.toString();
-          String fileName = urls?[requestUrl] ?? '';
-          if (fileName.isNotEmpty) {
-            _fileContentFutures[requestUrl!] = null;
+
+          // response code 2xx
+          if (fileRef != null && responseCode ~/ 100 == 2) {
+            String fileId = fileRef.id ?? '';
+            String? requestUrl = fileRef.url ?? '';
+            _fileContentFutures[requestUrl] = null;
             // response code 2xx
             if (responseCode ~/ 100 == 2) {
               Uint8List? fileContent = response?.bodyBytes;
               if (fileContent != null) {
-                files[fileName] = _fileContentCache['${fileName}_${category}'] = fileContent;
+                files[fileId] = _fileContentCache['${fileId}_${category}'] = fileContent;
               }
             } else {
-              debugPrint("Failed to download $fileName. Reason: $responseCode ${response?.body}");
+              debugPrint("Failed to download file ID $fileId from $requestUrl. Reason: $responseCode ${response?.body}");
             }
-          } else {
-            debugPrint("Missing file name for download URL $requestUrl. Response: $responseCode ${response?.body}");
           }
         }
       }
@@ -712,10 +717,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return files;
   }
 
-  Future<Map<String, String>?> getFileContentDownloadUrls(List<String> fileNames, String category, {String? entityId}) async {
+  Future<List<FileContentItemReference>?> getFileContentDownloadUrls(List<String> fileIds, String category, {String? entityId}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
-        'fileNames': fileNames.join(','),
+        'fileIDs': fileIds.join(','),
         'category': category,
       };
       if (entityId != null) {
@@ -731,50 +736,52 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          Map<String, dynamic>? urlsJson = JsonUtils.decodeMap(responseBody);
-          return JsonUtils.mapOfStringToStringValue(urlsJson);
+          List<dynamic>? fileReferences = JsonUtils.decodeList(responseBody);
+          return FileContentItemReference.listFromJson(fileReferences);
         }
       } else {
         String? responseString = response?.body;
-        debugPrint("Failed to get URLs for file content downloads. Reason: $responseCode $responseString");
+        debugPrint("Failed to get references for file content downloads. Reason: $responseCode $responseString");
       }
     }
     return null;
   }
 
-  Future<List<String>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {String? entityId}) async {
-    List<String> uploaded = [];
+  Future<List<FileContentItemReference>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {
+    String? entityId,
+    Function(FileContentItemReference)? preUpload,
+    Function(FileContentItemReference, Response?)? postUpload,
+  }) async {
+    List<FileContentItemReference> uploaded = [];
 
     //TODO: implement number of files limit per upload
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
-      Map<String, String>? urls = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
-      if ((urls?.length ?? 0) == files.length) {
+      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.length, category, entityId: entityId);
+      if ((fileRefs?.length ?? 0) == files.length) {
         List<Future<Response?>> responseFutures = [];
-        for (MapEntry<String, String> urlEntry in urls?.entries ?? []) {
-          String url = urlEntry.key;
-          String name = urlEntry.value;
-          Uint8List? bytes = await files[name];
+        for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
+          FileContentItemReference ref = fileRefs![i];
+          ref.name = files.keys.elementAt(i);
+          Uint8List? bytes = ref.data = await files[ref.name];
           if (bytes != null) {
-            responseFutures.add(Network().put(url, body: bytes));
+            responseFutures.add(_uploadFileContentItem(ref, bytes, preUpload: preUpload, postUpload: postUpload));
           }
         }
 
         List<Response?> responses = await Future.wait(responseFutures);
-        for (Response? response in responses) {
+        for (int i = 0; i < responses.length; i++) {
+          Response? response = responses[i];
+          FileContentItemReference? fileRef = fileRefs?[i];
           int responseCode = response?.statusCode ?? -1;
-          String? requestUrl = response?.request?.url.toString();
-          String fileName = urls?[requestUrl] ?? '';
-          if (fileName.isNotEmpty) {
-            // response code 2xx
-            if (responseCode ~/ 100 == 2) {
-              uploaded.add(fileName);
-            } else {
-              String? responseString = response?.body;
-              debugPrint("Failed to upload $fileName. Reason: $responseCode $responseString");
-            }
+          String? requestUrl = fileRef?.url ?? '';
+          String fileName = fileRef?.name ?? '';
+
+          // response code 2xx
+          if (fileRef != null && responseCode ~/ 100 == 2) {
+            uploaded.add(fileRef);
           } else {
             String? responseString = response?.body;
-            debugPrint("Missing file name for upload URL $requestUrl. Response: $responseCode $responseString");
+            debugPrint("Failed to upload $fileName to $requestUrl. Reason: $responseCode $responseString");
           }
         }
       }
@@ -782,10 +789,10 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return uploaded;
   }
 
-  Future<Map<String, String>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId}) async {
+  Future<List<FileContentItemReference>?> getFileContentUploadUrls(int fileCount, String category, {String? entityId}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
-        'fileNames': fileNames.join(','),
+        'count': fileCount.toString(),
         'category': category,
       };
       if (entityId != null) {
@@ -801,15 +808,29 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (responseCode == 200) {
         String? responseBody = response?.body;
         if (responseBody != null) {
-          Map<String, dynamic>? urlsJson = JsonUtils.decodeMap(responseBody);
-          return JsonUtils.mapOfStringToStringValue(urlsJson);
+          List<dynamic>? fileReferences = JsonUtils.decodeList(responseBody);
+          return FileContentItemReference.listFromJson(fileReferences);
         }
       } else {
         String? responseString = response?.body;
-        debugPrint("Failed to get URLs for file content uploads. Reason: $responseCode $responseString");
+        debugPrint("Failed to get references for file content uploads. Reason: $responseCode $responseString");
       }
     }
     return null;
+  }
+
+  Future<Response?> _uploadFileContentItem(FileContentItemReference ref, Uint8List bytes, {
+    FutureOr<void> Function(FileContentItemReference)? preUpload,
+    FutureOr<void> Function(FileContentItemReference, Response?)? postUpload
+  }) async {
+    await preUpload?.call(ref);
+
+    Future<Response?> response = Network().put(ref.url, body: bytes);
+    response.then((response) {
+      postUpload?.call(ref, response);
+    });
+
+    return response;
   }
 }
 
@@ -887,5 +908,33 @@ class AudioResult {
 extension FileExtention on FileSystemEntity{ //file.name
   String? get name {
     return this.path.split(Platform.pathSeparator).last;
+  }
+}
+
+class FileContentItemReference {
+  final String? id;
+  final String? url;
+  String? name;
+  Uint8List? data;
+
+  FileContentItemReference({this.id, this.url, this.name, this.data});
+
+  factory FileContentItemReference.fromJson(Map<String, dynamic> json, {String? name}) {
+    return FileContentItemReference(
+      id: JsonUtils.stringValue(json['id']),
+      url: JsonUtils.stringValue(json['url']),
+      name: name,
+    );
+  }
+
+  static List<FileContentItemReference>? listFromJson(List<dynamic>? jsonList) {
+    List<FileContentItemReference>? items;
+    if (jsonList != null) {
+      items = <FileContentItemReference>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, FileContentItemReference.fromJson(jsonEntry));
+      }
+    }
+    return items;
   }
 }
