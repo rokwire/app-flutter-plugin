@@ -104,10 +104,6 @@ class RokwirePlugin {
     return await PasskeyImpl().createPasskey(optionsJson);
   }
 
-  static Future<bool> saveDownloadedFile(String name, Uint8List data) async {
-    return await FileImpl().saveDownload(name, data);
-  }
-
   // Compound APIs
 
   static Future<dynamic> locationServices(String method, [dynamic arguments]) async {

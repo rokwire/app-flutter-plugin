@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/platform_impl/base.dart';
 
 class PasskeyImpl extends BasePasskey {
@@ -28,13 +27,6 @@ class PasskeyImpl extends BasePasskey {
 
   @override
   Future<String?> createPasskey(String? optionsJson) {
-    throw Exception("Unimplemented");
-  }
-}
-
-class FileImpl extends BaseFile {
-  @override
-  Future<bool> saveDownload(String name, Uint8List data) async {
     throw Exception("Unimplemented");
   }
 }
