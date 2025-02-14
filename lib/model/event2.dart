@@ -964,6 +964,16 @@ class Event2PersonIdentifier {
     };
   }
 
+  Map<String, dynamic> toNotNullJson() {
+    Map<String, dynamic> map = {};
+    if(accountId != null)
+      map["account_id"] = accountId;
+    if(externalId != null)
+      map["external_id"] = externalId;
+
+    return map;
+  }
+
   @override
   bool operator ==(other) =>
       (other is Event2PersonIdentifier) &&
@@ -992,6 +1002,17 @@ class Event2PersonIdentifier {
       jsonList = <dynamic>[];
       for (dynamic contentEntry in contentList) {
         jsonList.add(contentEntry?.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static List<dynamic>? listToNotNullJson(List<Event2PersonIdentifier>? contentList) {
+    List<dynamic>? jsonList;
+    if (contentList != null) {
+      jsonList = <dynamic>[];
+      for (Event2PersonIdentifier contentEntry in contentList) {
+        jsonList.add(contentEntry.toNotNullJson());
       }
     }
     return jsonList;

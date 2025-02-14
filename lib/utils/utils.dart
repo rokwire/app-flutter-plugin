@@ -295,6 +295,13 @@ class ListUtils {
     return (elements != null) ? List<T>.from(elements.reversed) : null;
   }
 
+  static List<T>? append<T>(List<T>? elements, T? entry) {
+    if ((elements != null && entry != null)) {
+      elements.add(entry);
+    }
+    return elements;
+  }
+
   static void add<T>(List<T>? list, T? entry) {
     if ((list != null) && (entry != null)) {
       list.add(entry);
