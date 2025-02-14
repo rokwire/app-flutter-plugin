@@ -200,7 +200,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/v3/event";
       String? body = JsonUtils.encode({
           "event": source.toJson(),
-          "admins_identifiers": Event2PersonIdentifier.listToJson(adminIdentifiers) ?? []
+          "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
       });
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -221,11 +221,11 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/v3/event/${source.id}";
       String? body = JsonUtils.encode({
         "event": source.toJson(),
-        "admins_identifiers": Event2PersonIdentifier.listToJson(adminIdentifiers) ?? []
+        "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
       });
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
-        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
         Set<String> notifyGroupIds = source.groupIds ?? <String>{};
         if (CollectionUtils.isNotEmpty(initialGroupIds)) {
           notifyGroupIds = notifyGroupIds.union(initialGroupIds!);
