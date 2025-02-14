@@ -762,7 +762,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
           FileContentItemReference ref = fileRefs![i];
           ref.name = files.keys.elementAt(i);
-          Uint8List? bytes = await files[ref.name];
+          Uint8List? bytes = ref.data = await files[ref.name];
           if (bytes != null) {
             responseFutures.add(_uploadFileContentItem(ref, bytes, preUpload: preUpload, postUpload: postUpload));
           }
@@ -915,8 +915,9 @@ class FileContentItemReference {
   final String? id;
   final String? url;
   String? name;
+  Uint8List? data;
 
-  FileContentItemReference({this.id, this.url, this.name});
+  FileContentItemReference({this.id, this.url, this.name, this.data});
 
   factory FileContentItemReference.fromJson(Map<String, dynamic> json, {String? name}) {
     return FileContentItemReference(

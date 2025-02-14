@@ -15,6 +15,7 @@
  */
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
@@ -991,8 +992,9 @@ class FileAttachment {
   final String? type;
   String? url;
   String? id;
+  Uint8List? data;
 
-  FileAttachment({this.name, this.type, this.url, this.id});
+  FileAttachment({this.name, this.type, this.url, this.id, this.data});
 
   static FileAttachment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
