@@ -195,15 +195,18 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> createEvent(Event2 source) async {
+  Future<dynamic> createEvent(Event2 source, {List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event";
+      String? body = JsonUtils.encode({
+          "event": source.toJson(),
+          "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
+      });
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
         _notifyGroupsForModifiedEvents(groupIds: source.groupIds);
-        return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        return Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
       }
       else {
         return response?.errorText;
@@ -213,13 +216,16 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
+  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds, List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event/${source.id}";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event/${source.id}";
+      String? body = JsonUtils.encode({
+        "event": source.toJson(),
+        "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
+      });
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
-        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
         Set<String> notifyGroupIds = source.groupIds ?? <String>{};
         if (CollectionUtils.isNotEmpty(initialGroupIds)) {
           notifyGroupIds = notifyGroupIds.union(initialGroupIds!);
