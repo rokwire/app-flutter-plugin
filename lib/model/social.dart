@@ -990,8 +990,9 @@ class FileAttachment {
   final String? name;
   final String? type;
   String? url;
+  String? id;
 
-  FileAttachment({this.name, this.type, this.url});
+  FileAttachment({this.name, this.type, this.url, this.id});
 
   static FileAttachment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -999,6 +1000,7 @@ class FileAttachment {
     }
 
     return FileAttachment(
+      id: JsonUtils.stringValue(json['id']),
       name: JsonUtils.stringValue(json['name']),
       type: JsonUtils.stringValue(json['type']),
     );
@@ -1006,6 +1008,7 @@ class FileAttachment {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'type': type,
     };
