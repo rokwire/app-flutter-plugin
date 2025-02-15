@@ -990,11 +990,12 @@ class Message {
 class FileAttachment {
   final String? name;
   final String? type;
-  String? url;
   String? id;
+  String? url;
+  String? path;
   Uint8List? data;
 
-  FileAttachment({this.name, this.type, this.url, this.id, this.data});
+  FileAttachment({this.name, this.type, this.id, this.url, this.path, this.data});
 
   static FileAttachment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
