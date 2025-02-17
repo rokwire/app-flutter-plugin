@@ -777,6 +777,13 @@ class UrlUtils {
     }
   }
 
+  static String? fixEmail(String email, {String scheme = 'mailto:'}) {
+    if (email.startsWith(scheme)) {
+      return email;
+    }
+    return '$scheme$email';
+  }
+
   static String? fixUrl(String url, {String scheme = 'http'}) {
     Uri? uri = parseUri(url);
     Uri? fixedUri = (uri != null) ? fixUri(uri, scheme: scheme) : null;
