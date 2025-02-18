@@ -733,7 +733,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     widget.controller.beforeComplete?.call();
     Surveys().evaluate(_survey!, evalResultRules: true, summarizeResultRules: widget.summarizeResultRules).then((result) {
       if (result is! SurveyResponse && !widget.summarizeResultRules) {
-        result = SurveyResponse('', _survey!, DateTime.now().toUtc(), null);
+        result = SurveyResponse(id:'', survey: _survey!, dateCreated: DateTime.now().toUtc(), dateUpdated: null);
       }
       widget.controller.onComplete?.call(result);
       _setSaving(false);
