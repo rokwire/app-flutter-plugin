@@ -26,12 +26,12 @@ abstract class Log {
       lineLength: 120, // width of the output
       colors: true, // Colorful log messages
       printEmojis: false, // Print an emoji for each log message
-      printTime: false // Should each log print contain a timestamp
+      //printTime: false // Should each log print contain a timestamp
     ),
   );
 
-  static v(String message, {int? lineLength}) {
-    _logger.v(message);
+  static t(String message, {int? lineLength}) {
+    _logger.t(message);
   }
 
   static d(String message, {int? lineLength}) {

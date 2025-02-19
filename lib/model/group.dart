@@ -654,8 +654,6 @@ String? groupMemberStatusToString(GroupMemberStatus? value) {
   return null;
 }
 
-
-
 //////////////////////////////
 // MemberNotificationsPreferences
 
@@ -959,105 +957,6 @@ class GroupMembershipAnswer {
   }
 }
 
-//////////////////////////////
-// GroupPost
-
-class GroupPost {
-  final String? id;
-  final String? parentId;
-  final String? topParentId;//main post for sub reply thread
-  final Member? member;
-  final String? subject;
-  final String? body;
-  final DateTime? dateCreatedUtc;
-  final DateTime? dateUpdatedUtc;
-  final DateTime? dateScheduledUtc;
-  final bool? private;
-  final List<GroupPost>? replies;
-  final List<Member>? members;
-  final String? imageUrl;
-  final Map<String, List<String>> reactions;
-
-  GroupPost({this.id, this.parentId, this.topParentId, this.member, this.subject, this.body, this.dateCreatedUtc, this.dateUpdatedUtc, this.dateScheduledUtc, this.private, this.imageUrl, this.replies, this.members, this.reactions = const {}});
-
-  static GroupPost? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-
-    Map<String, List<String>> reactions = {};
-    Map<String, dynamic>? reactionsRaw = JsonUtils.mapValue(json['reactions']);
-    if (reactionsRaw != null) {
-      for (MapEntry<String, dynamic> reaction in reactionsRaw.entries) {
-        List<String>? ids = JsonUtils.listStringsValue(reaction.value);
-        if (ids != null) {
-          reactions[reaction.key] = ids;
-        }
-      }
-    }
-
-    return GroupPost(
-        id: json['id'],
-        parentId: json['parent_id'],
-        topParentId: json['top_parent_id'],
-        member: Member.fromJson(json['member']),
-        subject: json['subject'],
-        body: json['body'],
-        dateCreatedUtc: groupUtcDateTimeFromString(json['date_created']),
-        dateUpdatedUtc: groupUtcDateTimeFromString(json['date_updated']),
-        dateScheduledUtc:  groupUtcDateTimeFromString(json['date_scheduled']),
-        private: json['private'],
-        imageUrl: JsonUtils.stringValue(json["image_url"]),
-        replies: GroupPost.fromJsonList(json['replies']),
-        members: Member.listFromJson(json['to_members']),
-        reactions: reactions,
-      );
-
-  }
-
-  Map<String, dynamic> toJson({bool create = false, bool update = false}) {
-    // MV: This does not look well at all!
-    Map<String, dynamic> json = {'body': body, 'private': private};
-    if ((parentId != null) && create) {
-      json['parent_id'] = parentId;
-    }
-    if ((topParentId != null) && create) {
-      json['top_parent_id'] = parentId;
-    }
-    if ((id != null) && update) {
-      json['id'] = id;
-    }
-    if (subject != null) {
-      json['subject'] = subject;
-    }
-    if(imageUrl!=null){
-      json['image_url'] = imageUrl;
-    }
-    if(members!=null){
-      json['to_members'] = Member.listToJson(members);
-    }
-    if(dateScheduledUtc!=null) {
-      json['date_scheduled'] = groupUtcDateTimeToString(dateScheduledUtc);
-    }
-    return json;
-  }
-
-  bool get isUpdated {
-    return (dateUpdatedUtc != null) && (dateCreatedUtc != dateUpdatedUtc);
-  }
-
-  static List<GroupPost>? fromJsonList(List<dynamic>? jsonList) {
-    List<GroupPost>? posts;
-    if (jsonList != null) {
-      posts = <GroupPost>[];
-      for (dynamic jsonEntry in jsonList) {
-        ListUtils.add(posts, GroupPost.fromJson(jsonEntry));
-      }
-    }
-    return posts;
-  }
-}
-
 //Model for editable post data. Helping to keep GroupPost immutable. Internal use
 class PostDataModel {
   String? body;
@@ -1135,8 +1034,9 @@ class GroupError {
 class GroupSettings { //TBD move the rest setting in this section
   MemberInfoPreferences? memberInfoPreferences;
   MemberPostPreferences? memberPostPreferences;
+  List<GroupContentItem>? contentItems;
 
-  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences});
+  GroupSettings({this.memberInfoPreferences, this.memberPostPreferences, this.contentItems});
 
   static GroupSettings? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -1145,13 +1045,15 @@ class GroupSettings { //TBD move the rest setting in this section
     return GroupSettings(
       memberInfoPreferences: MemberInfoPreferences.fromJson(JsonUtils.mapValue(json['member_info_preferences'])),
       memberPostPreferences: MemberPostPreferences.fromJson(JsonUtils.mapValue(json['post_preferences'])),
+      contentItems: GroupContentItem.listFromJson(JsonUtils.listValue(json['content_items']))
     );
   }
 
   static GroupSettings? fromOther(GroupSettings? other) {
     return (other != null) ? GroupSettings(
       memberInfoPreferences: MemberInfoPreferences.fromOther(other.memberInfoPreferences),
-      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences)
+      memberPostPreferences: MemberPostPreferences.fromOther(other.memberPostPreferences),
+      contentItems: other.contentItems != null ? List<GroupContentItem>.from(other.contentItems!) : null
     ) : null;
   }
 
@@ -1159,6 +1061,7 @@ class GroupSettings { //TBD move the rest setting in this section
     return {
       "member_info_preferences": memberInfoPreferences?.toJson(),
       "post_preferences": memberPostPreferences?.toJson(),
+      "content_items": GroupContentItem.listToJson(contentItems)
     };
   }
 
@@ -1166,17 +1069,73 @@ class GroupSettings { //TBD move the rest setting in this section
   bool operator ==(other) =>
       (other is GroupSettings) &&
           (other.memberInfoPreferences == memberInfoPreferences) &&
-          (other.memberPostPreferences == memberPostPreferences);
+          (other.memberPostPreferences == memberPostPreferences)&&
+          (other.contentItems == contentItems);
 
 
   @override
   int get hashCode =>
       (memberInfoPreferences?.hashCode ?? 0) ^
-      (memberPostPreferences?.hashCode ?? 0);
+      (memberPostPreferences?.hashCode ?? 0) ^
+      (contentItems?.hashCode ?? 0);
 }
 
 /////////////////////////////
 //Group Settings - Member Info Preferences
+
+class GroupContentItem {
+  final String? code;
+
+  GroupContentItem({this.code});
+
+  static GroupContentItem? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return GroupContentItem(
+        code: JsonUtils.stringValue(json['code'])
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "code": code,
+    };
+  }
+
+  static List<GroupContentItem>? listFromJson(List<dynamic>? json) {
+    List<GroupContentItem>? values;
+    if (json != null) {
+      values = <GroupContentItem>[];
+      for (dynamic entry in json) {
+        ListUtils.add(values, GroupContentItem.fromJson(JsonUtils.mapValue(entry)));
+      }
+    }
+    return values;
+  }
+
+  static List<Map<String,dynamic>?>? listToJson(List<GroupContentItem>? values) {
+    List<Map<String,dynamic>>? result;
+    if (values != null) {
+      result = <Map<String,dynamic>>[];
+      for (GroupContentItem value in values) {
+        ListUtils.add(result, value.toJson());
+      }
+    }
+    return result;
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is GroupContentItem) &&
+          (other.code == code);
+
+
+  @override
+  int get hashCode =>
+      (code?.hashCode ?? 0);
+}
 
 class MemberInfoPreferences {
   bool? allowMemberInfo;

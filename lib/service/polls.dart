@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/model/poll.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -119,16 +120,18 @@ class Polls with Service implements NotificationsListener {
         limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
 
+  Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
+    enabled ? Network().get(
+      '${Config().quickPollsUrl}/polls',
+      body: JsonUtils.encode(pollsFilter.toJson()),
+      auth: Auth2()) : null;
+
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
-    if (enabled) {
-      String? body = JsonUtils.encode(pollsFilter.toJson());
-      String url = '${Config().quickPollsUrl}/polls';
-      Response? response = await Network().get(url, body: body, auth: Auth2());
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if ((response != null) && (responseCode == 200)) {
-        List<dynamic>? responseJson = JsonUtils.decode(responseBody);
+    Response? response = await _getPollsResponse(pollsFilter);
+    if (response != null) {
+      if (response.statusCode == 200) {
+        List<dynamic>? responseJson = JsonUtils.decode(response.body);
         if (responseJson != null) {
           PollsCursor? pollsCursor = _increaseNextCursor(offset: pollsFilter.offset, limit: pollsFilter.limit, resultsCount: responseJson.length);
           return PollsChunk(polls: Poll.fromJsonList(responseJson), cursor: pollsCursor);
@@ -138,7 +141,7 @@ class Polls with Service implements NotificationsListener {
         }
       }
       else {
-        throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
+        throw PollsException(PollsError.serverResponse, '${response.statusCode} ${response.body}');
       }
     }
     return null;
@@ -798,6 +801,14 @@ class Polls with Service implements NotificationsListener {
 
   int _getLimit(int? limit) {
     return limit ?? 5;
+  }
+
+  /////////////////////////
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().quickPollsUrl != null) ? await Network().get("${Config().quickPollsUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }
 

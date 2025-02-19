@@ -136,7 +136,7 @@ class ModalImagePanel extends StatelessWidget {
   Widget _buildPinchZoomControl({required Widget child}) =>
       PinchZoom(
         child: child,
-        resetDuration: const Duration(milliseconds: 100),
+        //resetDuration: const Duration(milliseconds: 100),
         maxScale: 4,
         onZoomStart: (){print('Start zooming');},
         onZoomEnd: (){print('Stop zooming');},

@@ -4,6 +4,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/event2.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
@@ -25,10 +26,9 @@ class Events2 with Service implements NotificationsListener {
   static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
+  static const String notifyNotificationsUpdated  = "edu.illinois.rokwire.event2.notifications.updated";
 
   static const String sportEventCategory = 'Big 10 Athletics';
-
-  List<Uri>? _deepLinkUrisCache;
 
   // Singletone Factory
 
@@ -47,20 +47,14 @@ class Events2 with Service implements NotificationsListener {
   @override
   void createService() {
     NotificationService().subscribe(this,[
-      DeepLink.notifyUri,
+      DeepLink.notifyUiUri,
     ]);
-    _deepLinkUrisCache = <Uri>[];
   }
 
   @override
   void destroyService() {
     NotificationService().unsubscribe(this);
     super.destroyService();
-  }
-
-  @override
-  void initServiceUI() {
-    processCachedDeepLinkUris();
   }
 
   @override
@@ -72,8 +66,8 @@ class Events2 with Service implements NotificationsListener {
 
   @override
   void onNotification(String name, dynamic param) {
-    if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+    if (name == DeepLink.notifyUiUri) {
+      onDeepLinkUri(JsonUtils.cast(param));
     }
   }
 
@@ -92,16 +86,29 @@ class Events2 with Service implements NotificationsListener {
 
   // Implementation
 
+  Future<Response?> _loadEventsResponse(Events2Query? query, {Client? client}) async {
+    if (Config().calendarUrl == null) {
+      debugPrint('Failed to load events - missing calendar url.');
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode(query?.toQueryJson());
+    Response? response = await Network()
+        .post("${Config().calendarUrl}/v2/events/load", body: requestBody, headers: _jsonHeaders, client: client, auth: Auth2());
+
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode != 200) {
+      debugPrint('Failed to load events. Reason: $responseCode, $responseBody');
+    }
+    return response;
+  }
+
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
-    if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/events/load";
-      String? body = JsonUtils.encode(query?.toQueryJson());
-      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, client: null, auth: Auth2());
-      //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
-      return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
-    }
-    return null;
+    Response? response = await _loadEventsResponse(query, client: client);
+    //TMP: debugPrint("$body => ${response?.statusCode} ${response?.body}", wrapWidth: 256);
+    return (response?.statusCode == 200) ? Events2ListResult.fromResponseJson(JsonUtils.decode(response?.body)) : response?.errorText;
   }
 
   Future<Events2ListResult?> loadEvents(Events2Query? query, {Client? client}) async {
@@ -188,15 +195,18 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> createEvent(Event2 source) async {
+  Future<dynamic> createEvent(Event2 source, {List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event";
+      String? body = JsonUtils.encode({
+          "event": source.toJson(),
+          "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
+      });
       Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
         NotificationService().notify(notifyChanged);
         _notifyGroupsForModifiedEvents(groupIds: source.groupIds);
-        return Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        return Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
       }
       else {
         return response?.errorText;
@@ -206,13 +216,16 @@ class Events2 with Service implements NotificationsListener {
   }
 
   // Returns Event2 in case of success, String description in case of error
-  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds}) async {
+  Future<dynamic> updateEvent(Event2 source, {Set<String>? initialGroupIds, List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/v2/event/${source.id}";
-      String? body = JsonUtils.encode(source.toJson());
+      String url = "${Config().calendarUrl}/v3/event/${source.id}";
+      String? body = JsonUtils.encode({
+        "event": source.toJson(),
+        "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers)
+      });
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
-        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body));
+        Event2? event = Event2.fromJson(JsonUtils.decodeMap(response?.body)?["event"]);
         Set<String> notifyGroupIds = source.groupIds ?? <String>{};
         if (CollectionUtils.isNotEmpty(initialGroupIds)) {
           notifyGroupIds = notifyGroupIds.union(initialGroupIds!);
@@ -465,6 +478,88 @@ class Events2 with Service implements NotificationsListener {
     return null;
   }
 
+  // Event Custom Notifications
+  Future<dynamic> saveNotificationSettings({required String eventId, List<dynamic>? notificationSettings}) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/notification-settings";
+      String? body = JsonUtils.encode(Event2NotificationSetting.listToJson(notificationSettings));
+      Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2(),);
+
+      if(response?.statusCode == 200){
+        NotificationService().notify(Events2.notifyNotificationsUpdated);
+        return true;
+      } else
+        return response?.errorText;
+    }
+    return null;
+  }
+
+  Future<dynamic> loadNotificationSettings({required String eventId}) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/notification-settings";
+      Response? response = await Network().get(url, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2NotificationSetting.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
+  ///
+  /// Returns null if delete is successful, error String message - otherwise
+  ///
+  Future<String?> deleteAllNotification({required String eventId, required List<String> notificationIds}) async {
+    //TBD probably we can delete them at once (pass list of notificationIds to BB)
+    if (Config().calendarUrl == null) {
+      return 'Missing calendar url.';
+    }
+    if (CollectionUtils.isEmpty(notificationIds)) {
+      return 'Please, select at least one notification.';
+    }
+    List<String?>? errorMsgs;
+    for (String notificationId in notificationIds) {
+      String? notificationDeleteError = await _deleteNotification(eventId: eventId, notificationId: notificationId);
+      if (notificationDeleteError != null) {
+        if (errorMsgs == null) {
+          errorMsgs = <String?>[];
+        }
+        ListUtils.add(errorMsgs, notificationDeleteError);
+        break;
+      }
+    }
+    if (CollectionUtils.isNotEmpty(errorMsgs)) {
+      return errorMsgs!.join('\n\n'); // split error messages by new line
+    } else {
+      NotificationService().notify(Events2.notifyNotificationsUpdated, null);
+      return null;
+    }
+  }
+
+  ///
+  /// Returns null if delete is successful, error String message - otherwise
+  ///
+  Future<String?> _deleteNotification({required String eventId, required String notificationId}) async {
+    if (Config().calendarUrl == null) {
+      return 'Missing calendar url.';
+    }
+    String url = "${Config().calendarUrl}/event/$eventId/notification-settings/$notificationId";
+    Response? response = await Network().delete(url, headers: _jsonHeaders, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return null;
+    } else {
+      String errorText = 'Failed to delete event notification. Reason: $responseCode, $responseString';
+      debugPrint(errorText);
+      return errorText;
+    }
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().calendarUrl != null) ? await Network().get("${Config().calendarUrl}/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
+  }
+
   // Helpers
 
   void _notifyGroupsForModifiedEvents({Set<String>? groupIds}) {
@@ -488,38 +583,13 @@ class Events2 with Service implements NotificationsListener {
   @protected
   void onDeepLinkUri(Uri? uri) {
     if (uri != null) {
-      if (_deepLinkUrisCache != null) {
-        cacheDeepLinkUri(uri);
+      if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailRawUrl))) {
+        try { NotificationService().notify(notifyLaunchDetail, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
       }
-      else {
-        processDeepLinkUri(uri);
-      }
-    }
-  }
-
-  @protected
-  void processDeepLinkUri(Uri uri) {
-    if (uri.matchDeepLinkUri(Uri.tryParse(eventDetailRawUrl))) {
-      NotificationService().notify(notifyLaunchDetail, uri.queryParameters);
-    }
-    else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
-      NotificationService().notify(notifyLaunchQuery, uri.queryParameters);
-    }
-  }
-
-  @protected
-  void cacheDeepLinkUri(Uri uri) {
-    _deepLinkUrisCache?.add(uri);
-  }
-
-  @protected
-  void processCachedDeepLinkUris() {
-    if (_deepLinkUrisCache != null) {
-      List<Uri> deepLinkUrisCache = _deepLinkUrisCache!;
-      _deepLinkUrisCache = null;
-
-      for (Uri deepLinkUri in deepLinkUrisCache) {
-        processDeepLinkUri(deepLinkUri);
+      else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
+        try { NotificationService().notify(notifyLaunchQuery, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
       }
     }
   }
@@ -672,8 +742,11 @@ class Events2Query {
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
     TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
-    
-    if (timeFilter == Event2TimeFilter.upcoming) {
+
+    if (timeFilter == Event2TimeFilter.past) {
+      options['start_time_before'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
+    }
+    else if (timeFilter == Event2TimeFilter.upcoming) {
       options['end_time_after'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
       options['start_time_after_null_end_time'] = (nowLocal.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
     }
@@ -744,9 +817,10 @@ class Events2Query {
       options['start_time_before'] = endTimeLocal.millisecondsSinceEpoch ~/ 1000;
     }
     else if (timeFilter == Event2TimeFilter.customRange) {
-      DateTime startTimeUtc = (customStartTimeUtc != null) && (customStartTimeUtc.isAfter(nowLocal)) ? customStartTimeUtc : nowLocal;
-      options['end_time_after'] = startTimeUtc.millisecondsSinceEpoch ~/ 1000;
-      options['start_time_after_null_end_time'] = (startTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      if (customStartTimeUtc != null) {
+        options['end_time_after'] = customStartTimeUtc.millisecondsSinceEpoch ~/ 1000;
+        options['start_time_after_null_end_time'] = (customStartTimeUtc.millisecondsSinceEpoch - startTimeOffsetInMsIfNullEndTime) ~/ 1000;
+      }
       if (customEndTimeUtc != null) {
         options['start_time_before'] = customEndTimeUtc.millisecondsSinceEpoch ~/ 1000;
       }

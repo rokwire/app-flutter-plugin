@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/inbox.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
@@ -19,6 +20,7 @@ class Inbox with Service implements NotificationsListener {
 
   static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
   static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
+  static const String notifyInboxMessagesDeleted             = "edu.illinois.rokwire.inbox.messages.deleted";
   static const String notifyInboxMessageRead                 = "edu.illinois.rokwire.inbox.message.read";
 
   String?   _fcmToken;
@@ -50,7 +52,6 @@ class Inbox with Service implements NotificationsListener {
     NotificationService().subscribe(this, [
       FirebaseMessaging.notifyToken,
       Auth2.notifyLoginChanged,
-      Auth2.notifyPrepareUserDelete,
       AppLivecycle.notifyStateChanged,
     ]);
   }
@@ -92,8 +93,6 @@ class Inbox with Service implements NotificationsListener {
     }
     else if (name == AppLivecycle.notifyStateChanged) {
       _onAppLivecycleStateChanged(param); 
-    } else if (name == Auth2.notifyPrepareUserDelete){
-      _deleteUser();
     }
   }
 
@@ -179,6 +178,10 @@ class Inbox with Service implements NotificationsListener {
     }
   }
 
+  Future<bool> deleteMessage(String messageId) async {
+    return await deleteMessages([messageId]);
+  }
+
   Future<bool> deleteMessages(Iterable<String>? messageIds) async {
     String? url = (Config().notificationsUrl != null) ? "${Config().notificationsUrl}/api/messages" : null;
     String? body = JsonUtils.encode({
@@ -186,7 +189,14 @@ class Inbox with Service implements NotificationsListener {
     });
 
     Response? response = await Network().delete(url, body: body, auth: Auth2());
-    return (response?.statusCode == 200);
+    int? responseCode = response?.statusCode;
+    if (responseCode == 200) {
+      NotificationService().notify(notifyInboxMessagesDeleted);
+      return true;
+    } else {
+      debugPrint('Failed to delete messages with ids {${messageIds}. Reason: $responseCode, ${response?.body}.');
+      return false;
+    }
   }
 
   Future<bool> sendMessage(InboxMessage? message) async {
@@ -326,9 +336,19 @@ class Inbox with Service implements NotificationsListener {
   }
 
   //UserInfo
+  Future<Response?> _loadUserInfoResponse() async {
+    try {
+      return (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user", auth: Auth2()) : null;
+    } catch (e) {
+      Log.e('Failed to load inbox user info');
+      Log.e(e.toString());
+    }
+    return null;
+  }
+
   Future<void> _loadUserInfo() async {
     try {
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user", auth: Auth2()) : null;
+      Response? response = await _loadUserInfoResponse();
       if (response?.statusCode == 200) {
         Map<String, dynamic>? jsonData = JsonUtils.decode(response?.body);
         InboxUserInfo? userInfo = InboxUserInfo.fromJson(jsonData);
@@ -370,18 +390,22 @@ class Inbox with Service implements NotificationsListener {
   }
 
   //Delete User
-  void _deleteUser() async {
-    try {
+  Future<bool?> deleteUser({NetworkAuthProvider? auth}) async {
+    if ((Config().notificationsUrl != null) && ((auth != null) || Auth2().isLoggedIn)) {
       String? body = JsonUtils.encode({
         'notifications_disabled': true,
       });
-      Response? response = (Auth2().isLoggedIn && Config().notificationsUrl != null) ? await Network().delete("${Config().notificationsUrl}/api/user", auth: Auth2(), body: body) : null;
+      Response? response =  await Network().delete("${Config().notificationsUrl}/api/user", auth: auth ?? Auth2(), body: body);
       if (response?.statusCode == 200) {
         _applyUserInfo(null);
+        return true;
+      } else {
+        Log.e('Inbox: Failed to delete user. Reason: ${response?.statusCode}, ${response?.body}.');
+        return false;
       }
-    } catch (e) {
-      Log.e('Failed to delete inbox user info');
-      Log.e(e.toString());
+    }
+    else {
+      return null;
     }
   }
 
@@ -418,5 +442,12 @@ class Inbox with Service implements NotificationsListener {
 
   int get unreadMessagesCount {
     return _unreadMessagesCount ?? 0;
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().notificationsUrl != null) ? await Network().get("${Config().notificationsUrl}/api/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 }

@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 
+## [1.8.0] - 2025-02-19
+### Changed
+- Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
+- Added UiTextStyles.getTextStyleEx helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added scheme parameter to UrlUtils.fixUrl [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added StringUtils.firstNotEmpty helper [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Cleaned up Image & Audio Result data dispatch [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Standartized return type of loadUserPhoto and loadUserNamePronunciation [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Cleaned up social message deep link support [#4572](https://github.com/rokwire/illinois-app/issues/4572).
+- Use the new groupings for events filtering [#543](https://github.com/rokwire/app-flutter-plugin/issues/543)
+- Bring Admin functionality to UIUC app in progress [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Cleaned up delete user APIs [#4766](https://github.com/rokwire/illinois-app/issues/4766).
+### Added
+- Add last message info to conversation [#553](https://github.com/rokwire/app-flutter-plugin/issues/553)
+- Add "Past" event filter [#546](https://github.com/rokwire/app-flutter-plugin/issues/546)
+- Add notifications for editing/deleting conversation [#541](https://github.com/rokwire/app-flutter-plugin/issues/541)
+- Add delete message support to Social BB [#534](https://github.com/rokwire/app-flutter-plugin/issues/534)
+- Add support for editing messages on the social block [#529](https://github.com/rokwire/app-flutter-plugin/issues/529)
+- Add deep links for messages [#516](https://github.com/rokwire/app-flutter-plugin/issues/516)
+- Use Social BB for Posts, Comments and Reactions (task in progress) [#498](https://github.com/rokwire/app-flutter-plugin/issues/498).
+- Acknowledge event.notification_settings field and APIs [#4478](https://github.com/rokwire/illinois-app/issues/4478).
+- Prepared for directory content access and privacy edit in Core BB [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added directory content access and privacy edit in Auth2 [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Removed voice recording caching in Auth2, improved user profiles coping and merging [#4402](https://github.com/rokwire/illinois-app/issues/4402).
+- Added Messages model and service [#506](https://github.com/rokwire/app-flutter-plugin/issues/506).
+- Added Socal.loadConversation API [#4536](https://github.com/rokwire/illinois-app/issues/4536).
+- Added urls parameter to Auth2.loadDirectoryAccounts API [#4558](https://github.com/rokwire/illinois-app/issues/4558).
+- Added URL caching support in DeepLink service, removed it from other services [#4561](https://github.com/rokwire/illinois-app/issues/4561).
+- Acknowledge post replies count [#531](https://github.com/rokwire/app-flutter-plugin/issues/531).
+- Added reference to app Storage settings in FlexUI [#4531](https://github.com/rokwire/illinois-app/issues/4531).
+- Added DateTimeUtils.localDateTimeFileStampToString [#4605](https://github.com/rokwire/illinois-app/issues/4605).
+- Added delimiter paramterer to StringUtils.fullName [#4605](https://github.com/rokwire/illinois-app/issues/4605).
+- Added StringUtils.split API [#4695](https://github.com/rokwire/illinois-app/issues/4695).
+- Added loadUserDataJson API to number of services, make old Response dispatch APIs private [#4264](https://github.com/rokwire/illinois-app/issues/4264).
+- Acknowledge GroupSettings: "content_items": GroupContentItem.listToJson(contentItems) [4697](https://github.com/rokwire/illinois-app/issues/4697).
+- Acknowledge Social: pinPost API [4629](https://github.com/rokwire/illinois-app/issues/4629).
+### Fixed
+- Update Social BB Deeplink to use Conversation instead of Post [#518](https://github.com/rokwire/app-flutter-plugin/issues/518).
+- Fix Social service requests for messaging [#514](https://github.com/rokwire/app-flutter-plugin/issues/514).
+- Fixed DeepLink.notifyUri API [#4561](https://github.com/rokwire/illinois-app/issues/4561).
+- Do not call Content.initService twice [#4756](https://github.com/rokwire/illinois-app/issues/4756).
+- Fixed loadResearchProjects for open research projects [#4699](https://github.com/rokwire/illinois-app/issues/4699).
+  
 ## [1.7.4] - 2024-11-07
 ### Fixed
 - Fixed possible unhandled exception when parsing URLs.
@@ -26,9 +69,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Show sub-events for group members [#474](https://github.com/rokwire/app-flutter-plugin/issues/474).
 
+### Added
+- Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+- Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+- Created notification for deletion of survey response [#4243](https://github.com/rokwire/illinois-app/issues/4243).
+- Exposed low level APIs in services for accessing My Stored Data [#4264](https://github.com/rokwire/illinois-app/issues/4264).
+### Changed
+- Upgraded outdated Flutter plugins [#4302](https://github.com/rokwire/illinois-app/issues/4302).
+- Upgraded Flutter to 3.24.0 [#4302](https://github.com/rokwire/illinois-app/issues/4302).
+### Fixed
+- Android: crash on startup [#4320](https://github.com/rokwire/illinois-app/issues/4320).
+
 ## [1.7.1] - 2024-08-15
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
+- Use ISO 8601/RFC 3339 strings for survey start & end dates [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 ### Added
 - Introduce Groups.acceptMembershipMulti [#4268](https://github.com/rokwire/illinois-app/issues/4268).
 

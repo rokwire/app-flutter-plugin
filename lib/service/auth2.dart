@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
-
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/log.dart';
@@ -30,8 +30,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   static const String notifyAccountChanged    = "edu.illinois.rokwire.auth2.account.changed";
   static const String notifyProfileChanged    = "edu.illinois.rokwire.auth2.profile.changed";
   static const String notifyPrefsChanged      = "edu.illinois.rokwire.auth2.prefs.changed";
+  static const String notifyPrivacyChanged    = "edu.illinois.rokwire.auth2.privacy.changed";
   static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
-  static const String notifyPrepareUserDelete = "edu.illinois.rokwire.auth2.user.prepare.delete";
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
 
@@ -145,7 +145,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @override
   void onNotification(String name, dynamic param) {
     if (name == DeepLink.notifyUri) {
-      onDeepLinkUri(param);
+      onDeepLinkUri(JsonUtils.cast(param));
     }
     else if (name == Auth2UserProfile.notifyChanged) {
       onUserProfileChanged(param);
@@ -182,15 +182,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   void onDeepLinkUri(Uri? uri) {
-    if (uri != null) {
-      Uri? redirectUri = Uri.tryParse(oidcRedirectUrl);
-      if ((redirectUri != null) &&
-          (redirectUri.scheme == uri.scheme) &&
-          (redirectUri.authority == uri.authority) &&
-          (redirectUri.path == uri.path))
-      {
-        handleOidcAuthentication(uri);
-      }
+    if ((uri != null) && uri.matchDeepLinkUri(Uri.tryParse(oidcRedirectUrl))) {
+      handleOidcAuthentication(uri);
     }
   }
 
@@ -216,6 +209,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
     return false;
   }
+
+  // Auth2TokenNetworkAuthProvider
+
+  NetworkAuthProvider? get networkAuthProvider =>
+    (token != null) ? Auth2TokenNetworkAuthProvider(token: token) : null;
 
   // Getters
   Auth2LoginType get oidcLoginType => Auth2LoginType.oidcIllinois;
@@ -463,6 +461,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
     NotificationService().notify(notifyProfileChanged);
     NotificationService().notify(notifyPrefsChanged);
+    NotificationService().notify(notifyPrivacyChanged);
     NotificationService().notify(notifyLoginChanged);
   }
 
@@ -1025,6 +1024,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       NotificationService().notify(notifyProfileChanged);
       NotificationService().notify(notifyPrefsChanged);
+      NotificationService().notify(notifyPrivacyChanged);
       NotificationService().notify(notifyLoginChanged);
       NotificationService().notify(notifyLogout);
     }
@@ -1032,23 +1032,22 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // Delete
 
-  Future<bool> deleteUser() async {
-    NotificationService().notify(notifyPrepareUserDelete);
-    if (await _deleteUserAccount()) {
+  Future<bool?> deleteUser() async {
+    bool? result = await _deleteUserAccount();
+    if (result == true) {
       logout(prefs: Auth2UserPrefs.empty());
       NotificationService().notify(notifyUserDeleted);
-      return true;
     }
-    return false;
+    return result;
   }
 
-  Future<bool> _deleteUserAccount() async {
+  Future<bool?> _deleteUserAccount() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account";
       Response? response = await Network().delete(url, auth: Auth2());
       return response?.statusCode == 200;
     }
-    return false;
+    return null;
   }
 
   // Refresh
@@ -1212,26 +1211,16 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     else if (identical(profile, _account?.profile)) {
       Storage().auth2Account = _account;
       NotificationService().notify(notifyProfileChanged);
+      onUserAccountProfileChanged(profile);
       _saveAccountUserProfile();
     }
   }
 
+  @protected
+  void onUserAccountProfileChanged(Auth2UserProfile? profile) {
+  }
+
   Future<Auth2UserProfile?> loadUserProfile() async {
-    return await _loadAccountUserProfile();
-  }
-
-  Future<bool> saveAccountUserProfile(Auth2UserProfile? profile) async {
-    if (await _saveExternalAccountUserProfile(profile)) {
-      if (_account?.profile?.apply(profile) ?? false) {
-        Storage().auth2Account = _account;
-        NotificationService().notify(notifyProfileChanged);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  Future<Auth2UserProfile?> _loadAccountUserProfile() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Response? response = await Network().get(url, auth: Auth2());
@@ -1240,22 +1229,28 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return null;
   }
 
+  Future<bool> saveUserProfile(Auth2UserProfile? profile) async {
+    if (await _saveUserProfile(profile)) {
+      if (_account?.profile?.apply(profile, scope: Auth2UserProfileScopeImpl.fullScope) ?? false) {
+        Storage().auth2Account = _account;
+        NotificationService().notify(notifyProfileChanged);
+        onUserAccountProfileChanged(profile);
+      }
+      return true;
+    }
+    return false;
+  }
+
   Future<void> _saveAccountUserProfile() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (_account?.profile != null)) {
-      String url = "${Config().coreUrl}/services/account/profile";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode(profile!.toJson());
-
       Client client = Client();
       _updateUserProfileClient?.close();
       _updateUserProfileClient = client;
 
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      bool result = await _saveUserProfile(_account?.profile, client: _updateUserProfileClient);
 
       if (identical(client, _updateUserProfileClient)) {
-        if (response?.statusCode == 200) {
+        if (result) {
           _updateUserProfileTimer?.cancel();
           _updateUserProfileTimer = null;
         }
@@ -1271,21 +1266,21 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }
 
-  Future<bool> _saveExternalAccountUserProfile(Auth2UserProfile? profile) async {
-    if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
+  Future<bool> _saveUserProfile(Auth2UserProfile? profile, { Client? client }) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (profile != null)) {
       String url = "${Config().coreUrl}/services/account/profile";
       Map<String, String> headers = {
         'Content-Type': 'application/json'
       };
-      String? post = JsonUtils.encode(profile!.toJson());
-      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      String? post = JsonUtils.encode(profile.toJson());
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post, client: client);
       return (response?.statusCode == 200);
     }
     return false;
   }
 
   /*Future<void> _refreshAccountUserProfile() async {
-    Auth2UserProfile? profile = await _loadAccountUserProfile();
+    Auth2UserProfile? profile = await loadUserProfile();
     if ((profile != null) && (profile != _account?.profile)) {
       if (_account?.profile?.apply(profile) ?? false) {
         Storage().auth2Account = _account;
@@ -1294,15 +1289,52 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
   }*/
 
-  // Account
+  // Privacy
 
-  Future<Auth2Account?> _loadAccount() async {
+  Future<Auth2UserPrivacy?> loadUserPrivacy() async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null)) {
-      String url = "${Config().coreUrl}/services/account";
+      String url = "${Config().coreUrl}/services/account/privacy";
       Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+      return (response?.statusCode == 200) ? Auth2UserPrivacy.fromJson(JsonUtils.decodeMap(response?.body)) : null;
     }
     return null;
+  }
+
+  Future<bool> saveUserPrivacy(Auth2UserPrivacy? privacy) async {
+    if (await _saveUserPrivacy(privacy)) {
+      if (_account?.privacy != privacy) {
+        Storage().auth2Account = _account = Auth2Account.fromOther(_account, privacy: privacy);
+        NotificationService().notify(notifyPrivacyChanged);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // ignore: unused_element
+  Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
+    if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
+      String url = "${Config().coreUrl}/services/account/privacy";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode(privacy.toJson());
+      Response? response = await Network().put(url, auth: Auth2(), headers: headers, body: post);
+      return (response?.statusCode == 200);
+    }
+    return false;
+  }
+
+  // Account
+
+  Future<Response?> _loadAccountResponse() async {
+    return ((Config().coreUrl != null) && (_token?.accessToken != null)) ?
+      Network().get("${Config().coreUrl}/services/account", auth: Auth2()) : null;
+  }
+
+  Future<Auth2Account?> _loadAccount() async {
+    Response? response = await _loadAccountResponse();
+    return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
   }
 
   Future<void> _refreshAccount() async {
@@ -1311,6 +1343,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       
       bool profileUpdated = (account.profile != _account?.profile);
       bool prefsUpdated = (account.prefs != _account?.prefs);
+      bool privacyChanged = (account.privacy != _account?.privacy);
       
       Storage().auth2Account = _account = account;
       NotificationService().notify(notifyAccountChanged);
@@ -1321,7 +1354,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       if (prefsUpdated) {
         NotificationService().notify(notifyPrefsChanged);
       }
+      if (privacyChanged) {
+        NotificationService().notify(notifyPrivacyChanged);
+      }
     }
+  }
+
+  // User Data
+
+  Future<Map<String, dynamic>?> loadUserDataJson() async {
+    Response? response = (Config().coreUrl != null) ? await Network().get("${Config().coreUrl}/services/user-data", auth: Auth2()) : null;
+    return (response?.succeeded == true) ? JsonUtils.decodeMap(response?.body) : null;
   }
 
   // Helpers
@@ -1381,6 +1424,29 @@ class _OidcLogin {
   }  
 
 }
+
+// Auth2TokenNetworkAuthProvider
+
+class Auth2TokenNetworkAuthProvider with NetworkAuthProvider {
+
+  final Auth2Token? token;
+  Auth2TokenNetworkAuthProvider({this.token});
+
+  @override
+  Map<String, String>? get networkAuthHeaders {
+    String? accessToken = token?.accessToken;
+    if ((accessToken != null) && accessToken.isNotEmpty) {
+      String? tokenType = token?.tokenType ?? 'Bearer';
+      return { HttpHeaders.authorizationHeader : "$tokenType $accessToken" };
+    }
+    return null;
+  }
+
+  @override
+  dynamic get networkAuthToken => token;
+}
+
+
 
 // Auth2PhoneRequestCodeResult
 
