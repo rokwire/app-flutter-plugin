@@ -463,7 +463,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (isUserPic != true) {
       imageRequestFields.addAll({'path': storagePath!, 'width': width.toString()});
     }
-    StreamedResponse? response = await Network().multipartPost(
+    StreamedResponse? response = await Network().multipartRequest('POST',
         url: url,
         fileKey: 'fileName',
         fileName: fileName,
@@ -581,7 +581,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       return AudioResult.error(AudioErrorType.fileNameNotSupplied, 'Missing file.');
     }
     String url = "$serviceUrl/voice_record";
-    StreamedResponse? response = await Network().multipartPost(
+    StreamedResponse? response = await Network().multipartRequest('POST',
         url: url,
         fileKey: "voiceRecord",
         fileName: "record.m4a",
