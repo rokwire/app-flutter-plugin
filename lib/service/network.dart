@@ -376,14 +376,14 @@ class Network  {
     return _readBytes(url, headers: headers, auth: auth, timeout: timeout);
   }
 
-  Future<http.StreamedResponse?> multipartPost({String? url, String? fileKey, List<int>? fileBytes, String? fileName, String? contentType, Map<String, String?>? headers, Map<String, String>? fields, NetworkAuthProvider? auth, bool refreshToken = true, bool sendAnalytics = true, String? analyticsUrl}) async {
+  Future<http.StreamedResponse?> multipartRequest(String method, {String? url, String? fileKey, List<int>? fileBytes, String? fileName, String? contentType, Map<String, String?>? headers, Map<String, String>? fields, NetworkAuthProvider? auth, bool refreshToken = true, bool sendAnalytics = true, String? analyticsUrl}) async {
     http.StreamedResponse? response;
 
     try {
-      response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
+      response = await _multipartRequest(method, url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
 
       if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
-        response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
+        response = await _multipartRequest(method, url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
       }
     } catch (e) {
       Log.d(e.toString());
@@ -400,13 +400,13 @@ class Network  {
     return response;
   }
 
-  Future<http.StreamedResponse?> _multipartPost({String? url, String? fileKey, List<int>? fileBytes, String? fileName, String? contentType, Map<String, String?>? headers, Map<String, String?>? fields, NetworkAuthProvider? auth}) async {
+  Future<http.StreamedResponse?> _multipartRequest(String method, {String? url, String? fileKey, List<int>? fileBytes, String? fileName, String? contentType, Map<String, String?>? headers, Map<String, String?>? fields, NetworkAuthProvider? auth}) async {
     if (Connectivity().isNotOffline) {
       try {
         Uri? uri = _uriFromUrlString(url);
         if (uri != null) {
           Map<String, String>? preparedHeaders = await _prepareHeaders(headers, auth, uri);
-          http.MultipartRequest request = http.MultipartRequest("POST", uri);
+          http.MultipartRequest request = http.MultipartRequest(method, uri);
           if (preparedHeaders != null) {
             request.headers.addAll(preparedHeaders);
           }
