@@ -934,7 +934,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.8.0"
+    version: "1.9.0"
   shared_preferences:
     dependency: transitive
     description:

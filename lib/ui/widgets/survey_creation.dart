@@ -83,12 +83,22 @@ class _SurveyElementListState extends State<SurveyElementList> {
   int _flexMax = 17;
   bool _handleScrolling = false;
 
+  Map<int, GestureRecognizer> scrollGestureRecognizers = <int, GestureRecognizer>{};
+
   @override
   void initState() {
     if (widget.singleton) {
       _flexMax--;
     }
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    for (GestureRecognizer gestureRecognizer in scrollGestureRecognizers.values) {
+      gestureRecognizer.dispose();
+    }
+    super.dispose();
   }
   
   @override
@@ -319,7 +329,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
                 TextSpan(
                   text: widget.dataSubtitles![index]!,
                   style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
-                  recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![index - 1]) : null 
+                  recognizer: (widget.onScroll != null) ? scrollGestureRecognizer(index - 1) : null,
                 ),
               ],), overflow: TextOverflow.ellipsis, maxLines: 2,)
             ));
@@ -558,7 +568,7 @@ class _SurveyElementListState extends State<SurveyElementList> {
         textSpans.add(TextSpan(
           text: partialLink,
           style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
-          recognizer: TapGestureRecognizer()..onTap = widget.onScroll != null ? () => widget.onScroll!(widget.widgetKeys![dataKeyIndex + widgetKeyOffset]) : null,  
+          recognizer: (widget.onScroll != null) ? scrollGestureRecognizer(dataKeyIndex + widgetKeyOffset) : null,
         ));
         previousLink = true;
       } else {
@@ -600,6 +610,12 @@ class _SurveyElementListState extends State<SurveyElementList> {
   void _dismissRemoveElement() {
     Navigator.pop(context);
   }
+
+  GestureRecognizer scrollGestureRecognizer(int index) =>
+    scrollGestureRecognizers[index] ??= (TapGestureRecognizer()..onTap = () => _onTapScroll(index));
+
+  void _onTapScroll(int index) =>
+    widget.onScroll?.call(ListUtils.entry(widget.widgetKeys, index));
 
   /*
   void _onAcceptRuleDrag(String swapId, String id, SurveyElement surveyElement, {RuleElement? parentElement}) {
