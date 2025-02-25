@@ -751,17 +751,21 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         text: "These are the actions that would have been taken had a user completed this survey as you did\n\n",
         style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
       )];
+      GestureRecognizer gestureRecognizer;
+      Set<GestureRecognizer> gestureRecognizers = <TapGestureRecognizer>{};
       for (RuleAction action in result) {
         if (RuleAction.supportedPreviews.contains(action.action)) {
           textSpans.add(TextSpan(
             text: '\u2022 ${RuleAction.supportedActions[action.action]} ',
             style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
           ));
+          gestureRecognizer = TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true);
           textSpans.add(TextSpan(
             text: action.getSummary().replaceAll('${RuleAction.supportedActions[action.action]!} ', ''),
             style: Styles().textStyles.getTextStyle('widget.button.title.medium.fat.underline'),
-            recognizer: TapGestureRecognizer()..onTap = () => Rules().evaluateAction(_survey!, action, immediate: true),
+            recognizer: gestureRecognizer,
           ));
+          gestureRecognizers.add(gestureRecognizer);
           textSpans.add(TextSpan(
             text: '\n',
             style: Styles().textStyles.getTextStyle('widget.detail.regular.fat'),
@@ -781,7 +785,11 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         onTapButton: (context) {
           Navigator.pop(context);
         },
-      );
+      ).then((_) {
+        for (GestureRecognizer gestureRecognizer in gestureRecognizers) {
+          gestureRecognizer.dispose();
+        }
+      });
     }
   }
 

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+### Fixed
+- Make sure to dispose TapGestureRecognizer objects.
 
 ## [1.8.0] - 2025-02-19
 ### Changed
