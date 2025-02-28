@@ -573,6 +573,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   int get oidcAuthenticationTimeout => JsonUtils.intValue(settings['oidcAuthenticationTimeout']) ?? 1000;
 
+  // Multipart Uploads
+  int get multipartPartUploadRetryLimit       => JsonUtils.intValue(settings['multipart_part_upload_retry_limit']) ?? 2;
+  double get multipartPartUploadFailureCutoff => JsonUtils.doubleValue(settings['multipart_part_upload_failure_cutoff']) ?? 0.5;
+  int get multipartCompleteUploadRetryLimit   => JsonUtils.intValue(settings['multipart_complete_upload_retry_limit']) ?? multipartPartUploadRetryLimit;
+
   // Getters: path keys access
   dynamic pathEntry(String key)     => MapPathKey.entry(content, key);
   String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
