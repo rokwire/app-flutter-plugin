@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+### Added
+- Support file uploads to AWS S3 using signed URLs
+- Support multipart file uploads to AWS S3 using signed URLs
 ### Fixed
 - Make sure to dispose TapGestureRecognizer objects.
 
