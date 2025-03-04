@@ -418,16 +418,19 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<bool> react({required String entityId, required SocialEntityType source}) async {
+  Future<bool> react({required String entityId, required SocialEntityType source, Reaction? reaction}) async {
     String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: missing social url.');
       return false;
     }
-    Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    Map<String, dynamic> requestJson = reaction?.toJson() ?? {};
+    requestJson["identifier"] = entityId;
+    requestJson["source"] = sourceString;
+
     String? encodedBody = JsonUtils.encode(requestJson);
-    Response? response = await Network().post('$socialUrl/reactions/alter', auth: Auth2(), body: encodedBody);
+    Response? response = await Network().post('$socialUrl/v2/reactions/alter', auth: Auth2(), body: encodedBody);
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
