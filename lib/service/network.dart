@@ -419,6 +419,49 @@ class Network  {
     return null;
   }
 
+  Future<http.StreamedResponse?> streamedRequest(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60, http.Client? client, bool sendAnalytics = true, String? analyticsUrl }) async {
+    http.StreamedResponse? response;
+
+    try {
+      dynamic token = auth?.networkAuthToken;
+      response = await _streamedRequest(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
+
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+        response = await _streamedRequest(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
+      }
+    } catch (e) {
+      Log.d(e.toString());
+      FirebaseCrashlytics().recordError(e, null);
+    }
+
+    if (sendAnalytics) {
+      NotificationService().notify(notifyHttpResponse, _notifyHttpResponseParam(response, analyticsUrl: analyticsUrl));
+    }
+
+    _saveCookiesFromResponse(url, response);
+
+    return response;
+  }
+
+  Future<http.StreamedResponse?> _streamedRequest(url, {Object? body, Encoding? encoding, Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout, http.Client? client }) async {
+    if (Connectivity().isNotOffline) {
+      try {
+        Uri? uri = _uriFromUrlString(url);
+        // Future<http.Response?>? response = (uri != null) ?
+        // ((client != null) ?
+        //   client.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) :
+        //   http.put(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding)
+        // ) : null;
+        // return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
+        //TODO: construct and send http.StreamedRequest
+      } catch (e) {
+        Log.d(e.toString());
+        FirebaseCrashlytics().recordError(e, null);
+      }
+    }
+    return null;
+  }
+
   Future<http.Response?> _head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async {
     if (Connectivity().isNotOffline) {
       try {

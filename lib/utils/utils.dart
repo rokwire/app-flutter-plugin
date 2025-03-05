@@ -1736,19 +1736,6 @@ class WebUtils {
   }
 }
 
-class BytesUtils {
-  static List<Uint8List>? split({required Uint8List bytes, int? parts, int? partSize}) {
-    if (partSize == null) {
-      if (parts != null) {
-        partSize = (bytes.length ~/ parts) + 1;
-      } else {
-        return null;
-      }
-    }
-    return bytes.slices(partSize).map((elem) => Uint8List.fromList(elem)).toList();
-  }
-}
-
 class Pair<L,R> {
   final L left;
   final R right;

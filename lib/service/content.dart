@@ -32,6 +32,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
+import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
@@ -841,20 +842,18 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   // Multipart upload
 
-  Future<MultipartFileUpload> multipartUploadFile(String fileName, FutureOr<Uint8List?> fileBytes,
-      {required String category, String? entityId, Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
-    //TODO: read file in parts to avoid memory issues (use stream)
-    Uint8List? bytes = await fileBytes;
-    if (CollectionUtils.isNotEmpty(bytes)) {
-      MultipartFileUpload? uploadData = await getMultipartUploadUrls(fileName: fileName, size: bytes!.length, category: category, entityId: entityId);
+  Future<MultipartFileUpload> multipartUploadFile(File file, {int? fileSize, required String category, String? entityId,
+      Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
+    fileSize ??= await file.length();
+    if (fileSize > 0) {
+      MultipartFileUpload? uploadData = await getMultipartUploadUrls(fileName: file.path, size: fileSize, category: category, entityId: entityId);
       if (uploadData?.isValid ?? false) {
-        List<Uint8List>? splitBytes = BytesUtils.split(bytes: bytes, parts: uploadData!.signedUrls!.length);
-        if (CollectionUtils.isNotEmpty(splitBytes)) {
-          uploadData.result = await _uploadFileParts(uploadData, splitBytes!, category: category, entityId: entityId, onPartUploaded: onPartUploaded, onUploadCompleted: onUploadCompleted, onUploadAborted: onUploadAborted);
-          return uploadData;
-        } else {
-          debugPrint('Error uploading multipart file: failed to split file');
-        }
+        int totalParts = uploadData!.signedUrls!.length;
+        int partSize = (fileSize ~/ totalParts) + 1;
+        List<int> partStarts = List.generate(totalParts, (index) => index * partSize);
+        uploadData.result = await _uploadFileParts(uploadData, totalParts, file, partStarts: partStarts,
+            category: category, entityId: entityId, onPartUploaded: onPartUploaded, onUploadCompleted: onUploadCompleted, onUploadAborted: onUploadAborted);
+        return uploadData;
       } else {
         debugPrint('Error uploading multipart file: invalid upload data');
       }
@@ -866,11 +865,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     );
   }
 
-  Future<MultipartUploadResult> _uploadFileParts(MultipartFileUpload uploadData, List<Uint8List> splitBytes, {required String category, String? entityId,
-      int retryCount = 0, List<int>? retryParts, List<String?>? eTags, Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
+  Future<MultipartUploadResult> _uploadFileParts(MultipartFileUpload uploadData, int totalParts, File file, {required String category, String? entityId,
+      required List<int> partStarts, Map<int, int>? retryCounts, List<String?>? eTags, Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
     List<Future<Response?>> responseFutures = [];
-    int totalParts = splitBytes.length;
-    retryParts ??= List.generate(totalParts, (index) => index);
 
     for (int i in retryParts) {
       String? signedUrl = uploadData.signedUrls?[i];
