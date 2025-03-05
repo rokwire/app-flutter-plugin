@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 
+## [1.8.1] - 2025-03-05 
+### Fixed
+- Fixed storage update support in FlexUi [#4830](https://github.com/rokwire/illinois-app/issues/4830).
+
 ## [1.8.0] - 2025-02-19
 ### Changed
 - Allow event custom range filters in the past [#4450](https://github.com/rokwire/illinois-app/issues/4450).
