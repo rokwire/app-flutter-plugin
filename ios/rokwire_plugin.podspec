@@ -4,7 +4,11 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'rokwire_plugin'
+<<<<<<< HEAD
   s.version          = '1.9.0'
+=======
+  s.version          = '1.8.1'
+>>>>>>> support/v1.8
   s.summary          = 'Rokwire Flutter plugin'
   s.description      = <<-DESC
 Rokwire Flutter plugin
