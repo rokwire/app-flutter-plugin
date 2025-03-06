@@ -7,9 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 
-## [1.8.X] 
-<!-- The following updates persist in the 1.8 support branch. -->
-<!-- They should eihter appear in the next 1.8 support update, or in the upcoming 1.9 release. -->
+## [1.8.1] - 2025-03-05 
 ### Fixed
 - Fixed storage update support in FlexUi [#4830](https://github.com/rokwire/illinois-app/issues/4830).
 
