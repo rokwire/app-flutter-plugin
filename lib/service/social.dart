@@ -41,6 +41,7 @@ class Social extends Service implements NotificationsListener {
   static const String notifyMessageEdited = "edu.illinois.rokwire.social.message.edited";
   static const String notifyMessageDeleted = "edu.illinois.rokwire.social.message.deleted";
 
+  static const String notifyReactionsUpdated = "edu.illinois.rokwire.social.reactions.update";
   // Filtering keys
   static const String _postsOperationKey = 'operation';
   static const String _postsOperationAndValue = 'and';
@@ -434,6 +435,7 @@ class Social extends Service implements NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
+      NotificationService().notify(notifyReactionsUpdated, {"identifier": entityId, "source": source});
       return true;
     } else {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: $responseCode, $responseBody');
