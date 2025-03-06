@@ -32,7 +32,6 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
@@ -843,15 +842,15 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   // Multipart upload
 
   Future<MultipartFileUpload> multipartUploadFile(File file, {int? fileSize, required String category, String? entityId,
-      Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
+      Function(int, int, StreamedResponse?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
     fileSize ??= await file.length();
     if (fileSize > 0) {
       MultipartFileUpload? uploadData = await getMultipartUploadUrls(fileName: file.path, size: fileSize, category: category, entityId: entityId);
       if (uploadData?.isValid ?? false) {
         int totalParts = uploadData!.signedUrls!.length;
         int partSize = (fileSize ~/ totalParts) + 1;
-        List<int> partStarts = List.generate(totalParts, (index) => index * partSize);
-        uploadData.result = await _uploadFileParts(uploadData, totalParts, file, partStarts: partStarts,
+        List<int> parts = List.generate(totalParts, (index) => index + 1);
+        uploadData.result = await _uploadFileParts(uploadData, file, parts: parts, totalParts: totalParts, partSize: partSize, fileSize: fileSize,
             category: category, entityId: entityId, onPartUploaded: onPartUploaded, onUploadCompleted: onUploadCompleted, onUploadAborted: onUploadAborted);
         return uploadData;
       } else {
@@ -865,42 +864,57 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     );
   }
 
-  Future<MultipartUploadResult> _uploadFileParts(MultipartFileUpload uploadData, int totalParts, File file, {required String category, String? entityId,
-      required List<int> partStarts, Map<int, int>? retryCounts, List<String?>? eTags, Function(int, int, Response?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
-    List<Future<Response?>> responseFutures = [];
+  Future<MultipartUploadResult> _uploadFileParts(MultipartFileUpload uploadData, File file, {required String category, String? entityId, required List<int> parts, required int totalParts, required int partSize,
+      required int fileSize, List<int>? retryCounts, List<String>? eTags, Function(int, int, StreamedResponse?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
+    List<Future<StreamedResponse?>> responseFutures = [];
 
-    for (int i in retryParts) {
-      String? signedUrl = uploadData.signedUrls?[i];
-      Uint8List partBytes = splitBytes[i];
+    List<int> partAttempts = parts.take(Config().multipartPartUploadAxConcurrentParts).toList();
+    for (int partNumber in partAttempts) {
+      int partIndex = partNumber - 1;
+
+      String? signedUrl = uploadData.signedUrls?[partIndex];
       if (signedUrl == null) {
         debugPrint('Error uploading file part: missing signed urls $uploadData');
         return MultipartUploadResult.failed;
       }
+      // verify part number with part number in signed url query
       String? partNumberStr = Uri.tryParse(signedUrl)?.queryParameters[awsS3UploadPartQueryParamPartNumber] ?? '';
-      int partNumber = int.tryParse(partNumberStr) ?? i + 1;
-      responseFutures.add(_uploadFilePart(signedUrl, partBytes, partNumber: partNumber, totalParts: totalParts, onPartUploaded: onPartUploaded));
+      if (int.tryParse(partNumberStr) != partNumber) {
+        debugPrint('Error uploading file part: part number mismatch - from list $partNumber; from url query $partNumberStr');
+        return MultipartUploadResult.failed;
+      }
+
+      int partBytesStart = partIndex * partSize;
+      int numBytes = (partNumber == totalParts) ? fileSize - partBytesStart : partSize;
+      Stream<List<int>> partByteStream = file.openRead(partBytesStart, partBytesStart + partSize);
+      responseFutures.add(_uploadFilePart(signedUrl, partByteStream, numBytes: numBytes, partNumber: partNumber, totalParts: totalParts, onPartUploaded: onPartUploaded));
     }
 
-    List<Response?> responses = await Future.wait(responseFutures);
-    eTags ??= List.filled(totalParts, null);
-    List<int> failedParts = [];
+    List<StreamedResponse?> responses = await Future.wait(responseFutures);
+    eTags ??= List.filled(totalParts, '');
+    int failedParts = 0;
     for (int i = 0; i < responses.length; i++) {
-      Response? response = responses[i];
+      StreamedResponse? response = responses[i];
+      int partNumber = partAttempts[i];
+      int partIndex = partNumber - 1;
       int responseCode = response?.statusCode ?? -1;
       if (responseCode ~/ 100 == 2) {
-        String? eTag = response?.headers[awsS3UploadPartResponseHeaderETag]?.replaceAll(RegExp(r'\W'), ''); // get eTag from response header and remove non-alphanumeric characters
-        eTags[i] = eTag;
+        String? eTag = response?.headers[awsS3UploadPartResponseHeaderETag]?.replaceAll(RegExp(r'\W'), '') ?? ''; // get eTag from response header and remove non-alphanumeric characters
+        eTags[partIndex] = eTag;
+        parts.remove(partNumber);
       } else {
         // part upload failed
-        failedParts.add(i);
-        String? responseBody = response?.body;
+        failedParts++;
+        retryCounts ??= List.filled(totalParts, 0);
+        retryCounts[partIndex]++;
+        String? responseBody = await response?.stream.bytesToString();
         debugPrint('Error uploading file part: response $responseCode $responseBody');
       }
     }
 
-    double failureRate = failedParts.length / totalParts;
+    double failureRate = failedParts / totalParts;
     if (failureRate > Config().multipartPartUploadFailureCutoff) {
-      debugPrint('Aborting multipart upload: max fraction of failed part uploads exceeded - ${failedParts.length}/$totalParts');
+      debugPrint('Aborting multipart upload: max fraction of failed part uploads exceeded - $failedParts/$totalParts');
       MultipartUploadResult result = await abortMultipartUpload(uploadId: uploadData.uploadId!, category: category, entityId: entityId, fileKey: uploadData.fileKey);
       if (result == MultipartUploadResult.completed) {
         onUploadAborted?.call();
@@ -908,8 +922,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
       return result;
     }
-    if (retryCount >= Config().multipartPartUploadRetryLimit) {
-      debugPrint('Aborting multipart upload: failed part upload retry limit reached - $retryCount');
+    if ((retryCounts?.max ?? 1) >= Config().multipartPartUploadRetryLimit) {
+      debugPrint('Aborting multipart upload: failed part upload retry limit reached - ${retryCounts?.max}');
       MultipartUploadResult result = await abortMultipartUpload(uploadId: uploadData.uploadId!, category: category, entityId: entityId, fileKey: uploadData.fileKey);
       if (result == MultipartUploadResult.completed) {
         onUploadAborted?.call();
@@ -917,13 +931,14 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
       return result;
     }
-    if (failureRate > 0) {
-      MultipartUploadResult result = await _uploadFileParts(uploadData, splitBytes, category: category, entityId: entityId,
-          retryCount: ++retryCount, retryParts: failedParts, onPartUploaded: onPartUploaded, onUploadCompleted: onUploadCompleted);
+    if (parts.isNotEmpty) {
+      MultipartUploadResult result = await _uploadFileParts(uploadData, file, parts: parts, totalParts: totalParts, partSize: partSize, fileSize: fileSize,
+          category: category, entityId: entityId, retryCounts: retryCounts, eTags: eTags, onPartUploaded: onPartUploaded, onUploadCompleted: onUploadCompleted);
       return result;
     }
-    if (eTags.contains(null)) {
-      debugPrint('Aborting multipart upload: failed to get $awsS3UploadPartResponseHeaderETag for all parts');
+    if (eTags.contains('')) {
+      int missingETagPart = eTags.indexWhere((eTag) => eTag == '') + 1;
+      debugPrint('Aborting multipart upload: failed to get $awsS3UploadPartResponseHeaderETag for part $missingETagPart');
       MultipartUploadResult result = await abortMultipartUpload(uploadId: uploadData.uploadId!, category: category, entityId: entityId, fileKey: uploadData.fileKey);
       if (result == MultipartUploadResult.completed) {
         onUploadAborted?.call();
@@ -939,8 +954,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return result;
   }
 
-  Future<Response?> _uploadFilePart(String url, Uint8List bytes, {required int partNumber, required int totalParts, Function(int, int, Response?)? onPartUploaded}) async {
-    Future<Response?> response = Network().put(url, body: bytes,);
+  Future<StreamedResponse?> _uploadFilePart(String url, Stream<List<int>> byteStream, {required int numBytes, required int partNumber, required int totalParts,Function(int, int, StreamedResponse?)? onPartUploaded}) async {
+    Future<StreamedResponse?> response = Network().streamedRequest('PUT', url, byteStream: byteStream, contentLength: numBytes);
     response.then((response) {
       onPartUploaded?.call(partNumber, totalParts, response);
     });
