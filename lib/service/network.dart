@@ -458,7 +458,9 @@ class Network  {
             request.sink.add(bytes);
           }, onDone: () {
             request.sink.close();
-          });
+          }, onError: (e) {
+            Log.d(e.toString());
+          }, cancelOnError: true);
 
           // unawaited(request.sink.close());
           http.StreamedResponse response = await request.send();

@@ -868,7 +868,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       required int fileSize, List<int>? retryCounts, List<String>? eTags, Function(int, int, StreamedResponse?)? onPartUploaded, Function()? onUploadCompleted, Function()? onUploadAborted}) async {
     List<Future<StreamedResponse?>> responseFutures = [];
 
-    List<int> partAttempts = parts.take(Config().multipartPartUploadAxConcurrentParts).toList();
+    List<int> partAttempts = parts.take(Config().multipartPartUploadMaxConcurrentParts).toList();
     for (int partNumber in partAttempts) {
       int partIndex = partNumber - 1;
 
