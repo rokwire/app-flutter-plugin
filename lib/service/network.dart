@@ -431,6 +431,59 @@ class Network  {
     return null;
   }
 
+  Future<http.StreamedResponse?> streamedRequest(String method, String url, {required Stream<List<int>> byteStream, int? contentLength, Map<String, String?>? headers, NetworkAuthProvider? auth, bool sendAnalytics = true, String? analyticsUrl }) async {
+    http.StreamedResponse? response;
+
+    try {
+      dynamic token = auth?.networkAuthToken;
+      response = await _streamedRequest(method, url, byteStream: byteStream, contentLength: contentLength, headers: headers, auth: auth);
+
+      if (await auth?.refreshNetworkAuthTokenIfNeeded(response, token) == true) {
+        response = await _streamedRequest(method, url, byteStream: byteStream, contentLength: contentLength, headers: headers, auth: auth);
+      }
+    } catch (e) {
+      Log.d(e.toString());
+      FirebaseCrashlytics().recordError(e, null);
+    }
+
+    if (sendAnalytics) {
+      NotificationService().notify(notifyHttpResponse, _notifyHttpResponseParam(response, analyticsUrl: analyticsUrl));
+    }
+
+    _saveCookiesFromResponse(url, response);
+
+    return response;
+  }
+
+  Future<http.StreamedResponse?> _streamedRequest(String method, String url, {required Stream<List<int>> byteStream, int? contentLength, Map<String, String?>? headers, NetworkAuthProvider? auth}) async {
+    if (Connectivity().isNotOffline) {
+      try {
+        Uri? uri = _uriFromUrlString(url);
+        Map<String, String> reqHeaders = await _prepareHeaders(headers, auth, uri) ?? {};
+        if (uri != null) {
+
+          http.StreamedRequest request = http.StreamedRequest(method, uri)
+            ..headers.addAll(reqHeaders)
+            ..contentLength = contentLength;
+
+          byteStream.listen((bytes) {
+            request.sink.add(bytes);
+          }, onDone: () {
+            request.sink.close();
+          });
+
+          // unawaited(request.sink.close());
+          http.StreamedResponse response = await request.send();
+          return response;
+        }
+      } catch (e) {
+        Log.d(e.toString());
+        FirebaseCrashlytics().recordError(e, null);
+      }
+    }
+    return null;
+  }
+
   Future<http.Response?> _head(url, { Map<String, String?>? headers, NetworkAuthProvider? auth, int? timeout = 60 }) async {
     if (Connectivity().isNotOffline) {
       try {
