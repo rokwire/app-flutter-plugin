@@ -231,6 +231,11 @@ class Creator {
     return Creator(accountId: JsonUtils.stringValue(json['account_id']), name: JsonUtils.stringValue(json['name']));
   }
 
+  Map<String, dynamic> toJson() => {
+    "account_id": accountId,
+    "name": name
+  };
+
   @override
   bool operator ==(other) => (other is Creator) && (other.accountId == accountId) && (other.name == name);
 
@@ -772,11 +777,20 @@ class Comment {
 class Reaction {
   final String? id;
   final ReactionType? type;
-  final String? data;
+  final Map<String, dynamic>? data;
   final Creator? engager;
   final DateTime? dateCreatedUtc;
 
   Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc});
+
+  factory Reaction.emoji({String?emojiSource, String? emojiName, String? id, Creator? engager, dateCreatedUtc}) =>
+    Reaction(id: id, engager: engager, dateCreatedUtc: dateCreatedUtc,
+        type: ReactionType.emoji,
+        data: {
+          "emoji_source": emojiSource,
+          "emoji_name": emojiName
+        },
+    );
 
   static Reaction? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -785,11 +799,19 @@ class Reaction {
 
     return Reaction(
         id: JsonUtils.stringValue(json['id']),
-        data: JsonUtils.stringValue(json['data']),
+        data: JsonUtils.mapValue(json['data']),
         type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
         engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
         dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
   }
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "data": data,
+    "type": reactionTypeToString(type),
+    "created_by": engager?.toJson(),
+    "date_created": DateTimeUtils.utcDateTimeToString(dateCreatedUtc)
+  };
 
   @override
   bool operator ==(other) =>
