@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Fixed
 - Make sure to dispose TapGestureRecognizer objects.
+### Added
+- Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
+
+## [1.8.2] - 2025-03-06 
+### Added
+- Acknowledge new reaction API [#4613](https://github.com/rokwire/illinois-app/issues/4613).
+
+## [1.8.1] - 2025-03-05 
+### Fixed
+- Fixed storage update support in FlexUi [#4830](https://github.com/rokwire/illinois-app/issues/4830).
 
 ## [1.8.0] - 2025-02-19
 ### Changed
