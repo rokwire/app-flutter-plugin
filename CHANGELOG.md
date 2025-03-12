@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
 
 ## [1.8.X] 
+## [1.8.3] - 2025-03-12
 ### Added
 - Created CompactRoundedButton widget [#4872](https://github.com/rokwire/illinois-app/issues/4872).
 
