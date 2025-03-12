@@ -291,3 +291,101 @@ class _RoundedButtonState extends State<RoundedButton> {
   }
 }
 
+class CompactRoundedButton extends StatelessWidget {
+  final String label;
+  final String? hint;
+  final void Function()? onTap;
+  final Color? backgroundColor;
+  final EdgeInsetsGeometry padding;
+
+  final TextStyle? textStyle;
+  final Color? textColor;
+  final String? fontFamily;
+  final double fontSize;
+  final TextAlign textAlign;
+
+  final Border? border;
+  final Color? borderColor;
+  final double borderWidth;
+  final List<BoxShadow>? borderShadow;
+  final double maxBorderRadius;
+
+  final bool progress;
+  final Color? progressColor;
+  final double progressSize;
+  final double progressStrokeWidth;
+
+  const CompactRoundedButton({
+    Key? key,
+    required this.label,
+    this.hint,
+    this.onTap,
+    this.backgroundColor,      //= Styles().colors.white
+    this.padding                 = const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+
+    this.textStyle,
+    this.textColor,            //= Styles().colors.fillColorPrimary
+    this.fontFamily,           //= Styles().fontFamilies.bold
+    this.fontSize                = 16.0,
+    this.textAlign               = TextAlign.center,
+
+    this.border,
+    this.borderColor,          //= Styles().colors.fillColorSecondary
+    this.borderWidth             =  2.0,
+    this.borderShadow,
+    this.maxBorderRadius         = 0.0,
+
+    this.progress                = false,
+    this.progressColor,
+    this.progressSize            = 18.0,
+    this.progressStrokeWidth     = 2.0,
+  }) : super(key: key);
+
+  @protected Color? get defaultBackgroundColor => Styles().colors.white;
+  @protected Color? get displayBackgroundColor => backgroundColor ?? defaultBackgroundColor;
+
+  @protected Color? get defautTextColor => Styles().colors.fillColorPrimary;
+  @protected Color? get displayTextColor => textColor ?? defautTextColor;
+  @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
+  @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
+  @protected TextStyle get defaultTextStyle => TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
+  @protected TextStyle get displayTextStyle => textStyle ?? defaultTextStyle;
+
+  @protected Color get defaultBorderColor => Styles().colors.fillColorSecondary;
+  @protected Color get displayBorderColor => borderColor ?? defaultBorderColor;
+  @protected Border get defaultBorder => Border.all(color: displayBorderColor, width: borderWidth);
+  @protected Border get displayBorder => border ?? defaultBorder;
+  @protected double get defaultBorderRadius => padding.vertical + fontSize;
+  @protected double get displayBorderRadius => (0.0 < maxBorderRadius) ? min(defaultBorderRadius, maxBorderRadius) : defaultBorderRadius;
+
+  @protected Color? get displayProgressColor => progressColor ?? displayBorderColor;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth;
+
+  @override
+  Widget build(BuildContext context) =>
+    InkWell(onTap: onTap, child:
+      Container(
+        decoration: BoxDecoration(
+          color: displayBackgroundColor,
+          border: Border.all(color: displayBorderColor, width: borderWidth),
+          borderRadius: BorderRadius.circular(displayBorderRadius),
+        ),
+        padding: padding,
+        child: progress ? progressContent : textWidget,
+      ),
+    );
+
+  Widget get progressContent =>
+    Stack(children: [
+      textWidget,
+      Positioned.fill(child:
+        Center(child:
+          SizedBox(width: progressSize, height: progressSize, child:
+            CircularProgressIndicator(color: displayProgressColor, strokeWidth: displayProgressStrokeWidth,)
+          )
+        )
+      )
+    ],);
+
+  Widget get textWidget => Text(label, textAlign: textAlign, style: displayTextStyle,);
+}
