@@ -16,6 +16,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/ext/uri.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
