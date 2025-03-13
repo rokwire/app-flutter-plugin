@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+
+## [1.8.3] - 2025-03-12 
+### Added
+- Created CompactRoundedButton widget [#4872](https://github.com/rokwire/illinois-app/issues/4872).
+
 ## [1.8.2] - 2025-03-06 
 ### Added
 - Acknowledge new reaction API [#4613](https://github.com/rokwire/illinois-app/issues/4613).

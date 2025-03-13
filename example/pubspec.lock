@@ -926,7 +926,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.8.2"
+    version: "1.8.3"
   shared_preferences:
     dependency: transitive
     description:
