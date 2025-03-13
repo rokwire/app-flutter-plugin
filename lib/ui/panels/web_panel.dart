@@ -39,11 +39,12 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 class WebPanel extends StatefulWidget {
   final String? url;
+  final Uri? uri;
   final String? title;
   final PreferredSizeWidget? headerBar;
   final Widget? tabBar;
 
-  const WebPanel({Key? key, this.url, this.title, this.headerBar, this.tabBar}) : super(key: key);
+  const WebPanel({Key? key, this.url, this.uri, this.title, this.headerBar, this.tabBar}) : super(key: key);
 
   @override
   WebPanelState createState() => WebPanelState();
@@ -186,7 +187,10 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
       },
     );
 
-    Uri? uri = (widget.url != null) ? Uri.tryParse(widget.url!) : null;
+    Uri? uri = widget.uri;
+    if ((uri == null) && (widget.url != null)) {
+      uri = Uri.tryParse(widget.url!);
+    }
     if (uri != null) {
       controller.loadRequest(uri);
     }
