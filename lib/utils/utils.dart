@@ -656,7 +656,7 @@ class UrlUtils {
     return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
   }
 
-  static bool launchInternal(String? url) {
+  static bool canLaunchInternal(String? url) {
     return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
   }
 

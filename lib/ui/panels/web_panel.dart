@@ -304,7 +304,7 @@ class WebPanelState extends State<WebPanel> implements NotificationsListener {
   @protected
   FutureOr<flutter_webview.NavigationDecision> processPageNavigationRequest(flutter_webview.NavigationRequest navigation) async {
     String url = navigation.url;
-    if (UrlUtils.launchInternal(url)) {
+    if (UrlUtils.canLaunchInternal(url)) {
       return flutter_webview.NavigationDecision.navigate;
     }
     else {
