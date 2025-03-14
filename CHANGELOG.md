@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make sure to dispose TapGestureRecognizer objects.
 ### Added
 - Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
+- Check if Tracking services are enabled [#572](https://github.com/rokwire/app-flutter-plugin/issues/572).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
 

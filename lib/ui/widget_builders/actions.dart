@@ -102,7 +102,7 @@ class ActionBuilder {
   static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext}) {
     // onTapDismiss(dismissContext: dismissContext);
     if (StringUtils.isNotEmpty(uri)) {
-      if (internal == true || (internal != false && UrlUtils.launchInternal(uri))) {
+      if (internal == true || (internal != false && UrlUtils.canLaunchInternal(uri))) {
         Navigator.push(context, CupertinoPageRoute(builder: (context) => WebPanel(url: uri)));
       } else {
         Uri? parsedUri = Uri.tryParse(uri!);

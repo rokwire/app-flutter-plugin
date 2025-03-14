@@ -22,10 +22,10 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as path_package;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path/path.dart' as path_package;
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
@@ -645,27 +645,16 @@ class AppVersion {
 
 class UrlUtils {  
 
-  static bool isPdf(String? url) {
-    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
-    String? ext = ((uri != null) && uri.path.isNotEmpty) ? path_package.extension(uri.path) : null;
-    return (ext == '.pdf');
-  }
+  static bool isPdf(String? url) => (UriExt.tryParse(url)?.isPdf ?? false);
 
-  static bool isWebScheme(String? url) {
-    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
-    return ((uri != null) && ((uri.scheme == 'http') || (uri.scheme == 'https')));
-  }
+  static bool isWebScheme(String? url) => (UriExt.tryParse(url)?.isWebScheme ?? false);
 
-  static bool launchInternal(String? url) {
-    return UrlUtils.isWebScheme(url) && !(Platform.isAndroid && UrlUtils.isPdf(url));
-  }
+  static bool canLaunchInternal(String? url) => (UriExt.tryParse(url)?.canLaunchInternal ?? false);
 
   static Future<bool?> launchExternal(String? url) async {
     if (StringUtils.isNotEmpty(url)) {
-      Uri? uri = Uri.tryParse(url!);
-      if (uri != null) {
-        return launchUrl(UrlUtils.fixUri(uri) ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-      }
+      Uri? uri = UriExt.tryParse(url!);
+      return UriExt.launchExternal(uri);
     }
     return null;
   }
@@ -674,9 +663,7 @@ class UrlUtils {
     if (StringUtils.isNotEmpty(url)) {
       Uri? uri = Uri.tryParse(url);
       if (uri != null) {
-        Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
-        queryParameters.addAll(urlParams);
-        uri = uri.replace(queryParameters: queryParameters);
+        uri = UriExt.addQueryParameters(uri, queryParameters);
         url = uri.toString();
       }
     }
@@ -685,55 +672,37 @@ class UrlUtils {
 
   static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
     Uri? uri = Uri.tryParse(url);
-    return Uri(
-      scheme: StringUtils.ensureEmpty(uri?.scheme),
-      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
-      host: StringUtils.ensureEmpty(uri?.host),
-      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
-      path: StringUtils.ensureEmpty(uri?.path),
-      fragment: StringUtils.ensureEmpty(uri?.fragment),
-      queryParameters: queryParameters,
-    ).toString();
+    return UriExt.buildWithQueryParameters(uri, queryParameters).toString();
   }
 
-  static bool isValidUrl(String? url) {
-    Uri? uri = (url != null) ? Uri.tryParse(url) : null;
-    return (uri != null) && StringUtils.isNotEmpty(uri.scheme) && (StringUtils.isNotEmpty(uri.host) || StringUtils.isNotEmpty(uri.path));
+  static bool isValidUrl(String? url) => (UriExt.tryParse(url)?.isValid ?? false);
+
+  static String? fixUrl(String url, {String scheme = 'http'}) {
+    Uri? uri = UriExt.parse(url);
+    Uri? fixedUri = (uri != null) ? uri.fix(scheme: scheme) : null;
+    return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
-  static Uri? parseUri(String? url) {
-    if (url != null) {
-      Uri? uri = Uri.tryParse(url);
-      if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
-        List<String> pathComponents = uri.path.split('/');
-        if (0 < pathComponents.length) {
-          String host = pathComponents.first;
-          String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
-          try {
-            return Uri(
-              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
-              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
-              host: host,
-              port: (0 < uri.port) ? uri.port : null,
-              path: path,
-              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
-              query: uri.query.isNotEmpty ? uri.query : null,
-              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
-              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
-          }
-          catch(e) {
-          }
-        }
-      }
-      return uri;
+  static Future<bool> isHostAvailable(String? url) async {
+    List<InternetAddress>? result;
+    String? host = UriExt.parse(url)?.host;
+    try {
+      result = (host != null) ? await InternetAddress.lookup(host) : null;
     }
-    return null;
+    on SocketException catch (e) {
+      debugPrint(e.toString());
+    }
+    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
+}
 
-  static Uri? buildUri(Uri uri, { String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
-    
-    String sourceHost = uri.host;
-    String sourcePath = uri.path;
+extension UriExt on Uri {
+  bool matchDeepLinkUri(Uri? deepLinkUri) =>
+      (deepLinkUri != null) && (deepLinkUri.scheme == scheme) && (deepLinkUri.authority == authority) && (deepLinkUri.path == path);
+
+  Uri? build({String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
+    String sourceHost = this.host;
+    String sourcePath = this.path;
     if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
       List<String> sourcePathComponents = sourcePath.split('/');
       if (0 < sourcePathComponents.length) {
@@ -744,15 +713,15 @@ class UrlUtils {
 
     try {
       return Uri(
-        scheme: (scheme != null) ? scheme : (uri.scheme.isNotEmpty ? uri.scheme : null),
-        userInfo: (userInfo != null) ? userInfo : (uri.userInfo.isNotEmpty ? uri.userInfo : null),
-        host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
-        port: (port != null) ? port : ((0 < uri.port) ? uri.port : null),
-        path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
-        //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
-        query: (query != null) ? query : (uri.query.isNotEmpty ? uri.query : null),
-        //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
-        fragment: (fragment != null) ? fragment : (uri.fragment.isNotEmpty ? uri.fragment : null)
+          scheme: (scheme != null) ? scheme : (this.scheme.isNotEmpty ? this.scheme : null),
+          userInfo: (userInfo != null) ? userInfo : (this.userInfo.isNotEmpty ? this.userInfo : null),
+          host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
+          port: (port != null) ? port : ((0 < this.port) ? this.port : null),
+          path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
+          //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+          query: (query != null) ? query : (this.query.isNotEmpty ? this.query : null),
+          //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+          fragment: (fragment != null) ? fragment : (this.fragment.isNotEmpty ? this.fragment : null)
       );
     }
     catch(e) {
@@ -760,19 +729,13 @@ class UrlUtils {
     }
   }
 
-  static String? fixUrl(String url, {String scheme = 'http'}) {
-    Uri? uri = parseUri(url);
-    Uri? fixedUri = (uri != null) ? fixUri(uri, scheme: scheme) : null;
-    return (fixedUri != null) ? fixedUri.toString() : null;
-  }
+  Uri? fix({String scheme = 'http'}) => this.scheme.isEmpty ? this.build(scheme: scheme) : null;
 
-  static Uri? fixUri(Uri uri, {String scheme = 'http'}) => uri.scheme.isEmpty ? buildUri(uri, scheme: scheme) : null;
-
-  static Future<Uri?> fixUriAsync(Uri uri, { int? timeout = 60}) async {
-    if (uri.scheme.isEmpty) {
+  Future<Uri?> fixAsync({int? timeout = 60}) async {
+    if (scheme.isEmpty) {
       final List<String> schemes = ['https', 'http'];
-      for (String scheme in schemes) {
-        Uri? schemeUri = buildUri(uri, scheme: scheme);
+      for (String newScheme in schemes) {
+        Uri? schemeUri = build(scheme: newScheme);
         Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
         if (schemeResponse?.statusCode == 200) {
           return schemeUri;
@@ -780,10 +743,10 @@ class UrlUtils {
       }
 
       final String www = 'www.';
-      String? host = uri.host.isNotEmpty ? uri.host : (uri.path.isNotEmpty ? uri.path : null);
+      String? host = this.host.isNotEmpty ? this.host : (this.path.isNotEmpty ? this.path : null);
       if ((host != null) && !host.startsWith(www)) {
-        for (String scheme in schemes) {
-          Uri? schemeUri = buildUri(uri, scheme: scheme, host: www + host);
+        for (String newScheme in schemes) {
+          Uri? schemeUri = this.build(scheme: newScheme, host: www + host);
           Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
           if (schemeResponse?.statusCode == 200) {
             return schemeUri;
@@ -795,19 +758,73 @@ class UrlUtils {
     return null;
   }
 
-  static Future<bool> isHostAvailable(String? url) async {
-    List<InternetAddress>? result;
-    String? host = parseUri(url)?.host;
-    try {
-      result = (host != null) ? await InternetAddress.lookup(host) : null;
+  bool get isPdf {
+    String? extension;
+    if (path.isNotEmpty) {
+      extension = path_package.extension(path);
     }
-    on SocketException catch (e) {
-      debugPrint(e.toString());
+    return (extension == '.pdf');
+  }
+
+  bool get isWebScheme => ((scheme == 'http') || (scheme == 'https'));
+
+  bool get isValid => StringUtils.isNotEmpty(scheme) && (StringUtils.isNotEmpty(host) || StringUtils.isNotEmpty(path));
+
+  bool get canLaunchInternal => isWebScheme && !(Platform.isAndroid && isPdf);
+
+  static Uri? tryParse(String? url) => (url != null) ? Uri.tryParse(url) : null;
+
+  static Uri? parse(String? url) {
+    Uri? uri = tryParse(url);
+    if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
+      List<String> pathComponents = uri.path.split('/');
+      if (0 < pathComponents.length) {
+        String host = pathComponents.first;
+        String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
+        try {
+          return Uri(
+              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
+              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+              host: host,
+              port: (0 < uri.port) ? uri.port : null,
+              path: path,
+              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+              query: uri.query.isNotEmpty ? uri.query : null,
+              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+        } catch (e) {}
+      }
     }
-    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
+    return uri;
+  }
+
+  static Uri buildWithQueryParameters(Uri? uri, Map<String, String> queryParameters) {
+    return Uri(
+      scheme: StringUtils.ensureEmpty(uri?.scheme),
+      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
+      host: StringUtils.ensureEmpty(uri?.host),
+      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
+      path: StringUtils.ensureEmpty(uri?.path),
+      fragment: StringUtils.ensureEmpty(uri?.fragment),
+      queryParameters: queryParameters,
+    );
+  }
+
+  static Uri addQueryParameters(Uri uri, Map<String, String> queryParameters) {
+    Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
+    queryParameters.addAll(urlParams);
+    uri = uri.replace(queryParameters: queryParameters);
+    return uri;
+  }
+
+  static Future<bool?> launchExternal(Uri? uri) async {
+    if (uri != null) {
+      return launchUrl(uri.fix() ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+    } else {
+      return null;
+    }
   }
 }
-
 
 class JsonUtils {
 
@@ -1633,13 +1650,6 @@ extension TZDateTimeExt on timezone.TZDateTime {
 
 extension DateTimeExt on DateTime {
   int get secondsSinceEpoch => millisecondsSinceEpoch ~/ 1000;
-}
-
-extension UriUtilsExt on Uri {
-  bool matchDeepLinkUri(Uri? deepLinkUri) => (deepLinkUri != null) &&
-    (deepLinkUri.scheme == scheme) &&
-    (deepLinkUri.authority == authority) &&
-    (deepLinkUri.path == path);
 }
 
 class Pair<L,R> {
