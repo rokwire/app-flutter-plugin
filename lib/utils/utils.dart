@@ -20,11 +20,13 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:rokwire_plugin/ext/uri.dart';
+import 'package:path/path.dart' as path_package;
+import 'package:rokwire_plugin/service/network.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -647,17 +649,12 @@ class UrlUtils {
 
   static bool isWebScheme(String? url) => (UriExt.tryParse(url)?.isWebScheme ?? false);
 
-  static bool canLaunchInternal(String? url) {
-    Uri? uri = UriExt.tryParse(url);
-    return (uri != null) && uri.isWebScheme && !(Platform.isAndroid && uri.isPdf);
-  }
+  static bool canLaunchInternal(String? url) => (UriExt.tryParse(url)?.canLaunchInternal ?? false);
 
   static Future<bool?> launchExternal(String? url) async {
     if (StringUtils.isNotEmpty(url)) {
       Uri? uri = UriExt.tryParse(url!);
-      if (uri != null) {
-        return launchUrl(uri.fix() ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-      }
+      return UriExt.launchExternal(uri);
     }
     return null;
   }
@@ -666,9 +663,7 @@ class UrlUtils {
     if (StringUtils.isNotEmpty(url)) {
       Uri? uri = Uri.tryParse(url);
       if (uri != null) {
-        Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
-        queryParameters.addAll(urlParams);
-        uri = uri.replace(queryParameters: queryParameters);
+        uri = UriExt.addQueryParameters(uri, queryParameters);
         url = uri.toString();
       }
     }
@@ -677,20 +672,10 @@ class UrlUtils {
 
   static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
     Uri? uri = Uri.tryParse(url);
-    return Uri(
-      scheme: StringUtils.ensureEmpty(uri?.scheme),
-      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
-      host: StringUtils.ensureEmpty(uri?.host),
-      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
-      path: StringUtils.ensureEmpty(uri?.path),
-      fragment: StringUtils.ensureEmpty(uri?.fragment),
-      queryParameters: queryParameters,
-    ).toString();
+    return UriExt.buildWithQueryParameters(uri, queryParameters).toString();
   }
 
-  static bool isValidUrl(String? url) {
-    return UriExt.tryParse(url)?.isValid ?? false;
-  }
+  static bool isValidUrl(String? url) => (UriExt.tryParse(url)?.isValid ?? false);
 
   static String? fixUrl(String url, {String scheme = 'http'}) {
     Uri? uri = UriExt.parse(url);
@@ -711,6 +696,135 @@ class UrlUtils {
   }
 }
 
+extension UriExt on Uri {
+  bool matchDeepLinkUri(Uri? deepLinkUri) =>
+      (deepLinkUri != null) && (deepLinkUri.scheme == scheme) && (deepLinkUri.authority == authority) && (deepLinkUri.path == path);
+
+  Uri? build({String? scheme, String? userInfo, String? host, int? port, String? path, String? query, String? fragment}) {
+    String sourceHost = this.host;
+    String sourcePath = this.path;
+    if (sourceHost.isEmpty && sourcePath.isNotEmpty) {
+      List<String> sourcePathComponents = sourcePath.split('/');
+      if (0 < sourcePathComponents.length) {
+        sourceHost = sourcePathComponents.first;
+        sourcePath = (1 < sourcePathComponents.length) ? sourcePathComponents.slice(1).join('/') : "";
+      }
+    }
+
+    try {
+      return Uri(
+          scheme: (scheme != null) ? scheme : (this.scheme.isNotEmpty ? this.scheme : null),
+          userInfo: (userInfo != null) ? userInfo : (this.userInfo.isNotEmpty ? this.userInfo : null),
+          host: (host != null) ? host : (sourceHost.isNotEmpty ? sourceHost : null),
+          port: (port != null) ? port : ((0 < this.port) ? this.port : null),
+          path: (path != null) ? path : (sourcePath.isNotEmpty ? sourcePath : null),
+          //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+          query: (query != null) ? query : (this.query.isNotEmpty ? this.query : null),
+          //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+          fragment: (fragment != null) ? fragment : (this.fragment.isNotEmpty ? this.fragment : null)
+      );
+    }
+    catch(e) {
+      return null;
+    }
+  }
+
+  Uri? fix({String scheme = 'http'}) => this.scheme.isEmpty ? this.build(scheme: scheme) : null;
+
+  Future<Uri?> fixAsync({int? timeout = 60}) async {
+    if (scheme.isEmpty) {
+      final List<String> schemes = ['https', 'http'];
+      for (String newScheme in schemes) {
+        Uri? schemeUri = build(scheme: newScheme);
+        Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+        if (schemeResponse?.statusCode == 200) {
+          return schemeUri;
+        }
+      }
+
+      final String www = 'www.';
+      String? host = this.host.isNotEmpty ? this.host : (this.path.isNotEmpty ? this.path : null);
+      if ((host != null) && !host.startsWith(www)) {
+        for (String newScheme in schemes) {
+          Uri? schemeUri = this.build(scheme: newScheme, host: www + host);
+          Response? schemeResponse = (schemeUri != null) ? await Network().head(schemeUri, timeout: timeout) : null;
+          if (schemeResponse?.statusCode == 200) {
+            return schemeUri;
+          }
+        }
+      }
+
+    }
+    return null;
+  }
+
+  bool get isPdf {
+    String? extension;
+    if (path.isNotEmpty) {
+      extension = path_package.extension(path);
+    }
+    return (extension == '.pdf');
+  }
+
+  bool get isWebScheme => ((scheme == 'http') || (scheme == 'https'));
+
+  bool get isValid => StringUtils.isNotEmpty(scheme) && (StringUtils.isNotEmpty(host) || StringUtils.isNotEmpty(path));
+
+  bool get canLaunchInternal => isWebScheme && !(Platform.isAndroid && isPdf);
+
+  static Uri? tryParse(String? url) => (url != null) ? Uri.tryParse(url) : null;
+
+  static Uri? parse(String? url) {
+    Uri? uri = tryParse(url);
+    if ((uri != null) && uri.host.isEmpty && (uri.path.isNotEmpty)) {
+      List<String> pathComponents = uri.path.split('/');
+      if (0 < pathComponents.length) {
+        String host = pathComponents.first;
+        String? path = (1 < pathComponents.length) ? pathComponents.slice(1).join('/') : null;
+        try {
+          return Uri(
+              scheme: (uri.scheme.isNotEmpty ? uri.scheme : null),
+              userInfo: uri.userInfo.isNotEmpty ? uri.userInfo : null,
+              host: host,
+              port: (0 < uri.port) ? uri.port : null,
+              path: path,
+              //pathSegments: uri.pathSegments.isNotEmpty ? uri.pathSegments : null,
+              query: uri.query.isNotEmpty ? uri.query : null,
+              //queryParameters: uri.queryParameters.isNotEmpty ? uri.queryParameters : null,
+              fragment: uri.fragment.isNotEmpty ? uri.fragment : null);
+        } catch (e) {}
+      }
+    }
+    return uri;
+  }
+
+  static Uri buildWithQueryParameters(Uri? uri, Map<String, String> queryParameters) {
+    return Uri(
+      scheme: StringUtils.ensureEmpty(uri?.scheme),
+      userInfo: StringUtils.ensureEmpty(uri?.userInfo),
+      host: StringUtils.ensureEmpty(uri?.host),
+      port: ((uri?.port ?? 0) != 0) ? uri?.port : null,
+      path: StringUtils.ensureEmpty(uri?.path),
+      fragment: StringUtils.ensureEmpty(uri?.fragment),
+      queryParameters: queryParameters,
+    );
+  }
+
+  static Uri addQueryParameters(Uri uri, Map<String, String> queryParameters) {
+    Map<String, String> urlParams = Map<String, String>.from(uri.queryParameters);
+    queryParameters.addAll(urlParams);
+    uri = uri.replace(queryParameters: queryParameters);
+    return uri;
+  }
+
+  static Future<bool?> launchExternal(Uri? uri) async {
+    if (uri != null) {
+      return launchUrl(uri.fix() ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+    } else {
+      return null;
+    }
+  }
+}
 
 class JsonUtils {
 

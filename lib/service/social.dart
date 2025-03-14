@@ -17,7 +17,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:rokwire_plugin/ext/network.dart';
-import 'package:rokwire_plugin/ext/uri.dart';
 import 'package:rokwire_plugin/model/social.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
