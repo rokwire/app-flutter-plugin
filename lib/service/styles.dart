@@ -400,10 +400,10 @@ class UiColors {
   static String? toHex(Color? value, {bool leadingHashSign = true}) {
     if (value != null) {
       return (leadingHashSign ? '#' : '') +
-          value.alpha.toRadixString(16).padLeft(2, '0') +
-          value.red.toRadixString(16).padLeft(2, '0') +
-          value.green.toRadixString(16).padLeft(2, '0') +
-          value.blue.toRadixString(16).padLeft(2, '0');
+          (value.a / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.r / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.g / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.b / 255.0).toInt().toRadixString(16).padLeft(2, '0');
     }
     return null;
   }

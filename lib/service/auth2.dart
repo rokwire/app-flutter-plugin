@@ -1311,7 +1311,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
-  // ignore: unused_element
+  // ignore: unused_element_parameter
   Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";

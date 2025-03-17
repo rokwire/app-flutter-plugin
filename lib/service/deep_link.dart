@@ -17,7 +17,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 
 class DeepLink with Service {
   
@@ -46,10 +46,10 @@ class DeepLink with Service {
   Future<void> initService() async {
 
     // 1. Initial Uri
-    getInitialUri().then((Uri? uri) => handleUri(uri));
+    AppLinks().getInitialLink().then((Uri? uri) => handleUri(uri));
 
     // 2. Updated uri
-    uriLinkStream.listen((Uri? uri) => handleUri(uri));
+    AppLinks().uriLinkStream.listen((Uri? uri) => handleUri(uri));
 
     _uriCache = <Uri>[];
 
