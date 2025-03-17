@@ -3,6 +3,7 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/survey.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
 import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:rokwire_plugin/ui/widget_builders/buttons.dart';
@@ -99,10 +100,11 @@ class ActionBuilder {
     });
   }
 
-  static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext}) {
+  static void onTapLaunchUri(BuildContext context, String? uri, {bool? internal, BuildContext? dismissContext}) async {
     // onTapDismiss(dismissContext: dismissContext);
     if (StringUtils.isNotEmpty(uri)) {
-      if (internal == true || (internal != false && UrlUtils.canLaunchInternal(uri))) {
+      bool launchInternal = (internal == true || (internal != false && UrlUtils.canLaunchInternal(uri))) && await TrackingServices.isAllowed();
+      if (launchInternal) {
         Navigator.push(context, CupertinoPageRoute(builder: (context) => WebPanel(url: uri)));
       } else {
         Uri? parsedUri = Uri.tryParse(uri!);
