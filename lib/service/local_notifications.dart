@@ -76,7 +76,7 @@ class LocalNotifications with Service {
 
   Future<bool?> _initPlugin() {
     AndroidInitializationSettings androidSettings = const AndroidInitializationSettings('@mipmap/ic_launcher');
-    DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false, onDidReceiveLocalNotification: _onDidReceiveLocalNotification);
+    DarwinInitializationSettings darwinSettings = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false /*, onDidReceiveLocalNotification: _onDidReceiveLocalNotification */);
     InitializationSettings initSettings = InitializationSettings(android: androidSettings, iOS: darwinSettings);
     return _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: _onTapNotification);
   }
@@ -120,11 +120,11 @@ class LocalNotifications with Service {
     NotificationService().notify(notifyLocalNotificationTapped, _getActionFromNotificationResponse(response));
   }
 
-  Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
+  /*Future _onDidReceiveLocalNotification(int id, String? title, String? body, String? payload) async {
     NotificationService().notify(notifyLocalNotificationTapped, NotificationResponse(
       notificationResponseType: NotificationResponseType.selectedNotification, id: id, payload: payload
     ));
-  }
+  }*/
 
   Future<bool> showNotification(String id, {String? title, String? message, String? payload, bool overwrite = true}) async {
     if (await _shouldScheduleNotification(id, overwrite)) {
@@ -149,6 +149,7 @@ class LocalNotifications with Service {
         message,
         repeatInterval,
         notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: payload,
       );
       return true;
