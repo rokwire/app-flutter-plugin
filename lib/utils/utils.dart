@@ -556,15 +556,15 @@ class ColorUtils {
   }
 
   static String toHex(Color value) {
-    if (value.alpha < 0xFF) {
-      return "#${value.alpha.toRadixString(16)}${value.red.toRadixString(16)}${value.green.toRadixString(16)}${value.blue.toRadixString(16)}";
+    if (value.a < 1.0) {
+      return "#${(value.a / 255.0).toInt().toRadixString(16)}${(value.r / 255.0).toInt().toRadixString(16)}${(value.g / 255.0).toInt().toRadixString(16)}${(value.b / 255.0).toInt().toRadixString(16)}";
     }
     else {
-      return "#${value.red.toRadixString(16)}${value.green.toRadixString(16)}${value.blue.toRadixString(16)}";
+      return "#${(value.r / 255.0).toInt().toRadixString(16)}${(value.g / 255.0).toInt().toRadixString(16)}${(value.b / 255.0).toInt().toRadixString(16)}";
     }
   }
 
-  static int hueFromColor(Color color) => hueFromRGB(color.red, color.green, color.blue);
+  static int hueFromColor(Color color) => hueFromRGB((color.r / 255.0).toInt(), (color.g / 255.0).toInt(), (color.b / 255.0).toInt());
 
   static int hueFromRGB(int red, int green, int blue) {
     double min = math.min(math.min(red, green), blue).toDouble();

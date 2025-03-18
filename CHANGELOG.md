@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
 - Check if Tracking services are enabled [#572](https://github.com/rokwire/app-flutter-plugin/issues/572).
+- Launch urls based on if Tracking services are enabled [#4898](https://github.com/rokwire/illinois-app/issues/4898).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
+- Upgrade to Flutter 3.29.2, upgraded plugin [#4899](https://github.com/rokwire/illinois-app/issues/4899).
 
 ## [1.8.3] - 2025-03-12
 ### Added
