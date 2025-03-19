@@ -222,7 +222,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   Future<Map<String, dynamic>?> loadContentItems(List<String> categories) async {
     Map<String, dynamic>? result;
     if (Config().contentUrl != null) {
-      String url = Config().contentUrl!;
+      String url = '${Config().contentUrl!}/content_items';
       if (CollectionUtils.isNotEmpty(categories)) {
         String categoriesString = categories.join(',');
         Map<String, String> queryParams = {'categories': categoriesString};
