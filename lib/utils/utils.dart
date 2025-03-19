@@ -685,15 +685,19 @@ class UrlUtils {
   }
 
   static Future<bool> isHostAvailable(String? url) async {
-    List<InternetAddress>? result;
-    String? host = UriExt.parse(url)?.host;
-    try {
-      result = (host != null) ? await InternetAddress.lookup(host) : null;
+    if (kIsWeb) {
+      Response? response = (url != null) ? await Network().head(url) : null;
+      return response?.statusCode == 200;
+    } else {
+      List<InternetAddress>? result;
+      String? host = UriExt.parse(url)?.host;
+      try {
+        result = (host != null) ? await InternetAddress.lookup(host) : null;
+      } on SocketException catch (e) {
+        debugPrint(e.toString());
+      }
+      return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
     }
-    on SocketException catch (e) {
-      debugPrint(e.toString());
-    }
-    return ((result != null) && result.isNotEmpty && result.first.rawAddress.isNotEmpty);
   }
 }
 
