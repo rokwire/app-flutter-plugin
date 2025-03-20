@@ -445,6 +445,18 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2PersonIdentifier) ? result : null;
   }
 
+  // Returns secret string if successful, otherwise null
+  Future<String?> getEventSelfCheckSecret(String eventId) async {
+    await Future.delayed(Duration(milliseconds: 1000));
+    return 'abracadabra';
+    /* TMP: if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/self-check/secret";
+      Response? response = await Network().post(url, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? response?.body : null;
+    }
+    return null; */
+  }
+
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
@@ -575,10 +587,21 @@ class Events2 with Service implements NotificationsListener {
   // DeepLinks
 
   static String get eventDetailRawUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
-  static String eventDetailUrl(Event2? event) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{'event_id' : "${event?.id}"});
+  static String eventDetailUrl(Event2? event) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{
+    'event_id' : "${event?.id}",
+  });
 
   static String get eventsQueryRawUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
-  static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl, params);
+  static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl,
+      params
+  );
+
+  static String get eventSelfCheckRawUrl => '${DeepLink().appUrl}/event2_self_check'; //TBD: => self_check
+  static String eventSelfCheckUrl(String eventId, { String? secret }) => UrlUtils.buildWithQueryParameters(eventSelfCheckRawUrl, <String, String>{
+    'event_id' : eventId,
+    if (secret != null)
+      'secret': secret,
+  });
 
   @protected
   void onDeepLinkUri(Uri? uri) {
