@@ -447,14 +447,15 @@ class Events2 with Service implements NotificationsListener {
 
   // Returns secret string if successful, otherwise null
   Future<String?> getEventSelfCheckSecret(String eventId) async {
-    await Future.delayed(Duration(milliseconds: 1000));
+    await Future.delayed(Duration(milliseconds: 1500));
     return 'abracadabra';
-    /* TMP: if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/event/$eventId/self-check/secret";
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/security/secret";
       Response? response = await Network().post(url, headers: _jsonHeaders, auth: Auth2());
-      return (response?.statusCode == 200) ? response?.body : null;
+      Map<String, dynamic>? responseData = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body)  : null;  
+      return JsonUtils.stringValue(responseData?['secret']);
     }
-    return null; */
+    return null;
   }
 
   // Returns error message, Event2Person if successful
