@@ -1,4 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
@@ -31,7 +33,7 @@ class TriangleHeaderImage extends StatelessWidget {
   Widget buildFlexibleInterior(BuildContext context) {
     Widget? image;
     if (flexImageUrl != null) {
-      image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true);
+      image = Image.network(Config().wrapWebProxyUrl(sourceUrl: flexImageUrl) ?? '', fit: BoxFit.cover, headers: kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders, excludeFromSemantics: true);
     } else if (flexImageKey != null) {
       image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
     }

@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_panel.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -22,7 +23,7 @@ class ModalImageHolder extends StatelessWidget{
   //Modal Image Dialog
   void _showModalImage(BuildContext context){
     if(StringUtils.isNotEmpty(url)){
-      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (context, _, __) => ModalImagePanel(imageKey: url)));
+      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (context, _, __) => ModalImagePanel(imageKey: url, networkImageHeaders: Auth2Csrf().networkAuthHeaders)));
     }
     else if(image != null){
       Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (context, _, __) => ModalImagePanel(image: image)));

@@ -16,6 +16,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
@@ -417,10 +418,10 @@ class ImageSlantHeader extends StatelessWidget {
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
       image = Styles().images.getImage(imageKey!, source: imageUrl, width: width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
-        networkHeaders: (kIsWeb ? null : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+        networkHeaders: (kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
       image = Image.network(imageUrl!, width: width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
-        headers: (kIsWeb ? null : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
+        headers: (kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget);
     }
 
     double displayHeight = (image as Image?)?.height ?? 0;
