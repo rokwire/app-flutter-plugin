@@ -1171,7 +1171,7 @@ class Groups with Service implements NotificationsListener {
       });
       try {
         await _ensureLogin();
-        return await Network().get(url, body: post, auth: Auth2());
+        return await Network().post(url, body: post, auth: Auth2());
       } catch (e) {
         debugPrint(e.toString());
       }
