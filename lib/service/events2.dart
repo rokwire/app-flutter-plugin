@@ -587,8 +587,8 @@ class Events2 with Service implements NotificationsListener {
   // DeepLinks
 
   static String get eventDetailRawUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
-  static String eventDetailUrl(Event2? event) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{
-    'event_id' : "${event?.id}",
+  static String eventDetailUrl(String eventId) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{
+    'event_id' : eventId
   });
 
   static String get eventsQueryRawUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
