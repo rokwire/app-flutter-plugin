@@ -248,9 +248,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   List<Auth2Type> get linkedEmail => _account?.getLinkedForAuthType(emailLoginType) ?? [];
   List<Auth2Type> get linkedUsername => _account?.getLinkedForAuthType(usernameLoginType) ?? [];
 
+  String? get uin => uiucUser?.uin;
   bool get hasUin => (0 < (uin?.length ?? 0));
-  String? get uin => _account?.authType?.uiucUser?.uin;
-  String? get netId => _account?.authType?.uiucUser?.netId;
+  String? get netId => uiucUser?.netId;
+  Auth2UiucUser? get uiucUser => _account?.authType?.uiucUser;
 
   String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
   String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
