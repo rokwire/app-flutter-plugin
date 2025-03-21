@@ -924,9 +924,12 @@ class JsonUtils {
     }
   }
 
-  static Map<String, dynamic>? mapValue(dynamic value) {
+  static Map<String, dynamic>? mapValue(dynamic value) =>
+    mapCastValue<String, dynamic>(value);
+
+  static Map<T, K>? mapCastValue<T, K>(dynamic value) {
     try {
-      return (value is Map) ? value.cast<String, dynamic>() : null;
+      return (value is Map) ? value.cast<T, K>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
