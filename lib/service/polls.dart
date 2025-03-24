@@ -35,7 +35,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:sprintf/sprintf.dart';
 
-class Polls with Service implements NotificationsListener {
+class Polls with Service, NotificationsListener {
 
   static const String notifyCreated          = "edu.illinois.rokwire.poll.created"; // new poll created, bubble should appear
   static const String notifyPresentVote      = "edu.illinois.rokwire.poll.present.vote"; // poll opened for voting, bubble should appear

@@ -23,7 +23,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class HttpProxy extends Service implements NotificationsListener {
+class HttpProxy extends Service with NotificationsListener {
   
   // Singletone Factory
 

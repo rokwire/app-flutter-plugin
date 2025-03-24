@@ -20,7 +20,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart';
 
-class Events2 with Service implements NotificationsListener {
+class Events2 with Service, NotificationsListener {
 
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch.detail";
   static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";

@@ -28,7 +28,7 @@ import 'package:http/http.dart' as http;
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 
-class Localization with Service implements NotificationsListener {
+class Localization with Service, NotificationsListener {
   
   // Notifications
   static const String notifyLocaleChanged   = "edu.illinois.rokwire.localization.locale.updated";
