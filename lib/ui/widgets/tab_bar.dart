@@ -39,7 +39,7 @@ class TabBar extends StatefulWidget {
   String get flexUiSection => 'tabbar';
 }
 
-class _TabBarState extends State<TabBar> implements NotificationsListener {
+class _TabBarState extends State<TabBar> with NotificationsListener {
 
   List<dynamic>? _contentListCodes;
 

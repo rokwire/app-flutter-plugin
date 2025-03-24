@@ -31,7 +31,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 
-class Analytics with Service implements NotificationsListener {
+class Analytics with Service, NotificationsListener {
 
   // Database Data
 
