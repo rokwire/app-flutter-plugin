@@ -34,7 +34,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 
-class FlexUI with Service implements NotificationsListener {
+class FlexUI with Service, NotificationsListener {
 
   static const String notifyChanged  = "edu.illinois.rokwire.flexui.changed";
 

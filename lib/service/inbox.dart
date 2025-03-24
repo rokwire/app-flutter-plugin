@@ -16,7 +16,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Inbox with Service implements NotificationsListener {
+class Inbox with Service, NotificationsListener {
 
   static const String notifyInboxUserInfoChanged             = "edu.illinois.rokwire.inbox.user.info.changed";
   static const String notifyInboxUnreadMessagesCountChanged  = "edu.illinois.rokwire.inbox.messages.unread.count.changed";
