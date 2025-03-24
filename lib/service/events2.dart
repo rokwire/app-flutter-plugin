@@ -24,6 +24,7 @@ class Events2 with Service, NotificationsListener {
 
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch.detail";
   static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";
+  static const String notifySelfCheckIn  = "edu.illinois.rokwire.event2.self.checkin";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
   static const String notifyNotificationsUpdated  = "edu.illinois.rokwire.event2.notifications.updated";
@@ -446,7 +447,8 @@ class Events2 with Service, NotificationsListener {
   }
 
   // Returns secret string if successful, otherwise null
-  Future<String?> getEventSelfCheckSecret(String eventId) async {
+  Future<String?> getEventSelfCheckInSecret(String eventId) async {
+    //TMP:
     await Future.delayed(Duration(milliseconds: 1500));
     return 'abracadabra';
     if (Config().calendarUrl != null) {
@@ -454,6 +456,31 @@ class Events2 with Service, NotificationsListener {
       Response? response = await Network().post(url, headers: _jsonHeaders, auth: Auth2());
       Map<String, dynamic>? responseData = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body)  : null;  
       return JsonUtils.stringValue(responseData?['secret']);
+    }
+    return null;
+  }
+
+  Future<Event2Person?> selfCheckInEvent(String eventId, { String? secret }) async {
+    //TMP:
+    await Future.delayed(Duration(milliseconds: 1500));
+    return Event2Person(id: '', //identifier?.accountId == Auth2().accountId
+        identifier: Event2PersonIdentifier(
+          accountId: Auth2().accountId,
+          externalId: Auth2().uin,
+        ),
+        role: null,
+        registrationType: Event2UserRegistrationType.self,
+        time: 0,
+    );
+
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/attendee/self-check-in";
+      String? body = JsonUtils.encode({
+        if (secret != null)
+          'secret': secret,
+      });
+      Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : null;
     }
     return null;
   }
@@ -597,8 +624,8 @@ class Events2 with Service, NotificationsListener {
       params
   );
 
-  static String get eventSelfCheckRawUrl => '${DeepLink().appUrl}/event2_self_check'; //TBD: => self_check
-  static String eventSelfCheckUrl(String eventId, { String? secret }) => UrlUtils.buildWithQueryParameters(eventSelfCheckRawUrl, <String, String>{
+  static String get eventSelfCheckInRawUrl => '${DeepLink().appUrl}/event2_self_checkin'; //TBD: => event_self_checkin
+  static String eventSelfCheckInUrl(String eventId, { String? secret }) => UrlUtils.buildWithQueryParameters(eventSelfCheckInRawUrl, <String, String>{
     'event_id' : eventId,
     if (secret != null)
       'secret': secret,
@@ -613,6 +640,10 @@ class Events2 with Service, NotificationsListener {
       }
       else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
         try { NotificationService().notify(notifyLaunchQuery, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
+      }
+      else if (uri.matchDeepLinkUri(Uri.tryParse(eventSelfCheckInRawUrl))) {
+        try { NotificationService().notify(notifySelfCheckIn, uri.queryParameters.cast<String, dynamic>()); }
         catch (e) { print(e.toString()); }
       }
     }
