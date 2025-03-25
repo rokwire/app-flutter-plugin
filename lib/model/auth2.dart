@@ -88,13 +88,17 @@ class Auth2Account {
   final List<Auth2Type>? authTypes;
   final Map<String, dynamic>? systemConfigs;
 
+  final DateTime? lastLoginDate;
+  final DateTime? lastAccessTokenDate;
+
   Auth2Account({this.id, this.profile, this.prefs, this.privacy, this.secrets = const {}, this.permissions,
-    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs});
+    this.roles, this.groups, this.identifiers, this.authTypes, this.systemConfigs, this.lastLoginDate, this.lastAccessTokenDate});
 
   factory Auth2Account.fromOther(Auth2Account? other, {String? id, String? username,
     Auth2UserProfile? profile, Auth2UserPrefs? prefs, Auth2UserPrivacy? privacy, Map<String, dynamic>? secrets,
     List<Auth2Permission>? permissions, List<Auth2Role>? roles, List<Auth2Group>? groups,
-    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs}) {
+    List<Auth2Identifier>? identifiers, List<Auth2Type>? authTypes, Map<String, dynamic>? systemConfigs,
+    DateTime? lastLoginDate, DateTime? lastAccessTokenDate}) {
     return Auth2Account(
       id: id ?? other?.id,
       profile: profile ?? other?.profile,
@@ -107,6 +111,8 @@ class Auth2Account {
       identifiers: identifiers ?? other?.identifiers,
       authTypes: authTypes ?? other?.authTypes,
       systemConfigs: systemConfigs ?? other?.systemConfigs,
+      lastLoginDate: lastLoginDate ?? other?.lastLoginDate,
+      lastAccessTokenDate: lastAccessTokenDate ?? other?.lastAccessTokenDate,
     );
   }
 
@@ -123,6 +129,8 @@ class Auth2Account {
       identifiers: Auth2Identifier.listFromJson(JsonUtils.listValue(json['identifiers'])),
       authTypes: Auth2Type.listFromJson(JsonUtils.listValue(json['auth_types'])),
       systemConfigs: JsonUtils.mapValue(json['system_configs']),
+      lastLoginDate: AppDateTime().dateTimeLocalFromJson(json['last_login_date']),
+      lastAccessTokenDate: AppDateTime().dateTimeLocalFromJson(json['last_access_token_date']),
     ) : null;
   }
 
@@ -139,6 +147,8 @@ class Auth2Account {
       'identifiers': Auth2Identifier.listToJson(identifiers),
       'auth_types': Auth2Type.listToJson(authTypes),
       'system_configs': systemConfigs,
+      'last_login_date': AppDateTime().dateTimeLocalToJson(lastLoginDate),
+      'last_access_token_date': AppDateTime().dateTimeLocalToJson(lastAccessTokenDate),
     };
   }
 
@@ -153,7 +163,9 @@ class Auth2Account {
       const DeepCollectionEquality().equals(other.groups, groups) &&
       const DeepCollectionEquality().equals(other.identifiers, identifiers) &&
       const DeepCollectionEquality().equals(other.authTypes, authTypes) &&
-      const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs);
+      const DeepCollectionEquality().equals(other.systemConfigs, systemConfigs) &&
+      ((lastLoginDate != null && other.lastLoginDate != null && lastLoginDate!.isAtSameMomentAs(other.lastLoginDate!)) || (lastLoginDate == null && other.lastLoginDate == null)) &&
+      ((lastAccessTokenDate != null && other.lastAccessTokenDate != null && lastAccessTokenDate!.isAtSameMomentAs(other.lastAccessTokenDate!)) || (lastAccessTokenDate == null && other.lastAccessTokenDate == null));
 
   @override
   int get hashCode =>
@@ -165,7 +177,9 @@ class Auth2Account {
     (const DeepCollectionEquality().hash(groups)) ^
     (const DeepCollectionEquality().hash(identifiers)) ^
     (const DeepCollectionEquality().hash(authTypes)) ^
-    (const DeepCollectionEquality().hash(systemConfigs));
+    (const DeepCollectionEquality().hash(systemConfigs)) ^
+    (lastLoginDate?.hashCode ?? 0) ^
+    (lastAccessTokenDate?.hashCode ?? 0);
 
   bool get isValid {
     return (id != null) && id!.isNotEmpty /* && (profile != null) && profile.isValid*/;
@@ -181,6 +195,10 @@ class Auth2Account {
       return usernameIdentifiers.first.identifier;
     }
     return null;
+  }
+
+  bool get isAuthenticated {
+    return lastLoginDate != null && lastAccessTokenDate != null && lastLoginDate!.isAtSameMomentAs(lastAccessTokenDate!);
   }
 
   bool isIdentifierLinked(String code) {

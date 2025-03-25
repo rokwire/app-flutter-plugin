@@ -302,6 +302,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   bool get isCodeLoggedIn => (_account?.authType?.code == Auth2Type.typeCode) && _token != null;
   bool get isPasswordLoggedIn => (_account?.authType?.code == Auth2Type.typePassword) && _token != null;
   bool get isPasskeyLoggedIn => (_account?.authType?.code == Auth2Type.typePasskey) && _token != null;
+  bool get isAuthenticated => (_account?.isAuthenticated ?? false) && _token != null;
 
   bool get isEmailLinked => _account?.isIdentifierLinked(Auth2Identifier.typeEmail) ?? false;
   bool get isPhoneLinked => _account?.isIdentifierLinked(Auth2Identifier.typePhone) ?? false;
