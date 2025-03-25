@@ -677,18 +677,24 @@ String? event2RegistrationTypeToString(Event2RegistrationType? value) {
 class Event2AttendanceDetails {
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
+  final bool? selfCheckEnabled;
+  final bool? selfCheckLimitedToRegisteredOnly;
   final List<String>? attendanceTakers; // external IDs
 
-  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.attendanceTakers});
+  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.selfCheckEnabled, this.selfCheckLimitedToRegisteredOnly, this.attendanceTakers});
 
   static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {
     bool? scanningEnabled,
     bool? manualCheckEnabled,
+    bool? selfCheckEnabled,
+    bool? selfCheckLimitedToRegisteredOnly,
     List<String>? attendanceTakers,
   }) =>
     (other != null) ? Event2AttendanceDetails(
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
+      selfCheckEnabled: selfCheckEnabled ?? other.selfCheckEnabled,
+      selfCheckLimitedToRegisteredOnly: selfCheckLimitedToRegisteredOnly ?? other.selfCheckLimitedToRegisteredOnly,
       attendanceTakers: attendanceTakers ?? other.attendanceTakers,
     ) : null;
 
@@ -696,12 +702,16 @@ class Event2AttendanceDetails {
     (json != null) ? Event2AttendanceDetails(
       scanningEnabled: JsonUtils.boolValue(json['is_id_scanning_enabled']),
       manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
+      selfCheckEnabled: JsonUtils.boolValue(json['is_self_check_enabled']),
+      selfCheckLimitedToRegisteredOnly: JsonUtils.boolValue(json['is_self_check_limited_to_registered_only']),
       attendanceTakers: JsonUtils.listStringsValue(json['attendance_takers_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
     'is_id_scanning_enabled': scanningEnabled,
     'is_manual_attendance_check_enabled': manualCheckEnabled,
+    'is_self_check_enabled': selfCheckEnabled,
+    'is_self_check_limited_to_registered_only': selfCheckLimitedToRegisteredOnly,
     'attendance_takers_external_ids': attendanceTakers,
   };
 
@@ -710,19 +720,24 @@ class Event2AttendanceDetails {
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled) &&
+    (selfCheckEnabled == other.selfCheckEnabled) &&
+    (selfCheckLimitedToRegisteredOnly == other.selfCheckLimitedToRegisteredOnly) &&
     (const DeepCollectionEquality().equals(attendanceTakers, other.attendanceTakers));
 
   @override
   int get hashCode =>
     (scanningEnabled?.hashCode ?? 0) ^
     (manualCheckEnabled?.hashCode ?? 0) ^
+    (selfCheckEnabled?.hashCode ?? 0) ^
+    (selfCheckLimitedToRegisteredOnly?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attendanceTakers));
 
   bool get isEmpty => !isNotEmpty;
 
   bool get isNotEmpty =>
     (scanningEnabled == true) || 
-    (manualCheckEnabled == true);
+    (manualCheckEnabled == true) ||
+    (selfCheckEnabled == true);
 }
 
 ///////////////////////////////
