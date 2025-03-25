@@ -47,7 +47,7 @@ import 'firebase_messaging.dart';
 enum GroupsContentType { all, my }
 enum ResearchProjectsContentType { open, my }
 
-class Groups with Service implements NotificationsListener {
+class Groups with Service, NotificationsListener {
 
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";

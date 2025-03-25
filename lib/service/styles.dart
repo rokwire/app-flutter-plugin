@@ -34,7 +34,7 @@ import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
-class Styles extends Service implements NotificationsListener{
+class Styles extends Service with NotificationsListener{
   
   static const String notifyChanged    = "edu.illinois.rokwire.styles.changed";
   

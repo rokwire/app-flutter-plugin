@@ -9,7 +9,7 @@ import 'config.dart';
 import 'deep_link.dart';
 import 'network.dart';
 
-class Places extends Service implements NotificationsListener {
+class Places extends Service with NotificationsListener {
 
   static const String notifyPlacesDetail = "edu.illinois.rokwire.places.detail";
 

@@ -225,7 +225,7 @@ class FlexContent extends StatefulWidget {
   }
 }
 
-class FlexContentWidgetState extends State<FlexContent> implements NotificationsListener {
+class FlexContentWidgetState extends State<FlexContent> with NotificationsListener {
   bool _visible = true;
   Map<String, dynamic>? _contentJson;
 

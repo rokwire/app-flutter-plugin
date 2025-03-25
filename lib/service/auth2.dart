@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:universal_io/io.dart';
 
-class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
+class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   
   static const String notifyLoginStarted      = "edu.illinois.rokwire.auth2.login.started";
   static const String notifyLoginSucceeded    = "edu.illinois.rokwire.auth2.login.succeeded";
