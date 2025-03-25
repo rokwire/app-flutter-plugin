@@ -448,9 +448,7 @@ class Events2 with Service, NotificationsListener {
 
   // Returns secret string if successful, otherwise null
   Future<String?> getEventSelfCheckInSecret(String eventId) async {
-    //TMP:
-    await Future.delayed(Duration(milliseconds: 1500));
-    return 'abracadabra';
+    //TMP: return Future.delayed(Duration(milliseconds: 1500), () => 'abracadabra');
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/security/secret";
       Response? response = await Network().post(url, headers: _jsonHeaders, auth: Auth2());
@@ -461,17 +459,15 @@ class Events2 with Service, NotificationsListener {
   }
 
   Future<Event2Person?> selfCheckInEvent(String eventId, { String? secret }) async {
-    //TMP:
-    await Future.delayed(Duration(milliseconds: 1500));
-    return Event2Person(id: '', //identifier?.accountId == Auth2().accountId
-        identifier: Event2PersonIdentifier(
-          accountId: Auth2().accountId,
-          externalId: Auth2().uin,
-        ),
-        role: null,
-        registrationType: Event2UserRegistrationType.self,
-        time: 0,
-    );
+    /* TMP: return Future.delayed(Duration(milliseconds: 1500), () => Event2Person(id: '',
+      identifier: Event2PersonIdentifier(
+        accountId: Auth2().accountId,
+        externalId: Auth2().uin,
+      ),
+      role: null,
+      registrationType: Event2UserRegistrationType.self,
+      time: 0,
+    )); */
 
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/attendee/self-check-in";
