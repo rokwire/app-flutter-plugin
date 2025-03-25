@@ -451,7 +451,7 @@ class Events2 with Service, NotificationsListener {
     //TMP: return Future.delayed(Duration(milliseconds: 1500), () => 'abracadabra');
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/security/secret";
-      Response? response = await Network().post(url, headers: _jsonHeaders, auth: Auth2());
+      Response? response = await Network().get(url, headers: _jsonHeaders, auth: Auth2());
       Map<String, dynamic>? responseData = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body)  : null;  
       return JsonUtils.stringValue(responseData?['secret']);
     }
