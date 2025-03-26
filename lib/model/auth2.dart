@@ -364,11 +364,16 @@ class Auth2UserProfile {
   // Known unstructured_properties entries
   static const String researchQuestionnaireAnswersDataKey = 'research_questionnaire_answers';
 
+  static const String universityRoleDataKey = 'university_role';
   static const String collegeDataKey = 'college';
   static const String departmentDataKey = 'department';
   static const String majorDataKey = 'major';
+  static const String department2DataKey = 'department2';
+  static const String major2DataKey = 'major2';
   static const String titleDataKey = 'title';
   static const String email2DataKey = 'email2';
+
+  static const String universityRoleFacultyStaff = 'Faculty/Staff'; //TODO: verify this string is correct
 
   String? _id;
 
@@ -728,13 +733,17 @@ class Auth2UserProfile {
 
   bool   get isValid => StringUtils.isNotEmpty(id);
   String? get fullName => StringUtils.fullName([firstName, middleName, lastName]);
+  bool get isFacultyStaff => universityRole == universityRoleFacultyStaff;
 
   // Other Data Fields
 
 
+  String? get universityRole => JsonUtils.stringValue(_data?[universityRoleDataKey]);
   String? get college => JsonUtils.stringValue(_data?[collegeDataKey]);
   String? get department => JsonUtils.stringValue(_data?[departmentDataKey]);
   String? get major => JsonUtils.stringValue(_data?[majorDataKey]);
+  String? get department2 => JsonUtils.stringValue(_data?[department2DataKey]);
+  String? get major2 => JsonUtils.stringValue(_data?[major2DataKey]);
   String? get title => JsonUtils.stringValue(_data?[titleDataKey]);
 
   String? get email2 => JsonUtils.stringValue(_data?[email2DataKey]);
@@ -970,9 +979,12 @@ class Auth2UserProfileFieldsVisibility {
 
   // Other Data dields
 
+  Auth2FieldVisibility? get universityRole => data?[Auth2UserProfile.universityRoleDataKey];
   Auth2FieldVisibility? get college => data?[Auth2UserProfile.collegeDataKey];
   Auth2FieldVisibility? get department => data?[Auth2UserProfile.departmentDataKey];
   Auth2FieldVisibility? get major => data?[Auth2UserProfile.majorDataKey];
+  Auth2FieldVisibility? get department2 => data?[Auth2UserProfile.department2DataKey];
+  Auth2FieldVisibility? get major2 => data?[Auth2UserProfile.major2DataKey];
   Auth2FieldVisibility? get title => data?[Auth2UserProfile.titleDataKey];
 
   Auth2FieldVisibility? get email2 => data?[Auth2UserProfile.email2DataKey];
