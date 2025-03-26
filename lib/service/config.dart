@@ -526,10 +526,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
-  String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get assetsUrl        => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get deepLinkRedirectUrl => JsonUtils.stringValue(otherUniversityServices['deep_link_redirect_url']);
 
   // Getters: secretKeys
-  String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
+  String? get coreOrgId        => JsonUtils.stringValue(secretCore['org_id']);
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
@@ -541,12 +542,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: path keys access
   dynamic pathEntry(String key)     => MapPathKey.entry(content, key);
   String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
-
-  // Getters: other
-  String? get deepLinkRedirectUrl {
-    Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
-    return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
-  }
 }
 
 enum ConfigEnvironment { production, test, dev }
