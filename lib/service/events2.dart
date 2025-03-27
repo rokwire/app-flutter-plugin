@@ -458,17 +458,8 @@ class Events2 with Service, NotificationsListener {
     return null;
   }
 
-  Future<Event2Person?> selfCheckInEvent(String eventId, { String? secret }) async {
-    /* TMP: return Future.delayed(Duration(milliseconds: 1500), () => Event2Person(id: '',
-      identifier: Event2PersonIdentifier(
-        accountId: Auth2().accountId,
-        externalId: Auth2().uin,
-      ),
-      role: null,
-      registrationType: Event2UserRegistrationType.self,
-      time: 0,
-    )); */
-
+  // Returns error message, Event2Person if successful
+  Future<dynamic> selfCheckInEvent(String eventId, { String? secret }) async {
     if (Config().calendarUrl != null) {
       String url = "${Config().calendarUrl}/event/$eventId/attendee/self-check-in";
       String? body = JsonUtils.encode({
@@ -476,7 +467,7 @@ class Events2 with Service, NotificationsListener {
           'secret': secret,
       });
       Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2());
-      return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+      return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
     }
     return null;
   }

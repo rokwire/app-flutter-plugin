@@ -775,6 +775,11 @@ extension UriExt on Uri {
 
   bool get isValid => StringUtils.isNotEmpty(scheme) && (StringUtils.isNotEmpty(host) || StringUtils.isNotEmpty(path));
 
+  Map<String, dynamic>? get jsonParams {
+    try { return queryParameters.cast<String, dynamic>(); }
+    catch (e) { debugPrint(e.toString()); return null; }
+  }
+
   bool get canLaunchInternal => isWebScheme && !(Platform.isAndroid && isPdf);
 
   static Uri? tryParse(String? url) => (url != null) ? Uri.tryParse(url) : null;
