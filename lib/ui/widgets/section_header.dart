@@ -413,17 +413,15 @@ class ImageSlantHeader extends StatelessWidget {
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
       image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
-        networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+        networkHeaders: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
       image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
-        headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget);
+        headers: Config().networkAuthHeaders, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
     }
 
-    double displayHeight = (image as Image?)?.height ?? 240;
+    double displayHeight = (image as Image?)?.height ?? _defaultHeight(context);
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      image!=null ?
-          ModalImageHolder(child: image,)
-        :Container(),
+      (image != null) ? ModalImageHolder(child: image,) : Container(),
       Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
         Stack(alignment: Alignment.topCenter, children: <Widget>[
           Column(children: <Widget>[
@@ -438,19 +436,21 @@ class ImageSlantHeader extends StatelessWidget {
     ]);
   }
 
-  Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-    if (loadingProgress == null) {
-      return child;
-    }
-    return Center(child: _buildProgressWidget(context, loadingProgress));
-  }
+  double _defaultHeight(BuildContext context) => (MediaQuery.of(context).size.width * 2) / 3;
+  Color? get _slantImageColor => slantImageColor ?? Styles().colors.fillColorSecondary;
+  Color? get _progressColor => progressColor ?? Styles().colors.fillColorSecondary;
 
-  Widget _buildProgressWidget(BuildContext context, ImageChunkEvent progress) {
-    return progressWidget ?? SizedBox(height: progressSize.width, width: 24, child:
-      CircularProgressIndicator(strokeWidth: progressWidth, valueColor: AlwaysStoppedAnimation<Color?>(progressColor ?? Styles().colors.white),
-        value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
+  Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    return Container(height: _defaultHeight(context), child:
+      Center(child:
+        SizedBox(height: progressSize.height, width: progressSize.width, child:
+          CircularProgressIndicator(strokeWidth: progressWidth, color: _progressColor),
+        )
+      )
     );
   }
 
-  Color? get _slantImageColor => slantImageColor ?? Styles().colors.fillColorSecondary;
+  Widget _imageErrorWidget(BuildContext context, Object error, StackTrace? stackTrace) {
+    return Container(height: _defaultHeight(context));
+  }
 }

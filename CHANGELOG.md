@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Events2.eventDetailUrl parameter types.
 - Extended NotificationService APIs [#576](https://github.com/rokwire/app-flutter-plugin/issues/576).
 - Read deep links redirect url from separate config entry [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
+- Set error builder to ImageSlantHeader [#4922](https://github.com/rokwire/app-flutter-plugin/issues/4922).
+
 ## [1.8.3] - 2025-03-12
 ### Added
 - Created CompactRoundedButton widget [#4872](https://github.com/rokwire/illinois-app/issues/4872).
