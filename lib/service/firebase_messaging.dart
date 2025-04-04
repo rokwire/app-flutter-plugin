@@ -60,6 +60,9 @@ class FirebaseMessaging with Service {
 
   @override
   Future<void> initService() async {
+    if (kIsWeb) {
+      return;
+    }
     await firebase_messaging.FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
@@ -83,6 +86,9 @@ class FirebaseMessaging with Service {
 
   @override
   void initServiceUI() {
+    if (kIsWeb) {
+      return;
+    }
     firebase_messaging.FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         processDataMessage(message.data);
