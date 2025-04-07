@@ -602,7 +602,7 @@ class Groups with Service, NotificationsListener {
       return null;
     }
     if (Config().groupsUrl != null) {
-      String url = '${Config().groupsUrl}/group/$groupId/members';
+      String url = '${Config().groupsUrl}/group/$groupId/members/v2';
       Map<String, dynamic> params = {};
       if (CollectionUtils.isNotEmpty(statuses)) {
         List<String> statusList = [];
@@ -635,7 +635,7 @@ class Groups with Service, NotificationsListener {
       try {
         await _ensureLogin();
         String? body = JsonUtils.encode(params);
-        Response? response = await Network().get(url, auth: Auth2(), body: body);
+        Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
         if (responseCode == 200) {
