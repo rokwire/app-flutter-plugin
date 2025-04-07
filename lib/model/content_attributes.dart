@@ -174,7 +174,7 @@ class ContentAttributes {
   bool hasRequiredAttributes(int functionalScope) {
     if (attributes != null) {
       for (ContentAttribute attribute in attributes!) {
-        if (attribute.hasRequired(functionalScope)) {
+        if (attribute.isRequired(functionalScope)) {
           return true;
         }
       }
@@ -442,7 +442,7 @@ class ContentAttribute {
   ContentAttributeRequirements? groupRequirementsForFunctionalScope(String? group, int functionalScope) => _requirementsForFunctionalScope(groupsRequirements?[group] ?? groupsRequirements?[ContentAttribute.anyGroupRequirements], functionalScope);
 
 
-  bool hasRequired(int functionalScope, { String? group }) => (requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false) || (groupRequirementsForFunctionalScope(group, functionalScope)?.hasRequired ?? false);
+  bool isRequired(int functionalScope, { String? group }) => (requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false) || (groupRequirementsForFunctionalScope(group, functionalScope)?.hasRequired ?? false);
 
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
@@ -992,8 +992,7 @@ class ContentAttributeRequirements {
 
   bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
 
-  bool get hasRequired =>
-    (0 < (minSelectedCount ?? 0));
+  bool get hasRequired => (0 < (minSelectedCount ?? 0));
 
   bool isAttributesSelectionValid(Map<String, dynamic>? selection) {
     if ((minSelectedCount != null) || (maxSelectedCount != null)) {
