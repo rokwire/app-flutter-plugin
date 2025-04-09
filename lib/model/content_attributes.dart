@@ -407,7 +407,12 @@ class ContentAttribute {
 
   bool canSelectMore(int functionalScope) =>
     (requirementsForFunctionalScope(functionalScope)?.canSelectMore != false) &&
-    (groupsRequirements?.canSelectMore(functionalScope) != false);
+    _canGroupsSelectMore(functionalScope);
+
+  bool _canGroupsSelectMore(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = groupsRequirementsMapForFunctionalScope(functionalScope);
+    return (groupsRequirementsMap.length == 1) ? groupsRequirementsMap.values.first.canSelectMore : true;
+  }
 
   bool canClearSelection(int functionalScope) =>
     (requirementsForFunctionalScope(functionalScope)?.canClearSelection != false) &&
@@ -415,7 +420,12 @@ class ContentAttribute {
 
   bool isMultipleSelection(int functionalScope) =>
     (requirementsForFunctionalScope(functionalScope)?.isMultipleSelection != false) &&
-    (groupsRequirements?.isMultipleSelection(functionalScope) != false);
+    (_isGroupsMultipleSelection(functionalScope) != false);
+
+  bool _isGroupsMultipleSelection(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = groupsRequirementsMapForFunctionalScope(functionalScope);
+    return (groupsRequirementsMap.length == 1) ? groupsRequirementsMap.values.first.isMultipleSelection : true;
+  }
 
   bool isGroupMultipleSelection(int functionalScope, {String? group}) =>
     (requirementsForFunctionalScope(functionalScope)?.isMultipleSelection != false) &&
@@ -440,6 +450,21 @@ class ContentAttribute {
   static ContentAttributeRequirements? _requirementsForFunctionalScope(ContentAttributeRequirements? requirements, int functionalScope) => (requirements?.hasFunctionalScope(functionalScope) == true) ? requirements : null;
   ContentAttributeRequirements? requirementsForFunctionalScope(int functionalScope) => _requirementsForFunctionalScope(requirements, functionalScope);
   ContentAttributeRequirements? groupRequirementsForFunctionalScope(String? group, int functionalScope) => _requirementsForFunctionalScope(groupsRequirements?[group] ?? groupsRequirements?[ContentAttribute.anyGroupRequirements], functionalScope);
+
+  Map<String, ContentAttributeRequirements> groupsRequirementsMapForFunctionalScope(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = <String, ContentAttributeRequirements>{};
+    for (ContentAttributeValue value in values ?? []) {
+      String? group = value.group;
+      if ((group != null) && (groupsRequirementsMap[group] == null)) {
+        ContentAttributeRequirements? groupRequirements = groupRequirementsForFunctionalScope(group, functionalScope);
+        if (groupRequirements != null) {
+          groupsRequirementsMap[group] = groupRequirements;
+        }
+      }
+    }
+    return groupsRequirementsMap;
+  }
+
 
 
   bool isRequired(int functionalScope, { String? group }) => (requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false) || (groupRequirementsForFunctionalScope(group, functionalScope)?.hasRequired ?? false);
@@ -705,7 +730,9 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 // ContentAttributeValue
 
 class ContentAttributeValue {
-  final String? _label;
+  final String? label;
+  final String? _selectLabel;
+  final String? _selectedLabel;
   final dynamic _value;
   final String? group;
   final Map<String, dynamic>? requirements;
@@ -714,9 +741,20 @@ class ContentAttributeValue {
   String? info;
   Map<String, dynamic>? customData;
 
-  ContentAttributeValue({String? label, dynamic value, this.group, this.requirements, this.info, this.customData }) :
-    _label = label,
+  ContentAttributeValue({this.label,
+    String? selectLabel, String? selectedLabel, dynamic value,
+    this.group, this.requirements,
+    this.info, this.customData
+  }) :
+    _selectLabel = selectLabel,
+    _selectedLabel = selectedLabel,
     _value = value;
+
+  // Accessories
+
+  String? get selectLabel => _selectLabel ?? label;
+  String? get selectedLabel => _selectedLabel ?? label;
+  dynamic get value => _value ?? label;
 
   // JSON serialization
 
@@ -729,6 +767,8 @@ class ContentAttributeValue {
     else if (json is Map) {
       return ContentAttributeValue(
         label: JsonUtils.stringValue(json['label']),
+        selectLabel: JsonUtils.stringValue(json['select-label']),
+        selectedLabel: JsonUtils.stringValue(json['selected-label']),
         value: json['value'],
         group: JsonUtils.stringValue(json['group']),
         requirements: JsonUtils.mapValue(json['requirements']),
@@ -739,19 +779,23 @@ class ContentAttributeValue {
     }
   }
 
-  toJson() => ((value != null) || (group != null) || (requirements != null)) ? {
-    'label': _label,
+  toJson() => ((_value != null) || (_selectLabel != null) || (_selectedLabel != null) || (group != null) || (requirements != null)) ? {
+    'label': label,
+    'select-label': _selectLabel,
+    'selected-label': _selectedLabel,
     'value': _value,
     'group': group,
     'requirements': requirements,
-  } : _label;
+  } : label;
 
   // Equality
 
   @override
   bool operator==(Object other) =>
     (other is ContentAttributeValue) &&
-    (_label == other._label) &&
+    (label == other.label) &&
+    (_selectLabel == other._selectLabel) &&
+    (_selectedLabel == other._selectedLabel) &&
     (_value == other._value) &&
     (group == other.group) &&
     (info == other.info) &&
@@ -760,7 +804,9 @@ class ContentAttributeValue {
 
   @override
   int get hashCode =>
-    (_label?.hashCode ?? 0) ^
+    (label?.hashCode ?? 0) ^
+    (_selectLabel?.hashCode ?? 0) ^
+    (_selectedLabel?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
     (info?.hashCode ?? 0) ^
@@ -770,7 +816,9 @@ class ContentAttributeValue {
   // Clone
 
   ContentAttributeValue clone() => ContentAttributeValue(
-    label: _label,
+    label: label,
+    selectLabel: _selectLabel,
+    selectedLabel: _selectedLabel,
     value: _value,
     group: group,
     requirements: MapUtils.from(requirements),
@@ -795,14 +843,6 @@ class ContentAttributeValue {
       return null;
     }
   }
-
-  // Accessories
-
-  String? get label => _label;
-  String? get selectLabel => _label;
-  String? get selectedLabel => _label;
-
-  dynamic get value => _value ?? _label;
 
   static ContentAttributeValue? findInList(List<ContentAttributeValue>? attributeValues, { dynamic value }) {
     if (attributeValues != null) {
