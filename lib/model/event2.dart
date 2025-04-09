@@ -1110,6 +1110,22 @@ class Event2Person {
     return jsonList;
   }
 
+  static Set<String>? netIdsInList(List<Event2Person>? contentList, {Event2UserRole? role, Event2UserRegistrationType? registrationType}) {
+    if (contentList != null) {
+      List<Event2Person>? persons;
+      for (Event2Person contentEntry in contentList) {
+        if (((role == null) || (contentEntry.role == role)) && ((registrationType == null) || (contentEntry.registrationType == registrationType))) {
+          if (persons == null) {
+            persons = <Event2Person>[];
+          }
+          persons.add(contentEntry);
+        }
+      }
+      return netIdsFromList(persons);
+    }
+    return null;
+  }
+
   static Set<String>? netIdsFromList(List<Event2Person>? contentList) {
     Set<String>? result;
     if (contentList != null) {
