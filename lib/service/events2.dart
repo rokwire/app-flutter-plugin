@@ -446,6 +446,32 @@ class Events2 with Service, NotificationsListener {
     return (result is Event2PersonIdentifier) ? result : null;
   }
 
+  Future<List<Event2Account>?> loadEventAccounts({required String eventId, List<String>? accountIds, List<String>? netIds}) async {
+    if (StringUtils.isEmpty(Config().eventsUrl) || StringUtils.isEmpty(eventId)) {
+      return null;
+    }
+    Map<String, dynamic>? jsonBody;
+    if (CollectionUtils.isNotEmpty(accountIds)) {
+      jsonBody ??= {};
+      jsonBody['id'] = accountIds;
+    }
+    if (CollectionUtils.isNotEmpty(netIds)) {
+      jsonBody ??= {};
+      jsonBody['external_ids.net_id'] = netIds;
+    }
+    String url = "${Config().calendarUrl}/event/$eventId/accounts";
+    String? body = JsonUtils.encode(jsonBody);
+    Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseString = response?.body;
+    if (responseCode == 200) {
+      return Event2Account.listFromJson(JsonUtils.decodeList(responseString));
+    } else {
+      debugPrint('Failed to load event2 accounts. Reason: $responseCode, $responseString');
+      return null;
+    }
+  }
+
   // Returns secret string if successful, otherwise null
   Future<String?> getEventSelfCheckInSecret(String eventId) async {
     //TMP: return Future.delayed(Duration(milliseconds: 1500), () => 'abracadabra');

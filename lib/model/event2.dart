@@ -1728,3 +1728,50 @@ class Event2NotificationSetting {
 
   bool get hasAudience => (sendToFavorited || sendToRegistered || sendToPublishedInGroups);
 }
+
+///////////////////////////////
+/// Events2Account
+class Event2Account {
+  final String? accountId;
+  final String? firstName;
+  final String? lastName;
+  final String? netId;
+  final String? uin;
+
+  Event2Account({this.accountId, this.firstName, this.lastName, this.netId, this.uin});
+
+  static Event2Account? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+    return Event2Account(
+        accountId: JsonUtils.stringValue(json['account_id']),
+        firstName: JsonUtils.stringValue(json['first_name']),
+        lastName: JsonUtils.stringValue(json['last_name']),
+        netId: JsonUtils.stringValue(json['net_id']),
+        uin: JsonUtils.stringValue(json['uin']));
+  }
+
+  static List<Event2Account>? listFromJson(List<dynamic>? jsonList) {
+    List<Event2Account>? result;
+    if (jsonList != null) {
+      result = <Event2Account>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(result, Event2Account.fromJson(JsonUtils.mapValue(jsonEntry)));
+      }
+    }
+    return result;
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2Account) &&
+      (accountId == other.accountId) &&
+      (firstName == other.firstName) &&
+      (lastName == other.lastName) &&
+      (netId == other.netId) &&
+      (uin == other.uin);
+
+  @override
+  int get hashCode => (accountId?.hashCode ?? 0) ^ (firstName.hashCode) ^ (lastName.hashCode) ^ (netId.hashCode) ^ (uin?.hashCode ?? 0);
+}
