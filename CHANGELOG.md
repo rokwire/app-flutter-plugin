@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extended NotificationService APIs [#576](https://github.com/rokwire/app-flutter-plugin/issues/576).
 - Read deep links redirect url from separate config entry [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
 - Set error builder to ImageSlantHeader [#4922](https://github.com/rokwire/app-flutter-plugin/issues/4922).
+- Content Attributes cleaned up and extended to handle new Event Filters requirements [#4904](https://github.com/rokwire/illinois-app/issues/4904).
 
 ## [1.8.3] - 2025-03-12
 ### Added

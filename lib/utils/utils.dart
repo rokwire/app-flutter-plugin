@@ -345,6 +345,21 @@ class ListUtils {
     }
     return ((list?.length ?? 0) > 0) ? list : null;
   }
+
+  static List<T>? combine<T>(List<List<T>?> lists) {
+    List<T>? result;
+    for (List<T>? list in lists) {
+      if (list != null) {
+        if (result != null) {
+          result.addAll(list);
+        }
+        else {
+          result = List.from(list);
+        }
+      }
+    }
+    return result;
+  }
 }
 
 class _SortListParam<T> {

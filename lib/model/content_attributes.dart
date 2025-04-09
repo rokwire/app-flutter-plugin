@@ -235,6 +235,7 @@ class ContentAttribute {
   final ContentAttributeWidget? widget;
   final ContentAttributeUsage? usage;
   final ContentAttributeRequirements? requirements;
+  final Map<String, ContentAttributeRequirements>? groupsRequirements;
   final Set<String>? scope;
   final int? sortOrder;
   final List<ContentAttributeValue>? values;
@@ -242,8 +243,10 @@ class ContentAttribute {
 
   ContentAttribute({this.id, this.title, this.longTitle, this.description, this.text,
     this.emptyHint, this.emptyFilterHint, this.semanticsHint, this.semanticsFilterHint,
-    this.nullValue, this.widget, this.usage, this.requirements,
+    this.nullValue, this.widget, this.usage, this.requirements, this.groupsRequirements,
     this.scope, this.sortOrder, this.values, this.translations});
+
+  static const String anyGroupRequirements = '__any__';
 
   // JSON serialization
 
@@ -262,6 +265,7 @@ class ContentAttribute {
       widget: contentAttributeWidgetFromString(JsonUtils.stringValue(json['widget'])),
       usage: contentAttributeUsageFromString(JsonUtils.stringValue(json['usage'])),
       requirements: ContentAttributeRequirements.fromJson(JsonUtils.mapValue(json['requirements'])),
+      groupsRequirements: ContentAttributeRequirements.mapFromJson(JsonUtils.mapValue(json['group-requirements'])),
       scope: JsonUtils.setStringsValue(json['scope']),
       sortOrder: JsonUtils.intValue(json['sort-order']),
       values: ContentAttributeValue.listFromJson(JsonUtils.listValue(json['values'])),
@@ -282,10 +286,11 @@ class ContentAttribute {
     'null-value': nullValue,
     'widget': contentAttributeWidgetToString(widget),
     'usage': contentAttributeUsageToString(usage),
-    'requirements': requirements,
+    'requirements': requirements?.toJson(),
+    'group-requirements': ContentAttributeRequirements.mapToJson(groupsRequirements),
     'scope': JsonUtils.listStringsValue(scope),
     'sort-order': sortOrder,
-    'values': values,
+    'values': ContentAttributeValue.listToJson(values),
     'translations': translations,
   };
 
@@ -310,7 +315,8 @@ class ContentAttribute {
     (sortOrder == other.sortOrder) &&
     const DeepCollectionEquality().equals(scope, other.scope) &&
     const DeepCollectionEquality().equals(values, other.values) &&
-    const DeepCollectionEquality().equals(translations, other.translations);
+    const DeepCollectionEquality().equals(translations, other.translations) &&
+    const DeepCollectionEquality().equals(groupsRequirements, other.groupsRequirements);
 
   @override
   int get hashCode =>
@@ -330,7 +336,8 @@ class ContentAttribute {
     (sortOrder?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(scope)) ^
     (const DeepCollectionEquality().hash(values)) ^
-    (const DeepCollectionEquality().hash(translations));
+    (const DeepCollectionEquality().hash(translations)) ^
+    (const DeepCollectionEquality().hash(groupsRequirements));
 
   // Comparison
 
@@ -356,6 +363,7 @@ class ContentAttribute {
     widget: widget,
     usage: usage,
     requirements: requirements?.clone(),
+    groupsRequirements: ContentAttributeRequirements.mapFromOther(groupsRequirements),
     scope: SetUtils.from(scope),
     sortOrder: sortOrder,
     values: ContentAttributeValue.listFromOther(values, clone: true),
@@ -393,11 +401,74 @@ class ContentAttribute {
   String? get displaySemanticsHint => displayString(semanticsHint);
   String? get displaySemanticsFilterHint => displayString(semanticsFilterHint);
 
-  ContentAttributeRequirements? requirementsForFunctionalScope(int functionalScope) => (((requirements?.functionalScope ?? 0) & functionalScope) != 0) ? requirements : null;
-  bool isRequired(int functionalScope) => requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false;
-  bool isMultipleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount != 1);
-  bool isSingleSelection(int functionalScope) => (requirementsForFunctionalScope(functionalScope)?.maxSelectedCount == 1);
-  bool get hasMultipleValueGroups => (_collectValueGroups().length > 1);
+  bool hasAnyRequirements(int functionalScope) =>
+    (requirements?.hasFunctionalScope(functionalScope) == true) ||
+    (groupsRequirements?.hasFunctionalScope(functionalScope) == true);
+
+  bool canSelectMore(int functionalScope) =>
+    (requirementsForFunctionalScope(functionalScope)?.canSelectMore != false) &&
+    _canGroupsSelectMore(functionalScope);
+
+  bool _canGroupsSelectMore(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = groupsRequirementsMapForFunctionalScope(functionalScope);
+    return (groupsRequirementsMap.length == 1) ? groupsRequirementsMap.values.first.canSelectMore : true;
+  }
+
+  bool canClearSelection(int functionalScope) =>
+    (requirementsForFunctionalScope(functionalScope)?.canClearSelection != false) &&
+    (groupsRequirements?.canClearSelection(functionalScope) != false);
+
+  bool isMultipleSelection(int functionalScope) =>
+    (requirementsForFunctionalScope(functionalScope)?.isMultipleSelection != false) &&
+    (_isGroupsMultipleSelection(functionalScope) != false);
+
+  bool _isGroupsMultipleSelection(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = groupsRequirementsMapForFunctionalScope(functionalScope);
+    return (groupsRequirementsMap.length == 1) ? groupsRequirementsMap.values.first.isMultipleSelection : true;
+  }
+
+  bool isGroupMultipleSelection(int functionalScope, {String? group}) =>
+    (requirementsForFunctionalScope(functionalScope)?.isMultipleSelection != false) &&
+    (groupsRequirements?.isGroupMultipleSelection(functionalScope, group: group) != false);
+
+  bool canDeselect(int functionalScope, LinkedHashSet<dynamic> selection, dynamic attributeRawValue) =>
+    (requirementsForFunctionalScope(functionalScope)?.canDeselect(selection.length) != false) &&
+    (_canDeselectInGroup(functionalScope, selection, attributeRawValue) != false);
+
+  bool _canDeselectInGroup(int functionalScope, LinkedHashSet<dynamic> selection, dynamic attributeRawValue) {
+    ContentAttributeValue? attributeValue = findValue(value: attributeRawValue);
+    ContentAttributeRequirements? groupRequirement = groupsRequirements?._groupRequirements(functionalScope, group: attributeValue?.group);
+    if (groupRequirement != null) {
+      LinkedHashSet<dynamic> groupSelection = filterSelectionByGroup(selection, group: attributeValue?.group);
+      if (!groupRequirement.canDeselect(groupSelection.length)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static ContentAttributeRequirements? _requirementsForFunctionalScope(ContentAttributeRequirements? requirements, int functionalScope) => (requirements?.hasFunctionalScope(functionalScope) == true) ? requirements : null;
+  ContentAttributeRequirements? requirementsForFunctionalScope(int functionalScope) => _requirementsForFunctionalScope(requirements, functionalScope);
+  ContentAttributeRequirements? groupRequirementsForFunctionalScope(String? group, int functionalScope) => _requirementsForFunctionalScope(groupsRequirements?[group] ?? groupsRequirements?[ContentAttribute.anyGroupRequirements], functionalScope);
+
+  Map<String, ContentAttributeRequirements> groupsRequirementsMapForFunctionalScope(int functionalScope) {
+    Map<String, ContentAttributeRequirements> groupsRequirementsMap = <String, ContentAttributeRequirements>{};
+    for (ContentAttributeValue value in values ?? []) {
+      String? group = value.group;
+      if ((group != null) && (groupsRequirementsMap[group] == null)) {
+        ContentAttributeRequirements? groupRequirements = groupRequirementsForFunctionalScope(group, functionalScope);
+        if (groupRequirements != null) {
+          groupsRequirementsMap[group] = groupRequirements;
+        }
+      }
+    }
+    return groupsRequirementsMap;
+  }
+
+
+
+  bool isRequired(int functionalScope, { String? group }) => (requirementsForFunctionalScope(functionalScope)?.hasRequired ?? false) || (groupRequirementsForFunctionalScope(group, functionalScope)?.hasRequired ?? false);
+
 
   bool get isDropdownWidget => (widget == ContentAttributeWidget.dropdown);
   bool get isCheckboxWidget => (widget == ContentAttributeWidget.checkbox);
@@ -443,14 +514,33 @@ class ContentAttribute {
   }
 
   void validateAttributeValuesSelection(LinkedHashSet<dynamic>? selection) {
-    int? maxSelectedCount = requirements?.maxSelectedCount;
-    if ((maxSelectedCount != null) && (0 <= maxSelectedCount) && (selection != null)) {
-      Map<String?, LinkedHashSet<dynamic>> groupsSelection = _splitSelectionByGroups(selection);
-      for (LinkedHashSet<dynamic> groupSelection in groupsSelection.values) {
-        while (maxSelectedCount < groupSelection.length) {
-          dynamic removeValue = groupSelection.first;
-          selection.remove(removeValue);
-          groupSelection.remove(removeValue);
+    if (selection != null) {
+
+      if (groupsRequirements != null) {
+        Map<String?, LinkedHashSet<dynamic>> groupsSelection = _splitSelectionByGroups(selection);
+        for (String? group in groupsSelection.keys) {
+          LinkedHashSet<dynamic>? groupSelection = groupsSelection[group];
+          if (groupSelection != null) {
+            ContentAttributeRequirements? groupsRequirement = groupsRequirements?[group] ?? groupsRequirements?[anyGroupRequirements];
+            int? maxSelectedCount = groupsRequirement?.maxSelectedCount;
+            if ((maxSelectedCount != null) && (0 <= maxSelectedCount)) {
+              while (maxSelectedCount < groupSelection.length) {
+                dynamic removeValue = groupSelection.first;
+                selection.remove(removeValue);
+                groupSelection.remove(removeValue);
+              }
+            }
+          }
+        }
+      }
+
+      if (requirements != null) {
+        int? maxSelectedCount = requirements?.maxSelectedCount;
+        if ((maxSelectedCount != null) && (0 <= maxSelectedCount)) {
+          while (maxSelectedCount < selection.length) {
+            dynamic removeValue = selection.first;
+            selection.remove(removeValue);
+          }
         }
       }
     }
@@ -458,7 +548,7 @@ class ContentAttribute {
 
   Map<String?, LinkedHashSet<dynamic>> _splitSelectionByGroups(dynamic selection) {
     Map<String?, LinkedHashSet<dynamic>> map = <String?, LinkedHashSet<dynamic>>{};
-    if ((selection is List) || (selection is Set)) {
+    if (selection is Iterable) {
       for (dynamic entry in selection) {
         _extendSelectionByGroups(map, findValue(value: entry));
       }
@@ -476,16 +566,24 @@ class ContentAttribute {
     }
   }
 
-  LinkedHashSet<String?> _collectValueGroups() {
-    LinkedHashSet<String?> groups = LinkedHashSet<String?>();
-    if (values != null) {
-      for (ContentAttributeValue value in values!) {
-        groups.add(value.group);
+  LinkedHashSet<dynamic> filterSelectionByGroup(dynamic selection, {String? group}) {
+    LinkedHashSet<dynamic> set = LinkedHashSet<dynamic>();
+    if (selection is Iterable) {
+      for (dynamic entry in selection) {
+        ContentAttributeValue? value = findValue(value: entry);
+        if ((value != null) && (value.group == group)) {
+          set.add(value.value);
+        }
       }
     }
-    return groups;
+    else if (selection != null) {
+      ContentAttributeValue? value = findValue(value: selection);
+      if ((value != null) && (value.group == group)) {
+        set.add(value.value);
+      }
+    }
+    return set;
   }
-
 
   List<ContentAttributeValue>? attributeValuesFromSelection(Map<String, LinkedHashSet<dynamic>> selection) {
     List<ContentAttributeValue>? filteredAttributeValues;
@@ -632,7 +730,9 @@ String? contentAttributeUsageToString(ContentAttributeUsage? value) {
 // ContentAttributeValue
 
 class ContentAttributeValue {
-  final String? _label;
+  final String? label;
+  final String? _selectLabel;
+  final String? _selectedLabel;
   final dynamic _value;
   final String? group;
   final Map<String, dynamic>? requirements;
@@ -641,9 +741,20 @@ class ContentAttributeValue {
   String? info;
   Map<String, dynamic>? customData;
 
-  ContentAttributeValue({String? label, dynamic value, this.group, this.requirements, this.info, this.customData }) :
-    _label = label,
+  ContentAttributeValue({this.label,
+    String? selectLabel, String? selectedLabel, dynamic value,
+    this.group, this.requirements,
+    this.info, this.customData
+  }) :
+    _selectLabel = selectLabel,
+    _selectedLabel = selectedLabel,
     _value = value;
+
+  // Accessories
+
+  String? get selectLabel => _selectLabel ?? label;
+  String? get selectedLabel => _selectedLabel ?? label;
+  dynamic get value => _value ?? label;
 
   // JSON serialization
 
@@ -656,6 +767,8 @@ class ContentAttributeValue {
     else if (json is Map) {
       return ContentAttributeValue(
         label: JsonUtils.stringValue(json['label']),
+        selectLabel: JsonUtils.stringValue(json['select-label']),
+        selectedLabel: JsonUtils.stringValue(json['selected-label']),
         value: json['value'],
         group: JsonUtils.stringValue(json['group']),
         requirements: JsonUtils.mapValue(json['requirements']),
@@ -666,19 +779,23 @@ class ContentAttributeValue {
     }
   }
 
-  toJson() => ((value != null) || (group != null) || (requirements != null)) ? {
-    'label': _label,
+  toJson() => ((_value != null) || (_selectLabel != null) || (_selectedLabel != null) || (group != null) || (requirements != null)) ? {
+    'label': label,
+    'select-label': _selectLabel,
+    'selected-label': _selectedLabel,
     'value': _value,
     'group': group,
     'requirements': requirements,
-  } : _label;
+  } : label;
 
   // Equality
 
   @override
   bool operator==(Object other) =>
     (other is ContentAttributeValue) &&
-    (_label == other._label) &&
+    (label == other.label) &&
+    (_selectLabel == other._selectLabel) &&
+    (_selectedLabel == other._selectedLabel) &&
     (_value == other._value) &&
     (group == other.group) &&
     (info == other.info) &&
@@ -687,7 +804,9 @@ class ContentAttributeValue {
 
   @override
   int get hashCode =>
-    (_label?.hashCode ?? 0) ^
+    (label?.hashCode ?? 0) ^
+    (_selectLabel?.hashCode ?? 0) ^
+    (_selectedLabel?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
     (info?.hashCode ?? 0) ^
@@ -697,7 +816,9 @@ class ContentAttributeValue {
   // Clone
 
   ContentAttributeValue clone() => ContentAttributeValue(
-    label: _label,
+    label: label,
+    selectLabel: _selectLabel,
+    selectedLabel: _selectedLabel,
     value: _value,
     group: group,
     requirements: MapUtils.from(requirements),
@@ -722,14 +843,6 @@ class ContentAttributeValue {
       return null;
     }
   }
-
-  // Accessories
-
-  String? get label => _label;
-  String? get selectLabel => _label;
-  String? get selectedLabel => _label;
-
-  dynamic get value => _value ?? _label;
 
   static ContentAttributeValue? findInList(List<ContentAttributeValue>? attributeValues, { dynamic value }) {
     if (attributeValues != null) {
@@ -886,7 +999,30 @@ class ContentAttributeRequirements {
     }
   }
 
+  static Map<String, ContentAttributeRequirements>? mapFromOther(Map<String, ContentAttributeRequirements>? otherMap, { bool clone = false }) {
+    if (otherMap != null) {
+      if (clone) {
+        Map<String, ContentAttributeRequirements> cloneMap = <String, ContentAttributeRequirements>{};
+        for(String key in otherMap.keys) {
+          MapUtils.add(cloneMap, key, otherMap[key]?.clone());
+        }
+        return cloneMap;
+      }
+      else {
+        return Map<String, ContentAttributeRequirements>.from(otherMap);
+      }
+    }
+    else {
+      return null;
+    }
+  }
+
   // Accessories
+  
+  bool get canSelectMore => (maxSelectedCount != 1);
+  bool get canClearSelection => ((minSelectedCount ?? 0) == 0);
+  bool get isMultipleSelection => (maxSelectedCount != 1);
+  bool canDeselect(int selectionLength) => ((minSelectedCount ?? 0) < selectionLength);
 
   int get functionalScope => _functionalScope ?? contentAttributeRequirementsFunctionalScopeCreate; // the scope by default
 
@@ -896,8 +1032,7 @@ class ContentAttributeRequirements {
 
   bool inScope(String scopeItem) => scope?.contains(scopeItem) ?? true; // apply to all scopes if no particular scope defined
 
-  bool get hasRequired =>
-    (0 < (minSelectedCount ?? 0));
+  bool get hasRequired => (0 < (minSelectedCount ?? 0));
 
   bool isAttributesSelectionValid(Map<String, dynamic>? selection) {
     if ((minSelectedCount != null) || (maxSelectedCount != null)) {
@@ -966,6 +1101,83 @@ class ContentAttributeRequirements {
       }
     }
     return jsonList;
+  }
+
+  // Map<String, ContentAttributeRequirements> JSON Serialization
+
+  static Map<String, ContentAttributeRequirements>? mapFromJson(Map<String, dynamic>? json) {
+    Map<String, ContentAttributeRequirements>? requirementsMap;
+    if (json != null) {
+      requirementsMap = <String, ContentAttributeRequirements>{};
+      for (String key in json.keys) {
+        MapUtils.add(requirementsMap, key, ContentAttributeRequirements.fromJson(json[key]));
+      }
+    }
+    return requirementsMap;
+  }
+
+  static Map<String, dynamic>? mapToJson(Map<String, ContentAttributeRequirements>? values) {
+    Map<String, dynamic>? json;
+    if (values != null) {
+      json = <String, dynamic>{};
+      for (String key in values.keys) {
+        MapUtils.add(json, key, values[key]?.toJson());
+      }
+    }
+    return json;
+  }
+}
+
+/////////////////////////////////////
+// ContentAttributeGroup
+
+extension ContentAttributeGroupsRequirements on Map<String?, ContentAttributeRequirements> {
+
+  bool hasFunctionalScope(int functionalScope) {
+    for (ContentAttributeRequirements requirements in values) {
+      if (requirements.hasFunctionalScope(functionalScope)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool canSelectMore(int functionalScope) {
+    for (ContentAttributeRequirements requirements in values) {
+      if (requirements.hasFunctionalScope(functionalScope) && requirements.canSelectMore) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool canClearSelection(int functionalScope) {
+    for (ContentAttributeRequirements requirements in values) {
+      if (requirements.hasFunctionalScope(functionalScope) && !requirements.canClearSelection) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  ContentAttributeRequirements? _singleGroupRequirements(int functionalScope, { String? group }) {
+    ContentAttributeRequirements? requirements = this[group];
+    return (requirements?.hasFunctionalScope(functionalScope) == true) ?  requirements : null;
+  }
+
+  ContentAttributeRequirements? _groupRequirements (int functionalScope, {String? group}) =>
+    _singleGroupRequirements(functionalScope, group: group) ?? _singleGroupRequirements(functionalScope, group: ContentAttribute.anyGroupRequirements);
+
+  bool isGroupMultipleSelection(int functionalScope, { String? group }) =>
+    _groupRequirements(functionalScope, group: group)?.isMultipleSelection != false;
+
+  bool isMultipleSelection(int functionalScope) {
+    for (ContentAttributeRequirements requirements in values) {
+      if (requirements.hasFunctionalScope(functionalScope) && !requirements.isMultipleSelection) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
