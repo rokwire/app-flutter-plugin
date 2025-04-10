@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
 - Check if Tracking services are enabled [#572](https://github.com/rokwire/app-flutter-plugin/issues/572).
 - Launch urls based on if Tracking services are enabled [#4898](https://github.com/rokwire/illinois-app/issues/4898).
-- Added self-registration data & APIs to events model and service [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
+- Added self-registration data & APIs to events model and service [#4888](https://github.com/rokwire/illinois-app/issues/4888).
+- Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
 - Load event accounts [#4799](https://github.com/rokwire/illinois-app/issues/4799).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extended NotificationService APIs [#576](https://github.com/rokwire/app-flutter-plugin/issues/576).
 - Read deep links redirect url from separate config entry [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
 - Set error builder to ImageSlantHeader [#4922](https://github.com/rokwire/app-flutter-plugin/issues/4922).
+- Content Attributes cleaned up and extended to handle new Event Filters requirements [#4904](https://github.com/rokwire/illinois-app/issues/4904).
 
 ## [1.8.3] - 2025-03-12
 ### Added

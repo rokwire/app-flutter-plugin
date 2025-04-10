@@ -921,6 +921,18 @@ class Event2PersonsResult {
       registrationOccupancy: JsonUtils.intValue(json['registration_occupancy']),
     ) : null;
   }
+
+  factory Event2PersonsResult.fromOther(Event2PersonsResult? persons, {
+    List<Event2Person>? registrants, List<Event2Person>? attendees, int? registrationOccupancy,
+  }) {
+    registrants ??= persons?.registrants;
+    attendees ??= persons?.attendees;
+    return Event2PersonsResult(
+      registrants: (registrants != null) ? List.from(registrants) : null,
+      attendees: (attendees != null) ? List.from(attendees) : null,
+      registrationOccupancy: registrationOccupancy ?? persons?.registrationOccupancy,
+    );
+  }
 }
 
 extension _ResponseExt on Response {

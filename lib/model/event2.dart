@@ -1335,19 +1335,20 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 /// Event2TypeFilter
 
 enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
+enum Event2TypeGroup { cost, format, access, limits }
 
-const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
-  Event2TypeFilter.free: 'cost',
-  Event2TypeFilter.paid: 'cost',
-  Event2TypeFilter.inPerson: 'type',
-  Event2TypeFilter.online: 'type',
-  Event2TypeFilter.hybrid: 'type',
-  Event2TypeFilter.public: 'discoverability',
-  Event2TypeFilter.private: 'discoverability',
-  Event2TypeFilter.nearby: 'proximity',
-  Event2TypeFilter.superEvent: 'composite',
-  Event2TypeFilter.favorite: 'favorite',
-  Event2TypeFilter.admin: 'admin',
+const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2TypeFilter, Event2TypeGroup>{
+  Event2TypeFilter.free: Event2TypeGroup.cost,
+  Event2TypeFilter.paid: Event2TypeGroup.cost,
+  Event2TypeFilter.inPerson: Event2TypeGroup.format,
+  Event2TypeFilter.online: Event2TypeGroup.format,
+  Event2TypeFilter.hybrid: Event2TypeGroup.format,
+  Event2TypeFilter.public: Event2TypeGroup.access,
+  Event2TypeFilter.private: Event2TypeGroup.access,
+  Event2TypeFilter.nearby: Event2TypeGroup.limits,
+  Event2TypeFilter.superEvent: Event2TypeGroup.limits,
+  Event2TypeFilter.favorite: Event2TypeGroup.limits,
+  Event2TypeFilter.admin: Event2TypeGroup.limits,
 };
 
 Event2TypeFilter? event2TypeFilterFromString(String? value) {
