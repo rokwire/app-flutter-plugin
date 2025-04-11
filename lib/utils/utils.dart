@@ -666,13 +666,8 @@ class UrlUtils {
 
   static bool canLaunchInternal(String? url) => (UriExt.tryParse(url)?.canLaunchInternal ?? false);
 
-  static Future<bool?> launchExternal(String? url) async {
-    if (StringUtils.isNotEmpty(url)) {
-      Uri? uri = UriExt.tryParse(url!);
-      return UriExt.launchExternal(uri);
-    }
-    return null;
-  }
+  static Future<bool?> launchExternal(String? url, {LaunchMode? mode}) async =>
+    ((url != null) && url.isNotEmpty) ? UriExt.launchExternal(UriExt.tryParse(url), mode: mode) : null;
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
@@ -837,13 +832,10 @@ extension UriExt on Uri {
     return uri;
   }
 
-  static Future<bool?> launchExternal(Uri? uri) async {
-    if (uri != null) {
-      return launchUrl(uri.fix() ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-    } else {
-      return null;
-    }
-  }
+  static Future<bool?> launchExternal(Uri? uri, {LaunchMode? mode}) async =>
+    (uri != null) ? launchUrl(uri.fix() ?? uri, mode: mode ?? defaultLaunchMode) : null;
+
+  static LaunchMode get defaultLaunchMode => Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault;
 }
 
 class JsonUtils {
@@ -1420,6 +1412,30 @@ class HtmlUtils {
       return value!;
     }
     return value!.replaceAll('\r\n', '</br>').replaceAll('\n', '</br>');
+  }
+}
+
+class PlatformUtils {
+  static bool get isWeb => kIsWeb == true;
+  static bool get isMobile => kIsWeb == false;
+
+  static String get environment => kIsWeb ? 'web' : 'mobile';
+
+  static const String anyPlatformOrEnvironment = '';
+
+  static String? stringValue(dynamic entry) {
+    if (entry is String) {
+      return entry;
+    }
+    else if (entry is Map) {
+      return JsonUtils.stringValue(entry[Platform.operatingSystem.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[PlatformUtils.environment.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[anyPlatformOrEnvironment]) ??
+        null;
+    }
+    else {
+      return null;
+    }
   }
 }
 

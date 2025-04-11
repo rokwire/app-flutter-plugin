@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Launch urls based on if Tracking services are enabled [#4898](https://github.com/rokwire/illinois-app/issues/4898).
 - Added self-registration data & APIs to events model and service [#4888](https://github.com/rokwire/illinois-app/issues/4888).
 - Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
+- Added optional mode paramter to UrlUtils.launchExternal [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
 - Upgrade to Flutter 3.29.2, upgraded plugin [#4899](https://github.com/rokwire/illinois-app/issues/4899).
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Read deep links redirect url from separate config entry [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
 - Set error builder to ImageSlantHeader [#4922](https://github.com/rokwire/app-flutter-plugin/issues/4922).
 - Content Attributes cleaned up and extended to handle new Event Filters requirements [#4904](https://github.com/rokwire/illinois-app/issues/4904).
+- PlatformUtils moved to plugin, extended with environment retrieval [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 
 ## [1.8.3] - 2025-03-12
 ### Added
