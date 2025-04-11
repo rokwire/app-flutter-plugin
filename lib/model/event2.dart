@@ -1747,7 +1747,7 @@ class Event2NotificationSetting {
 }
 
 ///////////////////////////////
-/// Events2Account
+/// Event2Account
 class Event2Account {
   final String? accountId;
   final String? firstName;
@@ -1791,4 +1791,38 @@ class Event2Account {
 
   @override
   int get hashCode => (accountId?.hashCode ?? 0) ^ (firstName.hashCode) ^ (lastName.hashCode) ^ (netId.hashCode) ^ (uin?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2AttendeeResult
+class Event2AttendeeResult {
+  final bool succeeded;
+  final String netId;
+  final Event2Person? person;
+  final String? failedMessage;
+
+  Event2AttendeeResult({required this.succeeded, required this.netId, this.person, this.failedMessage});
+
+  static bool allSucceeded(List<Event2AttendeeResult>? results) {
+    if (CollectionUtils.isEmpty(results)) {
+      return false;
+    }
+    for (Event2AttendeeResult result in results!) {
+      if (result.succeeded == false) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  bool operator ==(other) =>
+      (other is Event2AttendeeResult) &&
+      (other.succeeded == succeeded) &&
+      (other.netId == netId) &&
+      (other.person == person) &&
+      (other.failedMessage == failedMessage);
+
+  @override
+  int get hashCode => succeeded.hashCode ^ netId.hashCode ^ (person?.hashCode ?? 0) ^ (failedMessage?.hashCode ?? 0);
 }

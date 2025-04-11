@@ -519,6 +519,34 @@ class Events2 with Service, NotificationsListener {
     return null;
   }
 
+  ///
+  /// returns List<EventAttendeeResult>? if eventId and NetIDs are provided and String error message otherwise
+  ///
+  Future<dynamic> attendAllNetIds({required String eventId, required List<String> netIds}) async {
+    List<Future<dynamic>> futures = <Future<dynamic>>[];
+    for (String netId in netIds) {
+      futures.add(Events2().attendEvent(eventId, personIdentifier: Event2PersonIdentifier(accountId: '', externalId: netId)));
+    }
+    List<dynamic> results = await Future.wait(futures);
+    List<Event2AttendeeResult> attendeeResults = <Event2AttendeeResult>[];
+    int resultsLength = results.length;
+    int netIdsLength = netIds.length;
+    for (int i = 0; i < resultsLength; i++) {
+      dynamic result = results[i];
+      late Event2AttendeeResult attendeeResult;
+      String netId = (i < netIdsLength) ? netIds[i] : '---';
+      if (result is String) {
+        attendeeResult = Event2AttendeeResult(succeeded: false, netId: netId, failedMessage: result);
+      } else if (result is Event2Person) {
+        attendeeResult = Event2AttendeeResult(succeeded: true, netId: netId, person: result);
+      } else {
+        attendeeResult = Event2AttendeeResult(succeeded: false, netId: netId, failedMessage: 'Unknown error.');
+      }
+      attendeeResults.add(attendeeResult);
+    }
+    return attendeeResults;
+  }
+
   // Returns error message, true if successful
   Future<dynamic> unattendEvent(String eventId, { Event2PersonIdentifier? personIdentifier }) async {
     if (Config().calendarUrl != null) {
