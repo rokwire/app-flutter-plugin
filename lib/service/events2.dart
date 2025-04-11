@@ -457,7 +457,7 @@ class Events2 with Service, NotificationsListener {
     }
     if (CollectionUtils.isNotEmpty(netIds)) {
       jsonBody ??= {};
-      jsonBody['external_ids.net_id'] = netIds;
+      jsonBody['net_id'] = netIds;
     }
     String url = "${Config().calendarUrl}/event/$eventId/accounts";
     String? body = JsonUtils.encode(jsonBody);
