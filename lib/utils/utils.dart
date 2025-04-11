@@ -1423,6 +1423,30 @@ class HtmlUtils {
   }
 }
 
+class PlatformUtils {
+  static bool get isWeb => kIsWeb == true;
+  static bool get isMobile => kIsWeb == false;
+
+  static String get environment => kIsWeb ? 'web' : 'mobile';
+
+  static const String anyPlatformOrEnvironment = '';
+
+  static String? stringValue(dynamic entry) {
+    if (entry is String) {
+      return entry;
+    }
+    else if (entry is Map) {
+      return JsonUtils.stringValue(entry[Platform.operatingSystem.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[PlatformUtils.environment.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[anyPlatformOrEnvironment]) ??
+        null;
+    }
+    else {
+      return null;
+    }
+  }
+}
+
 enum DayPart { morning, afternoon, evening, night }
 
 String? dayPartToString(DayPart? dayPart) {
