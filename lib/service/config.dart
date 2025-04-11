@@ -480,6 +480,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return upgradeStringEntry('url');
   }
 
+  String? upgradeStringEntry(String key) =>
+    PlatformUtils.stringValue(upgradeInfo[key]);
+
   void setUpgradeAvailableVersionReported(String? version, { bool permanent = false }) {
     if (permanent) {
       Storage().reportedUpgradeVersion = version;
@@ -497,20 +500,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
     else if ((value = upgradeAvailableVersion) != null) {
       NotificationService().notify(notifyUpgradeAvailable, value);
-    }
-  }
-
-  String? upgradeStringEntry(String key) {
-    dynamic entry = upgradeInfo[key];
-    if (entry is String) {
-      return entry;
-    }
-    else if (entry is Map) {
-      dynamic value = entry[operatingSystem];
-      return (value is String) ? value : null;
-    }
-    else {
-      return null;
     }
   }
 
