@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added self-registration data & APIs to events model and service [#4888](https://github.com/rokwire/illinois-app/issues/4888).
 - Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
 - Added optional mode paramter to UrlUtils.launchExternal [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
 - Upgrade to Flutter 3.29.2, upgraded plugin [#4899](https://github.com/rokwire/illinois-app/issues/4899).
