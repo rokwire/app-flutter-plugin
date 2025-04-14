@@ -694,6 +694,12 @@ class UrlUtils {
     return (fixedUri != null) ? fixedUri.toString() : null;
   }
 
+  static String? stripUrlScheme(String url) {
+    final String hostDelimiter = '://';
+    int hostPosition = url.indexOf(hostDelimiter);
+    return (0 <= hostPosition) ? url.substring(hostPosition + hostDelimiter.length) : null;
+  }
+
   static Future<bool> isHostAvailable(String? url) async {
     if (kIsWeb) {
       Response? response = (url != null) ? await Network().head(url) : null;
