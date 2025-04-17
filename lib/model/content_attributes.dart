@@ -1182,6 +1182,26 @@ extension ContentAttributeGroupsRequirements on Map<String?, ContentAttributeReq
 }
 
 /////////////////////////////////////
+// ContentAttributesSelection
+
+extension ContentAttributesSelection on Map<String, dynamic> {
+
+  Map<String, dynamic> get duplicatedAttributes {
+    Map<String, dynamic> attributes = <String, dynamic>{};
+    forEach((String attributeId, dynamic attributeValue) {
+      if (attributeValue is Iterable) {
+        attributes[attributeId] = List<dynamic>.from(attributeValue);
+      }
+      else {
+        attributes[attributeId] = attributeValue;
+      }
+    });
+    return attributes;
+  }
+}
+
+
+/////////////////////////////////////
 // ContentAttributeRequirementsMode
 
 enum ContentAttributeRequirementsMode { exclusive, inclusive }
