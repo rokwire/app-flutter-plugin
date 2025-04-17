@@ -246,10 +246,11 @@ class Events2 with Service, NotificationsListener {
   Future<bool> linkEventToGroup({required Event2 event, required groupId, required bool link}) async {
     if (Config().calendarUrl != null) {
       Event2ContextItem groupItem = Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId);
-      Event2AuthorizationContext? authorizationContext = event.authorizationContext;
+      Event2AuthorizationContext? authorizationContext;
       // 1 Add or remove authorization item based on the action (link / unlink)
-      if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
-        List<Event2ContextItem>? items = authorizationContext!.items;
+      if (event.authorizationContext?.status == Event2AuthorizationContextStatus.active) {
+        Event2AuthorizationContextStatus? status = event.authorizationContext?.status;
+        List<Event2ContextItem>? items = event.authorizationContext?.items;
         if (items == null) {
           items = <Event2ContextItem>[];
         }
@@ -260,34 +261,35 @@ class Events2 with Service, NotificationsListener {
           }
           if (CollectionUtils.isEmpty(items)) {
             // Make the event public if there are no more items so that an admin can view and edit the event
-            authorizationContext.status = Event2AuthorizationContextStatus.none;
+            status = Event2AuthorizationContextStatus.none;
           }
         } else {
           // 1.2 Link event to group - e.g. add context item
           items.add(groupItem);
         }
-        authorizationContext.items = items;
+        authorizationContext = Event2AuthorizationContext(status: status, items: items);
+      }
+      else {
+        authorizationContext = event.authorizationContext;
       }
       // 2 Add or remove context item based on the action (link / unlink)
-      Event2Context? event2Context = event.context;
+      Event2Context? event2Context;
       // 2.1 Unlink event from group - e.g. remove context item
+      List<Event2ContextItem>? items;
       if (link == false) {
-        List<Event2ContextItem>? items = event2Context?.items;
+        items = ListUtils.from(event.context?.items);
         if (items?.contains(groupItem) ?? false) {
           items!.remove(groupItem);
-          event2Context!.items = items;
+          event2Context = Event2Context(items: items);
         }
       } else {
         // 2.2 Link event to group - e.g. add context item
-        if (event2Context == null) {
+        if (event.context == null) {
           event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
         } else {
-          List<Event2ContextItem>? items = event2Context.items;
-          if (items == null) {
-            items = <Event2ContextItem>[];
-          }
+          List<Event2ContextItem> items = ListUtils.from(event.context?.items) ?? <Event2ContextItem>[];
           items.add(groupItem);
-          event2Context.items = items;
+          event2Context = Event2Context(items: items);
         }
       }
 
