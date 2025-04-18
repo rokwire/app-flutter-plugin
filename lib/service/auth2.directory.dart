@@ -15,15 +15,17 @@ List<Auth2PublicAccount>? _sampleDirectoryAccounts;
 extension Auh2Directory on Auth2 {
 
   static const String attributesScope = 'app-directory';
+  static const String loadDirectoryAccountsAscending = 'asc';
+  static const String loadDirectoryAccountsDescending = 'desc';
 
   ContentAttributes? get directoryAttributes =>
     Content().contentAttributes(attributesScope);
 
-  Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
+  Future<Auth2PublicAccountsResult?> loadDirectoryAccounts({String? search,
     String? userName, String? firstName, String? lastName,
     Iterable<String>? ids, String? followingId, String? followerId,
-    Map<String, dynamic>? attriutes,
-    int? offset, int? limit}) async {
+    Map<String, dynamic>? attributes,
+    String? nameOffset, int? limit, String order = loadDirectoryAccountsAscending}) async {
 
     //TMP:
     //return _sampleAccounts;
@@ -33,7 +35,7 @@ extension Auh2Directory on Auth2 {
 
     // ignore: dead_code
     if (Config().coreUrl != null) {
-      String url = UrlUtils.addQueryParameters("${Config().coreUrl}/services/accounts/public", <String, String>{
+      String url = UrlUtils.addQueryParameters("${Config().coreUrl}/services/v2/accounts/public", <String, String>{
         if (search != null)
           'search': search,
 
@@ -52,17 +54,18 @@ extension Auh2Directory on Auth2 {
         if (followerId != null)
           'follower-id': followerId,
 
-        if (offset != null)
-          'offset': offset.toString(),
+        if (nameOffset != null)
+          'name-offset': nameOffset,
         if (limit != null)
           'limit': limit.toString(),
-        
-        if (attriutes != null)
-          ...attriutes.map((k, v) => MapEntry(k, (v is List) ? v.join(',') : v.toString()))
+        'order': order,
+
+        if (attributes != null)
+          ...attributes.map((k, v) => MapEntry(k, (v is List) ? v.join(',') : v.toString()))
       });
 
       Response? response = await Network().get(url, auth: Auth2());
-      return (response?.statusCode == 200) ? Auth2PublicAccount.listFromJson(JsonUtils.decodeList(response?.body)) : null;
+      return (response?.statusCode == 200) ? Auth2PublicAccountsResult.fromJson(JsonUtils.decodeMap(response?.body)) : null;
     }
     return null;
   }
