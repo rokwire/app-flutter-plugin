@@ -25,7 +25,7 @@ extension Auh2Directory on Auth2 {
     String? userName, String? firstName, String? lastName,
     Iterable<String>? ids, String? followingId, String? followerId,
     Map<String, dynamic>? attributes,
-    String? nameOffset, int? limit, String order = loadDirectoryAccountsAscending}) async {
+    String? offset, int? limit, String order = loadDirectoryAccountsAscending}) async {
 
     //TMP:
     //return _sampleAccounts;
@@ -54,8 +54,8 @@ extension Auh2Directory on Auth2 {
         if (followerId != null)
           'follower-id': followerId,
 
-        if (nameOffset != null)
-          'name-offset': nameOffset,
+        if (offset != null)
+          'offset': offset,
         if (limit != null)
           'limit': limit.toString(),
         'order': order,
