@@ -345,6 +345,21 @@ class ListUtils {
     }
     return ((list?.length ?? 0) > 0) ? list : null;
   }
+
+  static List<T>? combine<T>(List<List<T>?> lists) {
+    List<T>? result;
+    for (List<T>? list in lists) {
+      if (list != null) {
+        if (result != null) {
+          result.addAll(list);
+        }
+        else {
+          result = List.from(list);
+        }
+      }
+    }
+    return result;
+  }
 }
 
 class _SortListParam<T> {
@@ -554,18 +569,26 @@ class ColorUtils {
     return null;
   }
 
-  static String toHex(Color value) {
-    if (value.a < 1.0) {
-      return "#${(value.a / 255.0).toInt().toRadixString(16)}${(value.r / 255.0).toInt().toRadixString(16)}${(value.g / 255.0).toInt().toRadixString(16)}${(value.b / 255.0).toInt().toRadixString(16)}";
-    }
-    else {
-      return "#${(value.r / 255.0).toInt().toRadixString(16)}${(value.g / 255.0).toInt().toRadixString(16)}${(value.b / 255.0).toInt().toRadixString(16)}";
-    }
-  }
+  static String toHex(Color value) => value.toHex();
 
-  static int hueFromColor(Color color) => hueFromRGB((color.r / 255.0).toInt(), (color.g / 255.0).toInt(), (color.b / 255.0).toInt());
+  static int hueFromColor(Color color) => color.hue;
+}
 
-  static int hueFromRGB(int red, int green, int blue) {
+extension ColorUtilsEx on Color {
+  int get aVal => (a * 255).toInt();
+  int get rVal => (r * 255).toInt();
+  int get gVal => (g * 255).toInt();
+  int get bVal => (b * 255).toInt();
+
+  String get aHex => aVal.toRadixString(16).padLeft(2, '0');
+  String get rHex => rVal.toRadixString(16).padLeft(2, '0');
+  String get gHex => gVal.toRadixString(16).padLeft(2, '0');
+  String get bHex => bVal.toRadixString(16).padLeft(2, '0');
+
+  String toHex() => (a < 1.0) ? "#$aHex$rHex$gHex$bHex" : "#$rHex$gHex$bHex";
+
+  int get hue {
+    int red = rVal, green = gVal, blue = bVal;
     double min = math.min(math.min(red, green), blue).toDouble();
     double max = math.max(math.max(red, green), blue).toDouble();
 
@@ -589,6 +612,7 @@ class ColorUtils {
 
     return hue.round();
   }
+
 }
 
 class AppVersion {
@@ -643,7 +667,7 @@ class AppVersion {
   }
 }
 
-class UrlUtils {  
+class UrlUtils {
 
   static bool isPdf(String? url) => (UriExt.tryParse(url)?.isPdf ?? false);
 
@@ -651,13 +675,8 @@ class UrlUtils {
 
   static bool canLaunchInternal(String? url) => (UriExt.tryParse(url)?.canLaunchInternal ?? false);
 
-  static Future<bool?> launchExternal(String? url) async {
-    if (StringUtils.isNotEmpty(url)) {
-      Uri? uri = UriExt.tryParse(url!);
-      return UriExt.launchExternal(uri);
-    }
-    return null;
-  }
+  static Future<bool?> launchExternal(String? url, {LaunchMode? mode}) async =>
+    ((url != null) && url.isNotEmpty) ? UriExt.launchExternal(UriExt.tryParse(url), mode: mode) : null;
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
     if (StringUtils.isNotEmpty(url)) {
@@ -681,6 +700,12 @@ class UrlUtils {
     Uri? uri = UriExt.parse(url);
     Uri? fixedUri = (uri != null) ? uri.fix(scheme: scheme) : null;
     return (fixedUri != null) ? fixedUri.toString() : null;
+  }
+
+  static String? stripUrlScheme(String url) {
+    final String hostDelimiter = '://';
+    int hostPosition = url.indexOf(hostDelimiter);
+    return (0 <= hostPosition) ? url.substring(hostPosition + hostDelimiter.length) : null;
   }
 
   static Future<bool> isHostAvailable(String? url) async {
@@ -822,13 +847,10 @@ extension UriExt on Uri {
     return uri;
   }
 
-  static Future<bool?> launchExternal(Uri? uri) async {
-    if (uri != null) {
-      return launchUrl(uri.fix() ?? uri, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-    } else {
-      return null;
-    }
-  }
+  static Future<bool?> launchExternal(Uri? uri, {LaunchMode? mode}) async =>
+    (uri != null) ? launchUrl(uri.fix() ?? uri, mode: mode ?? defaultLaunchMode) : null;
+
+  static LaunchMode get defaultLaunchMode => Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault;
 }
 
 class JsonUtils {
@@ -1405,6 +1427,30 @@ class HtmlUtils {
       return value!;
     }
     return value!.replaceAll('\r\n', '</br>').replaceAll('\n', '</br>');
+  }
+}
+
+class PlatformUtils {
+  static bool get isWeb => kIsWeb == true;
+  static bool get isMobile => kIsWeb == false;
+
+  static String get environment => kIsWeb ? 'web' : 'mobile';
+
+  static const String anyPlatformOrEnvironment = '';
+
+  static String? stringValue(dynamic entry) {
+    if (entry is String) {
+      return entry;
+    }
+    else if (entry is Map) {
+      return JsonUtils.stringValue(entry[Platform.operatingSystem.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[PlatformUtils.environment.toLowerCase()]) ??
+        JsonUtils.stringValue(entry[anyPlatformOrEnvironment]) ??
+        null;
+    }
+    else {
+      return null;
+    }
   }
 }
 
