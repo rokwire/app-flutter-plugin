@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
 - Added optional mode paramter to UrlUtils.launchExternal [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Added ability to override the default onTap processing in SurveyBuilder.surveyResponseCard [#5018](https://github.com/rokwire/illinois-app/issues/5018).
 ### Changed
 - Group content attributes split for groups and research projects [#5014](https://github.com/rokwire/illinois-app/issues/5014).
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
