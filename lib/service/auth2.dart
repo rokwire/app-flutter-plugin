@@ -758,7 +758,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           _oidcLink = link;
 
           //await RokwirePlugin.clearSafariVC();
-          await _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
+          _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
         }
         else {
           Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
