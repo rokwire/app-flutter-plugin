@@ -34,7 +34,7 @@ class SurveyBuilder {
     return ActionBuilder.actionButtons(ActionBuilder.actionTypeButtonActions(context, survey?.actions, dismissContext: context));
   }
 
-  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, bool showTimeOnly = false}) {
+  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, bool showTimeOnly = false, void Function()? onTap}) {
     List<Widget> widgets = [];
 
     String? date;
@@ -94,8 +94,9 @@ class SurveyBuilder {
       color: Styles().colors.surface,
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
-        onTap: () => Navigator.push(context, CupertinoPageRoute(builder: (context) =>
-            SurveyPanel(survey: response.survey, inputEnabled: false, dateTaken: response.dateTaken, showResult: true))),
+        onTap: () => (onTap != null) ? onTap() : Navigator.push(context, CupertinoPageRoute(builder: (context) =>
+          SurveyPanel(survey: response.survey, inputEnabled: false, dateTaken: response.dateTaken, showResult: true)
+        )),
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
