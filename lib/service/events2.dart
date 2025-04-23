@@ -117,13 +117,15 @@ class Events2 with Service, NotificationsListener {
     return (result is Events2ListResult) ? result : null;
   }
 
-  Future<Events2ListResult?> loadGroupEvents({String? groupId, int? offset, int? limit}) async {
-    if (StringUtils.isEmpty(groupId)) {
-      return null;
-    }
-    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, groupings: Event2Grouping.individualEvents(), offset: offset, limit: limit);
-    return await loadEvents(groupQuery);
-  }
+  Future<Events2ListResult?> loadGroupEvents({String? groupId, Event2TimeFilter? timeFilter, int? offset, int? limit}) async =>
+    StringUtils.isNotEmpty(groupId) ? loadEvents(Events2Query(
+        groupIds: {groupId!},
+        groupings: Event2Grouping.individualEvents(),
+        timeFilter: timeFilter,
+        sortType: Event2SortType.dateTime,
+        sortOrder: (timeFilter == Event2TimeFilter.past) ? Event2SortOrder.descending : Event2SortOrder.ascending,
+        offset: offset, limit: limit
+    )) : null;
 
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;

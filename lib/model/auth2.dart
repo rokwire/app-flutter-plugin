@@ -386,6 +386,9 @@ class Auth2UserProfile {
   String? _website;
 
   String? _address;
+  String? _address2;
+  String? _poBox;
+  String? _city;
   String? _state;
   String? _zip;
   String? _country;
@@ -396,7 +399,7 @@ class Auth2UserProfile {
     String? firstName, String? middleName, String? lastName, String? pronouns,
     int? birthYear, String? photoUrl, String? pronunciationUrl,
     String? email, String? phone, String? website,
-    String? address, String? state, String? zip, String? country,
+    String? address, String? address2, String? city, String? poBox, String? state, String? zip, String? country,
     Map<String, dynamic>? data
   }):
     _id = id,
@@ -415,6 +418,9 @@ class Auth2UserProfile {
     _website = website,
 
     _address = address,
+    _address2 = address2,
+    _poBox = poBox,
+    _city = city,
     _state  = state,
     _zip  = zip,
     _country = country,
@@ -443,6 +449,9 @@ class Auth2UserProfile {
       website: (override != null) ? Auth2UserProfileScope.website.pickString(override.website, other?._website, scope: scope) : other?._website,
 
       address: (override != null) ? Auth2UserProfileScope.address.pickString(override.address, other?._address, scope: scope) : other?._address,
+      address2: (override != null) ? Auth2UserProfileScope.address2.pickString(override.address2, other?._address2, scope: scope) : other?._address2,
+      city: (override != null) ? Auth2UserProfileScope.city.pickString(override.city, other?._city, scope: scope) : other?._city,
+      poBox: (override != null) ? Auth2UserProfileScope.poBox.pickString(override.poBox, other?._poBox, scope: scope) : other?._poBox,
       state: (override != null) ? Auth2UserProfileScope.state.pickString(override.state, other?._state, scope: scope) : other?._state,
       zip: (override != null) ? Auth2UserProfileScope.zip.pickString(override.zip, other?._zip, scope: scope) : other?._zip,
       country: (override != null) ? Auth2UserProfileScope.country.pickString(override.country, other?._country, scope: scope) : other?._country,
@@ -472,6 +481,9 @@ class Auth2UserProfile {
       website: permitted.contains(visibility?.website) ? source._website : null,
 
       address: permitted.contains(visibility?.address) ? source._address : null,
+      address2: permitted.contains(visibility?.address2) ? source._address : null,
+      city: permitted.contains(visibility?.city) ? source._city : null,
+      poBox: permitted.contains(visibility?.poBox) ? source._poBox : null,
       state: permitted.contains(visibility?.state) ? source._state : null,
       zip: permitted.contains(visibility?.zip) ? source._zip : null,
       country: permitted.contains(visibility?.country) ? source._country : null,
@@ -502,6 +514,9 @@ class Auth2UserProfile {
       website: JsonUtils.stringValue(json['website']),
 
       address: JsonUtils.stringValue(json['address']),
+      address2: JsonUtils.stringValue(json['address2']),
+      city: JsonUtils.stringValue(json['city']),
+      poBox: JsonUtils.stringValue(json['po_box']),
       state: JsonUtils.stringValue(json['state']),
       zip: JsonUtils.stringValue(json['zip_code']),
       country: JsonUtils.stringValue(json['country']),
@@ -528,6 +543,9 @@ class Auth2UserProfile {
       'website': _website,
 
       'address': _address,
+      'address2': _address2,
+      'city': _city,
+      'poBox': _poBox,
       'state': _state,
       'zip_code': _zip,
       'country': _country,
@@ -555,6 +573,9 @@ class Auth2UserProfile {
       (other._website == _website) &&
 
       (other._address == _address) &&
+      (other._address2 == _address2) &&
+      (other._city == _city) &&
+      (other._poBox == _poBox) &&
       (other._state == _state) &&
       (other._zip == _zip) &&
       (other._country == _country) &&
@@ -579,6 +600,9 @@ class Auth2UserProfile {
     (_website?.hashCode ?? 0) ^
 
     (_address?.hashCode ?? 0) ^
+    (_address2?.hashCode ?? 0) ^
+    (_city?.hashCode ?? 0) ^
+    (_poBox?.hashCode ?? 0) ^
     (_state?.hashCode ?? 0) ^
     (_zip?.hashCode ?? 0) ^
     (_country?.hashCode ?? 0) ^
@@ -672,6 +696,27 @@ class Auth2UserProfile {
         _address = profile._address;
         modified = true;
       }
+      if ((profile._address2 != _address2) && (
+          (scope?.contains(Auth2UserProfileScope.address2) == true) ||
+              ((profile._address2?.isNotEmpty ?? false) && (_address2?.isEmpty ?? true))
+      )) {
+        _address2 = profile._address2;
+        modified = true;
+      }
+      if ((profile._city != _city) && (
+          (scope?.contains(Auth2UserProfileScope.city) == true) ||
+              ((profile._city?.isNotEmpty ?? false) && (_city?.isEmpty ?? true))
+      )) {
+        _city = profile._city;
+        modified = true;
+      }
+      if ((profile._poBox != _poBox) && (
+          (scope?.contains(Auth2UserProfileScope.poBox) == true) ||
+              ((profile._poBox?.isNotEmpty ?? false) && (_poBox?.isEmpty ?? true))
+      )) {
+        _poBox = profile._poBox;
+        modified = true;
+      }
       if ((profile._state != _state) && (
           (scope?.contains(Auth2UserProfileScope.state) == true) ||
           ((profile._state?.isNotEmpty ?? false) && (_state?.isEmpty ?? true))
@@ -720,6 +765,9 @@ class Auth2UserProfile {
   String? get website => _website;
 
   String? get address => _address;
+  String? get address2 => _address2;
+  String? get city => _city;
+  String? get poBox => _poBox;
   String? get state => _state;
   String? get zip => _zip;
   String? get country => _country;
@@ -820,6 +868,9 @@ class Auth2UserProfileFieldsVisibility {
   final Auth2FieldVisibility? website;
 
   final Auth2FieldVisibility? address;
+  final Auth2FieldVisibility? address2;
+  final Auth2FieldVisibility? city;
+  final Auth2FieldVisibility? poBox;
   final Auth2FieldVisibility? state;
   final Auth2FieldVisibility? zip;
   final Auth2FieldVisibility? country;
@@ -830,7 +881,8 @@ class Auth2UserProfileFieldsVisibility {
     this.firstName, this.middleName, this.lastName, this.pronouns,
     this.birthYear, this.photoUrl, this.pronunciationUrl,
     this.email, this.phone, this.website,
-    this.address, this.state, this.zip, this.country,
+    this.address, this.address2, this.poBox, this.city,
+    this.state, this.zip, this.country,
     this.data
   });
 
@@ -849,6 +901,9 @@ class Auth2UserProfileFieldsVisibility {
     Auth2FieldVisibility? website,
 
     Auth2FieldVisibility? address,
+    Auth2FieldVisibility? address2,
+    Auth2FieldVisibility? city,
+    Auth2FieldVisibility? poBox,
     Auth2FieldVisibility? state,
     Auth2FieldVisibility? zip,
     Auth2FieldVisibility? country,
@@ -869,6 +924,9 @@ class Auth2UserProfileFieldsVisibility {
     website: website ?? other?.website,
 
     address: address ?? other?.address,
+    address2: address2 ?? other?.address2,
+    city: city ?? other?.city,
+    poBox: poBox ?? other?.poBox,
     state: state ?? other?.state,
     zip: zip ?? other?.zip,
     country: country ?? other?.country,
@@ -891,6 +949,9 @@ class Auth2UserProfileFieldsVisibility {
     website: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['website'])),
 
     address: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['address'])),
+    address2: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['address2'])),
+    city: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['city'])),
+    poBox: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['poBox'])),
     state: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['state'])),
     zip: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['zip_code'])),
     country: Auth2FieldVisibilityImpl.fromJson(JsonUtils.stringValue(json['country'])),
@@ -915,6 +976,9 @@ class Auth2UserProfileFieldsVisibility {
       'website': website?.toJson(),
 
       'address': address?.toJson(),
+      'address2': address2?.toJson(),
+      'city': city?.toJson(),
+      'poBox': poBox?.toJson(),
       'state': state?.toJson(),
       'zip_code': zip?.toJson(),
       'country': country?.toJson(),
@@ -940,6 +1004,9 @@ class Auth2UserProfileFieldsVisibility {
       (other.website == website) &&
 
       (other.address == address) &&
+      (other.address2 == address2) &&
+      (other.city == city) &&
+      (other.poBox == poBox) &&
       (other.state == state) &&
       (other.zip == zip) &&
       (other.country == country) &&
@@ -962,6 +1029,9 @@ class Auth2UserProfileFieldsVisibility {
     (website?.hashCode ?? 0) ^
 
     (address?.hashCode ?? 0) ^
+    (address2?.hashCode ?? 0) ^
+    (poBox?.hashCode ?? 0) ^
+    (city?.hashCode ?? 0) ^
     (state?.hashCode ?? 0) ^
     (zip?.hashCode ?? 0) ^
     (country?.hashCode ?? 0) ^
@@ -1247,7 +1317,7 @@ enum Auth2UserProfileScope {
   firstName, middleName, lastName, pronouns,
   birthYear, photoUrl, pronunciationUrl,
   email, phone, website,
-  address, state, zip, country,
+  address, address2, poBox, city, state, zip, country,
 }
 
 extension Auth2UserProfileScopeImpl on Auth2UserProfileScope {
