@@ -549,7 +549,7 @@ class Auth2UserProfile {
 
       'address': _address,
       'address2': _address2,
-      'poBox': _poBox,
+      'po_box': _poBox,
       'city': _city,
       'zip_code': _zip,
       'state': _state,
