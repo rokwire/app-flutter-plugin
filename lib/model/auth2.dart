@@ -486,7 +486,7 @@ class Auth2UserProfile {
       website: permitted.contains(visibility?.website) ? source._website : null,
 
       address: permitted.contains(visibility?.address) ? source._address : null,
-      address2: permitted.contains(visibility?.address2) ? source._address : null,
+      address2: permitted.contains(visibility?.address2) ? source._address2 : null,
       poBox: permitted.contains(visibility?.poBox) ? source._poBox : null,
       city: permitted.contains(visibility?.city) ? source._city : null,
       zip: permitted.contains(visibility?.zip) ? source._zip : null,
