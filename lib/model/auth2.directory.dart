@@ -17,7 +17,7 @@ class Auth2PublicAccountsResult {
   static Auth2PublicAccountsResult? fromJson(Map<String, dynamic>? json) {
     if (json != null) {
       Map<String, int> indexCounts = {};
-      Map<String, dynamic>? indexCountsJson = JsonUtils.mapValue(json['total']);
+      Map<String, dynamic>? indexCountsJson = JsonUtils.mapValue(json['counts']);
       for (MapEntry<String, dynamic> count in indexCountsJson?.entries ?? []) {
         indexCounts[count.key] = (count.value is int) ? count.value : 0;
       }
@@ -33,6 +33,7 @@ class Auth2PublicAccountsResult {
 
   Map<String, dynamic> toJson() => {
     'accounts': Auth2PublicAccount.listToJson(accounts),
+    'counts': indexCounts,
     'total': totalCount,
   };
 }
