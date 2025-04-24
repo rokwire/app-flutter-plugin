@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
 - Added optional mode paramter to UrlUtils.launchExternal [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Added ability to override the default onTap processing in SurveyBuilder.surveyResponseCard [#5018](https://github.com/rokwire/illinois-app/issues/5018).
 ### Changed
+- Group content attributes split for groups and research projects [#5014](https://github.com/rokwire/illinois-app/issues/5014).
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
 - Upgrade to Flutter 3.29.2, upgraded plugin [#4899](https://github.com/rokwire/illinois-app/issues/4899).
 - Updated Events2.eventDetailUrl parameter types.
@@ -27,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Content Attributes cleaned up and extended to handle new Event Filters requirements [#4904](https://github.com/rokwire/illinois-app/issues/4904).
 - PlatformUtils moved to plugin, extended with environment retrieval [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Implemented Event2 duplication API, make satellite classes immutable [#5013](https://github.com/rokwire/illinois-app/issues/5013).
+- Events2.loadGroupEvents updated to get time filter parameter, cleaned up sort type setting [#5022](https://github.com/rokwire/illinois-app/issues/5022).
 
 ## [1.8.3] - 2025-03-12
 ### Added
