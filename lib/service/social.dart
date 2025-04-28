@@ -780,8 +780,8 @@ class Social extends Service implements NotificationsListener {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
       return null;
     }
-    if (message.isEmpty) {
-      Log.e('Failed to create message for conversation $conversationId. Reason: missing message.');
+    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+      Log.e('Failed to create message for conversation $conversationId. Reason: missing message and attachment.');
       return null;
     }
     String? requestBody = JsonUtils.encode({
