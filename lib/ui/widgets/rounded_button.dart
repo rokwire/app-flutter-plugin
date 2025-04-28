@@ -16,6 +16,7 @@
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
@@ -164,7 +165,7 @@ class _RoundedButtonState extends State<RoundedButton> {
   Widget get _outerContent {
     //TODO: Fix ripple effect from InkWell (behind button content)
     return Semantics(label: widget.label, hint: widget.hint, button: true, enabled: widget.enabled, child:
-      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent),
+      InkWell(onTap: widget.onTap, borderRadius: borderRadius, child: _wrapperContent, splashColor: kIsWeb ? Colors.transparent : null, hoverColor: kIsWeb ? Colors.transparent : null,),
     );
   }
 
@@ -367,6 +368,8 @@ class CompactRoundedButton extends StatelessWidget {
         padding: padding,
         child: progress ? progressContent : textWidget,
       ),
+      hoverColor: kIsWeb ? Colors.transparent : null,
+      splashColor: kIsWeb ? Colors.transparent : null,
     );
 
   Widget get progressContent =>
