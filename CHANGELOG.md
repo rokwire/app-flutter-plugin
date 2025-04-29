@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Added ability to override the default onTap processing in SurveyBuilder.surveyResponseCard [#5018](https://github.com/rokwire/illinois-app/issues/5018).
 - Additional profile fields needed [#580](https://github.com/rokwire/app-flutter-plugin/issues/580).
+- Added colors for library card photo border [#4916](https://github.com/rokwire/illinois-app/issues/4916).
 ### Changed
 - Group content attributes split for groups and research projects [#5014](https://github.com/rokwire/illinois-app/issues/5014).
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
