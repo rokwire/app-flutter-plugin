@@ -436,7 +436,6 @@ class Auth2UserProfile {
     Auth2UserProfile? override,
     Set<Auth2UserProfileScope>? scope
   }) {
-
     return Auth2UserProfile(
       id: override?.id ?? other?._id,
 
@@ -465,11 +464,10 @@ class Auth2UserProfile {
     );
   }
 
-  static Auth2UserProfile? fromFieldsVisibility(Auth2UserProfile? source, Auth2UserProfileFieldsVisibility? visibility, {
+  factory Auth2UserProfile.fromFieldsVisibility(Auth2UserProfile source, Auth2UserProfileFieldsVisibility? visibility, {
     Set<Auth2FieldVisibility> permitted = const <Auth2FieldVisibility>{Auth2FieldVisibility.public}
   }) {
-
-    return (source != null) ? Auth2UserProfile(
+    return Auth2UserProfile(
       id: source._id,
 
       firstName: permitted.contains(visibility?.firstName) ? source._firstName : null,
@@ -494,7 +492,7 @@ class Auth2UserProfile {
       country: permitted.contains(visibility?.country) ? source._country : null,
 
       data: Auth2UserProfileFieldsVisibility.buildPermitted(source._data, visibility?.data , permitted: permitted),
-    ) : null;
+    );
   }
 
   factory Auth2UserProfile.empty() {
