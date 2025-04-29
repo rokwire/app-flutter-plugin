@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlatformUtils moved to plugin, extended with environment retrieval [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Implemented Event2 duplication API, make satellite classes immutable [#5013](https://github.com/rokwire/illinois-app/issues/5013).
 - Events2.loadGroupEvents updated to get time filter parameter, cleaned up sort type setting [#5022](https://github.com/rokwire/illinois-app/issues/5022).
+- Make Auth2UserProfile.fromFieldsVisibility a factory constructor [#5026](https://github.com/rokwire/illinois-app/issues/5026).
 
 ## [1.8.3] - 2025-03-12
 ### Added
