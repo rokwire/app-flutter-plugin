@@ -79,7 +79,7 @@ class ModalImagePanel extends StatelessWidget {
       imageWidget = Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
         headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
-    return Scaffold(backgroundColor: Colors.black.withOpacity(0.3), body:
+    return Scaffold(backgroundColor: Colors.black.withValues(alpha: 0.3), body:
       SafeArea(child:
         _buildPinchZoomControl(child:
           InkWell(onTap: () => _onDismiss(context), child:

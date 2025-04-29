@@ -20,6 +20,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/service/content.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
+import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/ui/panels/web_panel.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -206,8 +207,13 @@ class FlexContent extends StatefulWidget {
   }
 
   @protected
-  void launchInternal(BuildContext context, String url, { String? title }) =>
-    Navigator.of(context).push(CupertinoPageRoute(builder: (context) => WebPanel(url: url, title: title)));
+  void launchInternal(BuildContext context, String url, { String? title }) async {
+    if (await TrackingServices.isAllowed()) {
+      Navigator.of(context).push(CupertinoPageRoute(builder: (context) => WebPanel(url: url, title: title)));
+    } else {
+      launchUrlString(url);
+    }
+  }
 
   @protected
   void onTapClose(FlexContentWidgetState state) {
@@ -220,7 +226,7 @@ class FlexContent extends StatefulWidget {
   }
 }
 
-class FlexContentWidgetState extends State<FlexContent> implements NotificationsListener {
+class FlexContentWidgetState extends State<FlexContent> with NotificationsListener {
   bool _visible = true;
   Map<String, dynamic>? _contentJson;
 

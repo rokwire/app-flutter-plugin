@@ -33,7 +33,7 @@ import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 
-class Styles extends Service implements NotificationsListener{
+class Styles extends Service with NotificationsListener{
   
   static const String notifyChanged    = "edu.illinois.rokwire.styles.changed";
   
@@ -376,6 +376,11 @@ class UiColors {
   Color get greenAccent                => colorMap['greenAccent'] ?? const Color(0xFF69F0AE);
   Color get blueAccent                 => colorMap['blueAccent'] ?? const Color(0xFF0058A7);
 
+  Color get libraryCardBorderOrange    => colorMap['libraryCardBorderOrange'] ?? const Color(0xFFE84A27);
+  Color get libraryCardAccentOrange    => colorMap['libraryCardAccentOrange'] ?? const Color(0xFFF29835);
+  Color get libraryCardBorderBlue      => colorMap['libraryCardBorderBlue'] ?? const Color(0xFF13294B);
+  Color get libraryCardAccentBlue      => colorMap['libraryCardAccentBlue'] ?? const Color(0xFF2272DD);
+
   Color get saferLocationWaitTimeColorRed        => colorMap['saferLocationWaitTimeColorRed'] ?? const Color(0xFFFF0000);
   Color get saferLocationWaitTimeColorYellow     => colorMap['saferLocationWaitTimeColorYellow'] ?? const Color(0xFFFFFF00);
   Color get saferLocationWaitTimeColorGreen      => colorMap['saferLocationWaitTimeColorGreen'] ?? const Color(0xFF00FF00);
@@ -400,10 +405,10 @@ class UiColors {
   static String? toHex(Color? value, {bool leadingHashSign = true}) {
     if (value != null) {
       return (leadingHashSign ? '#' : '') +
-          value.alpha.toRadixString(16).padLeft(2, '0') +
-          value.red.toRadixString(16).padLeft(2, '0') +
-          value.green.toRadixString(16).padLeft(2, '0') +
-          value.blue.toRadixString(16).padLeft(2, '0');
+          (value.a / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.r / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.g / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
+          (value.b / 255.0).toInt().toRadixString(16).padLeft(2, '0');
     }
     return null;
   }

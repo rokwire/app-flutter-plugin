@@ -28,6 +28,14 @@ enum TrackingAuthorizationStatus {
 
 class TrackingServices {
 
+  static Future<bool> isAllowed() async {
+    TrackingAuthorizationStatus? status = await queryAuthorizationStatus();
+    if ((status == null) || (status == TrackingAuthorizationStatus.undetermined)) {
+      status = await requestAuthorization();
+    }
+    return (status == TrackingAuthorizationStatus.allowed);
+  }
+
   static Future<TrackingAuthorizationStatus?> queryAuthorizationStatus() async {
     return _trackingAuthorizationFromString(JsonUtils.stringValue(await RokwirePlugin.trackingServices('queryAuthorizationStatus')));
   }

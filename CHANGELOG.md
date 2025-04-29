@@ -5,7 +5,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next version number should be the version from pubspec.yaml -->
+
+## [1.9.0] - 2025-04-29
+### Fixed
+- Make sure to dispose TapGestureRecognizer objects.
+- Fixed hexadecimal color utilities.
+### Added
+- Added user prefs data source in FlexUi [#4840](https://github.com/rokwire/illinois-app/issues/4840).
+- Check if Tracking services are enabled [#572](https://github.com/rokwire/app-flutter-plugin/issues/572).
+- Launch urls based on if Tracking services are enabled [#4898](https://github.com/rokwire/illinois-app/issues/4898).
+- Added self-registration data & APIs to events model and service [#4888](https://github.com/rokwire/illinois-app/issues/4888).
+- Added Event2PersonsResult.fromOther factory constructor [#4956](https://github.com/rokwire/illinois-app/issues/4956).
+- Added optional mode paramter to UrlUtils.launchExternal [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Added ability to override the default onTap processing in SurveyBuilder.surveyResponseCard [#5018](https://github.com/rokwire/illinois-app/issues/5018).
+- Additional profile fields needed [#580](https://github.com/rokwire/app-flutter-plugin/issues/580).
+- Added colors for library card photo border [#4916](https://github.com/rokwire/illinois-app/issues/4916).
+### Changed
+- Group content attributes split for groups and research projects [#5014](https://github.com/rokwire/illinois-app/issues/5014).
+- Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
+- Upgrade to Flutter 3.29.2, upgraded plugin [#4899](https://github.com/rokwire/illinois-app/issues/4899).
+- Updated Events2.eventDetailUrl parameter types.
+- Extended NotificationService APIs [#576](https://github.com/rokwire/app-flutter-plugin/issues/576).
+- Read deep links redirect url from separate config entry [#4888](https://github.com/rokwire/app-flutter-plugin/issues/4888).
+- Set error builder to ImageSlantHeader [#4922](https://github.com/rokwire/app-flutter-plugin/issues/4922).
+- Content Attributes cleaned up and extended to handle new Event Filters requirements [#4904](https://github.com/rokwire/illinois-app/issues/4904).
+- PlatformUtils moved to plugin, extended with environment retrieval [#4950](https://github.com/rokwire/illinois-app/issues/4950).
+- Implemented Event2 duplication API, make satellite classes immutable [#5013](https://github.com/rokwire/illinois-app/issues/5013).
+- Events2.loadGroupEvents updated to get time filter parameter, cleaned up sort type setting [#5022](https://github.com/rokwire/illinois-app/issues/5022).
+- Make Auth2UserProfile.fromFieldsVisibility a factory constructor [#5026](https://github.com/rokwire/illinois-app/issues/5026).
+
+## [1.8.3] - 2025-03-12
+### Added
+- Created CompactRoundedButton widget [#4872](https://github.com/rokwire/illinois-app/issues/4872).
+
+## [1.8.2] - 2025-03-06 
+### Added
+- Acknowledge new reaction API [#4613](https://github.com/rokwire/illinois-app/issues/4613).
 
 ## [1.8.1] - 2025-03-05 
 ### Fixed

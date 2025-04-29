@@ -46,7 +46,7 @@ import 'firebase_messaging.dart';
 enum GroupsContentType { all, my }
 enum ResearchProjectsContentType { open, my }
 
-class Groups with Service implements NotificationsListener {
+class Groups with Service, NotificationsListener {
 
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
@@ -219,16 +219,21 @@ class Groups with Service implements NotificationsListener {
 
   // Content Attributes
 
-  static const String contentAttributesScope = 'groups';
+  static const String groupsContentAttributesScope = 'groups';
+  static const String researchProjectsContentAttributesScope = 'research_projects';
+  static String contentAttributesScope({ bool? researchProject }) =>
+    (researchProject == true) ? researchProjectsContentAttributesScope : groupsContentAttributesScope;
 
-  ContentAttributes? get contentAttributes =>
-    Content().contentAttributes(contentAttributesScope);
+  ContentAttributes? get groupsContentAttributes => contentAttributes(researchProject: false);
+  ContentAttributes? get researchProjectsContentAttributes => contentAttributes(researchProject: true);
+  ContentAttributes? contentAttributes({ bool? researchProject }) =>
+    Content().contentAttributes(contentAttributesScope(researchProject: researchProject));
 
-  bool isContentAttributeEnabled(ContentAttribute? attribute) =>
-    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope);
+  bool isContentAttributeEnabled(ContentAttribute? attribute, { bool? researchProject }) =>
+    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope(researchProject: researchProject));
 
-  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) =>
-    contentAttributes?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope, complete: complete);
+  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { bool? researchProject, ContentAttributeUsage? usage, bool complete = false }) =>
+    contentAttributes(researchProject: researchProject)?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope(researchProject: researchProject), complete: complete);
 
   // Categories APIs
   // TBD: REMOVE
@@ -312,11 +317,10 @@ class Groups with Service implements NotificationsListener {
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
   Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, int? offset, int? limit}) async {
-    if (contentType == GroupsContentType.my) {
-      await _updateUserGroupsFromNetSync();
-      return userGroups;
-    } else {
-      return await _loadAllGroups(title: title, attributes: attributes, offset: offset, limit:  limit);
+    switch(contentType) {
+      case GroupsContentType.my: return _loadUserGroups(title: title, attributes: attributes, offset: offset, limit: limit);
+      case GroupsContentType.all: return _loadAllGroups(title: title, attributes: attributes, offset: offset, limit: limit);
+      default: return null;
     }
   }
 
@@ -330,6 +334,7 @@ class Groups with Service implements NotificationsListener {
         'privacy': groupPrivacyToString(privacy),
         'offset': offset,
         'limit': limit,
+
         'research_group': true,
         'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
         'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
@@ -366,34 +371,24 @@ class Groups with Service implements NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async =>
-    JsonUtils.listTypedValue<Group>(await _loadAllGroupsEx(
-        title: title,
-        attributes : attributes,
-        privacy: privacy,
-        groupIds: groupIds,
-        offset: offset,
-        limit: limit,
-    ));
-
-  Future<dynamic> _loadAllGroupsEx({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
       String? post = JsonUtils.encode({
         'title': title,
         'attributes': attributes,
         'privacy': groupPrivacyToString(privacy),
+        'research_group': false,
         'ids': groupIds,
         'offset': offset,
         'limit': limit,
-        'research_group': false,
       });
 
       try {
         await _ensureLogin();
         Response? response = await Network().get(url, body: post, auth: Auth2());
         //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : response?.errorText;
+        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
       } catch (e) {
         debugPrint(e.toString());
       }
@@ -562,9 +557,7 @@ class Groups with Service implements NotificationsListener {
       String? body = JsonUtils.encode(params);
       Response? response = await Network().post(url, auth: Auth2(), body: body);
       int? responseCode = response?.statusCode;
-      return responseCode == 200 ?
-                  GroupResult.success() :
-                  GroupResult.fail(error: response?.errorText);
+      return responseCode == 200 ? GroupResult.success() : GroupResult.fail(error: response?.errorText);
     }
     return GroupResult.fail(error: "Missing Config url");
   }
@@ -1043,8 +1036,8 @@ class Groups with Service implements NotificationsListener {
     return null; // fail
   }
 
-  Future<dynamic> loadGroupsByIds({Set<String>? groupIds}) async {
-    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroupsEx(groupIds: groupIds!.toList()) : null;
+  Future<List<Group>?> loadGroupsByIds({Set<String>? groupIds}) async {
+    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroups(groupIds: groupIds!.toList()) : null;
     return result;
   }
 
@@ -1167,47 +1160,45 @@ class Groups with Service implements NotificationsListener {
     return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
   }
 
-  Future<Response?> _loadUserGroupsResponse() async {
+  Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
-      await _ensureLogin();
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       String url = '${Config().groupsUrl}/v2/user/groups';
       String? post = JsonUtils.encode({
+        'title': title,
+        'attributes': attributes,
+        'privacy': groupPrivacyToString(privacy),
         'research_group': false,
+        'ids': groupIds,
+        'offset': offset,
+        'limit': limit,
       });
-      return Network().get(url, body: post, auth: Auth2());
+      try {
+        await _ensureLogin();
+        return await Network().get(url, body: post, auth: Auth2());
+      } catch (e) {
+        debugPrint(e.toString());
+      }
     }
     return null;
   }
 
+  Future<List<Group>?> _loadUserGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
+    Response? response = await _loadUserGroupsResponse(
+        title: title,
+        attributes: attributes,
+        privacy: privacy,
+        groupIds: groupIds,
+        offset: offset,
+        limit:  limit,
+    );
+    return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
+  }
+
   Future<String?> _loadUserGroupsStringFromNet() async {
     Response? response = await _loadUserGroupsResponse();
-    if (response != null) {
-      if (response.statusCode == 200) {
-        return response.body;
-      }
-      else {
-        debugPrint('Failed to load user groups. Code: ${response.statusCode}}.\nResponse: ${response.body}');
-      }
-      return null;
-    }
-
-    if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
-      await _ensureLogin();
-      // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      String url = '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'research_group': false,
-      });
-      Response? response = await Network().get(url, body: post, auth: Auth2());
-      if (response?.statusCode == 200) {
-        return response?.body;
-      }
-      else {
-        debugPrint('Failed to load user groups. Code: ${response?.statusCode}}.\nResponse: ${response?.body}');
-      }
-    }
-    return null;
+    //debugPrint('Failed to load user groups. Code: ${response.statusCode}}.\nResponse: ${response.body}');
+    return (response?.statusCode == 200) ? response?.body : null;
   }
 
   Future<void> _initUserGroupsFromNet() async {

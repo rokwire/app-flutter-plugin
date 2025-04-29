@@ -25,7 +25,7 @@ import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/log.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
@@ -415,6 +415,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return upgradeStringEntry('url');
   }
 
+  String? upgradeStringEntry(String key) =>
+    PlatformUtils.stringValue(upgradeInfo[key]);
+
   void setUpgradeAvailableVersionReported(String? version, { bool permanent = false }) {
     if (permanent) {
       Storage().reportedUpgradeVersion = version;
@@ -432,20 +435,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
     else if ((value = upgradeAvailableVersion) != null) {
       NotificationService().notify(notifyUpgradeAvailable, value);
-    }
-  }
-
-  String? upgradeStringEntry(String key) {
-    dynamic entry = upgradeInfo[key];
-    if (entry is String) {
-      return entry;
-    }
-    else if (entry is Map) {
-      dynamic value = entry[Platform.operatingSystem.toLowerCase()];
-      return (value is String) ? value : null;
-    }
-    else {
-      return null;
     }
   }
 
@@ -526,10 +515,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
-  String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get assetsUrl        => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get deepLinkRedirectUrl => JsonUtils.stringValue(otherUniversityServices['deep_link_redirect_url']);
 
   // Getters: secretKeys
-  String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
+  String? get coreOrgId        => JsonUtils.stringValue(secretCore['org_id']);
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;
@@ -541,12 +531,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   // Getters: path keys access
   dynamic pathEntry(String key)     => MapPathKey.entry(content, key);
   String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
-
-  // Getters: other
-  String? get deepLinkRedirectUrl {
-    Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
-    return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
-  }
 }
 
 enum ConfigEnvironment { production, test, dev }

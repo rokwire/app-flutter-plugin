@@ -34,7 +34,7 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 
-class FlexUI with Service implements NotificationsListener {
+class FlexUI with Service, NotificationsListener {
 
   static const String notifyChanged  = "edu.illinois.rokwire.flexui.changed";
 
@@ -79,8 +79,9 @@ class FlexUI with Service implements NotificationsListener {
     NotificationService().subscribe(this,[
       Auth2.notifyPrefsChanged,
       Auth2.notifyUserDeleted,
-      Auth2UserPrefs.notifyRolesChanged,
-      Auth2UserPrefs.notifyPrivacyLevelChanged,
+      //Auth2UserPrefs.notifyRolesChanged,
+      //Auth2UserPrefs.notifyPrivacyLevelChanged,
+      Auth2UserPrefs.notifyChanged,
       Auth2.notifyLoginChanged,
       Auth2.notifyLinkChanged,
       AppLivecycle.notifyStateChanged,
@@ -128,8 +129,9 @@ class FlexUI with Service implements NotificationsListener {
   void onNotification(String name, dynamic param) {
     if ((name == Auth2.notifyPrefsChanged) ||
         (name == Auth2.notifyUserDeleted) ||
-        (name == Auth2UserPrefs.notifyRolesChanged) ||
-        (name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
+        //(name == Auth2UserPrefs.notifyRolesChanged) ||
+        //(name == Auth2UserPrefs.notifyPrivacyLevelChanged) ||
+        (name == Auth2UserPrefs.notifyChanged) ||
         (name == Auth2.notifyLoginChanged) ||
         (name == Auth2.notifyLinkChanged) ||
         (name == Groups.notifyUserGroupsUpdated) ||
@@ -721,6 +723,7 @@ class FlexUI with Service implements NotificationsListener {
   @protected
   String get configReferenceKey => 'config';
   String get appStorageReferenceKey => 'app.storage';
+  String get userPrefsReferenceKey => 'user.prefs';
 
   @protected
   dynamic localeEvalStringReference(String? stringRef, { FlexUiBuildContext? buildContext }) {
@@ -729,11 +732,15 @@ class FlexUI with Service implements NotificationsListener {
       if (stringRef.startsWith(configPrefix)) {
         return Config().pathEntry(stringRef.substring(configPrefix.length));
       }
-      String appPrefix = '$appStorageReferenceKey${MapPathKey.pathDelimiter}';
-      if (stringRef.startsWith(appPrefix)) {
-        String storageKey = stringRef.substring(appPrefix.length);
+      String appStoragePrefix = '$appStorageReferenceKey${MapPathKey.pathDelimiter}';
+      if (stringRef.startsWith(appStoragePrefix)) {
+        String storageKey = stringRef.substring(appStoragePrefix.length);
         buildContext?.storageKeys.add(storageKey);
         return Storage()[storageKey];
+      }
+      String userPrefsPrefix = '$userPrefsReferenceKey${MapPathKey.pathDelimiter}';
+      if (stringRef.startsWith(userPrefsPrefix)) {
+        return Auth2().prefs?.getSetting(stringRef.substring(userPrefsPrefix.length));
       }
     }
     return null;
