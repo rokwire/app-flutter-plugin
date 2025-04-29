@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UrlUtils.stripUrlScheme helper [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Added ability to override the default onTap processing in SurveyBuilder.surveyResponseCard [#5018](https://github.com/rokwire/illinois-app/issues/5018).
 - Additional profile fields needed [#580](https://github.com/rokwire/app-flutter-plugin/issues/580).
+- Added colors for library card photo border [#4916](https://github.com/rokwire/illinois-app/issues/4916).
 ### Changed
 - Group content attributes split for groups and research projects [#5014](https://github.com/rokwire/illinois-app/issues/5014).
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlatformUtils moved to plugin, extended with environment retrieval [#4950](https://github.com/rokwire/illinois-app/issues/4950).
 - Implemented Event2 duplication API, make satellite classes immutable [#5013](https://github.com/rokwire/illinois-app/issues/5013).
 - Events2.loadGroupEvents updated to get time filter parameter, cleaned up sort type setting [#5022](https://github.com/rokwire/illinois-app/issues/5022).
+- Make Auth2UserProfile.fromFieldsVisibility a factory constructor [#5026](https://github.com/rokwire/illinois-app/issues/5026).
 - Update directory accounts loading [#590](https://github.com/rokwire/app-flutter-plugin/issues/590).
 
 ## [1.8.3] - 2025-03-12
