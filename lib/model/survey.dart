@@ -1159,7 +1159,7 @@ class SurveysQueryParam {
 class Score {
   final String? surveyType;
   final String? externalProfileId;
-  final int? score;
+  final double? score;
   final int? responseCount;
   final int? currentStreak;
   final double? streakMultiplier;
@@ -1174,7 +1174,7 @@ class Score {
     return Score(
       JsonUtils.stringValue(json['survey_type']),
       JsonUtils.stringValue(json["external_profile_id"]),
-      JsonUtils.intValue(json['score']),
+      JsonUtils.doubleValue(json['score']),
       JsonUtils.intValue(json['response_count']),
       JsonUtils.intValue(json['current_streak']),
       JsonUtils.doubleValue(json['streak_multiplier']),
