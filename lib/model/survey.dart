@@ -152,7 +152,6 @@ class Survey extends RuleEngine {
       subRules: RuleEngine.subRulesFromJson(json),
       stats: JsonUtils.mapOrNull((json) => SurveyStats.fromJson(json), json['stats']),
       calendarEventId: JsonUtils.stringValue(json['calendar_event_id']),
-      unstructuredProperties: JsonUtils.mapValue(json['unstructured_properties'])
     );
   }
 
