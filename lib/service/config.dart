@@ -471,20 +471,6 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     }
   }
 
-  String? upgradeStringEntry(String key) {
-    dynamic entry = upgradeInfo[key];
-    if (entry is String) {
-      return entry;
-    }
-    else if (entry is Map) {
-      dynamic value = entry[operatingSystem];
-      return (value is String) ? value : null;
-    }
-    else {
-      return null;
-    }
-  }
-
   // Environment
 
   set configEnvironment(ConfigEnvironment? configEnvironment) {
@@ -563,7 +549,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: otherUniversityServices
   String? get assetsUrl        => JsonUtils.stringValue(otherUniversityServices['assets_url']);
-  String? get deepLinkRedirectUrl => JsonUtils.stringValue(otherUniversityServices['deep_link_redirect_url']);
+  String? get deepLinkRedirectUrl => JsonUtils.stringValue(otherUniversityServices['deep_link_redirect_url']) ?? _defaultDeepLinkRedirectUrl;
 
   // Getters: secretKeys
   String? get coreOrgId        => JsonUtils.stringValue(secretCore['org_id']);
@@ -582,7 +568,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? stringPathEntry(String key, { String? defaults }) => JsonUtils.stringValue(pathEntry(key)) ?? defaults;
 
   // Getters: other
-  String? get deepLinkRedirectUrl {
+  String? get _defaultDeepLinkRedirectUrl {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }

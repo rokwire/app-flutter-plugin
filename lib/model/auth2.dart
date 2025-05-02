@@ -956,7 +956,7 @@ class Auth2UserProfileFieldsVisibility {
   Auth2UserProfileFieldsVisibility({
     this.firstName, this.middleName, this.lastName, this.pronouns,
     this.birthYear, this.photoUrl, this.pronunciationUrl,
-    this.email, this.phone, this.website,
+    this.website,
     this.address, this.address2, this.poBox, this.city, this.zip, this.state, this.country,
     this.data
   });
