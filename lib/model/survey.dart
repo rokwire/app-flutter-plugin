@@ -262,14 +262,22 @@ class Survey extends RuleEngine {
 class SurveyStats {
   final int total;
   final int complete;
-
   final int scored;
+  final int correctAnswerCount;
   final Map<String, num> scores;
   final Map<String, num> maximumScores;
 
   final Map<String, dynamic> responseData;
 
-  SurveyStats({this.total = 0, this.complete = 0, this.scored = 0, this.scores = const {}, this.maximumScores = const {}, this.responseData = const {}});
+  SurveyStats({
+    this.total = 0,
+    this.complete = 0,
+    this.scored = 0,
+    this.correctAnswerCount = 0,
+    this.scores = const {},
+    this.maximumScores = const {},
+    this.responseData = const {},
+  });
 
   factory SurveyStats.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic>? scoresDynamic = JsonUtils.mapValue(json['scores']);
@@ -295,6 +303,7 @@ class SurveyStats {
       total: JsonUtils.intValue(json['total']) ?? 0,
       complete: JsonUtils.intValue(json['complete']) ?? 0,
       scored: JsonUtils.intValue(json['scored']) ?? 0,
+      correctAnswerCount: JsonUtils.intValue(json['correct_answer_count']) ?? 0,
       scores: scores,
       maximumScores: maxScores,
       responseData: JsonUtils.mapValue(json['response_data']) ?? {},
@@ -306,6 +315,7 @@ class SurveyStats {
       total: other.total,
       complete: other.complete,
       scored: other.scored,
+      correctAnswerCount: other.correctAnswerCount,
       scores: Map.of(other.scores),
       maximumScores: Map.of(other.maximumScores),
       responseData: Map.of(other.responseData),
@@ -332,6 +342,7 @@ class SurveyStats {
       total: total + other.total,
       complete: complete + other.complete,
       scored: scored + other.scored,
+      correctAnswerCount: correctAnswerCount + other.correctAnswerCount,
       scores: newScores,
       maximumScores: newMaxScores,
       responseData: newData,
@@ -343,6 +354,7 @@ class SurveyStats {
       'total': total,
       'complete': complete,
       'scored': scored,
+      'correct_answer_count': correctAnswerCount,
       'scores': scores,
       'maximum_scores': maximumScores,
       'response_data': responseData,
@@ -1159,7 +1171,7 @@ class SurveysQueryParam {
 class Score {
   final String? surveyType;
   final String? externalProfileId;
-  final int? score;
+  final double? score;
   final int? responseCount;
   final int? currentStreak;
   final double? streakMultiplier;
@@ -1174,7 +1186,7 @@ class Score {
     return Score(
       JsonUtils.stringValue(json['survey_type']),
       JsonUtils.stringValue(json["external_profile_id"]),
-      JsonUtils.intValue(json['score']),
+      JsonUtils.doubleValue(json['score']),
       JsonUtils.intValue(json['response_count']),
       JsonUtils.intValue(json['current_streak']),
       JsonUtils.doubleValue(json['streak_multiplier']),
