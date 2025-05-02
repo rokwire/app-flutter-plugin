@@ -368,6 +368,7 @@ class Storage with Service {
   set inboxUnreadMessagesCount(int? value) => setIntWithName(_inboxUnreadMessagesCountKey, value);
 
   // Firebase
+  /*
   String get inboxFirebaseMessagingSubscriptionTopicsKey => 'edu.illinois.rokwire.inbox.firebase_messaging.subscription_topis';
   Set<String>? get inboxFirebaseMessagingSubscriptionTopics => SetUtils.from(getStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey));
   set inboxFirebaseMessagingSubscriptionTopics(Set<String>? value) => setStringListWithName(inboxFirebaseMessagingSubscriptionTopicsKey, ListUtils.from(value));
@@ -387,6 +388,7 @@ class Storage with Service {
       inboxFirebaseMessagingSubscriptionTopics = topics;
     }
   }
+  */
 
   // Debug
   String get debugGeoFenceRegionRadiusKey  => 'edu.illinois.rokwire.debug.geo_fence.region_radius';

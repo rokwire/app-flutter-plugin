@@ -314,22 +314,27 @@ class Inbox with Service implements NotificationsListener {
 
   // Topics storage
   void _storeTopic(String? topic) {
-    if (!Auth2().isLoggedIn) {
-      Storage().addInboxFirebaseMessagingSubscriptionTopic(topic);
-    }
-    else if (userInfo != null) {
-      _userInfo?.topics ??= <String>{};
-      userInfo?.topics?.add(topic);
-    }
+    // if (!Auth2().isLoggedIn) {
+    //   Storage().addInboxFirebaseMessagingSubscriptionTopic(topic);
+    // }
+    // else if (userInfo != null) {
+    //   _userInfo?.topics ??= <String>{};
+    //   userInfo?.topics?.add(topic);
+    // }
+
+    _userInfo?.topics ??= <String>{};
+    userInfo?.topics?.add(topic);
   }
 
   void _removeStoredTopic(String? topic) {
-    if (!Auth2().isLoggedIn) {
-      Storage().removeInboxFirebaseMessagingSubscriptionTopic(topic);
-    }
-    else if (userInfo?.topics != null) {
-      userInfo?.topics?.remove(topic);
-    }
+    // if (!Auth2().isLoggedIn) {
+    //   Storage().removeInboxFirebaseMessagingSubscriptionTopic(topic);
+    // }
+    // else if (userInfo?.topics != null) {
+    //   userInfo?.topics?.remove(topic);
+    // }
+
+    userInfo?.topics?.remove(topic);
   }
 
   //UserInfo

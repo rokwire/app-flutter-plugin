@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check if Tracking services are enabled [#572](https://github.com/rokwire/app-flutter-plugin/issues/572).
 ### Changed
 - Groups.loadGroups API loads user groups as regular groups content, some cleanup applied [#4835](https://github.com/rokwire/illinois-app/issues/4835).
+- Remove notification topics device storage dependence.
 
 ## [1.8.3] - 2025-03-12
 ### Added
