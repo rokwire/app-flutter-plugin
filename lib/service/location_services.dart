@@ -33,7 +33,7 @@ enum LocationServicesStatus {
   permissionAllowed
 }
 
-class LocationServices with Service implements NotificationsListener {
+class LocationServices with Service, NotificationsListener {
 
   static const String notifyStatusChanged  = "edu.illinois.rokwire.locationservices.status.changed";
   static const String notifyLocationChanged  = "edu.illinois.rokwire.locationservices.location.changed";

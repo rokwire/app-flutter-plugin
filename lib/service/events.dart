@@ -34,7 +34,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:geolocator/geolocator.dart' as core;
 import 'package:http/http.dart' as http;
 
-class Events with Service implements NotificationsListener {
+class Events with Service, NotificationsListener {
 
   static const String notifyEventDetail  = "edu.illinois.rokwire.explore.event.detail";
   static const String notifyEventCreated = "edu.illinois.rokwire.explore.event.created";

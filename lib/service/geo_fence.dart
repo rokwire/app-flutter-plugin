@@ -27,7 +27,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class GeoFence with Service implements NotificationsListener, ContentItemCategoryClient {
+class GeoFence with Service, NotificationsListener, ContentItemCategoryClient {
 
   static const String notifyRegionEnter            = "edu.illinois.rokwire.geofence.region.enter";
   static const String notifyRegionExit             = "edu.illinois.rokwire.geofence.region.exit";

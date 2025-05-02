@@ -20,10 +20,11 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart';
 
-class Events2 with Service implements NotificationsListener {
+class Events2 with Service, NotificationsListener {
 
   static const String notifyLaunchDetail  = "edu.illinois.rokwire.event2.launch.detail";
   static const String notifyLaunchQuery  = "edu.illinois.rokwire.event2.launch.query";
+  static const String notifySelfCheckIn  = "edu.illinois.rokwire.event2.self.checkin";
   static const String notifyChanged  = "edu.illinois.rokwire.event2.changed";
   static const String notifyUpdated  = "edu.illinois.rokwire.event2.updated";
   static const String notifyNotificationsUpdated  = "edu.illinois.rokwire.event2.notifications.updated";
@@ -116,13 +117,15 @@ class Events2 with Service implements NotificationsListener {
     return (result is Events2ListResult) ? result : null;
   }
 
-  Future<Events2ListResult?> loadGroupEvents({String? groupId, int? offset, int? limit}) async {
-    if (StringUtils.isEmpty(groupId)) {
-      return null;
-    }
-    Events2Query groupQuery = Events2Query(groupIds: {groupId!}, groupings: Event2Grouping.individualEvents(), offset: offset, limit: limit);
-    return await loadEvents(groupQuery);
-  }
+  Future<Events2ListResult?> loadGroupEvents({String? groupId, Event2TimeFilter? timeFilter, int? offset, int? limit}) async =>
+    StringUtils.isNotEmpty(groupId) ? loadEvents(Events2Query(
+        groupIds: {groupId!},
+        groupings: Event2Grouping.individualEvents(),
+        timeFilter: timeFilter,
+        sortType: Event2SortType.dateTime,
+        sortOrder: (timeFilter == Event2TimeFilter.past) ? Event2SortOrder.descending : Event2SortOrder.ascending,
+        offset: offset, limit: limit
+    )) : null;
 
   Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
     (await loadEvents(query))?.events;
@@ -246,10 +249,11 @@ class Events2 with Service implements NotificationsListener {
   Future<bool> linkEventToGroup({required Event2 event, required groupId, required bool link}) async {
     if (Config().calendarUrl != null) {
       Event2ContextItem groupItem = Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId);
-      Event2AuthorizationContext? authorizationContext = event.authorizationContext;
+      Event2AuthorizationContext? authorizationContext;
       // 1 Add or remove authorization item based on the action (link / unlink)
-      if (authorizationContext?.status == Event2AuthorizationContextStatus.active) {
-        List<Event2ContextItem>? items = authorizationContext!.items;
+      if (event.authorizationContext?.status == Event2AuthorizationContextStatus.active) {
+        Event2AuthorizationContextStatus? status = event.authorizationContext?.status;
+        List<Event2ContextItem>? items = event.authorizationContext?.items;
         if (items == null) {
           items = <Event2ContextItem>[];
         }
@@ -260,34 +264,35 @@ class Events2 with Service implements NotificationsListener {
           }
           if (CollectionUtils.isEmpty(items)) {
             // Make the event public if there are no more items so that an admin can view and edit the event
-            authorizationContext.status = Event2AuthorizationContextStatus.none;
+            status = Event2AuthorizationContextStatus.none;
           }
         } else {
           // 1.2 Link event to group - e.g. add context item
           items.add(groupItem);
         }
-        authorizationContext.items = items;
+        authorizationContext = Event2AuthorizationContext(status: status, items: items);
+      }
+      else {
+        authorizationContext = event.authorizationContext;
       }
       // 2 Add or remove context item based on the action (link / unlink)
-      Event2Context? event2Context = event.context;
+      Event2Context? event2Context;
       // 2.1 Unlink event from group - e.g. remove context item
+      List<Event2ContextItem>? items;
       if (link == false) {
-        List<Event2ContextItem>? items = event2Context?.items;
+        items = ListUtils.from(event.context?.items);
         if (items?.contains(groupItem) ?? false) {
           items!.remove(groupItem);
-          event2Context!.items = items;
+          event2Context = Event2Context(items: items);
         }
       } else {
         // 2.2 Link event to group - e.g. add context item
-        if (event2Context == null) {
+        if (event.context == null) {
           event2Context = Event2Context.fromIdentifiers(identifiers: [groupId]);
         } else {
-          List<Event2ContextItem>? items = event2Context.items;
-          if (items == null) {
-            items = <Event2ContextItem>[];
-          }
+          List<Event2ContextItem> items = ListUtils.from(event.context?.items) ?? <Event2ContextItem>[];
           items.add(groupItem);
-          event2Context.items = items;
+          event2Context = Event2Context(items: items);
         }
       }
 
@@ -446,6 +451,32 @@ class Events2 with Service implements NotificationsListener {
     return (result is Event2PersonIdentifier) ? result : null;
   }
 
+  // Returns secret string if successful, otherwise null
+  Future<String?> getEventSelfCheckInSecret(String eventId) async {
+    //TMP: return Future.delayed(Duration(milliseconds: 1500), () => 'abracadabra');
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/security/secret";
+      Response? response = await Network().get(url, headers: _jsonHeaders, auth: Auth2());
+      Map<String, dynamic>? responseData = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body)  : null;  
+      return JsonUtils.stringValue(responseData?['secret']);
+    }
+    return null;
+  }
+
+  // Returns error message, Event2Person if successful
+  Future<dynamic> selfCheckInEvent(String eventId, { String? secret }) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/event/$eventId/attendee/self-check-in";
+      String? body = JsonUtils.encode({
+        if (secret != null)
+          'secret': secret,
+      });
+      Response? response = await Network().post(url, headers: _jsonHeaders, body: body, auth: Auth2());
+      return (response?.statusCode == 200) ? Event2Person.fromJson(JsonUtils.decodeMap(response?.body)) : response?.errorText;
+    }
+    return null;
+  }
+
   // Returns error message, Event2Person if successful
   Future<dynamic> attendEvent(String eventId, { Event2PersonIdentifier? personIdentifier, String? uin }) async {
 
@@ -576,10 +607,21 @@ class Events2 with Service implements NotificationsListener {
   // DeepLinks
 
   static String get eventDetailRawUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
-  static String eventDetailUrl(Event2? event) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{'event_id' : "${event?.id}"});
+  static String eventDetailUrl(String eventId) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{
+    'event_id' : eventId
+  });
 
   static String get eventsQueryRawUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
-  static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl, params);
+  static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl,
+      params
+  );
+
+  static String get eventSelfCheckInRawUrl => '${DeepLink().appUrl}/event2_self_checkin'; //TBD: => event_self_checkin
+  static String eventSelfCheckInUrl(String eventId, { String? secret }) => UrlUtils.buildWithQueryParameters(eventSelfCheckInRawUrl, <String, String>{
+    'event_id' : eventId,
+    if (secret != null)
+      'secret': secret,
+  });
 
   @protected
   void onDeepLinkUri(Uri? uri) {
@@ -590,6 +632,10 @@ class Events2 with Service implements NotificationsListener {
       }
       else if (uri.matchDeepLinkUri(Uri.tryParse(eventsQueryRawUrl))) {
         try { NotificationService().notify(notifyLaunchQuery, uri.queryParameters.cast<String, dynamic>()); }
+        catch (e) { print(e.toString()); }
+      }
+      else if (uri.matchDeepLinkUri(Uri.tryParse(eventSelfCheckInRawUrl))) {
+        try { NotificationService().notify(notifySelfCheckIn, uri.queryParameters.cast<String, dynamic>()); }
         catch (e) { print(e.toString()); }
       }
     }
@@ -853,6 +899,18 @@ class Event2PersonsResult {
       attendees: Event2Person.listFromJson(JsonUtils.listValue(json['attendees'])),
       registrationOccupancy: JsonUtils.intValue(json['registration_occupancy']),
     ) : null;
+  }
+
+  factory Event2PersonsResult.fromOther(Event2PersonsResult? persons, {
+    List<Event2Person>? registrants, List<Event2Person>? attendees, int? registrationOccupancy,
+  }) {
+    registrants ??= persons?.registrants;
+    attendees ??= persons?.attendees;
+    return Event2PersonsResult(
+      registrants: (registrants != null) ? List.from(registrants) : null,
+      attendees: (attendees != null) ? List.from(attendees) : null,
+      registrationOccupancy: registrationOccupancy ?? persons?.registrationOccupancy,
+    );
   }
 }
 

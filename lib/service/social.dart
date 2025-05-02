@@ -28,7 +28,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'dart:async';
 
-class Social extends Service implements NotificationsListener {
+class Social extends Service with NotificationsListener {
 
   static const String notifyMessageDetail = "edu.illinois.rokwire.social.message.detail";
   static const String notifyPostCreated  = 'edu.illinois.rokwire.social.post.created';

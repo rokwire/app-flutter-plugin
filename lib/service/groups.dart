@@ -46,7 +46,7 @@ import 'package:universal_io/io.dart';
 enum GroupsContentType { all, my }
 enum ResearchProjectsContentType { open, my }
 
-class Groups with Service implements NotificationsListener {
+class Groups with Service, NotificationsListener {
 
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
   static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
@@ -219,16 +219,21 @@ class Groups with Service implements NotificationsListener {
 
   // Content Attributes
 
-  static const String contentAttributesScope = 'groups';
+  static const String groupsContentAttributesScope = 'groups';
+  static const String researchProjectsContentAttributesScope = 'research_projects';
+  static String contentAttributesScope({ bool? researchProject }) =>
+    (researchProject == true) ? researchProjectsContentAttributesScope : groupsContentAttributesScope;
 
-  ContentAttributes? get contentAttributes =>
-    Content().contentAttributes(contentAttributesScope);
+  ContentAttributes? get groupsContentAttributes => contentAttributes(researchProject: false);
+  ContentAttributes? get researchProjectsContentAttributes => contentAttributes(researchProject: true);
+  ContentAttributes? contentAttributes({ bool? researchProject }) =>
+    Content().contentAttributes(contentAttributesScope(researchProject: researchProject));
 
-  bool isContentAttributeEnabled(ContentAttribute? attribute) =>
-    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope);
+  bool isContentAttributeEnabled(ContentAttribute? attribute, { bool? researchProject }) =>
+    FlexUI().isAttributeEnabled(attribute?.id, scope: contentAttributesScope(researchProject: researchProject));
 
-  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { ContentAttributeUsage? usage, bool complete = false }) =>
-    contentAttributes?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope, complete: complete);
+  List<String>? displaySelectedContentAttributeLabelsFromSelection(Map<String, dynamic>? selection, { bool? researchProject, ContentAttributeUsage? usage, bool complete = false }) =>
+    contentAttributes(researchProject: researchProject)?.displaySelectedLabelsFromSelection(selection, usage: usage, scope: contentAttributesScope(researchProject: researchProject), complete: complete);
 
   // Categories APIs
   // TBD: REMOVE

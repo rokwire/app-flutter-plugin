@@ -133,7 +133,7 @@ class WebPanel extends StatefulWidget {
 
 }
 
-class WebPanelState extends State<WebPanel> implements NotificationsListener {
+class WebPanelState extends State<WebPanel> with NotificationsListener {
 
   bool? _isOnline;
   bool? _isTrackingEnabled;

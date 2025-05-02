@@ -41,7 +41,7 @@ import 'package:universal_io/io.dart';
 //import 'package:flutter/services.dart' show rootBundle;
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
-class Content with Service implements NotificationsListener, ContentItemCategoryClient {
+class Content with Service, NotificationsListener, ContentItemCategoryClient {
 
   static const String notifyContentItemsChanged           = "edu.illinois.rokwire.content.content_items.changed";
   static const String notifyContentAttributesChanged      = "edu.illinois.rokwire.content.attributes.changed";

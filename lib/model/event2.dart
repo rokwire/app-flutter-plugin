@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
+import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -41,12 +42,11 @@ class Event2 with Explore, Favorite {
   final String? speaker;
   final List<Event2Contact>? contacts;
 
+  final Event2Source? source;
+  final Map<String, dynamic>? data;
   final List<Event2NotificationSetting>? notificationSettings;
 
   String? assignedImageUrl;
-
-  final Event2Source? source;
-  final Map<String, dynamic>? data;
 
   Event2({
     this.id, this.name, this.description, this.instructions, this.imageUrl, this.eventUrl,
@@ -57,8 +57,59 @@ class Event2 with Explore, Favorite {
     this.free, this.cost,
     this.registrationDetails, this.attendanceDetails, this.surveyDetails,
     this.sponsor, this.speaker, this.contacts,
-    this.data, this.source, this.notificationSettings
+    this.source, this.data, this.notificationSettings
   });
+
+  factory Event2.fromOther(Event2? event, {
+    String? name, String? description, String? instructions, String? imageUrl, String? eventUrl,
+    String? timezone, DateTime? startTimeUtc, DateTime? endTimeUtc, bool? allDay,
+    Event2Type? eventType, ExploreLocation? location, Event2OnlineDetails? onlineDetails,
+    Event2Grouping? grouping, Map<String, dynamic>? attributes, Event2AuthorizationContext? authorizationContext, Event2Context? context,
+    bool? canceled, bool? published, Event2UserRole? userRole,
+    bool? free, String? cost,
+    Event2RegistrationDetails? registrationDetails, Event2AttendanceDetails? attendanceDetails, Event2SurveyDetails? surveyDetails,
+    String? sponsor, String? speaker, List<Event2Contact>? contacts,
+    Event2Source? source, Map<String, dynamic>? data, List<Event2NotificationSetting>? notificationSettings,
+  }) => Event2(
+    name: name ?? event?.name,
+    description: description ?? event?.description,
+    instructions: instructions ?? event?.instructions,
+    imageUrl: imageUrl ?? event?.imageUrl,
+    eventUrl: eventUrl ?? event?.eventUrl,
+
+    timezone: timezone ?? event?.timezone,
+    startTimeUtc: startTimeUtc ?? event?.startTimeUtc,
+    endTimeUtc: endTimeUtc ?? event?.endTimeUtc,
+    allDay: allDay ?? event?.allDay,
+
+    eventType: eventType ?? event?.eventType,
+    location: location ?? event?.location,
+    onlineDetails: onlineDetails ?? event?.onlineDetails,
+
+    grouping: grouping ?? event?.grouping,
+    attributes: attributes ?? event?.attributes?.duplicatedAttributes,
+    authorizationContext: authorizationContext ?? ((event?.authorizationContext != null) ? Event2AuthorizationContext.fromOther(event?.authorizationContext) : null),
+    context: context ?? ((event?.context != null) ? Event2Context.fromOther(event?.context) : null),
+
+    canceled: canceled ?? event?.canceled,
+    published: published ?? event?.published,
+    userRole: userRole ?? event?.userRole,
+
+    free: free ?? event?.free,
+    cost: cost ?? event?.cost,
+
+    registrationDetails: registrationDetails ?? Event2RegistrationDetails.fromOther(event?.registrationDetails) ,
+    attendanceDetails: attendanceDetails ?? Event2AttendanceDetails.fromOther(event?.attendanceDetails) ,
+    surveyDetails: surveyDetails ?? Event2SurveyDetails.fromOther(event?.surveyDetails),
+
+    sponsor: sponsor ?? event?.sponsor,
+    speaker: speaker ?? event?.speaker,
+    contacts: contacts ?? ListUtils.from(event?.contacts),
+
+    source: source ?? event?.source,
+    data: data ?? MapUtils.from(event?.data),
+    notificationSettings: notificationSettings ?? ListUtils.from(event?.notificationSettings),
+  );
 
   // JSON serialization
 
@@ -325,16 +376,16 @@ class Event2 with Explore, Favorite {
 /// Event2Context
 
 class Event2Context {
-  List<Event2ContextItem>? items;
+  final List<Event2ContextItem>? items;
 
   Event2Context({this.items});
 
-  static Event2Context? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return Event2Context(items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
-  }
+  static Event2Context? fromJson(Map<String, dynamic>? json) => (json != null) ?
+    Event2Context(items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items']))) : null;
+
+  factory Event2Context.fromOther(Event2Context? other, {List<Event2ContextItem>? items}) => Event2Context(
+    items: items ?? ListUtils.from(other?.items)
+  );
 
   factory Event2Context.fromIdentifiers({List<String>? identifiers}) {
     List<Event2ContextItem>? items;
@@ -376,19 +427,23 @@ class Event2Context {
 /// Event2AuthorizationContext
 
 class Event2AuthorizationContext {
-  Event2AuthorizationContextStatus? status;
-  List<Event2ContextItem>? items;
+  final Event2AuthorizationContextStatus? status;
+  final List<Event2ContextItem>? items;
 
   Event2AuthorizationContext({this.status, this.items});
 
-  static Event2AuthorizationContext? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return Event2AuthorizationContext(
-        status: event2AuthorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
-        items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items'])));
-  }
+  static Event2AuthorizationContext? fromJson(Map<String, dynamic>? json) => (json != null) ? Event2AuthorizationContext(
+    status: event2AuthorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
+    items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items']))
+  ) : null;
+
+  factory Event2AuthorizationContext.fromOther(Event2AuthorizationContext? other, {
+    Event2AuthorizationContextStatus? status,
+    List<Event2ContextItem>? items,
+  }) => Event2AuthorizationContext(
+    status: status ?? other?.status,
+    items: items ?? ListUtils.from(other?.items),
+  );
 
   factory Event2AuthorizationContext.none() => Event2AuthorizationContext(status: Event2AuthorizationContextStatus.none);
 
@@ -592,7 +647,7 @@ class Event2RegistrationDetails {
       label: label ?? other.label,
       externalLink: externalLink ?? other.externalLink,
       eventCapacity: eventCapacity ?? other.eventCapacity,
-      registrants: registrants ?? other.registrants,
+      registrants: registrants ?? ListUtils.from(other.registrants),
     ) : null;
 
   static Event2RegistrationDetails? fromJson(Map<String, dynamic>? json) =>
@@ -677,18 +732,24 @@ String? event2RegistrationTypeToString(Event2RegistrationType? value) {
 class Event2AttendanceDetails {
   final bool? scanningEnabled;
   final bool? manualCheckEnabled;
+  final bool? selfCheckEnabled;
+  final bool? selfCheckLimitedToRegisteredOnly;
   final List<String>? attendanceTakers; // external IDs
 
-  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.attendanceTakers});
+  Event2AttendanceDetails({this.scanningEnabled, this.manualCheckEnabled, this.selfCheckEnabled, this.selfCheckLimitedToRegisteredOnly, this.attendanceTakers});
 
   static Event2AttendanceDetails? fromOther(Event2AttendanceDetails? other, {
     bool? scanningEnabled,
     bool? manualCheckEnabled,
+    bool? selfCheckEnabled,
+    bool? selfCheckLimitedToRegisteredOnly,
     List<String>? attendanceTakers,
   }) =>
     (other != null) ? Event2AttendanceDetails(
       scanningEnabled: scanningEnabled ?? other.scanningEnabled,
       manualCheckEnabled: manualCheckEnabled ?? other.manualCheckEnabled,
+      selfCheckEnabled: selfCheckEnabled ?? other.selfCheckEnabled,
+      selfCheckLimitedToRegisteredOnly: selfCheckLimitedToRegisteredOnly ?? other.selfCheckLimitedToRegisteredOnly,
       attendanceTakers: attendanceTakers ?? other.attendanceTakers,
     ) : null;
 
@@ -696,12 +757,16 @@ class Event2AttendanceDetails {
     (json != null) ? Event2AttendanceDetails(
       scanningEnabled: JsonUtils.boolValue(json['is_id_scanning_enabled']),
       manualCheckEnabled: JsonUtils.boolValue(json['is_manual_attendance_check_enabled']),
+      selfCheckEnabled: JsonUtils.boolValue(json['is_self_check_enabled']),
+      selfCheckLimitedToRegisteredOnly: JsonUtils.boolValue(json['is_self_check_limited_to_registered_only']),
       attendanceTakers: JsonUtils.listStringsValue(json['attendance_takers_external_ids']),
     ) : null;
 
   Map<String, dynamic> toJson() => {
     'is_id_scanning_enabled': scanningEnabled,
     'is_manual_attendance_check_enabled': manualCheckEnabled,
+    'is_self_check_enabled': selfCheckEnabled,
+    'is_self_check_limited_to_registered_only': selfCheckLimitedToRegisteredOnly,
     'attendance_takers_external_ids': attendanceTakers,
   };
 
@@ -710,19 +775,24 @@ class Event2AttendanceDetails {
     (other is Event2AttendanceDetails) &&
     (scanningEnabled == other.scanningEnabled) &&
     (manualCheckEnabled == other.manualCheckEnabled) &&
+    (selfCheckEnabled == other.selfCheckEnabled) &&
+    (selfCheckLimitedToRegisteredOnly == other.selfCheckLimitedToRegisteredOnly) &&
     (const DeepCollectionEquality().equals(attendanceTakers, other.attendanceTakers));
 
   @override
   int get hashCode =>
     (scanningEnabled?.hashCode ?? 0) ^
     (manualCheckEnabled?.hashCode ?? 0) ^
+    (selfCheckEnabled?.hashCode ?? 0) ^
+    (selfCheckLimitedToRegisteredOnly?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(attendanceTakers));
 
   bool get isEmpty => !isNotEmpty;
 
   bool get isNotEmpty =>
     (scanningEnabled == true) || 
-    (manualCheckEnabled == true);
+    (manualCheckEnabled == true) ||
+    (selfCheckEnabled == true);
 }
 
 ///////////////////////////////
@@ -1304,19 +1374,20 @@ Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
 /// Event2TypeFilter
 
 enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
+enum Event2TypeGroup { cost, format, access, limits }
 
-const Map<Event2TypeFilter, String> eventTypeFilterGroups = <Event2TypeFilter, String>{
-  Event2TypeFilter.free: 'cost',
-  Event2TypeFilter.paid: 'cost',
-  Event2TypeFilter.inPerson: 'type',
-  Event2TypeFilter.online: 'type',
-  Event2TypeFilter.hybrid: 'type',
-  Event2TypeFilter.public: 'discoverability',
-  Event2TypeFilter.private: 'discoverability',
-  Event2TypeFilter.nearby: 'proximity',
-  Event2TypeFilter.superEvent: 'composite',
-  Event2TypeFilter.favorite: 'favorite',
-  Event2TypeFilter.admin: 'admin',
+const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2TypeFilter, Event2TypeGroup>{
+  Event2TypeFilter.free: Event2TypeGroup.cost,
+  Event2TypeFilter.paid: Event2TypeGroup.cost,
+  Event2TypeFilter.inPerson: Event2TypeGroup.format,
+  Event2TypeFilter.online: Event2TypeGroup.format,
+  Event2TypeFilter.hybrid: Event2TypeGroup.format,
+  Event2TypeFilter.public: Event2TypeGroup.access,
+  Event2TypeFilter.private: Event2TypeGroup.access,
+  Event2TypeFilter.nearby: Event2TypeGroup.limits,
+  Event2TypeFilter.superEvent: Event2TypeGroup.limits,
+  Event2TypeFilter.favorite: Event2TypeGroup.limits,
+  Event2TypeFilter.admin: Event2TypeGroup.limits,
 };
 
 Event2TypeFilter? event2TypeFilterFromString(String? value) {
@@ -1604,31 +1675,46 @@ class Events2ListResult {
 /// Events2NotificationSettings
 class Event2NotificationSetting {
   final String? id;
-  bool sendToFavorited;
-  bool sendToRegistered;
-  bool sendToPublishedInGroups;
-  String? sendTimezone;
-  DateTime? sendDateTimeUtc;
-  String? subject;
-  String? body;
+  final bool sendToFavorited;
+  final bool sendToRegistered;
+  final bool sendToPublishedInGroups;
+  final String? sendTimezone;
+  final DateTime? sendDateTimeUtc;
+  final String? subject;
+  final String? body;
 
-  Event2NotificationSetting(
-      {this.id, this.sendToFavorited = false, this.sendToRegistered = false, this.sendToPublishedInGroups = false, this.sendDateTimeUtc, this.sendTimezone, this.subject, this.body});
+  Event2NotificationSetting({this.id, this.sendToFavorited = false, this.sendToRegistered = false, this.sendToPublishedInGroups = false, this.sendDateTimeUtc, this.sendTimezone, this.subject, this.body});
 
-  static Event2NotificationSetting? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
-    return Event2NotificationSetting(
-        id: JsonUtils.stringValue(json['id']),
-        sendToFavorited: JsonUtils.boolValue(json['send_to_favorited']) ?? false,
-        sendToRegistered: JsonUtils.boolValue(json['send_to_registrered']) ?? false,
-        sendToPublishedInGroups: JsonUtils.boolValue(json['send_to_published_in_groups']) ?? false,
-        sendDateTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['send_date_time']), isUtc: true),
-        sendTimezone: JsonUtils.stringValue(json['send_timezone']),
-        subject: JsonUtils.stringValue(json['subject']),
-        body: JsonUtils.stringValue(json['body']));
-  }
+  static Event2NotificationSetting? fromJson(Map<String, dynamic>? json) => (json != null) ? Event2NotificationSetting(
+      id: JsonUtils.stringValue(json['id']),
+      sendToFavorited: JsonUtils.boolValue(json['send_to_favorited']) ?? false,
+      sendToRegistered: JsonUtils.boolValue(json['send_to_registrered']) ?? false,
+      sendToPublishedInGroups: JsonUtils.boolValue(json['send_to_published_in_groups']) ?? false,
+      sendDateTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['send_date_time']), isUtc: true),
+      sendTimezone: JsonUtils.stringValue(json['send_timezone']),
+      subject: JsonUtils.stringValue(json['subject']),
+      body: JsonUtils.stringValue(json['body'])
+  ) : null;
+
+  factory Event2NotificationSetting.fromOther(Event2NotificationSetting? other, {
+    String? id,
+    bool? sendToFavorited,
+    bool? sendToRegistered,
+    bool? sendToPublishedInGroups,
+    String? sendTimezone,
+    DateTime? sendDateTimeUtc,
+    String? subject,
+    String? body,
+  }) => Event2NotificationSetting(
+      id: id ?? other?.id,
+      sendToFavorited: sendToFavorited ?? other?.sendToFavorited ?? false,
+      sendToRegistered: sendToRegistered ?? other?.sendToRegistered ?? false,
+      sendToPublishedInGroups: sendToPublishedInGroups ?? other?.sendToPublishedInGroups ?? false,
+      sendDateTimeUtc: sendDateTimeUtc ?? other?.sendDateTimeUtc,
+      sendTimezone: sendTimezone ?? other?.sendTimezone,
+      subject: subject ?? other?.subject,
+      body: body ?? other?.body,
+  );
 
   static List<Event2NotificationSetting>? listFromJson(List<dynamic>? jsonList) {
     List<Event2NotificationSetting>? result;
@@ -1639,20 +1725,6 @@ class Event2NotificationSetting {
       }
     }
     return result;
-  }
-
-  static Event2NotificationSetting? fromOther(Event2NotificationSetting? other) {
-    if (other == null) {
-      return null;
-    }
-    return Event2NotificationSetting(
-        sendToFavorited: other.sendToFavorited,
-        sendToRegistered: other.sendToRegistered,
-        sendToPublishedInGroups: other.sendToPublishedInGroups,
-        sendTimezone: other.sendTimezone,
-        sendDateTimeUtc: other.sendDateTimeUtc,
-        subject: other.subject,
-        body: other.body);
   }
 
   static List<Event2NotificationSetting>? listFromOther(List<Event2NotificationSetting>? values) {

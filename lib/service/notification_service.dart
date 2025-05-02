@@ -100,13 +100,35 @@ class NotificationService {
   void notifySubscribers(Set<NotificationsListener>? subscribers, String name, [dynamic param]) {
     if (subscribers != null) {
       for (NotificationsListener subscriber in subscribers) {
+        if (subscriber.preprocessNotification(name, param)) {
+          return;
+        }
+      }
+
+      for (NotificationsListener subscriber in subscribers) {
         subscriber.onNotification(name, param);
       }
     }
   }
 
+  Future<T?> notifyAsync<T>(String name, [dynamic param]) =>
+    notifySubscribersAsync(subscribers(name), name, param);
+
+  Future<T?> notifySubscribersAsync<T>(Set<NotificationsListener>? subscribers, String name, [dynamic param]) async {
+    if (subscribers != null) {
+      for (NotificationsListener subscriber in subscribers) {
+        T? result = await subscriber.onAsyncNotification(name, param);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 abstract class NotificationsListener {
-  void onNotification(String name, dynamic param);
+  void onNotification(String name, dynamic param) {}
+  bool preprocessNotification(String name, dynamic param) => false;
+  Future<T?> onAsyncNotification<T>(String name, dynamic param) => Future.value(null);
 }

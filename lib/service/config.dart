@@ -448,6 +448,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return upgradeStringEntry('url');
   }
 
+  String? upgradeStringEntry(String key) =>
+    PlatformUtils.stringValue(upgradeInfo[key]);
+
   void setUpgradeAvailableVersionReported(String? version, { bool permanent = false }) {
     if (permanent) {
       Storage().reportedUpgradeVersion = version;
@@ -559,10 +562,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get placesUrl        => JsonUtils.stringValue(platformBuildingBlocks["places_url"]);
 
   // Getters: otherUniversityServices
-  String? get assetsUrl => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get assetsUrl        => JsonUtils.stringValue(otherUniversityServices['assets_url']);
+  String? get deepLinkRedirectUrl => JsonUtils.stringValue(otherUniversityServices['deep_link_redirect_url']);
 
   // Getters: secretKeys
-  String? get coreOrgId => JsonUtils.stringValue(secretCore['org_id']);
+  String? get coreOrgId        => JsonUtils.stringValue(secretCore['org_id']);
 
   // Getters: settings
   int  get refreshTimeout           => JsonUtils.intValue(settings['refreshTimeout'])  ?? 0;

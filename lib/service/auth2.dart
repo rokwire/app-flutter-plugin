@@ -20,7 +20,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:universal_io/io.dart';
 
-class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
+class Auth2 with Service, NetworkAuthProvider implements NetworkAuthProvider, NotificationsListener {
 
   static const String notifyLoginStarted         = "edu.illinois.rokwire.auth2.login.started";
   static const String notifyLoginSucceeded       = "edu.illinois.rokwire.auth2.login.succeeded";
@@ -340,9 +340,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   List<Auth2Type> get linkedPassword => _account?.getLinkedForAuthType(Auth2Type.typePassword) ?? [];
   List<Auth2Type> get linkedPasskey => _account?.getLinkedForAuthType(Auth2Type.typePasskey) ?? [];
 
+  String? get uin => uiucUser?.uin;
   bool get hasUin => (0 < (uin?.length ?? 0));
-  String? get uin => _account?.authType?.uiucUser?.uin;
-  String? get netId => _account?.authType?.uiucUser?.netId;
+  String? get netId => uiucUser?.netId;
+  Auth2UiucUser? get uiucUser => _account?.authType?.uiucUser;
 
   String? get fullName => StringUtils.ensureNotEmpty(profile?.fullName, defaultValue: _account?.authType?.uiucUser?.fullName ?? '');
   String? get firstName => StringUtils.ensureNotEmpty(profile?.firstName, defaultValue: _account?.authType?.uiucUser?.firstName ?? '');
@@ -1989,7 +1990,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     return false;
   }
 
-  // ignore: unused_element
+  // ignore: unused_element_parameter
   Future<bool> _saveUserPrivacy(Auth2UserPrivacy? privacy, { Client? client }) async {
     if ((Config().coreUrl != null) && (_token?.accessToken != null) && (privacy != null)) {
       String url = "${Config().coreUrl}/services/account/privacy";

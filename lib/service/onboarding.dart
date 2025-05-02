@@ -19,7 +19,7 @@ import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 
-class Onboarding with Service implements NotificationsListener {
+class Onboarding with Service, NotificationsListener {
 
   static const String notifyFinished  = "edu.illinois.rokwire.onboarding.finished";
 

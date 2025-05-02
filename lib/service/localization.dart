@@ -29,7 +29,7 @@ import 'package:path/path.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_io/io.dart';
 
-class Localization with Service implements NotificationsListener {
+class Localization with Service, NotificationsListener {
   
   // Notifications
   static const String notifyLocaleChanged   = "edu.illinois.rokwire.localization.locale.updated";
