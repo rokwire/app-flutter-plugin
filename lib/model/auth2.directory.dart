@@ -5,6 +5,40 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 //////////////////////////////////////////
+// Auth2PublicAccountsResult
+
+class Auth2PublicAccountsResult {
+  final List<Auth2PublicAccount>? accounts;
+  final Map<String, int>? indexCounts;
+  final int? totalCount;
+
+  Auth2PublicAccountsResult({this.accounts, this.indexCounts, this.totalCount});
+
+  static Auth2PublicAccountsResult? fromJson(Map<String, dynamic>? json) {
+    if (json != null) {
+      Map<String, int> indexCounts = {};
+      Map<String, dynamic>? indexCountsJson = JsonUtils.mapValue(json['counts']);
+      for (MapEntry<String, dynamic> count in indexCountsJson?.entries ?? []) {
+        indexCounts[count.key] = (count.value is int) ? count.value : 0;
+      }
+
+      return Auth2PublicAccountsResult(
+        accounts: Auth2PublicAccount.listFromJson(JsonUtils.listValue(json['accounts'])),
+        indexCounts: indexCounts,
+        totalCount: JsonUtils.intValue(json['total']),
+      );
+    }
+    return null;
+  }
+
+  Map<String, dynamic> toJson() => {
+    'accounts': Auth2PublicAccount.listToJson(accounts),
+    'counts': indexCounts,
+    'total': totalCount,
+  };
+}
+
+//////////////////////////////////////////
 // Auth2PublicAccount
 
 class Auth2PublicAccount {
