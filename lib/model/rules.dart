@@ -106,7 +106,6 @@ class RuleComparison extends RuleCondition {
 
   factory RuleComparison.fromOther(RuleComparison other) {
     return RuleComparison(
-      id: other.id,
       operator: other.operator,
       dataKey: other.dataKey,
       dataParam: other.dataParam,
@@ -184,7 +183,7 @@ class RuleLogic extends RuleCondition {
   RuleLogic(this.operator, this.conditions, {String? id}) : super(id: id);
 
   factory RuleLogic.fromOther(RuleLogic other) {
-    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList(), id: other.id);
+    return RuleLogic(other.operator, other.conditions.map((e) => RuleCondition.fromOther(e)).toList());
   }
 
   @override
@@ -354,7 +353,7 @@ class RuleReference extends RuleResult {
   RuleReference(this.ruleKey, {String? id}) : super(id: id);
 
   factory RuleReference.fromOther(RuleReference other) {
-    return RuleReference(other.ruleKey, id: other.id);
+    return RuleReference(other.ruleKey);
   }
 
   @override
@@ -415,7 +414,6 @@ class RuleAction extends RuleActionResult {
 
   factory RuleAction.fromOther(RuleAction other) {
     return RuleAction(
-      id: other.id,
       action: other.action,
       data: other.data,
       dataKey: other.dataKey,
@@ -518,7 +516,6 @@ class RuleActionList extends RuleActionResult {
 
   factory RuleActionList.fromOther(RuleActionList other) {
     return RuleActionList(
-      id: other.id,
       actions: other.actions.map((e) => RuleAction.fromOther(e)).toList()
     );
   }
@@ -607,7 +604,6 @@ class Rule extends RuleResult {
 
   factory Rule.fromOther(Rule other) {
     return Rule(
-      id: other.id,
       condition: other.condition != null ? RuleCondition.fromOther(other.condition!) : null,
       trueResult: other.trueResult != null ? RuleResult.fromOther(other.trueResult!) : null,
       falseResult: other.falseResult != null ? RuleResult.fromOther(other.falseResult!) : null,
@@ -733,7 +729,6 @@ class RuleCases extends RuleResult {
 
   factory RuleCases.fromOther(RuleCases other) {
     return RuleCases(
-      id: other.id,
       cases: other.cases.map((e) => Rule.fromOther(e)).toList()
     );
   }

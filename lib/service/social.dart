@@ -41,6 +41,7 @@ class Social extends Service implements NotificationsListener {
   static const String notifyMessageEdited = "edu.illinois.rokwire.social.message.edited";
   static const String notifyMessageDeleted = "edu.illinois.rokwire.social.message.deleted";
 
+  static const String notifyReactionsUpdated = "edu.illinois.rokwire.social.reactions.update";
   // Filtering keys
   static const String _postsOperationKey = 'operation';
   static const String _postsOperationAndValue = 'and';
@@ -418,19 +419,23 @@ class Social extends Service implements NotificationsListener {
     }
   }
 
-  Future<bool> react({required String entityId, required SocialEntityType source}) async {
+  Future<bool> react({required String entityId, required SocialEntityType source, Reaction? reaction}) async {
     String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: missing social url.');
       return false;
     }
-    Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    Map<String, dynamic> requestJson = reaction?.toJson() ?? {};
+    requestJson["identifier"] = entityId;
+    requestJson["source"] = sourceString;
+
     String? encodedBody = JsonUtils.encode(requestJson);
-    Response? response = await Network().post('$socialUrl/reactions/alter', auth: Auth2(), body: encodedBody);
+    Response? response = await Network().post('$socialUrl/v2/reactions/alter', auth: Auth2(), body: encodedBody);
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
+      NotificationService().notify(notifyReactionsUpdated, {"identifier": entityId, "source": source});
       return true;
     } else {
       Log.e('Failed to react on $sourceString with id $entityId. Reason: $responseCode, $responseBody');
@@ -775,8 +780,8 @@ class Social extends Service implements NotificationsListener {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
       return null;
     }
-    if (message.isEmpty) {
-      Log.e('Failed to create message for conversation $conversationId. Reason: missing message.');
+    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+      Log.e('Failed to create message for conversation $conversationId. Reason: missing message and attachment.');
       return null;
     }
     String? requestBody = JsonUtils.encode({

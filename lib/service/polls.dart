@@ -162,6 +162,10 @@ class Polls with Service implements NotificationsListener {
       String? responseString = response?.body;
       if ((response != null) && (responseCode == 200)) {
         Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
+        Poll? createdPoll = Poll.fromJson(responseJson);
+        if (createdPoll != null) {
+          poll = createdPoll;
+        }
         String? pollId = (responseJson != null) ? responseJson['id'] : null;
         if (pollId != null) {
           poll.pollId = pollId;
@@ -301,8 +305,6 @@ class Polls with Service implements NotificationsListener {
     if (enabled) {
       if (pollPin != null) {
         PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
-        String? body = JsonUtils.encode(pollsFilter.toJson());
-        String url = '${Config().quickPollsUrl}/polls';
         Response? response = await _getPollsResponse(pollsFilter);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -766,12 +768,12 @@ class Polls with Service implements NotificationsListener {
         if (pollsJson != null) {
           for (dynamic pollJson in pollsJson) {
             Poll poll = Poll.fromJson(pollJson)!;
-              PollUIStatus? status = pollUIStatusFromString(chunksJson[poll.pollId]);
-              if (poll.status != PollStatus.closed) {
-                addPollToChunks(poll, status: status, save: false);
-              } else if ((status != PollUIStatus.waitingVote) && poll.settings!.hideResultsUntilClosed!) {
-                addPollToChunks(poll, status: PollUIStatus.waitingClose, save: false);
-              }
+            PollUIStatus? status = pollUIStatusFromString(chunksJson[poll.pollId]);
+            if (poll.status != PollStatus.closed) {
+              addPollToChunks(poll, status: status, save: false);
+            } else if ((status != PollUIStatus.waitingVote) && poll.settings!.hideResultsUntilClosed!) {
+              addPollToChunks(poll, status: PollUIStatus.waitingClose, save: false);
+            }
           }
         }
         savePollChunks();

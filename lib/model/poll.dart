@@ -199,8 +199,9 @@ class Poll {
   }
 
   void apply(PollVote pollVote) {
-    results ??= PollVote();
-    results!.apply(pollVote);
+    // poll event stream should handle this
+    // results ??= PollVote();
+    // results!.apply(pollVote);
 
     _increaseUniqueVotersCount();
 

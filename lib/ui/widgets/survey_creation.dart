@@ -733,7 +733,7 @@ class SurveyElementCreationWidget extends StatefulWidget {
   static dynamic parseTextForType(String text) {
     text = text.trim();
     bool? valueBool = text.toLowerCase() == 'true' ? true : (text.toLowerCase() == 'false' ? false : null);
-    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? null;
+    return num.tryParse(text) ?? DateTimeUtils.dateTimeFromString(text) ?? valueBool ?? text;
   }
 }
 
