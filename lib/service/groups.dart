@@ -453,7 +453,7 @@ class Groups with Service, NotificationsListener {
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
         json['members'] = Member.listToJson(members);
 
-        String url = '${Config().groupsUrl}/v3/groups';
+        String url = '${Config().groupsUrl}/v3/group';
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
