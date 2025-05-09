@@ -22,7 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/app_lifecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -56,6 +55,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   static const String conversationsContentCategory = "conversations";
   static const String profileImagesContentCategory = "profile-images";
+  static const String namesRecordsContentCategory = "names-records";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
@@ -630,33 +630,22 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) =>
-    loadUserNamePronunciationFromUrl(getUserNamePronunciationUrl(accountId: accountId));
+  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) async {
+    String fileName = '${accountId ?? Auth2().accountId ?? ''}.m4a';
 
-  Future<AudioResult?> loadUserNamePronunciationFromUrl(String? url) async {
-    if (StringUtils.isNotEmpty(url)) {
-      Response? response = await Network().get(url, auth: Auth2());
-      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
-      return  (response?.statusCode == 200) ? AudioResult.succeed(audioData: response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
+    if (fileName.isNotEmpty) {
+      Map<String, Uint8List> audioBytes = await getFileContentItems([fileName], namesRecordsContentCategory, addAppOrgIDtoPath: false);
+      if (audioBytes.containsKey(fileName)) {
+        Uint8List bytes = audioBytes[fileName]!;
+        debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
+        return AudioResult.succeed(audioData: bytes, extension: '.m4a');  //TODO: verify this works if audio is recorded on Android or web (maybe change profile photo URL and pronunciation URL to file names)
+      }
+      return AudioResult.error(AudioErrorType.retrieveFailed, "Failed to get user's voice audio file");
     }
-    else {
-      return null;
-    }
-  }
-
-  Future<bool?> checkUserNamePronunciation({ String? accountId }) async {
-    String? url = getUserNamePronunciationUrl(accountId: accountId);
-    if (StringUtils.isNotEmpty(url)) {
-      Response? response = await Network().get(url, auth: Auth2()); //TBD: use HEAD Http reqiest.
-      return (response?.statusCode == 200);
-    }
-    else {
-      return null;
-    }
+    return AudioResult.error(AudioErrorType.retrieveFailed, "Missing user's voice audio file name");
   }
 
   String? getUserNamePronunciationUrl({ String? accountId }) {
-    //TODO: update to call content BB API to get signed S3 download url
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isNotEmpty(serviceUrl)) {
       return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
