@@ -444,17 +444,16 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<GroupError?> createGroup(Group? group, {List<String>? adminNetIds, GroupMemberStatus? adminsStatus}) async {
+  Future<GroupError?> createGroup(Group? group, { List<Member>? members, }) async {
     if((Config().groupsUrl != null) && (group != null)) {
-      String url = '${Config().groupsUrl}/groups';
       try {
         await _ensureLogin();
         Map<String, dynamic> json = group.toJson(/*withId: false*/);
         json["creator_email"] = Auth2().account?.profile?.email ?? "";
         json["creator_name"] = Auth2().account?.profile?.fullName ?? "";
-        if (CollectionUtils.isNotEmpty(adminNetIds) && (adminsStatus != null)) {
-          json['members'] = {'net_ids': adminNetIds, 'status': groupMemberStatusToString(adminsStatus)};
-        }
+        json['members'] = Member.listToJson(members);
+
+        String url = '${Config().groupsUrl}/v3/groups';
         String? body = JsonUtils.encode(json);
         Response? response = await Network().post(url, auth: Auth2(), body: body);
         int responseCode = response?.statusCode ?? -1;
