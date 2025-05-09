@@ -55,6 +55,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String _contentItemsCacheFileName = "contentItems.json";
 
   static const String conversationsContentCategory = "conversations";
+  static const String profileImagesContentCategory = "profile-images";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
@@ -461,6 +462,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return await rotatedImage.readAsBytes();
   }
 
+  //TODO: refactor
   Future<ImagesResult> uploadImage(
       {List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType, bool? isUserPic}) async {
     String? serviceUrl = Config().contentUrl;
@@ -533,27 +535,22 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<ImagesResult?> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
-    String? url = getUserPhotoUrl(accountId: accountId, type: type);
-    if (StringUtils.isNotEmpty(url)) {
-      Response? response = await Network().get(url, auth: Auth2());
-      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
-      return (response?.statusCode == 200) ? ImagesResult.succeed(imageData: response?.bodyBytes) : ImagesResult.error(ImagesErrorType.retrieveFailed, response?.body);
+  Future<ImagesResult> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
+    String fileName = accountId ?? Auth2().accountId ?? '';
+    if (fileName.isNotEmpty && type != null) {
+      fileName += '-${_profileImageTypeToString(type)}.webp';
     }
-    else {
-      return null;
-    }
-  }
 
-  Future<bool?> checkUserPhoto({ String? accountId }) async {
-    String? url = getUserPhotoUrl(accountId: accountId);
-    if (StringUtils.isNotEmpty(url)) {
-      Response? response = await Network().get(url, auth: Auth2()); //TBD: use HEAD Http reqiest.
-      return (response?.statusCode == 200);
+    if (fileName.isNotEmpty) {
+      Map<String, Uint8List> imageBytes = await getFileContentItems([fileName], profileImagesContentCategory, addAppOrgIDtoPath: false);
+      if (imageBytes.containsKey(fileName)) {
+        Uint8List bytes = imageBytes[fileName]!;
+        debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
+        return ImagesResult.succeed(imageData: bytes);
+      }
+      return ImagesResult.error(ImagesErrorType.retrieveFailed, "Failed to get user's profile image");
     }
-    else {
-      return null;
-    }
+    return ImagesResult.error(ImagesErrorType.retrieveFailed, "Missing user's profile image name");
   }
 
   String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type, Map<String, String>? params }) {
@@ -570,9 +567,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       }
       return (urlParams != null) ? UrlUtils.buildWithQueryParameters(imageUrl, urlParams) : imageUrl;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   static String _profileImageTypeToString(UserProfileImageType type) {
@@ -661,6 +656,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   String? getUserNamePronunciationUrl({ String? accountId }) {
+    //TODO: update to call content BB API to get signed S3 download url
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isNotEmpty(serviceUrl)) {
       return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
@@ -670,7 +666,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileKeys, String category, {String? entityId}) async {
+  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
     Map<String, Uint8List> files = {};
     List<String> load = [];
     for (String fileKey in fileKeys) {
@@ -683,7 +679,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
 
     if (load.isNotEmpty) {
-      List<FileContentItemReference>? fileRefs = await getFileContentDownloadUrls(fileKeys, category, entityId: entityId);
+      List<FileContentItemReference>? fileRefs = await getFileContentDownloadUrls(fileKeys, category, entityId: entityId, addAppOrgIDtoPath: addAppOrgIDtoPath);
 
       if (StringUtils.isNotEmpty(Config().contentUrl)) {
         List<Future<Response?>> responseFutures = [];
@@ -701,7 +697,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
           int responseCode = response?.statusCode ?? -1;
 
           // response code 2xx
-          if (fileRef != null && responseCode ~/ 100 == 2) {
+          if (fileRef != null) {
             String fileKey = fileRef.key ?? '';
             String? requestUrl = fileRef.url ?? '';
             _fileContentFutures[requestUrl] = null;
@@ -721,11 +717,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return files;
   }
 
-  Future<List<FileContentItemReference>?> getFileContentDownloadUrls(List<String> fileKeys, String category, {String? entityId}) async {
+  Future<List<FileContentItemReference>?> getFileContentDownloadUrls(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileKeys': fileKeys.join(','),
         'category': category,
+        'add-path-apporg-id': addAppOrgIDtoPath.toString()
       };
       if (entityId != null) {
         queryParams['entityID'] = entityId;
@@ -752,7 +749,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<List<FileContentItemReference>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {
-    String? entityId,
+    String? entityId, bool handleDuplicateFileNames = true,
     Function(FileContentItemReference)? preUpload,
     Function(FileContentItemReference, Response?)? postUpload,
   }) async {
@@ -760,7 +757,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
     //TODO: implement number of files limit per upload
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
-      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId);
+      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId, handleDuplicateFileNames: handleDuplicateFileNames);
       if ((fileRefs?.length ?? 0) == files.length) {
         List<Future<Response?>> responseFutures = [];
         for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
@@ -793,11 +790,12 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return uploaded;
   }
 
-  Future<List<FileContentItemReference>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId}) async {
+  Future<List<FileContentItemReference>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId, bool handleDuplicateFileNames = true}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileNames': fileNames.join(','),
         'category': category,
+        'handle-duplicate-filenames': handleDuplicateFileNames.toString(),
       };
       if (entityId != null) {
         queryParams['entityID'] = entityId;
