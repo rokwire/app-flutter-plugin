@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_html/html.dart' show AnchorElement;
 import 'package:universal_io/io.dart';
 
 class ImageUtils {
@@ -37,10 +38,14 @@ class ImageUtils {
       return false;
     }
     if (kIsWeb) {
-      //TBD: DD - implement for web
-      debugPrint('WEB: implement downloading file to file system');
-      return false;
+      AnchorElement()
+        ..href = '${Uri.dataFromBytes(imageBytes)}'
+        ..download = fileName
+        ..style.display = 'none'
+        ..click();
+      return true;
     }
+
     final String dir = (await getApplicationDocumentsDirectory()).path;
     final String fullPath = '$dir/$fileName.png';
     File capturedFile = File(fullPath);
