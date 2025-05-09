@@ -638,7 +638,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
       if (audioBytes.containsKey(fileName)) {
         Uint8List bytes = audioBytes[fileName]!;
         debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
-        return AudioResult.succeed(audioData: bytes, extension: '.m4a');  //TODO: verify this works if audio is recorded on Android or web (maybe change profile photo URL and pronunciation URL to file names)
+        return AudioResult.succeed(audioData: bytes, extension: '.m4a');  //TODO: will not work if audio is recorded on Android or web because .wav is used (maybe change profile photo URL and pronunciation URL to file names)
       }
       return AudioResult.error(AudioErrorType.retrieveFailed, "Failed to get user's voice audio file");
     }
