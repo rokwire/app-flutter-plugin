@@ -222,7 +222,7 @@ class Events2 with Service implements NotificationsListener {
       String url = "${Config().calendarUrl}/v3/event/${source.id}";
       String? body = JsonUtils.encode({
         "event": source.toJson(),
-        "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers)
+        "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
       });
       Response? response = await Network().put(url, body: body, headers: _jsonHeaders, auth: Auth2());
       if (response?.statusCode == 200) {
