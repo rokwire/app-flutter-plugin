@@ -33,8 +33,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 import 'package:universal_io/io.dart';
-// import 'package:flutter_image_compress/flutter_image_compress.dart';
-// import 'package:image_compression_flutter/image_compression_flutter.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
