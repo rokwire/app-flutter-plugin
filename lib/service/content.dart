@@ -19,7 +19,6 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
@@ -31,13 +30,11 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 import 'package:universal_io/io.dart';
-
-//import 'package:flutter/services.dart' show rootBundle;
+// import 'package:flutter_image_compress/flutter_image_compress.dart';
+// import 'package:image_compression_flutter/image_compression_flutter.dart';
 
 // Content service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
 class Content with Service implements NotificationsListener, ContentItemCategoryClient {
@@ -56,6 +53,9 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   static const String conversationsContentCategory = "conversations";
   static const String profileImagesContentCategory = "profile-images";
   static const String namesRecordsContentCategory = "names-records";
+  static const String groupImagesContentCategory = "group/tout";
+  static const String groupPostImagesContentCategory = "group/posts";
+  static const String eventImagesContentCategory = "event/tout";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
@@ -400,7 +400,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
   // Images
 
-  Future<ImagesResult> useUrl({String? storageDir, required String url, int? width}) async {
+  Future<ImagesResult> useUrl({required String storageDir, required String url, int? width}) async {
     // 1. first check if the url gives an image
     Uri? uri = Uri.tryParse(url);
     Response? headersResponse = (uri != null) ? await head(Uri.parse(url)) : null;
@@ -414,8 +414,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
         Response response = await get(Uri.parse(url));
         Uint8List imageContent = response.bodyBytes;
         // 3. call the Content service api
-        String fileName = const Uuid().v1();
-        return uploadImage(storagePath: storageDir, imageBytes: imageContent, fileName: fileName, width: width, mediaType: contentType);
+        return uploadImage(storagePath: storageDir, imageBytes: imageContent, width: width, mediaType: contentType);
       } else {
         return ImagesResult.error(ImagesErrorType.contentTypeNotSupported, "The provided content type is not supported");
       }
@@ -429,6 +428,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return contentType.startsWith("image/");
   }
 
+  /*
   Future<ImagesResult?> selectImageFromDevice({String? storagePath, int? width, bool? isUserPic}) async {
     XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (image == null) {
@@ -461,10 +461,33 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
     return await rotatedImage.readAsBytes();
   }
+  */
 
-  //TODO: refactor
-  Future<ImagesResult> uploadImage(
-      {List<int>? imageBytes, String? fileName, String? storagePath, int? width, String? mediaType, bool? isUserPic}) async {
+  Future<ImagesResult> uploadImage({Uint8List? imageBytes, required String storagePath, int? width, String? mediaType}) async {
+    if (CollectionUtils.isNotEmpty(imageBytes)) {
+      // TODO: resize and convert to webp
+
+      String fileName = const Uuid().v1();
+      String extension = mediaType?.split("/").last ?? '';
+      if (extension.isNotEmpty) {
+        fileName += '.$extension';
+      }
+      List<FileContentItemReference>? uploaded = await Content().uploadFileContentItems({fileName: imageBytes}, storagePath, addAppOrgIDtoPath: false, handleDuplicateFileNames: false, publicRead: true);
+      if (CollectionUtils.isNotEmpty(uploaded)) {
+        String? imageUrl;
+        Uri? imageUri = Uri.tryParse(uploaded!.first.url ?? '');
+        if (imageUri != null) {
+          imageUrl = '${imageUri.scheme}://${imageUri.host}${imageUri.path}';
+        }
+        return ImagesResult.succeed(imageUrl: imageUrl, imageData: imageBytes);
+      }
+      return ImagesResult.error(ImagesErrorType.uploadFailed, "Failed to upload image");
+    }
+    return ImagesResult.error(ImagesErrorType.contentNotSupplied, 'Missing image data.');
+  }
+
+  // profile photos will be uploaded through the content BB for now because it resizes and uploads multiple images
+  Future<ImagesResult> uploadUserPhoto({List<int>? imageBytes, String? mediaType}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing images BB url.');
@@ -472,41 +495,21 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     if (CollectionUtils.isEmpty(imageBytes)) {
       return ImagesResult.error(ImagesErrorType.contentNotSupplied, 'No file bytes.');
     }
-    if (StringUtils.isEmpty(fileName)) {
-      return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing file name.');
-    }
-    if ((isUserPic != true) && StringUtils.isEmpty(storagePath)) {
-      return ImagesResult.error(ImagesErrorType.storagePathNotSupplied, 'Missing storage path.');
-    }
-    if ((isUserPic != true) && ((width == null) || (width <= 0))) {
-      return ImagesResult.error(ImagesErrorType.dimensionsNotSupplied, 'Invalid image width. Please, provide positive number.');
-    }
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
-    String url = (isUserPic == true) ? "$serviceUrl/profile_photo" : "$serviceUrl/image";
-    Map<String, String> imageRequestFields = {
-      'quality': 100.toString() // Use maximum quality - 100
-    };
-    if (isUserPic != true) {
-      imageRequestFields.addAll({'path': storagePath!, 'width': width.toString()});
-    }
     StreamedResponse? response = await Network().multipartPost(
-        url: url,
+        url: "$serviceUrl/profile_photo",
         fileKey: 'fileName',
-        fileName: fileName,
         fileBytes: imageBytes,
         contentType: mediaType,
-        fields: imageRequestFields,
         auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
       Map<String, dynamic>? json = JsonUtils.decodeMap(responseString);
       String? imageUrl = (json != null) ? JsonUtils.stringValue(json['url']) : null;
-      if (isUserPic == true) {
-        NotificationService().notify(notifyUserProfilePictureChanged, null);
-      }
+      NotificationService().notify(notifyUserProfilePictureChanged, null);
       return ImagesResult.succeed(imageUrl: imageUrl, imageData: (imageBytes != null) ? Uint8List.fromList(imageBytes) : null);
     } else {
       debugPrint("Failed to upload image. Reason: $responseCode $responseString");
@@ -584,44 +587,39 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   // Profile Voice Record
 
   Future<AudioResult> uploadUserNamePronunciation(Uint8List? audioFile) async{ //TBD return type
-    String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isEmpty(serviceUrl)) {
-      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
-    }
     if (CollectionUtils.isEmpty(audioFile)) {
       return AudioResult.error(AudioErrorType.fileNameNotSupplied, 'Missing file.');
     }
-    String url = "$serviceUrl/voice_record";
-    StreamedResponse? response = await Network().multipartPost(
-        url: url,
-        fileKey: "voiceRecord",
-        fileName: "record.m4a",
-        // fileName: audioFile.name,
-        fileBytes: audioFile,
-        contentType: 'audio/m4a',
-        auth: Auth2()
-    );
 
-    int responseCode = response?.statusCode ?? -1;
-    if (responseCode == 200) {
-      return AudioResult.succeed(audioData: audioFile);
-    } else {
-      String? responseString = (await response?.stream.bytesToString());
-      debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
-      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio: $responseString");
+    String? accountId = getUserNamePronunciationFileName(accountId: Auth2().accountId);
+    if (accountId != null) {
+      List<FileContentItemReference>? uploaded = await Content().uploadFileContentItems({accountId: audioFile}, namesRecordsContentCategory, handleDuplicateFileNames: false, addAppOrgIDtoPath: false);
+      if (CollectionUtils.isNotEmpty(uploaded)) {
+        return AudioResult.succeed(audioData: audioFile, extension: Platform.isIOS ? '.m4a' : '.wav');
+      }
+      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio");
     }
+    return AudioResult.error(AudioErrorType.uploadFailed, "Missing user account ID");
   }
 
-  Future<AudioResult?> deleteUserNamePronunciation() async {
+  Future<AudioResult?> deleteUserNamePronunciation({required String extension}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
     }
     String url = "$serviceUrl/voice_record";
+    Map<String, String> queryParams = {
+      'extension': extension,
+    };
+    if (queryParams.isNotEmpty) {
+      url = UrlUtils.addQueryParameters(url, queryParams);
+    }
     Response? response = await Network().delete(url, auth: Auth2());
     debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
+      String cacheKey = '${namesRecordsContentCategory}_${Auth2().accountId}$extension';
+      _fileContentCache.remove(cacheKey);
       return AudioResult.succeed();
     } else {
       String? responseString = response?.body;
@@ -630,29 +628,31 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     }
   }
 
-  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) async {
-    String fileName = '${accountId ?? Auth2().accountId ?? ''}.m4a';
-
-    if (fileName.isNotEmpty) {
+  Future<AudioResult?> loadUserNamePronunciation({String? fileName}) async {
+    fileName ??= getUserNamePronunciationFileName(accountId: Auth2().accountId);
+    if (StringUtils.isNotEmpty(fileName)) {
+      String? extension;
+      List<String> splitFileName = fileName!.split('.');
+      if (splitFileName.length >= 2) {
+        extension = '.${splitFileName.last}';
+      }
       Map<String, Uint8List> audioBytes = await getFileContentItems([fileName], namesRecordsContentCategory, addAppOrgIDtoPath: false);
       if (audioBytes.containsKey(fileName)) {
         Uint8List bytes = audioBytes[fileName]!;
         debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
-        return AudioResult.succeed(audioData: bytes, extension: '.m4a');  //TODO: will not work if audio is recorded on Android or web because .wav is used (maybe change profile photo URL and pronunciation URL to file names)
+        return AudioResult.succeed(audioData: bytes, extension: extension);
       }
       return AudioResult.error(AudioErrorType.retrieveFailed, "Failed to get user's voice audio file");
     }
     return AudioResult.error(AudioErrorType.retrieveFailed, "Missing user's voice audio file name");
   }
 
-  String? getUserNamePronunciationUrl({ String? accountId }) {
-    String? serviceUrl = Config().contentUrl;
-    if (StringUtils.isNotEmpty(serviceUrl)) {
-      return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
+  String? getUserNamePronunciationFileName({ String? accountId }) {
+    if (StringUtils.isNotEmpty(accountId)) {
+      String extension = Platform.isIOS ? '.m4a' : '.wav';
+      return accountId! + extension;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   Future<Map<String, Uint8List>> getFileContentItems(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
@@ -738,7 +738,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
   }
 
   Future<List<FileContentItemReference>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {
-    String? entityId, bool handleDuplicateFileNames = true,
+    String? entityId, bool addAppOrgIDtoPath = true, bool handleDuplicateFileNames = true, bool publicRead = false,
     Function(FileContentItemReference)? preUpload,
     Function(FileContentItemReference, Response?)? postUpload,
   }) async {
@@ -746,7 +746,8 @@ class Content with Service implements NotificationsListener, ContentItemCategory
 
     //TODO: implement number of files limit per upload
     if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
-      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId, handleDuplicateFileNames: handleDuplicateFileNames);
+      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId,
+          addAppOrgIDtoPath: addAppOrgIDtoPath, handleDuplicateFileNames: handleDuplicateFileNames, publicRead: publicRead);
       if ((fileRefs?.length ?? 0) == files.length) {
         List<Future<Response?>> responseFutures = [];
         for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
@@ -754,7 +755,7 @@ class Content with Service implements NotificationsListener, ContentItemCategory
           ref.name = files.keys.elementAt(i);
           Uint8List? bytes = await files[ref.name];
           if (bytes != null) {
-            responseFutures.add(_uploadFileContentItem(ref, bytes, preUpload: preUpload, postUpload: postUpload));
+            responseFutures.add(_uploadFileContentItem(ref, bytes, publicRead: publicRead, preUpload: preUpload, postUpload: postUpload));
           }
         }
 
@@ -779,12 +780,15 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return uploaded;
   }
 
-  Future<List<FileContentItemReference>?> getFileContentUploadUrls(List<String> fileNames, String category, {String? entityId, bool handleDuplicateFileNames = true}) async {
+  Future<List<FileContentItemReference>?> getFileContentUploadUrls(List<String> fileNames, String category,
+      {String? entityId, bool addAppOrgIDtoPath = true, bool handleDuplicateFileNames = true, bool publicRead = false}) async {
     if (StringUtils.isNotEmpty(Config().contentUrl)) {
       Map<String, String> queryParams = {
         'fileNames': fileNames.join(','),
         'category': category,
         'handle-duplicate-filenames': handleDuplicateFileNames.toString(),
+        'add-path-apporg-id': addAppOrgIDtoPath.toString(),
+        'public-read': publicRead.toString(),
       };
       if (entityId != null) {
         queryParams['entityID'] = entityId;
@@ -810,13 +814,16 @@ class Content with Service implements NotificationsListener, ContentItemCategory
     return null;
   }
 
-  Future<Response?> _uploadFileContentItem(FileContentItemReference ref, Uint8List bytes, {
+  Future<Response?> _uploadFileContentItem(FileContentItemReference ref, Uint8List bytes, { bool publicRead = false,
     FutureOr<void> Function(FileContentItemReference)? preUpload,
     FutureOr<void> Function(FileContentItemReference, Response?)? postUpload
   }) async {
     await preUpload?.call(ref);
 
-    Future<Response?> response = Network().put(ref.url, body: bytes);
+    Map<String, String>? headers = publicRead ? {
+      'x-amz-acl': 'public-read',
+    } : null;
+    Future<Response?> response = Network().put(ref.url, body: bytes, headers: headers);
     response.then((response) {
       postUpload?.call(ref, response);
     });
