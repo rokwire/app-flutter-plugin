@@ -359,7 +359,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
 
-  String? get appId => _packageInfo?.packageName;
+  String? get packageName => _packageInfo?.packageName;
+
+  String? get appId => packageName;
 
   String? get appCanonicalId {
     if (_appCanonicalId == null) {
@@ -577,7 +579,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   String? get webIdentifierOrigin => html.window.location.origin;
   String? get authBaseUrl {
     if (isReleaseWeb) {
-      return '$webIdentifierOrigin/${_packageInfo?.packageName}';
+      return '$webIdentifierOrigin/$packageName';
     } else if (isAdmin) {
       return '$coreUrl/admin';
     }
