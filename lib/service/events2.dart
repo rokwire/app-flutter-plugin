@@ -219,13 +219,13 @@ class Events2 with Service, NotificationsListener {
   }
 
   ///
-  /// Creates group event for group admins that are not calendar admins
+  /// Creates event with context. Currently used only for group admins that are not calendar admins, e.g. group events
   ///
   /// Returns Event2 in case of success, String description in case of error
   ///
-  Future<dynamic> createGroupEvent(Event2 source, {List<Event2PersonIdentifier>? adminIdentifiers}) async {
+  Future<dynamic> createEventWithContext(Event2 source, {List<Event2PersonIdentifier>? adminIdentifiers}) async {
     if (Config().calendarUrl != null) {
-      String url = "${Config().calendarUrl}/group/event";
+      String url = "${Config().calendarUrl}/event-context";
       String? body = JsonUtils.encode({
         "event": source.toJson(),
         "admins_identifiers": Event2PersonIdentifier.listToNotNullJson(adminIdentifiers) ?? []
