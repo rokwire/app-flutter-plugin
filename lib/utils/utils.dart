@@ -1214,8 +1214,8 @@ class JsonUtils {
 class AppToast {
   static const Duration defaultDuration = const Duration(seconds: 3);
   static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
-  static const Color defaultTextColor = Colors.white;
-  static const Color defaultBackgroundColor = const Color(0x99000000);
+  static const Color defaultTextColor = const Color(0x99000000);
+  static const Color defaultBackgroundColor = Colors.white;
   static const String defaultWebBackgroundColor = '#ffffff';
 
   static void showMessage(String msg, {
