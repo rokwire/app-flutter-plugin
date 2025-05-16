@@ -16,6 +16,7 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/model/auth2.directory.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 
@@ -499,6 +500,12 @@ class Member {
       dateUpdatedUtc  : other.dateUpdatedUtc,
     ) : null;
   }
+
+  factory Member.fromPublicAccount(Auth2PublicAccount account, { GroupMemberStatus? status }) => Member(
+    userId: account.id,
+    name: account.profile?.fullName,
+    status: status
+  );
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
