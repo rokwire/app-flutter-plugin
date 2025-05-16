@@ -80,18 +80,19 @@ class ModalImagePanel extends StatelessWidget {
         headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
     }
     return Scaffold(backgroundColor: Colors.black.withValues(alpha: 0.3), body:
-      SafeArea(child:
-        _buildPinchZoomControl(child:
-          InkWell(onTap: () => _onDismiss(context), child:
-            Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                Expanded(child:
-                  Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
-                    Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: InkWell(onTap: (){ /* ignore taps on image*/ }, child: imageWidget)) : Container()
-                    ),
-                  ],)
-                ),
+      InkWell(onTap: () => _onDismiss(context), child:
+        PinchZoom(
+          //resetDuration: const Duration(milliseconds: 100),
+          maxScale: 4,
+          onZoomStart: (){print('Start zooming');},
+          onZoomEnd: (){print('Stop zooming');},
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Expanded(child:
+              Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(child: imageWidget != null ? Padding(padding: imagePadding, child: imageWidget) : Container()),
             ],)
           ),
+          ],)
         ),
       ),
     );
@@ -118,8 +119,9 @@ class ModalImagePanel extends StatelessWidget {
 
   Widget _buildCloseWidget(BuildContext context) {
     return closeWidget ?? Semantics(label: closeLabel ?? "Close Button", hint: closeHint, button: true, focusable: true, focused: true, child:
+      // Do not use InkWell inside PinchZoom, this raises "No Material widget found" exception on attempts to zoom.
       GestureDetector(onTap: () => _onClose(context), child:
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child:
+        Container(color: Colors.transparent, padding: const EdgeInsets.symmetric(horizontal: 16), child:
           Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
         ),
       )
@@ -132,15 +134,6 @@ class ModalImagePanel extends StatelessWidget {
         value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null),
     );
   }
-
-  Widget _buildPinchZoomControl({required Widget child}) =>
-      PinchZoom(
-        child: child,
-        //resetDuration: const Duration(milliseconds: 100),
-        maxScale: 4,
-        onZoomStart: (){print('Start zooming');},
-        onZoomEnd: (){print('Stop zooming');},
-      );
 
   void _onClose(BuildContext context) {
     if (onClose != null) {
