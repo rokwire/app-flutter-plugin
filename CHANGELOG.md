@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version from pubspec.yaml -->
 ### Added
 - Create event with context, e.g. group event [#602](https://github.com/rokwire/app-flutter-plugin/issues/602).
+- Add group members from directory [#5098](https://github.com/rokwire/illinois-app/issues/5098)
 
 ## [1.9.0] - 2025-04-29
 ### Fixed
