@@ -499,12 +499,18 @@ class Content with Service, NotificationsListener, ContentItemCategoryClient {
     StreamedResponse? response = await Network().multipartPost(
         url: "$serviceUrl/profile_photo",
         fileKey: 'fileName',
+        fileName: 'fileName',
         fileBytes: imageBytes,
         contentType: mediaType,
         auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
+      for(UserProfileImageType type in UserProfileImageType.values) {
+        String ext = '-${_profileImageTypeToString(type)}.webp';
+        String cacheKey = '${profileImagesContentCategory}_${Auth2().accountId}$ext';
+        _fileContentCache.remove(cacheKey);
+      }
       Map<String, dynamic>? json = JsonUtils.decodeMap(responseString);
       String? imageUrl = (json != null) ? JsonUtils.stringValue(json['url']) : null;
       NotificationService().notify(notifyUserProfilePictureChanged, null);
@@ -527,6 +533,11 @@ class Content with Service, NotificationsListener, ContentItemCategoryClient {
     debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
+      for(UserProfileImageType type in UserProfileImageType.values) {
+        String ext = '-${_profileImageTypeToString(type)}.webp';
+        String cacheKey = '${profileImagesContentCategory}_${Auth2().accountId}$ext';
+        _fileContentCache.remove(cacheKey);
+      }
       NotificationService().notify(notifyUserProfilePictureChanged, null);
       return ImagesResult.succeed();
     } else {
