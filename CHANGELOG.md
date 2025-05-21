@@ -5,10 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- Fixed ModalImagePanel image zooming.
-- Rename ModalImagePanel to ModalPinchZoomImagePanel, introduce ModalPhotoImagePanel and use it by default [#5165](https://github.com/rokwire/illinois-app/issues/5165).
 ### Added
 - Create event with context, e.g. group event [#602](https://github.com/rokwire/app-flutter-plugin/issues/602).
+### Fixed
+- Fixed ModalImagePanel image zooming.
+- Rename ModalImagePanel to ModalPinchZoomImagePanel, introduce ModalPhotoImagePanel and use it by default [#5165](https://github.com/rokwire/illinois-app/issues/5165).
 
 ## [1.9.0] - 2025-04-29
 ### Fixed
