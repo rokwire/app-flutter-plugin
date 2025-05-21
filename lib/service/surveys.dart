@@ -586,7 +586,7 @@ class Surveys /* with Service */ {
         queryParams['external_profile_id'] = externalProfileId;
       }
 
-      String url = '${Config().surveysUrl}/score/v2';
+      String url = '${Config().surveysUrl}/v2/score';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }
@@ -607,7 +607,7 @@ class Surveys /* with Service */ {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
-        url += '/scores/v2';
+        url += '/v2/scores';
 
         Map<String, String> queryParams = {};
         if (limit != null) {
