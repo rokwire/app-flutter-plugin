@@ -301,10 +301,10 @@ class Polls with Service, NotificationsListener {
     }
   }
 
-  Future<Poll?> load({int? pollPin}) async {
+  Future<Poll?> load({int? pollPin, Set<PollStatus>? statuses}) async {
     if (enabled) {
       if (pollPin != null) {
-        PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: {PollStatus.created, PollStatus.opened});
+        PollFilter pollsFilter = PollFilter(pinCode: pollPin, statuses: statuses);
         Response? response = await _getPollsResponse(pollsFilter);
         int responseCode = response?.statusCode ?? -1;
         String? responseBody = response?.body;
@@ -463,7 +463,7 @@ class Polls with Service, NotificationsListener {
       PollChunk? pollChunk = _pollChunks[pollId];
       if (pollChunk == null) {
         try {
-          String url = '${Config().quickPollsUrl}/poll/$pollId';
+          String url = '${Config().quickPollsUrl}/polls/$pollId';
           Response? response = await Network().get(url, auth: Auth2());
           String? responseString = ((response != null) && (response.statusCode == 200)) ? response.body : null;
           Map<String, dynamic>? responseJson = JsonUtils.decode(responseString);
