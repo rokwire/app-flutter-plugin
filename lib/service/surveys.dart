@@ -77,6 +77,11 @@ class Surveys /* with Service */ {
           return stats.scores;
         }
         return null;
+      case "correct_answer_count":
+        if (stats != null) {
+          return stats.correctAnswerCount;
+        }
+        return null;
       case "date_updated":
         return survey.dateUpdated;
       case "scored":
@@ -173,6 +178,8 @@ class Surveys /* with Service */ {
         return stats?.complete;
       case "scored":
         return stats?.scored;
+      case "correct_answer_count":
+        return stats?.correctAnswerCount;
       case "scores":
         return stats?.scores;
       case "maximum_scores":
@@ -260,6 +267,7 @@ class Surveys /* with Service */ {
 
     Map<String, num> scores = {};
     num? score = _getDataScore(survey, data);
+    int correctAnswerCount = 0;
     if (score != null) {
       if (CollectionUtils.isNotEmpty(data.sections)) {
         for (String section in data.sections!) {
@@ -267,6 +275,11 @@ class Surveys /* with Service */ {
         }
       } else {
         scores[data.section ?? ''] = score;
+      }
+
+      // If the score is positive, we assume the answer is correct
+      if (score > 0) {
+        correctAnswerCount = 1;
       }
     }
     Map<String, num> maximumScores = {};
@@ -284,6 +297,7 @@ class Surveys /* with Service */ {
       total: data.isQuestion ? 1 : 0,
       complete: data.response != null ? 1 : 0,
       scored: data.scored ? 1 : 0,
+      correctAnswerCount: correctAnswerCount,
       scores: scores,
       maximumScores: maximumScores,
       responseData: responseData,
@@ -572,7 +586,7 @@ class Surveys /* with Service */ {
         queryParams['external_profile_id'] = externalProfileId;
       }
 
-      String url = '${Config().surveysUrl}/score';
+      String url = '${Config().surveysUrl}/v2/score';
       if (queryParams.isNotEmpty) {
         url = UrlUtils.addQueryParameters(url, queryParams);
       }
@@ -593,7 +607,7 @@ class Surveys /* with Service */ {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
-        url += '/scores';
+        url += '/v2/scores';
 
         Map<String, String> queryParams = {};
         if (limit != null) {
