@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed ModalImagePanel image zooming.
 - Rename ModalImagePanel to ModalPinchZoomImagePanel, introduce ModalPhotoImagePanel and use it by default [#5165](https://github.com/rokwire/illinois-app/issues/5165).
+### Changed
+- Change the way how we load individual recurring events [#4737](https://github.com/rokwire/illinois-app/issues/4737).
 
 ## [1.9.0] - 2025-04-29
 ### Fixed
