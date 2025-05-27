@@ -44,7 +44,8 @@ class GraphQL with Service {
 
   GraphQLClient getClient(String url, {Map<String, Set<String>> possibleTypes = const {},
     Map<String, String> defaultHeaders = const {}, AuthLink? authLink,
-    FetchPolicy? defaultFetchPolicy, bool useCache = true}) {
+    FetchPolicy? defaultFetchPolicy, bool useCache = true,
+    Duration? queryRequestTimeout = const Duration(seconds: 5)}) {
     Link link = HttpLink(url, defaultHeaders: defaultHeaders,
         parser: GraphQLResponseParser());
     if (authLink != null) {
@@ -52,6 +53,7 @@ class GraphQL with Service {
     }
     GraphQLClient client = GraphQLClient(
       link: link,
+      queryRequestTimeout: queryRequestTimeout,
       defaultPolicies: DefaultPolicies(
         query: Policies(
           fetch: defaultFetchPolicy,
