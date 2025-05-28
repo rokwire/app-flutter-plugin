@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
 
+## [1.10.1] - 2025-05-28
+### Added
+- Added pollStatuses input paramter of Polls.getGroupPolls API [#5175](https://github.com/rokwire/illinois-app/issues/5175).
+
 ## [1.10.0] - 2025-05-27
 ### Added
 - Create event with context, e.g. group event [#602](https://github.com/rokwire/app-flutter-plugin/issues/602).
