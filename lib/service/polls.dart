@@ -111,14 +111,20 @@ class Polls with Service, NotificationsListener {
     return getPolls(PollFilter(myPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<PollsChunk?>? getGroupPolls({Set<String>? groupIds, PollsCursor? cursor, Set<String>? pollIds}) async {
-    return getPolls(PollFilter(groupIds: groupIds, pollIds: pollIds, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
-  }
-
   Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
     return getPolls(PollFilter(
         limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
   }
+
+  Future<PollsChunk?>? getGroupPolls({Set<String>? groupIds, Set<String>? pollIds, Set<PollStatus>? pollStatuses, PollsCursor? cursor}) async {
+    return getPolls(PollFilter(groupIds: groupIds, pollIds: pollIds, statuses: pollStatuses, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
+  }
+
+  Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
+    enabled ? Network().post(
+      '${Config().quickPollsUrl}/polls/load',
+      body: JsonUtils.encode(pollsFilter.toJson()),
+      auth: Auth2()) : null;
 
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
@@ -140,12 +146,6 @@ class Polls with Service, NotificationsListener {
     }
     return null;
   }
-
-  Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
-      enabled ? Network().post(
-          '${Config().quickPollsUrl}/polls/load',
-          body: JsonUtils.encode(pollsFilter.toJson()),
-          auth: Auth2()) : null;
 
   Poll? getPoll({String? pollId}) {
     return enabled ? _pollChunks[pollId]?.poll : null;

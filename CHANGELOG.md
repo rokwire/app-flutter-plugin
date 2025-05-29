@@ -5,10 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next version number should be the version from pubspec.yaml -->
+<!-- The next version number should be the version already set in pubspec.yaml -->
+### Added
+- Add group members from directory [#5098](https://github.com/rokwire/illinois-app/issues/5098).
+
+## [1.10.1] - 2025-05-28
+### Added
+- Added pollStatuses input paramter of Polls.getGroupPolls API [#5175](https://github.com/rokwire/illinois-app/issues/5175).
+
+## [1.10.0] - 2025-05-27
 ### Added
 - Create event with context, e.g. group event [#602](https://github.com/rokwire/app-flutter-plugin/issues/602).
-- Add group members from directory [#5098](https://github.com/rokwire/illinois-app/issues/5098)
+### Fixed
+- Fixed ModalImagePanel image zooming.
+### Changed
+- Change the way how we load individual recurring events [#4737](https://github.com/rokwire/illinois-app/issues/4737).
+- Rename ModalImagePanel to ModalPinchZoomImagePanel, introduce ModalPhotoImagePanel and use it by default [#5165](https://github.com/rokwire/illinois-app/issues/5165).
 
 ## [1.9.0] - 2025-04-29
 ### Fixed
