@@ -884,8 +884,10 @@ class Event2Grouping {
     Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _ignoreFieldValue),
     // Sub Events when display as individual is true
     Event2Grouping(type: Event2GroupingType.superEvent, superEventId: _ignoreFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'), //explicitly String
-    // Main Recurring events
-    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true')
+    // Recurring events which shows as individuals - displayAsIndividual: true
+    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: 'true'),
+    // Recurring events which have missing displayAsIndividual value
+    Event2Grouping(type: Event2GroupingType.recurrence, superEventId: _noneFieldValue, recurrenceId: _ignoreFieldValue, displayAsIndividual: _noneFieldValue)
   ];
 
   static Event2Grouping? fromJson(Map<String, dynamic>? json) =>
