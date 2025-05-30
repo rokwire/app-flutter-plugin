@@ -34,8 +34,8 @@ class NotificationService {
   @protected
   NotificationService.internal();
 
-
   final Map<String, Set<NotificationsListener>> _listeners = {};
+  final Map<String, dynamic> _pendingNotifications = {};
 
   void subscribe(NotificationsListener listener, names) {
     if (names is List) {
@@ -57,6 +57,10 @@ class NotificationService {
         _listeners[name] = listenersForName = <NotificationsListener>{};
       }
       listenersForName.add(listener);
+      if (_pendingNotifications.containsKey(name)) {
+        notifySubscribers({listener}, name, _pendingNotifications[name]);
+        _pendingNotifications.remove(name);
+      }
     }
   }
 
@@ -96,17 +100,19 @@ class NotificationService {
   Set<NotificationsListener>? subscribers(String name) =>
     _listeners[name];
 
-  void notify(String name, [dynamic param]) =>
-    notifySubscribers(subscribers(name), name, param);
+  void notify(String name, [dynamic param, bool storePending = false,]) =>
+    notifySubscribers(subscribers(name), name, param, storePending);
 
-  void notifySubscribers(Set<NotificationsListener>? subscribers, String name, [dynamic param]) {
+  void notifySubscribers(Set<NotificationsListener>? subscribers, String name,
+      [dynamic param, bool storePending = false]) {
     if (subscribers != null) {
       for (NotificationsListener subscriber in subscribers) {
         subscriber.onNotification(name, param);
       }
+    } else if (storePending) {
+      _pendingNotifications[name] = param;
     }
   }
-
 }
 
 abstract mixin class NotificationsListener {
