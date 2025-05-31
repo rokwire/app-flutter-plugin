@@ -199,9 +199,8 @@ class Poll {
   }
 
   void apply(PollVote pollVote) {
-    // poll event stream should handle this
-    // results ??= PollVote();
-    // results!.apply(pollVote);
+    results ??= PollVote();
+    results!.apply(pollVote);
 
     _increaseUniqueVotersCount();
 
@@ -404,22 +403,19 @@ class PollVote {
     }
   }
 
-  bool isEqual(PollVote? pollVote) {
+  int? voteDifferenceIndex(PollVote? pollVote) {
     Map<int, int>? votes = pollVote?._votes;
     if ((_votes == null) && (votes == null)) {
-      return true;
+      return null;
     }
-    if ((_votes != null) && (votes != null)) {
-      if (votes.length == _votes!.length) {
-        for (int optionIndex in votes.keys) {
-          if (votes[optionIndex] != _votes![optionIndex]) {
-            return false;
-          }
+    if (votes != null) {
+      for (int optionIndex in votes.keys) {
+        if (votes[optionIndex] != _votes![optionIndex]) {
+          return optionIndex;
         }
-        return true;
       }
     }
-    return false;
+    return null;
   }
 
   void _updateTotal(int? delta) {

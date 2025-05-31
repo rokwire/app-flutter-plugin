@@ -51,6 +51,7 @@ class Polls with Service, NotificationsListener {
   static const String notifyLifecycleVote    = "edu.illinois.rokwire.poll.lifecycle.vote";
 
   final Map<String, PollChunk> _pollChunks = <String, PollChunk>{};
+  List<Pair<String, int>> _processingUserVotes = [];
   
   @protected
   Map<String, PollChunk> get pollChunks => _pollChunks;
@@ -237,7 +238,9 @@ class Polls with Service, NotificationsListener {
 
   Future<void> vote(String? pollId, PollVote? vote) async {
     if (enabled) {
-      if ((pollId != null) && (vote != null)) {
+      if ((pollId != null) && (vote?.votes != null)) {
+        Pair<String, int> userVote = Pair(pollId, vote!.votes!.values.first);
+        _processingUserVotes.add(userVote);
         String url = '${Config().quickPollsUrl}/polls/$pollId/vote';
         Map<String, dynamic> voteJson = {
           'userid': Auth2().accountId,
@@ -250,6 +253,7 @@ class Polls with Service, NotificationsListener {
           updatePollVote(pollId, vote);
         }
         else {
+          _processingUserVotes.remove(userVote);
           throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
         }
       }
@@ -315,7 +319,6 @@ class Polls with Service, NotificationsListener {
             Poll? poll = CollectionUtils.isNotEmpty(polls) ? polls.first : null;
             if ((poll != null) && (_pollChunks[poll.pollId] == null)) {
               addPollToChunks(poll);
-              NotificationService().notify(notifyCreated, poll.pollId);
             }
             return poll;
           } else {
@@ -382,7 +385,7 @@ class Polls with Service, NotificationsListener {
         if (pollChunk.status == PollUIStatus.waitingClose) {
           pollChunk.status = PollUIStatus.waitingVote;
         }
-        presentWaiting();
+        presentPoll = pollChunk;
       }
     }
   }
@@ -437,9 +440,20 @@ class Polls with Service, NotificationsListener {
     if (pollId != null) {
       PollChunk? pollChunk = _pollChunks[pollId];
       if (pollChunk != null) {
-        if ((pollChunk.poll!.results == null) || !pollChunk.poll!.results!.isEqual(pollResults)) {
-          pollChunk.poll!.results = pollResults;
-          NotificationService().notify(notifyResultsChanged, pollId);
+        int? index = pollChunk.poll?.results?.voteDifferenceIndex(pollResults);
+        if (index != null) {
+          for (int i = 0; i < _processingUserVotes.length; i++) {
+            Pair<String, int> votePair = _processingUserVotes[i];
+            if (votePair.left != pollId || votePair.right != index) {
+              //TODO: may not work if repeating option votes is allowed for the poll
+              // skip update event if the poll ids match and the poll option selections match
+              _processingUserVotes.removeAt(i);
+              break;
+            } else {
+              pollChunk.poll!.results = pollResults;
+              NotificationService().notify(notifyResultsChanged, pollId);
+            }
+          }
         }
       }
     }
@@ -449,8 +463,9 @@ class Polls with Service, NotificationsListener {
   void updatePollVote(String? pollId, PollVote pollVote) {
     if (pollId != null) {
       PollChunk? pollChunk = _pollChunks[pollId];
-      if (pollChunk != null) {
+      if (pollChunk != null && pollVote.votes != null) {
         pollChunk.poll!.apply(pollVote);
+        _processingUserVotes.remove(Pair(pollId, pollVote.votes!.values.first));
         NotificationService().notify(notifyVoteChanged, pollId);
       }
     }
