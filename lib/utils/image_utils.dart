@@ -15,13 +15,13 @@
  */
 
 import 'dart:ui' as ui;
+import 'package:universal_html/html.dart' as html;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:universal_html/html.dart' show AnchorElement;
 import 'package:universal_io/io.dart';
 
 class ImageUtils {
@@ -37,30 +37,42 @@ class ImageUtils {
     if ((imageBytes == null) || StringUtils.isEmpty(fileName)) {
       return false;
     }
-    if (kIsWeb) {
-      AnchorElement()
-        ..href = '${Uri.dataFromBytes(imageBytes)}'
-        ..download = fileName
-        ..style.display = 'none'
-        ..click();
-      return true;
-    }
-
-    final String dir = (await getApplicationDocumentsDirectory()).path;
-    final String fullPath = '$dir/$fileName.png';
-    File capturedFile = File(fullPath);
-    // This ensures that the date is set properly instead of using old date
-    // when temp file is first created.
-    if (await capturedFile.exists()) {
-      await capturedFile.delete();
-    }
-    await capturedFile.writeAsBytes(imageBytes);
+    final String fileExtension = 'png';
     bool? saveResult = false;
-    try {
-      await Gal.putImage(capturedFile.path);
+    if (kIsWeb) {
+      // prepare
+      fileName += '.$fileExtension';
+      final blob = html.Blob([imageBytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.document.createElement('a') as html.AnchorElement
+        ..href = url
+        ..style.display = 'none'
+        ..download = fileName;
+      html.document.body?.children.add(anchor);
+
+      // download
+      anchor.click();
+
+      // cleanup
+      html.document.body?.children.remove(anchor);
+      html.Url.revokeObjectUrl(url);
       saveResult = true;
-    } catch (e) {
-      debugPrint('Failed to save image to fs. \nException: ${e.toString()}');
+    } else {
+      final String dir = (await getApplicationDocumentsDirectory()).path;
+      final String fullPath = '$dir/$fileName.$fileExtension';
+      File capturedFile = File(fullPath);
+      // This ensures that the date is set properly instead of using old date
+      // when temp file is first created.
+      if (await capturedFile.exists()) {
+        await capturedFile.delete();
+      }
+      await capturedFile.writeAsBytes(imageBytes);
+      try {
+        await Gal.putImage(capturedFile.path);
+        saveResult = true;
+      } catch (e) {
+        debugPrint('Failed to save image to fs. \nException: ${e.toString()}');
+      }
     }
     return saveResult;
   }
