@@ -49,6 +49,11 @@ class ImageUtils {
     final String dir = (await getApplicationDocumentsDirectory()).path;
     final String fullPath = '$dir/$fileName.png';
     File capturedFile = File(fullPath);
+    // This ensures that the date is set properly instead of using old date
+    // when temp file is first created.
+    if (await capturedFile.exists()) {
+      await capturedFile.delete();
+    }
     await capturedFile.writeAsBytes(imageBytes);
     bool? saveResult = false;
     try {
