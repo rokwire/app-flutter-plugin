@@ -1180,6 +1180,19 @@ class Event2Person {
     return result;
   }
 
+  static Set<String>? accountIdsFromList(List<Event2Person>? contentList) {
+    Set<String>? result;
+    if (contentList != null) {
+      result = <String>{};
+      for (Event2Person contentEntry in contentList) {
+        if (contentEntry.identifier?.accountId != null) {
+          result.add(contentEntry.identifier!.accountId!);
+        }
+      }
+    }
+    return result;
+  }
+
   static int? countInList(List<Event2Person>? contentList, { Event2UserRole? role, Event2UserRegistrationType? registrationType}) {
     if (contentList != null) {
       int count = 0;
