@@ -64,10 +64,13 @@ class FirebaseCore extends Service {
     //TBD: DD - implement for web - firebase options
     google.FirebaseOptions? options = kIsWeb
         ? google.FirebaseOptions(
-            apiKey: 'testApiKeyForUIUCWeb',
-            appId: 'testAppIdForUIUCWeb',
-            messagingSenderId: 'testMessagingSenderIdForUIUCWeb',
-            projectId: 'testProjectIdForUIUCWeb',
+            apiKey: 'AIzaSyA2jtU96o8YBeTCOnseW_CX3uocozE8UVU',
+            appId: '1:776164375754:web:b37caf68c1255ba6b04833',
+            messagingSenderId: '776164375754',
+            projectId: 'neom-u',
+            authDomain: 'neom-u.firebaseapp.com',
+            storageBucket: 'neom-u.firebasestorage.app',
+            measurementId: 'G-PQV6HTCQG7',
           )
         : _options;
     _firebaseApp ??= await google.Firebase.initializeApp(options: options);
