@@ -1121,8 +1121,8 @@ class Groups with Service, NotificationsListener {
   ///
   /// Returns the groups that current user is admin of without the current group
   ///
-  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const []}) async {
-    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my);
+  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const [], bool? administrative}) async {
+    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my, administrative: administrative);
     return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
   }
 
