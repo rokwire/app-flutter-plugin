@@ -533,6 +533,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   
   Map<String, dynamic> get settings                => JsonUtils.mapValue(content['settings'])  ?? {};
   Map<String, dynamic> get upgradeInfo             => JsonUtils.mapValue(content['upgrade']) ?? {};
+
+  Map<String, dynamic> get firebase {
+    Map<String, dynamic> firebaseMap = JsonUtils.mapValue(content['firebase']) ?? {};
+    return JsonUtils.mapValue(firebaseMap[operatingSystem]) ?? {};
+  }
   
   List<dynamic>? get supportedLocales              => JsonUtils.listValue(content['languages']);
 
@@ -574,6 +579,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     Uri? assetsUri = StringUtils.isNotEmpty(assetsUrl) ? Uri.tryParse(assetsUrl!) : null;
     return (assetsUri != null) ? "${assetsUri.scheme}://${assetsUri.host}/html/redirect.html" : null;
   }
+
+  // Getters: Firebase
+  String? get firebaseApiKey => JsonUtils.stringValue(firebase['apiKey']);
+  String? get firebaseAppId => JsonUtils.stringValue(firebase['appId']);
+  String? get firebaseMessagingSenderId => JsonUtils.stringValue(firebase['messagingSenderId']);
+  String? get firebaseProjectId => JsonUtils.stringValue(firebase['projectId']);
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;

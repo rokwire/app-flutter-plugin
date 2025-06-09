@@ -16,16 +16,13 @@
 
 import 'package:firebase_core/firebase_core.dart' as google;
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class FirebaseCore extends Service {
 
   google.FirebaseApp? _firebaseApp;
-  google.FirebaseOptions? _options;
-
-  set options(google.FirebaseOptions options) {
-    _options = options;
-  }
 
   // Singletone Factory
 
@@ -60,20 +57,27 @@ class FirebaseCore extends Service {
     }
   }
 
+  // This is required for the web app
+  @override
+  Set<Service> get serviceDependsOn => { Config() };
+
   Future<void> initFirebase() async {
-    //TBD: DD - implement for web - firebase options
-    google.FirebaseOptions? options = kIsWeb
-        ? google.FirebaseOptions(
-            apiKey: 'AIzaSyA2jtU96o8YBeTCOnseW_CX3uocozE8UVU',
-            appId: '1:776164375754:web:b37caf68c1255ba6b04833',
-            messagingSenderId: '776164375754',
-            projectId: 'neom-u',
-            authDomain: 'neom-u.firebaseapp.com',
-            storageBucket: 'neom-u.firebasestorage.app',
-            measurementId: 'G-PQV6HTCQG7',
-          )
-        : _options;
-    _firebaseApp ??= await google.Firebase.initializeApp(options: options);
+    google.FirebaseOptions? firebaseOptions;
+    if (kIsWeb) {
+      String? firebaseApiKey = Config().firebaseApiKey;
+      String? firebaseAppId = Config().firebaseAppId;
+      String? firebaseMessagingSenderId = Config().firebaseMessagingSenderId;
+      String? firebaseProjectId = Config().firebaseProjectId;
+
+      firebaseOptions = google.FirebaseOptions(
+        apiKey: StringUtils.ensureNotEmpty(firebaseApiKey),
+        appId: StringUtils.ensureNotEmpty(firebaseAppId),
+        messagingSenderId: StringUtils.ensureNotEmpty(firebaseMessagingSenderId),
+        projectId: StringUtils.ensureNotEmpty(firebaseProjectId),
+      );
+    }
+
+    _firebaseApp ??= await google.Firebase.initializeApp(options: firebaseOptions);
   }
 
   google.FirebaseApp? get app => _firebaseApp;
