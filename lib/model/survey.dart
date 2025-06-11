@@ -1178,10 +1178,17 @@ class Score {
   final double? streakMultiplier;
   final int? answerCount;
   final int? correctAnswerCount;
+  final int? rank;
 
-  Score(this.surveyType, this.externalProfileId, this.score, this.responseCount,
-       this.currentStreak, this.streakMultiplier, this.answerCount,
-      this.correctAnswerCount);
+  Score(this.surveyType,
+      this.externalProfileId,
+      this.score, this.responseCount,
+       this.currentStreak,
+      this.streakMultiplier,
+      this.answerCount,
+      this.correctAnswerCount,
+      this.rank
+      );
 
   factory Score.fromJson(Map<String, dynamic> json) {
     return Score(
@@ -1192,7 +1199,8 @@ class Score {
       JsonUtils.intValue(json['current_streak']),
       JsonUtils.doubleValue(json['streak_multiplier']),
       JsonUtils.intValue(json['answer_count']),
-      JsonUtils.intValue(json['correct_answer_count'])
+      JsonUtils.intValue(json['correct_answer_count']),
+      JsonUtils.intValue(json['rank'])
     );
   }
 
