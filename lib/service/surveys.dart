@@ -633,6 +633,16 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  /// Retrieves a list of `Score` objects from the surveys API, using optional
+  /// pivot filters to segment results. Each limit must be positive. The
+  /// results are returned in descending order.
+  ///
+  /// - [aboveLimit]: Number of scores to include above user's score.
+  /// - [equalLimit]: Number of scores to include equal to user's score.
+  /// - [belowLimit]: Number of scores to include less than user's score.
+  ///
+  /// Returns a `Future<List<Score>?>` that completes with the parsed scores or
+  /// `null` if the request was not made or did not succeed.
   Future<List<Score>?> getScoresWithPivot({
     int? aboveLimit,
     int? equalLimit,
