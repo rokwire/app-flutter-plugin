@@ -633,6 +633,43 @@ class Surveys /* with Service */ {
     return null;
   }
 
+  Future<List<Score>?> getScoresWithPivot({
+    int? aboveLimit,
+    int? equalLimit,
+    int? belowLimit
+  }) async {
+    if (enabled) {
+      String? url = Config().surveysUrl;
+      if (url != null && url.isNotEmpty) {
+        url += '/scores/pivot';
+
+        Map<String, String> queryParams = {};
+        if (aboveLimit != null) {
+          queryParams['above_limit'] = aboveLimit.toString();
+        }
+        if (equalLimit != null) {
+          queryParams['equal_limit'] = equalLimit.toString();
+        }
+        if (belowLimit != null) {
+          queryParams['below_limit'] = belowLimit.toString();
+        }
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+      int responseCode = response?.statusCode ?? -1;
+      String? responseBody = response?.body;
+      if (responseCode == 200) {
+        List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+        if (responseList != null) {
+          return Score.listFromJson(responseList);
+        }
+      }
+    }
+    return null;
+  }
+
   /////////////////////////
   // Enabled
 
