@@ -1337,80 +1337,61 @@ String? event2TypeToString(Event2Type? value) {
 
 enum Event2TimeFilter { past, upcoming, today, tomorrow, thisWeek, thisWeekend, nextWeek, nextWeekend, thisMonth, nextMonth, customRange }
 
-Event2TimeFilter? event2TimeFilterFromString(String? value) {
-  if (value == 'past') {
-    return Event2TimeFilter.past;
-  }
-  else if (value == 'upcoming') {
-    return Event2TimeFilter.upcoming;
-  }
-  else if (value == 'today') {
-    return Event2TimeFilter.today;
-  }
-  else if (value == 'tomorrow') {
-    return Event2TimeFilter.tomorrow;
-  }
-  else if (value == 'this_week') {
-    return Event2TimeFilter.thisWeek;
-  }
-  else if (value == 'this_weekend') {
-    return Event2TimeFilter.thisWeekend;
-  }
-  else if (value == 'next_week') {
-    return Event2TimeFilter.nextWeek;
-  }
-  else if (value == 'next_weekend') {
-    return Event2TimeFilter.nextWeekend;
-  }
-  else if (value == 'this_month') {
-    return Event2TimeFilter.thisMonth;
-  }
-  else if (value == 'next_month') {
-    return Event2TimeFilter.nextMonth;
-  }
-  else if (value == 'custom_range') {
-    return Event2TimeFilter.customRange;
-  }
-  else {
-    return null;
-  }
-}
+extension Event2TimeFilterImpl on Event2TimeFilter {
 
-String? event2TimeFilterToString(Event2TimeFilter? value) {
-  switch (value) {
-    case Event2TimeFilter.past: return 'past';
-    case Event2TimeFilter.upcoming: return 'upcoming';
-    case Event2TimeFilter.today: return 'today';
-    case Event2TimeFilter.tomorrow: return 'tomorrow';
-    case Event2TimeFilter.thisWeek: return 'this_week';
-    case Event2TimeFilter.thisWeekend: return 'this_weekend';
-    case Event2TimeFilter.nextWeek: return 'next_week';
-    case Event2TimeFilter.nextWeekend: return 'next_weekend';
-    case Event2TimeFilter.thisMonth: return 'this_month';
-    case Event2TimeFilter.nextMonth: return 'next_month';
-    case Event2TimeFilter.customRange: return 'custom_range';
-    default: return null;
-  }
-}
-
-Event2TimeFilter? event2TimeFilterListFromSelection(dynamic selection) {
-  if (selection is List) {
-    for (dynamic entry in selection) {
-      if (entry is Event2TimeFilter) {
-        return entry;
-      }
+  String toJson() {
+    switch (this) {
+      case Event2TimeFilter.past: return 'past';
+      case Event2TimeFilter.upcoming: return 'upcoming';
+      case Event2TimeFilter.today: return 'today';
+      case Event2TimeFilter.tomorrow: return 'tomorrow';
+      case Event2TimeFilter.thisWeek: return 'this_week';
+      case Event2TimeFilter.thisWeekend: return 'this_weekend';
+      case Event2TimeFilter.nextWeek: return 'next_week';
+      case Event2TimeFilter.nextWeekend: return 'next_weekend';
+      case Event2TimeFilter.thisMonth: return 'this_month';
+      case Event2TimeFilter.nextMonth: return 'next_month';
+      case Event2TimeFilter.customRange: return 'custom_range';
     }
   }
-  else if (selection is Event2TimeFilter) {
-    return selection;
+
+  static Event2TimeFilter? fromJson(String? value) {
+    switch (value) {
+      case 'past': return Event2TimeFilter.past;
+      case 'upcoming': return Event2TimeFilter.upcoming;
+      case 'today': return Event2TimeFilter.today;
+      case 'tomorrow': return Event2TimeFilter.tomorrow;
+      case 'this_week': return Event2TimeFilter.thisWeek;
+      case 'this_weekend': return Event2TimeFilter.thisWeekend;
+      case 'next_week': return Event2TimeFilter.nextWeek;
+      case 'next_weekend': return Event2TimeFilter.nextWeekend;
+      case 'this_month': return Event2TimeFilter.thisMonth;
+      case 'next_month': return Event2TimeFilter.nextMonth;
+      case 'custom_range': return Event2TimeFilter.customRange;
+      default: return null;
+    }
   }
-  return null;
+
+  static Event2TimeFilter? fromAttributeSelection(dynamic attributeSelection) {
+    if (attributeSelection is List) {
+      for (dynamic entry in attributeSelection) {
+        if (entry is Event2TimeFilter) {
+          return entry;
+        }
+      }
+    }
+    else if (attributeSelection is Event2TimeFilter) {
+      return attributeSelection;
+    }
+    return null;
+  }
 }
 
 ///////////////////////////////
 /// Event2TypeFilter
 
 enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
+
 enum Event2TypeGroup { cost, format, access, limits }
 
 const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2TypeFilter, Event2TypeGroup>{
@@ -1427,102 +1408,79 @@ const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2Type
   Event2TypeFilter.admin: Event2TypeGroup.limits,
 };
 
-Event2TypeFilter? event2TypeFilterFromString(String? value) {
-  if (value == 'free') {
-    return Event2TypeFilter.free;
-  }
-  else if (value == 'paid') {
-    return Event2TypeFilter.paid;
-  }
-  else if (value == 'in-person') {
-    return Event2TypeFilter.inPerson;
-  }
-  else if (value == 'online') {
-    return Event2TypeFilter.online;
-  }
-  else if (value == 'hybrid') {
-    return Event2TypeFilter.hybrid;
-  }
-  else if (value == 'public') {
-    return Event2TypeFilter.public;
-  }
-  else if (value == 'private') {
-    return Event2TypeFilter.private;
-  }
-  else if (value == 'nearby') {
-    return Event2TypeFilter.nearby;
-  }
-  else if (value == 'super-event') {
-    return Event2TypeFilter.superEvent;
-  }
-  else if (value == 'favorite') {
-    return Event2TypeFilter.favorite;
-  }
-  else if (value == 'admin') {
-    return Event2TypeFilter.admin;
-  }
-  else {
-    return null;
-  }
-}
+extension Event2TypeFilterImpl on Event2TypeFilter {
 
-String? event2TypeFilterToString(Event2TypeFilter? value) {
-  switch (value) {
-    case Event2TypeFilter.free: return 'free';
-    case Event2TypeFilter.paid: return 'paid';
-    case Event2TypeFilter.inPerson: return 'in-person';
-    case Event2TypeFilter.online: return 'online';
-    case Event2TypeFilter.hybrid: return 'hybrid';
-    case Event2TypeFilter.public: return 'public';
-    case Event2TypeFilter.private: return 'private';
-    case Event2TypeFilter.nearby: return 'nearby';
-    case Event2TypeFilter.superEvent: return 'super-event';
-    case Event2TypeFilter.favorite: return 'favorite';
-    case Event2TypeFilter.admin: return 'admin';
-    default: return null;
-  }
-}
-
-List<Event2TypeFilter>? event2TypeFilterListFromStringList(List<String>? values) {
-  if (values != null) {
-    List<Event2TypeFilter> list = <Event2TypeFilter>[];
-    for (String value in values) {
-      Event2TypeFilter? entry = event2TypeFilterFromString(value);
-      if (entry != null) {
-        list.add(entry);
-      }
+  String toJson() {
+    switch (this) {
+      case Event2TypeFilter.free: return 'free';
+      case Event2TypeFilter.paid: return 'paid';
+      case Event2TypeFilter.inPerson: return 'in-person';
+      case Event2TypeFilter.online: return 'online';
+      case Event2TypeFilter.hybrid: return 'hybrid';
+      case Event2TypeFilter.public: return 'public';
+      case Event2TypeFilter.private: return 'private';
+      case Event2TypeFilter.nearby: return 'nearby';
+      case Event2TypeFilter.superEvent: return 'super-event';
+      case Event2TypeFilter.favorite: return 'favorite';
+      case Event2TypeFilter.admin: return 'admin';
     }
-    return list;
   }
-  return null;
+
+  static Event2TypeFilter? fromJson(String? value) {
+    switch (value) {
+      case 'free': return Event2TypeFilter.free;
+      case 'paid': return Event2TypeFilter.paid;
+      case 'in-person': return Event2TypeFilter.inPerson;
+      case 'online': return Event2TypeFilter.online;
+      case 'hybrid': return Event2TypeFilter.hybrid;
+      case 'public': return Event2TypeFilter.public;
+      case 'private': return Event2TypeFilter.private;
+      case 'nearby': return Event2TypeFilter.nearby;
+      case 'super-event': return Event2TypeFilter.superEvent;
+      case 'favorite': return Event2TypeFilter.favorite;
+      case 'admin': return Event2TypeFilter.admin;
+      default: return null;
+    }
+  }
+
 }
 
-List<String>? event2TypeFilterListToStringList(Iterable<Event2TypeFilter>? values) {
-  if (values != null) {
+extension Event2TypeFilterListImpl on Iterable<Event2TypeFilter> {
+
+  List<String> toJson() {
     List<String> list = <String>[];
-    for (Event2TypeFilter value in values) {
-      String? entry = event2TypeFilterToString(value);
-      if (entry != null) {
-        list.add(entry);
-      }
+    for (Event2TypeFilter value in this) {
+      list.add(value.toJson());
     }
     return list;
   }
-  return null;
-}
 
-List<Event2TypeFilter>? event2TypeFilterListFromSelection(dynamic selection) {
-  if (selection is List) {
-    return JsonUtils.listValue<Event2TypeFilter>(selection);
-  }
-  else if (selection is Event2TypeFilter) {
-    return <Event2TypeFilter>[selection];
-  }
-  else {
+  static List<Event2TypeFilter>? listFromJson(List<String>? values) {
+    if (values != null) {
+      List<Event2TypeFilter> list = <Event2TypeFilter>[];
+      for (String value in values) {
+        Event2TypeFilter? entry = Event2TypeFilterImpl.fromJson(value);
+        if (entry != null) {
+          list.add(entry);
+        }
+      }
+      return list;
+    }
     return null;
   }
-}
 
+  static List<Event2TypeFilter>? fromAttributeSelection(dynamic attributeSelection) {
+    if (attributeSelection is List) {
+      return JsonUtils.listValue<Event2TypeFilter>(attributeSelection);
+    }
+    else if (attributeSelection is Event2TypeFilter) {
+      return <Event2TypeFilter>[attributeSelection];
+    }
+    else {
+      return null;
+    }
+  }
+}
 
 ///////////////////////////////
 /// Event2SortType
