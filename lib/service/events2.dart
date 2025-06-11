@@ -87,23 +87,14 @@ class Events2 with Service, NotificationsListener {
 
   // Implementation
 
-  Future<Response?> _loadEventsResponse(Events2Query? query, {Client? client}) async {
-    if (Config().calendarUrl == null) {
-      debugPrint('Failed to load events - missing calendar url.');
-      return null;
-    }
-
-    String? requestBody = JsonUtils.encode(query?.toQueryJson());
-    Response? response = await Network()
-        .post("${Config().calendarUrl}/v2/events/load", body: requestBody, headers: _jsonHeaders, client: client, auth: Auth2());
-
-    int? responseCode = response?.statusCode;
-    String? responseBody = response?.body;
-    if (responseCode != 200) {
-      debugPrint('Failed to load events. Reason: $responseCode, $responseBody');
-    }
-    return response;
-  }
+  Future<Response?> _loadEventsResponse(Events2Query? query, {Client? client}) async => (Config().calendarUrl != null) ?
+    Network().post(
+      "${Config().calendarUrl}/v2/events/load",
+      body: JsonUtils.encode(query?.toQueryJson()),
+      headers: _jsonHeaders,
+      client: client,
+      auth: Auth2()
+    ) : null;
 
   // Returns Events2ListResult in case of success, String description in case of error
   Future<dynamic> loadEventsEx(Events2Query? query, {Client? client}) async {
@@ -117,6 +108,9 @@ class Events2 with Service, NotificationsListener {
     return (result is Events2ListResult) ? result : null;
   }
 
+  Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
+    (await loadEvents(query))?.events;
+
   Future<Events2ListResult?> loadGroupEvents({String? groupId, Event2TimeFilter? timeFilter, int? offset, int? limit}) async =>
     StringUtils.isNotEmpty(groupId) ? loadEvents(Events2Query(
         groupIds: {groupId!},
@@ -127,8 +121,18 @@ class Events2 with Service, NotificationsListener {
         offset: offset, limit: limit
     )) : null;
 
-  Future<List<Event2>?> loadEventsList(Events2Query? query) async =>
-    (await loadEvents(query))?.events;
+  Future<Map<String, int?>?> loadEventsCounts({Events2Query? baseQuery, Map<String, Events2Query?>? countQueries}) async {
+    if (Config().calendarUrl != null) {
+      String url = "${Config().calendarUrl}/v2/events/stats";
+      String? body = JsonUtils.encode({
+        'base_filter': baseQuery?.toQueryJson(),
+        'sub_filters': countQueries?.map<String, Map<String, dynamic>?>((String key, Events2Query? query) => MapEntry(key, query?.toQueryJson())),
+      });
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? JsonUtils.mapCastValue<String, int?>(JsonUtils.decodeMap(response?.body)) : null;
+    }
+    return null;
+  }
 
   Future<dynamic> loadEventEx(String eventId) async {
     if (Config().calendarUrl != null) {
@@ -294,7 +298,7 @@ class Events2 with Service, NotificationsListener {
           // 1.2 Link event to group - e.g. add context item
           items.add(groupItem);
         }
-        authorizationContext = Event2AuthorizationContext(status: status, items: items);
+        authorizationContext = Event2AuthorizationContext(status: status, items: items, externalAdmins: event.authorizationContext?.externalAdmins);
       }
       else {
         authorizationContext = event.authorizationContext;

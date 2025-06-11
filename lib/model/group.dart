@@ -44,7 +44,9 @@ class Group {
   String?                       authManGroupName;
 
   bool?                         attendanceGroup;
-  
+
+  bool?                         administrative;
+
   bool?                         researchProject;
   bool?                         researchOpen;
   String?                       researchConsentDetails;
@@ -62,7 +64,7 @@ class Group {
 	  this.id, this.attributes, this.type, this.title, this.description, this.privacy, 
     this.dateCreatedUtc, this.dateUpdatedUtc, this.dateManagedMembershipUpdatedUtc, this.dateMembershipUpdatedUtc,
     this.certified, this.hiddenForSearch, this.canJoinAutomatically, this.onlyAdminsCanCreatePolls,
-    this.authManEnabled, this.authManGroupName, this.attendanceGroup,
+    this.authManEnabled, this.authManGroupName, this.attendanceGroup, this.administrative,
     this.researchProject, this.researchOpen, this.researchConsentDetails, this.researchConsentStatement, this.researchProfile,
     this.imageURL, this.webURL, this.currentMember, this.questions, this.membershipQuest, this.settings
     });
@@ -90,6 +92,8 @@ class Group {
       authManGroupName               : JsonUtils.stringValue(json['authman_group']),
       
       attendanceGroup                : JsonUtils.boolValue(json['attendance_group']),
+
+      administrative                 : JsonUtils.boolValue(json['administrative']),
 
       researchProject                : JsonUtils.boolValue(json['research_group']),
       researchOpen                   : JsonUtils.boolValue(json['research_open']),
@@ -130,6 +134,8 @@ class Group {
 
       attendanceGroup                : other.attendanceGroup,
 
+      administrative                 : other.administrative,
+
       researchProject                : other.researchProject,
       researchOpen                   : other.researchOpen,
       researchConsentDetails         : other.researchConsentDetails,
@@ -168,6 +174,8 @@ class Group {
       'authman_group'                 : authManGroupName,
 
       'attendance_group'              : attendanceGroup,
+
+      'administrative'                : administrative,
 
       'research_group'                : researchProject,
       'research_open'                 : researchOpen,
@@ -209,6 +217,8 @@ class Group {
 
       (other.attendanceGroup == attendanceGroup) &&
 
+      (other.administrative == administrative) &&
+
       (other.researchProject == researchProject) &&
       (other.researchOpen == researchOpen) &&
       (other.researchConsentDetails == researchConsentDetails) &&
@@ -246,6 +256,8 @@ class Group {
     (authManGroupName?.hashCode ?? 0) ^
 
     (attendanceGroup?.hashCode ?? 0) ^
+
+    (administrative?.hashCode ?? 0) ^
 
     (researchProject?.hashCode ?? 0) ^
     (researchOpen?.hashCode ?? 0) ^
