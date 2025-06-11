@@ -317,9 +317,9 @@ class Groups with Service, NotificationsListener {
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
   /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, int? offset, int? limit}) async {
+  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, bool? administrative, int? offset, int? limit}) async {
     switch(contentType) {
-      case GroupsContentType.my: return _loadUserGroups(title: title, attributes: attributes, offset: offset, limit: limit);
+      case GroupsContentType.my: return _loadUserGroups(title: title, attributes: attributes, administrative: administrative, offset: offset, limit: limit);
       case GroupsContentType.all: return _loadAllGroups(title: title, attributes: attributes, offset: offset, limit: limit);
       default: return null;
     }
@@ -372,7 +372,7 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, bool? administrative, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
       String? post = JsonUtils.encode({
@@ -381,6 +381,7 @@ class Groups with Service, NotificationsListener {
         'privacy': groupPrivacyToString(privacy),
         'research_group': false,
         'ids': groupIds,
+        'administrative': administrative,
         'offset': offset,
         'limit': limit,
       });
@@ -1121,8 +1122,8 @@ class Groups with Service, NotificationsListener {
   ///
   /// Returns the groups that current user is admin of without the current group
   ///
-  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const []}) async {
-    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my);
+  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const [], bool? administrative}) async {
+    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my, administrative: administrative);
     return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
   }
 
@@ -1161,7 +1162,7 @@ class Groups with Service, NotificationsListener {
     return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
   }
 
-  Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
+  Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
       // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
       String url = '${Config().groupsUrl}/v2/user/groups';
@@ -1171,6 +1172,7 @@ class Groups with Service, NotificationsListener {
         'privacy': groupPrivacyToString(privacy),
         'research_group': false,
         'ids': groupIds,
+        'administrative': administrative,
         'offset': offset,
         'limit': limit,
       });
@@ -1184,12 +1186,13 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> _loadUserGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, int? offset, int? limit}) async {
+  Future<List<Group>?> _loadUserGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
     Response? response = await _loadUserGroupsResponse(
         title: title,
         attributes: attributes,
         privacy: privacy,
         groupIds: groupIds,
+        administrative: administrative,
         offset: offset,
         limit:  limit,
     );
