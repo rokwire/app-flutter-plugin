@@ -1182,8 +1182,9 @@ class Score {
 
   Score(this.surveyType,
       this.externalProfileId,
-      this.score, this.responseCount,
-       this.currentStreak,
+      this.score,
+      this.responseCount,
+      this.currentStreak,
       this.streakMultiplier,
       this.answerCount,
       this.correctAnswerCount,
