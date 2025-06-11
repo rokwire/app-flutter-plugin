@@ -429,25 +429,30 @@ class Event2Context {
 class Event2AuthorizationContext {
   final Event2AuthorizationContextStatus? status;
   final List<Event2ContextItem>? items;
+  final Event2ExternalAdmins? externalAdmins;
 
-  Event2AuthorizationContext({this.status, this.items});
+  Event2AuthorizationContext({this.status, this.items, this.externalAdmins});
 
   static Event2AuthorizationContext? fromJson(Map<String, dynamic>? json) => (json != null) ? Event2AuthorizationContext(
     status: event2AuthorizationContextStatusFromString(JsonUtils.stringValue(json['authorization_status'])),
-    items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items']))
+    items: Event2ContextItem.listFromJson(JsonUtils.listValue(json['items'])),
+    externalAdmins: Event2ExternalAdmins.fromJson(JsonUtils.mapValue(json['external_admins']))
   ) : null;
 
   factory Event2AuthorizationContext.fromOther(Event2AuthorizationContext? other, {
     Event2AuthorizationContextStatus? status,
     List<Event2ContextItem>? items,
+    Event2ExternalAdmins? externalAdmins,
   }) => Event2AuthorizationContext(
     status: status ?? other?.status,
     items: items ?? ListUtils.from(other?.items),
+    externalAdmins: externalAdmins ?? other?.externalAdmins,
   );
 
-  factory Event2AuthorizationContext.none() => Event2AuthorizationContext(status: Event2AuthorizationContextStatus.none);
+  factory Event2AuthorizationContext.none({Event2ExternalAdmins? externalAdmins}) =>
+      Event2AuthorizationContext(status: Event2AuthorizationContextStatus.none, externalAdmins: externalAdmins);
 
-  factory Event2AuthorizationContext.groupMember({List<String>? groupIds}) {
+  factory Event2AuthorizationContext.groupMember({List<String>? groupIds, Event2ExternalAdmins? externalAdmins}) {
     List<Event2ContextItem>? items;
     if (groupIds != null) {
       items = <Event2ContextItem>[];
@@ -455,17 +460,19 @@ class Event2AuthorizationContext {
         items.add(Event2ContextItem(name: Event2ContextItemName.group_member, identifier: groupId));
       }
     }
-    return Event2AuthorizationContext(status: Event2AuthorizationContextStatus.active, items: items);
+    return Event2AuthorizationContext(status: Event2AuthorizationContextStatus.active, items: items, externalAdmins: externalAdmins);
   }
 
-  factory Event2AuthorizationContext.registeredUser() => Event2AuthorizationContext(
+  factory Event2AuthorizationContext.registeredUser({Event2ExternalAdmins? externalAdmins}) => Event2AuthorizationContext(
       status: Event2AuthorizationContextStatus.active,
-      items: [Event2ContextItem(name: Event2ContextItemName.registered_user)]);
+      items: [Event2ContextItem(name: Event2ContextItemName.registered_user)],
+      externalAdmins: externalAdmins);
 
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = {};
     JsonUtils.addNonNullValue(json: json, key: 'authorization_status', value: event2AuthorizationContextStatusToString(status));
     JsonUtils.addNonNullValue(json: json, key: 'items', value: Event2ContextItem.listToJson(items));
+    JsonUtils.addNonNullValue(json: json, key: 'external_admins', value: externalAdmins?.toJson());
     return json;
   }
 
@@ -480,10 +487,38 @@ class Event2AuthorizationContext {
           (items!.firstWhereOrNull((item) => (item.name == Event2ContextItemName.group_member)) != null));
 
   @override
-  bool operator ==(other) => (other is Event2AuthorizationContext) && (other.status == status) && const DeepCollectionEquality().equals(other.items, items);
+  bool operator ==(other) => (other is Event2AuthorizationContext) &&
+      (other.status == status) &&
+      const DeepCollectionEquality().equals(other.items, items) &&
+      (other.externalAdmins == externalAdmins);
 
   @override
-  int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items));
+  int get hashCode => (status?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(items)) ^ (externalAdmins?.hashCode ?? 0);
+}
+
+///////////////////////////////
+/// Event2ExternalAdmins
+
+class Event2ExternalAdmins {
+  final List<String>? groupIds;
+
+  Event2ExternalAdmins({this.groupIds});
+
+  static Event2ExternalAdmins? fromJson(Map<String, dynamic>? json) => (json != null) ? Event2ExternalAdmins(
+      groupIds: JsonUtils.listStringsValue(json['groups-bb_groups-ids'])
+  ) : null;
+
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = {};
+    JsonUtils.addNonNullValue(json: json, key: 'groups-bb_groups-ids', value: groupIds);
+    return json;
+  }
+
+  @override
+  bool operator ==(other) => (other is Event2ExternalAdmins) && const DeepCollectionEquality().equals(other.groupIds, groupIds);
+
+  @override
+  int get hashCode => (const DeepCollectionEquality().hash(groupIds));
 }
 
 ///////////////////////////////

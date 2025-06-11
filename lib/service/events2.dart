@@ -298,7 +298,7 @@ class Events2 with Service, NotificationsListener {
           // 1.2 Link event to group - e.g. add context item
           items.add(groupItem);
         }
-        authorizationContext = Event2AuthorizationContext(status: status, items: items);
+        authorizationContext = Event2AuthorizationContext(status: status, items: items, externalAdmins: event.authorizationContext?.externalAdmins);
       }
       else {
         authorizationContext = event.authorizationContext;
