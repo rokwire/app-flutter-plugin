@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+### Added
+- Added Counts API to Events2 service, updated event filter enums implementaions [#4890](https://github.com/rokwire/illinois-app/issues/4890).
 
 ## [1.10.1] - 2025-05-28
 ### Added
