@@ -1211,3 +1211,58 @@ class Score {
     return result;
   }
 }
+
+class Leaderboard {
+  final String id;
+  final String orgId;
+  final String appId;
+  final String name;
+  final List<String> adminUserIds;
+  final List<String> userIds;
+
+  Leaderboard({
+    required this.id,
+    required this.orgId,
+    required this.appId,
+    required this.name,
+    required this.adminUserIds,
+    required this.userIds,
+  });
+
+  factory Leaderboard.fromJson(Map<String, dynamic> json) {
+    return Leaderboard(
+      id: JsonUtils.stringValue(json['id']) ?? '',
+      orgId: JsonUtils.stringValue(json['org_id']) ?? '',
+      appId: JsonUtils.stringValue(json['app_id']) ?? '',
+      name: JsonUtils.stringValue(json['name']) ?? '',
+      adminUserIds: JsonUtils.stringListValue(json['adminUserIds']) ?? [],
+      userIds: JsonUtils.stringListValue(json['userIds']) ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'org_id': orgId,
+      'app_id': appId,
+      'name': name,
+      'adminUserIds': adminUserIds,
+      'userIds': userIds,
+    };
+  }
+
+  static List<Leaderboard> listFromJson(List<dynamic>? jsonList) {
+    final List<Leaderboard> result = [];
+    for (final entry in jsonList ?? []) {
+      final map = JsonUtils.mapValue(entry);
+      if (map != null) {
+        try {
+          result.add(Leaderboard.fromJson(map));
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+    return result;
+  }
+}
