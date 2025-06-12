@@ -633,35 +633,46 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  /// Retrieves a list of `Score` objects from the surveys API, using optional
-  /// pivot filters to segment results. Each limit must be positive. The
-  /// results are returned in descending order.
+  /// Retrieves a list of `Score` objects from the surveys API, The top scores
+  /// are listed first bounded by the `limit` followed by the local scores
+  /// using optional pivot filters to segment results. Each limit must be
+  /// positive. The results are returned in descending order.
   ///
+  /// - [limit]: Number of top scores
+  /// - [offset]: Number of previously loaded top scores
+  /// - [localLimit]: Number of scores to locally
   /// - [aboveLimit]: Number of scores to include above user's score.
-  /// - [equalLimit]: Number of scores to include equal to user's score.
   /// - [belowLimit]: Number of scores to include less than user's score.
   ///
   /// Returns a `Future<List<Score>?>` that completes with the parsed scores or
   /// `null` if the request was not made or did not succeed.
-  Future<List<Score>?> getScoresWithPivot({
-    int? aboveLimit,
-    int? equalLimit,
-    int? belowLimit
+  Future<List<Score>?> getTopAndLocalScores({
+    int? limit,
+    int? offset,
+    int? localLimit,
+    int? abovePivotLimit,
+    int? belowPivotLimit
   }) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
-        url += '/scores/pivot';
+        url += '/scores/top-and-local';
 
         Map<String, String> queryParams = {};
-        if (aboveLimit != null) {
-          queryParams['above_limit'] = aboveLimit.toString();
+        if (limit != null) {
+          queryParams['limit'] = limit.toString();
         }
-        if (equalLimit != null) {
-          queryParams['equal_limit'] = equalLimit.toString();
+        if (offset != null) {
+          queryParams['offset'] = offset.toString();
         }
-        if (belowLimit != null) {
-          queryParams['below_limit'] = belowLimit.toString();
+        if (localLimit != null) {
+          queryParams['local_limit'] = localLimit.toString();
+        }
+        if (abovePivotLimit != null) {
+          queryParams['above_pivot_limit'] = abovePivotLimit.toString();
+        }
+        if (belowPivotLimit != null) {
+          queryParams['below_pivot_limit'] = belowPivotLimit.toString();
         }
         if (queryParams.isNotEmpty) {
           url = UrlUtils.addQueryParameters(url, queryParams);
