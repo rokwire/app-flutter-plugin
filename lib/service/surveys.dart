@@ -639,13 +639,21 @@ class Surveys /* with Service */ {
   // ────────────────────────────────────────────────────────────────────────────
   // Leaderboards
 
-  /// Fetch all custom leaderboards for a given user
-  Future<List<Leaderboard>?> loadLeaderboardsForUser({required String userId, int? limit, int? offset,}) async {
+  /// Fetch all custom leaderboards for a given user, org & app
+  Future<List<Leaderboard>?> loadLeaderboardsForUser({
+    required String orgId,
+    required String appId,
+    required String userId,
+    int? limit,
+    int? offset,
+  }) async {
     if (!enabled) return null;
-
-    // Build URL and only send the user_id param
     String url = '${Config().surveysUrl}/leaderboards';
-    final qp = <String, String>{ 'user_id': userId };
+    final qp = <String, String>{
+      'org_id': orgId,
+      'app_id': appId,
+      'user_id': userId,
+    };
     if (limit  != null) qp['limit']  = limit.toString();
     if (offset != null) qp['offset'] = offset.toString();
     url = UrlUtils.addQueryParameters(url, qp);
@@ -660,43 +668,38 @@ class Surveys /* with Service */ {
 
   /// Create a new custom leaderboard
   Future<Leaderboard?> createLeaderboard(Leaderboard board) async {
-    if (enabled) {
-      String url = '${Config().surveysUrl}/leaderboards';
-      Response? res = await Network().post(
-        url,
-        body: JsonUtils.encode(board.toJson()),
-        auth: Auth2(),
-      );
-      if (res?.statusCode == 200) {
-        Map<String, dynamic>? m = JsonUtils.decodeMap(res!.body);
-        return (m != null) ? Leaderboard.fromJson(m) : null;
-      }
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards';
+    final res = await Network().post(
+      url,
+      body: JsonUtils.encode(board.toJson()),
+      auth: Auth2(),
+    );
+    if (res?.statusCode == 200) {
+      final m = JsonUtils.decodeMap(res!.body);
+      return m != null ? Leaderboard.fromJson(m) : null;
     }
     return null;
   }
 
   /// Update an existing custom leaderboard
   Future<bool?> updateLeaderboard(Leaderboard board) async {
-    if (enabled) {
-      String url = '${Config().surveysUrl}/leaderboards/${board.id}';
-      Response? res = await Network().put(
-        url,
-        body: JsonUtils.encode(board.toJson()),
-        auth: Auth2(),
-      );
-      return res?.statusCode == 200;
-    }
-    return null;
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/${board.id}';
+    final res = await Network().put(
+      url,
+      body: JsonUtils.encode(board.toJson()),
+      auth: Auth2(),
+    );
+    return res?.statusCode == 200;
   }
 
   /// Delete a custom leaderboard
   Future<bool?> deleteLeaderboard(String id) async {
-    if (enabled) {
-      String url = '${Config().surveysUrl}/leaderboards/$id';
-      Response? res = await Network().delete(url, auth: Auth2());
-      return res?.statusCode == 200;
-    }
-    return null;
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$id';
+    final res = await Network().delete(url, auth: Auth2());
+    return res?.statusCode == 200;
   }
   // ────────────────────────────────────────────────────────────────────────────
 
