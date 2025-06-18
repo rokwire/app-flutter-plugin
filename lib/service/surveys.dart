@@ -771,7 +771,7 @@ class Surveys /* with Service */ {
   /// Join a leaderboard with the specified id
   Future<bool?> joinLeaderboard(String id) async {
     if (!enabled) return null;
-    String url = '${Config().surveysUrl}/leaderboards/$id';
+    String url = '${Config().surveysUrl}/leaderboards/$id/join';
     final res = await Network().put(url, auth: Auth2());
     return res?.statusCode == 200;
   }
@@ -791,7 +791,7 @@ class Surveys /* with Service */ {
 
     String? url = Config().surveysUrl;
     if (url != null && url.isNotEmpty) {
-      url += '/leaderboards/$id';
+      url += '/leaderboards/$id/leave';
 
       Map<String, String> queryParams = {};
       if (userIds != null) {
