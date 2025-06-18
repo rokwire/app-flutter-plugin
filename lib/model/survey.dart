@@ -1222,30 +1222,27 @@ class Score {
 }
 
 class Leaderboard {
-  final String id;
-  final String orgId;
-  final String appId;
-  final String name;
-  final List<String> adminUserIds;
-  final List<String> userIds;
+  final String? id;
+  final String? orgId;
+  final String? appId;
+  final String? name;
+  final bool? isAdmin;
 
   Leaderboard({
-    required this.id,
-    required this.orgId,
-    required this.appId,
-    required this.name,
-    required this.adminUserIds,
-    required this.userIds,
+    this.id,
+    this.orgId,
+    this.appId,
+    this.name,
+    this.isAdmin,
   });
 
   factory Leaderboard.fromJson(Map<String, dynamic> json) {
     return Leaderboard(
-      id: JsonUtils.stringValue(json['id']) ?? '',
-      orgId: JsonUtils.stringValue(json['org_id']) ?? '',
-      appId: JsonUtils.stringValue(json['app_id']) ?? '',
-      name: JsonUtils.stringValue(json['name']) ?? '',
-      adminUserIds: JsonUtils.stringListValue(json['adminUserIds']) ?? [],
-      userIds: JsonUtils.stringListValue(json['userIds']) ?? [],
+      id: JsonUtils.stringValue(json['id']),
+      orgId: JsonUtils.stringValue(json['org_id']),
+      appId: JsonUtils.stringValue(json['app_id']),
+      name: JsonUtils.stringValue(json['name']),
+      isAdmin: JsonUtils.boolValue(json['is_admin']),
     );
   }
 
@@ -1255,8 +1252,7 @@ class Leaderboard {
       'org_id': orgId,
       'app_id': appId,
       'name': name,
-      'adminUserIds': adminUserIds,
-      'userIds': userIds,
+      // we leave out isAdmin because the Surveys BB verifies this anyway
     };
   }
 
