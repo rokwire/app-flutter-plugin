@@ -712,24 +712,10 @@ class Surveys /* with Service */ {
   // ────────────────────────────────────────────────────────────────────────────
   // Leaderboards
 
-  /// Fetch all custom leaderboards for a given user, org & app
-  Future<List<Leaderboard>?> loadLeaderboardsForUser({
-    required String orgId,
-    required String appId,
-    required String userId,
-    int? limit,
-    int? offset,
-  }) async {
+  /// Fetch all custom leaderboards for a given user
+  Future<List<Leaderboard>?> getLeaderboards() async {
     if (!enabled) return null;
     String url = '${Config().surveysUrl}/leaderboards';
-    final qp = <String, String>{
-      'org_id': orgId,
-      'app_id': appId,
-      'user_id': userId,
-    };
-    if (limit  != null) qp['limit']  = limit.toString();
-    if (offset != null) qp['offset'] = offset.toString();
-    url = UrlUtils.addQueryParameters(url, qp);
 
     final res = await Network().get(url, auth: Auth2());
     if (res?.statusCode == 200) {
@@ -739,7 +725,9 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  /// Create a new custom leaderboard
+  /// Create a new custom leaderboard and add calling user as an admin
+  ///
+  /// The only field in Leaderboard that needs to be set is `name`
   Future<Leaderboard?> createLeaderboard(Leaderboard board) async {
     if (!enabled) return null;
     String url = '${Config().surveysUrl}/leaderboards';
