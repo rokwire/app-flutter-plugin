@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add account date fields
 - Update survey score objects to have decimal scores [#598](https://github.com/rokwire/app-flutter-plugin/issues/598)
 - Parse Unstructured Properties on getSurveys [#611](https://github.com/rokwire/app-flutter-plugin/issues/611)
+- Add Rank to Score Model & Add API to Get Scores with Pivot [#615](https://github.com/rokwire/app-flutter-plugin/issues/615)
 
 ### Changed
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
