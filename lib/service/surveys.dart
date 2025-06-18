@@ -603,21 +603,36 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<Score>?> getScores({String? leaderboardId, int? limit, int? offset}) async {
+  /// Retrieves a list of `Score` objects sorted DESC, and are paginated by
+  /// `limit` and `offset`.
+  ///
+  /// - [limit]: Number of scores to retreives
+  /// - [offset]: Number of previously loaded scores
+  /// - [leaderboardIds]: Used to retrieve scores in specified leaderboards
+  /// - [userId]: User to search for their scores exclusively
+  Future<List<Score>?> getScores({
+    int? limit,
+    int? offset,
+    List<String>? leaderboardIds,
+    String? userId
+  }) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
         url += '/v2/scores';
 
         Map<String, String> queryParams = {};
-        if (leaderboardId != null) {
-          queryParams['leaderboard_id'] = leaderboardId;
-        }
         if (limit != null) {
           queryParams['limit'] = limit.toString();
         }
         if (offset != null) {
           queryParams['offset'] = offset.toString();
+        }
+        if (leaderboardIds != null) {
+          queryParams['leaderboard_ids'] = leaderboardIds.join(',');
+        }
+        if (userId != null) {
+          queryParams['user_id'] = userId;
         }
         if (queryParams.isNotEmpty) {
           url = UrlUtils.addQueryParameters(url, queryParams);
