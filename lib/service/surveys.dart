@@ -744,7 +744,7 @@ class Surveys /* with Service */ {
   }
 
   /// Update an existing custom leaderboard
-  Future<bool?> updateLeaderboard(Leaderboard board) async {
+  Future<Leaderboard?> updateLeaderboard(Leaderboard board) async {
     if (!enabled) return null;
     String url = '${Config().surveysUrl}/leaderboards/${board.id}';
     final res = await Network().put(
@@ -752,7 +752,12 @@ class Surveys /* with Service */ {
       body: JsonUtils.encode(board.toJson()),
       auth: Auth2(),
     );
-    return res?.statusCode == 200;
+
+    if (res?.statusCode == 200) {
+      final m = JsonUtils.decodeMap(res!.body);
+      return m != null ? Leaderboard.fromJson(m) : null;
+    }
+    return null;
   }
 
   /// Delete a custom leaderboard
