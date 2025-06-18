@@ -760,10 +760,48 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  /// Delete a custom leaderboard
+  /// Delete a custom leaderboard with the specified id
   Future<bool?> deleteLeaderboard(String id) async {
     if (!enabled) return null;
     String url = '${Config().surveysUrl}/leaderboards/$id';
+    final res = await Network().delete(url, auth: Auth2());
+    return res?.statusCode == 200;
+  }
+
+  /// Join a leaderboard with the specified id
+  Future<bool?> joinLeaderboard(String id) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$id';
+    final res = await Network().put(url, auth: Auth2());
+    return res?.statusCode == 200;
+  }
+
+  /// Removes users from leaderboard. If `userIds` is not specified,
+  /// the calling user will be removed from the leaderboard. The calling
+  /// user must be an admin of the leaderboard in order to specify other users
+  /// to leave.
+  ///
+  /// [userIds]: If specified and user is admin, will remove
+  /// the specified users from the leaderboard.
+  Future<bool?> leaveLeaderboard({
+    required String id,
+    List<String>? userIds,
+  }) async {
+    if (!enabled) return null;
+
+    String? url = Config().surveysUrl;
+    if (url != null && url.isNotEmpty) {
+      url += '/leaderboards/$id';
+
+      Map<String, String> queryParams = {};
+      if (userIds != null) {
+        queryParams['user_ids'] = userIds.join(',');
+      }
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+    }
+
     final res = await Network().delete(url, auth: Auth2());
     return res?.statusCode == 200;
   }
