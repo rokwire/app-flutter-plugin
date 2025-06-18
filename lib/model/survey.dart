@@ -1223,15 +1223,11 @@ class Score {
 
 class Leaderboard {
   final String? id;
-  final String? orgId;
-  final String? appId;
   final String? name;
   final bool? isAdmin;
 
   Leaderboard({
     this.id,
-    this.orgId,
-    this.appId,
     this.name,
     this.isAdmin,
   });
@@ -1239,8 +1235,6 @@ class Leaderboard {
   factory Leaderboard.fromJson(Map<String, dynamic> json) {
     return Leaderboard(
       id: JsonUtils.stringValue(json['id']),
-      orgId: JsonUtils.stringValue(json['org_id']),
-      appId: JsonUtils.stringValue(json['app_id']),
       name: JsonUtils.stringValue(json['name']),
       isAdmin: JsonUtils.boolValue(json['is_admin']),
     );
@@ -1249,8 +1243,6 @@ class Leaderboard {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'org_id': orgId,
-      'app_id': appId,
       'name': name,
       // we leave out isAdmin because the Surveys BB verifies this anyway
     };
@@ -1270,4 +1262,10 @@ class Leaderboard {
     }
     return result;
   }
+}
+
+class LeaderboardEntry {
+  final String? id;
+  final String? leaderboardId;
+
 }
