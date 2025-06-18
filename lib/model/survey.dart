@@ -1267,5 +1267,37 @@ class Leaderboard {
 class LeaderboardEntry {
   final String? id;
   final String? leaderboardId;
+  final String? userId;
+  final bool? isAdmin;
 
+  LeaderboardEntry({
+    this.id,
+    this.leaderboardId,
+    this.userId,
+    this.isAdmin,
+  });
+
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
+    return LeaderboardEntry(
+      id: JsonUtils.stringValue(json['id']),
+      leaderboardId: JsonUtils.stringValue(json['leaderboard_id']),
+      userId: JsonUtils.stringValue(json['user_id']),
+      isAdmin: JsonUtils.boolValue(json['is_admin']),
+    );
+  }
+
+  static List<LeaderboardEntry> listFromJson(List<dynamic>? jsonList) {
+    final List<LeaderboardEntry> result = [];
+    for (final entry in jsonList ?? []) {
+      final map = JsonUtils.mapValue(entry);
+      if (map != null) {
+        try {
+          result.add(LeaderboardEntry.fromJson(map));
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+    return result;
+  }
 }
