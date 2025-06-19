@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
 
 ### Added
+- Support unstructured properties [#622](https://github.com/rokwire/app-flutter-plugin/issues/622)
 - Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created notification for deletion of survey response [#4243](https://github.com/rokwire/illinois-app/issues/4243).

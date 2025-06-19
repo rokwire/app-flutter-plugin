@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
@@ -925,7 +927,7 @@ class SurveyDataEntry extends SurveyData {
 
   SurveyDataEntry({required String text, required this.dataFormat, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, Rule? defaultResponseRule,
     Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, 
+      : super(key: key, section: section, sections: sections, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
   factory SurveyDataEntry.fromJson(String key, Map<String, dynamic> json) {
@@ -1105,13 +1107,14 @@ class SurveysQueryParam {
   final DateTime? endsAfter;
   final int? offset;
   final int? limit;
+  final Map<String, dynamic>? unstructuredProperties;
 
   SurveysQueryParam({this.ids,
     this.types, this.calendarEventID,
     this.public, this.archived, this.completed,
     this.startsBefore, this.startsAfter,
     this.endsBefore, this.endsAfter,
-    this.offset, this.limit});
+    this.offset, this.limit, this.unstructuredProperties});
 
   factory SurveysQueryParam.fromType(String type) => SurveysQueryParam(types: [type]);
 
@@ -1162,6 +1165,10 @@ class SurveysQueryParam {
 
     if (limit != null) {
       queryParams['limit'] = limit.toString();
+    }
+
+    if (unstructuredProperties != null) {
+      queryParams['unstructured_properties'] = jsonEncode(unstructuredProperties);
     }
 
     return queryParams;
