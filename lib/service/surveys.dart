@@ -775,6 +775,22 @@ class Surveys /* with Service */ {
   // ────────────────────────────────────────────────────────────────────────────
   // Leaderboards
 
+  /// Get Leaderboard
+  ///
+  /// Leaderboard object's isAdmin flag is set to null if user
+  /// is not apart of leaderboard
+  Future<Leaderboard?> getLeaderboard({required String leaderboardId}) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$leaderboardId';
+
+    final res = await Network().get(url, auth: Auth2());
+    if (res?.statusCode == 200) {
+      final m = JsonUtils.decodeMap(res!.body);
+      return m != null ? Leaderboard.fromJson(m) : null;
+    }
+    return null;
+  }
+
   /// Fetch all custom leaderboards for a given user
   Future<List<Leaderboard>?> getLeaderboards() async {
     if (!enabled) return null;
