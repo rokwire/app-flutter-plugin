@@ -1171,6 +1171,7 @@ class SurveysQueryParam {
 
 class Score {
   final String? surveyType;
+  final String? userId;
   final String? externalProfileId;
   final double? score;
   final int? responseCount;
@@ -1181,6 +1182,7 @@ class Score {
   final int? rank;
 
   Score(this.surveyType,
+      this.userId,
       this.externalProfileId,
       this.score,
       this.responseCount,
@@ -1194,6 +1196,7 @@ class Score {
   factory Score.fromJson(Map<String, dynamic> json) {
     return Score(
       JsonUtils.stringValue(json['survey_type']),
+      JsonUtils.stringValue(json['user_id']),
       JsonUtils.stringValue(json["external_profile_id"]),
       JsonUtils.doubleValue(json['score']),
       JsonUtils.intValue(json['response_count']),
