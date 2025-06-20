@@ -5,12 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-- Update GetScore API to take in external ids [#538](https://github.com/rokwire/app-flutter-plugin/issues/538)
-- Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
 ### Added
 - Add custom leaderboard capabilities [#617](https://github.com/rokwire/app-flutter-plugin/issues/617)
-
-### Added
+- Support unstructured properties in surveys [#622](https://github.com/rokwire/app-flutter-plugin/issues/622)
+- Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
 - Support unstructured properties [#622](https://github.com/rokwire/app-flutter-plugin/issues/622)
 - Added new Survey fields [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Created SurveysQueryParam class for surveys query model [#4243](https://github.com/rokwire/illinois-app/issues/4243).
@@ -28,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Rank to Score Model & Add API to Get Scores with Pivot [#615](https://github.com/rokwire/app-flutter-plugin/issues/615)
 
 ### Changed
+- Update GetScore API to take in external ids [#538](https://github.com/rokwire/app-flutter-plugin/issues/538)
 - Upgrade Android app to target API level 34 and upgrade plugin versions to match that requirement [#464](https://github.com/rokwire/app-flutter-plugin/issues/464).
 - Use ISO 8601/RFC 3339 strings for survey start & end dates [#4243](https://github.com/rokwire/illinois-app/issues/4243).
 - Integrate auth refactor [#379](https://github.com/rokwire/app-flutter-plugin/issues/379)
