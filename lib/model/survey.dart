@@ -1186,6 +1186,7 @@ class Score {
   final int? answerCount;
   final int? correctAnswerCount;
   final int? rank;
+  final Leaderboard? leaderboard;
 
   Score(this.surveyType,
       this.externalProfileId,
@@ -1195,7 +1196,8 @@ class Score {
       this.streakMultiplier,
       this.answerCount,
       this.correctAnswerCount,
-      this.rank
+      this.rank,
+      this.leaderboard
       );
 
   factory Score.fromJson(Map<String, dynamic> json) {
@@ -1208,7 +1210,8 @@ class Score {
       JsonUtils.doubleValue(json['streak_multiplier']),
       JsonUtils.intValue(json['answer_count']),
       JsonUtils.intValue(json['correct_answer_count']),
-      JsonUtils.intValue(json['rank'])
+      JsonUtils.intValue(json['rank']),
+      JsonUtils.mapOrNull((json) => Leaderboard.fromJson(json), json['leaderboard']),
     );
   }
 

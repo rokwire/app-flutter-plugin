@@ -741,11 +741,22 @@ class Surveys /* with Service */ {
   }
 
   /// Retrieves a list of `Score` objects for every leaderboard the user is in
-  Future<List<Score>?> getLeaderboardUserScores() async {
+  Future<List<Score>?> getLeaderboardUserScores(int? limit, int? offset,) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
         url += '/leaderboards/scores';
+
+        Map<String, String> queryParams = {};
+        if (limit != null) {
+          queryParams['limit'] = limit.toString();
+        }
+        if (offset != null) {
+          queryParams['offset'] = offset.toString();
+        }
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
 
         Response? response = await Network().get(url, auth: Auth2());
         int responseCode = response?.statusCode ?? -1;
