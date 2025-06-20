@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - Update GetScore API to take in external ids [#538](https://github.com/rokwire/app-flutter-plugin/issues/538)
 - Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
+### Added
+- Add custom leaderboard capabilities [#617](https://github.com/rokwire/app-flutter-plugin/issues/617)
 
 ### Added
 - Support unstructured properties [#622](https://github.com/rokwire/app-flutter-plugin/issues/622)
