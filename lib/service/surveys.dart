@@ -741,7 +741,8 @@ class Surveys /* with Service */ {
   }
 
   /// Retrieves a list of `Score` objects for every leaderboard the user is in
-  Future<List<Score>?> getLeaderboardUserScores(int? limit, int? offset,) async {
+  Future<List<Score>?> getLeaderboardUserScores(
+      {int? limit, int? offset}) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
