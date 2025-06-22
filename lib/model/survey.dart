@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
@@ -925,7 +927,7 @@ class SurveyDataEntry extends SurveyData {
 
   SurveyDataEntry({required String text, required this.dataFormat, required String key, String? section, List<String>? sections, String? defaultFollowUpKey, Rule? defaultResponseRule,
     Rule? followUpRule, Rule? scoreRule, String? moreInfo, String? style, dynamic response, bool allowSkip = false, bool replace = false, num? maximumScore})
-      : super(key: key, section: section, sections: sections, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule, 
+      : super(key: key, section: section, sections: sections, defaultFollowUpKey: defaultFollowUpKey, text: text, defaultResponseRule: defaultResponseRule, followUpRule: followUpRule,
         scoreRule: scoreRule, moreInfo: moreInfo, style: style, response: response, allowSkip: allowSkip, replace: replace, maximumScore: maximumScore);
 
   factory SurveyDataEntry.fromJson(String key, Map<String, dynamic> json) {
@@ -1105,13 +1107,14 @@ class SurveysQueryParam {
   final DateTime? endsAfter;
   final int? offset;
   final int? limit;
+  final Map<String, dynamic>? unstructuredProperties;
 
   SurveysQueryParam({this.ids,
     this.types, this.calendarEventID,
     this.public, this.archived, this.completed,
     this.startsBefore, this.startsAfter,
     this.endsBefore, this.endsAfter,
-    this.offset, this.limit});
+    this.offset, this.limit, this.unstructuredProperties});
 
   factory SurveysQueryParam.fromType(String type) => SurveysQueryParam(types: [type]);
 
@@ -1164,6 +1167,10 @@ class SurveysQueryParam {
       queryParams['limit'] = limit.toString();
     }
 
+    if (unstructuredProperties != null) {
+      queryParams['unstructured_properties'] = jsonEncode(unstructuredProperties);
+    }
+
     return queryParams;
   }
 
@@ -1171,6 +1178,7 @@ class SurveysQueryParam {
 
 class Score {
   final String? surveyType;
+  final String? userId;
   final String? externalProfileId;
   final double? score;
   final int? responseCount;
@@ -1179,8 +1187,10 @@ class Score {
   final int? answerCount;
   final int? correctAnswerCount;
   final int? rank;
+  final Leaderboard? leaderboard;
 
   Score(this.surveyType,
+      this.userId,
       this.externalProfileId,
       this.score,
       this.responseCount,
@@ -1188,12 +1198,14 @@ class Score {
       this.streakMultiplier,
       this.answerCount,
       this.correctAnswerCount,
-      this.rank
+      this.rank,
+      this.leaderboard
       );
 
   factory Score.fromJson(Map<String, dynamic> json) {
     return Score(
       JsonUtils.stringValue(json['survey_type']),
+      JsonUtils.stringValue(json['user_id']),
       JsonUtils.stringValue(json["external_profile_id"]),
       JsonUtils.doubleValue(json['score']),
       JsonUtils.intValue(json['response_count']),
@@ -1201,7 +1213,8 @@ class Score {
       JsonUtils.doubleValue(json['streak_multiplier']),
       JsonUtils.intValue(json['answer_count']),
       JsonUtils.intValue(json['correct_answer_count']),
-      JsonUtils.intValue(json['rank'])
+      JsonUtils.intValue(json['rank']),
+      JsonUtils.mapOrNull((json) => Leaderboard.fromJson(json), json['leaderboard']),
     );
   }
 
@@ -1212,6 +1225,87 @@ class Score {
       if (mapVal != null) {
         try {
           ListUtils.add(result, Score.fromJson(mapVal));
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+    return result;
+  }
+}
+
+class Leaderboard {
+  final String? id;
+  final String? name;
+  final bool? isAdmin;
+
+  Leaderboard({
+    this.id,
+    this.name,
+    this.isAdmin,
+  });
+
+  factory Leaderboard.fromJson(Map<String, dynamic> json) {
+    return Leaderboard(
+      id: JsonUtils.stringValue(json['id']),
+      name: JsonUtils.stringValue(json['name']),
+      isAdmin: JsonUtils.boolValue(json['is_admin']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      // we leave out isAdmin because the Surveys BB verifies this anyway
+    };
+  }
+
+  static List<Leaderboard> listFromJson(List<dynamic>? jsonList) {
+    final List<Leaderboard> result = [];
+    for (final entry in jsonList ?? []) {
+      final map = JsonUtils.mapValue(entry);
+      if (map != null) {
+        try {
+          result.add(Leaderboard.fromJson(map));
+        } catch (e) {
+          debugPrint(e.toString());
+        }
+      }
+    }
+    return result;
+  }
+}
+
+class LeaderboardEntry {
+  final String? id;
+  final String? leaderboardId;
+  final String? userId;
+  final bool? isAdmin;
+
+  LeaderboardEntry({
+    this.id,
+    this.leaderboardId,
+    this.userId,
+    this.isAdmin,
+  });
+
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
+    return LeaderboardEntry(
+      id: JsonUtils.stringValue(json['id']),
+      leaderboardId: JsonUtils.stringValue(json['leaderboard_id']),
+      userId: JsonUtils.stringValue(json['user_id']),
+      isAdmin: JsonUtils.boolValue(json['is_admin']),
+    );
+  }
+
+  static List<LeaderboardEntry> listFromJson(List<dynamic>? jsonList) {
+    final List<LeaderboardEntry> result = [];
+    for (final entry in jsonList ?? []) {
+      final map = JsonUtils.mapValue(entry);
+      if (map != null) {
+        try {
+          result.add(LeaderboardEntry.fromJson(map));
         } catch (e) {
           debugPrint(e.toString());
         }

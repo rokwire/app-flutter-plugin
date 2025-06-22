@@ -603,7 +603,15 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  Future<List<Score>?> getScores({int? limit, int? offset}) async {
+  /// Retrieves a list of `Score` objects sorted DESC, and are paginated by
+  /// `limit` and `offset`.
+  ///
+  /// - [limit]: Number of scores to retreives
+  /// - [offset]: Number of previously loaded scores
+  Future<List<Score>?> getScores({
+    int? limit,
+    int? offset,
+  }) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
@@ -640,7 +648,7 @@ class Surveys /* with Service */ {
   ///
   /// - [limit]: Number of top scores
   /// - [offset]: Number of previously loaded top scores
-  /// - [localLimit]: Number of scores to locally
+  /// - [localLimit]: Number of scores to load in the local group
   /// - [aboveLimit]: Number of scores to include above user's score.
   /// - [belowLimit]: Number of scores to include less than user's score.
   ///
@@ -690,6 +698,191 @@ class Surveys /* with Service */ {
     }
     return null;
   }
+
+  /// Retrieves a paginated list of `Score` objects DESC for a specified
+  /// leaderboard
+  ///
+  /// - [leaderboardId]: ID of the leaderboard
+  /// - [limit]: Number of scores to load
+  /// - [offset]: Number of previously loaded scores
+  Future<List<Score>?> getLeaderboardScores({
+    required String leaderboardId,
+    int? limit,
+    int? offset,
+  }) async {
+    if (enabled) {
+      String? url = Config().surveysUrl;
+      if (url != null && url.isNotEmpty) {
+        url += '/leaderboards/$leaderboardId/scores';
+
+        Map<String, String> queryParams = {};
+        if (limit != null) {
+          queryParams['limit'] = limit.toString();
+        }
+        if (offset != null) {
+          queryParams['offset'] = offset.toString();
+        }
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
+
+        Response? response = await Network().get(url, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+          if (responseList != null) {
+            return Score.listFromJson(responseList);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Retrieves a list of `Score` objects for every leaderboard the user is in
+  Future<List<Score>?> getLeaderboardUserScores(
+      {int? limit, int? offset}) async {
+    if (enabled) {
+      String? url = Config().surveysUrl;
+      if (url != null && url.isNotEmpty) {
+        url += '/leaderboards/scores';
+
+        Map<String, String> queryParams = {};
+        if (limit != null) {
+          queryParams['limit'] = limit.toString();
+        }
+        if (offset != null) {
+          queryParams['offset'] = offset.toString();
+        }
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
+
+        Response? response = await Network().get(url, auth: Auth2());
+        int responseCode = response?.statusCode ?? -1;
+        String? responseBody = response?.body;
+        if (responseCode == 200) {
+          List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
+          if (responseList != null) {
+            return Score.listFromJson(responseList);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Leaderboards
+
+  /// Get Leaderboard
+  ///
+  /// Leaderboard object's isAdmin flag is set to null if user
+  /// is not apart of leaderboard
+  Future<Leaderboard?> getLeaderboard({required String leaderboardId}) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$leaderboardId';
+
+    final res = await Network().get(url, auth: Auth2());
+    if (res?.statusCode == 200) {
+      final m = JsonUtils.decodeMap(res!.body);
+      return m != null ? Leaderboard.fromJson(m) : null;
+    }
+    return null;
+  }
+
+  /// Fetch all custom leaderboards for a given user
+  Future<List<Leaderboard>?> getLeaderboards() async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards';
+
+    final res = await Network().get(url, auth: Auth2());
+    if (res?.statusCode == 200) {
+      final list = JsonUtils.decodeList(res!.body);
+      return Leaderboard.listFromJson(list);
+    }
+    return null;
+  }
+
+  /// Create a new custom leaderboard and add calling user as an admin
+  ///
+  /// The only field in Leaderboard that needs to be set is `name`
+  Future<Leaderboard?> createLeaderboard(Leaderboard board) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards';
+    final res = await Network().post(
+      url,
+      body: JsonUtils.encode(board.toJson()),
+      auth: Auth2(),
+    );
+    if (res?.statusCode == 200) {
+      final m = JsonUtils.decodeMap(res!.body);
+      return m != null ? Leaderboard.fromJson(m) : null;
+    }
+    return null;
+  }
+
+  /// Update an existing custom leaderboard
+  Future<bool?> updateLeaderboard(Leaderboard board) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/${board.id}';
+    final res = await Network().put(
+      url,
+      body: JsonUtils.encode(board.toJson()),
+      auth: Auth2(),
+    );
+
+    return res?.statusCode == 200;
+  }
+
+  /// Delete a custom leaderboard with the specified id
+  Future<bool?> deleteLeaderboard(String id) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$id';
+    final res = await Network().delete(url, auth: Auth2());
+    return res?.statusCode == 200;
+  }
+
+  /// Join a leaderboard with the specified id
+  Future<bool?> joinLeaderboard(String id) async {
+    if (!enabled) return null;
+    String url = '${Config().surveysUrl}/leaderboards/$id/join';
+    final res = await Network().put(url, auth: Auth2());
+    return res?.statusCode == 200;
+  }
+
+  /// Removes users from leaderboard. If `userIds` is not specified,
+  /// the calling user will be removed from the leaderboard. The calling
+  /// user must be an admin of the leaderboard in order to specify other users
+  /// to leave.
+  ///
+  /// [userIds]: If specified and user is admin, will remove
+  /// the specified users from the leaderboard.
+  Future<bool?> leaveLeaderboard({
+    required String id,
+    List<String>? userIds,
+  }) async {
+    if (!enabled) return null;
+
+    String? url = Config().surveysUrl;
+    if (url != null && url.isNotEmpty) {
+      url += '/leaderboards/$id/leave';
+
+      Map<String, String> queryParams = {};
+      if (userIds != null) {
+        queryParams['user_ids'] = userIds.join(',');
+      }
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+    }
+
+    final res = await Network().delete(url, auth: Auth2());
+    return res?.statusCode == 200;
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
 
   /////////////////////////
   // Enabled
