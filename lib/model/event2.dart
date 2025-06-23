@@ -1408,7 +1408,7 @@ extension Event2TimeFilterImpl on Event2TimeFilter {
 
 enum Event2TypeFilter { free, paid, inPerson, online, hybrid, public, private, nearby, superEvent, favorite, admin }
 
-enum Event2TypeGroup { cost, format, access, limits }
+enum Event2TypeGroup { cost, format, visibility, limits }
 
 const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2TypeFilter, Event2TypeGroup>{
   Event2TypeFilter.free: Event2TypeGroup.cost,
@@ -1416,8 +1416,8 @@ const Map<Event2TypeFilter, Event2TypeGroup> eventTypeFilterGroups = <Event2Type
   Event2TypeFilter.inPerson: Event2TypeGroup.format,
   Event2TypeFilter.online: Event2TypeGroup.format,
   Event2TypeFilter.hybrid: Event2TypeGroup.format,
-  Event2TypeFilter.public: Event2TypeGroup.access,
-  Event2TypeFilter.private: Event2TypeGroup.access,
+  Event2TypeFilter.public: Event2TypeGroup.visibility,
+  Event2TypeFilter.private: Event2TypeGroup.visibility,
   Event2TypeFilter.nearby: Event2TypeGroup.limits,
   Event2TypeFilter.superEvent: Event2TypeGroup.limits,
   Event2TypeFilter.favorite: Event2TypeGroup.limits,
