@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version from pubspec.yaml -->
+
+## [1.10.3] - 2025-06-23
 ### Changed
 - Event2TypeGroup.access renamed to visibility [#5241](https://github.com/rokwire/illinois-app/issues/5241).
 
