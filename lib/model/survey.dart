@@ -218,6 +218,8 @@ class Survey extends RuleEngine {
       subRules: Map.of(other.subRules),
       stats: other.stats != null ? SurveyStats.fromOther(other.stats!) : null,
       calendarEventId: other.calendarEventId,
+      unstructuredProperties: other.unstructuredProperties != null ?
+        Map.of(other.unstructuredProperties ?? {}) : null,
     );
   }
 
