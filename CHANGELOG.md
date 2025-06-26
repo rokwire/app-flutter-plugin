@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Added
+- Quiz Archive [#624](https://github.com/rokwire/app-flutter-plugin/issues/624)
 - Add custom leaderboard capabilities [#617](https://github.com/rokwire/app-flutter-plugin/issues/617)
 - Support unstructured properties in surveys [#622](https://github.com/rokwire/app-flutter-plugin/issues/622)
 - Create getter APIs for scores in surveys BB for Vogue [#521](https://github.com/rokwire/app-flutter-plugin/issues/521)
