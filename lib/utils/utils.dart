@@ -599,7 +599,13 @@ class AppVersion {
   }
 }
 
-class UrlUtils {  
+class UrlUtils {
+  static Uri? tryParseUri(String? url) {
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    return Uri.tryParse(url);
+  }
 
   static bool isPdf(String? url) {
     Uri? uri = (url != null) ? Uri.parse(url) : null;
