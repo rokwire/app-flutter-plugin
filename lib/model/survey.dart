@@ -1100,6 +1100,7 @@ class SurveysQueryParam {
   final List<String>? ids;
   final List<String>? types;
   final String? calendarEventID;
+  final String? query;
   final bool? public;
   final bool? archived;
   final bool? completed;
@@ -1112,7 +1113,7 @@ class SurveysQueryParam {
   final Map<String, dynamic>? unstructuredProperties;
 
   SurveysQueryParam({this.ids,
-    this.types, this.calendarEventID,
+    this.types, this.calendarEventID, this.query,
     this.public, this.archived, this.completed,
     this.startsBefore, this.startsAfter,
     this.endsBefore, this.endsAfter,
@@ -1171,6 +1172,10 @@ class SurveysQueryParam {
 
     if (unstructuredProperties != null) {
       queryParams['unstructured_properties'] = jsonEncode(unstructuredProperties);
+    }
+
+    if (query != null) {
+      queryParams["query"] = query!;
     }
 
     return queryParams;
