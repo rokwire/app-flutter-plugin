@@ -394,18 +394,22 @@ class RuleAction extends RuleActionResult {
 
   factory RuleAction.fromJson(Map<String, dynamic> json) {
     dynamic data = json["data"];
-    String action = json["action"];
-    if (action == 'local_notify') {
-      data = Alert.fromJson(json["data"]);
-    } else if (action == 'notify') {
-      data = SurveyAlert.fromJson(json["data"]);
+    dynamic action = json["action"];
+    if (action is String) {
+      if (action == 'local_notify') {
+        data = Alert.fromJson(json["data"]);
+      } else if (action == 'notify') {
+        data = SurveyAlert.fromJson(json["data"]);
+      }
+      return RuleAction(
+        action: action,
+        data: data,
+        dataKey: JsonUtils.stringValue(json["data_key"]),
+        priority: json["priority"],
+      );
+    } else {
+      throw FormatException('RuleAction: Expected a non-null String for "action"');
     }
-    return RuleAction(
-      action: action,
-      data: data,
-      dataKey: JsonUtils.stringValue(json["data_key"]),
-      priority: json["priority"],
-    );
   }
 
   factory RuleAction.fromOther(RuleAction other) {

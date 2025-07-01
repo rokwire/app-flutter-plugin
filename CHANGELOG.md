@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Fixed
+- WEB: Fix parsing survey rules [#5083](https://github.com/rokwire/illinois-app/issues/5083).
 
 ## [1.10.3] - 2025-06-23
 ### Changed
