@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Changed
+- Android: upgrade compileSdkVersion and targetSdkVersion to 36 [#626](https://github.com/rokwire/app-flutter-plugin/issues/626).
 
 ## [1.10.3] - 2025-06-23
 ### Changed
