@@ -2000,6 +2000,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 }
 
+typedef OidcLogin = _OidcLogin;
+
 class _OidcLogin {
   final String? loginUrl;
   final Map<String, dynamic>? params;
