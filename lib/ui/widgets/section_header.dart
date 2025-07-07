@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
+import 'package:rokwire_plugin/ui/widgets/web_network_image.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 
@@ -419,11 +420,10 @@ class ImageSlantHeader extends StatelessWidget {
       image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
         networkHeaders: (kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
-      image = Image.network(imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, 
-        headers: (kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
+      image = WebNetworkImage(imageUrl: imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
     }
 
-    double displayHeight = (image as Image?)?.height ?? _defaultHeight(context);
+    double displayHeight = (image is Image) ? (image.height ?? _defaultHeight(context)) : _defaultHeight(context);
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
       (image != null) ? ModalImageHolder(child: image,) : Container(),
       Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
