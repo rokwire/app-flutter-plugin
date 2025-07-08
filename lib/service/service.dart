@@ -19,7 +19,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-abstract class Service {
+mixin class Service {
 
   bool? _isInitialized;
 
