@@ -23,7 +23,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 //////////////////////////////
 /// Event
 
-class Event with Explore, Favorite {
+class Event with Explore implements Favorite {
   String? id;
   String? title;
   String? description;

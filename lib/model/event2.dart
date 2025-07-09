@@ -4,7 +4,7 @@ import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/explore.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class Event2 with Explore, Favorite {
+class Event2 with Explore implements Favorite {
   final String? id;
   final String? name;
   final String? description;
