@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WEB: Fix parsing survey rules [#5083](https://github.com/rokwire/illinois-app/issues/5083).
 ### Changed
 - WEB: Introduce image cache service and web network image [#5240](https://github.com/rokwire/illinois-app/issues/5240).
+- Android: upgrade compileSdkVersion and targetSdkVersion to 36 [#626](https://github.com/rokwire/app-flutter-plugin/issues/626).
+- Upgrade dart sdk [#628](https://github.com/rokwire/app-flutter-plugin/issues/628).
 
 ## [1.10.3] - 2025-06-23
 ### Changed

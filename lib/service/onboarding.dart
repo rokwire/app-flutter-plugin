@@ -154,7 +154,7 @@ class Onboarding with Service, NotificationsListener {
   String? getPanelCode({OnboardingPanel? panel}) => null;
 }
 
-abstract class OnboardingPanel {
+mixin class OnboardingPanel {
   
   Map<String, dynamic>? get onboardingContext {
     return null;

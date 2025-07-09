@@ -127,7 +127,7 @@ class NotificationService {
   }
 }
 
-abstract class NotificationsListener {
+mixin class NotificationsListener {
   void onNotification(String name, dynamic param) {}
   bool preprocessNotification(String name, dynamic param) => false;
   Future<T?> onAsyncNotification<T>(String name, dynamic param) => Future.value(null);
