@@ -1462,6 +1462,18 @@ class PlatformUtils {
   }
 }
 
+extension GlobalKeyUtils on GlobalKey {
+  Size? get renderBoxSize {
+    final RenderObject? renderBox = this.currentContext?.findRenderObject();
+    return ((renderBox is RenderBox) && renderBox.hasSize) ? renderBox.size : null;
+  }
+}
+
+extension DoubleUtils on double {
+  bool get isNotEmpty => (this != 0);
+  bool get isEmpty => (this == 0);
+}
+
 enum DayPart { morning, afternoon, evening, night }
 
 String? dayPartToString(DayPart? dayPart) {

@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WEB: Introduce image cache service and web network image [#5240](https://github.com/rokwire/illinois-app/issues/5240).
 - Android: upgrade compileSdkVersion and targetSdkVersion to 36 [#626](https://github.com/rokwire/app-flutter-plugin/issues/626).
 - Upgrade dart sdk [#628](https://github.com/rokwire/app-flutter-plugin/issues/628).
+### Added
+- Add helper extensions for GlobalKey and double [#5271](https://github.com/rokwire/illinois-app/issues/5271).
 
 ## [1.10.3] - 2025-06-23
 ### Changed
