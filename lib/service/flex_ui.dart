@@ -724,6 +724,17 @@ class FlexUI with Service, NotificationsListener {
     return null;
   }
 
+  /* Example:
+  [["NOT", {
+	  "role": <role-rule>
+  }],
+  "AND", {
+    "auth": <auth-rule>
+  }
+  "OR", {
+	  "groups": <group-rule>
+  }]*/
+
   @protected
   bool localeEvalCombinedRule(dynamic combinedRule, { FlexUiBuildContext? buildContext }) =>
     BoolExpr.eval(combinedRule, (dynamic argument) {
@@ -744,7 +755,7 @@ class FlexUI with Service, NotificationsListener {
         return false;
       }
     });
-  
+
   @protected
   bool Function(dynamic rule, { FlexUiBuildContext? buildContext })? getCombinedRuleProcessor(dynamic key) {
     switch (key) {
@@ -755,17 +766,6 @@ class FlexUI with Service, NotificationsListener {
       case 'auth':     return localeEvalAuthRule;
       case 'platform': return localeEvalPlatformRule;
       case 'enable':   return localeEvalEnableRule;
-    }
-    return null;
-  }
-
-  @protected
-  bool? localeEvalCombinedParam(dynamic stringParam, { FlexUiBuildContext? buildContext }) {
-    if (stringParam is String) {
-      if (RegExp(r"\${.+}").hasMatch(stringParam)) {
-        String stringRef = stringParam.substring(2, stringParam.length - 1);
-        return JsonUtils.boolValue(localeEvalStringReference(stringRef, buildContext: buildContext));
-      }
     }
     return null;
   }
