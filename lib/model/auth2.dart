@@ -2573,18 +2573,19 @@ class Auth2VoterPrefs {
 // UserRole
 
 class UserRole {
-  static const student = UserRole._internal('student');
-  static const visitor = UserRole._internal('visitor');
-  static const fan = UserRole._internal('fan');
-  static const employee = UserRole._internal('employee');
-  static const alumni = UserRole._internal('alumni');
-  static const parent = UserRole._internal('parent');
-  static const gies = UserRole._internal('gies');
-  static const prospective = UserRole._internal('prospective');
+  static const UserRole student = UserRole._internal('student');
+  static const UserRole visitor = UserRole._internal('visitor');
+  static const UserRole fan = UserRole._internal('fan');
+  static const UserRole employee = UserRole._internal('employee');
+  static const UserRole alumni = UserRole._internal('alumni');
+  static const UserRole parent = UserRole._internal('parent');
+  static const UserRole gies = UserRole._internal('gies');
+  static const UserRole prospective = UserRole._internal('prospective');
 
-  static List<UserRole> get values {
-    return [student, visitor, fan, employee, alumni, parent, gies, prospective];
-  }
+  static const List<UserRole> values = [
+    student, visitor, fan, employee, alumni, parent, gies, prospective
+  ];
+
 
   final String _value;
 
@@ -2658,6 +2659,70 @@ class UserRole {
     return jsonList;
   }
 }
+
+enum _UserRoleGroup { student }
+
+class _UserRoleGroupRequirements {
+  final int? minSelectedCount;
+  final int? maxSelectedCount;
+
+  _UserRoleGroupRequirements({  this.minSelectedCount, this.maxSelectedCount });
+}
+
+extension UserRoleGroup on _UserRoleGroup {
+
+  static Map<UserRole, _UserRoleGroup> _roleGroups = <UserRole, _UserRoleGroup>{
+    UserRole.student : _UserRoleGroup.student,
+    UserRole.prospective : _UserRoleGroup.student,
+  };
+
+  static Map<_UserRoleGroup, _UserRoleGroupRequirements> _groupRequirements = <_UserRoleGroup, _UserRoleGroupRequirements>{
+    _UserRoleGroup.student: _UserRoleGroupRequirements(maxSelectedCount: 1)
+  };
+
+  static void toggleSelection(LinkedHashSet<UserRole> selection, UserRole role) {
+    _UserRoleGroup? roleGroup = _roleGroups[role];
+    _UserRoleGroupRequirements? groupRequirements = (roleGroup != null) ? _groupRequirements[roleGroup] : null;
+
+    if (selection.contains(role)) {
+      int? minSelectedCount = groupRequirements?.minSelectedCount;
+      if ((roleGroup == null) || (groupRequirements == null) || (minSelectedCount == null) || (minSelectedCount < selection.groupSelection(roleGroup).length)) {
+        selection.remove(role);
+      }
+    }
+    else {
+      int? maxSelectedCount = groupRequirements?.maxSelectedCount;
+      if ((roleGroup == null) || (groupRequirements == null) || (maxSelectedCount == null)) {
+        selection.add(role);
+      }
+      else {
+        LinkedHashSet<UserRole> groupSelection = selection.groupSelection(roleGroup);
+        while ((maxSelectedCount <= groupSelection.length) && groupSelection.isNotEmpty) {
+          UserRole roleToRemove = groupSelection.first;
+          selection.remove(roleToRemove);
+          groupSelection.remove(roleToRemove);
+        }
+        if (groupSelection.length < maxSelectedCount) {
+          selection.add(role);
+        }
+      }
+    }
+  }
+}
+
+extension _UserRoleSelection on LinkedHashSet<UserRole> {
+  LinkedHashSet<UserRole> groupSelection(_UserRoleGroup group) {
+    LinkedHashSet<UserRole> groupRoles = LinkedHashSet<UserRole>();
+    for (UserRole role in this) {
+      if (UserRoleGroup._roleGroups[role] == group) {
+        groupRoles.add(role);
+      }
+    }
+    return groupRoles;
+  }
+}
+
+
 
 
 ////////////////////////////////
