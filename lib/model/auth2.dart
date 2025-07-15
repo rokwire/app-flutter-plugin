@@ -2666,7 +2666,8 @@ class _UserRoleGroupRequirements {
   final int? minSelectedCount;
   final int? maxSelectedCount;
 
-  _UserRoleGroupRequirements({  this.minSelectedCount, this.maxSelectedCount });
+  // ignore: unused_element_parameter
+  _UserRoleGroupRequirements({ this.minSelectedCount, this.maxSelectedCount });
 }
 
 extension UserRoleGroup on _UserRoleGroup {
