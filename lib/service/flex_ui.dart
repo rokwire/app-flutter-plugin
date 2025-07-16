@@ -459,6 +459,12 @@ class FlexUI with Service, NotificationsListener {
       return false;
     }
 
+    Map<String, dynamic>? combinedRules = rules['combined'];
+    dynamic combinedRule = (combinedRules != null) ? (((pathEntry != null) ? combinedRules[pathEntry] : null) ?? combinedRules[entry])  : null;
+    if ((combinedRule != null) && !localeEvalCombinedRule(enableRule, buildContext: buildContext)) {
+      return false;
+    }
+
     return true;
   }
 
@@ -716,6 +722,52 @@ class FlexUI with Service, NotificationsListener {
         String stringRef = stringParam.substring(2, stringParam.length - 1);
         return JsonUtils.boolValue(localeEvalStringReference(stringRef, buildContext: buildContext));
       }
+    }
+    return null;
+  }
+
+  /* Example:
+  [["NOT", {
+	  "role": <role-rule>
+  }],
+  "AND", {
+    "auth": <auth-rule>
+  }
+  "OR", {
+	  "groups": <group-rule>
+  }]*/
+
+  @protected
+  bool localeEvalCombinedRule(dynamic combinedRule, { FlexUiBuildContext? buildContext }) =>
+    BoolExpr.eval(combinedRule, (dynamic argument) {
+      if (argument is Map) {
+        bool result = true;
+        for (dynamic argumentKey in argument.keys) {
+          bool Function(dynamic rule, { FlexUiBuildContext? buildContext })? ruleProcessor = getCombinedRuleProcessor(argumentKey);
+          if (ruleProcessor != null) {
+            result = result && ruleProcessor(argument[argumentKey], buildContext: buildContext);
+          }
+          else {
+            return false;
+          }
+        }
+        return result;
+      }
+      else {
+        return false;
+      }
+    });
+
+  @protected
+  bool Function(dynamic rule, { FlexUiBuildContext? buildContext })? getCombinedRuleProcessor(dynamic key) {
+    switch (key) {
+      case 'role':     return localeEvalRoleRule;
+      case 'group':    return localeEvalGroupRule;
+      case 'location': return localeEvalLocationRule;
+      case 'privacy':  return localeEvalPrivacyRule;
+      case 'auth':     return localeEvalAuthRule;
+      case 'platform': return localeEvalPlatformRule;
+      case 'enable':   return localeEvalEnableRule;
     }
     return null;
   }
