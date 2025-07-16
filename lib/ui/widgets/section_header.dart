@@ -386,6 +386,8 @@ class ImageSlantHeader extends StatelessWidget {
   final double? imageWidth;
   final Widget? child;
 
+  final Map<String, String>? headers;
+
   final String slantImageKey;
   final Color? slantImageColor;
   final double slantImageHeadingHeight;
@@ -401,6 +403,8 @@ class ImageSlantHeader extends StatelessWidget {
     this.imageKey,
     this.imageWidth,
     this.child,
+
+    this.headers,
 
     required this.slantImageKey,
     this.slantImageColor,
@@ -418,14 +422,14 @@ class ImageSlantHeader extends StatelessWidget {
     Widget? image;
     if (StringUtils.isNotEmpty(imageKey)) {
       image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
-        networkHeaders: (kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget);
+        networkHeaders: (kIsWeb ? Auth2Csrf().networkAuthHeaders : (headers ?? Config().networkAuthHeaders)), loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
       image = WebNetworkImage(imageUrl: imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
     }
 
     double displayHeight = (image is Image) ? (image.height ?? _defaultHeight(context)) : _defaultHeight(context);
     return Stack(alignment: Alignment.topCenter, children: <Widget>[
-      (image != null) ? ModalImageHolder(child: image,) : Container(),
+      (image != null) ? ModalImageHolder(child: image, headers: headers) : Container(),
       Padding(padding: EdgeInsets.only(top: displayHeight * 0.75), child:
         Stack(alignment: Alignment.topCenter, children: <Widget>[
           Column(children: <Widget>[
@@ -445,6 +449,9 @@ class ImageSlantHeader extends StatelessWidget {
   Color? get _progressColor => progressColor ?? Styles().colors.fillColorSecondary;
 
   Widget _imageLoadingWidget(BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+    if (loadingProgress == null) {
+      return child;
+    }
     return Container(height: _defaultHeight(context), child:
       Center(child:
         SizedBox(height: progressSize.height, width: progressSize.width, child:
