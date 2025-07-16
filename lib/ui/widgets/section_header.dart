@@ -424,7 +424,7 @@ class ImageSlantHeader extends StatelessWidget {
       image = Styles().images.getImage(imageKey!, source: imageUrl, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true,
         networkHeaders: (kIsWeb ? Auth2Csrf().networkAuthHeaders : (headers ?? Config().networkAuthHeaders)), loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget);
     } else if (StringUtils.isNotEmpty(imageUrl)) {
-      image = WebNetworkImage(imageUrl: imageUrl!, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
+      image = WebNetworkImage(imageUrl: imageUrl!, headers: headers, width: MediaQuery.of(context).size.width, fit: BoxFit.fitWidth, excludeFromSemantics: true, loadingBuilder: _imageLoadingWidget, errorBuilder: _imageErrorWidget,);
     }
 
     double displayHeight = (image is Image) ? (image.height ?? _defaultHeight(context)) : _defaultHeight(context);

@@ -24,6 +24,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 class WebNetworkImage extends StatefulWidget {
   final String? imageUrl;
+  final Map<String, String>? headers;
   final BoxFit? fit;
   final AlignmentGeometry alignment;
   final bool excludeFromSemantics;
@@ -33,7 +34,7 @@ class WebNetworkImage extends StatefulWidget {
   final double? width;
   final double? height;
 
-  WebNetworkImage({this.imageUrl, this.fit, this.alignment = Alignment.center, this.excludeFromSemantics = false,
+  WebNetworkImage({this.imageUrl, this.headers, this.fit, this.alignment = Alignment.center, this.excludeFromSemantics = false,
     this.semanticLabel, this.loadingBuilder, this.errorBuilder, this.width, this.height});
 
   @override
@@ -102,13 +103,14 @@ class _WebNetworkImageState extends State<WebNetworkImage> {
         });
       }
     } else {
-      String proxyUrl = Config().wrapWebProxyUrl(sourceUrl: _imageUrl) ?? '';
+      bool useRegularUrl = widget.headers != null;
+      String url = (useRegularUrl ? _imageUrl : Config().wrapWebProxyUrl(sourceUrl: _imageUrl)) ?? '';
       if (mounted) {
         setState(() {
           _loading = true;
         });
       }
-      http.get(Uri.parse(proxyUrl), headers: Auth2Csrf().networkAuthHeaders).then((response) {
+      http.get(Uri.parse(url), headers: useRegularUrl ? widget.headers : Auth2Csrf().networkAuthHeaders).then((response) {
         Uint8List? responseBytes;
         if ((response.statusCode >= 200) && (response.statusCode <= 304)) {
           responseBytes = response.bodyBytes;
