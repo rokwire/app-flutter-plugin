@@ -253,7 +253,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
       return image;
     }
     else if (imageUrl != null) {
-      return NetworkImage(imageUrl!);
+      return NetworkImage(imageUrl!, headers: networkImageHeaders);
     }
     else if (imageKey != null) {
       Widget? imageWidget = Styles().images.getImage(imageKey);
