@@ -1880,6 +1880,9 @@ class Auth2UserPrefs {
     }
   }
 
+  bool hasRole(UserRole role) =>
+    (_roles?.contains(role) == true);
+
   // Favorites
 
   Iterable<String>? get favoritesKeys => _favorites?.keys;
