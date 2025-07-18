@@ -740,13 +740,13 @@ class Surveys /* with Service */ {
     return null;
   }
 
-  /// Retrieves a list of `Score` objects for every leaderboard the user is in
-  Future<List<Score>?> getLeaderboardUserScores(
+  /// Retrieves a list of `Leaderboard` objects for every leaderboard the user is in
+  Future<List<Leaderboard>?> getLeaderboardUserRanks(
       {int? limit, int? offset}) async {
     if (enabled) {
       String? url = Config().surveysUrl;
       if (url != null && url.isNotEmpty) {
-        url += '/leaderboards/scores';
+        url += '/leaderboards/ranks';
 
         Map<String, String> queryParams = {};
         if (limit != null) {
@@ -765,7 +765,7 @@ class Surveys /* with Service */ {
         if (responseCode == 200) {
           List<dynamic>? responseList = JsonUtils.decodeList(responseBody);
           if (responseList != null) {
-            return Score.listFromJson(responseList);
+            return Leaderboard.listFromJson(responseList);
           }
         }
       }
