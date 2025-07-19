@@ -1245,11 +1245,13 @@ class Leaderboard {
   final String? id;
   final String? name;
   final bool? isAdmin;
+  final int? rank;
 
   Leaderboard({
     this.id,
     this.name,
     this.isAdmin,
+    this.rank,
   });
 
   factory Leaderboard.fromJson(Map<String, dynamic> json) {
@@ -1257,6 +1259,7 @@ class Leaderboard {
       id: JsonUtils.stringValue(json['id']),
       name: JsonUtils.stringValue(json['name']),
       isAdmin: JsonUtils.boolValue(json['is_admin']),
+      rank: JsonUtils.intValue(json['rank']),
     );
   }
 
@@ -1264,7 +1267,7 @@ class Leaderboard {
     return {
       'id': id,
       'name': name,
-      // we leave out isAdmin because the Surveys BB verifies this anyway
+      // we leave out isAdmin, rank because the Surveys BB verifies this anyway
     };
   }
 
