@@ -175,7 +175,9 @@ class AppDateTime with Service {
     return '$timePrefix,${multiLine ? '\n' : ' '}$timeSuffix';
   }
 
-  String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool includeToday = true, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
+  String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false,
+    bool includeToday = true, bool considerSettingsDisplayTime = true,
+    bool includeAtSuffix = false, bool showWeekday = true}) {
     String? displayDay = '';
     if (dateTimeUtc != null) {
       DateTime dateTimeToCompare = _getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
@@ -199,7 +201,7 @@ class AppDateTime with Service {
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
-      } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
+      } else if (showWeekday && DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
         displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
       } else {
         displayDay = formatDateTime(dateTimeToCompare, format: "MMM d", ignoreTimeZone: true, showTzSuffix: false);
