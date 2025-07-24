@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add helper extensions for GlobalKey and double [#5271](https://github.com/rokwire/illinois-app/issues/5271).
 - Add prospective student user role [#5270](https://github.com/rokwire/illinois-app/issues/5270).
+- Add dropShadow color in Styles [#5289](https://github.com/rokwire/illinois-app/issues/5289).
 ### Fixed
 - Showing network images [#5240](https://github.com/rokwire/illinois-app/issues/5240).
 
