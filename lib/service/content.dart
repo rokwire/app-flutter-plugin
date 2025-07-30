@@ -263,6 +263,9 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     return (contentItems != null) ? contentItems[category] : null;
   }
 
+  Future<void> refreshContentItems() async =>
+    updateContentItemsFromNet();
+
   @protected
   Future<void> updateContentItemsFromNet() async {
     Map<String, dynamic>? contentItems = await loadContentItemsFromNet();
