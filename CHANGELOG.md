@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
-### Fixed
-- WEB: Fix parsing survey rules [#5083](https://github.com/rokwire/illinois-app/issues/5083).
+
+## [1.11.0] - 2025-08-05
 ### Changed
 - WEB: Introduce image cache service and web network image [#5240](https://github.com/rokwire/illinois-app/issues/5240).
 - Android: upgrade compileSdkVersion and targetSdkVersion to 36 [#626](https://github.com/rokwire/app-flutter-plugin/issues/626).
@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added prospective student user role [#5270](https://github.com/rokwire/illinois-app/issues/5270).
 - Added dropShadow color in Styles [#5289](https://github.com/rokwire/illinois-app/issues/5289).
 - Added Content refreshContentItems public API [#5251](https://github.com/rokwire/illinois-app/issues/5251).
-
 ### Fixed
+- WEB: Fix parsing survey rules [#5083](https://github.com/rokwire/illinois-app/issues/5083).
 - Showing network images [#5240](https://github.com/rokwire/illinois-app/issues/5240).
 
 ## [1.10.3] - 2025-06-23
