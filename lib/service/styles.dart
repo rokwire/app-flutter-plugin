@@ -362,6 +362,7 @@ class UiColors {
   Color get blackTransparent06         => colorMap['blackTransparent06'] ?? const Color(0x99000000);
   Color get blackTransparent018        => colorMap['blackTransparent018'] ?? const Color(0x30000000);
   Color get blackTransparent038        => colorMap['blackTransparent038'] ?? const Color(0x61000000);
+  Color get dropShadow                 => colorMap['dropShadow'] ?? const Color(0x40535353);
 
   Color get mediumGray                 => colorMap['mediumGray'] ?? const Color(0xFF717372);
   Color get mediumGray1                => colorMap['mediumGray1'] ?? const Color(0xFF535353);

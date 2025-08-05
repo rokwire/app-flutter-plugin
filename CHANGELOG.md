@@ -5,7 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-<!-- The next version number should be the version from pubspec.yaml -->
+<!-- The next version number should be the version already set in pubspec.yaml -->
+
+## [1.11.0] - 2025-08-05
+### Changed
+- Android: upgrade compileSdkVersion and targetSdkVersion to 36 [#626](https://github.com/rokwire/app-flutter-plugin/issues/626).
+- Upgrade dart sdk [#628](https://github.com/rokwire/app-flutter-plugin/issues/628).
+### Added
+- Added helper extensions for GlobalKey and double [#5271](https://github.com/rokwire/illinois-app/issues/5271).
+- Added prospective student user role [#5270](https://github.com/rokwire/illinois-app/issues/5270).
+- Added dropShadow color in Styles [#5289](https://github.com/rokwire/illinois-app/issues/5289).
+- Added Content refreshContentItems public API [#5251](https://github.com/rokwire/illinois-app/issues/5251).
+### Fixed
+- Showing network images [#5240](https://github.com/rokwire/illinois-app/issues/5240).
+
+## [1.10.3] - 2025-06-23
+### Changed
+- Event2TypeGroup.access renamed to visibility [#5241](https://github.com/rokwire/illinois-app/issues/5241).
 
 ## [1.10.2] - 2025-06-16
 ### Added

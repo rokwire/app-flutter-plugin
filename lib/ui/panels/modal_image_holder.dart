@@ -8,8 +8,9 @@ class ModalImageHolder extends StatelessWidget{
   final String? imageKey;
   final ImageProvider? image; //If the child can't be Image. Useful when Image is wrapped within Decoration
   final Widget? child; //Preferably Image that will be directly passed to the ModalImagePanel. But can also contain image wrapped in Contained/Decoration/etc - then must use url/image
+  final Map<String, String>? headers;
 
-  const ModalImageHolder({Key? key,  this.child, this.imageUrl, this.imageKey, this.image, }) : super(key: key);
+  const ModalImageHolder({Key? key,  this.child, this.imageUrl, this.imageKey, this.image, this.headers}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class ModalImageHolder extends StatelessWidget{
   //Modal Image Dialog
   void _showModalImage(BuildContext context){
     if (StringUtils.isNotEmpty(imageUrl)){
-      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(imageUrl: imageUrl)));
+      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(imageUrl: imageUrl, networkImageHeaders: headers)));
       //Navigator.push(context, MaterialPageRoute( builder: (_) => ModalPhotoImagePanel(imageUrl: url)));
     }
     else if (StringUtils.isNotEmpty(imageKey)){

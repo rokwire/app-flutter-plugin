@@ -221,8 +221,6 @@ class LocalNotifications with Service {
               }
             }
             return null;
-          default:
-            return null;
         }
       }
     }
