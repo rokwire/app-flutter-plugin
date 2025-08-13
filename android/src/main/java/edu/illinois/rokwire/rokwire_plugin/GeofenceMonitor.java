@@ -21,9 +21,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
@@ -35,11 +33,11 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.altbeacon.beacon.Beacon;
-import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.util.ArrayList;
@@ -55,7 +53,7 @@ import androidx.core.content.ContextCompat;
 
 import io.flutter.plugin.common.MethodChannel;
 
-public class GeofenceMonitor implements BeaconConsumer {
+public class GeofenceMonitor {
 
     private static final String TAG = GeofenceMonitor.class.getCanonicalName();
     private static final int BEACON_INVALID_VALUE = -420000;
@@ -64,13 +62,13 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     private GeofencingClient geofencingClient;
     private PendingIntent geofencePendingIntent;
-    private List<String> currentRegionIds = new ArrayList<>();
-    private Map<String, EntryGeofenceMap> geofenceRegions;
+    private final List<String> currentRegionIds = new ArrayList<>();
+    private Map<String, Geofence> geofenceRegions;
 
     // Beacons
     private BeaconManager beaconManager;
     private Map<String, Region> beaconRegions;
-    private Map<String, Collection<Beacon>> currentRegionBeacons = new HashMap<>();
+    private final Map<String, Collection<Beacon>> currentRegionBeacons = new HashMap<>();
 
     public static GeofenceMonitor getInstance() {
         if (instance == null) {
@@ -126,14 +124,8 @@ public class GeofenceMonitor implements BeaconConsumer {
         if ((region != null) && (beaconManager != null)) {
             Collection<Region> rangingRegions = beaconManager.getRangedRegions();
             if (!rangingRegions.contains(region)) {
-                try {
-                    beaconManager.startRangingBeaconsInRegion(region);
-                    return true;
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Failed to start ranging region with id: " + regionId);
-                    e.printStackTrace();
-                    return false;
-                }
+                beaconManager.startRangingBeacons(region);
+                return true;
             }
         }
         return false;
@@ -220,13 +212,9 @@ public class GeofenceMonitor implements BeaconConsumer {
 
         geofencingClient = LocationServices.getGeofencingClient(activity);
         if (geofenceRegions != null && !geofenceRegions.isEmpty()) {
-            List<EntryGeofenceMap> entryGeofenceMaps = new ArrayList<>(geofenceRegions.values());
-            if (!entryGeofenceMaps.isEmpty()) {
-                List<Geofence> geofenceList = new ArrayList<>();
-                for (EntryGeofenceMap geofenceMapEntry : entryGeofenceMaps) {
-                    geofenceList.add(geofenceMapEntry.geofence);
-                }
-                startMonitorGeofenceRegions(geofenceList);
+            List<Geofence> geofenceRegionList = new ArrayList<>(geofenceRegions.values());
+            if (!geofenceRegionList.isEmpty()) {
+                startMonitorGeofenceRegions(geofenceRegionList);
             }
         }
     }
@@ -271,7 +259,7 @@ public class GeofenceMonitor implements BeaconConsumer {
                                 setExpirationDuration(Geofence.NEVER_EXPIRE).
                                 setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT).
                                 build();
-                        geofenceRegions.put(id, new EntryGeofenceMap(regionEntry, geofence));
+                        geofenceRegions.put(id, geofence);
 
                         newGeofenceIds.add(id);
                         newGeofences.add(geofence);
@@ -312,7 +300,7 @@ public class GeofenceMonitor implements BeaconConsumer {
                 currentRegionIds.remove(geofenceId);
             }
             stopMonitorGeofenceRegions(removeGeofenceIds);
-            if (removeGeofenceIds.size() > 0) {
+            if (!removeGeofenceIds.isEmpty()) {
                 regionsChanged = true;
             }
 
@@ -330,7 +318,7 @@ public class GeofenceMonitor implements BeaconConsumer {
                 currentRegionIds.remove(beaconRegion.getUniqueId());
             }
             stopMonitorBeaconRegions(removeBeaconRegions);
-            if (removeBeaconRegions.size() > 0) {
+            if (!removeBeaconRegions.isEmpty()) {
                 regionsChanged = true;
             }
 
@@ -396,22 +384,28 @@ public class GeofenceMonitor implements BeaconConsumer {
 
     //region Add Geofences Listeners
 
-    private OnSuccessListener<Void> addGeofencesSuccessListener = aVoid -> Log.i(TAG, "Add Geofences -> onSuccess");
+    private final OnSuccessListener<Void> addGeofencesSuccessListener = aVoid -> Log.i(TAG, "Add Geofences -> onSuccess");
 
-    private OnFailureListener addGeofencesFailureListener = e -> {
+    private final OnFailureListener addGeofencesFailureListener = e -> {
         Log.e(TAG, "Add Geofences -> onFailure");
-        Log.e(TAG, e.getLocalizedMessage());
+        String localizedMsg = e.getLocalizedMessage();
+        if (localizedMsg != null) {
+            Log.e(TAG, localizedMsg);
+        }
     };
 
     //endregion
 
     //region Remove Geofences Listeners
 
-    private OnSuccessListener<Void> removeGeofencesSuccessListener = aVoid -> Log.i(TAG, "Remove Geofences -> onSuccess");
+    private final OnSuccessListener<Void> removeGeofencesSuccessListener = aVoid -> Log.i(TAG, "Remove Geofences -> onSuccess");
 
-    private OnFailureListener removeGeofencesFailureListener = e -> {
+    private final OnFailureListener removeGeofencesFailureListener = e -> {
         Log.e(TAG, "Remove Geofences -> onFailure");
-        Log.e(TAG, e.getLocalizedMessage());
+        String localizedMsg = e.getLocalizedMessage();
+        if (localizedMsg != null) {
+            Log.e(TAG, localizedMsg);
+        }
     };
 
     //endregion
@@ -431,7 +425,9 @@ public class GeofenceMonitor implements BeaconConsumer {
         beaconManager = BeaconManager.getInstanceForApplication(context);
         // Layout for iBeacons
         beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
-        beaconManager.bind(this);
+
+        beaconManager.addMonitorNotifier(monitorNotifier);
+        beaconManager.addRangeNotifier(rangeNotifier);
 
         if (beaconRegions != null && !beaconRegions.isEmpty()) {
             List<Region> beaconRegionList = new ArrayList<>(beaconRegions.values());
@@ -445,7 +441,6 @@ public class GeofenceMonitor implements BeaconConsumer {
         if (beaconManager != null) {
             beaconManager.removeAllMonitorNotifiers();
             beaconManager.removeAllRangeNotifiers();
-            beaconManager.unbind(this);
             beaconManager = null;
         }
     }
@@ -465,8 +460,7 @@ public class GeofenceMonitor implements BeaconConsumer {
             try {
                 beaconManager.startMonitoring(region);
             } catch (Exception e) {
-                Log.e(TAG, "Failed to start monitor beacon region with id: " + region.getUniqueId());
-                e.printStackTrace();
+                Log.e(TAG, "Failed to start monitor beacon region with id: " + region.getUniqueId() + ", ex: " + e);
             }
         }
     }
@@ -482,8 +476,7 @@ public class GeofenceMonitor implements BeaconConsumer {
             try {
                 beaconManager.stopMonitoring(region);
             } catch (Exception e) {
-                Log.e(TAG, "Failed to stop monitor beacon region with id: " + region.getUniqueId());
-                e.printStackTrace();
+                Log.e(TAG, "Failed to stop monitor beacon region with id: " + region.getUniqueId() + ", ex: " + e);
             }
         }
     }
@@ -513,13 +506,7 @@ public class GeofenceMonitor implements BeaconConsumer {
             return false;
         }
         if (beaconManager != null) {
-            try {
-                beaconManager.stopRangingBeaconsInRegion(region);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Failed to stop ranging beacons in region with id: " + regionId);
-                e.printStackTrace();
-                return false;
-            }
+            beaconManager.stopRangingBeacons(region);
             if (currentRegionBeacons.get(regionId) != null) {
                 currentRegionBeacons.remove(regionId);
                 notifyBeacons(null, regionId);
@@ -544,92 +531,62 @@ public class GeofenceMonitor implements BeaconConsumer {
         RokwirePlugin.getInstance().notifyGeoFence​("onBeaconsInRegionChanged", parameters);
     }
 
-    @Override
-    public void onBeaconServiceConnect() {
-        if (beaconManager != null) {
-            beaconManager.removeAllMonitorNotifiers();
-            beaconManager.removeAllRangeNotifiers();
-
-            // Monitor Listener
-            beaconManager.addMonitorNotifier(new MonitorNotifier() {
-                @Override
-                public void didEnterRegion(Region region) {
-                    String beaconRegionId = region.getUniqueId();
-                    Log.i(TAG, "BeaconScanner.didEnterRegion with id: " + beaconRegionId);
-                    if (!currentRegionIds.contains(beaconRegionId)) {
-                        currentRegionIds.add(beaconRegionId);
-                        notifyRegionEnter(beaconRegionId);
-                        notifyCurrentGeofencesUpdated();
-                    }
-                }
-
-                @Override
-                public void didExitRegion(Region region) {
-                    String beaconRegionId = region.getUniqueId();
-                    Log.i(TAG, "BeaconScanner.didExitRegion with id: " + beaconRegionId);
-                    if (currentRegionIds.contains(beaconRegionId)) {
-                        currentRegionIds.remove(beaconRegionId);
-                        notifyRegionExit(beaconRegionId);
-                        notifyCurrentGeofencesUpdated();
-                        stopRangingBeaconsInRegion(region);
-                    }
-                }
-
-                @Override
-                public void didDetermineStateForRegion(int state, Region region) {
-                    String regionId = region.getUniqueId();
-                    Log.i(TAG, "BeaconScanner.didDetermineStateForRegion with id: " + regionId + " and state: " + state);
-                    boolean changed;
-                    if (state == INSIDE) {
-                        Log.i(TAG, "BeaconScanner.INSIDE region with id: " + regionId);
-                        changed = !currentRegionIds.contains(regionId);
-                        currentRegionIds.add(regionId);
-                        if (changed) {
-                            notifyRegionEnter(regionId);
-                            notifyCurrentGeofencesUpdated();
-                        }
-                    } else if (state == OUTSIDE) {
-                        Log.i(TAG, "BeaconScanner.OUTSIDE region with id: " + regionId);
-                        changed = currentRegionIds.contains(regionId);
-                        currentRegionIds.remove(regionId);
-                        if (changed) {
-                            notifyRegionExit(regionId);
-                            notifyCurrentGeofencesUpdated();
-                        }
-                        stopRangingBeaconsInRegion(region);
-                    }
-                }
-            });
-
-            // Ranging Listener
-            beaconManager.addRangeNotifier((collection, region) -> {
-                int beaconsCount = (collection != null) ? collection.size() : 0;
-                String regionId = region.getUniqueId();
-                Log.i(TAG, String.format(Locale.getDefault(), "BeaconScanner.didRangeBeaconsInRegion: [%d] in region with id '%s'", beaconsCount, regionId));
-                rangedBeaconsInRegion(collection, regionId);
-            });
+    private final MonitorNotifier monitorNotifier = new MonitorNotifier() {
+        @Override
+        public void didEnterRegion(Region region) {
+            String beaconRegionId = region.getUniqueId();
+            Log.i(TAG, "BeaconScanner.didEnterRegion with id: " + beaconRegionId);
+            if (!currentRegionIds.contains(beaconRegionId)) {
+                currentRegionIds.add(beaconRegionId);
+                notifyRegionEnter(beaconRegionId);
+                notifyCurrentGeofencesUpdated();
+            }
         }
-    }
 
-    @Override
-    public Context getApplicationContext() {
-        Log.i(TAG, "BeaconScanner.getApplicationContext");
-        if (RokwirePlugin.getInstance() != null) {
-            return RokwirePlugin.getInstance().getApplicationContext();
+        @Override
+        public void didExitRegion(Region region) {
+            String beaconRegionId = region.getUniqueId();
+            Log.i(TAG, "BeaconScanner.didExitRegion with id: " + beaconRegionId);
+            if (currentRegionIds.contains(beaconRegionId)) {
+                currentRegionIds.remove(beaconRegionId);
+                notifyRegionExit(beaconRegionId);
+                notifyCurrentGeofencesUpdated();
+                stopRangingBeaconsInRegion(region);
+            }
         }
-        return null;
-    }
 
-    @Override
-    public void unbindService(ServiceConnection serviceConnection) {
-        Log.i(TAG, "BeaconScanner.unbindService");
-    }
+        @Override
+        public void didDetermineStateForRegion(int state, Region region) {
+            String regionId = region.getUniqueId();
+            Log.i(TAG, "BeaconScanner.didDetermineStateForRegion with id: " + regionId + " and state: " + state);
+            boolean changed;
+            if (state == INSIDE) {
+                Log.i(TAG, "BeaconScanner.INSIDE region with id: " + regionId);
+                changed = !currentRegionIds.contains(regionId);
+                currentRegionIds.add(regionId);
+                if (changed) {
+                    notifyRegionEnter(regionId);
+                    notifyCurrentGeofencesUpdated();
+                }
+            } else if (state == OUTSIDE) {
+                Log.i(TAG, "BeaconScanner.OUTSIDE region with id: " + regionId);
+                changed = currentRegionIds.contains(regionId);
+                currentRegionIds.remove(regionId);
+                if (changed) {
+                    notifyRegionExit(regionId);
+                    notifyCurrentGeofencesUpdated();
+                }
+                stopRangingBeaconsInRegion(region);
+            }
+        }
+    };
 
-    @Override
-    public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
-        Log.i(TAG, "BeaconScanner.bindService");
-        return false;
-    }
+    private final RangeNotifier rangeNotifier = (collection, region) -> {
+        int beaconsCount = (collection != null) ? collection.size() : 0;
+        String regionId = region.getUniqueId();
+        Log.i(TAG, String.format(Locale.getDefault(), "BeaconScanner.didRangeBeaconsInRegion: [%d] in region with id '%s'", beaconsCount, regionId));
+        rangedBeaconsInRegion(collection, regionId);
+    };
 
     //endregion
 
@@ -639,7 +596,14 @@ public class GeofenceMonitor implements BeaconConsumer {
                 result.success(getCurrentIds());
             }
             else if ("monitorRegions".equals(name)) {
-                List<Map<String, Object>> geoFencesList = (params instanceof List) ? (List<Map<String, Object>>) params : null;
+                List<Map<String, Object>> geoFencesList = null;
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> paramsList = (params instanceof List<?>) ? (List<Map<String, Object>>) params : null;
+                    geoFencesList = paramsList;
+                } catch (Exception e) {
+                    Log.e(TAG, String.format(Locale.getDefault(), "monitorRegions: Failed to parse geofences list. Ex: '%s'", e));
+                }
                 monitorRegions(geoFencesList);
                 result.success(null);
             }
@@ -659,20 +623,8 @@ public class GeofenceMonitor implements BeaconConsumer {
                 result.success(null);
             }
         } catch (IllegalStateException exception) {
-            String errorMsg = String.format("Ignoring exception '%s'. See https://github.com/flutter/flutter/issues/29092 for details.", exception.toString());
+            String errorMsg = String.format("Ignoring exception '%s'. See https://github.com/flutter/flutter/issues/29092 for details.", exception);
             Log.e(TAG, errorMsg);
-            exception.printStackTrace();
-        }
-    }
-
-
-    private static class EntryGeofenceMap {
-        private Map<String, Object> entry;
-        private Geofence geofence;
-
-        private EntryGeofenceMap(Map<String, Object> entry, Geofence geofence) {
-            this.entry = entry;
-            this.geofence = geofence;
         }
     }
 }
