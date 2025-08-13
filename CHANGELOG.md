@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Added
+- Acknowledge Reaction innerContext field [#5238](https://github.com/rokwire/illinois-app/issues/5238). 
 
 ## [1.11.0] - 2025-08-05
 ### Changed
