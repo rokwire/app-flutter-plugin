@@ -966,12 +966,7 @@ class JsonUtils {
 
   static List<T>? listValue<T>(dynamic value) {
     try {
-      if (value is List) {
-        return value.cast<T>();
-      }
-      else if (value is Set) {
-        return List<T>.from(value.cast<T>());
-      }
+      return (value is List) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
@@ -981,15 +976,7 @@ class JsonUtils {
 
   static Set<T>? setValue<T>(dynamic value) {
     try {
-      if (value is Set) {
-        return value.cast<T>();
-      }
-      else if (value is List) {
-        return Set<T>.from(value.cast<T>());
-      }
-      else {
-        return null;
-      }
+      return (value is Set) ? value.cast<T>() : null;
     }
     catch(e) {
       debugPrint(e.toString());
@@ -998,22 +985,8 @@ class JsonUtils {
   }
 
   static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
-    LinkedHashSet<T>? result;
-    try {
-      if (value is Set) {
-        result = LinkedHashSet<T>.from(value.cast<T>());
-      }
-      else if (value is List) {
-        result = LinkedHashSet<T>.from(value.cast<T>());
-      }
-      else {
-        return null;
-      }
-    }
-    catch(e) {
-      debugPrint(e.toString());
-    }
-    return result;
+    Set<T>? set = setValue(value);
+    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
@@ -1038,22 +1011,13 @@ class JsonUtils {
     return result;
   }
 
-  static List<String>? listStringsValue(dynamic value) =>
-    listValue(value);
-
-
-  static List<int>? listIntsValue(dynamic value) =>
-    listValue(value);
-
-
-  static Uint8List? listUint8Value(dynamic value) {
+  static List<String>? listStringsValue(dynamic value) {
     try {
-      if (value is Uint8List) {
-        return value;
+      if (value is List) {
+        return value.cast<String>();
       }
-      else {
-        List<int>? intListValue = listValue(value);
-        return (intListValue != null) ? Uint8List.fromList(intListValue) : null;
+      else if (value is Set) {
+        return List<String>.from(value.cast<String>());
       }
     }
     catch(e) {
@@ -1062,68 +1026,108 @@ class JsonUtils {
     return null;
   }
 
-  static Set<String>? setStringsValue(dynamic value) =>
-    setValue(value);
+  static List<int>? listIntsValue(dynamic value) {
+    try {
+      if (value is List) {
+        return value.cast<int>();
+      }
+      else if (value is Set) {
+        return List<int>.from(value.cast<int>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
 
-  static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) =>
-    mapOfStringToLinkedHashSetValue<String>(value);
+  static Uint8List? listUint8Value(dynamic value) {
+    try {
+      if (value is Uint8List) {
+        return value;
+      }
+      else if (value is List) {
+        return Uint8List.fromList(value.cast<int>());
+      }
+      else if (value is Set) {
+        return Uint8List.fromList(List<int>.from(value.cast<int>()));
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
 
-  static Map<String, LinkedHashSet<T>>? mapOfStringToLinkedHashSetValue<T>(dynamic value) {
-    Map<String, LinkedHashSet<T>>? result;
+  static Set<String>? setStringsValue(dynamic value) {
+    try {
+      if (value is Set) {
+        return value.cast<String>();
+      }
+      else if (value is List) {
+        return Set<String>.from(value.cast<String>());
+      }
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static LinkedHashSet<String>? linkedHashSetStringsValue(dynamic value) {
+    try {
+      return (value is List) ? LinkedHashSet<String>.from(value.cast<String>()) : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) {
+    Map<String, LinkedHashSet<String>>? result;
     if (value is Map) {
-      result = <String, LinkedHashSet<T>>{};
+      result = <String, LinkedHashSet<String>>{};
       for (dynamic key in value.keys) {
         if (key is String) {
-          LinkedHashSet<T>? resultValue = linkedHashSetValue<T>(value[key]);
-          try { MapUtils.set(result, key, resultValue); }
-          catch(e) {
-            debugPrint(e.toString());
-          }
+          MapUtils.set(result, key, linkedHashSetStringsValue(value[key]));
         }
       }
     }
     return result;
   }
 
-  static Map<String, dynamic>? mapOfStringToLinkedHashSetOfStringsJsonValue(Map<String, LinkedHashSet<String>>? contentMap) =>
-    mapOfStringToLinkedHashSetJsonValue(contentMap);
-
-  static Map<String, dynamic>? mapOfStringToLinkedHashSetJsonValue<T>(Map<String, LinkedHashSet<T>>? contentMap) {
+  static Map<String, dynamic>? mapOfStringToLinkedHashSetOfStringsJsonValue(Map<String, LinkedHashSet<String>>? contentMap) {
     Map<String, dynamic>? jsonMap;
     if (contentMap != null) {
       jsonMap = <String, dynamic>{};
       for (String key in contentMap.keys) {
-        jsonMap[key] = List<T>.from(contentMap[key]!);
+        jsonMap[key] = List.from(contentMap[key]!);
       }
     }
     return jsonMap;
   }
 
-  static Map<String, Set<String>>? mapOfStringToSetOfStringsValue(dynamic value) =>
-    mapOfStringToSetValue(value);
-
-  static Map<String, Set<T>>? mapOfStringToSetValue<T>(dynamic value) {
-    Map<String, Set<T>>? result;
+  static Map<String, Set<String>>? mapOfStringToSetOfStringsValue(dynamic value) {
+    Map<String, Set<String>>? result;
     if (value is Map) {
-      result = <String, Set<T>>{};
+      result = <String, Set<String>>{};
       for (dynamic key in value.keys) {
         if (key is String) {
-          MapUtils.set(result, key, JsonUtils.setValue(value[key]));
+          MapUtils.set(result, key, JsonUtils.setStringsValue(value[key]));
         }
       }
     }
     return result;
   }
 
-  static Map<String, dynamic>? mapOfStringToSetOfStringsJsonValue(Map<String, Set<String>>? contentMap) =>
-      mapOfStringToSetJsonValue(contentMap);
 
-  static Map<String, dynamic>? mapOfStringToSetJsonValue<T>(Map<String, Set<T>>? contentMap) {
+  static Map<String, dynamic>? mapOfStringToSetOfStringsJsonValue(Map<String, Set<String>>? contentMap) {
     Map<String, dynamic>? jsonMap;
     if (contentMap != null) {
       jsonMap = <String, dynamic>{};
       for (String key in contentMap.keys) {
-        jsonMap[key] = List<T>.from(contentMap[key]!);
+        jsonMap[key] = List.from(contentMap[key]!);
       }
     }
     return jsonMap;
