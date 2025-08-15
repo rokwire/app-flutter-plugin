@@ -808,12 +808,12 @@ class Auth2UserProfile {
     }
   }
 
-  Map<String, LinkedHashSet<String>>? getResearchQuestionnaireAnswers(String? questionnaireId) {
-    return JsonUtils.mapOfStringToLinkedHashSetOfStringsValue(MapUtils.get(researchQuestionnaireAnswers, questionnaireId));
+  Map<String, LinkedHashSet<dynamic>>? getResearchQuestionnaireAnswers(String? questionnaireId) {
+    return JsonUtils.mapOfStringToLinkedHashSetValue(MapUtils.get(researchQuestionnaireAnswers, questionnaireId));
   }
 
-  void setResearchQuestionnaireAnswers(String? questionnaireId, Map<String, LinkedHashSet<String>>? questionnaireAnswers) {
-    Map<String, dynamic>? answersJson = JsonUtils.mapOfStringToLinkedHashSetOfStringsJsonValue(questionnaireAnswers);
+  void setResearchQuestionnaireAnswers(String? questionnaireId, Map<String, LinkedHashSet<dynamic>>? questionnaireAnswers) {
+    Map<String, dynamic>? answersJson = JsonUtils.mapOfStringToLinkedHashSetJsonValue(questionnaireAnswers);
     Map<String, dynamic>? lastAnswersJson = JsonUtils.mapValue(MapUtils.get(researchQuestionnaireAnswers, questionnaireId));
     if (!const DeepCollectionEquality().equals(answersJson, lastAnswersJson)) {
       researchQuestionnaireAnswers ??= <String, dynamic>{};
