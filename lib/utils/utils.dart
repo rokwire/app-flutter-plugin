@@ -998,12 +998,13 @@ class JsonUtils {
   }
 
   static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
+    LinkedHashSet<T>? result;
     try {
       if (value is Set) {
-        return LinkedHashSet<T>.from(value.cast<T>());
+        result = LinkedHashSet<T>.from(value.cast<T>());
       }
       else if (value is List) {
-        return LinkedHashSet<T>.from(value.cast<T>());
+        result = LinkedHashSet<T>.from(value.cast<T>());
       }
       else {
         return null;
@@ -1012,7 +1013,7 @@ class JsonUtils {
     catch(e) {
       debugPrint(e.toString());
     }
-    return null;
+    return result;
   }
 
   static List<String>? stringListValue(dynamic value) {
@@ -1036,7 +1037,7 @@ class JsonUtils {
     }
     return result;
   }
-  
+
   static List<String>? listStringsValue(dynamic value) =>
     listValue(value);
 
@@ -1065,7 +1066,7 @@ class JsonUtils {
     setValue(value);
 
   static Map<String, LinkedHashSet<String>>? mapOfStringToLinkedHashSetOfStringsValue(dynamic value) =>
-    mapOfStringToLinkedHashSetValue(value);
+    mapOfStringToLinkedHashSetValue<String>(value);
 
   static Map<String, LinkedHashSet<T>>? mapOfStringToLinkedHashSetValue<T>(dynamic value) {
     Map<String, LinkedHashSet<T>>? result;
@@ -1073,7 +1074,11 @@ class JsonUtils {
       result = <String, LinkedHashSet<T>>{};
       for (dynamic key in value.keys) {
         if (key is String) {
-          MapUtils.set(result, key, linkedHashSetValue(value[key]));
+          LinkedHashSet<T>? resultValue = linkedHashSetValue<T>(value[key]);
+          try { MapUtils.set(result, key, resultValue); }
+          catch(e) {
+            debugPrint(e.toString());
+          }
         }
       }
     }
