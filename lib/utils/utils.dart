@@ -984,11 +984,6 @@ class JsonUtils {
     return null;
   }
 
-  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
-    Set<T>? set = setValue(value);
-    return (set != null) ? LinkedHashSet.from(set) : null;
-  }
-
   static List<String>? stringListValue(dynamic value) {
     List<String>? result;
     if (value is List) {
@@ -1098,6 +1093,40 @@ class JsonUtils {
   }
 
   static Map<String, dynamic>? mapOfStringToLinkedHashSetOfStringsJsonValue(Map<String, LinkedHashSet<String>>? contentMap) {
+    Map<String, dynamic>? jsonMap;
+    if (contentMap != null) {
+      jsonMap = <String, dynamic>{};
+      for (String key in contentMap.keys) {
+        jsonMap[key] = List.from(contentMap[key]!);
+      }
+    }
+    return jsonMap;
+  }
+
+  static LinkedHashSet<dynamic>? linkedHashSetValue(dynamic value) {
+    try {
+      return (value is List) ? LinkedHashSet<dynamic>.from(value) : null;
+    }
+    catch(e) {
+      debugPrint(e.toString());
+    }
+    return null;
+  }
+
+  static Map<String, LinkedHashSet<dynamic>>? mapOfStringToLinkedHashSetValue(dynamic value) {
+    Map<String, LinkedHashSet<dynamic>>? result;
+    if (value is Map) {
+      result = <String, LinkedHashSet<dynamic>>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, linkedHashSetValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
+  static Map<String, dynamic>? mapOfStringToLinkedHashSetJsonValue(Map<String, LinkedHashSet<dynamic>>? contentMap) {
     Map<String, dynamic>? jsonMap;
     if (contentMap != null) {
       jsonMap = <String, dynamic>{};
