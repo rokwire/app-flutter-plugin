@@ -23,8 +23,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
-import 'package:rokwire_plugin/service/firebase_crashlytics.dart';
 import 'package:rokwire_plugin/service/log.dart';
+import 'package:rokwire_plugin/service/logger.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
@@ -101,9 +101,8 @@ class Network  {
 
         return response;
       }
-    } catch (e) { 
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+    } catch (e) {
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
     return null;
@@ -134,9 +133,8 @@ class Network  {
 
           return response;
         }
-      } catch (e) { 
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+      } catch (e) {
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -152,9 +150,8 @@ class Network  {
       if (await auth?.refreshNetworkAuthTokenIfNeeded(response, auth.networkAuthToken) == true) {
         response = await _get(url, body: body, headers: headers, auth: auth, client: client, timeout: timeout);
       }
-    } catch (e) { 
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+    } catch (e) {
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -178,8 +175,7 @@ class Network  {
           ) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -196,8 +192,7 @@ class Network  {
         response = await _post(url, body: body, encoding: encoding, headers: headers, client: client, auth: auth, timeout: timeout);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -221,8 +216,7 @@ class Network  {
           ) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -239,8 +233,7 @@ class Network  {
         response = await _put(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout, client: client);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -260,8 +253,7 @@ class Network  {
         Future<http.Response?>? response = (uri != null) ? http.patch(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -278,8 +270,7 @@ class Network  {
         response = await _patch(url, body: body, encoding: encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -299,8 +290,7 @@ class Network  {
         Future<http.Response?>? response = (uri != null) ? http.delete(uri, headers: await _prepareHeaders(headers, auth, uri), body: body, encoding: encoding) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -316,8 +306,7 @@ class Network  {
         response = await _delete(url, body: body, encoding:encoding, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -337,8 +326,7 @@ class Network  {
         Future<String>? response = (uri != null) ? http.read(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -350,8 +338,7 @@ class Network  {
       return await _read(url, headers: headers, auth: auth, timeout: timeout);
     }
     catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
     return null;
@@ -364,8 +351,7 @@ class Network  {
         Future<Uint8List?>? response = (uri != null) ? http.readBytes(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseBytesHandler) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -386,8 +372,7 @@ class Network  {
         response = await _multipartPost(url: url, fileKey: fileKey, fileBytes: fileBytes, fileName: fileName, contentType: contentType, headers: headers, fields: fields, auth: auth);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -423,8 +408,7 @@ class Network  {
           }
         }
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -442,8 +426,7 @@ class Network  {
         response = await _streamedRequest(method, url, byteStream: byteStream, contentLength: contentLength, headers: headers, auth: auth);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
     }
 
     if (sendAnalytics) {
@@ -480,8 +463,7 @@ class Network  {
           return response;
         }
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
       }
     }
     return null;
@@ -494,8 +476,7 @@ class Network  {
         Future<http.Response?>? response = (uri != null) ? http.head(uri, headers: await _prepareHeaders(headers, auth, uri)) : null;
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
       } catch (e) {
-        Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        _logError(e);
         NotificationService().notify(notifyHttpResponseError, e);
       }
     }
@@ -512,8 +493,7 @@ class Network  {
         response = await _head(url, headers: headers, auth: auth, timeout: timeout);
       }
     } catch (e) {
-      Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      _logError(e);
       NotificationService().notify(notifyHttpResponseError, e);
     }
 
@@ -649,5 +629,9 @@ class Network  {
 
   static String? _urlStringFromUri(dynamic uri) {
     return (uri is String) ? uri : uri.toString();
+  }
+
+  static void _logError(dynamic error) {
+    Logger().error('network: $error');
   }
 }
