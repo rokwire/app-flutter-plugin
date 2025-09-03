@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:collection/collection.dart';
@@ -52,6 +53,13 @@ class Content with Service, NotificationsListener implements ContentItemCategory
   static const String _imagesContentCategory = "images";
   static const String _widgetsContentCategory = "widgets";
   static const String _contentItemsCacheFileName = "contentItems.json";
+
+  static const String conversationsContentCategory = "conversations";
+  static const String profileImagesContentCategory = "profile-images";
+  static const String namesRecordsContentCategory = "names-records";
+  static const String groupImagesContentCategory = "group/tout";
+  static const String groupPostImagesContentCategory = "group/posts";
+  static const String eventImagesContentCategory = "event/tout";
 
   Directory? _appDocDir;
   DateTime?  _pausedDateTime;
@@ -697,6 +705,182 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     }
     return null;
   }
+
+  Future<Map<String, Uint8List>> getFileContentItems(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
+    Map<String, Uint8List> files = {};
+    List<String> load = [];
+    for (String fileKey in fileKeys) {
+      String key = '${category}_${fileKey}';
+      if (_fileContentCache[key] != null) {
+        files[fileKey] = _fileContentCache[key]!;
+      } else if (_fileContentFutures[key] == null) {
+        load.add(fileKey);
+      }
+    }
+
+    if (load.isNotEmpty) {
+      List<FileContentItemReference>? fileRefs = await getFileContentDownloadUrls(fileKeys, category, entityId: entityId, addAppOrgIDtoPath: addAppOrgIDtoPath);
+
+      if (StringUtils.isNotEmpty(Config().contentUrl)) {
+        List<Future<Response?>> responseFutures = [];
+        for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
+          String? url = fileRefs![i].url;
+          if (url != null) {
+            responseFutures.add(_fileContentFutures[url] = Network().get(url,));
+          }
+        }
+
+        List<Response?> responses = await Future.wait(responseFutures);
+        for (int i = 0; i < responses.length; i++) {
+          Response? response = responses[i];
+          FileContentItemReference? fileRef = fileRefs?[i];
+          int responseCode = response?.statusCode ?? -1;
+
+          // response code 2xx
+          if (fileRef != null) {
+            String fileKey = fileRef.key ?? '';
+            String? requestUrl = fileRef.url ?? '';
+            _fileContentFutures[requestUrl] = null;
+            // response code 2xx
+            if (responseCode ~/ 100 == 2) {
+              Uint8List? fileContent = response?.bodyBytes;
+              if (fileContent != null) {
+                files[fileKey] = _fileContentCache['${category}_${fileKey}'] = fileContent;
+              }
+            } else {
+              debugPrint("Failed to download file key $fileKey from $requestUrl. Reason: $responseCode ${response?.body}");
+            }
+          }
+        }
+      }
+    }
+    return files;
+  }
+
+  Future<List<FileContentItemReference>?> getFileContentDownloadUrls(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileKeys': fileKeys.join(','),
+        'category': category,
+        'add-path-apporg-id': addAppOrgIDtoPath.toString()
+      };
+      if (entityId != null) {
+        queryParams['entityID'] = entityId;
+      }
+      String url = "${Config().contentUrl}/files/download";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        String? responseBody = response?.body;
+        if (responseBody != null) {
+          List<dynamic>? fileReferences = JsonUtils.decodeList(responseBody);
+          return FileContentItemReference.listFromJson(fileReferences);
+        }
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get references for file content downloads. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+
+  Future<List<FileContentItemReference>?> uploadFileContentItems(Map<String, FutureOr<Uint8List?>> files, String category, {
+    String? entityId, bool addAppOrgIDtoPath = true, bool handleDuplicateFileNames = true, bool publicRead = false,
+    Function(FileContentItemReference)? preUpload,
+    Function(FileContentItemReference, Response?)? postUpload,
+  }) async {
+    List<FileContentItemReference> uploaded = [];
+
+    //TODO: implement number of files limit per upload
+    if (StringUtils.isNotEmpty(Config().contentUrl) && files.isNotEmpty) {
+      List<FileContentItemReference>? fileRefs = await getFileContentUploadUrls(files.keys.toList(), category, entityId: entityId,
+          addAppOrgIDtoPath: addAppOrgIDtoPath, handleDuplicateFileNames: handleDuplicateFileNames, publicRead: publicRead);
+      if ((fileRefs?.length ?? 0) == files.length) {
+        List<Future<Response?>> responseFutures = [];
+        for (int i = 0; i < (fileRefs?.length ?? 0); i++) {
+          FileContentItemReference ref = fileRefs![i];
+          ref.name = files.keys.elementAt(i);
+          Uint8List? bytes = await files[ref.name];
+          if (bytes != null) {
+            responseFutures.add(_uploadFileContentItem(ref, bytes, publicRead: publicRead, preUpload: preUpload, postUpload: postUpload));
+          }
+        }
+
+        List<Response?> responses = await Future.wait(responseFutures);
+        for (int i = 0; i < responses.length; i++) {
+          Response? response = responses[i];
+          FileContentItemReference? fileRef = fileRefs?[i];
+          int responseCode = response?.statusCode ?? -1;
+          String? requestUrl = fileRef?.url ?? '';
+          String fileName = fileRef?.name ?? '';
+
+          // response code 2xx
+          if (fileRef != null && responseCode ~/ 100 == 2) {
+            uploaded.add(fileRef);
+          } else {
+            String? responseString = response?.body;
+            debugPrint("Failed to upload $fileName to $requestUrl. Reason: $responseCode $responseString");
+          }
+        }
+      }
+    }
+    return uploaded;
+  }
+
+  Future<List<FileContentItemReference>?> getFileContentUploadUrls(List<String> fileNames, String category,
+      {String? entityId, bool addAppOrgIDtoPath = true, bool handleDuplicateFileNames = true, bool publicRead = false}) async {
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Map<String, String> queryParams = {
+        'fileNames': fileNames.join(','),
+        'category': category,
+        'handle-duplicate-filenames': handleDuplicateFileNames.toString(),
+        'add-path-apporg-id': addAppOrgIDtoPath.toString(),
+        'public-read': publicRead.toString(),
+      };
+      if (entityId != null) {
+        queryParams['entityID'] = entityId;
+      }
+      String url = "${Config().contentUrl}/files/upload";
+      if (queryParams.isNotEmpty) {
+        url = UrlUtils.addQueryParameters(url, queryParams);
+      }
+      Response? response = await Network().get(url, auth: Auth2());
+
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        String? responseBody = response?.body;
+        if (responseBody != null) {
+          List<dynamic>? fileReferences = JsonUtils.decodeList(responseBody);
+          return FileContentItemReference.listFromJson(fileReferences);
+        }
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get references for file content uploads. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+
+  Future<Response?> _uploadFileContentItem(FileContentItemReference ref, Uint8List bytes, { bool publicRead = false,
+    FutureOr<void> Function(FileContentItemReference)? preUpload,
+    FutureOr<void> Function(FileContentItemReference, Response?)? postUpload
+  }) async {
+    await preUpload?.call(ref);
+
+    Map<String, String>? headers = publicRead ? {
+      'x-amz-acl': 'public-read',
+    } : null;
+    Future<Response?> response = Network().put(ref.url, body: bytes, headers: headers);
+    response.then((response) {
+      postUpload?.call(ref, response);
+    });
+
+    return response;
+  }
 }
 
 abstract class ContentItemCategoryClient {
@@ -755,17 +939,18 @@ class AudioResult {
   final AudioErrorType? errorType;
   final String? errorMessage;
   final Uint8List? audioData;
+  final String? audioFileExtension;
 
-  AudioResult(this.resultType, { this.errorType, this.errorMessage, this.audioData});
+  AudioResult(this.resultType, { this.errorType, this.errorMessage, this.audioData, this.audioFileExtension});
 
   factory AudioResult.error(AudioErrorType? errorType, String? errorMessage) =>
-    AudioResult(AudioResultType.error, errorType: errorType, errorMessage: errorMessage);
+      AudioResult(AudioResultType.error, errorType: errorType, errorMessage: errorMessage);
 
   factory AudioResult.cancel() =>
       AudioResult(AudioResultType.cancelled);
 
-  factory AudioResult.succeed({ Uint8List? audioData }) =>
-    AudioResult(AudioResultType.succeeded, audioData: audioData);
+  factory AudioResult.succeed({ Uint8List? audioData, String? extension }) =>
+      AudioResult(AudioResultType.succeeded, audioData: audioData, audioFileExtension: extension);
 
   bool get succeeded => (resultType == AudioResultType.succeeded);
 }
@@ -773,5 +958,32 @@ class AudioResult {
 extension FileExtention on FileSystemEntity{ //file.name
   String? get name {
     return this.path.split(Platform.pathSeparator).last;
+  }
+}
+
+class FileContentItemReference {
+  final String? key;
+  final String? url;
+  String? name;
+
+  FileContentItemReference({this.key, this.url, this.name});
+
+  factory FileContentItemReference.fromJson(Map<String, dynamic> json, {String? name}) {
+    return FileContentItemReference(
+      key: JsonUtils.stringValue(json['key']),
+      url: JsonUtils.stringValue(json['url']),
+      name: name,
+    );
+  }
+
+  static List<FileContentItemReference>? listFromJson(List<dynamic>? jsonList) {
+    List<FileContentItemReference>? items;
+    if (jsonList != null) {
+      items = <FileContentItemReference>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, FileContentItemReference.fromJson(jsonEntry));
+      }
+    }
+    return items;
   }
 }
