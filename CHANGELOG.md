@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android: Fix various compilation warnings [#634](https://github.com/rokwire/app-flutter-plugin/issues/634).
 ### Added
 - Acknowledge Reaction innerContext field [#5238](https://github.com/rokwire/illinois-app/issues/5238).
+- Added ListUtils.last() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 
 ## [1.11.0] - 2025-08-05
 ### Changed
