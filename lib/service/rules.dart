@@ -299,8 +299,9 @@ class Rules {
           if (!evaluateComparison(engine, subCondition)) {
             return false;
           }
+        } else {
+          return false;
         }
-        return false;
       } else if (logic.operator == "or") {
         if (subCondition is RuleLogic) {
           if (evaluateLogic(engine, subCondition)) {
@@ -310,8 +311,9 @@ class Rules {
           if (evaluateComparison(engine, subCondition)) {
             return true;
           }
+        } else {
+          return false;
         }
-        return false;
       }
     }
     return defaultResult;
