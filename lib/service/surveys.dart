@@ -97,7 +97,7 @@ class Surveys /* with Service */ {
     return Rules().getEngineProperty(key);
   }
 
-  Future<dynamic> evaluate(Survey survey, {bool evalResultRules = false, bool summarizeResultRules = false}) async {
+  Future<dynamic> evaluate(Survey survey, {bool evalResultRules = false, bool summarizeResultRules = false, bool returnMultiple = false}) async {
     SurveyStats surveyStats = SurveyStats();
     for (SurveyData? data = getFirstQuestion(survey); data != null; data = getFollowUp(survey, data)) {
       surveyStats += _getDataStats(survey, data);
@@ -105,6 +105,7 @@ class Surveys /* with Service */ {
     survey.stats = surveyStats;
 
     dynamic result;
+    List<dynamic> resultList = [];
     List<RuleAction> resultActions = [];
     if (evalResultRules && CollectionUtils.isNotEmpty(survey.resultRules)) {
       Rules().clearDataCache(survey.id);
@@ -126,7 +127,7 @@ class Surveys /* with Service */ {
                   resultActions.add(result);
                 }
               }
-            } else {
+            } else if (ruleResult is RuleAction) {
               resultActions.add(ruleResult);
             }
           }
@@ -136,10 +137,11 @@ class Surveys /* with Service */ {
         }
         if (ruleResult != null) {
           result = ruleResult;
+          resultList.add(result);
         }
       }
     }
-    return summarizeResultRules ? resultActions : result;
+    return summarizeResultRules ? resultActions : (returnMultiple ? resultList : result);
   }
 
   SurveyData? getFirstQuestion(Survey survey) {
