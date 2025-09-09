@@ -133,15 +133,18 @@ class ImageUtils {
   }
 
   static Future<Uint8List?> mapGroupMarkerImage({
+    required double imageSize,
+
     Color? backColor,
-    
+    Color? backColor2,
+
     Color? strokeColor,
     double strokeWidth = 1,
-    
+    double strokeOffset = 0,
+
     String? text,
     TextStyle? textStyle,
-    
-    required double imageSize }) async {
+  }) async {
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder, Rect.fromLTRB(0, 0, imageSize, imageSize));
     Offset center = Offset(imageSize / 2, imageSize / 2);
@@ -153,8 +156,15 @@ class ImageUtils {
       );
     }
 
+    if (backColor2 != null) {
+      canvas.drawCircle(center, center.dx - strokeWidth - strokeOffset, Paint()
+        ..color = backColor2
+        ..style = PaintingStyle.fill
+      );
+    }
+
     if (strokeColor != null) {
-      canvas.drawCircle(center, center.dx, Paint()
+      canvas.drawCircle(center, center.dx - strokeWidth / 2 - strokeOffset, Paint()
         ..color = strokeColor
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke

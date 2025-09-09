@@ -286,6 +286,16 @@ class ListUtils {
     return elements;
   }
 
+  static List<T> stripNull<T>(Iterable<T?> elements) {
+    List<T> result = <T>[];
+    for (T? element in elements) {
+      if (element != null) {
+        result.add(element);
+      }
+    }
+    return result;
+  }
+
   static void add<T>(List<T>? list, T? entry) {
     if ((list != null) && (entry != null)) {
       list.add(entry);
