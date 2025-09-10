@@ -780,11 +780,12 @@ class Reaction {
   final Map<String, dynamic>? data;
   final Creator? engager;
   final DateTime? dateCreatedUtc;
+  final ContextItem? innerContext;
 
-  Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc});
+  Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc, this.innerContext});
 
-  factory Reaction.emoji({String?emojiSource, String? emojiName, String? id, Creator? engager, dateCreatedUtc}) =>
-    Reaction(id: id, engager: engager, dateCreatedUtc: dateCreatedUtc,
+  factory Reaction.emoji({String?emojiSource, String? emojiName, String? id, Creator? engager, dateCreatedUtc, ContextItem? innerContext}) =>
+    Reaction(id: id, engager: engager, dateCreatedUtc: dateCreatedUtc, innerContext: innerContext,
         type: ReactionType.emoji,
         data: {
           "emoji_source": emojiSource,
@@ -802,7 +803,9 @@ class Reaction {
         data: JsonUtils.mapValue(json['data']),
         type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
         engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
-        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
+        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+        innerContext: ContextItem.fromJson(JsonUtils.mapValue(json['inner_context']))
+    );
   }
 
   Map<String, dynamic> toJson() => {
@@ -810,7 +813,8 @@ class Reaction {
     "data": data,
     "type": reactionTypeToString(type),
     "created_by": engager?.toJson(),
-    "date_created": DateTimeUtils.utcDateTimeToString(dateCreatedUtc)
+    "date_created": DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
+    "inner_context": innerContext?.toJson()
   };
 
   @override
@@ -820,10 +824,11 @@ class Reaction {
       (other.type == type) &&
       (other.engager == engager) &&
       (other.data == data) &&
+      (other.data == innerContext) &&
       (other.dateCreatedUtc == dateCreatedUtc);
 
   @override
-  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0) ^ (data?.hashCode ?? 0);
+  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0) ^ (innerContext?.hashCode ?? 0) ^ (data?.hashCode ?? 0);
 
   static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
     List<Reaction>? items;

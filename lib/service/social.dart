@@ -443,7 +443,7 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source}) async {
+  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source, String? innerContextIdentifier}) async {
     String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -451,6 +451,9 @@ class Social extends Service with NotificationsListener {
       return null;
     }
     Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    if(StringUtils.isNotEmpty(innerContextIdentifier))
+      requestJson['inner_context'] = ContextItem(identifier: innerContextIdentifier).toJson();
+
     String? encodedBody = JsonUtils.encode(requestJson);
     Response? response = await Network().post('$socialUrl/reactions', auth: Auth2(), body: encodedBody);
     int? responseCode = response?.statusCode;
