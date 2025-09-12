@@ -927,15 +927,17 @@ class Message {
   final String? message;
   final bool? read;
 
+  final List<FileAttachment>? fileAttachments;
+
   final DateTime? dateSentUtc;
   final DateTime? dateUpdatedUtc;
 
-  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.dateSentUtc, this.dateUpdatedUtc});
+  Message({this.id, this.globalId, this.conversationId, this.sender, this.recipient, this.message, this.read, this.fileAttachments, this.dateSentUtc, this.dateUpdatedUtc});
 
   factory Message.fromOther(Message? other, {
     String? id, String? globalId, String? conversationId,
     ConversationMember? sender, ConversationMember? recipient,
-    String? message, bool? read,
+    String? message, bool? read, List<FileAttachment>? fileAttachments,
     DateTime? dateSentUtc,
     DateTime? dateUpdatedUtc
   }) => Message(
@@ -946,6 +948,7 @@ class Message {
     recipient: recipient ?? other?.recipient,
     message: message ?? other?.message,
     read: read ?? other?.read,
+    fileAttachments: fileAttachments ?? other?.fileAttachments,
     dateSentUtc: dateSentUtc ?? other?.dateSentUtc,
     dateUpdatedUtc: dateUpdatedUtc ?? other?.dateUpdatedUtc,
   );
@@ -958,6 +961,7 @@ class Message {
     recipient: ConversationMember.fromJson(json['recipient']),
     message: JsonUtils.stringValue(json['message']),
     read: JsonUtils.boolValue(json['read']),
+    fileAttachments: FileAttachment.listFromJson(json['file_attachments']),
     dateSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_sent']), isUtc: true),
     dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
   ) : null;
@@ -971,6 +975,7 @@ class Message {
       'recipient': recipient?.toJson(),
       'message': message,
       'read': read,
+      'file_attachments': FileAttachment.listToJson(fileAttachments),
       'date_sent': DateTimeUtils.utcDateTimeToString(dateSentUtc),
       'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdatedUtc),
     };
@@ -1006,6 +1011,59 @@ class Message {
       return time1.compareTo(time2);  // chronological
     });
   }
+}
+
+class FileAttachment {
+  final String? name;
+  final String? type;
+  String? id;
+  String? url;
+
+  FileAttachment({this.name, this.type, this.id, this.url});
+
+  static FileAttachment? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    return FileAttachment(
+      id: JsonUtils.stringValue(json['id']),
+      name: JsonUtils.stringValue(json['name']),
+      type: JsonUtils.stringValue(json['type']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+    };
+  }
+
+  static List<FileAttachment>? listFromJson(List<dynamic>? jsonList) {
+    List<FileAttachment>? items;
+    if (jsonList != null) {
+      items = <FileAttachment>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(items, FileAttachment.fromJson(jsonEntry));
+      }
+    }
+    return items;
+  }
+
+  static List<dynamic>? listToJson(List<FileAttachment>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = <dynamic>[];
+      for (FileAttachment? value in values) {
+        ListUtils.add(json, value?.toJson());
+      }
+    }
+    return json;
+  }
+
+  String? get extension => name?.split('.').last;
 }
 
 class Conversation {
