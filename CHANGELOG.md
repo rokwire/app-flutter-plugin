@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Acknowledge Reaction innerContext field [#5238](https://github.com/rokwire/illinois-app/issues/5238).
 - Added ListUtils.last() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - Added ListUtils.stripNull() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Add file attachments to conversation messages [#639](https://github.com/rokwire/app-flutter-plugin/issues/639).
 ### Changed
 - ImageUtils.mapGroupMarkerImage extended to handle pin markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 
