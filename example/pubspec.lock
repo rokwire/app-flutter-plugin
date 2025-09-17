@@ -998,7 +998,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.11.0"
+    version: "1.11.1"
   shared_preferences:
     dependency: transitive
     description:
