@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+
+## [1.11.1] - 2025-09-17
 ### Fixed
 - Survey result rule evaluation issues [#637](https://github.com/rokwire/app-flutter-plugin/issues/637).
 ### Added
