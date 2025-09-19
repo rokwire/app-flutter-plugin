@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - ImageUtils.mapGroupMarkerImage extended to handle pin markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 
+## [1.11.2] - 2025-09-18
+### Changed
+- Acknowledge Comment innerContext field and pass it when create/delete/load comments [#5356](https://github.com/rokwire/illinois-app/issues/5356).
+
 ## [1.11.1] - 2025-09-17
 ### Fixed
 - Survey result rule evaluation issues [#637](https://github.com/rokwire/app-flutter-plugin/issues/637).
