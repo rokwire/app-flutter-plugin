@@ -22,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -593,39 +594,44 @@ class Content with Service, NotificationsListener implements ContentItemCategory
   // Profile Voice Record
 
   Future<AudioResult> uploadUserNamePronunciation(Uint8List? audioFile) async{ //TBD return type
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
+    }
     if (CollectionUtils.isEmpty(audioFile)) {
       return AudioResult.error(AudioErrorType.fileNameNotSupplied, 'Missing file.');
     }
+    String url = "$serviceUrl/voice_record";
+    StreamedResponse? response = await Network().multipartPost(
+        url: url,
+        fileKey: "voiceRecord",
+        fileName: "record.m4a",
+        // fileName: audioFile.name,
+        fileBytes: audioFile,
+        contentType: 'audio/m4a',
+        auth: Auth2()
+    );
 
-    String? accountId = getUserNamePronunciationFileName(accountId: Auth2().accountId);
-    if (accountId != null) {
-      List<FileContentItemReference>? uploaded = await Content().uploadFileContentItems({accountId: audioFile}, namesRecordsContentCategory, handleDuplicateFileNames: false, addAppOrgIDtoPath: false);
-      if (CollectionUtils.isNotEmpty(uploaded)) {
-        return AudioResult.succeed(audioData: audioFile, extension: Platform.isIOS ? '.m4a' : '.wav');
-      }
-      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio");
+    int responseCode = response?.statusCode ?? -1;
+    if (responseCode == 200) {
+      return AudioResult.succeed(audioData: audioFile);
+    } else {
+      String? responseString = (await response?.stream.bytesToString());
+      debugPrint("Failed to upload audio. Reason: $responseCode $responseString");
+      return AudioResult.error(AudioErrorType.uploadFailed, "Failed to upload audio: $responseString");
     }
-    return AudioResult.error(AudioErrorType.uploadFailed, "Missing user account ID");
   }
 
-  Future<AudioResult?> deleteUserNamePronunciation({required String extension}) async {
+  Future<AudioResult?> deleteUserNamePronunciation() async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return AudioResult.error(AudioErrorType.serviceNotAvailable, 'Missing voice_record BB url.');
     }
     String url = "$serviceUrl/voice_record";
-    Map<String, String> queryParams = {
-      'extension': extension,
-    };
-    if (queryParams.isNotEmpty) {
-      url = UrlUtils.addQueryParameters(url, queryParams);
-    }
     Response? response = await Network().delete(url, auth: Auth2());
     debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      String cacheKey = '${namesRecordsContentCategory}_${Auth2().accountId}$extension';
-      _fileContentCache.remove(cacheKey);
       return AudioResult.succeed();
     } else {
       String? responseString = response?.body;
@@ -634,29 +640,35 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     }
   }
 
-  Future<AudioResult?> loadUserNamePronunciation({String? fileName}) async {
-    fileName ??= getUserNamePronunciationFileName(accountId: Auth2().accountId);
-    if (StringUtils.isNotEmpty(fileName)) {
-      String? extension;
-      List<String> splitFileName = fileName!.split('.');
-      if (splitFileName.length >= 2) {
-        extension = '.${splitFileName.last}';
-      }
-      Map<String, Uint8List> audioBytes = await getFileContentItems([fileName], namesRecordsContentCategory, addAppOrgIDtoPath: false);
-      if (audioBytes.containsKey(fileName)) {
-        Uint8List bytes = audioBytes[fileName]!;
-        debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
-        return AudioResult.succeed(audioData: bytes, extension: extension);
-      }
-      return AudioResult.error(AudioErrorType.retrieveFailed, "Failed to get user's voice audio file");
+  Future<AudioResult?> loadUserNamePronunciation({ String? accountId }) =>
+      loadUserNamePronunciationFromUrl(getUserNamePronunciationUrl(accountId: accountId));
+
+  Future<AudioResult?> loadUserNamePronunciationFromUrl(String? url) async {
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2());
+      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
+      return  (response?.statusCode == 200) ? AudioResult.succeed(audioData: response?.bodyBytes) : AudioResult.error(AudioErrorType.retrieveFailed, response?.body);
     }
-    return AudioResult.error(AudioErrorType.retrieveFailed, "Missing user's voice audio file name");
+    else {
+      return null;
+    }
   }
 
-  String? getUserNamePronunciationFileName({ String? accountId }) {
-    if (StringUtils.isNotEmpty(accountId)) {
-      String extension = Platform.isIOS ? '.m4a' : '.wav';
-      return accountId! + extension;
+  Future<bool?> checkUserNamePronunciation({ String? accountId }) async {
+    String? url = getUserNamePronunciationUrl(accountId: accountId);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2()); //TBD: use HEAD Http reqiest.
+      return (response?.statusCode == 200);
+    }
+    else {
+      return null;
+    }
+  }
+
+  String? getUserNamePronunciationUrl({ String? accountId }) {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isNotEmpty(serviceUrl)) {
+      return (accountId != null) ? '$serviceUrl/voice_record/$accountId' : '$serviceUrl/voice_record';
     }
     return null;
   }
