@@ -114,7 +114,9 @@ class ImageUtils {
     required double imageSize,
 
     Color? backColor,
+
     Color? backColor2,
+    double backColor2Offset = 0,
 
     Color? strokeColor,
     double strokeWidth = 1,
@@ -135,7 +137,7 @@ class ImageUtils {
     }
 
     if (backColor2 != null) {
-      canvas.drawCircle(center, center.dx - strokeWidth - strokeOffset, Paint()
+      canvas.drawCircle(center, center.dx - strokeWidth - strokeOffset - backColor2Offset, Paint()
         ..color = backColor2
         ..style = PaintingStyle.fill
       );
