@@ -707,8 +707,9 @@ class Comment {
   final Creator? creator;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
+  final ContextItem? innerContext;
 
-  Comment({this.id, this.parentId, this.body, this.imageUrl, this.creator, this.dateCreatedUtc, this.dateUpdatedUtc});
+  Comment({this.id, this.parentId, this.body, this.imageUrl, this.creator, this.innerContext, this.dateCreatedUtc, this.dateUpdatedUtc,});
 
   static Comment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -721,12 +722,19 @@ class Comment {
       body: JsonUtils.stringValue(json['body']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
+      innerContext: ContextItem.fromJson(JsonUtils.mapValue(json['inner_context'])),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
-  Map<String, dynamic> toJson() => {'body': body, 'parent_id': parentId, 'image_url': imageUrl};
+  //TBD why this don't contain all fields
+  Map<String, dynamic> toJson() => {
+    'body': body,
+    'parent_id': parentId,
+    'image_url': imageUrl,
+    "inner_context": innerContext?.toJson()
+  };
 
   @override
   bool operator ==(other) =>
@@ -736,6 +744,7 @@ class Comment {
       (other.body == body) &&
       (other.imageUrl == imageUrl) &&
       (other.creator == creator) &&
+      (other.innerContext == innerContext) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
 
@@ -746,6 +755,7 @@ class Comment {
       (body?.hashCode ?? 0) ^
       (imageUrl?.hashCode ?? 0) ^
       (creator?.hashCode ?? 0) ^
+      (innerContext?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
 
