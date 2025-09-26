@@ -673,6 +673,42 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     return null;
   }
 
+  Future<Uint8List?> getFileContentItem(String fileName, String category) async {
+    String key = '${fileName}_${category}';
+    if (_fileContentCache[key] != null) {
+      return _fileContentCache[key];
+    }
+    if (StringUtils.isNotEmpty(Config().contentUrl)) {
+      Response? response;
+      if (_fileContentFutures[key] == null) {
+        Map<String, String> queryParams = {
+          'fileName': fileName,
+          'category': category,
+        };
+        String url = "${Config().contentUrl}/files";
+        if (queryParams.isNotEmpty) {
+          url = UrlUtils.addQueryParameters(url, queryParams);
+        }
+
+        _fileContentFutures[key] = Network().get(url, auth: Auth2());
+      }
+      response = await _fileContentFutures[key];
+      _fileContentFutures[key] = null;
+
+      int? responseCode = response?.statusCode;
+      if (responseCode == 200) {
+        Uint8List? fileContent = response?.bodyBytes;
+        if (fileContent != null) {
+          return _fileContentCache[key] = fileContent;
+        }
+      } else {
+        String? responseString = response?.body;
+        debugPrint("Failed to get file content item. Reason: $responseCode $responseString");
+      }
+    }
+    return null;
+  }
+
   Future<Map<String, Uint8List>> getFileContentItems(List<String> fileKeys, String category, {String? entityId, bool addAppOrgIDtoPath = true}) async {
     Map<String, Uint8List> files = {};
     List<String> load = [];
