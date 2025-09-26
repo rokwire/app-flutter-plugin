@@ -204,9 +204,9 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   
   @override
   Future<bool> refreshNetworkAuthTokenIfNeeded(BaseResponse? response, dynamic token) async {
-    // if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token)) {
-    //   return (await refreshToken(token) != null);
-    // }
+    if ((response?.statusCode == 401) && (token is Auth2Token) && (this.token == token)) {
+      return (await refreshToken(token) != null);
+    }
     return false;
   }
 
