@@ -923,7 +923,7 @@ class Auth2UserProfileFieldsVisibility {
 
     birthYear: birthYear ?? other?.birthYear,
     photoUrl: photoUrl ?? other?.photoUrl,
-    pronunciationUrl: photoUrl ?? other?.pronunciationUrl,
+    pronunciationUrl: pronunciationUrl ?? other?.pronunciationUrl,
 
     email: email ?? other?.email,
     phone: phone ?? other?.phone,

@@ -787,21 +787,19 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-
-
-
-  Future<List<Message>?> createConversationMessage({required String conversationId, required String message}) async {
+  Future<List<Message>?> createConversationMessage({required String conversationId, required String message, List<FileAttachment>? fileAttachments}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
       return null;
     }
-    if (message.isEmpty) {
-      Log.e('Failed to create message for conversation $conversationId. Reason: missing message.');
+    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+      Log.e('Failed to create message for conversation $conversationId. Reason: missing message and attachment.');
       return null;
     }
     String? requestBody = JsonUtils.encode({
-      'message': message
+      'message': message,
+      'file_attachments': FileAttachment.listToJson(fileAttachments),
     });
     Response? response = await Network().post('$socialUrl/conversations/$conversationId/messages/send', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
