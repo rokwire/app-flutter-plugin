@@ -707,8 +707,9 @@ class Comment {
   final Creator? creator;
   final DateTime? dateCreatedUtc;
   final DateTime? dateUpdatedUtc;
+  final ContextItem? innerContext;
 
-  Comment({this.id, this.parentId, this.body, this.imageUrl, this.creator, this.dateCreatedUtc, this.dateUpdatedUtc});
+  Comment({this.id, this.parentId, this.body, this.imageUrl, this.creator, this.innerContext, this.dateCreatedUtc, this.dateUpdatedUtc,});
 
   static Comment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -721,12 +722,19 @@ class Comment {
       body: JsonUtils.stringValue(json['body']),
       imageUrl: JsonUtils.stringValue(json['image_url']),
       creator: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
+      innerContext: ContextItem.fromJson(JsonUtils.mapValue(json['inner_context'])),
       dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
       dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']), isUtc: true),
     );
   }
 
-  Map<String, dynamic> toJson() => {'body': body, 'parent_id': parentId, 'image_url': imageUrl};
+  //TBD why this don't contain all fields
+  Map<String, dynamic> toJson() => {
+    'body': body,
+    'parent_id': parentId,
+    'image_url': imageUrl,
+    "inner_context": innerContext?.toJson()
+  };
 
   @override
   bool operator ==(other) =>
@@ -736,6 +744,7 @@ class Comment {
       (other.body == body) &&
       (other.imageUrl == imageUrl) &&
       (other.creator == creator) &&
+      (other.innerContext == innerContext) &&
       (other.dateCreatedUtc == dateCreatedUtc) &&
       (other.dateUpdatedUtc == dateUpdatedUtc);
 
@@ -746,6 +755,7 @@ class Comment {
       (body?.hashCode ?? 0) ^
       (imageUrl?.hashCode ?? 0) ^
       (creator?.hashCode ?? 0) ^
+      (innerContext?.hashCode ?? 0) ^
       (dateCreatedUtc?.hashCode ?? 0) ^
       (dateUpdatedUtc?.hashCode ?? 0);
 
@@ -780,11 +790,12 @@ class Reaction {
   final Map<String, dynamic>? data;
   final Creator? engager;
   final DateTime? dateCreatedUtc;
+  final ContextItem? innerContext;
 
-  Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc});
+  Reaction({this.id, this.type, this.engager, this.data, this.dateCreatedUtc, this.innerContext});
 
-  factory Reaction.emoji({String?emojiSource, String? emojiName, String? id, Creator? engager, dateCreatedUtc}) =>
-    Reaction(id: id, engager: engager, dateCreatedUtc: dateCreatedUtc,
+  factory Reaction.emoji({String?emojiSource, String? emojiName, String? id, Creator? engager, dateCreatedUtc, ContextItem? innerContext}) =>
+    Reaction(id: id, engager: engager, dateCreatedUtc: dateCreatedUtc, innerContext: innerContext,
         type: ReactionType.emoji,
         data: {
           "emoji_source": emojiSource,
@@ -802,7 +813,9 @@ class Reaction {
         data: JsonUtils.mapValue(json['data']),
         type: reactionTypeFromString(JsonUtils.stringValue(json['type'])),
         engager: Creator.fromJson(JsonUtils.mapValue(json['created_by'])),
-        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true));
+        dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+        innerContext: ContextItem.fromJson(JsonUtils.mapValue(json['inner_context']))
+    );
   }
 
   Map<String, dynamic> toJson() => {
@@ -810,7 +823,8 @@ class Reaction {
     "data": data,
     "type": reactionTypeToString(type),
     "created_by": engager?.toJson(),
-    "date_created": DateTimeUtils.utcDateTimeToString(dateCreatedUtc)
+    "date_created": DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
+    "inner_context": innerContext?.toJson()
   };
 
   @override
@@ -820,10 +834,11 @@ class Reaction {
       (other.type == type) &&
       (other.engager == engager) &&
       (other.data == data) &&
+      (other.data == innerContext) &&
       (other.dateCreatedUtc == dateCreatedUtc);
 
   @override
-  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0) ^ (data?.hashCode ?? 0);
+  int get hashCode => (id?.hashCode ?? 0) ^ (type?.hashCode ?? 0) ^ (engager?.hashCode ?? 0) ^ (dateCreatedUtc?.hashCode ?? 0) ^ (innerContext?.hashCode ?? 0) ^ (data?.hashCode ?? 0);
 
   static List<Reaction>? listFromJson(List<dynamic>? jsonList) {
     List<Reaction>? items;

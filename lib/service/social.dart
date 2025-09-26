@@ -184,7 +184,7 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<bool> deletePost({required Post post}) async {
+  Future<bool> deletePost({required Post post, required String innerContextIdentifier}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to delete social post. Reason: missing social url.');
@@ -195,7 +195,13 @@ class Social extends Service with NotificationsListener {
       Log.e('Failed to delete social post. Reason: missing post id.');
       return false;
     }
-    Response? response = await Network().delete('$socialUrl/posts/$postId', auth: Auth2());
+    Map<String, dynamic> body =
+    {
+      "inner_context" : ContextItem(identifier: innerContextIdentifier).toJson()
+    };
+
+    String? encodedBody = JsonUtils.encode(body);
+    Response? response = await Network().post('$socialUrl/posts/$postId/delete', body: encodedBody, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
@@ -401,13 +407,20 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<List<Comment>?> loadComments({required String postId}) async {
+  Future<List<Comment>?> loadComments({required String postId, String? innerContextIdentifier}) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to load social comments. Reason: missing social url.');
       return null;
     }
-    Response? response = await Network().get('$socialUrl/posts/$postId/comments', auth: Auth2());
+
+    Map<String, dynamic> body = StringUtils.isNotEmpty(innerContextIdentifier) ?
+    {
+      "inner_context" : ContextItem(identifier: innerContextIdentifier).toJson()
+    } : {};
+    String? encodedBody = JsonUtils.encode(body);
+
+    Response? response = await Network().post('$socialUrl/v2/posts/$postId/comments', body: encodedBody, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
@@ -443,7 +456,7 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source}) async {
+  Future<List<Reaction>?> loadReactions({required String entityId, required SocialEntityType source, String? innerContextIdentifier}) async {
     String? sourceString = socialEntityTypeToString(source);
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -451,6 +464,9 @@ class Social extends Service with NotificationsListener {
       return null;
     }
     Map<String, dynamic> requestJson = {'identifier': entityId, 'source': sourceString};
+    if(StringUtils.isNotEmpty(innerContextIdentifier))
+      requestJson['inner_context'] = ContextItem(identifier: innerContextIdentifier).toJson();
+
     String? encodedBody = JsonUtils.encode(requestJson);
     Response? response = await Network().post('$socialUrl/reactions', auth: Auth2(), body: encodedBody);
     int? responseCode = response?.statusCode;
