@@ -110,11 +110,13 @@ class ImageUtils {
     return null;
   }
 
-  static Future<Uint8List?> mapGroupMarkerImage({
+  static Future<Uint8List?> mapMarkerImage({
     required double imageSize,
 
     Color? backColor,
+
     Color? backColor2,
+    double backColor2Offset = 0,
 
     Color? strokeColor,
     double strokeWidth = 1,
@@ -135,7 +137,7 @@ class ImageUtils {
     }
 
     if (backColor2 != null) {
-      canvas.drawCircle(center, center.dx - strokeWidth - strokeOffset, Paint()
+      canvas.drawCircle(center, center.dx - backColor2Offset, Paint()
         ..color = backColor2
         ..style = PaintingStyle.fill
       );
@@ -178,8 +180,12 @@ class ImageUtils {
       }
     }
 
-    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
-    ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
+    TextScaler textScaler = (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling;
+    ui.TextStyle paragraphTextStyle = textStyle.getTextStyle(textScaler: textScaler);
+    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: textScaler, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+    ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)
+      ..pushStyle(paragraphTextStyle)
+      ..addText(text);
     return paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: size.width));
 
     /* ui.Paragraph? paragraph;
