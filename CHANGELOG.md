@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added ListUtils.last() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - Added ListUtils.stripNull() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Added reason parameter to notifyLogout notification [#5411](https://github.com/rokwire/illinois-app/issues/5411).
 ### Changed
 - ImageUtils.mapGroupMarkerImage extended to handle pin and explore markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 

@@ -34,6 +34,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   static const String notifyUserDeleted       = "edu.illinois.rokwire.auth2.user.deleted";
 
   static const String _deviceIdIdentifier     = 'edu.illinois.rokwire.device_id';
+  static const String logoutReasonToken       = "edu.illinois.rokwire.auth2.logout.reason.token";
 
   static const Auth2AccountScope defaultLoginScope = const Auth2AccountScope(
     prefs: { Auth2UserPrefsScope.privacyLevel, Auth2UserPrefsScope.roles }
@@ -1001,7 +1002,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   // Logout
 
-  void logout({ Auth2UserPrefs? prefs }) {
+  void logout({ String? reason, Auth2UserPrefs? prefs, }) {
     if (_token != null) {
       _log("Auth2: logout");
       _refreshTonenFailCounts.remove(_token?.refreshToken);
@@ -1027,16 +1028,16 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       NotificationService().notify(notifyPrefsChanged);
       NotificationService().notify(notifyPrivacyChanged);
       NotificationService().notify(notifyLoginChanged);
-      NotificationService().notify(notifyLogout);
+      NotificationService().notify(notifyLogout, reason);
     }
   }
 
   // Delete
 
-  Future<bool?> deleteUser() async {
+  Future<bool?> deleteUser({ String? reason }) async {
     bool? result = await _deleteUserAccount();
     if (result == true) {
-      logout(prefs: Auth2UserPrefs.empty());
+      logout(reason: reason, prefs: Auth2UserPrefs.empty());
       NotificationService().notify(notifyUserDeleted);
     }
     return result;
@@ -1094,7 +1095,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           int refreshTonenFailCount  = (_refreshTonenFailCounts[token.refreshToken] ?? 0) + 1;
           if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTonenFailCount)) {
             if (token == _token) {
-              logout();
+              logout(reason: logoutReasonToken);
             }
             else if (token == _anonymousToken) {
               await authenticateAnonymously();
@@ -1446,8 +1447,6 @@ class Auth2TokenNetworkAuthProvider with NetworkAuthProvider {
   @override
   dynamic get networkAuthToken => token;
 }
-
-
 
 // Auth2PhoneRequestCodeResult
 
