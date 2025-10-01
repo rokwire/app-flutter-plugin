@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Android: Fix various compilation warnings [#634](https://github.com/rokwire/app-flutter-plugin/issues/634).
 - Fixed text color of ImageUtils.mapMarkerImage, removed "Group" from API name [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Fixed equality operator of Auth2Account.
 ### Added
 - Added ListUtils.last() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - Added ListUtils.stripNull() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
