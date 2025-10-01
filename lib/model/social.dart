@@ -1024,12 +1024,13 @@ class Message {
 }
 
 class FileAttachment {
+  final String? id;
   final String? name;
   final String? type;
-  String? id;
+
   String? url;
 
-  FileAttachment({this.name, this.type, this.id, this.url});
+  FileAttachment({this.id, this.name, this.type, this.url});
 
   static FileAttachment? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
