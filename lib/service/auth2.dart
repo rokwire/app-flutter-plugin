@@ -16,7 +16,7 @@ import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -746,19 +746,17 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     Auth2AccountScope? scope = defaultLoginScope, bool? link,
     bool useExternalBrowser = false}) async {
     if (Config().authBaseUrl != null) {
-
+      String? loginUrl = _oidcLogin?.loginUrl;
       if (_oidcAuthenticationCompleters == null) {
         _oidcAuthenticationCompleters = <Completer<Auth2OidcAuthenticateResult?>>[];
         NotificationService().notify(notifyLoginStarted, oidcAuthType);
 
         _OidcLogin? oidcLogin = await getOidcData();
-        if (oidcLogin?.loginUrl != null) {
+        loginUrl = oidcLogin?.loginUrl;
+        if (loginUrl != null) {
           _oidcLogin = oidcLogin;
           _oidcScope = scope;
           _oidcLink = link;
-
-          //await RokwirePlugin.clearSafariVC();
-          _launchUrl(_oidcLogin?.loginUrl, useExternalBrowser: useExternalBrowser);
         }
         else {
           Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
@@ -772,7 +770,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
       _oidcLoginInProgress = true;
       Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
-      _oidcAuthenticationCompleters!.add(completer);
+      _oidcAuthenticationCompleters?.add(completer);
+
+      // This should come after setting up the completer to avoid race conditions
+      if (loginUrl != null) {
+        //await RokwirePlugin.clearSafariVC();
+        _launchUrl(loginUrl, useExternalBrowser: useExternalBrowser);
+      }
+
       return completer.future;
     }
     
@@ -914,26 +919,32 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<_OidcLogin?> getOidcData() async {
     if (Config().authBaseUrl != null) {
-
-      String url = "${Config().authBaseUrl}/auth/login-url";
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      Map<String, dynamic> postData = {
-        'auth_type': oidcAuthType,
-      };
-      Map<String, dynamic>? additionalParams = _getConfigParams(postData);
-      if (additionalParams != null) {
-        postData.addAll(additionalParams);
-        postData['redirect_uri'] = oidcRedirectUrl;
-      } else {
-        return _OidcLogin(error: 'config params are null');
-      }
-      Response? response = await Network().post(url, headers: headers, body: JsonUtils.encode(postData), auth: Auth2Csrf());
-      if (response?.statusCode == 200) {
-        return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
-      } else {
-        return _OidcLogin(error: '${response?.statusCode} - ${response?.body}');
+      try {
+        String url = "${Config().authBaseUrl}/auth/login-url";
+        Map<String, String> headers = {
+          'Content-Type': 'application/json'
+        };
+        Map<String, dynamic> postData = {
+          'auth_type': oidcAuthType,
+        };
+        Map<String, dynamic>? additionalParams = _getConfigParams(postData);
+        if (additionalParams != null) {
+          postData.addAll(additionalParams);
+          postData['redirect_uri'] = oidcRedirectUrl;
+        } else {
+          return _OidcLogin(error: 'config params are null');
+        }
+        Response? response = await Network().post(url, headers: headers,
+            body: JsonUtils.encode(postData),
+            auth: Auth2Csrf());
+        if (response?.statusCode == 200) {
+          return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+        } else {
+          return _OidcLogin(
+              error: '${response?.statusCode} - ${response?.body}');
+        }
+      } catch (e) {
+        return _OidcLogin(error: e.toString());;
       }
     }
     return _OidcLogin(error: 'auth url is null');;
@@ -1941,6 +1952,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   Future<void> _launchUrl(String? urlStr,
       {bool useExternalBrowser = false}) async {
+    String? error;
     try {
       if ((urlStr != null)) {
         if (kIsWeb) {
@@ -1949,14 +1961,31 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
           ).then((String url) {
             onDeepLinkUri(Uri.tryParse(url));
           });
-        } else if (await canLaunchUrlString(urlStr)) {
-          await launchUrlString(urlStr, mode: useExternalBrowser ?
-            LaunchMode.externalApplication : LaunchMode.platformDefault);
+        } else {
+          Uri? uri = Uri.tryParse(urlStr);
+          if (uri != null && await canLaunchUrl(uri)) {
+            bool success = await launchUrl(uri, mode: useExternalBrowser ?
+              LaunchMode.externalApplication : LaunchMode.platformDefault);
+            if (!success) {
+              error = 'failed to launch url';
+            }
+          } else {
+            error = 'could not launch url $urlStr';
+          }
         }
+      } else {
+        error = 'launch url is null';
       }
-    }
-    catch(e) {
+    } catch(e) {
       debugPrint(e.toString());
+      error = 'launch url error: $e - $urlStr';
+    }
+    if (error != null) {
+      Auth2OidcAuthenticateResult result = Auth2OidcAuthenticateResult(
+        Auth2OidcAuthenticateResultStatus.failed,
+        error: "error launching login url: $error"
+      );
+      completeOidcAuthentication(result);
     }
   }
 

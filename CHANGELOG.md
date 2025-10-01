@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
+- Improve error handling and logging for OIDC login url launcher
 
 ## [1.7.0] - 2024-07-15
 ### Changed
