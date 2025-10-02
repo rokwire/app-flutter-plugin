@@ -182,6 +182,7 @@ class Auth2Account {
       (other.id == id) &&
       (other.username == username) &&
       (other.profile == profile) &&
+      (other.prefs == prefs) &&
       (other.privacy == privacy) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
@@ -194,6 +195,7 @@ class Auth2Account {
     (id?.hashCode ?? 0) ^
     (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
+    (prefs?.hashCode ?? 0) ^
     (privacy?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
