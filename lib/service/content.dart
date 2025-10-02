@@ -23,6 +23,7 @@ import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/ext/network.dart';
+import 'package:rokwire_plugin/model/content.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -451,6 +452,26 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     }
     File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
     return await rotatedImage.readAsBytes();
+  }
+  Future<ImagesResult>  deleteImageMetaData({required String imageUrl}) async {
+      //TBD
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
+  }
+
+  Future<ImagesResult> uploadImageMetaData({required String imageUrl, required ImageMetaData imageMetaData}) async {
+    AppToast.showMessage("uploadImageMetaData.altText:$imageUrl : ${imageMetaData.altText}");
+    //TBD implement
+    return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
+  }
+
+  Future<ImagesResult> updateImageMetaData({required String imageUrl, ImageMetaData}) async {
+      //TBD implement
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
+  }
+
+  Future<ImageMetaData?> loadImageMetaData({required String imageUrl}) async {
+      //TBD implement
+    return null;
   }
 
   Future<ImagesResult> uploadImage(
