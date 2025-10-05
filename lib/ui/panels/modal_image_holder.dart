@@ -38,5 +38,12 @@ class ModalImageHolder extends StatelessWidget{
       Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(image: (child as Image).image)));
       //Navigator.push(context, MaterialPageRoute( builder: (_) => ModalPhotoImagePanel(image: (child as Image).image)));
     }
+    else if(child is ImageHolder) {
+      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(image: (child as ImageHolder).image?.image)));
+    }
   }
+}
+
+abstract class ImageHolder {
+  Image? get image;
 }
