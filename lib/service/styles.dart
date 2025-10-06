@@ -335,6 +335,7 @@ class UiColors {
   Color get textSurface                => colorMap['textSurface'] ?? const Color(0xFF404040);
   Color get textSurfaceTransparent15   => colorMap['textSurfaceTransparent15'] ?? const Color(0x26404040);
   Color get surfaceAccent              => colorMap['surfaceAccent'] ?? const Color(0xFFDADDE1);
+  Color get surfaceAccent2             => colorMap['surfaceAccent2'] ?? const Color(0xFFCFCFCF);
   Color get surfaceAccentTransparent15 => colorMap['surfaceAccentTransparent15'] ?? const Color(0x26DADDE1);
   Color get textSurfaceAccent          => colorMap['textSurfaceAccent'] ?? const Color(0xFF404040);
   Color get background                 => colorMap['background'] ?? const Color(0xFFF5F5F5);
