@@ -464,14 +464,10 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
   }
 
-  Future<ImagesResult> updateImageMetaData({required String imageUrl, ImageMetaData}) async {
+  Future<ImagesResult> loadImageMetaData({required String imageUrl}) async {
       //TBD implement
-      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
-  }
-
-  Future<ImageMetaData?> loadImageMetaData({required String imageUrl}) async {
-      //TBD implement
-    return null;
+    return Future.delayed(Duration(seconds: 2), () => ImagesResult.succeed(metaData:
+        ImageMetaData(altText: "Mocup Alt text. To-Do load real Alt text")));
   }
 
   Future<ImagesResult> uploadImage(
@@ -751,8 +747,8 @@ class ImagesResult {
   final String? errorMessage;
   final String? imageUrl;
   final Uint8List? imageData;
-
-  ImagesResult(this.resultType, { this.errorType, this.errorMessage, this.imageUrl, this.imageData});
+  final ImageMetaData? metaData;
+  ImagesResult(this.resultType, { this.errorType, this.errorMessage, this.imageUrl, this.imageData, this.metaData});
 
   factory ImagesResult.error(ImagesErrorType? errorType, String? errorMessage) =>
     ImagesResult(ImagesResultType.error, errorType: errorType, errorMessage: errorMessage);
@@ -760,8 +756,8 @@ class ImagesResult {
   factory ImagesResult.cancel() =>
     ImagesResult(ImagesResultType.cancelled);
 
-  factory ImagesResult.succeed({String? imageUrl, Uint8List? imageData}) =>
-    ImagesResult(ImagesResultType.succeeded, imageUrl: imageUrl, imageData: imageData);
+  factory ImagesResult.succeed({String? imageUrl, Uint8List? imageData, ImageMetaData? metaData}) =>
+    ImagesResult(ImagesResultType.succeeded, imageUrl: imageUrl, imageData: imageData, metaData: metaData);
 
   bool get succeeded => (resultType == ImagesResultType.succeeded);
 }

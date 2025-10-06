@@ -37,15 +37,6 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   }
 
   @override
-  void didUpdateWidget(covariant AccessibleImageHolder oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Reload if the image or metadata changes
-    if (widget.image?.image != oldWidget.image?.image || widget.metaData != oldWidget.metaData) {
-      _loadMetaData();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) =>
       Semantics(label: _imageAltText != null ? _semanticsLabel : widget.emptySemanticsLabel,
           image: true,
@@ -56,11 +47,12 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   void _loadMetaData() {
     String? url = _imageUrl;
     if(url != null) {
-      Content().loadImageMetaData(imageUrl: url).then((metaData) => {
+      Content().loadImageMetaData(imageUrl: url).then((result) => {
           if(mounted){
               setState(() =>
-          _metaData = metaData ?? _metaData
-          )}
+                _metaData = result.metaData ?? _metaData
+            )
+          }
       });
     }
   }
