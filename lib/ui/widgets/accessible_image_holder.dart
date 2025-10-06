@@ -40,24 +40,24 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   Widget build(BuildContext context) =>
       Semantics(label: _imageAltText != null ? _semanticsLabel : widget.emptySemanticsLabel,
           image: true,
-          excludeSemantics: true,
           child: widget.child
       );
 
   void _loadMetaData() {
     String? url = _imageUrl;
     if(url != null) {
-      Content().loadImageMetaData(imageUrl: url).then((result) => {
+      Content().loadImageMetaData(imageUrl: url).then((result) {
           if(mounted){
               setState(() =>
                 _metaData = result.metaData ?? _metaData
-            )
+              );
+              // context.findRenderObject()?.markNeedsSemanticsUpdate();
           }
       });
     }
   }
 
-  String? get _imageUrl =>  widget.image is NetworkImage ? (widget.image as NetworkImage).url : null;
+  String? get _imageUrl =>  widget.image?.image is NetworkImage ? (widget.image?.image as NetworkImage).url : null;
 
   String? get _imageAltText => _metaData?.altText;
 
