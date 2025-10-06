@@ -466,7 +466,7 @@ class Content with Service, NotificationsListener implements ContentItemCategory
 
   Future<ImagesResult> loadImageMetaData({required String imageUrl}) async {
       //TBD implement
-    return Future.delayed(Duration(seconds: 2), () => ImagesResult.succeed(metaData:
+    return Future.delayed(Duration(milliseconds: 500), () => ImagesResult.succeed(metaData:
         ImageMetaData(altText: "Mocup Alt text. To-Do load real Alt text")));
   }
 
