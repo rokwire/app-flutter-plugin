@@ -39,7 +39,7 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   @override
   Widget build(BuildContext context) =>
       Semantics(label: _imageAltText != null ? _semanticsLabel : widget.emptySemanticsLabel,
-          image: true,
+          image: true, excludeSemantics: true,
           child: widget.child
       );
 

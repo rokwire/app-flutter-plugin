@@ -14,10 +14,11 @@ class ModalImageHolder extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _showModalImage(context),
-      child: child ?? Container(),
-    );
+    return MergeSemantics(child: Semantics(hint: "double tap to Zoom", child:
+      InkWell(
+        onTap: () => _showModalImage(context),
+        child: child ?? Container(),
+      )));
   }
 
   //Modal Image Dialog
