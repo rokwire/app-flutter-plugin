@@ -453,21 +453,65 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
     return await rotatedImage.readAsBytes();
   }
-  Future<ImagesResult>  deleteImageMetaData({required String imageUrl}) async {
-      //TBD
-      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
+  Future<ImagesResult>  deleteMetaData({String? key}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing key');
+    }
+    String? url = "$serviceUrl/meta-data/$key";
+    Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
+    return (response?.statusCode == 200) ?
+      ImagesResult.succeed(metaData: ImageMetaData.fromJson(JsonUtils.decodeMap(response?.body)?["value"])) :
+      ImagesResult.error(ImagesErrorType.deleteFailed, response?.body);
   }
 
-  Future<ImagesResult> uploadImageMetaData({required String imageUrl, required ImageMetaData imageMetaData}) async {
-    AppToast.showMessage("uploadImageMetaData.altText:$imageUrl : ${imageMetaData.altText}");
-    //TBD implement
-    return ImagesResult.error(ImagesErrorType.serviceNotAvailable, "To be implemented");
+  Future<ImagesResult> uploadMetaData({String? key, Map<String, dynamic>? metaData}) async { //TBD implement MetaDataResult
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing key');
+    }
+    if (metaData == null) {
+      return ImagesResult.error(ImagesErrorType.contentNotSupplied, 'No meta-data.');
+    }
+    tmp: key = "test";
+    String? url = "$serviceUrl/meta-data/";
+
+    Response? response = await Network().post(
+        url,
+        body: JsonUtils.encode({
+          "key": key,
+          "value": ImageMetaData(altText: "Test").toJson()
+        }),
+        auth: Auth2()
+    );
+    debugPrint("Upload $url => ${response?.statusCode}");
+    return (response?.statusCode == 200) ?
+      ImagesResult.succeed(metaData: ImageMetaData.fromJson(JsonUtils.decodeMap(response?.body)?["value"])) :
+      ImagesResult.error(ImagesErrorType.uploadFailed, response?.body);
   }
 
-  Future<ImagesResult> loadImageMetaData({required String imageUrl}) async {
-      //TBD implement
-    return Future.delayed(Duration(milliseconds: 500), () => ImagesResult.succeed(metaData:
-        ImageMetaData(altText: "Mocup Alt text. To-Do load real Alt text")));
+  Future<ImagesResult> loadMetaData({String? key}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing key');
+    }
+    tmp: key = "test";
+    String? url = "$serviceUrl/meta-data/$key";
+    Response? response = await Network().get(url, auth: Auth2());
+    debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
+    return (response?.statusCode == 200) ?
+      ImagesResult.succeed(metaData: ImageMetaData.fromJson(JsonUtils.decodeMap(response?.body)?["value"])) :
+      ImagesResult.error(ImagesErrorType.retrieveFailed, response?.body);
   }
 
   Future<ImagesResult> uploadImage(

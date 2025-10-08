@@ -6,7 +6,7 @@ class ImageMetaData {
 
   ImageMetaData( {this.altText, this.decorative});
 
-  ImageMetaData? fromJson(Map<String, dynamic>? json) => json != null ? ImageMetaData(
+  static ImageMetaData? fromJson(Map<String, dynamic>? json) => json != null ? ImageMetaData(
     altText: JsonUtils.stringValue("alt_text"),
     decorative: JsonUtils.boolValue("decorative")
   ) : null;

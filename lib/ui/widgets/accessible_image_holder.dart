@@ -46,7 +46,7 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   void _loadMetaData() {
     String? url = _imageUrl;
     if(url != null) {
-      Content().loadImageMetaData(imageUrl: url).then((result) {
+      Content().loadMetaData(key: url).then((result) {
           if(mounted){
               setState(() =>
                 _metaData = result.metaData ?? _metaData
