@@ -7,8 +7,8 @@ class ImageMetaData {
   ImageMetaData( {this.altText, this.decorative});
 
   static ImageMetaData? fromJson(Map<String, dynamic>? json) => json != null ? ImageMetaData(
-    altText: JsonUtils.stringValue("alt_text"),
-    decorative: JsonUtils.boolValue("decorative")
+    altText: JsonUtils.stringValue(json["alt_text"]),
+    decorative: JsonUtils.boolValue(json["decorative"])
   ) : null;
 
   Map<String, dynamic> toJson() =>

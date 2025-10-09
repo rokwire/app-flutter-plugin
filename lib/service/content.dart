@@ -453,6 +453,7 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     File rotatedImage = await FlutterExifRotation.rotateImage(path: filePath);
     return await rotatedImage.readAsBytes();
   }
+
   Future<ImagesResult>  deleteMetaData({String? key}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
@@ -461,6 +462,8 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     if (StringUtils.isEmpty(key)) {
       return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing key');
     }
+    key = key != null? Uri.encodeComponent(key): key;
+
     String? url = "$serviceUrl/meta-data/$key";
     Response? response = await Network().delete(url, auth: Auth2());
     debugPrint("Delete $url => ${response?.statusCode}");
@@ -480,20 +483,23 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     if (metaData == null) {
       return ImagesResult.error(ImagesErrorType.contentNotSupplied, 'No meta-data.');
     }
-    tmp: key = "test";
-    String? url = "$serviceUrl/meta-data/";
-
+    // tmp: key = "test-key";
+    // tmp: key = "rokwire-images.s3.us-east-2.amazonaws.com/group/tout/ec1c0eb4-a4e3-11f0-a47a-0a58a9feac02";
+    // key = key != null? Uri.encodeComponent(key): key;
+    // key = key != null ? UrlUtils.stripUrlScheme(key) : key;
+    String? url = "$serviceUrl/meta-data";
     Response? response = await Network().post(
         url,
         body: JsonUtils.encode({
           "key": key,
-          "value": ImageMetaData(altText: "Test").toJson()
+          "value": metaData
         }),
         auth: Auth2()
     );
-    debugPrint("Upload $url => ${response?.statusCode}");
+    Map<String, dynamic>? result = JsonUtils.decodeMap(response?.body);
+    debugPrint("Upload $url => ${response?.statusCode} : result: $result");
     return (response?.statusCode == 200) ?
-      ImagesResult.succeed(metaData: ImageMetaData.fromJson(JsonUtils.decodeMap(response?.body)?["value"])) :
+      ImagesResult.succeed(metaData: ImageMetaData.fromJson(result?["value"])) :
       ImagesResult.error(ImagesErrorType.uploadFailed, response?.body);
   }
 
@@ -505,7 +511,10 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     if (StringUtils.isEmpty(key)) {
       return ImagesResult.error(ImagesErrorType.fileNameNotSupplied, 'Missing key');
     }
-    tmp: key = "test";
+    // tmp: key = "test-key";
+    // tmp: key = "rokwire-images.s3.us-east-2.amazonaws.com/group/tout/ec1c0eb4-a4e3-11f0-a47a-0a58a9feac02";
+    // key = key != null? Uri.encodeComponent(key): key;
+    // key = key != null ? UrlUtils.stripUrlScheme(key) : key;
     String? url = "$serviceUrl/meta-data/$key";
     Response? response = await Network().get(url, auth: Auth2());
     debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
