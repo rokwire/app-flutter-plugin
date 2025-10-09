@@ -813,8 +813,7 @@ class ImagesResult {
   final String? errorMessage;
   final String? imageUrl;
   final Uint8List? imageData;
-  final ImageMetaData? metaData;
-  ImagesResult(this.resultType, { this.errorType, this.errorMessage, this.imageUrl, this.imageData, this.metaData});
+  ImagesResult(this.resultType, { this.errorType, this.errorMessage, this.imageUrl, this.imageData});
 
   factory ImagesResult.error(ImagesErrorType? errorType, String? errorMessage) =>
     ImagesResult(ImagesResultType.error, errorType: errorType, errorMessage: errorMessage);
@@ -822,8 +821,8 @@ class ImagesResult {
   factory ImagesResult.cancel() =>
     ImagesResult(ImagesResultType.cancelled);
 
-  factory ImagesResult.succeed({String? imageUrl, Uint8List? imageData, ImageMetaData? metaData}) =>
-    ImagesResult(ImagesResultType.succeeded, imageUrl: imageUrl, imageData: imageData, metaData: metaData);
+  factory ImagesResult.succeed({String? imageUrl, Uint8List? imageData}) =>
+    ImagesResult(ImagesResultType.succeeded, imageUrl: imageUrl, imageData: imageData);
 
   bool get succeeded => (resultType == ImagesResultType.succeeded);
 }
