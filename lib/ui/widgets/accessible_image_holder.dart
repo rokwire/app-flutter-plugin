@@ -38,9 +38,9 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
 
   @override
   Widget build(BuildContext context) =>
-      Semantics(label: _imageAltText != null ? _semanticsLabel : widget.emptySemanticsLabel,
-          image: true, excludeSemantics: true,
-          child: widget.child
+      Semantics(label: _semanticsLabel,
+        image: true, excludeSemantics: true,
+        child: widget.child
       );
 
   void _loadMetaData() {
@@ -59,7 +59,12 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
 
   String? get _imageUrl =>  widget.image?.image is NetworkImage ? (widget.image?.image as NetworkImage).url : null;
 
-  String? get _imageAltText => _metaData?.altText;
+  String? get _semanticsLabel =>  _metaData?.decorative == true ? "decorative " :
+    _imageAltText != null ?
+      _semanticsText :
+      widget.emptySemanticsLabel;
 
-  String? get _semanticsLabel => "${widget.prefixSemanticsLabel ?? ""} $_imageAltText ${widget.suffixSemanticsLabel ?? ""}";
+  String? get _semanticsText =>  "${widget.prefixSemanticsLabel ?? ""} $_imageAltText ${widget.suffixSemanticsLabel ?? ""}";
+
+  String? get _imageAltText => _metaData?.altText;
 }
