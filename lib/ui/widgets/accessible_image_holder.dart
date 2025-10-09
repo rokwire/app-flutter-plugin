@@ -46,12 +46,12 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
   void _loadMetaData() {
     String? url = _imageUrl;
     if(url != null) {
-      Content().loadMetaData(key: url).then((result) {
-          if(mounted){
-              setState(() =>
-                _metaData = result.metaData ?? _metaData
-              );
-              // context.findRenderObject()?.markNeedsSemanticsUpdate();
+      Content().loadImageMetaData(url: url).then((result) {
+          if (mounted) {
+            setState(() =>
+            _metaData = result.imageMetaData ?? _metaData
+            );
+            // context.findRenderObject()?.markNeedsSemanticsUpdate();
           }
       });
     }
