@@ -280,6 +280,7 @@ String? _buildDefaultClass(String name, MapEntry<String, dynamic> entry, {Map<St
     if (extendsKey != null) {
       dynamic extendsMap = data?[extendsKey];
       if (extendsMap is Map<String, dynamic>) {
+        extendsMap = Map.from(extendsMap);
         _mergeMaps(extendsMap, value);
         value = extendsMap;
       } else {
