@@ -14,10 +14,11 @@ class ModalImageHolder extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _showModalImage(context),
-      child: child ?? Container(),
-    );
+    return MergeSemantics(child: Semantics(hint: "double tap to Zoom", child:
+      InkWell(
+        onTap: () => _showModalImage(context),
+        child: child ?? Container(),
+      )));
   }
 
   //Modal Image Dialog
@@ -38,5 +39,12 @@ class ModalImageHolder extends StatelessWidget{
       Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(image: (child as Image).image)));
       //Navigator.push(context, MaterialPageRoute( builder: (_) => ModalPhotoImagePanel(image: (child as Image).image)));
     }
+    else if(child is ImageHolder) {
+      Navigator.push(context, PageRouteBuilder( opaque: false, pageBuilder: (_, __, ___) => ModalPhotoImagePanel(image: (child as ImageHolder).image?.image)));
+    }
   }
+}
+
+abstract class ImageHolder {
+  Image? get image;
 }

@@ -4,6 +4,7 @@ import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
+import 'package:rokwire_plugin/ui/widgets/accessible_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 class TriangleHeaderImage extends StatelessWidget {
@@ -37,7 +38,7 @@ class TriangleHeaderImage extends StatelessWidget {
     } else if (flexImageKey != null) {
       image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
     }
-    return (image != null) ? Positioned.fill(child: ModalImageHolder(child:image)) : Container();
+    return (image != null) ? Positioned.fill(child: ModalImageHolder(child: AccessibleImageHolder(child: image))) : Container();
   }
 
   @protected
