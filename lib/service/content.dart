@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rokwire_plugin/ext/network.dart';
+import 'package:rokwire_plugin/model/content.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/config.dart';
@@ -458,6 +459,88 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     return await rotatedImage.readAsBytes();
   }
   */
+
+  Future<MetaDataResult> deleteImageMetaData({String? url}) async =>  deleteMetaData(key: url);
+
+  Future<MetaDataResult> uploadImageMetaData({String? url, ImageMetaData? metaData}) async {
+    MetaDataResult uploadResult = await uploadMetaData(key: url, metaData: metaData?.toJson());
+    return uploadResult.succeeded ?
+      MetaDataResult.succeed(metaData: ImageMetaData.fromJson(JsonUtils.mapValue(
+          uploadResult.metaData)?["value"])) :
+      uploadResult;
+  }
+
+  Future<MetaDataResult> loadImageMetaData({String? url}) async {
+    MetaDataResult loadResult = await loadMetaData(key: url);
+    Map<String, dynamic>? loadResultJson = JsonUtils.mapValue(loadResult.metaData);
+    Map<String, dynamic>? imageResult = JsonUtils.mapValue(loadResultJson?["value"]);
+    return loadResult.succeeded == true ?
+      MetaDataResult.succeed(metaData: ImageMetaData.fromJson(imageResult)) :
+      loadResult;
+  }
+
+  Future<MetaDataResult>  deleteMetaData({String? key}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return MetaDataResult.error(MetaDataErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return MetaDataResult.error(MetaDataErrorType.keyNotSupplied, 'Missing key');
+    }
+    key = key != null? Uri.encodeComponent(key): key;
+
+    String? url = "$serviceUrl/meta-data?key=$key";
+    Response? response = await Network().delete(url, auth: Auth2());
+    debugPrint("Delete $url => ${response?.statusCode}");
+    return (response?.statusCode == 200) ?
+      MetaDataResult.succeed() :
+      MetaDataResult.error(MetaDataErrorType.deleteFailed, response?.body);
+  }
+
+  Future<MetaDataResult> uploadMetaData({String? key, Map<String, dynamic>? metaData}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return MetaDataResult.error(MetaDataErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return MetaDataResult.error(MetaDataErrorType.keyNotSupplied, 'Missing key');
+    }
+    if (metaData == null) {
+      return MetaDataResult.error(MetaDataErrorType.dataNotSupplied, 'No meta-data.');
+    }
+
+    String? url = "$serviceUrl/meta-data";
+    Response? response = await Network().post(url, auth: Auth2(),
+        body: JsonUtils.encode({
+          "key": key,
+          "value": metaData
+        }),
+
+    );
+    Map<String, dynamic>? result = JsonUtils.decodeMap(response?.body);
+    debugPrint("Upload $url => ${response?.statusCode} : result: $result");
+    return (response?.statusCode == 200) ?
+    MetaDataResult.succeed(metaData: result) :
+    MetaDataResult.error(MetaDataErrorType.uploadFailed, response?.body);
+  }
+
+  Future<MetaDataResult> loadMetaData({String? key}) async {
+    String? serviceUrl = Config().contentUrl;
+    if (StringUtils.isEmpty(serviceUrl)) {
+      return MetaDataResult.error(MetaDataErrorType.serviceNotAvailable, 'Missing Content BB url.');
+    }
+    if (StringUtils.isEmpty(key)) {
+      return MetaDataResult.error(MetaDataErrorType.keyNotSupplied, 'Missing key');
+    }
+
+    String? url = "$serviceUrl/meta-data?key=$key";
+    Response? response = await Network().get(url, auth: Auth2());
+    Map<String, dynamic>? result = JsonUtils.decodeMap(response?.body);
+    debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : result}");
+    return (response?.statusCode == 200) ?
+      MetaDataResult.succeed(metaData: result) :
+      MetaDataResult.error(MetaDataErrorType.retrieveFailed, response?.body);
+  }
 
   Future<ImagesResult> uploadImage({Uint8List? imageBytes, required String storagePath, int? width, String? mediaType}) async {
     if (CollectionUtils.isNotEmpty(imageBytes)) {
@@ -917,7 +1000,6 @@ class ImagesResult {
   final String? errorMessage;
   final String? imageUrl;
   final Uint8List? imageData;
-
   ImagesResult(this.resultType, { this.errorType, this.errorMessage, this.imageUrl, this.imageData});
 
   factory ImagesResult.error(ImagesErrorType? errorType, String? errorMessage) =>
@@ -989,4 +1071,38 @@ class FileContentItemReference {
     }
     return items;
   }
+}
+
+enum MetaDataResultType { error, cancelled, succeeded }
+enum MetaDataErrorType {
+  serviceNotAvailable,
+  keyNotSupplied,
+  dataNotSupplied,
+  uploadFailed,
+  deleteFailed,
+  retrieveFailed,
+}
+
+class MetaDataResult {
+  final MetaDataResultType resultType;
+  final MetaDataErrorType? errorType;
+  final String? errorMessage;
+  final dynamic metaData;
+
+  MetaDataResult(this.resultType, { this.errorType, this.errorMessage, this.metaData});
+
+  factory MetaDataResult.error(MetaDataErrorType? errorType, String? errorMessage) =>
+      MetaDataResult(MetaDataResultType.error, errorType: errorType, errorMessage: errorMessage);
+
+  factory MetaDataResult.cancel() =>
+      MetaDataResult(MetaDataResultType.cancelled);
+
+  factory MetaDataResult.succeed({dynamic metaData}) =>
+      MetaDataResult(MetaDataResultType.succeeded, metaData: metaData);
+
+  bool get succeeded => (resultType == MetaDataResultType.succeeded);
+}
+
+extension ImageMetaDataResultExt on MetaDataResult{
+  ImageMetaData? get imageMetaData => metaData is ImageMetaData ? metaData : null;
 }
