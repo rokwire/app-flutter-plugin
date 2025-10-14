@@ -160,6 +160,9 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
       case "launchAppSettings":
         result.success(launchAppSettings(call.arguments));
         break;
+      case "launchExternalBrowser":
+        result.success(launchExternalBrowser(call.arguments));
+        break;
       case "locationServices":
         assert nextMethodComponents != null;
         LocationServices.getInstance().handleMethodCall(nextMethodComponents, call.arguments, result);
@@ -330,6 +333,33 @@ public class RokwirePlugin implements FlutterPlugin, MethodCallHandler, Activity
     boolean activityExists = settingsIntent.resolveActivityInfo(activity.getPackageManager(), 0) != null;
     if (!activityExists) {
       activity.startActivity(settingsIntent);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean launchExternalBrowser(Object params) {
+    Activity activity = getActivity();
+    if (activity == null) {
+      Log.d(TAG, "No activity connected");
+      return false;
+    }
+
+    String url = Utils.Map.getValueFromPath(params, "url", null);
+    if (Utils.Str.isEmpty(url)) {
+      Log.d(TAG, "Invalid url: " + url);
+      return false;
+    }
+
+    Uri uri = Uri.parse(url);
+    Intent browserIntent = new Intent(Intent.ACTION_VIEW);
+    browserIntent.setDataAndType(uri, "text/html");
+    browserIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+
+    boolean activityExists = browserIntent.resolveActivityInfo(activity.getPackageManager(), 0) != null;
+    if (activityExists) {
+      activity.startActivity(browserIntent);
       return true;
     } else {
       return false;

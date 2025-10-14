@@ -97,6 +97,16 @@ class RokwirePlugin {
     return false;
   }
 
+  // Launch external browser (avoid infinite loop on deep links on Android)
+  // Currently only works on Android, can use url_launcher for iOS
+  static Future<bool?> launchExternalBrowser(String url) async {
+    try { return await _channel.invokeMethod('launchExternalBrowser', {
+      'url': url,
+    }); }
+    catch(e) { debugPrint(e.toString()); }
+    return false;
+  }
+
   static Future<bool> arePasskeysSupported() async {
     try { return await PasskeyImpl().arePasskeysSupported(); }
     catch(e) { debugPrint(e.toString()); }
