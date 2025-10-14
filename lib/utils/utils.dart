@@ -968,39 +968,71 @@ class JsonUtils {
   static Map<String, dynamic>? mapValue(dynamic value) =>
     mapCastValue<String, dynamic>(value);
 
-  static Map<T, K>? mapCastValue<T, K>(dynamic value) {
-    try {
-      return (value is Map) ? value.cast<T, K>() : null;
-    }
-    catch(e) {
-      debugPrint(e.toString());
+  static Map<K, V>? mapCastValue<K, V>(dynamic value) {
+    if (value is Map) {
+      try {
+        return value.cast<K, V>();
+      }
+      catch(e) {
+        debugPrint(e.toString());
+      }
+
+      Map<K, V> result = <K, V>{};
+      value.forEach((key, value) {
+        if ((key is K) && (value is V)) {
+          result[key] = value;
+        }
+      });
+      return result;
     }
     return null;
   }
 
-  static List<T>? listValue<T>(dynamic value) {
-    try {
-      return (value is List) ? value.cast<T>() : null;
-    }
-    catch(e) {
-      debugPrint(e.toString());
+  static List<dynamic>? listValue(dynamic value) =>
+    listCastValue<dynamic>(value);
+
+  static List<T>? listCastValue<T>(dynamic value) {
+    if (value is List) {
+      try {
+        return value.cast<T>();
+      }
+      catch(e) {
+        debugPrint(e.toString());
+      }
+
+      List<T> result = <T>[];
+      for (dynamic entry in value) {
+        if (entry is T) {
+          result.add(entry);
+        }
+      }
+      return result;
+
     }
     return null;
   }
 
-  static Set<T>? setValue<T>(dynamic value) {
-    try {
-      return (value is Set) ? value.cast<T>() : null;
-    }
-    catch(e) {
-      debugPrint(e.toString());
+  static Set<dynamic>? setValue(dynamic value) =>
+      setCastValue<dynamic>(value);
+
+  static Set<T>? setCastValue<T>(dynamic value) {
+    if (value is Set) {
+      try {
+        return value.cast<T>();
+      }
+      catch(e) {
+        debugPrint(e.toString());
+      }
+
+      Set<T> result = <T>{};
+      for (dynamic entry in value) {
+        if (entry is T) {
+          result.add(entry);
+        }
+      }
+      return result;
     }
     return null;
-  }
-
-  static LinkedHashSet<T>? linkedHashSetValue<T>(dynamic value) {
-    Set<T>? set = setValue(value);
-    return (set != null) ? LinkedHashSet.from(set) : null;
   }
 
   static List<String>? stringListValue(dynamic value) {
