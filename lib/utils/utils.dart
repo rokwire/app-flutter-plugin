@@ -405,6 +405,16 @@ class SetUtils {
   }
 }
 
+class LinkedHashMapUtils {
+  static LinkedHashMap<K, V>? from<K, V>(Map<K, V>? map) {
+    return (map != null) ? LinkedHashMap<K, V>.from(map) : null;
+  }
+
+  static LinkedHashMap<K, V>? fromEntries<K, V>(Iterable<MapEntry<K, V>>? entries) {
+    return (entries != null) ? LinkedHashMap<K, V>.fromEntries(entries) : null;
+  }
+}
+
 class LinkedHashSetUtils {
   static LinkedHashSet<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? LinkedHashSet<T>.from(elements) : null;
