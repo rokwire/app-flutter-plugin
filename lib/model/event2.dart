@@ -1487,7 +1487,7 @@ extension Event2TypeFilterListImpl on Iterable<Event2TypeFilter> {
 
   static List<Event2TypeFilter>? fromAttributeSelection(dynamic attributeSelection) {
     if (attributeSelection is List) {
-      return JsonUtils.listValue<Event2TypeFilter>(attributeSelection);
+      return JsonUtils.listCastValue<Event2TypeFilter>(attributeSelection);
     }
     else if (attributeSelection is Event2TypeFilter) {
       return <Event2TypeFilter>[attributeSelection];
