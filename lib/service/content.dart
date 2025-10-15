@@ -566,7 +566,7 @@ class Content with Service, NotificationsListener implements ContentItemCategory
   }
 
   // profile photos will be uploaded through the content BB for now because it resizes and uploads multiple images
-  Future<ImagesResult> uploadUserPhoto({List<int>? imageBytes, String? mediaType}) async {
+  Future<ImagesResult> uploadUserPhoto({String? fileName, List<int>? imageBytes, String? mediaType}) async {
     String? serviceUrl = Config().contentUrl;
     if (StringUtils.isEmpty(serviceUrl)) {
       return ImagesResult.error(ImagesErrorType.serviceNotAvailable, 'Missing images BB url.');
@@ -577,21 +577,20 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     if (StringUtils.isEmpty(mediaType)) {
       return ImagesResult.error(ImagesErrorType.mediaTypeNotSupplied, 'Missing media type.');
     }
+    Map<String, String> imageRequestFields = {
+      'quality': 100.toString() // Use maximum quality - 100
+    };
     StreamedResponse? response = await Network().multipartPost(
         url: "$serviceUrl/profile_photo",
         fileKey: 'fileName',
-        fileName: 'fileName',
+        fileName: fileName,
         fileBytes: imageBytes,
         contentType: mediaType,
+        fields: imageRequestFields,
         auth: Auth2());
     int responseCode = response?.statusCode ?? -1;
     String responseString = (await response?.stream.bytesToString())!;
     if (responseCode == 200) {
-      for(UserProfileImageType type in UserProfileImageType.values) {
-        String ext = '-${_profileImageTypeToString(type)}.webp';
-        String cacheKey = '${profileImagesContentCategory}_${Auth2().accountId}$ext';
-        _fileContentCache.remove(cacheKey);
-      }
       Map<String, dynamic>? json = JsonUtils.decodeMap(responseString);
       String? imageUrl = (json != null) ? JsonUtils.stringValue(json['url']) : null;
       NotificationService().notify(notifyUserProfilePictureChanged, null);
@@ -614,11 +613,6 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     debugPrint("Delete $url => ${response?.statusCode}");
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      for(UserProfileImageType type in UserProfileImageType.values) {
-        String ext = '-${_profileImageTypeToString(type)}.webp';
-        String cacheKey = '${profileImagesContentCategory}_${Auth2().accountId}$ext';
-        _fileContentCache.remove(cacheKey);
-      }
       NotificationService().notify(notifyUserProfilePictureChanged, null);
       return ImagesResult.succeed();
     } else {
@@ -628,22 +622,16 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     }
   }
 
-  Future<ImagesResult> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
-    String fileName = accountId ?? Auth2().accountId ?? '';
-    if (fileName.isNotEmpty && type != null) {
-      fileName += '-${_profileImageTypeToString(type)}.webp';
+  Future<ImagesResult?> loadUserPhoto({ UserProfileImageType? type, String? accountId }) async {
+    String? url = getUserPhotoUrl(accountId: accountId, type: type);
+    if (StringUtils.isNotEmpty(url)) {
+      Response? response = await Network().get(url, auth: Auth2());
+      debugPrint("GET $url => ${response?.statusCode} ${(response?.succeeded == true) ? ('<' + (response?.bodyBytes.length.toString() ?? '') + ' bytes>') : response?.body}");
+      return (response?.statusCode == 200) ? ImagesResult.succeed(imageData: response?.bodyBytes) : ImagesResult.error(ImagesErrorType.retrieveFailed, response?.body);
     }
-
-    if (fileName.isNotEmpty) {
-      Map<String, Uint8List> imageBytes = await getFileContentItems([fileName], profileImagesContentCategory, addAppOrgIDtoPath: false);
-      if (imageBytes.containsKey(fileName)) {
-        Uint8List bytes = imageBytes[fileName]!;
-        debugPrint("GET $fileName => ${bytes.length.toString()} bytes>");
-        return ImagesResult.succeed(imageData: bytes);
-      }
-      return ImagesResult.error(ImagesErrorType.retrieveFailed, "Failed to get user's profile image");
+    else {
+      return null;
     }
-    return ImagesResult.error(ImagesErrorType.retrieveFailed, "Missing user's profile image name");
   }
 
   String? getUserPhotoUrl({ String? accountId, UserProfileImageType? type, Map<String, String>? params }) {
