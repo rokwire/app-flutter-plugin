@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/widgets/web_network_image.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:pinch_zoom/pinch_zoom.dart';
 
@@ -225,18 +227,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
             height: MediaQuery.of(context).size.height,
             //width: MediaQuery.of(context).size.width,
           ),
-          child: PhotoView(
-            imageProvider: _imageProvider,
-            loadingBuilder: _buildImageLoading,
-            backgroundDecoration: BoxDecoration(color: Colors.transparent),
-            //minScale: minScale,
-            //maxScale: maxScale,
-            //initialScale: initialScale,
-            //basePosition: basePosition,
-            //filterQuality: filterQuality,
-            //disableGestures: disableGestures,
-            errorBuilder: _buildImageError,
-          ),
+          child: _buildImageContainer(),
         ),
         Positioned.fill(child:
           SafeArea(child:
@@ -247,6 +238,31 @@ class ModalPhotoImagePanel extends StatelessWidget {
         ),
       ],)
     );
+
+  Widget _buildImageContainer() {
+    if (kIsWeb && (imageUrl != null)) {
+      return WebNetworkImage(
+        imageUrl: imageUrl,
+        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+          return (loadingProgress != null) ? Center(child: _buildImageProgress(context, loadingProgress)) : Container();
+        },
+        errorBuilder: _buildImageError,
+      );
+    } else {
+      return PhotoView(
+        imageProvider: _imageProvider,
+        loadingBuilder: _buildImageLoading,
+        backgroundDecoration: BoxDecoration(color: Colors.transparent),
+        //minScale: minScale,
+        //maxScale: maxScale,
+        //initialScale: initialScale,
+        //basePosition: basePosition,
+        //filterQuality: filterQuality,
+        //disableGestures: disableGestures,
+        errorBuilder: _buildImageError,
+      );
+    }
+  }
 
   ImageProvider? get _imageProvider {
     if (image != null) {
