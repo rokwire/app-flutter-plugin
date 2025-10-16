@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Auth2UserPrefs.replaceFavorite API [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - Added surfaceAccent2 entry to Style's colors map [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - Аcknowledge content load/upload/delete API [#4836](https://github.com/rokwire/illinois-app/issues/4836).
-- Added LinkedHashMapUtils [#5344](https://github.com/rokwire/illinois-app/issues/5344). 
+- Added LinkedHashMapUtils [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Add file attachments to conversation messages [#639](https://github.com/rokwire/app-flutter-plugin/issues/639).
 ### Changed
 - ImageUtils.mapGroupMarkerImage extended to handle pin and explore markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - JsonUtils: If unable to perform a collection cast, try to build the collection manually [#5344](https://github.com/rokwire/illinois-app/issues/5344).
