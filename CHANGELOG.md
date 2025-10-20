@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - ImageUtils.mapGroupMarkerImage extended to handle pin and explore markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
 - JsonUtils: If unable to perform a collection cast, try to build the collection manually [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- WebPanel: Added back button to the default header bar, if no custom one provided [#5458](https://github.com/rokwire/illinois-app/issues/5458).
 
 ## [1.11.2] - 2025-09-18
 ### Changed
