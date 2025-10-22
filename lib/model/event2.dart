@@ -1471,7 +1471,7 @@ extension Event2TypeFilterListImpl on Iterable<Event2TypeFilter> {
 
   static List<Event2TypeFilter>? fromAttributeSelection(dynamic attributeSelection) {
     if (attributeSelection is List) {
-      return JsonUtils.listValue<Event2TypeFilter>(attributeSelection);
+      return JsonUtils.listCastValue<Event2TypeFilter>(attributeSelection);
     }
     else if (attributeSelection is Event2TypeFilter) {
       return <Event2TypeFilter>[attributeSelection];
@@ -1487,39 +1487,48 @@ extension Event2TypeFilterListImpl on Iterable<Event2TypeFilter> {
 
 enum Event2SortType { dateTime, alphabetical, proximity }
 
-Event2SortType? event2SortTypeFromString(String? value) {
-  if (value == 'date_time') {
-    return Event2SortType.dateTime;
+extension Event2SortTypeImpl on Event2SortType {
+  static Event2SortType? fromJson(String? value) {
+    if (value == 'date_time') {
+      return Event2SortType.dateTime;
+    }
+    else if (value == 'alphabetical') {
+      return Event2SortType.alphabetical;
+    }
+    else if (value == 'proximity') {
+      return Event2SortType.proximity;
+    }
+    else {
+      return null;
+    }
   }
-  else if (value == 'alphabetical') {
-    return Event2SortType.alphabetical;
+
+  String toJson() {
+    switch (this) {
+      case Event2SortType.dateTime: return 'date_time';
+      case Event2SortType.alphabetical: return 'alphabetical';
+      case Event2SortType.proximity: return 'proximity';
+    }
   }
-  else if (value == 'proximity') {
-    return Event2SortType.proximity;
-  }
-  else {
-    return null;
+
+  String toOption() {
+    switch (this) {
+      case Event2SortType.dateTime: return 'start_time';
+      case Event2SortType.alphabetical: return 'name';
+      case Event2SortType.proximity: return 'proximity';
+    }
   }
 }
 
-String? event2SortTypeToString(Event2SortType? value) {
-  switch (value) {
-    case Event2SortType.dateTime: return 'date_time';
-    case Event2SortType.alphabetical: return 'alphabetical';
-    case Event2SortType.proximity: return 'proximity';
-    default: return null;
-  }
-}
+Event2SortType? event2SortTypeFromString(String? value) =>
+  Event2SortTypeImpl.fromJson(value);
 
-String? event2SortTypeToOption(Event2SortType? value) {
-  // sort_by: name, start_time, end_time, proximity. Default: start_time 
-  switch (value) {
-    case Event2SortType.dateTime: return 'start_time';
-    case Event2SortType.alphabetical: return 'name';
-    case Event2SortType.proximity: return 'proximity';
-    default: return null;
-  }
-}
+String? event2SortTypeToString(Event2SortType? value) =>
+  value?.toJson();
+
+String? event2SortTypeToOption(Event2SortType? value) =>
+  value?.toOption();
+
 
 ///////////////////////////////
 /// Event2SortOrder

@@ -20,6 +20,7 @@ import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
+import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
@@ -241,7 +242,13 @@ class WebPanelState extends State<WebPanel> with NotificationsListener {
     }
 
     return Scaffold(
-      appBar: widget.headerBar ?? HeaderBar(title: widget.title),
+      appBar: widget.headerBar ?? HeaderBar(
+        title: widget.title,
+        leadingIcon: Styles().images.getImage('chevron-left-white', defaultSpec: FontAwesomeImageSpec(type: 'fa.icon', source: '0xf053', weight: 'solid', size: 16.0, color: Styles().colors.surface)),
+        leadingLabel: Localization().getStringEx('headerbar.back.title', 'Back'),
+        leadingHint: Localization().getStringEx('headerbar.back.hint', ''),
+        onLeading:() => Navigator.pop(context),
+      ),
       backgroundColor: Styles().colors.background,
       body: Column(children: <Widget>[
         Expanded(child: contentWidget),

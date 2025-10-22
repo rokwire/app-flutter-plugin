@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.12.0] - 2025-10-22
+### Fixed
+- Android: Fix various compilation warnings [#634](https://github.com/rokwire/app-flutter-plugin/issues/634).
+- Fixed text color of ImageUtils.mapMarkerImage, removed "Group" from API name [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Fixed equality operator of Auth2Account.
+### Added
+- Added ListUtils.last() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Added ListUtils.stripNull() helper [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Added reason parameter to notifyLogout notification [#5411](https://github.com/rokwire/illinois-app/issues/5411).
+- Added Auth2UserPrefs.replaceFavorite API [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Added surfaceAccent2 entry to Style's colors map [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Аcknowledge content load/upload/delete API [#4836](https://github.com/rokwire/illinois-app/issues/4836).
+- Added LinkedHashMapUtils [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- Add file attachments to conversation messages [#639](https://github.com/rokwire/app-flutter-plugin/issues/639).
+### Changed
+- ImageUtils.mapGroupMarkerImage extended to handle pin and explore markers [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- JsonUtils: If unable to perform a collection cast, try to build the collection manually [#5344](https://github.com/rokwire/illinois-app/issues/5344).
+- WebPanel: Added back button to the default header bar, if no custom one provided [#5458](https://github.com/rokwire/illinois-app/issues/5458).
+
 ## [1.11.2] - 2025-09-18
 ### Changed
 - Acknowledge Comment innerContext field and pass it when create/delete/load comments [#5356](https://github.com/rokwire/illinois-app/issues/5356).
@@ -15,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Survey result rule evaluation issues [#637](https://github.com/rokwire/app-flutter-plugin/issues/637).
 ### Added
-- Acknowledge Reaction innerContext field [#5238](https://github.com/rokwire/illinois-app/issues/5238). 
+- Acknowledge Reaction innerContext field [#5238](https://github.com/rokwire/illinois-app/issues/5238).
 
 ## [1.11.0] - 2025-08-05
 ### Changed

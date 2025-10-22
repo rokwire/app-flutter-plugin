@@ -182,6 +182,7 @@ class Auth2Account {
       (other.id == id) &&
       (other.username == username) &&
       (other.profile == profile) &&
+      (other.prefs == prefs) &&
       (other.privacy == privacy) &&
       const DeepCollectionEquality().equals(other.permissions, permissions) &&
       const DeepCollectionEquality().equals(other.roles, roles) &&
@@ -194,6 +195,7 @@ class Auth2Account {
     (id?.hashCode ?? 0) ^
     (username?.hashCode ?? 0) ^
     (profile?.hashCode ?? 0) ^
+    (prefs?.hashCode ?? 0) ^
     (privacy?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(permissions)) ^
     (const DeepCollectionEquality().hash(roles)) ^
@@ -923,7 +925,7 @@ class Auth2UserProfileFieldsVisibility {
 
     birthYear: birthYear ?? other?.birthYear,
     photoUrl: photoUrl ?? other?.photoUrl,
-    pronunciationUrl: photoUrl ?? other?.pronunciationUrl,
+    pronunciationUrl: pronunciationUrl ?? other?.pronunciationUrl,
 
     email: email ?? other?.email,
     phone: phone ?? other?.phone,
@@ -1585,6 +1587,7 @@ class Auth2UserPrefs {
   static const String notifyRolesChanged         = "edu.illinois.rokwire.user.prefs.roles.changed";
   static const String notifyFavoriteChanged      = "edu.illinois.rokwire.user.prefs.favorite.changed";
   static const String notifyFavoritesChanged     = "edu.illinois.rokwire.user.prefs.favorites.changed";
+  static const String notifyFavoriteReplaced    = "edu.illinois.rokwire.user.prefs.favorites.replaced";
   static const String notifyInterestsChanged     = "edu.illinois.rokwire.user.prefs.interests.changed";
   static const String notifyFoodChanged          = "edu.illinois.rokwire.user.prefs.food.changed";
   static const String notifyTagsChanged          = "edu.illinois.rokwire.user.prefs.tags.changed";
@@ -1987,6 +1990,43 @@ class Auth2UserPrefs {
         NotificationService().notify(notifyFavoritesChanged);
         NotificationService().notify(notifyChanged, this);
       }
+    }
+  }
+
+  void replaceFavorite(Favorite oldFavorite, Favorite newFavorite) {
+
+    bool isOldModified = false;
+    String? oldFavoriteId = oldFavorite.favoriteId; 
+    LinkedHashSet<String>? oldFavoriteIdsForKey = (_favorites != null) ? _favorites![oldFavorite.favoriteKey] : null;
+    if ((oldFavoriteId != null) && (oldFavoriteIdsForKey?.contains(oldFavorite.favoriteId) == true)) {
+      oldFavoriteIdsForKey?.remove(oldFavorite.favoriteId);
+      isOldModified = true;
+    }
+    
+    bool isNewModified = false;
+    String? newFavoriteId = newFavorite.favoriteId; 
+    LinkedHashSet<String>? newFavoriteIdsForKey = (_favorites != null) ? _favorites![newFavorite.favoriteKey] : null;
+    if ((newFavoriteId != null) && (newFavoriteIdsForKey?.contains(newFavorite.favoriteId) != true)) {
+      if (newFavoriteIdsForKey == null) {
+        _favorites ??= <String, LinkedHashSet<String>>{};
+        _favorites![newFavorite.favoriteKey] = newFavoriteIdsForKey = LinkedHashSet<String>();
+      }
+      newFavoriteIdsForKey.add(newFavoriteId);
+      isNewModified = true;
+    }
+    
+    if (isOldModified) {
+      NotificationService().notify(notifyFavoriteChanged, oldFavorite);
+    }
+    if (isNewModified) {
+      NotificationService().notify(notifyFavoriteChanged, newFavorite);
+    }
+    if (isOldModified && isNewModified) {
+      NotificationService().notify(notifyFavoriteReplaced, Pair(oldFavorite, newFavorite));
+    }
+    if (isOldModified || isNewModified) {
+      NotificationService().notify(notifyFavoritesChanged);
+      NotificationService().notify(notifyChanged, this);
     }
   }
 

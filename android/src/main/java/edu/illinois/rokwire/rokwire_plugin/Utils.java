@@ -16,48 +16,25 @@
 
 package edu.illinois.rokwire.rokwire_plugin;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.nio.ByteBuffer;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
 import java.lang.Exception;
 
-import androidx.core.content.ContextCompat;
-import androidx.security.crypto.MasterKeys;
+import androidx.security.crypto.MasterKey;
 import androidx.security.crypto.EncryptedSharedPreferences;
 
 import org.altbeacon.beacon.Beacon;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-
 public class Utils {
+
+    private static final String TAG = "rokwire_plugin";
 
     public static class Str {
         public static boolean isEmpty(String value) {
@@ -199,18 +176,21 @@ public class Utils {
         public static String getString(Context context, String key, String defaults) {
             if ((context != null) && !Str.isEmpty(key)) {
                 try {
+                    MasterKey masterKey = new MasterKey.Builder(context)
+                            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                            .build();
+
                     SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
-                        SECURE_SHARED_PREFS_FILE_NAME,
-                        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
                         context,
+                        SECURE_SHARED_PREFS_FILE_NAME,
+                        masterKey,
                         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                     );
                     return sharedPreferences.getString(key, defaults);
                 }
                 catch (Exception e) {
-                    Log.e("Error", "Failed to create EncryptedSharedPreferences");
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to create EncryptedSharedPreferences. Ex: " + e);
                 }
             }
             return defaults;
@@ -219,10 +199,14 @@ public class Utils {
         public static void saveString(Context context, String key, String value) {
             if ((context != null) && !Str.isEmpty(key)) {
                 try {
+                    MasterKey masterKey = new MasterKey.Builder(context)
+                            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                            .build();
+
                     SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
-                        SECURE_SHARED_PREFS_FILE_NAME,
-                        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
                         context,
+                        SECURE_SHARED_PREFS_FILE_NAME,
+                        masterKey,
                         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                     );
@@ -231,8 +215,7 @@ public class Utils {
                     editor.apply();
                 }
                 catch (Exception e) {
-                    Log.e("Error", "Failed to create EncryptedSharedPreferences");
-                    e.printStackTrace();
+                    Log.e(TAG, "Failed to create EncryptedSharedPreferences. Ex: " + e);
                 }
             }
         }

@@ -52,6 +52,10 @@ public class LocationServices implements PluginRegistry.RequestPermissionsResult
         }
     }
 
+    /**
+     * Handle location services status based on the version of the Android. Even though the compiler throws warnings so that leave suppress deprecated clause.
+     * **/
+    @SuppressWarnings("deprecation")
     private String getLocationServicesStatus() {
         Context activity = RokwirePlugin.getInstance().getActivity();
         if (activity != null) {

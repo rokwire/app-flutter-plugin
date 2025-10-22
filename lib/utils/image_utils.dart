@@ -110,16 +110,21 @@ class ImageUtils {
     return null;
   }
 
-  static Future<Uint8List?> mapGroupMarkerImage({
+  static Future<Uint8List?> mapMarkerImage({
+    required double imageSize,
+
     Color? backColor,
-    
+
+    Color? backColor2,
+    double backColor2Offset = 0,
+
     Color? strokeColor,
     double strokeWidth = 1,
-    
+    double strokeOffset = 0,
+
     String? text,
     TextStyle? textStyle,
-    
-    required double imageSize }) async {
+  }) async {
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(recorder, Rect.fromLTRB(0, 0, imageSize, imageSize));
     Offset center = Offset(imageSize / 2, imageSize / 2);
@@ -131,8 +136,15 @@ class ImageUtils {
       );
     }
 
+    if (backColor2 != null) {
+      canvas.drawCircle(center, center.dx - backColor2Offset, Paint()
+        ..color = backColor2
+        ..style = PaintingStyle.fill
+      );
+    }
+
     if (strokeColor != null) {
-      canvas.drawCircle(center, center.dx, Paint()
+      canvas.drawCircle(center, center.dx - strokeWidth / 2 - strokeOffset, Paint()
         ..color = strokeColor
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke
@@ -168,8 +180,12 @@ class ImageUtils {
       }
     }
 
-    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
-    ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)..addText(text);
+    TextScaler textScaler = (0 < textScaleFactor) ? TextScaler.linear(textScaleFactor) : TextScaler.noScaling;
+    ui.TextStyle paragraphTextStyle = textStyle.getTextStyle(textScaler: textScaler);
+    ui.ParagraphStyle paragraphStyle = textStyle.getParagraphStyle(textScaler: textScaler, textDirection: textDirection, textAlign: textAlign, maxLines: maxLines);
+    ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)
+      ..pushStyle(paragraphTextStyle)
+      ..addText(text);
     return paragraphBuilder.build()..layout(ui.ParagraphConstraints(width: size.width));
 
     /* ui.Paragraph? paragraph;
