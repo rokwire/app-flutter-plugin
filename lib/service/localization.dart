@@ -29,6 +29,7 @@ import 'package:http/http.dart' as http;
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 
 class Localization with Service, NotificationsListener {
   
@@ -106,6 +107,8 @@ class Localization with Service, NotificationsListener {
       await initLocaleStirngs(currentLanguage);
     }
 
+    _setWebHtmlLang();
+
     await super.initService();
   }
 
@@ -150,6 +153,7 @@ class Localization with Service, NotificationsListener {
         _localeStrings = _localeAssetsStrings = _localeNetStrings = null;
         // Notyfy when we change the locale (valid change)
         NotificationService().notify(notifyLocaleChanged, null);
+        _setWebHtmlLang();
       }
     }
     else if (_currentLocale?.languageCode != value.languageCode) {
@@ -158,6 +162,14 @@ class Localization with Service, NotificationsListener {
       await initLocaleStirngs(value.languageCode);
       // Notyfy when we change the locale (valid change)
       NotificationService().notify(notifyLocaleChanged, null);
+      _setWebHtmlLang();
+    }
+  }
+
+  void _setWebHtmlLang() {
+    if (kIsWeb) {
+      final langCode = Localization().selectedLocale?.languageCode ?? (Localization().defaultLocale?.languageCode ?? 'en');
+      html.document.documentElement?.lang = langCode;
     }
   }
 

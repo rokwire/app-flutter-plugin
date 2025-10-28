@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Fixed
+- WEB: Set web page language [#5183](https://github.com/rokwire/illinois-app/issues/5183).
 
 ## [1.12.0] - 2025-10-22
 ### Fixed
