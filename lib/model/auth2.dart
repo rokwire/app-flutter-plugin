@@ -2257,7 +2257,17 @@ class Auth2UserPrefs {
     _foodFilters?[_foodExcludedIngredients];
 
   set excludedFoodIngredients(Set<String>? value) {
-    if (!const SetEquality().equals(excludedFoodIngredients, value)) {
+    if (applyExcludedFoodIngredients(value)) {
+      NotificationService().notify(notifyFoodChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+
+  @protected
+  bool applyExcludedFoodIngredients(Set<String>? value) {
+    if (const SetEquality().equals(excludedFoodIngredients, value)) {
+      return false;
+    } else {
       if (value != null) {
         if (_foodFilters != null) {
           _foodFilters![_foodExcludedIngredients] = Set<String>.from(value);
@@ -2269,8 +2279,7 @@ class Auth2UserPrefs {
       else if (_foodFilters != null) {
         _foodFilters!.remove(_foodExcludedIngredients);
       }
-      NotificationService().notify(notifyFoodChanged);
-      NotificationService().notify(notifyChanged, this);
+      return true;
     }
   }
 
@@ -2278,7 +2287,17 @@ class Auth2UserPrefs {
     _foodFilters?[_foodIncludedTypes];
 
   set includedFoodTypes(Set<String>? value) {
-    if (!const SetEquality().equals(includedFoodTypes, value)) {
+    if (applyIncludedFoodTypes(value)) {
+      NotificationService().notify(notifyFoodChanged);
+      NotificationService().notify(notifyChanged, this);
+    }
+  }
+
+  @protected
+  bool applyIncludedFoodTypes(Set<String>? value) {
+    if (const SetEquality().equals(includedFoodTypes, value)) {
+      return false;
+    } else {
       if (value != null) {
         if (_foodFilters != null) {
           _foodFilters![_foodIncludedTypes] = Set<String>.from(value);
@@ -2290,6 +2309,15 @@ class Auth2UserPrefs {
       else if (_foodFilters != null) {
         _foodFilters!.remove(_foodIncludedTypes);
       }
+      return true;
+    }
+  }
+
+  void applyFoodFilters({Set<String>? includedFoodTypes, Set<String>? excludedFoodIngredients}) {
+    // NB: Make sure both apply
+    bool includedFoodTypesModified = (includedFoodTypes != null) ? applyIncludedFoodTypes(includedFoodTypes) : false;
+    bool excludedFoodIngredientsModified = (excludedFoodIngredients != null) ? applyExcludedFoodIngredients(excludedFoodIngredients) : false;
+    if (includedFoodTypesModified || excludedFoodIngredientsModified) {
       NotificationService().notify(notifyFoodChanged);
       NotificationService().notify(notifyChanged, this);
     }

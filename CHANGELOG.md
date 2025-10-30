@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Added
+- Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).
 ### Fixed
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
 
