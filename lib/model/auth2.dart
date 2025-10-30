@@ -1819,7 +1819,7 @@ class Auth2UserPrefs {
     if (_foodFilters != null) {
       _foodFilters = null;
       if (notify == true) {
-        NotificationService().notify(notifyInterestsChanged);
+        NotificationService().notify(notifyFoodChanged);
       }
       modified = true;
     }
@@ -2253,18 +2253,17 @@ class Auth2UserPrefs {
 
   // Food
 
-  Set<String>? get excludedFoodIngredients {
-    return (_foodFilters != null) ? _foodFilters![_foodExcludedIngredients] : null;
-  }
+  Set<String>? get excludedFoodIngredients =>
+    _foodFilters?[_foodExcludedIngredients];
 
   set excludedFoodIngredients(Set<String>? value) {
     if (!const SetEquality().equals(excludedFoodIngredients, value)) {
       if (value != null) {
         if (_foodFilters != null) {
-          _foodFilters![_foodExcludedIngredients] = value;
+          _foodFilters![_foodExcludedIngredients] = Set<String>.from(value);
         }
         else {
-          _foodFilters = { _foodExcludedIngredients : value };
+          _foodFilters = { _foodExcludedIngredients : Set<String>.from(value) };
         }
       }
       else if (_foodFilters != null) {
@@ -2275,18 +2274,17 @@ class Auth2UserPrefs {
     }
   }
 
-  Set<String>? get includedFoodTypes {
-    return (_foodFilters != null) ? _foodFilters![_foodIncludedTypes] : null;
-  }
+  Set<String>? get includedFoodTypes =>
+    _foodFilters?[_foodIncludedTypes];
 
   set includedFoodTypes(Set<String>? value) {
     if (!const SetEquality().equals(includedFoodTypes, value)) {
       if (value != null) {
         if (_foodFilters != null) {
-          _foodFilters![_foodIncludedTypes] = value;
+          _foodFilters![_foodIncludedTypes] = Set<String>.from(value);
         }
         else {
-          _foodFilters = { _foodIncludedTypes : value };
+          _foodFilters = { _foodIncludedTypes : Set<String>.from(value) };
         }
       }
       else if (_foodFilters != null) {
@@ -2297,13 +2295,14 @@ class Auth2UserPrefs {
     }
   }
 
-  bool get hasFoodFilters {
-    return foodFiltersNotEmpty(_foodFilters);
-  }
+  bool get hasFoodFilters =>
+    hasIncludedFoodTypes || hasExcludedIngredientsTypes;
 
-  static bool foodFiltersNotEmpty(Map<String, Set<String>>? foodFilters) {
-    return (foodFilters?[_foodIncludedTypes]?.isNotEmpty ?? false) || (foodFilters?[_foodExcludedIngredients]?.isNotEmpty ?? false);
-  }
+  bool get hasIncludedFoodTypes =>
+    _foodFilters?[_foodIncludedTypes]?.isNotEmpty == true;
+
+  bool get hasExcludedIngredientsTypes =>
+    _foodFilters?[_foodExcludedIngredients]?.isNotEmpty == true;
 
   void clearFoodFilters() {
     if (hasFoodFilters) {
