@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../model/content.dart';
@@ -6,6 +7,7 @@ import '../panels/modal_image_holder.dart';
 
 class AccessibleImageHolder extends StatefulWidget implements ImageHolder{
   final ImageMetaData? metaData;
+  final Function(ImageMetaData? data)? onMetaDataLoaded;
   final String? imageUrl;
   final Widget? child; //Image or ImageHolder
 
@@ -17,11 +19,13 @@ class AccessibleImageHolder extends StatefulWidget implements ImageHolder{
   Image? get image => child is Image ? child as Image :
                                         child is ImageHolder ? (child as ImageHolder).image : null;
 
-  const AccessibleImageHolder({super.key, this.metaData, required this.child, this.imageUrl, this.emptySemanticsLabel, this.prefixSemanticsLabel, this.suffixSemanticsLabel});
+ static  String? getUrlFromProvider(dynamic provider) => provider is NetworkImage ? provider.url : null;
 
   @override
   State<StatefulWidget> createState() =>
       _AccessibleImageHolderState();
+
+  const AccessibleImageHolder({super.key, this.metaData, required this.child, this.imageUrl, this.emptySemanticsLabel, this.prefixSemanticsLabel, this.suffixSemanticsLabel, this.onMetaDataLoaded});
 }
 
 class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
@@ -51,13 +55,15 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
             setState(() =>
             _metaData = result.imageMetaData ?? _metaData
             );
+            widget.onMetaDataLoaded?.call(_metaData);
             // context.findRenderObject()?.markNeedsSemanticsUpdate();
           }
       });
     }
   }
 
-  String? get _imageUrl =>  widget.image?.image is NetworkImage ? (widget.image?.image as NetworkImage).url : null;
+  String? get _imageUrl =>  widget.imageUrl != null ? widget.imageUrl :
+      AccessibleImageHolder.getUrlFromProvider(widget.image?.image);
 
   String? get _semanticsLabel =>  _metaData?.decorative == true ? "decorative " :
     _imageAltText != null ?
