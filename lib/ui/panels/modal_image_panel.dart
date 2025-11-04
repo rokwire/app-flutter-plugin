@@ -20,8 +20,11 @@ import 'package:photo_view/photo_view.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/web_network_image.dart';
+import 'package:rokwire_plugin/ui/widgets/accessible_image_holder.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:pinch_zoom/pinch_zoom.dart';
+
+import '../../model/content.dart';
 
 ///////////////////////////////////////
 // ModalPinchZoomImagePanel
@@ -177,6 +180,7 @@ class ModalPinchZoomImagePanel extends StatelessWidget {
 class ModalPhotoImagePanel extends StatelessWidget {
   final String? imageUrl;
   final String? imageKey;
+  final ImageMetaData? imageMetadata;
   final EdgeInsetsGeometry imagePadding;
 
   final Map<String, String>? networkImageHeaders;
@@ -205,7 +209,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
     this.networkImageHeaders,
 
     this.closeWidget,
-    this.closeLabel = 'Close Button',
+    this.closeLabel = 'Close',
     this.closeHint,
     this.onClose,
     this.onCloseAnalytics,
@@ -216,11 +220,13 @@ class ModalPhotoImagePanel extends StatelessWidget {
     this.progressColor,
 
     this.onDismiss,
+    this.imageMetadata,
 
   }) : super(key: key);
 
   Widget build(BuildContext context) =>
     Scaffold(backgroundColor: Colors.black.withValues(alpha: 0.7), body:
+      // Semantics(container: true, child:
       Stack(children: [
         Container(
           constraints: BoxConstraints.expand(
@@ -237,6 +243,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
           )
         ),
       ],)
+      // )
     );
 
   Widget _buildImageContainer() {
@@ -249,18 +256,35 @@ class ModalPhotoImagePanel extends StatelessWidget {
         errorBuilder: _buildImageError,
       );
     } else {
-      return PhotoView(
-        imageProvider: _imageProvider,
-        loadingBuilder: _buildImageLoading,
-        backgroundDecoration: BoxDecoration(color: Colors.transparent),
-        //minScale: minScale,
-        //maxScale: maxScale,
-        //initialScale: initialScale,
-        //basePosition: basePosition,
-        //filterQuality: filterQuality,
-        //disableGestures: disableGestures,
-        errorBuilder: _buildImageError,
+      return
+      //MergeSemantics(
+      Semantics(container: true, child:
+        AccessibleImageHolder(
+          metaData: imageMetadata,
+          imageUrl: AccessibleImageHolder.getUrlFromProvider(_imageProvider),
+          // onMetaDataLoaded: (data) {
+          //   if(data != null && data != imageMetadata){
+          //     if(_metaDataHolderKey.currentContext?.mounted == true){
+          //       _metaDataHolderKey.currentContext?.findRenderObject()?.sendSemanticsEvent(
+          //           FocusSemanticEvent());
+          //     }
+          //   }
+          // },
+          child: PhotoView(
+            imageProvider: _imageProvider,
+            loadingBuilder: _buildImageLoading,
+            backgroundDecoration: BoxDecoration(color: Colors.transparent),
+            //minScale: minScale,
+            //maxScale: maxScale,
+            //initialScale: initialScale,
+            //basePosition: basePosition,
+            //filterQuality: filterQuality,
+            //disableGestures: disableGestures,
+            errorBuilder: _buildImageError,
+          ),
+        )
       );
+      // );
     }
   }
 
@@ -295,12 +319,14 @@ class ModalPhotoImagePanel extends StatelessWidget {
   }
 
   Widget _buildCloseWidget(BuildContext context) =>
-    closeWidget ?? Semantics(label: closeLabel ?? "Close Button", hint: closeHint, button: true, focusable: true, focused: true, child:
+    closeWidget ?? Semantics(label: closeLabel ?? "Close", hint: closeHint, button: true, container: true, child:
       // Do not use InkWell inside PinchZoom, this raises "No Material widget found" exception on attempts to zoom.
       GestureDetector(onTap: () => _onClose(context), child:
         Container(color: Colors.transparent, padding: const EdgeInsets.symmetric(horizontal: 16), child:
-          Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
-        ),
+          ExcludeSemantics(child:
+            Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
+          ),
+        )
       )
     );
 
