@@ -3,7 +3,7 @@ import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class RibbonButton extends StatefulWidget {
+class RibbonButton extends StatelessWidget {
   final String? title;
   final String? description;
   final void Function()? onTap;
@@ -123,8 +123,9 @@ class RibbonButton extends StatefulWidget {
 
   @protected Color? get defaultProgressColor => Styles().colors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
-  @protected double get defaultStrokeWidth => 2.0;
-  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;
+  @protected double get defaultProgressStrokeWidth => 2.0;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultProgressStrokeWidth;
+  @protected double get defaultProgressSizeRatio => 3.0;
 
   @protected bool get progressHidesLeftIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerLeft);
   @protected bool get progressHidesRightIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerRight);
@@ -132,60 +133,36 @@ class RibbonButton extends StatefulWidget {
   @protected bool? get semanticsToggled => null;
   @protected bool? get semanticsEnabled => null;
 
-  @override
-  _RibbonButtonState createState() => _RibbonButtonState();
-
-  @protected
-  void onTapWidget(BuildContext context) {
-    if (onTap != null) {
-      onTap!();
-    }
-  }
-}
-
-class _RibbonButtonState extends State<RibbonButton> {
-
-  final GlobalKey _contentKey = GlobalKey();
-  Size? _contentSize;
-
-  double get _progressSize => widget.progressSize ?? ((_contentSize?.height ?? 0) / 2.5);
 
   @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _evalContentSize();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return (widget.progress == true)
-      ? Stack(children: [ _contentWidget, _progressWidget, ],)
-      : _contentWidget;
-  }
+  Widget build(BuildContext context) => (progress == true) ?
+    Stack(children: [
+      _contentWidget,
+      Positioned.fill(child: _progressWidget),
+    ],) : _contentWidget;
 
   Widget get _contentWidget {
-    Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
-    Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
-    Widget textContentWidget = widget.hasDescription ?
+    Widget? leftIconWidget = !progressHidesLeftIcon ? (leftIcon ?? leftIconImage) : null;
+    Widget? rightIconWidget = !progressHidesRightIcon ? (rightIcon ?? rightIconImage) : null;
+
+    Widget textContentWidget = hasDescription ?
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        widget.displayTextWidget,
-        widget.displayDescriptionWidget,
-      ],) : widget.displayTextWidget;
-    return Semantics(label: widget.semanticsLabel ?? widget.title, hint: widget.semanticsHint, value : widget.semanticsValue, button: true, toggled: widget.semanticsToggled, enabled: widget.semanticsEnabled, excludeSemantics: true, child:
-      GestureDetector(onTap: () => widget.onTapWidget(context), child:
+        displayTextWidget,
+        displayDescriptionWidget,
+      ],) : displayTextWidget;
+
+    return Semantics(label: semanticsLabel ?? title, hint: semanticsHint, value : semanticsValue, button: true, toggled: semanticsToggled, enabled: semanticsEnabled, excludeSemantics: true, child:
+      GestureDetector(onTap: onTap, child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
-            Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
-              Padding(padding: widget.displayPadding, child:
+            Container(decoration: BoxDecoration(color: displayBackgroundColor, border: border, borderRadius: borderRadius, boxShadow: borderShadow), child:
+              Padding(padding: displayPadding, child:
                 Row(children: <Widget>[
-                  (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
+                  (leftIconWidget != null) ? Padding(padding: leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
                     textContentWidget
                   ),
-                  (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
+                  (rightIconWidget != null) ? Padding(padding: rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
               ),
             )
@@ -195,30 +172,21 @@ class _RibbonButtonState extends State<RibbonButton> {
     );
   }
 
-  Widget get _progressWidget {
-    return (_contentSize != null) ? SizedBox(width: _contentSize!.width, height: _contentSize!.height, child:
-      Padding(padding: widget.progressPadding, child:
-        Align(alignment: widget.progressAlignment, child:
-          SizedBox(height: _progressSize, width: _progressSize, child:
-            CircularProgressIndicator(strokeWidth: widget.displayProgressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(widget.displayProgressColor), )
-          ),
+  Widget get _progressWidget => LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
+    double progressSize = this.progressSize ?? (constraints.maxHeight / defaultProgressSizeRatio);
+    return Padding(padding: progressPadding, child:
+      Align(alignment: progressAlignment, child:
+        SizedBox(height: progressSize, width: progressSize, child:
+          CircularProgressIndicator(strokeWidth: displayProgressStrokeWidth, color: displayProgressColor, )
         ),
       ),
-    ) : Container();
-  }
+    );
+  });
 
-  void _evalContentSize() {
-    try {
-      final RenderObject? renderBox = _contentKey.currentContext?.findRenderObject();
-      if ((renderBox is RenderBox) && renderBox.hasSize) {
-        if (mounted) {
-          setState(() {
-            _contentSize = renderBox.size;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+  @protected
+  void onTapWidget(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
     }
   }
 }
