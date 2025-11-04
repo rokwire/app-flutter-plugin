@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).
 - Added Read More semantic label in ExpandableText [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Add AccessibleImageHolder to ModalPhotoImagePanel [#5439](https://github.com/rokwire/illinois-app/issues/5439).
 ### Fixed
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
 
