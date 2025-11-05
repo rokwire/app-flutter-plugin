@@ -61,6 +61,7 @@ class ExpandableText extends StatefulWidget {
   Color? get _splitterColor => splitterColor ?? Styles().colors.fillColorSecondary;
   
   String get readMoreText => 'Read more';
+  String? get readMoreLabel => null;
   String? get readMoreHint => null;
   TextStyle get _readMoreStyle => readMoreStyle ?? TextStyle(fontFamily: Styles().fontFamilies.bold, fontSize: 16, color: Styles().colors.fillColorPrimary);
 
@@ -114,7 +115,7 @@ class _ExpandableTextState extends State<ExpandableText> {
             readMoreList.add(Padding(padding: widget.readMoreIconPadding, child: readMoreIcon));
           }
 
-          contentList.add(Semantics(button: true, label: widget.readMoreText, hint: widget.readMoreHint, child:
+          contentList.add(Semantics(button: true, label: widget.readMoreLabel ?? widget.readMoreText, hint: widget.readMoreHint, child:
             InkWell(onTap: _onTapLink, child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Container(color: widget._splitterColor, height: widget.splitterHeight, margin: widget.splitterMargin,),
