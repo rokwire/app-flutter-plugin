@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Added
 - Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).
+- Added Read More semantic label in ExpandableText [#4874](https://github.com/rokwire/illinois-app/issues/4874).
 - Add AccessibleImageHolder to ModalPhotoImagePanel [#5439](https://github.com/rokwire/illinois-app/issues/5439).
+- Added additional semantics properties to RibbonButton, some cleanup applied as well [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+### Changed
+- Make RibbonButton StatelessWidget, as it should be.
 ### Fixed
 - WEB: Set web page language [#5183](https://github.com/rokwire/illinois-app/issues/5183).
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
