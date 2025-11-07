@@ -365,8 +365,8 @@ class Inbox with Service implements NotificationsListener {
     return false;
   }
 
-  Future<bool> applySettingNotificationsEnabled(bool? value) async{
-    if (_userInfo != null && value!=null){
+  Future<bool> applySettingNotificationsDisabled(bool? value) async {
+    if (_userInfo != null && value != null) {
       userInfo!.notificationsDisabled = value;
       return _putUserInfo(InboxUserInfo(userId: _userInfo!.userId, notificationsDisabled: value));
     }
