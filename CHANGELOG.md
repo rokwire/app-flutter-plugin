@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use CCT for Android OIDC login [#404](https://github.com/rokwire/app-flutter-plugin/issues/404)
 - Improve services init on app startup [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
 - Improve services failure processing [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
+- Update Naming for Notifications Disabled Flag [#654](https://github.com/rokwire/app-flutter-plugin/issues/654)
 
 ### Fixed
 - Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
