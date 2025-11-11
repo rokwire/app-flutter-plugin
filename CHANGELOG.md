@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added additional semantics properties to RibbonButton, some cleanup applied as well [#4874](https://github.com/rokwire/illinois-app/issues/4874).
 ### Changed
 - Make RibbonButton StatelessWidget, as it should be.
+- StringUtils.intValue extended to parse string source values [#5526](https://github.com/rokwire/illinois-app/issues/5526).
 ### Fixed
 - WEB: Set web page language [#5183](https://github.com/rokwire/illinois-app/issues/5183).
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).

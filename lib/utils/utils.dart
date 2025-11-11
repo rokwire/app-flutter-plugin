@@ -943,22 +943,19 @@ class JsonUtils {
     compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
-    if (value is String) {
-      return value;
-    }
-    else if (value != null) {
-      try {
-        return value.toString();
-      }
-      catch(e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
+    return (value is String) ? value : value?.toString();
   }
 
   static int? intValue(dynamic value) {
-    return (value is int) ? value : null;
+    if (value is int) {
+      return value;
+    }
+    else if (value is String) {
+      return int.tryParse(value);
+    }
+    else {
+      return null;
+    }
   }
 
   static bool? boolValue(dynamic value) {
