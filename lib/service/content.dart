@@ -960,7 +960,7 @@ class Content with Service, NotificationsListener implements ContentItemCategory
     Map<String, String>? headers = publicRead ? {
       'x-amz-acl': 'public-read',
     } : null;
-    Future<Response?> response = Network().put(ref.url, body: bytes, headers: headers);
+    Future<Response?> response = Network().put(ref.url, body: bytes, headers: headers, auth: (kIsWeb ? Auth2Csrf() : null));
     response.then((response) {
       postUpload?.call(ref, response);
     });
