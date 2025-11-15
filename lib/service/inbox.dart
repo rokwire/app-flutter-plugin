@@ -26,6 +26,8 @@ class Inbox with Service implements NotificationsListener {
   InboxUserInfo? _userInfo;
   int? _unreadMessagesCount;
 
+  Future<void>? _loadUserInfoFuture;
+
   // Singletone Factory
 
   static Inbox? _instance;
@@ -65,7 +67,7 @@ class Inbox with Service implements NotificationsListener {
     _unreadMessagesCount = Storage().inboxUnreadMessagesCount;
     _isServiceInitialized = true;
     processDeviceToken();
-    _loadUserInfo();
+    getCachedUserInfoFuture(reload: true);
     _loadUnreadMessagesCount();
     await super.initService();
   }
@@ -84,7 +86,7 @@ class Inbox with Service implements NotificationsListener {
     }
     else if (name == Auth2.notifyLoginChanged) {
       processDeviceToken();
-      _loadUserInfo();
+      getCachedUserInfoFuture(reload: true);
       _loadUnreadMessagesCount();
     }
     else if (name == AppLifecycle.notifyStateChanged) {
@@ -103,7 +105,7 @@ class Inbox with Service implements NotificationsListener {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
           processDeviceToken();
-          _loadUserInfo();
+          getCachedUserInfoFuture(reload: true);
           _loadUnreadMessagesCount();
         }
       }
@@ -348,7 +350,17 @@ class Inbox with Service implements NotificationsListener {
     } catch (e) {
       Log.e('Failed to load inbox user info');
       Log.e(e.toString());
+      _loadUserInfoFuture = null;
     }
+  }
+
+  Future<InboxUserInfo?> getCachedUserInfoFuture({bool reload = false}) async {
+    if (_loadUserInfoFuture == null || reload) {
+      _loadUserInfoFuture = _loadUserInfo();
+    }
+    await _loadUserInfoFuture;
+
+    return userInfo;
   }
 
   Future<bool> _putUserInfo(InboxUserInfo? userInfo) async {
