@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WEB: Set web page language [#5183](https://github.com/rokwire/illinois-app/issues/5183).
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
 - WEB: Set csrf header when uploading files [#5511](https://github.com/rokwire/illinois-app/issues/5511).
+- Fixed contrast accessibility issue for close button in ModalPhotoImagePanel  [#5429](https://github.com/rokwire/illinois-app/issues/5429).
 
 ## [1.12.0] - 2025-10-22
 ### Fixed
