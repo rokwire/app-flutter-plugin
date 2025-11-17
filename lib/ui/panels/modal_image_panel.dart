@@ -302,13 +302,20 @@ class ModalPhotoImagePanel extends StatelessWidget {
   }
 
   Widget _buildCloseWidget(BuildContext context) =>
-    closeWidget ?? Semantics(label: closeLabel ?? "Close", hint: closeHint, button: true, container: true, child:
-      // Do not use InkWell inside PinchZoom, this raises "No Material widget found" exception on attempts to zoom.
-      GestureDetector(onTap: () => _onClose(context), child:
-        Container(color: Colors.transparent, padding: const EdgeInsets.symmetric(horizontal: 16), child:
-          ExcludeSemantics(child:
-            Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
-          ),
+    Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        shape: BoxShape.circle,
+      ), child:
+        closeWidget ?? Semantics(label: closeLabel ?? "Close", hint: closeHint, button: true, container: true, child:
+        // Do not use InkWell inside PinchZoom, this raises "No Material widget found" exception on attempts to zoom.
+        GestureDetector(onTap: () => _onClose(context), child:
+          Container(color: Colors.transparent, padding: const EdgeInsets.symmetric(horizontal: 12), child:
+            ExcludeSemantics(child:
+              Text('\u00D7', style: TextStyle(color: Styles().colors.white, fontFamily: Styles().fontFamilies.medium, fontSize: 50),),
+            ),
+          )
         )
       )
     );
