@@ -322,7 +322,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
     Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
+        color: Colors.black.withValues(alpha: 0.7),
         shape: BoxShape.circle,
       ), child:
         closeWidget ?? Semantics(label: closeLabel ?? "Close", hint: closeHint, button: true, container: true, child:
