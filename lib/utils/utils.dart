@@ -30,6 +30,7 @@ import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:web/web.dart' as web;
 
 class StringUtils {
 
@@ -1796,6 +1797,22 @@ class WebUtils {
       }
     }
     return "";
+  }
+
+  static bool isIosWeb() {
+    if (kIsWeb) {
+      final userAgent = web.window.navigator.userAgent.toLowerCase();
+      return (userAgent.contains('iphone') || userAgent.contains('ipad') || userAgent.contains('ipod'));
+    }
+    return false;
+  }
+
+  static web.Window? createIosWebWindow() {
+    web.Window? webWindow;
+    if (isIosWeb()) {
+      webWindow = web.window.open("", "_blank");
+    }
+    return webWindow;
   }
 }
 
