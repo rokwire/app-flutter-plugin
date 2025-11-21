@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Read More semantic label in ExpandableText [#4874](https://github.com/rokwire/illinois-app/issues/4874).
 - Add AccessibleImageHolder to ModalPhotoImagePanel [#5439](https://github.com/rokwire/illinois-app/issues/5439).
 - Added additional semantics properties to RibbonButton, some cleanup applied as well [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Improved AccessibleImageHolder and ModalImageHolder [#5548](https://github.com/rokwire/illinois-app/issues/5548).
 ### Changed
 - Make RibbonButton StatelessWidget, as it should be.
 - StringUtils.intValue extended to parse string source values [#5526](https://github.com/rokwire/illinois-app/issues/5526).
