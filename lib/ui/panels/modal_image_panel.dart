@@ -261,7 +261,7 @@ class ModalPhotoImagePanel extends StatelessWidget {
       Semantics(container: true, child:
         AccessibleImageHolder(
           metaData: imageMetadata,
-          imageUrl: AccessibleImageHolder.getUrlFromProvider(_imageProvider),
+          imageUrl: AccessibleImageHolder.getUrlFromImageProvider(_imageProvider),
           // onMetaDataLoaded: (data) {
           //   if(data != null && data != imageMetadata){
           //     if(_metaDataHolderKey.currentContext?.mounted == true){

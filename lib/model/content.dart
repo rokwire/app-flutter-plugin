@@ -4,7 +4,7 @@ class ImageMetaData {
   final String? altText;
   final bool? decorative;
 
-  ImageMetaData( {this.altText, this.decorative});
+  const ImageMetaData( {this.altText, this.decorative});
 
   static ImageMetaData? fromJson(Map<String, dynamic>? json) => json != null ? ImageMetaData(
     altText: JsonUtils.stringValue(json["alt_text"]),
