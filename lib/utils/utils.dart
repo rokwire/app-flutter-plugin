@@ -713,6 +713,11 @@ class UrlUtils {
     return url;
   }
 
+  static String? stripQueryParameters(String? url){
+    int queryIndex = url?.indexOf('?') ?? -1;
+    return queryIndex >= 0 ? url?.substring(0, queryIndex) : url;
+  }
+
   static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
     Uri? uri = Uri.tryParse(url);
     return UriExt.buildWithQueryParameters(uri, queryParameters).toString();
