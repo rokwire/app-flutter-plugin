@@ -36,7 +36,7 @@ class TriangleHeaderImage extends StatelessWidget {
     } else if (flexImageKey != null) {
       image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
     }
-    return (image != null) ? Positioned.fill(child: ModalImageHolder(child: AccessibleImageHolder(child: image))) : Container();
+    return (image != null) ? Positioned.fill(child: AccessibleImageHolder(child: ModalImageHolder(child: image))) : Container();
   }
 
   @protected
