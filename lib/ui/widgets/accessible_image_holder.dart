@@ -17,7 +17,7 @@ class AccessibleImageHolder extends StatefulWidget implements ImageHolder{
 
   @override
   Image? get holderImage => child is Image ? child as Image :
-                                     child is ImageHolder ? (child as ImageHolder).holderImage : null;
+                                               child is ImageHolder ? (child as ImageHolder).holderImage : null;
 
   @override
   String? get holderUrl => imageUrl ??
@@ -41,7 +41,7 @@ class _AccessibleImageHolderState extends State<AccessibleImageHolder> with Imag
 
   @override
   String? get metaDataKey => 
-    widget.imageUrl   ??
+    widget.holderUrl   ??
     widget.holderKey ??
     AccessibleImageHolder.getUrlFromImageProvider(widget.holderImage?.image);
 
