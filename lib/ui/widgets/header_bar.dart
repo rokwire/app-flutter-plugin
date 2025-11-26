@@ -215,7 +215,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   // Flexible Space
   @protected
   Widget? buildFlexibleSpace(BuildContext context) =>
-    Semantics(container: true, excludeSemantics: true, child:
+    Semantics(container: true, child:
       FlexibleSpaceBar(background:
         TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl,
           flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
