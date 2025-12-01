@@ -50,6 +50,7 @@ class Events2 with Service, NotificationsListener {
     NotificationService().subscribe(this,[
       DeepLink.notifyUiUri,
     ]);
+    super.createService();
   }
 
   @override
@@ -632,7 +633,7 @@ class Events2 with Service, NotificationsListener {
 
   Map<String, String?> get _jsonHeaders => {"Accept": "application/json", "Content-type": "application/json"};
 
-  // DeepLinks
+  // Deep Links
 
   static String get eventDetailRawUrl => '${DeepLink().appUrl}/event2_detail'; //TBD: => event_detail
   static String eventDetailUrl(String eventId) => UrlUtils.buildWithQueryParameters(eventDetailRawUrl, <String, String>{
@@ -641,7 +642,7 @@ class Events2 with Service, NotificationsListener {
 
   static String get eventsQueryRawUrl => '${DeepLink().appUrl}/events2_query'; //TBD: => events_query
   static String eventsQueryUrl(Map<String, String> params) => UrlUtils.buildWithQueryParameters(eventsQueryRawUrl,
-      params
+    params
   );
 
   static String get eventSelfCheckInRawUrl => '${DeepLink().appUrl}/event2_self_checkin'; //TBD: => event_self_checkin

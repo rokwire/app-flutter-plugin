@@ -713,6 +713,11 @@ class UrlUtils {
     return url;
   }
 
+  static String? stripQueryParameters(String? url){
+    int queryIndex = url?.indexOf('?') ?? -1;
+    return queryIndex >= 0 ? url?.substring(0, queryIndex) : url;
+  }
+
   static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
     Uri? uri = Uri.tryParse(url);
     return UriExt.buildWithQueryParameters(uri, queryParameters).toString();
@@ -938,22 +943,19 @@ class JsonUtils {
     compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
-    if (value is String) {
-      return value;
-    }
-    else if (value != null) {
-      try {
-        return value.toString();
-      }
-      catch(e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
+    return (value is String) ? value : value?.toString();
   }
 
   static int? intValue(dynamic value) {
-    return (value is int) ? value : null;
+    if (value is int) {
+      return value;
+    }
+    else if (value is String) {
+      return int.tryParse(value);
+    }
+    else {
+      return null;
+    }
   }
 
   static bool? boolValue(dynamic value) {

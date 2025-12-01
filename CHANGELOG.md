@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.12.1] - 2025-12-01
+### Added
+- Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).
+- Added Read More semantic label in ExpandableText [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Add AccessibleImageHolder to ModalPhotoImagePanel [#5439](https://github.com/rokwire/illinois-app/issues/5439).
+- Added additional semantics properties to RibbonButton, some cleanup applied as well [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Improved AccessibleImageHolder and ModalImageHolder [#5548](https://github.com/rokwire/illinois-app/issues/5548).
+- Added UrlUtils.stripQueryParameters
+### Changed
+- Make RibbonButton StatelessWidget, as it should be.
+- StringUtils.intValue extended to parse string source values [#5526](https://github.com/rokwire/illinois-app/issues/5526).
+### Fixed
+- Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
+- Fixed contrast accessibility issue for close button in ModalPhotoImagePanel  [#5429](https://github.com/rokwire/illinois-app/issues/5429).
+
 ## [1.12.0] - 2025-10-22
 ### Fixed
 - Android: Fix various compilation warnings [#634](https://github.com/rokwire/app-flutter-plugin/issues/634).
