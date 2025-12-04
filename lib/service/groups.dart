@@ -312,6 +312,24 @@ class Groups with Service, NotificationsListener {
   // Groups APIs
 
 
+  Future<List<Group>?> loadGroupsV2(GroupsQuery query) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v2/groups';
+      String? post = JsonUtils.encode(query.toQueryJson());
+
+      try {
+        await _ensureLogin();
+        Response? response = await Network().get(url, body: post, auth: Auth2());
+        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
+        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+
+    return null;
+  }
+
   ///
   /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
   ///
@@ -1413,6 +1431,149 @@ class GroupResult<T>{
   static GroupResult<T> success<T>({T? data}) => GroupResult(data: data);
 
   bool get successful => this.error == null;
+}
+
+class GroupsFilter {
+  final Map<String, dynamic>? attributes;
+
+  final bool? public;
+  final bool? private;
+  final bool? eventAdimn;
+  final bool? univerityManaged;
+
+  final bool? admin;
+  final bool? member;
+  final bool? candidate; // pending or denied
+
+  GroupsFilter({
+    this.attributes,
+    this.public, this.private, this.eventAdimn, this.univerityManaged,
+    this.admin, this.member, this.candidate,
+  });
+
+  factory GroupsFilter.fromUriParams(Map<String, String> uriParams) => GroupsFilter(
+    attributes: JsonUtils.decodeMap(uriParams['attributes']),
+
+    public: JsonUtils.boolValue(uriParams['public']),
+    private: JsonUtils.boolValue(uriParams['private']),
+    eventAdimn: JsonUtils.boolValue(uriParams['eventAdimn']),
+    univerityManaged: JsonUtils.boolValue(uriParams['univerityManaged']),
+
+    admin: JsonUtils.boolValue(uriParams['admin']),
+    member: JsonUtils.boolValue(uriParams['member']),
+    candidate: JsonUtils.boolValue(uriParams['candidate']),
+  );
+
+  Map<String, String> toUriParams() {
+    Map<String, String> result = <String, String>{};
+    MapUtils.add(result, 'attributes', JsonUtils.encode(attributes));
+
+    MapUtils.add(result, 'public', JsonUtils.encode(public));
+    MapUtils.add(result, 'private', JsonUtils.encode(private));
+    MapUtils.add(result, 'eventAdimn', JsonUtils.encode(eventAdimn));
+    MapUtils.add(result, 'univerityManaged', JsonUtils.encode(univerityManaged));
+
+    MapUtils.add(result, 'admin', JsonUtils.encode(admin));
+    MapUtils.add(result, 'member', JsonUtils.encode(member));
+    MapUtils.add(result, 'candidate', JsonUtils.encode(candidate));
+    return result;
+  }
+
+  static GroupsFilter? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsFilter(
+    attributes: JsonUtils.mapValue(json['attributes']),
+
+    public: JsonUtils.boolValue(json['public']),
+    private: JsonUtils.boolValue(json['private']),
+    eventAdimn: JsonUtils.boolValue(json['eventAdimn']),
+    univerityManaged: JsonUtils.boolValue(json['univerityManaged']),
+
+    admin: JsonUtils.boolValue(json['admin']),
+    member: JsonUtils.boolValue(json['member']),
+    candidate: JsonUtils.boolValue(json['candidate']),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'attributes': attributes,
+
+    'public': public,
+    'private': private,
+    'eventAdimn': eventAdimn,
+    'univerityManaged': univerityManaged,
+
+    'admin': admin,
+    'member': member,
+    'candidate': candidate,
+  };
+
+  Map<String, dynamic> toQueryJson() {
+    Map<String, dynamic> result = <String, dynamic>{};
+    MapUtils.add(result, 'attributes', attributes);
+
+    // TBD: public, private, eventAdimn, univerityManaged
+    // TBD: admin, member, applied
+    return result;
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupsFilter) &&
+    DeepCollectionEquality().equals(other.attributes, attributes) &&
+
+    (other.public == public) &&
+    (other.private == private) &&
+    (other.eventAdimn == eventAdimn) &&
+    (other.univerityManaged == univerityManaged) &&
+
+    (other.admin == admin) &&
+    (other.member == member) &&
+    (other.candidate == candidate);
+
+  @override
+  int get hashCode =>
+    DeepCollectionEquality().hash(attributes) ^
+
+    (public?.hashCode ?? 0) ^
+    (private?.hashCode ?? 0) ^
+    (eventAdimn?.hashCode ?? 0) ^
+    (univerityManaged?.hashCode ?? 0) ^
+
+    (admin?.hashCode ?? 0) ^
+    (member?.hashCode ?? 0) ^
+    (candidate?.hashCode ?? 0);
+
+  bool get isNotEmpty =>
+    (attributes?.isNotEmpty == true) ||
+    (public != null) || (private != null) || (eventAdimn != null) || (univerityManaged != null) ||
+    (admin != null) || (member != null) || (candidate != null);
+
+}
+
+class GroupsQuery {
+  final GroupsFilter? filter;
+  final String? searchText;
+  final Iterable<String>? ids;
+
+  final int? offset;
+  final int? limit;
+
+  GroupsQuery({
+    this.filter, this.searchText, this.ids,
+    this.offset, this.limit
+  });
+
+
+  Map<String, dynamic> toQueryJson({bool researchGroup = false}) => <String, dynamic>{
+    'research_group': researchGroup,
+    ...(filter?.toQueryJson() ?? {}),
+    if (ids != null)
+      'ids': List.from(ids!),
+    if (searchText != null)
+      'title': searchText,
+    if (offset != null)
+      'offset': offset,
+    if (limit != null)
+      'limit': limit,
+  };
 }
 
 extension _ResponseExt on Response {
