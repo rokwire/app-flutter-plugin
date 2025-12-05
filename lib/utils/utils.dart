@@ -340,14 +340,11 @@ class ListUtils {
     return list.contains(item);
   }
 
-  static void sort<T>(List<T> list, int Function(T a, T b)? compare) =>
-    list.sort(compare);
-
-  static void _sort<T>(_SortListParam<T> param) =>
-    param.list.sort(param.compare);
-
-  static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
-    compute(_sort, _SortListParam(list, compare));
+  static List<T> sort<T>(List<T> list, [int Function(T a, T b)? compare]) {
+    List<T> sortedList = List<T>.from(list);
+    sortedList.sort(compare);
+    return sortedList;
+  }
 
   static List<String>? stripEmptyStrings(List<String>? list) {
     if (list != null) {
@@ -374,12 +371,6 @@ class ListUtils {
     }
     return result;
   }
-}
-
-class _SortListParam<T> {
-  final List<T> list;
-  final int Function(T a, T b)? compare;
-  _SortListParam(this.list, this.compare);
 }
 
 class SetUtils {
