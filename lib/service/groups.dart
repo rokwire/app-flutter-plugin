@@ -1433,76 +1433,34 @@ class GroupResult<T>{
   bool get successful => this.error == null;
 }
 
+enum GroupsFilterType { public, private, eventAdmin, managed, admin, member, candidate }
+
 class GroupsFilter {
   final Map<String, dynamic>? attributes;
+  final Set<GroupsFilterType>? types;
 
-  final bool? public;
-  final bool? private;
-  final bool? eventAdmin;
-  final bool? managed;
-
-  final bool? admin;
-  final bool? member;
-  final bool? candidate; // pending or denied
-
-  GroupsFilter({
-    this.attributes,
-    this.public, this.private, this.eventAdmin, this.managed,
-    this.admin, this.member, this.candidate,
-  });
+  GroupsFilter({this.attributes, this.types,});
 
   factory GroupsFilter.fromUriParams(Map<String, String> uriParams) => GroupsFilter(
     attributes: JsonUtils.decodeMap(uriParams['attributes']),
-
-    public: JsonUtils.boolValue(uriParams['public']),
-    private: JsonUtils.boolValue(uriParams['private']),
-    eventAdmin: JsonUtils.boolValue(uriParams['eventAdmin']),
-    managed: JsonUtils.boolValue(uriParams['managed']),
-
-    admin: JsonUtils.boolValue(uriParams['admin']),
-    member: JsonUtils.boolValue(uriParams['member']),
-    candidate: JsonUtils.boolValue(uriParams['candidate']),
+    types: GroupsFilterTypeImpl.setFromUriParam(uriParams['types']),
   );
 
   Map<String, String> toUriParams() {
     Map<String, String> result = <String, String>{};
     MapUtils.add(result, 'attributes', JsonUtils.encode(attributes));
-
-    MapUtils.add(result, 'public', JsonUtils.encode(public));
-    MapUtils.add(result, 'private', JsonUtils.encode(private));
-    MapUtils.add(result, 'eventAdmin', JsonUtils.encode(eventAdmin));
-    MapUtils.add(result, 'managed', JsonUtils.encode(managed));
-
-    MapUtils.add(result, 'admin', JsonUtils.encode(admin));
-    MapUtils.add(result, 'member', JsonUtils.encode(member));
-    MapUtils.add(result, 'candidate', JsonUtils.encode(candidate));
+    MapUtils.add(result, 'types', GroupsFilterTypeImpl.setToUriParam(types));
     return result;
   }
 
   static GroupsFilter? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsFilter(
     attributes: JsonUtils.mapValue(json['attributes']),
-
-    public: JsonUtils.boolValue(json['public']),
-    private: JsonUtils.boolValue(json['private']),
-    eventAdmin: JsonUtils.boolValue(json['eventAdmin']),
-    managed: JsonUtils.boolValue(json['managed']),
-
-    admin: JsonUtils.boolValue(json['admin']),
-    member: JsonUtils.boolValue(json['member']),
-    candidate: JsonUtils.boolValue(json['candidate']),
+    types: GroupsFilterTypeImpl.setFromJsonList(JsonUtils.listStringsValue(json['types'])),
   ) : null;
 
   Map<String, dynamic> toJson() => {
     'attributes': attributes,
-
-    'public': public,
-    'private': private,
-    'eventAdmin': eventAdmin,
-    'managed': managed,
-
-    'admin': admin,
-    'member': member,
-    'candidate': candidate,
+    'types': GroupsFilterTypeImpl.setToJsonList(types),
   };
 
   Map<String, dynamic> toQueryJson() {
@@ -1518,33 +1476,23 @@ class GroupsFilter {
   bool operator ==(other) =>
     (other is GroupsFilter) &&
     DeepCollectionEquality().equals(other.attributes, attributes) &&
-
-    (other.public == public) &&
-    (other.private == private) &&
-    (other.eventAdmin == eventAdmin) &&
-    (other.managed == managed) &&
-
-    (other.admin == admin) &&
-    (other.member == member) &&
-    (other.candidate == candidate);
+    DeepCollectionEquality().equals(other.types, types);
 
   @override
   int get hashCode =>
     DeepCollectionEquality().hash(attributes) ^
+    DeepCollectionEquality().hash(types);
 
-    (public?.hashCode ?? 0) ^
-    (private?.hashCode ?? 0) ^
-    (eventAdmin?.hashCode ?? 0) ^
-    (managed?.hashCode ?? 0) ^
+  bool get public => (types?.contains(GroupsFilterType.public) == true);
+  bool get private => (types?.contains(GroupsFilterType.private) == true);
+  bool get eventAdmin => (types?.contains(GroupsFilterType.eventAdmin) == true);
+  bool get managed => (types?.contains(GroupsFilterType.managed) == true);
 
-    (admin?.hashCode ?? 0) ^
-    (member?.hashCode ?? 0) ^
-    (candidate?.hashCode ?? 0);
+  bool get admin => (types?.contains(GroupsFilterType.admin) == true);
+  bool get member => (types?.contains(GroupsFilterType.member) == true);
+  bool get candidate => (types?.contains(GroupsFilterType.candidate) == true); // pending or denied
 
-  bool get isNotEmpty =>
-    (attributes?.isNotEmpty == true) ||
-    (public != null) || (private != null) || (eventAdmin != null) || (managed != null) ||
-    (admin != null) || (member != null) || (candidate != null);
+  bool get isNotEmpty => (attributes?.isNotEmpty == true) || (types?.isNotEmpty == true);
 
 }
 
@@ -1574,6 +1522,65 @@ class GroupsQuery {
     if (limit != null)
       'limit': limit,
   };
+}
+
+extension GroupsFilterTypeImpl on GroupsFilterType {
+
+  static GroupsFilterType? fromCode(String? code) {
+    switch (code) {
+      case 'public': return GroupsFilterType.public;
+      case 'private': return GroupsFilterType.private;
+      case 'eventAdmin': return GroupsFilterType.eventAdmin;
+      case 'managed': return GroupsFilterType.managed;
+      case 'admin': return GroupsFilterType.admin;
+      case 'member': return GroupsFilterType.member;
+      case 'candidate': return GroupsFilterType.candidate;
+      default: return null;
+    }
+  }
+
+  String toCode() {
+    switch (this) {
+      case GroupsFilterType.public: return 'public';
+      case GroupsFilterType.private: return 'private';
+      case GroupsFilterType.eventAdmin: return 'eventAdmin';
+      case GroupsFilterType.managed: return 'managed';
+      case GroupsFilterType.admin: return 'admin';
+      case GroupsFilterType.member: return 'member';
+      case GroupsFilterType.candidate: return 'candidate';
+    }
+  }
+
+  static List<GroupsFilterType> listFromCodes(Iterable<String> codes) {
+    List<GroupsFilterType> types = <GroupsFilterType>[];
+    for (String code in codes) {
+      GroupsFilterType? type = fromCode(code);
+      if (type != null) {
+        types.add(type);
+      }
+    }
+    return types;
+  }
+
+  static List<GroupsFilterType>? listFromCodesEx(Iterable<String>? codes) =>
+    (codes != null) ? listFromCodes(codes) : null;
+
+  static Iterable<String> listToCodes(Iterable<GroupsFilterType> types) =>
+      types.map((GroupsFilterType type) => type.toCode());
+
+  static const String uriParamSeparator = ',';
+
+  static Set<GroupsFilterType>? setFromUriParam(String? uriParam) => (uriParam != null) ?
+    Set<GroupsFilterType>.from(listFromCodes(uriParam.split(uriParamSeparator))) : null;
+
+  static String? setToUriParam(Set<GroupsFilterType>? types) => (types != null) ?
+    listToCodes(types).join(uriParamSeparator) : null;
+
+  static Set<GroupsFilterType>? setFromJsonList(List<String>? jsonList) => (jsonList != null) ?
+    Set<GroupsFilterType>.from(listFromCodes(jsonList)) : null;
+
+  static List<String>? setToJsonList(Set<GroupsFilterType>? types) => (types != null) ?
+    List.from(listToCodes(types)) : null;
 }
 
 extension _ResponseExt on Response {
