@@ -1438,8 +1438,8 @@ class GroupsFilter {
 
   final bool? public;
   final bool? private;
-  final bool? eventAdimn;
-  final bool? univerityManaged;
+  final bool? eventAdmin;
+  final bool? managed;
 
   final bool? admin;
   final bool? member;
@@ -1447,7 +1447,7 @@ class GroupsFilter {
 
   GroupsFilter({
     this.attributes,
-    this.public, this.private, this.eventAdimn, this.univerityManaged,
+    this.public, this.private, this.eventAdmin, this.managed,
     this.admin, this.member, this.candidate,
   });
 
@@ -1456,8 +1456,8 @@ class GroupsFilter {
 
     public: JsonUtils.boolValue(uriParams['public']),
     private: JsonUtils.boolValue(uriParams['private']),
-    eventAdimn: JsonUtils.boolValue(uriParams['eventAdimn']),
-    univerityManaged: JsonUtils.boolValue(uriParams['univerityManaged']),
+    eventAdmin: JsonUtils.boolValue(uriParams['eventAdmin']),
+    managed: JsonUtils.boolValue(uriParams['managed']),
 
     admin: JsonUtils.boolValue(uriParams['admin']),
     member: JsonUtils.boolValue(uriParams['member']),
@@ -1470,8 +1470,8 @@ class GroupsFilter {
 
     MapUtils.add(result, 'public', JsonUtils.encode(public));
     MapUtils.add(result, 'private', JsonUtils.encode(private));
-    MapUtils.add(result, 'eventAdimn', JsonUtils.encode(eventAdimn));
-    MapUtils.add(result, 'univerityManaged', JsonUtils.encode(univerityManaged));
+    MapUtils.add(result, 'eventAdmin', JsonUtils.encode(eventAdmin));
+    MapUtils.add(result, 'managed', JsonUtils.encode(managed));
 
     MapUtils.add(result, 'admin', JsonUtils.encode(admin));
     MapUtils.add(result, 'member', JsonUtils.encode(member));
@@ -1484,8 +1484,8 @@ class GroupsFilter {
 
     public: JsonUtils.boolValue(json['public']),
     private: JsonUtils.boolValue(json['private']),
-    eventAdimn: JsonUtils.boolValue(json['eventAdimn']),
-    univerityManaged: JsonUtils.boolValue(json['univerityManaged']),
+    eventAdmin: JsonUtils.boolValue(json['eventAdmin']),
+    managed: JsonUtils.boolValue(json['managed']),
 
     admin: JsonUtils.boolValue(json['admin']),
     member: JsonUtils.boolValue(json['member']),
@@ -1497,8 +1497,8 @@ class GroupsFilter {
 
     'public': public,
     'private': private,
-    'eventAdimn': eventAdimn,
-    'univerityManaged': univerityManaged,
+    'eventAdmin': eventAdmin,
+    'managed': managed,
 
     'admin': admin,
     'member': member,
@@ -1509,7 +1509,7 @@ class GroupsFilter {
     Map<String, dynamic> result = <String, dynamic>{};
     MapUtils.add(result, 'attributes', attributes);
 
-    // TBD: public, private, eventAdimn, univerityManaged
+    // TBD: public, private, eventAdmin, managed
     // TBD: admin, member, applied
     return result;
   }
@@ -1521,8 +1521,8 @@ class GroupsFilter {
 
     (other.public == public) &&
     (other.private == private) &&
-    (other.eventAdimn == eventAdimn) &&
-    (other.univerityManaged == univerityManaged) &&
+    (other.eventAdmin == eventAdmin) &&
+    (other.managed == managed) &&
 
     (other.admin == admin) &&
     (other.member == member) &&
@@ -1534,8 +1534,8 @@ class GroupsFilter {
 
     (public?.hashCode ?? 0) ^
     (private?.hashCode ?? 0) ^
-    (eventAdimn?.hashCode ?? 0) ^
-    (univerityManaged?.hashCode ?? 0) ^
+    (eventAdmin?.hashCode ?? 0) ^
+    (managed?.hashCode ?? 0) ^
 
     (admin?.hashCode ?? 0) ^
     (member?.hashCode ?? 0) ^
@@ -1543,7 +1543,7 @@ class GroupsFilter {
 
   bool get isNotEmpty =>
     (attributes?.isNotEmpty == true) ||
-    (public != null) || (private != null) || (eventAdimn != null) || (univerityManaged != null) ||
+    (public != null) || (private != null) || (eventAdmin != null) || (managed != null) ||
     (admin != null) || (member != null) || (candidate != null);
 
 }
