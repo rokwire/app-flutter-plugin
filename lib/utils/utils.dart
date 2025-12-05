@@ -1262,13 +1262,14 @@ class AppToast {
   static const Duration defaultDuration = const Duration(seconds: 3);
   static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
   static const Color defaultTextColor = Colors.white;
+  static const Color defaultWebTextColor = Colors.black;
   static const Color defaultBackgroundColor = const Color(0x99000000);
   static const String defaultWebBackgroundColor = '#ffffff';
 
   static void showMessage(String msg, {
     ToastGravity gravity = defaultGravity,
     Duration duration = defaultDuration,
-    Color textColor = defaultTextColor,
+    Color textColor = (kIsWeb ? defaultWebTextColor : defaultTextColor),
     Color backgroundColor = defaultBackgroundColor,
     String webBackgroundColor = defaultWebBackgroundColor,
   }) {
