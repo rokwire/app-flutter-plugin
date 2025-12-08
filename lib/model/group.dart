@@ -1339,6 +1339,17 @@ class GroupsFilter {
 
     // TBD: public, private, eventAdmin, managed
     // TBD: admin, member, applied
+
+    if (types?.contains(GroupsFilterType.public) == true) {
+      MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.public));
+    }
+    if (types?.contains(GroupsFilterType.private) == true) {
+      MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.private));
+    }
+    if (types?.contains(GroupsFilterType.managed) == true) {
+      MapUtils.add(result, 'administrative', true);
+    }
+
     return result;
   }
 
@@ -1451,4 +1462,34 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
 
   static List<String>? setToJsonList(Set<GroupsFilterType>? types) => (types != null) ?
     List.from(listToCodes(types)) : null;
+}
+
+class GroupsLoadResult {
+  final List<Group>? groups;
+  final int? totalCount;
+
+  GroupsLoadResult({this.groups, this.totalCount});
+
+  static GroupsLoadResult? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsLoadResult(
+    groups: Group.listFromJson(JsonUtils.listValue(json['result'])),
+    totalCount: JsonUtils.intValue(json['total_count']),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'result': Group.listToJson(groups),
+    'total_count': totalCount,
+  };
+
+  // Equality
+
+  @override
+  bool operator==(Object other) =>
+    (other is GroupsLoadResult) &&
+    (const DeepCollectionEquality().equals(groups, other.groups)) &&
+    (totalCount == other.totalCount);
+
+  @override
+  int get hashCode =>
+    (const DeepCollectionEquality().hash(groups)) ^
+    (totalCount?.hashCode ?? 0);
 }

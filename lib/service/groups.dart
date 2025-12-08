@@ -312,16 +312,29 @@ class Groups with Service, NotificationsListener {
   // Groups APIs
 
 
-  Future<List<Group>?> loadGroupsV2(GroupsQuery query) async {
+  Future<GroupsLoadResult?> loadGroupsV2(GroupsQuery query) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
-      String? post = JsonUtils.encode(query.toQueryJson());
+
+      Map<String, dynamic> queryJson = query.toQueryJson();
+      String? pagePost = JsonUtils.encode(queryJson);
+
+      queryJson.remove('offset');
+      queryJson.remove('limit');
+      String? totalPost = JsonUtils.encode(queryJson);
 
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
+        List<Response?> responses = await Future.wait(<Future<Response?>>[
+          Network().get(url, body: pagePost, auth: Auth2()),
+          Network().get(url, body: totalPost, auth: Auth2())
+        ]);
+        Response? pageResponse = (0 < responses.length) ? responses[0] : null;
+        Response? totalResponse = (1 < responses.length) ? responses[1] : null;
+        return GroupsLoadResult(
+          groups: (pageResponse?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(pageResponse?.body)) : null,
+          totalCount: (totalResponse?.statusCode == 200) ? JsonUtils.decodeList(totalResponse?.body)?.length : null,
+        );
       } catch (e) {
         debugPrint(e.toString());
       }
