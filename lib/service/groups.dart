@@ -71,6 +71,11 @@ class Groups with Service, NotificationsListener {
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
 
+  /*static const Map<String, String> _jsonHeaders = <String, String>{
+    "Accept": "application/json",
+    "Content-type": "application/json"
+  };*/
+
   Directory? _appDocDir;
 
   List<Group>? _userGroups;
@@ -340,6 +345,42 @@ class Groups with Service, NotificationsListener {
       }
     }
 
+    return null;
+  }
+
+  Future<Map<String, int?>?> loadGroupsV2Counts(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v2/groups';
+      Map<String, dynamic> baseFilterJson = baseFilter?.toQueryJson() ?? <String, dynamic>{};
+
+      List<Future<Response?>> requests = <Future<Response?>>[];
+      for (String key in countFilters.keys) {
+        GroupsFilter? countFilter = countFilters[key];
+        Map<String, dynamic> countFilterJson = countFilter?.toQueryJson() ?? <String, dynamic>{};
+        Map<String, dynamic> postFilterJson = Map<String, dynamic>.from(baseFilterJson)..addAll(countFilterJson);
+        String? post = JsonUtils.encode(postFilterJson);
+        requests.add(Network().get(url, body: post, auth: Auth2()));
+      }
+
+      List<Response?> responses = await Future.wait(requests);
+
+      int keyIndex = 0;
+      Map<String, int?> result = <String, int?>{};
+      for (String key in countFilters.keys) {
+        Response? keyResponse = (keyIndex < responses.length) ? responses[keyIndex] : null;
+        result[key] = (keyResponse?.statusCode == 200) ? JsonUtils.decodeList(keyResponse?.body)?.length : null;
+        keyIndex++;
+      }
+      return result;
+
+      /*String url = "${Config().groupsUrl}/v2/groups/stats";
+      String? body = JsonUtils.encode({
+        'base_filter': baseFilter?.toQueryJson(),
+        'sub_filters': countFilters?.map<String, Map<String, dynamic>?>((String key, GroupsFilter? filter) => MapEntry(key, filter?.toQueryJson())),
+      });
+      Response? response = await Network().post(url, body: body, headers: _jsonHeaders, auth: Auth2());
+      return (response?.statusCode == 200) ? JsonUtils.mapCastValue<String, int?>(JsonUtils.decodeMap(response?.body)) : null;*/
+    }
     return null;
   }
 
