@@ -1303,7 +1303,7 @@ String? groupUtcDateTimeToString(DateTime? dateTime) {
 
 // Group Filters
 
-enum GroupsFilterType { public, private, eventAdmin, managed, admin, member, candidate }
+enum GroupsFilterType { public, private, eventAdmin, managed, administrative, admin, member, candidate }
 
 class GroupsFilter {
   final Map<String, dynamic>? attributes;
@@ -1337,8 +1337,8 @@ class GroupsFilter {
     Map<String, dynamic> result = <String, dynamic>{};
     MapUtils.add(result, 'attributes', attributes);
 
-    // TBD: public, private, eventAdmin, managed
-    // TBD: admin, member, applied
+    // TBD: public, private, eventAdmin, managed, administrative
+    // TBD: admin, member, candidate
 
     if (types?.contains(GroupsFilterType.public) == true) {
       MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.public));
@@ -1347,6 +1347,9 @@ class GroupsFilter {
       MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.private));
     }
     if (types?.contains(GroupsFilterType.managed) == true) {
+      MapUtils.add(result, 'authman_enabled', true);
+    }
+    if (types?.contains(GroupsFilterType.administrative) == true) {
       MapUtils.add(result, 'administrative', true);
     }
 
@@ -1413,6 +1416,7 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
       case 'private': return GroupsFilterType.private;
       case 'eventAdmin': return GroupsFilterType.eventAdmin;
       case 'managed': return GroupsFilterType.managed;
+      case 'administrative': return GroupsFilterType.administrative;
       case 'admin': return GroupsFilterType.admin;
       case 'member': return GroupsFilterType.member;
       case 'candidate': return GroupsFilterType.candidate;
@@ -1426,6 +1430,7 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
       case GroupsFilterType.private: return 'private';
       case GroupsFilterType.eventAdmin: return 'eventAdmin';
       case GroupsFilterType.managed: return 'managed';
+      case GroupsFilterType.administrative: return 'administrative';
       case GroupsFilterType.admin: return 'admin';
       case GroupsFilterType.member: return 'member';
       case GroupsFilterType.candidate: return 'candidate';

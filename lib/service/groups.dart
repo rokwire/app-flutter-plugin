@@ -317,7 +317,7 @@ class Groups with Service, NotificationsListener {
   // Groups APIs
 
 
-  Future<GroupsLoadResult?> loadGroupsV2(GroupsQuery query) async {
+  Future<GroupsLoadResult?> loadGroupsV3(GroupsQuery query) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
 
@@ -348,7 +348,7 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<Map<String, int?>?> loadGroupsV2Counts(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
+  Future<Map<String, int?>?> countGroupsV3(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
       Map<String, dynamic> baseFilterJson = baseFilter?.toQueryJson() ?? <String, dynamic>{};
