@@ -49,7 +49,6 @@ enum ResearchProjectsContentType { open, my }
 class Groups with Service, NotificationsListener {
 
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
-  static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
   static const String notifyGroupEventsUpdated        = "edu.illinois.rokwire.groups.events.updated";
   static const String notifyGroupStatsUpdated         = "edu.illinois.rokwire.group.stats.updated";
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
