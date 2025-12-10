@@ -1371,6 +1371,7 @@ class GroupsFilter {
   bool get private => (types?.contains(GroupsFilterType.private) == true);
   bool get eventAdmin => (types?.contains(GroupsFilterType.eventAdmin) == true);
   bool get managed => (types?.contains(GroupsFilterType.managed) == true);
+  bool get administrative => (types?.contains(GroupsFilterType.administrative) == true);
 
   bool get admin => (types?.contains(GroupsFilterType.admin) == true);
   bool get member => (types?.contains(GroupsFilterType.member) == true);
@@ -1467,6 +1468,7 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
 
   static List<String>? setToJsonList(Set<GroupsFilterType>? types) => (types != null) ?
     List.from(listToCodes(types)) : null;
+
 }
 
 class GroupsLoadResult {
