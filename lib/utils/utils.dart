@@ -1798,11 +1798,21 @@ class WebUtils {
 
   static bool isIosWeb() {
     if (kIsWeb) {
-      final userAgent = web.window.navigator.userAgent.toLowerCase();
-      return (userAgent.contains('iphone') || userAgent.contains('ipad') || userAgent.contains('ipod'));
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && (userAgent.contains('iphone') || userAgent.contains('ipad') || userAgent.contains('ipod'));
     }
     return false;
   }
+
+  static bool isAndroidWeb() {
+    if (kIsWeb) {
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && userAgent.contains('android');
+    }
+    return false;
+  }
+
+  static String? _webUserAgent() => kIsWeb ? web.window.navigator.userAgent.toLowerCase() : null;
 
   static web.Window? createIosWebWindow() {
     web.Window? webWindow;
