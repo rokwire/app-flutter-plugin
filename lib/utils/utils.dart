@@ -1011,6 +1011,19 @@ class JsonUtils {
     return null;
   }
 
+  static Map<String, String>? mapOfStringToStringValue(dynamic value) {
+    Map<String, String>? result;
+    if (value is Map) {
+      result = <String, String>{};
+      for (dynamic key in value.keys) {
+        if (key is String) {
+          MapUtils.set(result, key, stringValue(value[key]));
+        }
+      }
+    }
+    return result;
+  }
+
   static Map<String, Map<String, dynamic>>? mapOfStringToMapOfStringsValue(dynamic value) {
     Map<String, Map<String, dynamic>>? result;
     if (value is Map) {
