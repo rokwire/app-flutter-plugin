@@ -1796,6 +1796,8 @@ class WebUtils {
     return "";
   }
 
+  static isMobileDeviceWeb() => kIsWeb && (isIosWeb() || isAndroidWeb());
+
   static bool isIosWeb() {
     if (kIsWeb) {
       final userAgent = _webUserAgent();
