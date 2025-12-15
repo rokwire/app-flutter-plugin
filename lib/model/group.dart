@@ -367,29 +367,26 @@ class Group {
 
 enum GroupPrivacy { private, public }
 
-GroupPrivacy? groupPrivacyFromString(String? value) {
-  if (value != null) {
-    if (value == 'private') {
-      return GroupPrivacy.private;
-    }
-    else if (value == 'public') {
-      return GroupPrivacy.public;
+extension GroupPrivacyImpl on GroupPrivacy {
+
+  static GroupPrivacy? fromJson(String? json) {
+    switch (json) {
+      case 'private': return GroupPrivacy.private;
+      case 'public': return GroupPrivacy.public;
+      default: return null;
     }
   }
-  return null;
+
+  String toJson() {
+    switch(this) {
+      case GroupPrivacy.private: return 'private';
+      case GroupPrivacy.public: return 'public';
+    }
+  }
 }
 
-String? groupPrivacyToString(GroupPrivacy? value) {
-  if (value != null) {
-    if (value == GroupPrivacy.private) {
-      return 'private';
-    }
-    else if (value == GroupPrivacy.public) {
-      return 'public';
-    }
-  }
-  return null;
-}
+GroupPrivacy? groupPrivacyFromString(String? value) => GroupPrivacyImpl.fromJson(value);
+String? groupPrivacyToString(GroupPrivacy? value) => value?.toJson();
 
 //////////////////////////////
 // GroupStats
@@ -636,35 +633,29 @@ class Member {
 
 enum GroupMemberStatus { pending, member, admin, rejected }
 
-GroupMemberStatus? groupMemberStatusFromString(String? value) {
-  if (value != null) {
-    if (value == 'pending') {
-      return GroupMemberStatus.pending;
-    } else if (value == 'member') {
-      return GroupMemberStatus.member;
-    } else if (value == 'admin') {
-      return GroupMemberStatus.admin;
-    } else if (value == 'rejected') {
-      return GroupMemberStatus.rejected;
+extension GroupMemberStatusImpl on GroupMemberStatus {
+  static GroupMemberStatus? fromJson(String? json) {
+    switch (json) {
+      case 'admin': return GroupMemberStatus.admin;
+      case 'member': return GroupMemberStatus.member;
+      case 'pending': return GroupMemberStatus.pending;
+      case 'rejected': return GroupMemberStatus.rejected;
+      default: return null;
     }
   }
-  return null;
+
+  String toJson() {
+    switch(this) {
+      case GroupMemberStatus.admin: return 'admin';
+      case GroupMemberStatus.member: return 'member';
+      case GroupMemberStatus.pending: return 'pending';
+      case GroupMemberStatus.rejected: return 'rejected';
+    }
+  }
 }
 
-String? groupMemberStatusToString(GroupMemberStatus? value) {
-  if (value != null) {
-    if (value == GroupMemberStatus.pending) {
-      return 'pending';
-    } else if (value == GroupMemberStatus.member) {
-      return 'member';
-    } else if (value == GroupMemberStatus.admin) {
-      return 'admin';
-    } else if (value == GroupMemberStatus.rejected) {
-      return 'rejected';
-    }
-  }
-  return null;
-}
+GroupMemberStatus? groupMemberStatusFromString(String? value) => GroupMemberStatusImpl.fromJson(value);
+String? groupMemberStatusToString(GroupMemberStatus? value) => value?.toJson();
 
 //////////////////////////////
 // MemberNotificationsPreferences
@@ -1340,17 +1331,41 @@ class GroupsFilter {
     // TBD: public, private, eventAdmin, managed, administrative
     // TBD: admin, member, candidate
 
+    List<String>? privacy;
     if (types?.contains(GroupsFilterType.public) == true) {
-      MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.public));
+      (privacy ??= <String>[]).add(GroupPrivacy.public.toJson());
     }
     if (types?.contains(GroupsFilterType.private) == true) {
-      MapUtils.add(result, 'privacy', groupPrivacyToString(GroupPrivacy.private));
+      (privacy ??= <String>[]).add(GroupPrivacy.private.toJson());
     }
+    if (privacy?.isNotEmpty == true) {
+      MapUtils.add(result, 'privacy', privacy);
+    }
+
+    if (types?.contains(GroupsFilterType.eventAdmin) == true) {
+      // TBD:
+    }
+
     if (types?.contains(GroupsFilterType.managed) == true) {
       MapUtils.add(result, 'authman_enabled', true);
     }
+
     if (types?.contains(GroupsFilterType.administrative) == true) {
       MapUtils.add(result, 'administrative', true);
+    }
+
+    List<String>? memberStatus;
+    if (types?.contains(GroupsFilterType.admin) == true) {
+      (memberStatus ??= <String>[]).add(GroupMemberStatus.admin.toJson());
+    }
+    if (types?.contains(GroupsFilterType.member) == true) {
+      (memberStatus ??= <String>[]).add(GroupMemberStatus.member.toJson());
+    }
+    if (types?.contains(GroupsFilterType.candidate) == true) {
+      (memberStatus ??= <String>[]).addAll(<String>[
+        GroupMemberStatus.pending.toJson(),
+        GroupMemberStatus.rejected.toJson()
+      ]);
     }
 
     return result;
@@ -1478,7 +1493,7 @@ class GroupsLoadResult {
   GroupsLoadResult({this.groups, this.totalCount});
 
   static GroupsLoadResult? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsLoadResult(
-    groups: Group.listFromJson(JsonUtils.listValue(json['result'])),
+    groups: Group.listFromJson(JsonUtils.listValue(json['results'])),
     totalCount: JsonUtils.intValue(json['total_count']),
   ) : null;
 
