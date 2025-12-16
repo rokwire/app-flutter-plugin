@@ -43,7 +43,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'firebase_messaging.dart';
 
-enum GroupsContentType { all, my }
 enum ResearchProjectsContentType { open, my }
 
 class Groups with Service, NotificationsListener {
@@ -136,7 +135,7 @@ class Groups with Service, NotificationsListener {
     _userGroupNames = _buildGroupNames(_userGroups);
 
     if (_userGroups == null) {
-      _userGroups = await _loadUserGroupsV3();
+      _userGroups = await loadUserGroupsV3();
       _userGroupNames = _buildGroupNames(_userGroups);
       _saveUserGroupsToCache(_userGroups);
     }
@@ -334,6 +333,11 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
+  Future<List<Group>?> loadGroupsListV3({GroupsFilter? filter}) async {
+    GroupsLoadResult? groupsResult = await loadGroupsV3(GroupsQuery(filter: filter));
+    return groupsResult?.groups;
+  }
+
   Future<Map<String, int?>?> countGroupsV3(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v3/groups/stats';
@@ -347,30 +351,17 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  static const GroupsQuery _userGroupsQuery = GroupsQuery(
-    filter: GroupsFilter(types: _userGroupsTypes)
-  );
+  static const GroupsFilter userGroupsFilter =  GroupsFilter(types: userGroupsTypes);
+  static const Set<GroupsFilterType> userGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin, GroupsFilterType.member};
+  Future<List<Group>?> loadUserGroupsV3() => loadGroupsListV3(filter: userGroupsFilter);
 
-  static const Set<GroupsFilterType> _userGroupsTypes = <GroupsFilterType>{
-    GroupsFilterType.admin, GroupsFilterType.member
-  };
+  static const GroupsFilter adminUserGroupsFilter =  GroupsFilter(types: adminUserGroupsTypes );
+  static const Set<GroupsFilterType> adminUserGroupsTypes = <GroupsFilterType>{ ...userGroupsTypes, GroupsFilterType.administrative };
+  Future<List<Group>?> loadAdminUserGroupsV3() => loadGroupsListV3(filter: adminUserGroupsFilter);
 
-  Future<List<Group>?> _loadUserGroupsV3() async {
-    GroupsLoadResult? userGroupsResult = await loadGroupsV3(_userGroupsQuery);
-    return userGroupsResult?.groups;
-  }
+  static const GroupsFilter allGroupsFilter =  GroupsFilter();
+  Future<List<Group>?> loadAllGroupsV3() => loadGroupsListV3(filter: allGroupsFilter);
 
-  ///
-  /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
-  ///
-  /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, bool? administrative, int? offset, int? limit}) async {
-    switch(contentType) {
-      case GroupsContentType.my: return _loadUserGroups(title: title, attributes: attributes, administrative: administrative, offset: offset, limit: limit);
-      case GroupsContentType.all: return _loadAllGroups(title: title, attributes: attributes, offset: offset, limit: limit);
-      default: return null;
-    }
-  }
 
   Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
     if ((Config().groupsUrl != null) && ((contentType != ResearchProjectsContentType.my) || Auth2().isLoggedIn)) {
@@ -1163,19 +1154,10 @@ class Groups with Service, NotificationsListener {
   // User Groups
 
   List<Group>? get userGroups => _userGroups;
-
   Set<String>? get userGroupNames => _userGroupNames;
 
-  ///
-  /// Returns the groups that current user is admin of without the current group
-  ///
-  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const [], bool? administrative}) async {
-    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my, administrative: administrative);
-    return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
-  }
-
-  File? get _userGroupsCacheFile  =>
-    (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
+  File? get _userGroupsCacheFile  => (_appDocDir != null) ?
+    File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
   Future<String?> _loadUserGroupsStringFromCache() async {
     try {
@@ -1211,43 +1193,6 @@ class Groups with Service, NotificationsListener {
   Future<void> _saveUserGroupsToCache(List<Group>? groups) async =>
     _saveUserGroupsStringToCache(JsonUtils.encode(Group.listToJson(groups)));
 
-  Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
-    if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
-      // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      String url = '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'attributes': attributes,
-        'privacy': groupPrivacyToString(privacy),
-        'research_group': false,
-        'ids': groupIds,
-        'administrative': administrative,
-        'offset': offset,
-        'limit': limit,
-      });
-      try {
-        await _ensureLogin();
-        return await Network().get(url, body: post, auth: Auth2());
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
-  }
-
-  Future<List<Group>?> _loadUserGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
-    Response? response = await _loadUserGroupsResponse(
-        title: title,
-        attributes: attributes,
-        privacy: privacy,
-        groupIds: groupIds,
-        administrative: administrative,
-        offset: offset,
-        limit:  limit,
-    );
-    return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
-  }
-
   Future<void> _updateUserGroupsFromNetSync() async{
     try {
       if (_userGroupUpdateCompleters.isEmpty) {
@@ -1272,7 +1217,7 @@ class Groups with Service, NotificationsListener {
   }
 
   Future<void> _updateUserGroupsFromNet() async {
-    List<Group>? userGroups = await _loadUserGroupsV3();
+    List<Group>? userGroups = await loadUserGroupsV3();
     if ((userGroups != null) && !const DeepCollectionEquality().equals(_userGroups, userGroups)) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);
