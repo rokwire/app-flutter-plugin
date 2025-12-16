@@ -654,6 +654,11 @@ extension GroupMemberStatusImpl on GroupMemberStatus {
   }
 }
 
+extension GroupMemberStatusSetImpl on Set<GroupMemberStatus> {
+  List<String> toJson() => List.from(map((GroupMemberStatus memberStatus) => memberStatus.toJson()));
+}
+
+
 GroupMemberStatus? groupMemberStatusFromString(String? value) => GroupMemberStatusImpl.fromJson(value);
 String? groupMemberStatusToString(GroupMemberStatus? value) => value?.toJson();
 
@@ -1327,47 +1332,11 @@ class GroupsFilter {
   Map<String, dynamic> toQueryJson() {
     Map<String, dynamic> result = <String, dynamic>{};
     MapUtils.add(result, 'attributes', attributes);
-
-    // TBD: public, private, eventAdmin, managed, administrative
-    // TBD: admin, member, candidate
-
-    List<String>? privacy;
-    if (types?.contains(GroupsFilterType.public) == true) {
-      (privacy ??= <String>[]).add(GroupPrivacy.public.toJson());
-    }
-    if (types?.contains(GroupsFilterType.private) == true) {
-      (privacy ??= <String>[]).add(GroupPrivacy.private.toJson());
-    }
-    if (privacy?.isNotEmpty == true) {
-      MapUtils.add(result, 'privacy', privacy);
-    }
-
-    if (types?.contains(GroupsFilterType.eventAdmin) == true) {
-      // TBD:
-    }
-
-    if (types?.contains(GroupsFilterType.managed) == true) {
-      MapUtils.add(result, 'authman_enabled', true);
-    }
-
-    if (types?.contains(GroupsFilterType.administrative) == true) {
-      MapUtils.add(result, 'administrative', true);
-    }
-
-    List<String>? memberStatus;
-    if (types?.contains(GroupsFilterType.admin) == true) {
-      (memberStatus ??= <String>[]).add(GroupMemberStatus.admin.toJson());
-    }
-    if (types?.contains(GroupsFilterType.member) == true) {
-      (memberStatus ??= <String>[]).add(GroupMemberStatus.member.toJson());
-    }
-    if (types?.contains(GroupsFilterType.candidate) == true) {
-      (memberStatus ??= <String>[]).addAll(<String>[
-        GroupMemberStatus.pending.toJson(),
-        GroupMemberStatus.rejected.toJson()
-      ]);
-    }
-
+    MapUtils.add(result, 'privacy', privacy?.toJson());
+    //TBD: MapUtils.add(result, '...', eventAdmin ? true : null);
+    MapUtils.add(result, 'authman_enabled', managed ? true : null);
+    MapUtils.add(result, 'administrative', administrative ? true : null);
+    MapUtils.add(result, 'member_status', memberStatus?.toJson());
     return result;
   }
 
@@ -1393,6 +1362,32 @@ class GroupsFilter {
   bool get candidate => (types?.contains(GroupsFilterType.candidate) == true); // pending or denied
 
   bool get isNotEmpty => (attributes?.isNotEmpty == true) || (types?.isNotEmpty == true);
+
+  GroupPrivacy? get privacy {
+    if (public && !private) {
+      return GroupPrivacy.public;
+    }
+    else if (private && !public) {
+      return GroupPrivacy.private;
+    }
+    else {
+      return null;
+    }
+  }
+
+  Set<GroupMemberStatus>? get memberStatus {
+    Set<GroupMemberStatus> status = <GroupMemberStatus>{};
+    if (admin) {
+      status.add(GroupMemberStatus.admin);
+    }
+    if (member) {
+      status.add(GroupMemberStatus.member);
+    }
+    if (candidate) {
+      status.addAll(<GroupMemberStatus> { GroupMemberStatus.pending, GroupMemberStatus.rejected });
+    }
+    return status.isNotEmpty ? status : null;
+  }
 
 }
 

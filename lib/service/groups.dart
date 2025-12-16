@@ -342,7 +342,7 @@ class Groups with Service, NotificationsListener {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v3/groups/stats';
       String? body = JsonUtils.encode({
-        'base_filter': baseFilter?.toQueryJson(),
+        'base_filter': GroupsQuery(filter: baseFilter).toQueryJson(),
         'sub_filters': countFilters.map<String, Map<String, dynamic>?>((String key, GroupsFilter? filter) => MapEntry(key, filter?.toQueryJson())),
       });
       Response? response = await Network().post(url, body: body, auth: Auth2());
