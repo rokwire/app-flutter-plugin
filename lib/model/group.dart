@@ -1403,10 +1403,11 @@ class GroupsQuery {
 
   final int? offset;
   final int? limit;
+  final String? limitId;
 
   GroupsQuery({
     this.filter, this.searchText, this.ids,
-    this.offset, this.limit
+    this.offset, this.limit, this.limitId,
   });
 
 
@@ -1421,6 +1422,8 @@ class GroupsQuery {
       'offset': offset,
     if (limit != null)
       'limit': limit,
+    if (limitId != null)
+      'limit_id': limitId,
   };
 }
 
