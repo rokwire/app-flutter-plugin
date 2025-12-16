@@ -147,7 +147,7 @@ class Group {
       currentMember                  : other.currentMember,
       questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
       membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
-      settings                          : GroupSettings.fromOther(other.settings),
+      settings                       : GroupSettings.fromOther(other.settings),
     ) : null;
   }
 
@@ -188,7 +188,7 @@ class Group {
       'current_member'                : currentMember?.toJson(),
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
-      'settings'                                : settings?.toJson()
+      'settings'                      : settings?.toJson()
     };
   }
 
@@ -1300,7 +1300,7 @@ class GroupsFilter {
   final Map<String, dynamic>? attributes;
   final Set<GroupsFilterType>? types;
 
-  GroupsFilter({this.attributes, this.types,});
+  const GroupsFilter({this.attributes, this.types,});
 
   factory GroupsFilter.fromUriParams(Map<String, String> uriParams) => GroupsFilter(
     attributes: JsonUtils.decodeMap(uriParams['attributes']),
@@ -1405,7 +1405,7 @@ class GroupsQuery {
   final int? limit;
   final String? limitId;
 
-  GroupsQuery({
+  const GroupsQuery({
     this.filter, this.searchText, this.ids,
     this.offset, this.limit, this.limitId,
   });

@@ -136,7 +136,9 @@ class Groups with Service, NotificationsListener {
     _userGroupNames = _buildGroupNames(_userGroups);
 
     if (_userGroups == null) {
-      await _initUserGroupsFromNet();
+      _userGroups = await _loadUserGroupsV3();
+      _userGroupNames = _buildGroupNames(_userGroups);
+      _saveUserGroupsToCache(_userGroups);
     }
     else {
       _updateUserGroupsFromNetSync();
@@ -343,6 +345,19 @@ class Groups with Service, NotificationsListener {
       return (response?.statusCode == 200) ? JsonUtils.mapCastValue<String, int?>(JsonUtils.decodeMap(response?.body)) : null;
     }
     return null;
+  }
+
+  static const GroupsQuery _userGroupsQuery = GroupsQuery(
+    filter: GroupsFilter(types: _userGroupsTypes)
+  );
+
+  static const Set<GroupsFilterType> _userGroupsTypes = <GroupsFilterType>{
+    GroupsFilterType.admin, GroupsFilterType.member
+  };
+
+  Future<List<Group>?> _loadUserGroupsV3() async {
+    GroupsLoadResult? userGroupsResult = await loadGroupsV3(_userGroupsQuery);
+    return userGroupsResult?.groups;
   }
 
   ///
@@ -1159,12 +1174,12 @@ class Groups with Service, NotificationsListener {
     return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
   }
 
-  File? _getUserGroupsCacheFile()  =>
+  File? get _userGroupsCacheFile  =>
     (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
   Future<String?> _loadUserGroupsStringFromCache() async {
     try {
-      File? cacheFile = _getUserGroupsCacheFile();
+      File? cacheFile = _userGroupsCacheFile;
       return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
     }
     catch(e) { 
@@ -1175,7 +1190,7 @@ class Groups with Service, NotificationsListener {
 
   Future<void> _saveUserGroupsStringToCache(String? value) async {
     try {
-      File? cacheFile = _getUserGroupsCacheFile();
+      File? cacheFile = _userGroupsCacheFile;
       if (cacheFile != null) {
         if (value != null) {
           await cacheFile.writeAsString(value, flush: true);
@@ -1190,9 +1205,11 @@ class Groups with Service, NotificationsListener {
     }
   }
 
-  Future<List<Group>?> _loadUserGroupsFromCache() async {
-    return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
-  }
+  Future<List<Group>?> _loadUserGroupsFromCache() async =>
+    Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
+
+  Future<void> _saveUserGroupsToCache(List<Group>? groups) async =>
+    _saveUserGroupsStringToCache(JsonUtils.encode(Group.listToJson(groups)));
 
   Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
     if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
@@ -1231,22 +1248,6 @@ class Groups with Service, NotificationsListener {
     return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
   }
 
-  Future<String?> _loadUserGroupsStringFromNet() async {
-    Response? response = await _loadUserGroupsResponse();
-    //debugPrint('Failed to load user groups. Code: ${response.statusCode}}.\nResponse: ${response.body}');
-    return (response?.statusCode == 200) ? response?.body : null;
-  }
-
-  Future<void> _initUserGroupsFromNet() async {
-    String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
-    if (userGroups != null) {
-      _userGroups = userGroups;
-      _userGroupNames = _buildGroupNames(_userGroups);
-      await _saveUserGroupsStringToCache(jsonString);
-    }
-  }
-
   Future<void> _updateUserGroupsFromNetSync() async{
     try {
       if (_userGroupUpdateCompleters.isEmpty) {
@@ -1271,12 +1272,11 @@ class Groups with Service, NotificationsListener {
   }
 
   Future<void> _updateUserGroupsFromNet() async {
-    String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
+    List<Group>? userGroups = await _loadUserGroupsV3();
     if ((userGroups != null) && !const DeepCollectionEquality().equals(_userGroups, userGroups)) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);
-      await _saveUserGroupsStringToCache(jsonString);
+      await _saveUserGroupsToCache(_userGroups);
       NotificationService().notify(notifyUserGroupsUpdated);
     }
   }
@@ -1285,7 +1285,7 @@ class Groups with Service, NotificationsListener {
     if (_userGroups != null) {
       _userGroups = null;
       _userGroupNames = null;
-      await _saveUserGroupsStringToCache(null);
+      await _saveUserGroupsToCache(_userGroups);
       NotificationService().notify(notifyUserGroupsUpdated);
     }
   }
