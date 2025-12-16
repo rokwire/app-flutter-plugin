@@ -121,7 +121,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
         _configAsset = await loadFromAssets();
       }
       String? configString = await loadAsStringFromNet();
-      _configAsset = null;
+      if (!kIsWeb) {
+        _configAsset = null;
+      }
 
       _config = (configString != null) ? await configFromJsonString(configString) : null;
       //TODO: decide how best to handle secret keys
@@ -365,9 +367,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return _appCanonicalId;
   }
 
+  String? get defaultAppId => null;
   String? get appPlatformId {
     if (kIsWeb) {
-      return authBaseUrl;
+      return isReleaseWeb ? releaseWebAuthBaseUrl : defaultAppId;
     } else if (_appPlatformId == null) {
       _appPlatformId = appId;
 
@@ -409,7 +412,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
   } 
   
-  String? get rokwireApiKey          {
+  String? get rokwireApiKey {
     String? assetKey = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['api_key']) : null;
     return assetKey ?? secretRokwire['api_key'];
   }
@@ -545,9 +548,10 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
+  String? get releaseWebAuthBaseUrl => '${html.window.location.origin}/$webServiceId';
   String? get authBaseUrl {
     if (isReleaseWeb) {
-      return '${html.window.location.origin}/$webServiceId';
+      return releaseWebAuthBaseUrl;
     } else if (isAdmin) {
       return coreUrl != null ? '$coreUrl/admin': null;
     }
