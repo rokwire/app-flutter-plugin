@@ -1398,11 +1398,13 @@ class GroupsQuery {
 
   final int? offset;
   final int? limit;
-  final String? limitId;
+  final String? anchorId;
+  final int? anchorOffset;
 
   const GroupsQuery({
     this.filter, this.searchText, this.ids,
-    this.offset, this.limit, this.limitId,
+    this.offset, this.limit,
+    this.anchorId, this.anchorOffset,
   });
 
 
@@ -1417,8 +1419,10 @@ class GroupsQuery {
       'offset': offset,
     if (limit != null)
       'limit': limit,
-    if (limitId != null)
-      'limit_id': limitId,
+    if (anchorId != null)
+      'limit_id': anchorId,
+    if (anchorOffset != null)
+      'limit_id_extra_records': anchorOffset,
   };
 }
 
