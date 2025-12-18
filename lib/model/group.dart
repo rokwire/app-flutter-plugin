@@ -16,6 +16,7 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 
@@ -1393,8 +1394,8 @@ class GroupsFilter {
 
 class GroupsQuery {
   final GroupsFilter? filter;
-  final String? searchText;
   final Iterable<String>? ids;
+  final String? searchText;
 
   final int? offset;
   final int? limit;
@@ -1402,14 +1403,14 @@ class GroupsQuery {
   final int? anchorOffset;
 
   const GroupsQuery({
-    this.filter, this.searchText, this.ids,
+    this.filter, this.ids, this.searchText,
     this.offset, this.limit,
     this.anchorId, this.anchorOffset,
   });
 
 
-  Map<String, dynamic> toQueryJson({bool researchGroup = false}) => <String, dynamic>{
-    'research_group': researchGroup,
+  Map<String, dynamic> toQueryJson() => <String, dynamic>{
+    'research_group': false,
     ...(filter?.toQueryJson() ?? {}),
     if (ids != null)
       'ids': List.from(ids!),
@@ -1516,4 +1517,73 @@ class GroupsLoadResult {
   int get hashCode =>
     (const DeepCollectionEquality().hash(groups)) ^
     (totalCount?.hashCode ?? 0);
+}
+
+enum ResearchProjectsContentType { open, my }
+
+class ResearchProjectsFilter {
+  ResearchProjectsContentType? contentType;
+  String? category;
+  Set<String>? tags;
+  GroupPrivacy? privacy;
+
+  ResearchProjectsFilter({this.contentType, this.category, this.tags, this.privacy });
+
+  Map<String, dynamic> toQueryJson() {
+    Map<String, dynamic> result = contentType?.filterAttributes ?? <String, dynamic>{};
+    MapUtils.add(result, 'member_status', contentType?.memberStatus?.toJson());
+    MapUtils.add(result, 'category', category);
+    MapUtils.add(result, 'tags', ListUtils.from(tags));
+    MapUtils.add(result, 'privacy', privacy?.toJson());
+    return result;
+  }
+}
+
+class ResearchProjectsQuery {
+  ResearchProjectsFilter? filter;
+  final Iterable<String>? ids;
+  String? title;
+  int? offset;
+  int? limit;
+
+  ResearchProjectsQuery({this.filter, this.ids, this.title, this.offset, this.limit});
+
+  Map<String, dynamic> toQueryJson() => <String, dynamic>{
+    'research_group': true,
+    ...(filter?.toQueryJson() ?? {}),
+    if (ids != null)
+      'ids': List.from(ids!),
+    if (title != null)
+      'title': title,
+    if (offset != null)
+      'offset': offset,
+    if (limit != null)
+      'limit': limit,
+  };
+}
+
+extension ResearchProjectsContentTypeImpl on ResearchProjectsContentType {
+
+  Map<String, dynamic>? get filterAttributes {
+    switch (this) {
+      case ResearchProjectsContentType.open:
+        return <String, dynamic>{
+          'research_open': true,
+          'exclude_my_groups': true,
+          'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+        };
+      case ResearchProjectsContentType.my:
+        return <String, dynamic>{
+          'member_status': memberStatus?.toJson(),
+        };
+    }
+  }
+
+  Set<GroupMemberStatus>? get memberStatus {
+    switch (this) {
+      case ResearchProjectsContentType.open: return null;
+      case ResearchProjectsContentType.my: return <GroupMemberStatus> { GroupMemberStatus.admin, GroupMemberStatus.member };
+    }
+  }
+
 }

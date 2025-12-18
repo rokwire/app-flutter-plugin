@@ -43,7 +43,6 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'firebase_messaging.dart';
 
-enum ResearchProjectsContentType { open, my }
 
 class Groups with Service, NotificationsListener {
 
@@ -314,7 +313,7 @@ class Groups with Service, NotificationsListener {
     Auth2().prefs?.applySetting(_userLoginVersionSetting, Config().appMajorVersion);
   }
 
-  // Groups APIs
+  // Groups V3 APIs
 
   Future<GroupsLoadResult?> loadGroupsV3(GroupsQuery query) async {
     if (Config().groupsUrl != null) {
@@ -362,35 +361,28 @@ class Groups with Service, NotificationsListener {
   static const GroupsFilter allGroupsFilter =  GroupsFilter();
   Future<List<Group>?> loadAllGroupsV3() => loadGroupsListV3(filter: allGroupsFilter);
 
+  // Research Projects V3 APIs
 
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
-    if ((Config().groupsUrl != null) && ((contentType != ResearchProjectsContentType.my) || Auth2().isLoggedIn)) {
-      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'category': category,
-        'tags': tags,
-        'privacy': groupPrivacyToString(privacy),
-        'offset': offset,
-        'limit': limit,
+  Future<GroupsLoadResult?> loadResearchProjectsV3(ResearchProjectsQuery query) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v3/groups/load';
+      String? post = JsonUtils.encode(query.toQueryJson());
 
-        'research_group': true,
-        'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
-        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
-        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });
-      
       try {
         await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
-        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        return (response?.statusCode == 200) ? GroupsLoadResult.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       } catch (e) {
         debugPrint(e.toString());
       }
     }
+
     return null;
+  }
+
+  Future<List<Group>?> loadResearchProjectsListV3(ResearchProjectsFilter? filter) async {
+    GroupsLoadResult? result = await loadResearchProjectsV3(ResearchProjectsQuery(filter: filter));
+    return result?.groups;
   }
 
   Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
@@ -410,6 +402,7 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
+  //TBD:
   Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, bool? administrative, int? offset, int? limit}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v2/groups';
@@ -437,6 +430,7 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
+  //TBD:
   Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
