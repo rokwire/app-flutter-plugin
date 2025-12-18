@@ -1396,6 +1396,7 @@ class GroupsQuery {
   final GroupsFilter? filter;
   final Iterable<String>? ids;
   final String? searchText;
+  final bool? includeHidden;
 
   final int? offset;
   final int? limit;
@@ -1403,7 +1404,8 @@ class GroupsQuery {
   final int? anchorOffset;
 
   const GroupsQuery({
-    this.filter, this.ids, this.searchText,
+    this.filter, this.ids,
+    this.searchText, this.includeHidden,
     this.offset, this.limit,
     this.anchorId, this.anchorOffset,
   });
@@ -1416,6 +1418,8 @@ class GroupsQuery {
       'ids': List.from(ids!),
     if (searchText != null)
       'title': searchText,
+    if (includeHidden != null)
+      'include_hidden': includeHidden,
     if (offset != null)
       'offset': offset,
     if (limit != null)
@@ -1542,19 +1546,26 @@ class ResearchProjectsFilter {
 class ResearchProjectsQuery {
   ResearchProjectsFilter? filter;
   final Iterable<String>? ids;
-  String? title;
+  final String? searchText;
+  final bool? includeHidden;
   int? offset;
   int? limit;
 
-  ResearchProjectsQuery({this.filter, this.ids, this.title, this.offset, this.limit});
+  ResearchProjectsQuery({
+    this.filter, this.ids,
+    this.searchText, this.includeHidden,
+    this.offset, this.limit
+  });
 
   Map<String, dynamic> toQueryJson() => <String, dynamic>{
     'research_group': true,
     ...(filter?.toQueryJson() ?? {}),
     if (ids != null)
       'ids': List.from(ids!),
-    if (title != null)
-      'title': title,
+    if (searchText != null)
+      'title': searchText,
+    if (includeHidden != null)
+      'include_hidden': includeHidden,
     if (offset != null)
       'offset': offset,
     if (limit != null)
