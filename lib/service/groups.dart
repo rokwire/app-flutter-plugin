@@ -403,34 +403,6 @@ class Groups with Service, NotificationsListener {
   }
 
   //TBD:
-  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, bool? administrative, int? offset, int? limit}) async {
-    if (Config().groupsUrl != null) {
-      String url = '${Config().groupsUrl}/v2/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'attributes': attributes,
-        'privacy': groupPrivacyToString(privacy),
-        'research_group': false,
-        'ids': groupIds,
-        'administrative': administrative,
-        'offset': offset,
-        'limit': limit,
-      });
-
-      try {
-        await _ensureLogin();
-        Response? response = await Network().get(url, body: post, auth: Auth2());
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-
-    return null;
-  }
-
-  //TBD:
   Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
     if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
       await _ensureLogin();
@@ -1068,11 +1040,6 @@ class Groups with Service, NotificationsListener {
       }
     }
     return null; // fail
-  }
-
-  Future<List<Group>?> loadGroupsByIds({Set<String>? groupIds}) async {
-    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroups(groupIds: groupIds!.toList()) : null;
-    return result;
   }
 
   // Nudges
