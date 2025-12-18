@@ -402,33 +402,6 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  //TBD:
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
-    if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
-      await _ensureLogin();
-      String? post = JsonUtils.encode({
-        'title': searchText, // Uri.encodeComponent(searchText)
-        'include_hidden': includeHidden,
-        'research_group': researchProjects,
-        'research_open': researchOpen,
-        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });
-
-
-      String url = '${Config().groupsUrl}/v2/groups';
-      Response? response = await Network().get(url, auth: Auth2(), body: post);
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        return Group.listFromJson(JsonUtils.decodeList(responseBody));
-      } else {
-        debugPrint('Failed to search for groups. Reason: ');
-        debugPrint(responseBody);
-      }
-    }
-    return null;
-  }
-
   Future<Group?> loadGroup(String? groupId) async {
     if ((Config().groupsUrl != null) && StringUtils.isNotEmpty(groupId)) {
       String url = '${Config().groupsUrl}/v2/groups/$groupId';
