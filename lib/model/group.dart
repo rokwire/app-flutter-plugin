@@ -301,14 +301,6 @@ class Group {
     return (currentUserIsAdmin == true) && (authManEnabled == true);
   }
 
-  ///
-  /// Show hidden group only if the user is admin
-  ///
-  ///
-  bool get isVisible {
-    return !(hiddenForSearch ?? false) || currentUserIsAdmin;
-  }
-
   static List<Group>? listFromJson(List<dynamic>? json, {bool Function(Group element)? filter}) {
     List<Group>? values;
     if (json != null) {
