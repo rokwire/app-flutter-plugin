@@ -44,13 +44,10 @@ import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'firebase_messaging.dart';
 
-enum GroupsContentType { all, my }
-enum ResearchProjectsContentType { open, my }
 
 class Groups with Service, NotificationsListener {
 
   static const String notifyUserGroupsUpdated         = "edu.illinois.rokwire.groups.user.updated";
-  static const String notifyUserMembershipUpdated     = "edu.illinois.rokwire.groups.membership.updated";
   static const String notifyGroupEventsUpdated        = "edu.illinois.rokwire.groups.events.updated";
   static const String notifyGroupStatsUpdated         = "edu.illinois.rokwire.group.stats.updated";
   static const String notifyGroupCreated              = "edu.illinois.rokwire.group.created";
@@ -71,6 +68,11 @@ class Groups with Service, NotificationsListener {
 
   static const String _userGroupsCacheFileName = "groups.json";
   static const String _attendedMembersCacheFileName = "attended_members.json";
+
+  /*static const Map<String, String> _jsonHeaders = <String, String>{
+    "Accept": "application/json",
+    "Content-type": "application/json"
+  };*/
 
   Directory? _appDocDir;
 
@@ -133,7 +135,9 @@ class Groups with Service, NotificationsListener {
     _userGroupNames = _buildGroupNames(_userGroups);
 
     if (_userGroups == null) {
-      await _initUserGroupsFromNet();
+      _userGroups = await loadUserGroupsV3();
+      _userGroupNames = _buildGroupNames(_userGroups);
+      _saveUserGroupsToCache(_userGroups);
     }
     else {
       _updateUserGroupsFromNetSync();
@@ -310,49 +314,76 @@ class Groups with Service, NotificationsListener {
     Auth2().prefs?.applySetting(_userLoginVersionSetting, Config().appMajorVersion);
   }
 
-  // Groups APIs
+  // Groups V3 APIs
 
+  Future<GroupsLoadResult?> loadGroupsV3(GroupsQuery query) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v3/groups/load';
+      String? post = JsonUtils.encode(query.toQueryJson());
 
-  ///
-  /// Do not load user groups on portions / pages. We cached and use them for checks in flexUi and checklist
-  ///
-  /// Note: Do not allow loading on portions (paging) - there is a problem on the backend. Revert when it is fixed. 
-  Future<List<Group>?> loadGroups({GroupsContentType? contentType, String? title, Map<String, dynamic>? attributes, bool? administrative, int? offset, int? limit}) async {
-    switch(contentType) {
-      case GroupsContentType.my: return _loadUserGroups(title: title, attributes: attributes, administrative: administrative, offset: offset, limit: limit);
-      case GroupsContentType.all: return _loadAllGroups(title: title, attributes: attributes, offset: offset, limit: limit);
-      default: return null;
-    }
-  }
-
-  Future<List<Group>?> loadResearchProjects({ResearchProjectsContentType? contentType, String? title, String? category, Set<String>? tags, GroupPrivacy? privacy, int? offset, int? limit}) async {
-    if ((Config().groupsUrl != null) && ((contentType != ResearchProjectsContentType.my) || Auth2().isLoggedIn)) {
-      String url = (contentType != ResearchProjectsContentType.my) ? '${Config().groupsUrl}/v2/groups' : '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'category': category,
-        'tags': tags,
-        'privacy': groupPrivacyToString(privacy),
-        'offset': offset,
-        'limit': limit,
-
-        'research_group': true,
-        'research_open': (contentType == ResearchProjectsContentType.open) ? true : null,
-        'exclude_my_groups': (contentType == ResearchProjectsContentType.open) ? true : null,
-        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });
-      
       try {
         await _ensureLogin();
         Response? response = await Network().post(url, body: post, auth: Auth2());
-        String? responseBody = (response?.statusCode == 200) ? response?.body : null;
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return Group.listFromJson(JsonUtils.decodeList(responseBody), filter: (contentType == ResearchProjectsContentType.open) ? (Group group) => (group.currentMember == null) : null);
+        return (response?.statusCode == 200) ? GroupsLoadResult.fromJson(JsonUtils.decodeMap(response?.body)) : null;
       } catch (e) {
         debugPrint(e.toString());
       }
     }
+
     return null;
+  }
+
+  Future<List<Group>?> loadGroupsListV3({GroupsFilter? filter}) async {
+    GroupsLoadResult? groupsResult = await loadGroupsV3(GroupsQuery(filter: filter));
+    return groupsResult?.groups;
+  }
+
+  Future<Map<String, int?>?> countGroupsV3(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v3/groups/stats';
+      String? body = JsonUtils.encode({
+        'base_filter': GroupsQuery(filter: baseFilter).toQueryJson(),
+        'sub_filters': countFilters.map<String, Map<String, dynamic>?>((String key, GroupsFilter? filter) => MapEntry(key, filter?.toQueryJson())),
+      });
+      Response? response = await Network().post(url, body: body, auth: Auth2());
+      return (response?.statusCode == 200) ? JsonUtils.mapCastValue<String, int?>(JsonUtils.decodeMap(response?.body)) : null;
+    }
+    return null;
+  }
+
+  static const GroupsFilter userGroupsFilter =  GroupsFilter(types: userGroupsTypes);
+  static const Set<GroupsFilterType> userGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin, GroupsFilterType.member};
+  Future<List<Group>?> loadUserGroupsV3() => loadGroupsListV3(filter: userGroupsFilter);
+
+  static const GroupsFilter adminUserGroupsFilter =  GroupsFilter(types: adminUserGroupsTypes );
+  static const Set<GroupsFilterType> adminUserGroupsTypes = <GroupsFilterType>{ ...userGroupsTypes, GroupsFilterType.administrative };
+  Future<List<Group>?> loadAdminUserGroupsV3() => loadGroupsListV3(filter: adminUserGroupsFilter);
+
+  static const GroupsFilter allGroupsFilter =  GroupsFilter();
+  Future<List<Group>?> loadAllGroupsV3() => loadGroupsListV3(filter: allGroupsFilter);
+
+  // Research Projects V3 APIs
+
+  Future<GroupsLoadResult?> loadResearchProjectsV3(ResearchProjectsQuery query) async {
+    if (Config().groupsUrl != null) {
+      String url = '${Config().groupsUrl}/v3/groups/load';
+      String? post = JsonUtils.encode(query.toQueryJson());
+
+      try {
+        await _ensureLogin();
+        Response? response = await Network().post(url, body: post, auth: Auth2());
+        return (response?.statusCode == 200) ? GroupsLoadResult.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+      } catch (e) {
+        debugPrint(e.toString());
+      }
+    }
+
+    return null;
+  }
+
+  Future<List<Group>?> loadResearchProjectsListV3(ResearchProjectsFilter? filter) async {
+    GroupsLoadResult? result = await loadResearchProjectsV3(ResearchProjectsQuery(filter: filter));
+    return result?.groups;
   }
 
   Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
@@ -367,59 +398,6 @@ class Groups with Service, NotificationsListener {
         return (responseBody != null) ? int.tryParse(responseBody) : null;
       } catch (e) {
         debugPrint(e.toString());
-      }
-    }
-    return null;
-  }
-
-  Future<List<Group>?> _loadAllGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, List<String>? groupIds, bool? administrative, int? offset, int? limit}) async {
-    if (Config().groupsUrl != null) {
-      String url = '${Config().groupsUrl}/v2/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'attributes': attributes,
-        'privacy': groupPrivacyToString(privacy),
-        'research_group': false,
-        'ids': groupIds,
-        'administrative': administrative,
-        'offset': offset,
-        'limit': limit,
-      });
-
-      try {
-        await _ensureLogin();
-        Response? response = await Network().post(url, body: post, auth: Auth2());
-        //Log.d('GET $url\n$post\n ${response?.statusCode} $responseBody', lineLength: 512);
-        return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-
-    return null;
-  }
-
-  Future<List<Group>?> searchGroups(String searchText, {bool includeHidden = false, bool researchProjects = false, bool researchOpen = false }) async {
-    if ((Config().groupsUrl != null) && (StringUtils.isNotEmpty(searchText))) {
-      await _ensureLogin();
-      String? post = JsonUtils.encode({
-        'title': searchText, // Uri.encodeComponent(searchText)
-        'include_hidden': includeHidden,
-        'research_group': researchProjects,
-        'research_open': researchOpen,
-        'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
-      });
-
-
-      String url = '${Config().groupsUrl}/v2/groups';
-      Response? response = await Network().post(url, auth: Auth2(), body: post);
-      int responseCode = response?.statusCode ?? -1;
-      String? responseBody = response?.body;
-      if (responseCode == 200) {
-        return Group.listFromJson(JsonUtils.decodeList(responseBody));
-      } else {
-        debugPrint('Failed to search for groups. Reason: ');
-        debugPrint(responseBody);
       }
     }
     return null;
@@ -1038,11 +1016,6 @@ class Groups with Service, NotificationsListener {
     return null; // fail
   }
 
-  Future<List<Group>?> loadGroupsByIds({Set<String>? groupIds}) async {
-    dynamic result = CollectionUtils.isNotEmpty(groupIds) ? await _loadAllGroups(groupIds: groupIds!.toList()) : null;
-    return result;
-  }
-
   // Nudges
 
   Future<List<GroupPostNudge>?> loadPostNudges({required String groupName}) async {
@@ -1116,23 +1089,14 @@ class Groups with Service, NotificationsListener {
   // User Groups
 
   List<Group>? get userGroups => _userGroups;
-
   Set<String>? get userGroupNames => _userGroupNames;
 
-  ///
-  /// Returns the groups that current user is admin of without the current group
-  ///
-  Future<List<Group>?> loadAdminUserGroups({List<String> excludeIds = const [], bool? administrative}) async {
-    List<Group>? userGroups = await loadGroups(contentType: GroupsContentType.my, administrative: administrative);
-    return userGroups?.where((group) => (group.currentUserIsAdmin && (excludeIds.contains(group.id) == false))).toList();
-  }
-
-  File? _getUserGroupsCacheFile()  =>
-    (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
+  File? get _userGroupsCacheFile  => (_appDocDir != null) ?
+    File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
   Future<String?> _loadUserGroupsStringFromCache() async {
     try {
-      File? cacheFile = _getUserGroupsCacheFile();
+      File? cacheFile = _userGroupsCacheFile;
       return (await cacheFile?.exists() == true) ? await cacheFile?.readAsString() : null;
     }
     catch(e) { 
@@ -1143,7 +1107,7 @@ class Groups with Service, NotificationsListener {
 
   Future<void> _saveUserGroupsStringToCache(String? value) async {
     try {
-      File? cacheFile = _getUserGroupsCacheFile();
+      File? cacheFile = _userGroupsCacheFile;
       if (cacheFile != null) {
         if (value != null) {
           await cacheFile.writeAsString(value, flush: true);
@@ -1158,62 +1122,11 @@ class Groups with Service, NotificationsListener {
     }
   }
 
-  Future<List<Group>?> _loadUserGroupsFromCache() async {
-    return Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
-  }
+  Future<List<Group>?> _loadUserGroupsFromCache() async =>
+    Group.listFromJson(JsonUtils.decodeList(await _loadUserGroupsStringFromCache()));
 
-  Future<Response?> _loadUserGroupsResponse({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
-    if (StringUtils.isNotEmpty(Config().groupsUrl) && Auth2().isLoggedIn) {
-      // Load all user groups because we cache them and use them for various checks on startup like flexUI etc
-      String url = '${Config().groupsUrl}/v2/user/groups';
-      String? post = JsonUtils.encode({
-        'title': title,
-        'attributes': attributes,
-        'privacy': groupPrivacyToString(privacy),
-        'research_group': false,
-        'ids': groupIds,
-        'administrative': administrative,
-        'offset': offset,
-        'limit': limit,
-      });
-      try {
-        await _ensureLogin();
-        return await Network().post(url, body: post, auth: Auth2());
-      } catch (e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
-  }
-
-  Future<List<Group>?> _loadUserGroups({String? title, Map<String, dynamic>? attributes, GroupPrivacy? privacy, bool? administrative, List<String>? groupIds, int? offset, int? limit}) async {
-    Response? response = await _loadUserGroupsResponse(
-        title: title,
-        attributes: attributes,
-        privacy: privacy,
-        groupIds: groupIds,
-        administrative: administrative,
-        offset: offset,
-        limit:  limit,
-    );
-    return (response?.statusCode == 200) ? Group.listFromJson(JsonUtils.decodeList(response?.body)) : null;
-  }
-
-  Future<String?> _loadUserGroupsStringFromNet() async {
-    Response? response = await _loadUserGroupsResponse();
-    //debugPrint('Failed to load user groups. Code: ${response.statusCode}}.\nResponse: ${response.body}');
-    return (response?.statusCode == 200) ? response?.body : null;
-  }
-
-  Future<void> _initUserGroupsFromNet() async {
-    String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
-    if (userGroups != null) {
-      _userGroups = userGroups;
-      _userGroupNames = _buildGroupNames(_userGroups);
-      await _saveUserGroupsStringToCache(jsonString);
-    }
-  }
+  Future<void> _saveUserGroupsToCache(List<Group>? groups) async =>
+    _saveUserGroupsStringToCache(JsonUtils.encode(Group.listToJson(groups)));
 
   Future<void> _updateUserGroupsFromNetSync() async{
     try {
@@ -1239,12 +1152,11 @@ class Groups with Service, NotificationsListener {
   }
 
   Future<void> _updateUserGroupsFromNet() async {
-    String? jsonString = await _loadUserGroupsStringFromNet();
-    List<Group>? userGroups = Group.listFromJson(JsonUtils.decodeList(jsonString));
+    List<Group>? userGroups = await loadUserGroupsV3();
     if ((userGroups != null) && !const DeepCollectionEquality().equals(_userGroups, userGroups)) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);
-      await _saveUserGroupsStringToCache(jsonString);
+      await _saveUserGroupsToCache(_userGroups);
       NotificationService().notify(notifyUserGroupsUpdated);
     }
   }
@@ -1253,7 +1165,7 @@ class Groups with Service, NotificationsListener {
     if (_userGroups != null) {
       _userGroups = null;
       _userGroupNames = null;
-      await _saveUserGroupsStringToCache(null);
+      await _saveUserGroupsToCache(_userGroups);
       NotificationService().notify(notifyUserGroupsUpdated);
     }
   }
