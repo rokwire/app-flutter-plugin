@@ -1292,7 +1292,7 @@ String? groupUtcDateTimeToString(DateTime? dateTime) {
 
 // Group Filters
 
-enum GroupsFilterType { public, private, eventAdmin, managed, administrative, admin, member, candidate }
+enum GroupsFilterType { public, private, administrative, managed, admin, member, candidate }
 
 class GroupsFilter {
   final Map<String, dynamic>? attributes;
@@ -1326,9 +1326,8 @@ class GroupsFilter {
     Map<String, dynamic> result = <String, dynamic>{};
     MapUtils.add(result, 'attributes', attributes);
     MapUtils.add(result, 'privacy', privacy?.toJson());
-    //TBD: MapUtils.add(result, '...', eventAdmin ? true : null);
-    MapUtils.add(result, 'authman_enabled', managed ? true : null);
     MapUtils.add(result, 'administrative', administrative ? true : null);
+    MapUtils.add(result, 'authman_enabled', managed ? true : null);
     MapUtils.add(result, 'member_status', memberStatus?.toJson());
     return result;
   }
@@ -1346,9 +1345,8 @@ class GroupsFilter {
 
   bool get public => (types?.contains(GroupsFilterType.public) == true);
   bool get private => (types?.contains(GroupsFilterType.private) == true);
-  bool get eventAdmin => (types?.contains(GroupsFilterType.eventAdmin) == true);
-  bool get managed => (types?.contains(GroupsFilterType.managed) == true);
   bool get administrative => (types?.contains(GroupsFilterType.administrative) == true);
+  bool get managed => (types?.contains(GroupsFilterType.managed) == true);
 
   bool get admin => (types?.contains(GroupsFilterType.admin) == true);
   bool get member => (types?.contains(GroupsFilterType.member) == true);
@@ -1429,9 +1427,8 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
     switch (code) {
       case 'public': return GroupsFilterType.public;
       case 'private': return GroupsFilterType.private;
-      case 'eventAdmin': return GroupsFilterType.eventAdmin;
-      case 'managed': return GroupsFilterType.managed;
       case 'administrative': return GroupsFilterType.administrative;
+      case 'managed': return GroupsFilterType.managed;
       case 'admin': return GroupsFilterType.admin;
       case 'member': return GroupsFilterType.member;
       case 'candidate': return GroupsFilterType.candidate;
@@ -1443,9 +1440,8 @@ extension GroupsFilterTypeImpl on GroupsFilterType {
     switch (this) {
       case GroupsFilterType.public: return 'public';
       case GroupsFilterType.private: return 'private';
-      case GroupsFilterType.eventAdmin: return 'eventAdmin';
-      case GroupsFilterType.managed: return 'managed';
       case GroupsFilterType.administrative: return 'administrative';
+      case GroupsFilterType.managed: return 'managed';
       case GroupsFilterType.admin: return 'admin';
       case GroupsFilterType.member: return 'member';
       case GroupsFilterType.candidate: return 'candidate';
