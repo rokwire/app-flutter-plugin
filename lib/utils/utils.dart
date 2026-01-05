@@ -1796,6 +1796,7 @@ class WebUtils {
     return "";
   }
 
+  static isDesktopDeviceWeb() => kIsWeb && (!isIosWeb() && !isAndroidWeb() && !isMobileWeb());
   static isMobileDeviceWeb() => kIsWeb && (isIosWeb() || isAndroidWeb());
 
   static bool isIosWeb() {
@@ -1810,6 +1811,14 @@ class WebUtils {
     if (kIsWeb) {
       final userAgent = _webUserAgent();
       return (userAgent != null) && userAgent.contains('android');
+    }
+    return false;
+  }
+
+  static bool isMobileWeb() {
+    if (kIsWeb) {
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && userAgent.contains('mobile');
     }
     return false;
   }
