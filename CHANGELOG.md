@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed existing ListUtils sort utilities as unused, ListUtils.sort updated to sort a list copy [#5577](https://github.com/rokwire/illinois-app/issues/5577).
 - Switched to load Groups V3 API [#5353](https://github.com/rokwire/illinois-app/issues/5353).
 - Merged eventAdmin and administrative GroupFilterTypes [#5353](https://github.com/rokwire/illinois-app/issues/5353).
+- Upgrade to http package 1.4.0 [#5562](https://github.com/rokwire/illinois-app/issues/5562).
 
 ## [1.12.1] - 2025-12-01
 ### Added
