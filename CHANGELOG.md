@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched to load Groups V3 API [#5353](https://github.com/rokwire/illinois-app/issues/5353).
 - Merged eventAdmin and administrative GroupFilterTypes [#5353](https://github.com/rokwire/illinois-app/issues/5353).
 - Upgrade to http package 1.4.0 [#5562](https://github.com/rokwire/illinois-app/issues/5562).
+### Added
+- Added web platform rule in FlexUI [#5615](https://github.com/rokwire/illinois-app/issues/5615).
 
 ## [1.12.1] - 2025-12-01
 ### Added
