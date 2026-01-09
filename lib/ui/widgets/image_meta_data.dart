@@ -37,6 +37,7 @@ class ImageMetaDataProvider extends ChangeNotifier {
   final String? imageUrl;
   ImageMetaData? _metaData;
   bool _isLoading = false;
+  bool _isDisposed = false;
 
   ImageMetaDataProvider({required String? this.imageUrl, ImageMetaData? initialData}) :
     _metaData = initialData;
@@ -45,15 +46,26 @@ class ImageMetaDataProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   void loadMetaData() {
-    if (_metaData != null || _isLoading || imageUrl == null) return;
+    if (_metaData != null || _isLoading || imageUrl == null || _isDisposed) return;
 
     _isLoading = true;
     Content().loadImageMetaData(url: imageUrl!).then((result) {
       _metaData = result.imageMetaData ?? _metaData;
       _isLoading = false;
       // Notify all listeners that the data has changed.
-      notifyListeners();
+      if(_isDisposed == false)
+        notifyListeners();
+    }).catchError((e) {
+      _isLoading = false;
+      if(_isDisposed == false)
+        notifyListeners();
     });
   }
 }
