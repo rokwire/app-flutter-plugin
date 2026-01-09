@@ -15,12 +15,16 @@ class ModalImageHolder extends StatelessWidget implements ImageHolder, ImageMeta
 
   const ModalImageHolder({super.key, this.image, this.child, this.imageUrl, this.imageKey, this.headers, this.metaData});
 
-  @override //Used to pass the metaData fut in the same time keep the metaData final. Fixing warning.
+  @override //Used to pass the metaData but in the same time keep the metaData final. Fixing warning.
   ImageMetaDataDecorator copyWithMetaData(ImageMetaData? metaData) =>
       ModalImageHolder(key: super.key, image: this.image,  imageUrl: this.imageUrl, child: this.child, imageKey: this.imageKey, headers: this.headers, metaData: metaData ?? this.metaData);
 
-  @override String? get holderUrl => imageUrl;
-  @override String? get holderKey => imageKey;
+  @override String? get holderUrl => imageUrl  ??
+      (child is ImageHolder ? (child as ImageHolder).holderUrl : null);
+
+  @override String? get holderKey => imageKey ??
+      (child is ImageHolder ? (child as ImageHolder).holderKey : null);
+
   @override Image? get holderImage => image ?? (
       child is Image ? child as Image :
       child is ImageHolder ? (child as ImageHolder).holderImage :
