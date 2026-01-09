@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_header_image.dart';
+import 'package:rokwire_plugin/ui/widgets/web_semantics.dart';
 
 // HeaderBar
 
@@ -88,9 +89,9 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
     Widget? image = leadingIcon ?? leadingIconFromKey;
-    return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
+    return (image != null) ? WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
-    ) : null;
+    )) : null;
   }
 
   @protected
