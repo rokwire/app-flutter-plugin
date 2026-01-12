@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added web platform rule in FlexUI [#5615](https://github.com/rokwire/illinois-app/issues/5615).
 ### Fixed
 - Fix alert text evaluation for local notifications [#666](https://github.com/rokwire/app-flutter-plugin/issues/666).
+- Fixed Auth2UserPrefs.apply implementation [#4698](https://github.com/rokwire/app-flutter-plugin/issues/4698).
 
 ## [1.12.1] - 2025-12-01
 ### Added
