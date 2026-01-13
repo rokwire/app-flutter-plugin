@@ -228,7 +228,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   //Leading
   @protected
   Widget? buildLeadingWidget(BuildContext context) => (leadingIconKey != null) ?
-    Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
+    WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
       GestureDetector(onTap: () => onTapLeading(context), child:
         Padding(padding: leadingPadding, child:
           ClipOval(child:
@@ -238,7 +238,7 @@ class SliverToutHeaderBar extends StatelessWidget {
           ),
         ),
       )
-    ) : null;
+    )) : null;
 
   @protected
   void onTapLeading(BuildContext context) {
@@ -344,9 +344,9 @@ class SliverHeaderBar extends StatelessWidget {
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
     Widget? image = leadingImage;
-    return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
+    return (image != null) ? WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
-    ) : null;
+    )) : null;
   }
 
   
