@@ -164,7 +164,7 @@ class LocalNotifications with Service {
         id.hashCode,
         title,
         message,
-        timezone.TZDateTime.from(dateTime ?? DateTime.now(), timezone.getLocation(AppDateTime().localTimeZone)),
+        timezone.TZDateTime.from(dateTime ?? DateTime.now().add(const Duration(seconds: 2)), timezone.getLocation(AppDateTime().localTimeZone)), // must give DateTime in the future
         notificationDetails,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.wallClockTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

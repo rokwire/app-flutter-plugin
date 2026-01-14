@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.12.2] - 2026-01-14
+### Changed
+- Removed existing ListUtils sort utilities as unused, ListUtils.sort updated to sort a list copy [#5577](https://github.com/rokwire/illinois-app/issues/5577).
+- Switched to load Groups V3 API [#5353](https://github.com/rokwire/illinois-app/issues/5353).
+- Merged eventAdmin and administrative GroupFilterTypes [#5353](https://github.com/rokwire/illinois-app/issues/5353).
+- Upgrade to http package 1.4.0 [#5562](https://github.com/rokwire/illinois-app/issues/5562).
+### Added
+- Added web platform rule in FlexUI [#5615](https://github.com/rokwire/illinois-app/issues/5615).
+### Fixed
+- Fix alert text evaluation for local notifications [#666](https://github.com/rokwire/app-flutter-plugin/issues/666).
+- Fixed Auth2UserPrefs.apply implementation [#4698](https://github.com/rokwire/app-flutter-plugin/issues/4698).
+
 ## [1.12.1] - 2025-12-01
 ### Added
 - Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).

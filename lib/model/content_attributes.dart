@@ -735,6 +735,7 @@ class ContentAttributeValue {
   final String? _selectedLabel;
   final dynamic _value;
   final String? group;
+  final bool? enabled;
   final Map<String, dynamic>? requirements;
   
   // Mutable properties
@@ -744,7 +745,7 @@ class ContentAttributeValue {
   ContentAttributeValue({this.label,
     String? selectLabel, String? selectedLabel, dynamic value,
     this.group, this.requirements,
-    this.info, this.customData
+    this.info, this.enabled, this.customData
   }) :
     _selectLabel = selectLabel,
     _selectedLabel = selectedLabel,
@@ -771,6 +772,7 @@ class ContentAttributeValue {
         selectedLabel: JsonUtils.stringValue(json['selected-label']),
         value: json['value'],
         group: JsonUtils.stringValue(json['group']),
+        enabled: JsonUtils.boolValue(json['enabled']),
         requirements: JsonUtils.mapValue(json['requirements']),
       );
     }
@@ -785,6 +787,7 @@ class ContentAttributeValue {
     'selected-label': _selectedLabel,
     'value': _value,
     'group': group,
+    'enabled': enabled,
     'requirements': requirements,
   } : label;
 
@@ -798,6 +801,7 @@ class ContentAttributeValue {
     (_selectedLabel == other._selectedLabel) &&
     (_value == other._value) &&
     (group == other.group) &&
+    (enabled == other.enabled) &&
     (info == other.info) &&
     (const DeepCollectionEquality().equals(requirements, other.requirements)) &&
     (const DeepCollectionEquality().equals(customData, other.customData));
@@ -809,6 +813,7 @@ class ContentAttributeValue {
     (_selectedLabel?.hashCode ?? 0) ^
     (_value?.hashCode ?? 0) ^
     (group?.hashCode ?? 0) ^
+    (enabled?.hashCode ?? 0) ^
     (info?.hashCode ?? 0) ^
     (customData?.hashCode ?? 0) ^
     (const DeepCollectionEquality().hash(requirements));
@@ -821,10 +826,13 @@ class ContentAttributeValue {
     selectedLabel: _selectedLabel,
     value: _value,
     group: group,
+    enabled: enabled,
     requirements: MapUtils.from(requirements),
     info: info,
     customData: MapUtils.from(customData)
   );
+
+  bool get isEnabled => (enabled != false);
 
   static List<ContentAttributeValue>? listFromOther(List<ContentAttributeValue>? otherList, { bool clone = false }) {
     if (otherList != null) {
