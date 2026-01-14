@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+
+## [1.12.2] - 2026-01-14
 ### Changed
 - Removed existing ListUtils sort utilities as unused, ListUtils.sort updated to sort a list copy [#5577](https://github.com/rokwire/illinois-app/issues/5577).
 ### Added
