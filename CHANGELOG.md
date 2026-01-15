@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Changed
+- Groups.loadAdminUserGroupsV3 renamed to loadAdministrativeUserGroupsV3, created new loadAdminUserGroupsV3 that loads only groups where the user is admin [#5666](https://github.com/rokwire/illinois-app/issues/5666).
 
 ## [1.12.2] - 2026-01-14
 ### Changed
