@@ -6,8 +6,8 @@ Patches for [ **app-flutter-plugin** ] will only be applied to the following ver
 
 | Version  | Supported |
 |----------| ------------------ |
-| 1.12.2   | :white_check_mark: |
-| < 1.12.2 | :x: |
+| 1.12.3   | :white_check_mark: |
+| < 1.12.3 | :x: |
 | 1.11.2   | :white_check_mark: |
 | < 1.11.2 | :x: |
 | 1.10.2   | :white_check_mark: |
