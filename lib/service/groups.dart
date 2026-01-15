@@ -355,9 +355,13 @@ class Groups with Service, NotificationsListener {
   static const Set<GroupsFilterType> userGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin, GroupsFilterType.member};
   Future<List<Group>?> loadUserGroupsV3() => loadGroupsListV3(filter: userGroupsFilter);
 
-  static const GroupsFilter adminUserGroupsFilter =  GroupsFilter(types: adminUserGroupsTypes );
-  static const Set<GroupsFilterType> adminUserGroupsTypes = <GroupsFilterType>{ ...userGroupsTypes, GroupsFilterType.administrative };
+  static const GroupsFilter adminUserGroupsFilter =  GroupsFilter(types: adminUserGroupsTypes);
+  static const Set<GroupsFilterType> adminUserGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin};
   Future<List<Group>?> loadAdminUserGroupsV3() => loadGroupsListV3(filter: adminUserGroupsFilter);
+
+  static const GroupsFilter administrativeUserGroupsFilter =  GroupsFilter(types: administrativeUserGroupsTypes );
+  static const Set<GroupsFilterType> administrativeUserGroupsTypes = <GroupsFilterType>{ ...userGroupsTypes, GroupsFilterType.administrative };
+  Future<List<Group>?> loadAdministrativeUserGroupsV3() => loadGroupsListV3(filter: administrativeUserGroupsFilter);
 
   static const GroupsFilter allGroupsFilter =  GroupsFilter();
   Future<List<Group>?> loadAllGroupsV3() => loadGroupsListV3(filter: allGroupsFilter);
