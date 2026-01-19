@@ -314,10 +314,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       return SurveyDataWidget(_buildHorizontalMultipleChoiceSurveySection(survey, enabled: enabled));
     }
 
-    OptionData? selected;
-    for (OptionData data in optionList) {
-      if (data.responseValue == survey.response) {
-        selected = data;
+    int? selected;
+    for (int index = 0; index <  optionList.length; index++) {
+      if (optionList[index].responseValue == survey.response) {
+        selected = index;
         break;
       }
     }
@@ -466,10 +466,10 @@ class _SurveyWidgetState extends State<SurveyWidget> {
 
     List<OptionData> optionList = survey.options;
 
-    OptionData? selected;
-    for (OptionData data in optionList) {
-      if (data.responseValue == survey.response) {
-        selected = data;
+    int? selected;
+    for (int index = 0; index < optionList.length; index++) {
+      if (optionList[index].responseValue == survey.response) {
+        selected = index;
         break;
       }
     }
@@ -662,18 +662,29 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     for (int i = min; i <= max; i++) {
       buttons.add(Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
        Text(i.toString(), style: Styles().textStyles.getTextStyle('label')),
-       Radio(value: i, groupValue: value, activeColor: Styles().colors.fillColorPrimary,
-         onChanged: enabled ? (Object? value) {
+       Radio(value: i, activeColor: Styles().colors.fillColorPrimary,
+          /*groupValue: value,
+          onChanged: enabled ? (Object? value) {
            survey.response = value;
            _onChangeResponse(false);
-         } : null
+         } : null*/
        )
       ]));
     }
 
     return Column(
       children: [
-        Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
+        RadioGroup(
+          groupValue: value,
+          onChanged: (Object? value) {
+            if (enabled) {
+              survey.response = value;
+              _onChangeResponse(false);
+            }
+           },
+          child: Row(mainAxisSize: MainAxisSize.max, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: buttons),
+        )
+        ,
         Padding(
           padding: const EdgeInsets.only(top: 24.0),
           child: Container(height: 1, color: Styles().colors.dividerLine),
@@ -950,7 +961,7 @@ class CustomIconSelectionList extends StatelessWidget {
 class SingleSelectionList extends StatelessWidget {
   final List<OptionData> selectionList;
   final void Function(int)? onChanged;
-  final OptionData? selectedValue;
+  final int? selectedValue;
 
   const SingleSelectionList({
     Key? key,
@@ -961,7 +972,10 @@ class SingleSelectionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return RadioGroup<int>(
+      groupValue: selectedValue,
+      onChanged: (int? value) => (value != null) ? onChanged?.call(value) : null,
+      child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: selectionList.length,
@@ -971,16 +985,16 @@ class SingleSelectionList extends StatelessWidget {
               child: Card(
                 color: Styles().colors.white,
                 clipBehavior: Clip.hardEdge,
-                child: RadioListTile(
+                child: RadioListTile<int>(
                   title: Transform.translate(offset: const Offset(-15, 0), child: Text(title, style: TextStyle(fontFamily: Styles().fontFamilies.regular, fontSize: 16 /*, color: Styles().colors.headlineText */))),
                   activeColor: Styles().colors.fillColorSecondary,
-                  value: title,
-                  groupValue: selectedValue?.title,
-                  onChanged: onChanged != null ? (_) => onChanged!(index) : null,
+                  value: index,
                   contentPadding: const EdgeInsets.all(8),
                 )
               ));
-        });
+        }
+      ),
+    );
   }
 }
 
