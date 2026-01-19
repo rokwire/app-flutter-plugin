@@ -453,7 +453,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
       }
       return SurveyDataWidget(Switch(
         value: survey.response,
-        activeColor: Styles().colors.fillColorPrimary,
+        activeThumbColor: Styles().colors.fillColorPrimary,
         onChanged: enabled ? (bool value) {
           // if (survey.scored && survey.response != null) {
           //   return;
