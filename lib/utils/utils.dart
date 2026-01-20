@@ -30,6 +30,7 @@ import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_io/io.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:web/web.dart' as web;
 
 class StringUtils {
 
@@ -341,14 +342,11 @@ class ListUtils {
     return list.contains(item);
   }
 
-  static void sort<T>(List<T> list, int Function(T a, T b)? compare) =>
-    list.sort(compare);
-
-  static void _sort<T>(_SortListParam<T> param) =>
-    param.list.sort(param.compare);
-
-  static Future<void> sortAsync<T>(List<T> list, int Function(T a, T b)? compare) =>
-    compute(_sort, _SortListParam(list, compare));
+  static List<T> sort<T>(List<T> list, [int Function(T a, T b)? compare]) {
+    List<T> sortedList = List<T>.from(list);
+    sortedList.sort(compare);
+    return sortedList;
+  }
 
   static List<String>? stripEmptyStrings(List<String>? list) {
     if (list != null) {
@@ -375,12 +373,6 @@ class ListUtils {
     }
     return result;
   }
-}
-
-class _SortListParam<T> {
-  final List<T> list;
-  final int Function(T a, T b)? compare;
-  _SortListParam(this.list, this.compare);
 }
 
 class SetUtils {
@@ -714,6 +706,11 @@ class UrlUtils {
     return url;
   }
 
+  static String? stripQueryParameters(String? url){
+    int queryIndex = url?.indexOf('?') ?? -1;
+    return queryIndex >= 0 ? url?.substring(0, queryIndex) : url;
+  }
+
   static String buildWithQueryParameters(String url, Map<String, String> queryParameters) {
     Uri? uri = Uri.tryParse(url);
     return UriExt.buildWithQueryParameters(uri, queryParameters).toString();
@@ -943,22 +940,19 @@ class JsonUtils {
     compute(decodeMap, jsonString);
 
   static String? stringValue(dynamic value) {
-    if (value is String) {
-      return value;
-    }
-    else if (value != null) {
-      try {
-        return value.toString();
-      }
-      catch(e) {
-        debugPrint(e.toString());
-      }
-    }
-    return null;
+    return (value is String) ? value : value?.toString();
   }
 
   static int? intValue(dynamic value) {
-    return (value is int) ? value : null;
+    if (value is int) {
+      return value;
+    }
+    else if (value is String) {
+      return int.tryParse(value);
+    }
+    else {
+      return null;
+    }
   }
 
   static bool? boolValue(dynamic value) {
@@ -1259,13 +1253,14 @@ class AppToast {
   static const Duration defaultDuration = const Duration(seconds: 3);
   static const ToastGravity defaultGravity = ToastGravity.BOTTOM;
   static const Color defaultTextColor = Colors.white;
+  static const Color defaultWebTextColor = Colors.black;
   static const Color defaultBackgroundColor = const Color(0x99000000);
   static const String defaultWebBackgroundColor = '#ffffff';
 
   static void showMessage(String msg, {
     ToastGravity gravity = defaultGravity,
     Duration duration = defaultDuration,
-    Color textColor = defaultTextColor,
+    Color textColor = (kIsWeb ? defaultWebTextColor : defaultTextColor),
     Color backgroundColor = defaultBackgroundColor,
     String webBackgroundColor = defaultWebBackgroundColor,
   }) {
@@ -1799,6 +1794,43 @@ class WebUtils {
       }
     }
     return "";
+  }
+
+  static isDesktopDeviceWeb() => kIsWeb && (!isIosWeb() && !isAndroidWeb() && !isMobileWeb());
+  static isMobileDeviceWeb() => kIsWeb && (isIosWeb() || isAndroidWeb());
+
+  static bool isIosWeb() {
+    if (kIsWeb) {
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && (userAgent.contains('iphone') || userAgent.contains('ipad') || userAgent.contains('ipod'));
+    }
+    return false;
+  }
+
+  static bool isAndroidWeb() {
+    if (kIsWeb) {
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && userAgent.contains('android');
+    }
+    return false;
+  }
+
+  static bool isMobileWeb() {
+    if (kIsWeb) {
+      final userAgent = _webUserAgent();
+      return (userAgent != null) && userAgent.contains('mobile');
+    }
+    return false;
+  }
+
+  static String? _webUserAgent() => kIsWeb ? web.window.navigator.userAgent.toLowerCase() : null;
+
+  static web.Window? createIosWebWindow() {
+    web.Window? webWindow;
+    if (isIosWeb()) {
+      webWindow = web.window.open("", "_blank");
+    }
+    return webWindow;
   }
 }
 

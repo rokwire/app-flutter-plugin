@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_header_image.dart';
+import 'package:rokwire_plugin/ui/widgets/web_semantics.dart';
 
 // HeaderBar
 
@@ -88,9 +89,9 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
     Widget? image = leadingIcon ?? leadingIconFromKey;
-    return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
+    return (image != null) ? WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
-    ) : null;
+    )) : null;
   }
 
   @protected
@@ -215,7 +216,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   // Flexible Space
   @protected
   Widget? buildFlexibleSpace(BuildContext context) =>
-    Semantics(container: true, excludeSemantics: true, child:
+    Semantics(container: true, child:
       FlexibleSpaceBar(background:
         TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl,
           flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
@@ -227,7 +228,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   //Leading
   @protected
   Widget? buildLeadingWidget(BuildContext context) => (leadingIconKey != null) ?
-    Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
+    WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, child:
       GestureDetector(onTap: () => onTapLeading(context), child:
         Padding(padding: leadingPadding, child:
           ClipOval(child:
@@ -237,7 +238,7 @@ class SliverToutHeaderBar extends StatelessWidget {
           ),
         ),
       )
-    ) : null;
+    )) : null;
 
   @protected
   void onTapLeading(BuildContext context) {
@@ -343,9 +344,9 @@ class SliverHeaderBar extends StatelessWidget {
   @protected
   Widget? buildLeadingWidget(BuildContext context) {
     Widget? image = leadingImage;
-    return (image != null) ? Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
+    return (image != null) ? WebFocusableSemanticsWidget(onSelect: () => onTapLeading(context), child: Semantics(label: leadingLabel, hint: leadingHint, button: true, excludeSemantics: true, child:
       IconButton(icon: image, onPressed: () => onTapLeading(context))
-    ) : null;
+    )) : null;
   }
 
   

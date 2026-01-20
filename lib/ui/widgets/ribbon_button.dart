@@ -3,8 +3,8 @@ import 'package:flutter/semantics.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
-class RibbonButton extends StatefulWidget {
-  final String? label;
+class RibbonButton extends StatelessWidget {
+  final String? title;
   final String? description;
   final void Function()? onTap;
   final Color? backgroundColor;
@@ -45,11 +45,12 @@ class RibbonButton extends StatefulWidget {
   final AlignmentGeometry progressAlignment;
   final bool progressHidesIcon;
 
-  final String? hint;
+  final String? semanticsLabel;
+  final String? semanticsHint;
   final String? semanticsValue;
 
   const RibbonButton({Key? key,
-    this.label,
+    this.title,
     this.description,
     this.onTap,
     this.backgroundColor,      //= Styles().colors.white
@@ -90,7 +91,8 @@ class RibbonButton extends StatefulWidget {
     this.progressAlignment          = Alignment.centerRight,
     this.progressHidesIcon          = true,
 
-    this.hint,
+    this.semanticsLabel,
+    this.semanticsHint,
     this.semanticsValue,
   }) : super(key: key);
 
@@ -106,7 +108,7 @@ class RibbonButton extends StatefulWidget {
   @protected String? get defaultFontFamily => Styles().fontFamilies.bold;
   @protected String? get displayFontFamily => fontFamily ?? defaultFontFamily;
   @protected TextStyle get displayTextStyle => textStyle ?? TextStyle(fontFamily: displayFontFamily, fontSize: fontSize, color: displayTextColor);
-  @protected Widget get displayTextWidget => textWidget ?? Text(label ?? '', style: displayTextStyle, textAlign: textAlign,);
+  @protected Widget get displayTextWidget => textWidget ?? Text(title ?? '', style: displayTextStyle, textAlign: textAlign,);
 
   @protected bool get hasDescription => StringUtils.isNotEmpty(description) || (descriptionWidget != null);
   @protected Color? get defaultDescriptionTextColor => Styles().colors.textSurface;
@@ -121,66 +123,46 @@ class RibbonButton extends StatefulWidget {
 
   @protected Color? get defaultProgressColor => Styles().colors.fillColorSecondary;
   @protected Color? get displayProgressColor => progressColor ?? defaultProgressColor;
-  @protected double get defaultStrokeWidth => 2.0;
-  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultStrokeWidth;
+  @protected double get defaultProgressStrokeWidth => 2.0;
+  @protected double get displayProgressStrokeWidth => progressStrokeWidth ?? defaultProgressStrokeWidth;
+  @protected double get defaultProgressSizeRatio => 3.0;
 
   @protected bool get progressHidesLeftIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerLeft);
   @protected bool get progressHidesRightIcon => (progress == true) && (progressHidesIcon == true) && (progressAlignment == Alignment.centerRight);
 
-  @override
-  _RibbonButtonState createState() => _RibbonButtonState();
+  @protected bool? get semanticsToggled => null;
+  @protected bool? get semanticsEnabled => null;
 
-  @protected
-  void onTapWidget(BuildContext context) {
-    if (onTap != null) {
-      onTap!();
-    }
-  }
-}
-
-class _RibbonButtonState extends State<RibbonButton> {
-
-  final GlobalKey _contentKey = GlobalKey();
-  Size? _contentSize;
-
-  double get _progressSize => widget.progressSize ?? ((_contentSize?.height ?? 0) / 2.5);
 
   @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _evalContentSize();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return (widget.progress == true)
-      ? Stack(children: [ _contentWidget, _progressWidget, ],)
-      : _contentWidget;
-  }
+  Widget build(BuildContext context) => (progress == true) ?
+    Stack(children: [
+      _contentWidget,
+      Positioned.fill(child: _progressWidget),
+    ],) : _contentWidget;
 
   Widget get _contentWidget {
-    Widget? leftIconWidget = !widget.progressHidesLeftIcon ? (widget.leftIcon ?? widget.leftIconImage) : null;
-    Widget? rightIconWidget = !widget.progressHidesRightIcon ? (widget.rightIcon ?? widget.rightIconImage) : null;
-    Widget textContentWidget = widget.hasDescription ?
+    Widget? leftIconWidget = !progressHidesLeftIcon ? (leftIcon ?? leftIconImage) : null;
+    Widget? rightIconWidget = !progressHidesRightIcon ? (rightIcon ?? rightIconImage) : null;
+
+    Widget textContentWidget = hasDescription ?
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        widget.displayTextWidget,
-        widget.displayDescriptionWidget,
-      ],) : widget.displayTextWidget;
-    return Semantics(label: widget.label, hint: widget.hint, value : widget.semanticsValue, button: true, excludeSemantics: true, child:
-      GestureDetector(onTap: () => widget.onTapWidget(context), child:
+        displayTextWidget,
+        displayDescriptionWidget,
+      ],) : displayTextWidget;
+
+    return Semantics(label: semanticsLabel ?? title, hint: semanticsHint, value : semanticsValue, button: true, toggled: semanticsToggled, enabled: semanticsEnabled, excludeSemantics: true, child:
+      GestureDetector(onTap: onTap, child:
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Expanded(child:
-            Container(key: _contentKey, decoration: BoxDecoration(color: widget.displayBackgroundColor, border: widget.border, borderRadius: widget.borderRadius, boxShadow: widget.borderShadow), child:
-              Padding(padding: widget.displayPadding, child:
+            Container(decoration: BoxDecoration(color: displayBackgroundColor, border: border, borderRadius: borderRadius, boxShadow: borderShadow), child:
+              Padding(padding: displayPadding, child:
                 Row(children: <Widget>[
-                  (leftIconWidget != null) ? Padding(padding: widget.leftIconPadding, child: leftIconWidget) : Container(),
+                  (leftIconWidget != null) ? Padding(padding: leftIconPadding, child: leftIconWidget) : Container(),
                   Expanded(child:
                     textContentWidget
                   ),
-                  (rightIconWidget != null) ? Padding(padding: widget.rightIconPadding, child: rightIconWidget) : Container(),
+                  (rightIconWidget != null) ? Padding(padding: rightIconPadding, child: rightIconWidget) : Container(),
                 ],),
               ),
             )
@@ -190,30 +172,21 @@ class _RibbonButtonState extends State<RibbonButton> {
     );
   }
 
-  Widget get _progressWidget {
-    return (_contentSize != null) ? SizedBox(width: _contentSize!.width, height: _contentSize!.height, child:
-      Padding(padding: widget.progressPadding, child:
-        Align(alignment: widget.progressAlignment, child:
-          SizedBox(height: _progressSize, width: _progressSize, child:
-            CircularProgressIndicator(strokeWidth: widget.displayProgressStrokeWidth, valueColor: AlwaysStoppedAnimation<Color?>(widget.displayProgressColor), )
-          ),
+  Widget get _progressWidget => LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
+    double progressSize = this.progressSize ?? (constraints.maxHeight / defaultProgressSizeRatio);
+    return Padding(padding: progressPadding, child:
+      Align(alignment: progressAlignment, child:
+        SizedBox(height: progressSize, width: progressSize, child:
+          CircularProgressIndicator(strokeWidth: displayProgressStrokeWidth, color: displayProgressColor, )
         ),
       ),
-    ) : Container();
-  }
+    );
+  });
 
-  void _evalContentSize() {
-    try {
-      final RenderObject? renderBox = _contentKey.currentContext?.findRenderObject();
-      if ((renderBox is RenderBox) && renderBox.hasSize) {
-        if (mounted) {
-          setState(() {
-            _contentSize = renderBox.size;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint(e.toString());
+  @protected
+  void onTapWidget(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
     }
   }
 }
@@ -221,6 +194,8 @@ class _RibbonButtonState extends State<RibbonButton> {
 class ToggleRibbonButton extends RibbonButton {
 
   final bool toggled;
+  final bool? enabled;
+
   final Map<bool, Widget>? leftIcons;
   final Map<bool, String>? leftIconKeys;
 
@@ -229,141 +204,97 @@ class ToggleRibbonButton extends RibbonButton {
 
   final Map<bool, String>? semanticsValues;
 
-  const ToggleRibbonButton({
-    Key? key,
-    String? label,
-    String? description,
-    void Function()? onTap,
-    Color? backgroundColor,
-    EdgeInsetsGeometry? padding,
+  const ToggleRibbonButton({super.key,
+    super.title,
+    super.description,
+    super.onTap,
+    super.backgroundColor,
+    super.padding,
 
-    Widget? textWidget,
-    TextStyle? textStyle,
-    Color? textColor,
-    String? fontFamily,
-    double fontSize                     = 16.0,
-    TextAlign textAlign                 = TextAlign.left,
+    super.textWidget,
+    super.textStyle,
+    super.textColor,
+    super.fontFamily,
+    super.fontSize  = 16.0,
+    super.textAlign = TextAlign.left,
 
-    Widget? descriptionWidget,
-    TextStyle? descriptionTextStyle,
-    Color? descriptionTextColor,
-    String? descriptionFontFamily,
-    double descriptionFontSize = 14,
-    TextAlign descriptionTextAlign = TextAlign.left,
-    EdgeInsetsGeometry descriptionPadding = const EdgeInsets.only(top: 2),
+    super.descriptionWidget,
+    super.descriptionTextStyle,
+    super.descriptionTextColor,
+    super.descriptionFontFamily,
+    super.descriptionFontSize   = 14,
+    super.descriptionTextAlign  = TextAlign.left,
+    super.descriptionPadding    = const EdgeInsets.only(top: 2),
 
-    Widget? leftIcon,
-    String? leftIconKey,
-    EdgeInsetsGeometry leftIconPadding  = const EdgeInsets.only(right: 8),
+    super.leftIcon,
+    super.leftIconKey,
+    super.leftIconPadding  = const EdgeInsets.only(right: 8),
     
-    Widget? rightIcon,
-    String? rightIconKey,
-    EdgeInsetsGeometry rightIconPadding = const EdgeInsets.only(left: 8),
+    super.rightIcon,
+    super.rightIconKey,
+    super.rightIconPadding = const EdgeInsets.only(left: 8),
 
-    BoxBorder? border,
-    BorderRadius? borderRadius,
-    List<BoxShadow>? borderShadow,
+    super.border,
+    super.borderRadius,
+    super.borderShadow,
 
-    String? hint,
-    String? semanticsValue,
+    super.progress,
+    super.progressColor,
+    super.progressSize,
+    super.progressStrokeWidth,
+    super.progressPadding = const EdgeInsets.symmetric(horizontal: 12),
+    super.progressAlignment = Alignment.centerRight,
+    super.progressHidesIcon = true,
+
+    super.semanticsLabel,
+    super.semanticsHint,
+    super.semanticsValue,
 
     this.toggled = false,
-    
+    this.enabled,
+
     this.leftIcons,
     this.leftIconKeys,
-    
+
     this.rightIcons,
     this.rightIconKeys,
 
     this.semanticsValues,
+  });
 
-    bool? progress,
-    Color? progressColor,
-    double? progressSize,
-    double? progressStrokeWidth,
-    EdgeInsetsGeometry progressPadding = const EdgeInsets.symmetric(horizontal: 12),
-    AlignmentGeometry progressAlignment = Alignment.centerRight,
-    bool progressHidesIcon = true,
+  bool get _enabled => (enabled != false);
+  bool get _toggled => _enabled && toggled;
 
-  }): super(
-    key: key,
-    label: label,
-    description: description,
-    onTap: onTap,
-    backgroundColor: backgroundColor,
-    padding: padding,
+  Widget? get _leftIcon => (leftIcons != null) ? leftIcons![_toggled] : null;
+  String? get _leftIconKey => (leftIconKeys != null) ? leftIconKeys![_toggled] : null;
+  Widget? get _rightIcon => (rightIcons != null) ? rightIcons![_toggled] : null;
+  String? get _rightIconKey => (rightIconKeys != null) ? rightIconKeys![_toggled] : null;
 
-    textWidget: textWidget,
-    textStyle: textStyle,
-    textColor: textColor,
-    fontFamily: fontFamily,
-    fontSize: fontSize,
-    textAlign: textAlign,
-
-    descriptionWidget: descriptionWidget,
-    descriptionTextStyle: descriptionTextStyle,
-    descriptionTextColor: descriptionTextColor,
-    descriptionFontFamily: descriptionFontFamily,
-    descriptionFontSize: descriptionFontSize,
-    descriptionTextAlign: descriptionTextAlign,
-    descriptionPadding: descriptionPadding,
-
-    leftIcon: leftIcon,
-    leftIconKey: leftIconKey,
-    leftIconPadding: leftIconPadding,
-    
-    rightIcon: rightIcon,
-    rightIconKey: rightIconKey,
-    rightIconPadding: rightIconPadding,
-
-    border: border,
-    borderRadius: borderRadius,
-    borderShadow: borderShadow,
-
-    hint: hint,
-    semanticsValue: semanticsValue,
-
-    progress: progress,
-    progressColor: progressColor,
-    progressSize: progressSize,
-    progressStrokeWidth: progressStrokeWidth,
-    progressPadding: progressPadding,
-    progressAlignment: progressAlignment,
-    progressHidesIcon: progressHidesIcon,
-  );
-
-  Widget? get _leftIcon => (leftIcons != null) ? leftIcons![toggled] : null;
-  String? get _leftIconKey => (leftIconKeys != null) ? leftIconKeys![toggled] : null;
-  Widget? get _rightIcon => (rightIcons != null) ? rightIcons![toggled] : null;
-  String? get _rightIconAsset => (rightIconKeys != null) ? rightIconKeys![toggled] : null;
-  String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![toggled] : null;
+  String? get _semanticsValue => (semanticsValues != null) ? semanticsValues![_toggled] : null;
   String? get _changedSemanticsValue => (semanticsValues != null) ? semanticsValues![!toggled] : null;
 
-  @override
-  Widget? get leftIcon => _leftIcon ?? super.leftIcon;
-  
-  @override
-  String? get leftIconKey => _leftIconKey ?? super.leftIconKey;
+  @override Widget? get leftIcon => super.leftIcon ?? (_enabled ? _leftIcon : (disabledLeftIcon ?? _leftIcon));
+  @override String? get leftIconKey => super.leftIconKey ?? _leftIconKey;
+  @protected Widget? get disabledLeftIcon => null;
 
-  @override
-  Widget? get rightIcon => _rightIcon ?? super.rightIcon;
-  
-  @override
-  String? get rightIconKey => _rightIconAsset ?? super.rightIconKey;
+  @override Widget? get rightIcon => super.rightIcon ?? (_enabled ? _rightIcon : (disabledRightIcon ?? _rightIcon));
+  @override String? get rightIconKey => super.rightIconKey ?? _rightIconKey;
+  @protected Widget? get disabledRightIcon => null;
 
-  @override
-  String? get semanticsValue => _semanticsValue ?? super.semanticsValue;
+  @override String? get semanticsValue => super.semanticsValue ?? _semanticsValue;
+  @override bool? get semanticsToggled => _toggled;
+  @override bool? get semanticsEnabled => enabled;
 
   @protected
   String? get semanticStateChangeAnnouncementMessage {
-    if (StringUtils.isNotEmpty(label) && StringUtils.isNotEmpty(_changedSemanticsValue)) {
-      return "$_changedSemanticsValue, $label";
+    if (StringUtils.isNotEmpty(title) && StringUtils.isNotEmpty(_changedSemanticsValue)) {
+      return "$_changedSemanticsValue, $title";
     }
     else if (StringUtils.isNotEmpty(_changedSemanticsValue)) {
       return _changedSemanticsValue;
     }
-    else if (StringUtils.isNotEmpty(label)) {
-      return label;
+    else if (StringUtils.isNotEmpty(title)) {
+      return title;
     }
     else {
       return null;

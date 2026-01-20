@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
 
-import '../../model/content.dart';
-import '../../service/content.dart';
-import '../panels/modal_image_holder.dart';
+import 'package:flutter/material.dart';
+import 'package:rokwire_plugin/model/content.dart';
+import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
+import 'package:rokwire_plugin/ui/widgets/image_meta_data.dart';
+import 'package:rokwire_plugin/utils/utils.dart';
 
 class AccessibleImageHolder extends StatefulWidget implements ImageHolder{
   final ImageMetaData? metaData;
+  final Function(ImageMetaData? data)? onMetaDataLoaded;
   final String? imageUrl;
   final Widget? child; //Image or ImageHolder
 
@@ -14,57 +16,61 @@ class AccessibleImageHolder extends StatefulWidget implements ImageHolder{
   final String? suffixSemanticsLabel;
 
   @override
-  Image? get image => child is Image ? child as Image :
-                                        child is ImageHolder ? (child as ImageHolder).image : null;
-
-  const AccessibleImageHolder({super.key, this.metaData, required this.child, this.imageUrl, this.emptySemanticsLabel, this.prefixSemanticsLabel, this.suffixSemanticsLabel});
+  Image? get holderImage => child is Image ? child as Image :
+                                               child is ImageHolder ? (child as ImageHolder).holderImage : null;
 
   @override
-  State<StatefulWidget> createState() =>
-      _AccessibleImageHolderState();
+  String? get holderUrl => imageUrl ??
+                                        (child is ImageHolder ? (child as ImageHolder).holderUrl : null);
+
+  @override
+  String? get holderKey => child is ImageHolder ? (child as ImageHolder).holderKey : null;
+
+  static  String? getUrlFromImageProvider(ImageProvider? provider) => provider is NetworkImage ? provider.url : null;
+
+  @override
+  State<StatefulWidget> createState() => _AccessibleImageHolderState();
+
+  const AccessibleImageHolder({super.key, this.metaData, required this.child, this.imageUrl, this.emptySemanticsLabel, this.prefixSemanticsLabel, this.suffixSemanticsLabel, this.onMetaDataLoaded});
 }
 
-class _AccessibleImageHolderState extends State<AccessibleImageHolder>{
-  ImageMetaData? _metaData;
+class _AccessibleImageHolderState extends State<AccessibleImageHolder> with ImageMetaDataProviderMixin{
 
   @override
-  void initState() {
-    _metaData = widget.metaData;
-    if(_metaData == null ){
-      _loadMetaData();
-    }
-    super.initState();
-  }
+  ImageMetaData? get initialMetaData => widget.metaData;
 
   @override
-  Widget build(BuildContext context) =>
-      Semantics(label: _semanticsLabel,
-        image: true, excludeSemantics: true,
-        child: widget.child
-      );
+  String? get metaDataKey => 
+    widget.holderUrl   ??
+    widget.holderKey ??
+    AccessibleImageHolder.getUrlFromImageProvider(widget.holderImage?.image);
 
-  void _loadMetaData() {
-    String? url = _imageUrl;
-    if(url != null) {
-      Content().loadImageMetaData(url: url).then((result) {
-          if (mounted) {
-            setState(() =>
-            _metaData = result.imageMetaData ?? _metaData
-            );
-            // context.findRenderObject()?.markNeedsSemanticsUpdate();
-          }
-      });
+  @override
+  void onMetaDataProvided() {
+    if (mounted) {
+      widget.onMetaDataLoaded?.call(metaData);
+      setState((){}); // Update the metaData in the decorator
     }
   }
 
-  String? get _imageUrl =>  widget.image?.image is NetworkImage ? (widget.image?.image as NetworkImage).url : null;
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(excluding: _excludeSemantics, child:
+      MergeSemantics(child:
+        Semantics(label: _semanticsLabel,
+          image: true, excludeSemantics: _excludeSemantics, explicitChildNodes: true, container: true,
+          child: _metaDataDecorator?.copyWithMetaData(metaData) ?? widget.child
+      )));
 
-  String? get _semanticsLabel =>  _metaData?.decorative == true ? "decorative " :
+  bool get _excludeSemantics => StringUtils.isEmpty(_semanticsLabel);
+
+  String? get _semanticsLabel =>  metaData?.decorative == true ? null :
     _imageAltText != null ?
       _semanticsText :
       widget.emptySemanticsLabel;
 
   String? get _semanticsText =>  "${widget.prefixSemanticsLabel ?? ""} $_imageAltText ${widget.suffixSemanticsLabel ?? ""}";
 
-  String? get _imageAltText => _metaData?.altText;
+  String? get _imageAltText => metaData?.altText;
+
+  ImageMetaDataDecorator? get _metaDataDecorator => widget.child is ImageMetaDataDecorator ? widget.child as ImageMetaDataDecorator : null;
 }

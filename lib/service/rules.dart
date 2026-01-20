@@ -151,6 +151,8 @@ class Rules {
         }
       }
       return out;
+    } else if (data is Alert) {
+      data.text = _getEngineValOrCollection(engine, data.text);
     }
     return data;
   }

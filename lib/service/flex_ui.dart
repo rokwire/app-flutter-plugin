@@ -675,7 +675,7 @@ class FlexUI with Service, NotificationsListener {
     if (platformRule is Map) {
       platformRule.forEach((dynamic key, dynamic value) {
         if (key is String) {
-          String? target;
+          dynamic target;
           if (key == 'os') {
             target = Config().operatingSystem;
           }
@@ -693,12 +693,15 @@ class FlexUI with Service, NotificationsListener {
               target = 'debug';
             }
           }
+          else if (key == 'web') {
+            target = kIsWeb;
+          }
 
           if (target != null) {
             if (value is List) {
               result = result && value.contains(target);
             }
-            else if (value is String) {
+            else {
               result = result && (value == target);
             }
           }

@@ -6,6 +6,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/flex_ui.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/styles.dart';
+import 'package:rokwire_plugin/ui/widgets/web_semantics.dart';
 
 class TabBar extends StatefulWidget {
 
@@ -146,7 +147,7 @@ class TabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: () => onTap(this), behavior: HitTestBehavior.translucent, child:
+    return WebBareSemanticsButton(onTap: () => onTap(this), child:
       Stack(children: <Widget>[
         buildTab(context),
         selected ? buildSelectedIndicator(context) : Container(),

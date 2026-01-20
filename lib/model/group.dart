@@ -16,6 +16,7 @@
 
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:intl/intl.dart';
 
@@ -147,7 +148,7 @@ class Group {
       currentMember                  : other.currentMember,
       questions                      : GroupMembershipQuestion.listFromOthers(other.questions),
       membershipQuest                : GroupMembershipQuest.fromOther(other.membershipQuest),
-      settings                          : GroupSettings.fromOther(other.settings),
+      settings                       : GroupSettings.fromOther(other.settings),
     ) : null;
   }
 
@@ -188,7 +189,7 @@ class Group {
       'current_member'                : currentMember?.toJson(),
       'membership_questions'          : GroupMembershipQuestion.listToStringList(questions),
       'membership_quest'              : membershipQuest?.toJson(),
-      'settings'                                : settings?.toJson()
+      'settings'                      : settings?.toJson()
     };
   }
 
@@ -300,14 +301,6 @@ class Group {
     return (currentUserIsAdmin == true) && (authManEnabled == true);
   }
 
-  ///
-  /// Show hidden group only if the user is admin
-  ///
-  ///
-  bool get isVisible {
-    return !(hiddenForSearch ?? false) || currentUserIsAdmin;
-  }
-
   static List<Group>? listFromJson(List<dynamic>? json, {bool Function(Group element)? filter}) {
     List<Group>? values;
     if (json != null) {
@@ -367,29 +360,26 @@ class Group {
 
 enum GroupPrivacy { private, public }
 
-GroupPrivacy? groupPrivacyFromString(String? value) {
-  if (value != null) {
-    if (value == 'private') {
-      return GroupPrivacy.private;
-    }
-    else if (value == 'public') {
-      return GroupPrivacy.public;
+extension GroupPrivacyImpl on GroupPrivacy {
+
+  static GroupPrivacy? fromJson(String? json) {
+    switch (json) {
+      case 'private': return GroupPrivacy.private;
+      case 'public': return GroupPrivacy.public;
+      default: return null;
     }
   }
-  return null;
+
+  String toJson() {
+    switch(this) {
+      case GroupPrivacy.private: return 'private';
+      case GroupPrivacy.public: return 'public';
+    }
+  }
 }
 
-String? groupPrivacyToString(GroupPrivacy? value) {
-  if (value != null) {
-    if (value == GroupPrivacy.private) {
-      return 'private';
-    }
-    else if (value == GroupPrivacy.public) {
-      return 'public';
-    }
-  }
-  return null;
-}
+GroupPrivacy? groupPrivacyFromString(String? value) => GroupPrivacyImpl.fromJson(value);
+String? groupPrivacyToString(GroupPrivacy? value) => value?.toJson();
 
 //////////////////////////////
 // GroupStats
@@ -636,35 +626,34 @@ class Member {
 
 enum GroupMemberStatus { pending, member, admin, rejected }
 
-GroupMemberStatus? groupMemberStatusFromString(String? value) {
-  if (value != null) {
-    if (value == 'pending') {
-      return GroupMemberStatus.pending;
-    } else if (value == 'member') {
-      return GroupMemberStatus.member;
-    } else if (value == 'admin') {
-      return GroupMemberStatus.admin;
-    } else if (value == 'rejected') {
-      return GroupMemberStatus.rejected;
+extension GroupMemberStatusImpl on GroupMemberStatus {
+  static GroupMemberStatus? fromJson(String? json) {
+    switch (json) {
+      case 'admin': return GroupMemberStatus.admin;
+      case 'member': return GroupMemberStatus.member;
+      case 'pending': return GroupMemberStatus.pending;
+      case 'rejected': return GroupMemberStatus.rejected;
+      default: return null;
     }
   }
-  return null;
+
+  String toJson() {
+    switch(this) {
+      case GroupMemberStatus.admin: return 'admin';
+      case GroupMemberStatus.member: return 'member';
+      case GroupMemberStatus.pending: return 'pending';
+      case GroupMemberStatus.rejected: return 'rejected';
+    }
+  }
 }
 
-String? groupMemberStatusToString(GroupMemberStatus? value) {
-  if (value != null) {
-    if (value == GroupMemberStatus.pending) {
-      return 'pending';
-    } else if (value == GroupMemberStatus.member) {
-      return 'member';
-    } else if (value == GroupMemberStatus.admin) {
-      return 'admin';
-    } else if (value == GroupMemberStatus.rejected) {
-      return 'rejected';
-    }
-  }
-  return null;
+extension GroupMemberStatusSetImpl on Set<GroupMemberStatus> {
+  List<String> toJson() => List.from(map((GroupMemberStatus memberStatus) => memberStatus.toJson()));
 }
+
+
+GroupMemberStatus? groupMemberStatusFromString(String? value) => GroupMemberStatusImpl.fromJson(value);
+String? groupMemberStatusToString(GroupMemberStatus? value) => value?.toJson();
 
 //////////////////////////////
 // MemberNotificationsPreferences
@@ -1301,3 +1290,299 @@ String? groupUtcDateTimeToString(DateTime? dateTime) {
   return null;
 }
 
+// Group Filters
+
+enum GroupsFilterType { public, private, administrative, managed, admin, member, candidate }
+
+class GroupsFilter {
+  final Map<String, dynamic>? attributes;
+  final Set<GroupsFilterType>? types;
+
+  const GroupsFilter({this.attributes, this.types,});
+
+  factory GroupsFilter.fromUriParams(Map<String, String> uriParams) => GroupsFilter(
+    attributes: JsonUtils.decodeMap(uriParams['attributes']),
+    types: GroupsFilterTypeImpl.setFromUriParam(uriParams['types']),
+  );
+
+  Map<String, String> toUriParams() {
+    Map<String, String> result = <String, String>{};
+    MapUtils.add(result, 'attributes', JsonUtils.encode(attributes));
+    MapUtils.add(result, 'types', GroupsFilterTypeImpl.setToUriParam(types));
+    return result;
+  }
+
+  static GroupsFilter? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsFilter(
+    attributes: JsonUtils.mapValue(json['attributes']),
+    types: GroupsFilterTypeImpl.setFromJsonList(JsonUtils.listStringsValue(json['types'])),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'attributes': attributes,
+    'types': GroupsFilterTypeImpl.setToJsonList(types),
+  };
+
+  Map<String, dynamic> toQueryJson() {
+    Map<String, dynamic> result = <String, dynamic>{};
+    MapUtils.add(result, 'attributes', attributes);
+    MapUtils.add(result, 'privacy', privacy?.toJson());
+    MapUtils.add(result, 'administrative', administrative ? true : null);
+    MapUtils.add(result, 'authman_enabled', managed ? true : null);
+    MapUtils.add(result, 'member_status', memberStatus?.toJson());
+    return result;
+  }
+
+  @override
+  bool operator ==(other) =>
+    (other is GroupsFilter) &&
+    DeepCollectionEquality().equals(other.attributes, attributes) &&
+    DeepCollectionEquality().equals(other.types, types);
+
+  @override
+  int get hashCode =>
+    DeepCollectionEquality().hash(attributes) ^
+    DeepCollectionEquality().hash(types);
+
+  bool get public => (types?.contains(GroupsFilterType.public) == true);
+  bool get private => (types?.contains(GroupsFilterType.private) == true);
+  bool get administrative => (types?.contains(GroupsFilterType.administrative) == true);
+  bool get managed => (types?.contains(GroupsFilterType.managed) == true);
+
+  bool get admin => (types?.contains(GroupsFilterType.admin) == true);
+  bool get member => (types?.contains(GroupsFilterType.member) == true);
+  bool get candidate => (types?.contains(GroupsFilterType.candidate) == true); // pending or denied
+
+  bool get isNotEmpty => (attributes?.isNotEmpty == true) || (types?.isNotEmpty == true);
+
+  GroupPrivacy? get privacy {
+    if (public && !private) {
+      return GroupPrivacy.public;
+    }
+    else if (private && !public) {
+      return GroupPrivacy.private;
+    }
+    else {
+      return null;
+    }
+  }
+
+  Set<GroupMemberStatus>? get memberStatus {
+    Set<GroupMemberStatus> status = <GroupMemberStatus>{};
+    if (admin) {
+      status.add(GroupMemberStatus.admin);
+    }
+    if (member) {
+      status.add(GroupMemberStatus.member);
+    }
+    if (candidate) {
+      status.addAll(<GroupMemberStatus> { GroupMemberStatus.pending, GroupMemberStatus.rejected });
+    }
+    return status.isNotEmpty ? status : null;
+  }
+
+}
+
+class GroupsQuery {
+  final GroupsFilter? filter;
+  final Iterable<String>? ids;
+  final String? searchText;
+  final bool? includeHidden;
+
+  final int? offset;
+  final int? limit;
+  final String? anchorId;
+  final int? anchorOffset;
+
+  const GroupsQuery({
+    this.filter, this.ids,
+    this.searchText, this.includeHidden,
+    this.offset, this.limit,
+    this.anchorId, this.anchorOffset,
+  });
+
+
+  Map<String, dynamic> toQueryJson() => <String, dynamic>{
+    'research_group': false,
+    ...(filter?.toQueryJson() ?? {}),
+    if (ids != null)
+      'ids': List.from(ids!),
+    if (searchText != null)
+      'title': searchText,
+    if (includeHidden != null)
+      'include_hidden': includeHidden,
+    if (offset != null)
+      'offset': offset,
+    if (limit != null)
+      'limit': limit,
+    if (anchorId != null)
+      'limit_id': anchorId,
+    if (anchorOffset != null)
+      'limit_id_extra_records': anchorOffset,
+  };
+}
+
+extension GroupsFilterTypeImpl on GroupsFilterType {
+
+  static GroupsFilterType? fromCode(String? code) {
+    switch (code) {
+      case 'public': return GroupsFilterType.public;
+      case 'private': return GroupsFilterType.private;
+      case 'administrative': return GroupsFilterType.administrative;
+      case 'managed': return GroupsFilterType.managed;
+      case 'admin': return GroupsFilterType.admin;
+      case 'member': return GroupsFilterType.member;
+      case 'candidate': return GroupsFilterType.candidate;
+      default: return null;
+    }
+  }
+
+  String toCode() {
+    switch (this) {
+      case GroupsFilterType.public: return 'public';
+      case GroupsFilterType.private: return 'private';
+      case GroupsFilterType.administrative: return 'administrative';
+      case GroupsFilterType.managed: return 'managed';
+      case GroupsFilterType.admin: return 'admin';
+      case GroupsFilterType.member: return 'member';
+      case GroupsFilterType.candidate: return 'candidate';
+    }
+  }
+
+  static List<GroupsFilterType> listFromCodes(Iterable<String> codes) {
+    List<GroupsFilterType> types = <GroupsFilterType>[];
+    for (String code in codes) {
+      GroupsFilterType? type = fromCode(code);
+      if (type != null) {
+        types.add(type);
+      }
+    }
+    return types;
+  }
+
+  static List<GroupsFilterType>? listFromCodesEx(Iterable<String>? codes) =>
+    (codes != null) ? listFromCodes(codes) : null;
+
+  static Iterable<String> listToCodes(Iterable<GroupsFilterType> types) =>
+      types.map((GroupsFilterType type) => type.toCode());
+
+  static const String uriParamSeparator = ',';
+
+  static Set<GroupsFilterType>? setFromUriParam(String? uriParam) => (uriParam != null) ?
+    Set<GroupsFilterType>.from(listFromCodes(uriParam.split(uriParamSeparator))) : null;
+
+  static String? setToUriParam(Set<GroupsFilterType>? types) => (types != null) ?
+    listToCodes(types).join(uriParamSeparator) : null;
+
+  static Set<GroupsFilterType>? setFromJsonList(List<String>? jsonList) => (jsonList != null) ?
+    Set<GroupsFilterType>.from(listFromCodes(jsonList)) : null;
+
+  static List<String>? setToJsonList(Set<GroupsFilterType>? types) => (types != null) ?
+    List.from(listToCodes(types)) : null;
+
+}
+
+class GroupsLoadResult {
+  final List<Group>? groups;
+  final int? totalCount;
+
+  GroupsLoadResult({this.groups, this.totalCount});
+
+  static GroupsLoadResult? fromJson(Map<String, dynamic>? json) => (json != null) ? GroupsLoadResult(
+    groups: Group.listFromJson(JsonUtils.listValue(json['results'])),
+    totalCount: JsonUtils.intValue(json['total_count']),
+  ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'result': Group.listToJson(groups),
+    'total_count': totalCount,
+  };
+
+  // Equality
+
+  @override
+  bool operator==(Object other) =>
+    (other is GroupsLoadResult) &&
+    (const DeepCollectionEquality().equals(groups, other.groups)) &&
+    (totalCount == other.totalCount);
+
+  @override
+  int get hashCode =>
+    (const DeepCollectionEquality().hash(groups)) ^
+    (totalCount?.hashCode ?? 0);
+}
+
+enum ResearchProjectsContentType { open, my }
+
+class ResearchProjectsFilter {
+  ResearchProjectsContentType? contentType;
+  String? category;
+  Set<String>? tags;
+  GroupPrivacy? privacy;
+
+  ResearchProjectsFilter({this.contentType, this.category, this.tags, this.privacy });
+
+  Map<String, dynamic> toQueryJson() {
+    Map<String, dynamic> result = contentType?.filterAttributes ?? <String, dynamic>{};
+    MapUtils.add(result, 'member_status', contentType?.memberStatus?.toJson());
+    MapUtils.add(result, 'category', category);
+    MapUtils.add(result, 'tags', ListUtils.from(tags));
+    MapUtils.add(result, 'privacy', privacy?.toJson());
+    return result;
+  }
+}
+
+class ResearchProjectsQuery {
+  ResearchProjectsFilter? filter;
+  final Iterable<String>? ids;
+  final String? searchText;
+  final bool? includeHidden;
+  int? offset;
+  int? limit;
+
+  ResearchProjectsQuery({
+    this.filter, this.ids,
+    this.searchText, this.includeHidden,
+    this.offset, this.limit
+  });
+
+  Map<String, dynamic> toQueryJson() => <String, dynamic>{
+    'research_group': true,
+    ...(filter?.toQueryJson() ?? {}),
+    if (ids != null)
+      'ids': List.from(ids!),
+    if (searchText != null)
+      'title': searchText,
+    if (includeHidden != null)
+      'include_hidden': includeHidden,
+    if (offset != null)
+      'offset': offset,
+    if (limit != null)
+      'limit': limit,
+  };
+}
+
+extension ResearchProjectsContentTypeImpl on ResearchProjectsContentType {
+
+  Map<String, dynamic>? get filterAttributes {
+    switch (this) {
+      case ResearchProjectsContentType.open:
+        return <String, dynamic>{
+          'research_open': true,
+          'exclude_my_groups': true,
+          'research_answers': Auth2().profile?.researchQuestionnaireAnswers,
+        };
+      case ResearchProjectsContentType.my:
+        return <String, dynamic>{
+          'member_status': memberStatus?.toJson(),
+        };
+    }
+  }
+
+  Set<GroupMemberStatus>? get memberStatus {
+    switch (this) {
+      case ResearchProjectsContentType.open: return null;
+      case ResearchProjectsContentType.my: return <GroupMemberStatus> { GroupMemberStatus.admin, GroupMemberStatus.member };
+    }
+  }
+
+}

@@ -6,11 +6,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+
+## [1.12.3] - 2026-01-15
+### Changed
+- Groups.loadAdminUserGroupsV3 renamed to loadAdministrativeUserGroupsV3, created new loadAdminUserGroupsV3 that loads only groups where the user is admin [#5666](https://github.com/rokwire/illinois-app/issues/5666).
+
+## [1.12.2] - 2026-01-14
+### Changed
+- Removed existing ListUtils sort utilities as unused, ListUtils.sort updated to sort a list copy [#5577](https://github.com/rokwire/illinois-app/issues/5577).
+### Added
+- WEB: Check if the browser works on iOS/Android mobile devices [#5594](https://github.com/rokwire/illinois-app/issues/5594).
+- Switched to load Groups V3 API [#5353](https://github.com/rokwire/illinois-app/issues/5353).
+- Merged eventAdmin and administrative GroupFilterTypes [#5353](https://github.com/rokwire/illinois-app/issues/5353).
+- Upgrade to http package 1.4.0 [#5562](https://github.com/rokwire/illinois-app/issues/5562).
+### Added
+- Added web platform rule in FlexUI [#5615](https://github.com/rokwire/illinois-app/issues/5615).
+### Fixed
+- Fix alert text evaluation for local notifications [#666](https://github.com/rokwire/app-flutter-plugin/issues/666).
+- Fixed Auth2UserPrefs.apply implementation [#4698](https://github.com/rokwire/app-flutter-plugin/issues/4698).
+
+## [1.12.1] - 2025-12-01
 ### Added
 - Added Auth2UserPrefs.applyFoodFilters API for more precise filter updating [#5202](https://github.com/rokwire/illinois-app/issues/5202).
+- Added Read More semantic label in ExpandableText [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Add AccessibleImageHolder to ModalPhotoImagePanel [#5439](https://github.com/rokwire/illinois-app/issues/5439).
+- Added additional semantics properties to RibbonButton, some cleanup applied as well [#4874](https://github.com/rokwire/illinois-app/issues/4874).
+- Improved AccessibleImageHolder and ModalImageHolder [#5548](https://github.com/rokwire/illinois-app/issues/5548).
+- Added UrlUtils.stripQueryParameters
+### Changed
+- Make RibbonButton StatelessWidget, as it should be.
+- StringUtils.intValue extended to parse string source values [#5526](https://github.com/rokwire/illinois-app/issues/5526).
 ### Fixed
 - WEB: Set web page language [#5183](https://github.com/rokwire/illinois-app/issues/5183).
 - Fixed food filters setters in Auth2UserPrefs [#5202](https://github.com/rokwire/illinois-app/issues/5202).
+- WEB: Set csrf header when uploading files [#5511](https://github.com/rokwire/illinois-app/issues/5511).
+- Fixed contrast accessibility issue for close button in ModalPhotoImagePanel  [#5429](https://github.com/rokwire/illinois-app/issues/5429).
+- WEB: Handle OIDC login in iOS web browsers [#4949](https://github.com/rokwire/illinois-app/issues/4949).
 
 ## [1.12.0] - 2025-10-22
 ### Fixed

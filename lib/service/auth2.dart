@@ -18,6 +18,9 @@ import 'package:rokwire_plugin/service/storage.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:universal_io/io.dart';
+import 'package:web/web.dart' as web;
+//DD: Use deprecated lib because currently there is no other way to read JS properties
+import 'dart:js_util' as js_util;
 
 class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   
@@ -362,7 +365,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   // OIDC Authentication
 
-  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
+  Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope = defaultLoginScope, bool? link, web.Window? iosWebWindow}) async {
     if (Config().authBaseUrl != null) {
 
       if (_oidcAuthenticationCompleters == null) {
@@ -376,7 +379,34 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           _oidcLink = link;
 
           //await RokwirePlugin.clearSafariVC();
-          await _launchUrl(_preprocessOidcLoginUrl(_oidcLogin?.loginUrl));
+
+          final url = _preprocessOidcLoginUrl(_oidcLogin?.loginUrl)!;
+          if (WebUtils.isIosWeb() && (iosWebWindow != null)) {
+            iosWebWindow.location.href = url;
+
+            web.window.onMessage.listen((event) {
+              dynamic eventData = event.data;
+              if (eventData != null) {
+                final String redirectUrlKey = 'flutter-web-auth-2';
+                if (js_util.hasProperty(eventData, redirectUrlKey)) {
+                  dynamic redirectUrlValue = js_util.getProperty(eventData, redirectUrlKey);
+                  if (redirectUrlValue is String) {
+                    iosWebWindow.close();
+                    onDeepLinkUri(Uri.tryParse(redirectUrlValue));
+                  } else {
+                    debugPrint('WEB: auth2 | oidc login -> redirectUrlValue is NOT a string: toString: ${redirectUrlValue.toString()}, runtimeType: ${redirectUrlValue.runtimeType.toString()}');
+                  }
+                } else if (eventData is String) {
+                  iosWebWindow.close();
+                  onDeepLinkUri(Uri.tryParse(eventData));
+                }
+              } else {
+                debugPrint('WEB: auth2 | oidc login -> event data IS null!');
+              }
+            });
+          } else {
+            await _launchUrl(url);
+          }
         }
         else {
           completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);

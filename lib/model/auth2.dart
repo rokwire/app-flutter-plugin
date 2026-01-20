@@ -1714,66 +1714,66 @@ class Auth2UserPrefs {
     bool modified = false;
     if (prefs != null) {
       
-      if ((prefs.privacyLevel != _privacyLevel) && (
-            (scope?.contains(Auth2UserPrefsScope.privacyLevel) ?? false) ||
-            (((prefs.privacyLevel ?? 0) > 0) && ((_privacyLevel ?? 0) == 0))
+      if ((prefs.privacyLevel != null) && (prefs.privacyLevel != _privacyLevel) && (
+        (scope?.contains(Auth2UserPrefsScope.privacyLevel) == true) ||
+        (((prefs.privacyLevel ?? 0) > 0) && ((_privacyLevel ?? 0) == 0))
       )) {
         _privacyLevel = prefs._privacyLevel;
         modified = true;
       }
       
-      if (!const DeepCollectionEquality().equals(prefs.roles, _roles) && (
-            (scope?.contains(Auth2UserPrefsScope.roles) ?? false) ||
-            ((prefs.roles?.isNotEmpty ?? false) && (_roles?.isEmpty ?? true))
+      if ((prefs.roles != null) && !const DeepCollectionEquality().equals(prefs.roles, _roles) && (
+        (scope?.contains(Auth2UserPrefsScope.roles) == true) ||
+        ((prefs.roles?.isNotEmpty == true) && (_roles?.isNotEmpty != true))
       )) {
         _roles = prefs._roles;
         modified = true;
       }
       
-      if (!const DeepCollectionEquality().equals(prefs._favorites, _favorites) && (
-          (scope?.contains(Auth2UserPrefsScope.favorites) ?? false) ||
-          (prefs.hasFavorites && !hasFavorites)
+      if ((prefs._favorites != null) && !const DeepCollectionEquality().equals(prefs._favorites, _favorites) && (
+        (scope?.contains(Auth2UserPrefsScope.favorites) == true) ||
+        (prefs.hasFavorites && !this.hasFavorites)
       )) {
         _favorites = prefs._favorites;
         modified = true;
       }
       
-      if (!const DeepCollectionEquality().equals(prefs._interests, _interests) && (
-        (scope?.contains(Auth2UserPrefsScope.interests) ?? false) ||
-        ((prefs._interests?.isNotEmpty ?? false) && (_interests?.isEmpty ?? true))
+      if ((prefs._interests != null) && !const DeepCollectionEquality().equals(prefs._interests, _interests) && (
+        (scope?.contains(Auth2UserPrefsScope.interests) == true) ||
+        ((prefs._interests?.isNotEmpty == true) && (_interests?.isNotEmpty != true))
       )) {
         _interests = prefs._interests;
         modified = true;
       }
       
-      if (!const DeepCollectionEquality().equals(prefs._foodFilters, _foodFilters) && (
-          (scope?.contains(Auth2UserPrefsScope.foodFilters) ?? false) ||
-          (prefs.hasFoodFilters && !hasFoodFilters)
+      if ((prefs._foodFilters != null) && !const DeepCollectionEquality().equals(prefs._foodFilters, _foodFilters) && (
+        (scope?.contains(Auth2UserPrefsScope.foodFilters) == true) ||
+        (prefs.hasFoodFilters && !this.hasFoodFilters)
       )) {
         _foodFilters = prefs._foodFilters;
         modified = true;
       }
 
-      if (!const DeepCollectionEquality().equals(prefs._tags, _tags) && (
-          (scope?.contains(Auth2UserPrefsScope.tags) ?? false) ||
-          ((prefs._tags?.isNotEmpty ?? false) &&  (_tags?.isEmpty ?? true))
+      if ((prefs._tags != null) && !const DeepCollectionEquality().equals(prefs._tags, _tags) && (
+        (scope?.contains(Auth2UserPrefsScope.tags) == true) ||
+        ((prefs._tags?.isNotEmpty == true) && (_tags?.isNotEmpty != true))
       )) {
         _tags = prefs._tags;
         modified = true;
       }
       
-      if (!const DeepCollectionEquality().equals(prefs._settings, _settings) && (
-          (scope?.contains(Auth2UserPrefsScope.settings) ?? false) ||
-          ((prefs._settings?.isNotEmpty ?? false) &&  (_settings?.isEmpty ?? true))
+      if ((prefs._settings != null) && !const DeepCollectionEquality().equals(prefs._settings, _settings) && (
+        (scope?.contains(Auth2UserPrefsScope.settings) == true) ||
+        ((prefs._settings?.isNotEmpty == true) && (_settings?.isNotEmpty != true))
       )) {
         _settings = prefs._settings;
         modified = true;
       }
       
-      if ((prefs._voter != _voter) &&  (
-          (scope?.contains(Auth2UserPrefsScope.voter) ?? false) ||
-          ((prefs._voter?.isNotEmpty ?? false) && (_voter?.isEmpty ?? true))
-        )) {
+      if ((prefs._voter != null) && (prefs._voter != _voter) && (
+        (scope?.contains(Auth2UserPrefsScope.voter) == true) ||
+        ((prefs._voter?.isNotEmpty == true) && (_voter?.isNotEmpty != true))
+      )) {
         _voter = Auth2VoterPrefs.fromOther(prefs._voter, onChanged: _onVoterChanged);
         modified = true;
       }
