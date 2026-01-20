@@ -101,12 +101,12 @@ class Styles extends Service with NotificationsListener{
   @override
   Future<void> initService() async {
     
-    _assetsDir = await getAssetsDir();
-    _assetsManifest = await loadAssetsManifest();
-    _assetsStyles = await loadFromAssets(assetsKey);
-    _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey);
-    _netAssetsStyles = await loadFromCache(netCacheFileName);
-    _debugAssetsStyles = await loadFromCache(debugCacheFileName);
+    try { _assetsDir = await getAssetsDir(); } catch(e) { debugPrint(e.toString()); }
+    try { _assetsManifest = await loadAssetsManifest(); } catch(e) { debugPrint(e.toString()); }
+    try { _assetsStyles = await loadFromAssets(assetsKey); } catch(e) { debugPrint(e.toString()); }
+    try { _appAssetsStyles = kIsWeb ? null : await loadFromAssets(appAssetsKey); } catch(e) { debugPrint(e.toString()); }
+    try { _netAssetsStyles = await loadFromCache(netCacheFileName); } catch(e) { debugPrint(e.toString()); }
+    try { _debugAssetsStyles = await loadFromCache(debugCacheFileName); } catch(e) { debugPrint(e.toString()); }
 
     if ((_assetsStyles != null) || (_appAssetsStyles != null) || (_netAssetsStyles != null) || (_debugAssetsStyles != null)) {
       await build();
