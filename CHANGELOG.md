@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Changed
 - Acknowledged includeHidden field of GroupsQuery & ResearchProjectsQuery [#5666](https://github.com/rokwire/illinois-app/issues/5666).
-
+### Fixed
+- Fixed equality operator of GroupSettings object.
+ 
 ## [1.12.3] - 2026-01-15
 ### Changed
 - Groups.loadAdminUserGroupsV3 renamed to loadAdministrativeUserGroupsV3, created new loadAdminUserGroupsV3 that loads only groups where the user is admin [#5666](https://github.com/rokwire/illinois-app/issues/5666).
