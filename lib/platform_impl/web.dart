@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'dart:js_interop';
+
 import 'package:js/js.dart';
-import 'package:js/js_util.dart';
 import 'package:rokwire_plugin/platform_impl/base.dart';
 
 @JS('isSupported')
 external bool isSupported();
 
 @JS('getPasskey')
-external dynamic getPasskeyJS(String? optionsJson);
+external JSPromise<JSString?> getPasskeyJS(String? optionsJson);
 
 @JS('createPasskey')
-external dynamic createPasskeyJS(String? optionsJson);
+external JSPromise<JSString?> createPasskeyJS(String? optionsJson);
 
 class PasskeyImpl extends BasePasskey {
   @override
@@ -32,12 +33,14 @@ class PasskeyImpl extends BasePasskey {
   }
 
   @override
-  Future<String?> getPasskey(String? optionsJson) {
-    return promiseToFuture<String?>(getPasskeyJS(optionsJson));
+  Future<String?> getPasskey(String? optionsJson) async {
+    JSString? jsString = await getPasskeyJS(optionsJson).toDart;
+    return jsString?.toDart;
   }
 
   @override
-  Future<String?> createPasskey(String? optionsJson) {
-    return promiseToFuture<String?>(createPasskeyJS(optionsJson));
+  Future<String?> createPasskey(String? optionsJson) async {
+    JSString? jsString = await createPasskeyJS(optionsJson).toDart;
+    return jsString?.toDart;
   }
 }

@@ -51,7 +51,7 @@ class Styles extends Service implements NotificationsListener{
   Directory? _assetsDir;
   DateTime?  _pausedDateTime;
 
-  Map<String, dynamic>? _assetsManifest;
+  List<String>? _assetsManifest;
 
   Map<String, dynamic>? _assetsStyles;
   Map<String, dynamic>? _appAssetsStyles;
@@ -385,7 +385,7 @@ class Styles extends Service implements NotificationsListener{
       for (String assetsPath in imageAssetsPaths) {
         if (assetsPath.isNotEmpty) {
           String imagePath = "$assetsPath/${uri.pathSegments.first}";
-          if (_assetsManifest!.containsKey(imagePath)) {
+          if (_assetsManifest!.contains(imagePath)) {
             return imagePath;
           }
         }
@@ -395,8 +395,10 @@ class Styles extends Service implements NotificationsListener{
   }
 
   @protected
-  Future<Map<String, dynamic>?> loadAssetsManifest() async {
-    return JsonUtils.decodeMap(await rootBundle.loadString('AssetManifest.json'));
+  Future<List<String>> loadAssetsManifest() async {
+    // return JsonUtils.decodeMap(await rootBundle.loadString('AssetManifest.json'));
+    AssetManifest assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    return assetManifest.listAssets();
   }
 }
 
@@ -589,10 +591,10 @@ class UiColors {
   static String? toHex(Color? value, {bool leadingHashSign = true}) {
     if (value != null) {
       return (leadingHashSign ? '#' : '') +
-          value.alpha.toRadixString(16).padLeft(2, '0') +
-          value.red.toRadixString(16).padLeft(2, '0') +
-          value.green.toRadixString(16).padLeft(2, '0') +
-          value.blue.toRadixString(16).padLeft(2, '0');
+          (value.a * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0') +
+          (value.r * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0') +
+          (value.g * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0') +
+          (value.b * 255.0).round().clamp(0, 255).toRadixString(16).padLeft(2, '0');
     }
     return null;
   }

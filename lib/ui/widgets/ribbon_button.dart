@@ -381,7 +381,12 @@ class ToggleRibbonButton extends RibbonButton {
 
     String? announcementMessage = (onTap != null) ? semanticStateChangeAnnouncementMessage : null;
     if (announcementMessage != null) {
-      context.findRenderObject()?.sendSemanticsEvent(AnnounceSemanticsEvent(announcementMessage, TextDirection.ltr));
+      try {
+        int viewId = View.of(context).viewId;
+        context.findRenderObject()?.sendSemanticsEvent(AnnounceSemanticsEvent(announcementMessage, TextDirection.ltr, viewId));
+      } catch (e) {
+        debugPrint(e.toString());
+      }
     }
   }
 }
