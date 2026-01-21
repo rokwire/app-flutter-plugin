@@ -134,7 +134,7 @@ class Groups with Service, NotificationsListener {
     _userGroupNames = _buildGroupNames(_userGroups);
 
     if (_userGroups == null) {
-      _userGroups = await loadUserGroupsV3();
+      _userGroups = await loadAllUserGroupsV3();
       _userGroupNames = _buildGroupNames(_userGroups);
       _saveUserGroupsToCache(_userGroups);
     }
@@ -332,16 +332,18 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> loadGroupsListV3({GroupsFilter? filter}) async {
-    GroupsLoadResult? groupsResult = await loadGroupsV3(GroupsQuery(filter: filter));
+  Future<List<Group>?> _loadGroupsListV3(GroupsFilter filter, {bool? includeHidden}) async {
+    GroupsLoadResult? groupsResult = await loadGroupsV3(GroupsQuery(filter: filter, includeHidden: includeHidden));
     return groupsResult?.groups;
   }
 
-  Future<Map<String, int?>?> countGroupsV3(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter }) async {
+  Future<List<Group>?> loadDisplayGroupsListV3(GroupsFilter filter) => _loadGroupsListV3(filter, includeHidden: false);
+
+  Future<Map<String, int?>?> countDisplayGroupsV3(Map<String, GroupsFilter> countFilters, {GroupsFilter? baseFilter}) async {
     if (Config().groupsUrl != null) {
       String url = '${Config().groupsUrl}/v3/groups/stats';
       String? body = JsonUtils.encode({
-        'base_filter': GroupsQuery(filter: baseFilter).toQueryJson(),
+        'base_filter': GroupsQuery(filter: baseFilter, includeHidden: false).toQueryJson(),
         'sub_filters': countFilters.map<String, Map<String, dynamic>?>((String key, GroupsFilter? filter) => MapEntry(key, filter?.toQueryJson())),
       });
       Response? response = await Network().post(url, body: body, auth: Auth2());
@@ -352,18 +354,17 @@ class Groups with Service, NotificationsListener {
 
   static const GroupsFilter userGroupsFilter =  GroupsFilter(types: userGroupsTypes);
   static const Set<GroupsFilterType> userGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin, GroupsFilterType.member};
-  Future<List<Group>?> loadUserGroupsV3() => loadGroupsListV3(filter: userGroupsFilter);
+  Future<List<Group>?> loadAllUserGroupsV3() => _loadGroupsListV3(userGroupsFilter, includeHidden: true);
 
   static const GroupsFilter adminUserGroupsFilter =  GroupsFilter(types: adminUserGroupsTypes);
   static const Set<GroupsFilterType> adminUserGroupsTypes = <GroupsFilterType>{ GroupsFilterType.admin};
-  Future<List<Group>?> loadAdminUserGroupsV3() => loadGroupsListV3(filter: adminUserGroupsFilter);
+  Future<List<Group>?> loadAllAdminUserGroupsV3() => _loadGroupsListV3(adminUserGroupsFilter, includeHidden: true);
 
   static const GroupsFilter administrativeUserGroupsFilter =  GroupsFilter(types: administrativeUserGroupsTypes );
   static const Set<GroupsFilterType> administrativeUserGroupsTypes = <GroupsFilterType>{ ...userGroupsTypes, GroupsFilterType.administrative };
-  Future<List<Group>?> loadAdministrativeUserGroupsV3() => loadGroupsListV3(filter: administrativeUserGroupsFilter);
+  Future<List<Group>?> loadAllAdministrativeUserGroupsV3() => _loadGroupsListV3(administrativeUserGroupsFilter, includeHidden: true);
 
   static const GroupsFilter allGroupsFilter =  GroupsFilter();
-  Future<List<Group>?> loadAllGroupsV3() => loadGroupsListV3(filter: allGroupsFilter);
 
   // Research Projects V3 APIs
 
@@ -384,10 +385,12 @@ class Groups with Service, NotificationsListener {
     return null;
   }
 
-  Future<List<Group>?> loadResearchProjectsListV3(ResearchProjectsFilter? filter) async {
-    GroupsLoadResult? result = await loadResearchProjectsV3(ResearchProjectsQuery(filter: filter));
+  Future<List<Group>?> _loadResearchProjectsListV3(ResearchProjectsFilter filter, {bool? includeHidden}) async {
+    GroupsLoadResult? result = await loadResearchProjectsV3(ResearchProjectsQuery(filter: filter, includeHidden: includeHidden));
     return result?.groups;
   }
+
+  Future<List<Group>?> loadDisplayResearchProjectsListV3(ResearchProjectsFilter filter) => _loadResearchProjectsListV3(filter, includeHidden: false);
 
   Future<int?> loadResearchProjectTragetAudienceCount(Map<String, dynamic> researchQuestionnaireAnswers) async {
     if (Config().groupsUrl != null) {
@@ -1094,8 +1097,11 @@ class Groups with Service, NotificationsListener {
   List<Group>? get userGroups => _userGroups;
   Set<String>? get userGroupNames => _userGroupNames;
 
-  File? get _userGroupsCacheFile  => (_appDocDir != null) ?
-    File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
+  List<Group>? get displayUserGroups => ListUtils.from(_userGroups?.where((Group group) => group.isVisible));
+
+  Group? getUserGroup(String groupId) => _userGroups?.firstWhereOrNull((Group group) => (group.id == groupId));
+
+  File? get _userGroupsCacheFile  => (_appDocDir != null) ? File(join(_appDocDir!.path, _userGroupsCacheFileName)) : null;
 
   Future<String?> _loadUserGroupsStringFromCache() async {
     try {
@@ -1155,7 +1161,7 @@ class Groups with Service, NotificationsListener {
   }
 
   Future<void> _updateUserGroupsFromNet() async {
-    List<Group>? userGroups = await loadUserGroupsV3();
+    List<Group>? userGroups = await loadAllUserGroupsV3();
     if ((userGroups != null) && !const DeepCollectionEquality().equals(_userGroups, userGroups)) {
       _userGroups = userGroups;
       _userGroupNames = _buildGroupNames(_userGroups);
@@ -1251,7 +1257,7 @@ class Groups with Service, NotificationsListener {
         Iterator groupIdIterator = groupIdKeys.iterator;
         while (groupIdIterator.moveNext()) {
           String groupId = groupIdIterator.current;
-          Group? group = _getUserGroup(groupId: groupId);
+          Group? group = getUserGroup(groupId);
           if (group != null) {
             List<Member>? attendedMembers = _attendedMembers![groupId];
             if (CollectionUtils.isNotEmpty(attendedMembers)) {
@@ -1281,17 +1287,6 @@ class Groups with Service, NotificationsListener {
         _saveAttendedMembersStringToCache(membersString);
       }
     }
-  }
-
-  Group? _getUserGroup({required String groupId}) {
-    if (CollectionUtils.isNotEmpty(userGroups) && StringUtils.isNotEmpty(groupId)) {
-      for (Group group in userGroups!) {
-        if (groupId == group.id) {
-          return group;
-        }
-      }
-    }
-    return null;
   }
 
   // Report Abuse

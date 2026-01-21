@@ -301,6 +301,10 @@ class Group {
     return (currentUserIsAdmin == true) && (authManEnabled == true);
   }
 
+  bool get isVisible {
+    return (hiddenForSearch != true) || currentUserIsAdmin;
+  }
+
   static List<Group>? listFromJson(List<dynamic>? json, {bool Function(Group element)? filter}) {
     List<Group>? values;
     if (json != null) {
@@ -1298,7 +1302,7 @@ class GroupsFilter {
   final Map<String, dynamic>? attributes;
   final Set<GroupsFilterType>? types;
 
-  const GroupsFilter({this.attributes, this.types,});
+  const GroupsFilter({this.attributes, this.types});
 
   factory GroupsFilter.fromUriParams(Map<String, String> uriParams) => GroupsFilter(
     attributes: JsonUtils.decodeMap(uriParams['attributes']),
