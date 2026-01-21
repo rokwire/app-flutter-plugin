@@ -19,8 +19,8 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:universal_io/io.dart';
 import 'package:web/web.dart' as web;
-//DD: Use deprecated lib because currently there is no other way to read JS properties
-import 'dart:js_util' as js_util;
+import 'dart:js_interop' as js_interop;
+import 'dart:js_interop_unsafe';
 
 class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   
@@ -385,20 +385,29 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
             iosWebWindow.location.href = url;
 
             web.window.onMessage.listen((event) {
-              dynamic eventData = event.data;
+              js_interop.JSAny? eventData = event.data;
               if (eventData != null) {
+                String? redirectUrl;
                 final String redirectUrlKey = 'flutter-web-auth-2';
-                if (js_util.hasProperty(eventData, redirectUrlKey)) {
-                  dynamic redirectUrlValue = js_util.getProperty(eventData, redirectUrlKey);
-                  if (redirectUrlValue is String) {
-                    iosWebWindow.close();
-                    onDeepLinkUri(Uri.tryParse(redirectUrlValue));
+                // 1 Case - JSONObject
+                if (eventData is js_interop.JSObject) {
+                  final redirectUrlValue = eventData.getProperty(redirectUrlKey.toJS);
+                  if (redirectUrlValue is js_interop.JSString) {
+                    redirectUrl = redirectUrlValue.toDart;
                   } else {
-                    debugPrint('WEB: auth2 | oidc login -> redirectUrlValue is NOT a string: toString: ${redirectUrlValue.toString()}, runtimeType: ${redirectUrlValue.runtimeType.toString()}');
+                    debugPrint('WEB: auth2 | redirectUrlValue is not js_interop.JSString: $redirectUrlValue');
                   }
-                } else if (eventData is String) {
+                }
+                // 2 Case - fallback for JSString
+                else if (eventData is js_interop.JSString) {
+                  redirectUrl = eventData.toDart;
+                } else {
+                  debugPrint(
+                      'WEB: auth2 | eventData is neither js_interop.JSObject, nor js_interop.JSString:  toString: ${eventData.toString()}, runtimeType: ${eventData.runtimeType.toString()}');
+                }
+                if (redirectUrl != null) {
                   iosWebWindow.close();
-                  onDeepLinkUri(Uri.tryParse(eventData));
+                  onDeepLinkUri(Uri.tryParse(redirectUrl));
                 }
               } else {
                 debugPrint('WEB: auth2 | oidc login -> event data IS null!');
