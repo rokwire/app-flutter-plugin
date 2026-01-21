@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Changed
-- Acknowledged includeHidden field of GroupsQuery & ResearchProjectsQuery [#5666](https://github.com/rokwire/illinois-app/issues/5666).
+- Acknowledged includeHidden field of GroupsQuery & ResearchProjectsQuery [#5683](https://github.com/rokwire/illinois-app/issues/5683).
 ### Fixed
 - Fixed equality operator of GroupSettings object.
  
