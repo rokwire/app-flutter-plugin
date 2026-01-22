@@ -48,7 +48,7 @@ class DeepLink with Service {
     final _appLinks = AppLinks();
 
     // 1. Initial Uri
-    _appLinks.getInitialAppLink().then((uri) {
+    _appLinks.getInitialLink().then((uri) {
       if (uri != null) {
         _initialUri = uri;
         debugPrint('Launch URI: $uri');
