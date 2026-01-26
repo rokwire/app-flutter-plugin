@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.12.5] - 2026-01-26
+### Fixed
+- Do not allow updating a poll twice when the user votes, take care to update date created/updated either [#5672](https://github.com/rokwire/illinois-app/issues/5672).
+
 ## [1.12.4] - 2026-01-21
 ### Changed
 - Acknowledged includeHidden field of GroupsQuery & ResearchProjectsQuery [#5683](https://github.com/rokwire/illinois-app/issues/5683).
