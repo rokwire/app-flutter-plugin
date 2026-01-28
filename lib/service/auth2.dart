@@ -44,12 +44,12 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   _OidcLogin? _oidcLogin;
   Auth2AccountScope? _oidcScope;
   bool? _oidcLink;
-  List<Completer<Auth2OidcAuthenticateResult?>>? _oidcAuthenticationCompleters;
   bool? _processingOidcAuthentication;
   Timer? _oidcAuthenticationTimer;
+  _OidcAuthCompleters? _oidcAuthCompleters;
 
-  final Map<String, Future<Response?>> _refreshTokenFutures = {};
-  final Map<String, int> _refreshTonenFailCounts = {};
+  final Map<String, _RefreshTokenCompleters> _refreshTokenCompleters = {};
+  final Map<String, int> _refreshTokenFailCounts = {};
 
   Client? _updateUserPrefsClient;
   Timer? _updateUserPrefsTimer;
@@ -121,7 +121,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     }
 
     if ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid) {
-      if (!await authenticateAnonymously()) {
+      if (await authenticateAnonymously() == null) {
         throw ServiceError(
           source: this,
           severity: ServiceErrorSeverity.fatal,
@@ -306,7 +306,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   // Anonymous Authentication
 
-  Future<bool> authenticateAnonymously() async {
+  Future<Auth2Token?> authenticateAnonymously() async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null) && (Config().rokwireApiKey != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -327,16 +327,20 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         Map<String, dynamic>? params = JsonUtils.mapValue(responseJson['params']);
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
-          _refreshTonenFailCounts.remove(_anonymousToken?.refreshToken);
+          _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
+
+          _clearRefreshTokenCompleters(_anonymousToken?.refreshToken);
+          _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
+
           Storage().auth2AnonymousId = _anonymousId = anonymousId;
           Storage().auth2AnonymousToken = _anonymousToken = anonymousToken;
-          _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
-          return true;
+
+          return anonymousToken;
         }
       }
       _log("Auth2: anonymous auth failed: ${response?.statusCode}\n${response?.body}");
     }
-    return false;
+    return null;
   }
 
   // OIDC Authentication
@@ -344,8 +348,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({ Auth2AccountScope? scope = defaultLoginScope, bool? link}) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
 
-      if (_oidcAuthenticationCompleters == null) {
-        _oidcAuthenticationCompleters = <Completer<Auth2OidcAuthenticateResult?>>[];
+      if (_oidcAuthCompleters == null) {
+        _oidcAuthCompleters = <_OidcAuthCompleter>{};
         NotificationService().notify(notifyLoginStarted, oidcLoginType);
 
         _OidcLogin? oidcLogin = await getOidcData();
@@ -363,8 +367,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         }
       }
 
-      Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
-      _oidcAuthenticationCompleters!.add(completer);
+      _OidcAuthCompleter completer = _OidcAuthCompleter();
+      _oidcAuthCompleters?.add(completer);
       return completer.future;
     }
     
@@ -444,7 +448,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   @protected
   Future<void> applyLogin(Auth2Account account, Auth2Token token, { Auth2AccountScope? scope, Map<String, dynamic>? params }) async {
 
-    _refreshTonenFailCounts.remove(_token?.refreshToken);
+    _clearRefreshTokenCompleters(_token?.refreshToken);
+    _refreshTokenFailCounts.remove(_token?.refreshToken);
 
     bool? prefsUpdated = account.prefs?.apply(_anonymousPrefs, scope: scope?.prefs);
     bool? profileUpdated = account.profile?.apply(_anonymousProfile, scope: scope?.profile);
@@ -490,9 +495,9 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void createOidcAuthenticationTimerIfNeeded() {
-    if ((_oidcAuthenticationCompleters != null) && (_processingOidcAuthentication != true)) {
+    if ((_oidcAuthCompleters != null) && (_processingOidcAuthentication != true)) {
       if (_oidcAuthenticationTimer != null) {
-        _oidcAuthenticationTimer!.cancel();
+        _oidcAuthenticationTimer?.cancel();
       }
       _oidcAuthenticationTimer = Timer(const Duration(milliseconds: 100), () {
         completeOidcAuthentication(null);
@@ -504,7 +509,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   @protected
   void cancelOidcAuthenticationTimer() {
     if(_oidcAuthenticationTimer != null){
-      _oidcAuthenticationTimer!.cancel();
+      _oidcAuthenticationTimer?.cancel();
       _oidcAuthenticationTimer = null;
     }
   }
@@ -518,11 +523,11 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     _oidcScope = null;
     _oidcLink = null;
 
-    if (_oidcAuthenticationCompleters != null) {
-      List<Completer<Auth2OidcAuthenticateResult?>> loginCompleters = _oidcAuthenticationCompleters!;
-      _oidcAuthenticationCompleters = null;
+    _OidcAuthCompleters? loginCompleters = _oidcAuthCompleters;
+    if (loginCompleters != null) {
+      _oidcAuthCompleters = null;
 
-      for(Completer<Auth2OidcAuthenticateResult?> completer in loginCompleters){
+      for(_OidcAuthCompleter completer in loginCompleters){
         completer.complete(result);
       }
     }
@@ -1005,7 +1010,9 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   void logout({ String? reason, Auth2UserPrefs? prefs, }) {
     if (_token != null) {
       _log("Auth2: logout");
-      _refreshTonenFailCounts.remove(_token?.refreshToken);
+
+      _clearRefreshTokenCompleters(_token?.refreshToken);
+      _refreshTokenFailCounts.remove(_token?.refreshToken);
 
       Storage().auth2AnonymousPrefs = _anonymousPrefs = prefs ?? _account?.prefs ?? Auth2UserPrefs.empty();
       Storage().auth2AnonymousProfile = _anonymousProfile = Auth2UserProfile.empty();
@@ -1055,85 +1062,113 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   // Refresh
 
   Future<Auth2Token?> refreshToken(Auth2Token token) async {
-    if ((Config().coreUrl != null) && (token.refreshToken != null)) {
+    String? refreshToken = token.refreshToken;
+    if ((Config().coreUrl != null) && (refreshToken != null)) {
       try {
-        Future<Response?>? refreshTokenFuture = _refreshTokenFutures[token.refreshToken];
-
-        if (refreshTokenFuture != null) {
-          _log("Auth2: will await refresh token:\nSource Token: ${token.refreshToken}");
-          Response? response = await refreshTokenFuture;
-          Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-          Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
-          _log("Auth2: did await refresh token: ${responseToken?.isValid}\nSource Token: ${token.refreshToken}");
-          return ((responseToken != null) && responseToken.isValid) ? responseToken : null;
+        _RefreshTokenCompleters? refreshTokenCompleters = _refreshTokenCompleters[refreshToken];
+        if (refreshTokenCompleters != null) {
+          _log("Auth2: will await refresh token:\nSource Token: $refreshToken");
+          _RefreshTokenCompleter completer = _RefreshTokenCompleter();
+          refreshTokenCompleters.add(completer);
+          return completer.future;
         }
         else {
-          _log("Auth2: will refresh token:\nSource Token: ${token.refreshToken}");
+          _refreshTokenCompleters[refreshToken] = refreshTokenCompleters = <_RefreshTokenCompleter>{};
+          Auth2Token? responseToken = await _refreshTokenImpl(token);
+          _refreshTokenCompleters.remove(refreshToken);
+          _completeRefreshToken(refreshTokenCompleters, responseToken: responseToken, refreshToken: refreshToken);
+          return responseToken;
+        }
+      }
+      catch(e) {
+        debugPrint(e.toString());
+        _clearRefreshTokenCompleters(refreshToken);
+      }
+    }
+    return null;
+  }
 
-          _refreshTokenFutures[token.refreshToken!] = refreshTokenFuture = _refreshToken(token.refreshToken);
-          Response? response = await refreshTokenFuture;
-          _refreshTokenFutures.remove(token.refreshToken);
+  Future<Auth2Token?> _refreshTokenImpl(Auth2Token token) async {
+    String? refreshToken = token.refreshToken;
+    if ((Config().coreUrl != null) && (refreshToken != null)) {
+      try {
+        _log("Auth2: will refresh token:\nSource Token: $refreshToken");
+        String url = "${Config().coreUrl}/services/auth/refresh";
+        Map<String, String> headers = {
+          'Content-Type': 'application/json'
+        };
+        String? post = JsonUtils.encode({
+          'api_key': Config().rokwireApiKey,
+          'refresh_token': refreshToken
+        });
 
-          Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-          if (responseJson != null) {
-            Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
-            if ((responseToken != null) && responseToken.isValid) {
-              _log("Auth2: did refresh token:\nResponse Token: ${responseToken.refreshToken}\nSource Token: ${token.refreshToken}");
-              _refreshTonenFailCounts.remove(token.refreshToken);
+        Response? response = await Network().post(url, headers: headers, body: post);
+        Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+        Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
 
-              if (token == _token) {
-                applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
-              }
-              else if (token == _anonymousToken) {
-                Storage().auth2AnonymousToken = _anonymousToken = responseToken;
-              }
-              return responseToken;
-            }
+        if ((responseJson != null) && (responseToken != null) && responseToken.isValid) {
+          _log("Auth2: did refresh token: ${responseToken.refreshToken}\nSource Token: $refreshToken");
+          _refreshTokenFailCounts.remove(refreshToken);
+
+          if (token == _token) {
+            applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
           }
+          else if (token == _anonymousToken) {
+            Storage().auth2AnonymousToken = _anonymousToken = responseToken;
+          }
+          return responseToken;
+        }
+        else {
+          int refreshTokenFailCount  = (_refreshTokenFailCounts[refreshToken] ?? 0) + 1;
 
-          _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: ${token.refreshToken}");
-          int refreshTonenFailCount  = (_refreshTonenFailCounts[token.refreshToken] ?? 0) + 1;
-          if (((response?.statusCode == 400) || (response?.statusCode == 401)) || (Config().refreshTokenRetriesCount <= refreshTonenFailCount)) {
+          if ((response?.statusCode == 400) || (response?.statusCode == 401) || (Config().refreshTokenRetriesCount <= refreshTokenFailCount)) {
+            _refreshTokenFailCounts.remove(refreshToken);
+
             if (token == _token) {
+              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail & Logout");
               logout(reason: logoutReasonToken);
             }
             else if (token == _anonymousToken) {
-              await authenticateAnonymously();
+              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail & Authenticate");
+              return await authenticateAnonymously();
+            }
+            else {
+              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail");
             }
           }
           else {
-            _refreshTonenFailCounts[token.refreshToken!] = refreshTonenFailCount;
+            _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Try Again");
+            _refreshTokenFailCounts[refreshToken] = refreshTokenFailCount;
           }
         }
       }
       catch(e) {
         debugPrint(e.toString());
-        _refreshTokenFutures.remove(token.refreshToken); // make sure to clear this in case something went wrong.
       }
     }
     return null;
   }
 
+  void _clearRefreshTokenCompleters(String? refreshToken) {
+    if (refreshToken != null) {
+      _RefreshTokenCompleters? refreshTokenCompleters = _refreshTokenCompleters[refreshToken];
+      if (refreshTokenCompleters != null) {
+        _refreshTokenCompleters.remove(refreshToken); // make sure to clear this in case something went wrong.
+        _completeRefreshToken(refreshTokenCompleters, refreshToken: refreshToken);
+      }
+    }
+  }
+
+  static void _completeRefreshToken(_RefreshTokenCompleters refreshTokenCompleters, { Auth2Token? responseToken, required String refreshToken}) {
+    for(_RefreshTokenCompleter completer in refreshTokenCompleters) {
+      _log("Auth2: did await refresh token: ${responseToken?.refreshToken}\nSource Token: $refreshToken");
+      completer.complete(responseToken);
+    }
+  }
+
   @protected
   void applyToken(Auth2Token token, { Map<String, dynamic>? params }) {
     Storage().auth2Token = _token = token;
-  }
-
-  static Future<Response?> _refreshToken(String? refreshToken) async {
-    if ((Config().coreUrl != null) && (refreshToken != null)) {
-      String url = "${Config().coreUrl}/services/auth/refresh";
-      
-      Map<String, String> headers = {
-        'Content-Type': 'application/json'
-      };
-      String? post = JsonUtils.encode({
-        'api_key': Config().rokwireApiKey,
-        'refresh_token': refreshToken
-      });
-
-      return Network().post(url, headers: headers, body: post);
-    }
-    return null;
   }
 
   // User Prefs
@@ -1400,10 +1435,16 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   static void _log(String message) {
-    Log.d(message, lineLength: 512); // max line length of VS Code Debug Console
+    Log.d(message);
   }
 
 }
+
+typedef _OidcAuthCompleter = Completer<Auth2OidcAuthenticateResult?>;
+typedef _OidcAuthCompleters = Set<_OidcAuthCompleter>;
+
+typedef _RefreshTokenCompleter = Completer<Auth2Token?>;
+typedef _RefreshTokenCompleters = Set<_RefreshTokenCompleter>;
 
 class _OidcLogin {
   final String? loginUrl;
