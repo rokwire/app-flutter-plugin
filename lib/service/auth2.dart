@@ -1007,9 +1007,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   // Logout
 
-  void logout({ String? reason, Auth2UserPrefs? prefs, }) {
+  Future<void> logout({ String? reason, Auth2UserPrefs? prefs, }) async {
     if (_token != null) {
       _log("Auth2: logout");
+
+      if (reason != logoutReasonToken) {
+        await _logoutImpl();
+      }
 
       _clearRefreshTokenCompleters(_token?.refreshToken);
       _refreshTokenFailCounts.remove(_token?.refreshToken);
@@ -1036,6 +1040,23 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       NotificationService().notify(notifyPrivacyChanged);
       NotificationService().notify(notifyLoginChanged);
       NotificationService().notify(notifyLogout, reason);
+    }
+  }
+
+  Future<bool?> _logoutImpl() async {
+    if ((Config().coreUrl != null) && (_token != null)) {
+      String url = "${Config().coreUrl}/services/auth/logout";
+      Map<String, String> headers = {
+        'Content-Type': 'application/json'
+      };
+      String? post = JsonUtils.encode({
+        'all_sessions': false,
+      });
+      Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
+      return (response?.statusCode == 200);
+    }
+    else {
+      return null;
     }
   }
 
