@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Fixed
+- Converting color to string hex value [#5699](https://github.com/rokwire/illinois-app/issues/5699).
 
 ## [1.12.5] - 2026-01-26
 ### Fixed
