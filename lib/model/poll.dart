@@ -198,19 +198,20 @@ class Poll {
     return Random().nextInt(9998) + 1;
   }
 
-  void apply(PollVote pollVote) {
-    results ??= PollVote();
-    results!.apply(pollVote);
-
-    _increaseUniqueVotersCount();
-
+  void apply(PollVote pollVote, { bool updateResults = true}) {
+    if (updateResults) {
+      results ??= PollVote();
+      results?.apply(pollVote);
+    }
+    
     userVote ??= PollVote();
-    userVote!.apply(pollVote);
+    userVote?.apply(pollVote);
+    
+    updateUniqueVotersCount();
   }
 
-  void _increaseUniqueVotersCount() {
-    uniqueVotersCount ??= 0;
-    uniqueVotersCount = uniqueVotersCount! + 1;
+  void updateUniqueVotersCount({int delta = 1}) {
+    uniqueVotersCount = (uniqueVotersCount ?? 0) + delta;
   }
 
   static List<Poll> fromJsonList(List<dynamic>? jsonList) {
@@ -423,21 +424,16 @@ class PollVote {
 
   void _updateTotal(int? delta) {
     if (delta != null) {
-      if (_total != null) {
-        _total = _total! + delta;
-      }
-      else {
-        _total = delta;
-      }
+      _total = (_total ?? 0) + delta;
     }
   }
 
   void apply(PollVote? vote) {
-    if ((vote?._votes != null) && vote!._votes!.isNotEmpty) {
+    if ((vote?._votes != null) && vote?._votes?.isNotEmpty == true) {
       _votes ??= {};
       int deltaTotal = 0;
-      vote._votes!.forEach((int optionIndex, int optionVotes) {
-        _votes![optionIndex] = optionVotes + (_votes![optionIndex] ?? 0);
+      vote?._votes?.forEach((int optionIndex, int optionVotes) {
+        _votes?[optionIndex] = optionVotes + (_votes?[optionIndex] ?? 0);
         deltaTotal += optionVotes;
       });
       _updateTotal(deltaTotal);
