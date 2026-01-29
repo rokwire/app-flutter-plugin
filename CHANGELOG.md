@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Fixed
 - Converting color to string hex value [#5699](https://github.com/rokwire/illinois-app/issues/5699).
+### Changed
+- Reworked refresh token processing in Auth2, added extended Crashlytics logs [#5405](https://github.com/rokwire/illinois-app/issues/5405).
 
 ## [1.12.5] - 2026-01-26
 ### Fixed
