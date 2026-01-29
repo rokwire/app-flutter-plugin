@@ -406,11 +406,9 @@ class UiColors {
 
   static String? toHex(Color? value, {bool leadingHashSign = true}) {
     if (value != null) {
-      return (leadingHashSign ? '#' : '') +
-          (value.a / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
-          (value.r / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
-          (value.g / 255.0).toInt().toRadixString(16).padLeft(2, '0') +
-          (value.b / 255.0).toInt().toRadixString(16).padLeft(2, '0');
+      final argb = value.toARGB32();
+      return '${leadingHashSign ? '#' : ''}'
+          '${argb.toRadixString(16).padLeft(8, '0')}';
     }
     return null;
   }
