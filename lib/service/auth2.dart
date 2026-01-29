@@ -9,7 +9,7 @@ import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/rokwire_plugin.dart';
 import 'package:rokwire_plugin/service/app_livecycle.dart';
 import 'package:rokwire_plugin/service/deep_link.dart';
-import 'package:rokwire_plugin/service/log.dart';
+import 'package:rokwire_plugin/service/firebase_crashlytics.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
@@ -110,7 +110,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     _anonymousPrefs = Storage().auth2AnonymousPrefs;
     _anonymousProfile = Storage().auth2AnonymousProfile;
 
-    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+    _deviceId = await getDeviceId();
 
     if ((_account == null) && (_anonymousPrefs == null)) {
       Storage().auth2AnonymousPrefs = _anonymousPrefs = defaultAnonimousPrefs;
@@ -166,8 +166,6 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     }
     else if (state == AppLifecycleState.resumed) {
       createOidcAuthenticationTimerIfNeeded();
-
-      //TMP: _log('Core Access Token: ${_token?.accessToken}');
 
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
@@ -327,7 +325,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         Map<String, dynamic>? params = JsonUtils.mapValue(responseJson['params']);
         String? anonymousId = (params != null) ? JsonUtils.stringValue(params['anonymous_id']) : null;
         if ((anonymousToken != null) && anonymousToken.isValid && (anonymousId != null) && anonymousId.isNotEmpty) {
-          _log("Auth2: anonymous auth succeeded: ${response?.statusCode}\n${response?.body}");
+          debugPrint("Auth2: anonymous auth succeeded: ${response?.statusCode} ${response?.body}", wrapWidth: 512);
+          FirebaseCrashlytics().log("Auth2: anonymous auth succeeded with refresh token: ${anonymousToken.refreshToken?.hashCode}");
 
           _clearRefreshTokenCompleters(_anonymousToken?.refreshToken);
           _refreshTokenFailCounts.remove(_anonymousToken?.refreshToken);
@@ -338,7 +337,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           return anonymousToken;
         }
       }
-      _log("Auth2: anonymous auth failed: ${response?.statusCode}\n${response?.body}");
+      FirebaseCrashlytics().recordError("Auth2: anonymous auth failed: ${response?.statusCode} ${response?.body}");
     }
     return null;
   }
@@ -419,18 +418,17 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       _oidcLogin = null;
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      Log.d("Login: ${response?.statusCode}, ${response?.body}", lineLength: 512);
-      Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
-      bool result = await processLoginResponse(responseJson, scope: _oidcScope);
+      bool result = await processLoginResponse(response, scope: _oidcScope, loginType: oidcLoginType);
       _oidcScope = null;
-      _log(result ? "Auth2: login succeeded: ${response?.statusCode}\n${response?.body}" : "Auth2: login failed: ${response?.statusCode}\n${response?.body}");
       return result;
     }
     return false;
   }
 
   @protected
-  Future<bool> processLoginResponse(Map<String, dynamic>? responseJson, { Auth2AccountScope? scope }) async {
+  Future<bool> processLoginResponse(Response? response, { Auth2AccountScope? scope, Auth2LoginType? loginType }) async {
+    String authType = loginType?.name ?? 'user';
+    Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
     if (responseJson != null) {
       Auth2Token? token = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
       Auth2Account? account = Auth2Account.fromJson(JsonUtils.mapValue(responseJson['account']),
@@ -438,10 +436,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         profile: _anonymousProfile ?? Auth2UserProfile.empty());
 
       if ((token != null) && token.isValid && (account != null) && account.isValid) {
+        debugPrint("Auth2: $authType auth succeeded: ${response?.statusCode} ${response?.body}", wrapWidth: 512);
+        FirebaseCrashlytics().log("Auth2: $authType auth succeeded with refresh token: ${token.refreshToken?.hashCode}");
         await applyLogin(account, token, scope: scope, params: JsonUtils.mapValue(responseJson['params']));
         return true;
       }
     }
+    FirebaseCrashlytics().recordError("Auth2: $authType auth failed:\n${response?.statusCode} ${response?.body}");
     return false;
   }
 
@@ -588,14 +589,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(phoneLoginType, result);
-        return result ? Auth2PhoneSendCodeResult.succeeded : Auth2PhoneSendCodeResult.failed;
+      bool result = await processLoginResponse(response, scope: scope, loginType: phoneLoginType);
+      _notifyLogin(phoneLoginType, result);
+      if (result) {
+        return Auth2PhoneSendCodeResult.succeeded;
       }
       else {
-        _notifyLogin(phoneLoginType, false);
-        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        Auth2Error? error = (response?.statusCode != 200) ? Auth2Error.fromJson(JsonUtils.decodeMap(response?.body)) : null;
         if (error?.status == 'invalid') {
           return Auth2PhoneSendCodeResult.failedInvalid;
         }
@@ -630,14 +630,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(emailLoginType, result);
-        return result ? Auth2EmailSignInResult.succeeded : Auth2EmailSignInResult.failed;
+      bool result = await processLoginResponse(response, scope: scope, loginType: emailLoginType);
+      _notifyLogin(emailLoginType, result);
+      if (result) {
+        return Auth2EmailSignInResult.succeeded;
       }
       else {
-        _notifyLogin(emailLoginType, false);
-        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        Auth2Error? error = (response?.statusCode != 200) ? Auth2Error.fromJson(JsonUtils.decodeMap(response?.body)) : null;
         if (error?.status == 'unverified') {
           return Auth2EmailSignInResult.failedNotActivated;
         }
@@ -792,14 +791,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(usernameLoginType, result);
-        return result ? Auth2UsernameSignInResult.succeeded : Auth2UsernameSignInResult.failed;
+      bool result = await processLoginResponse(response, scope: scope, loginType: usernameLoginType);
+      _notifyLogin(usernameLoginType, result);
+      if (result) {
+        return Auth2UsernameSignInResult.succeeded;
       }
       else {
-        _notifyLogin(usernameLoginType, false);
-        Auth2Error? error = Auth2Error.fromJson(JsonUtils.decodeMap(response?.body));
+        Auth2Error? error = (response?.statusCode != 200) ? Auth2Error.fromJson(JsonUtils.decodeMap(response?.body)) : null;
         if (error?.status == 'not-found') {
           return Auth2UsernameSignInResult.failedNotFound;
         } else if (error?.status == 'invalid') {
@@ -835,13 +833,16 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       });
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      if (response?.statusCode == 200) {
-        bool result = await processLoginResponse(JsonUtils.decodeMap(response?.body), scope: scope);
-        _notifyLogin(usernameLoginType, result);
-        return result ? Auth2UsernameSignUpResult.succeeded : Auth2UsernameSignUpResult.failed;
+      bool result = await processLoginResponse(response, scope: scope, loginType: usernameLoginType);
+      _notifyLogin(usernameLoginType, result);
+      if (result) {
+        return Auth2UsernameSignUpResult.succeeded;
       }
-      else if (Auth2Error.fromJson(JsonUtils.decodeMap(response?.body))?.status == 'already-exists') {
-        return Auth2UsernameSignUpResult.failedAccountExist;
+      else  {
+        Auth2Error? error = (response?.statusCode != 200) ? Auth2Error.fromJson(JsonUtils.decodeMap(response?.body)) : null;
+        if (error?.status == 'already-exists') {
+          return Auth2UsernameSignUpResult.failedAccountExist;
+        }
       }
     }
     return Auth2UsernameSignUpResult.failed;
@@ -994,6 +995,11 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     return false;
   }
 
+  // Device Id
+
+  // NB: do not rely on any data obtained in initService as this API is used in FirebaseCrashlytics.
+  Future<String?> getDeviceId() => RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+
   // Device Info
 
   @protected
@@ -1009,7 +1015,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   Future<void> logout({ String? reason, Auth2UserPrefs? prefs, }) async {
     if (_token != null) {
-      _log("Auth2: logout");
+      String? refreshToken = _token?.refreshToken;
+      FirebaseCrashlytics().log("Auth2: will logout with refresh token: ${refreshToken.hashCode}");
 
       if (reason != logoutReasonToken) {
         await _logoutImpl();
@@ -1034,6 +1041,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
       _updateUserProfileClient?.close();
       _updateUserProfileClient = null;
+
+      FirebaseCrashlytics().log("Auth2: did logout with refresh token: ${refreshToken.hashCode} => ${_anonymousToken?.refreshToken?.hashCode}");
 
       NotificationService().notify(notifyProfileChanged);
       NotificationService().notify(notifyPrefsChanged);
@@ -1088,12 +1097,11 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       try {
         _RefreshTokenCompleters? refreshTokenCompleters = _refreshTokenCompleters[refreshToken];
         if (refreshTokenCompleters != null) {
-          _log("Auth2: will await refresh token:\nSource Token: $refreshToken");
+          FirebaseCrashlytics().log("Auth2: will await refresh token: ${refreshToken.hashCode}");
           _RefreshTokenCompleter completer = _RefreshTokenCompleter();
           refreshTokenCompleters.add(completer);
           return completer.future;
-        }
-        else {
+        } else {
           _refreshTokenCompleters[refreshToken] = refreshTokenCompleters = <_RefreshTokenCompleter>{};
           Auth2Token? responseToken = await _refreshTokenImpl(token);
           _refreshTokenCompleters.remove(refreshToken);
@@ -1102,7 +1110,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         }
       }
       catch(e) {
-        debugPrint(e.toString());
+        FirebaseCrashlytics().recordError(e);
         _clearRefreshTokenCompleters(refreshToken);
       }
     }
@@ -1113,7 +1121,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     String? refreshToken = token.refreshToken;
     if ((Config().coreUrl != null) && (refreshToken != null)) {
       try {
-        _log("Auth2: will refresh token:\nSource Token: $refreshToken");
+        FirebaseCrashlytics().log("Auth2: will refresh token: ${refreshToken.hashCode}");
         String url = "${Config().coreUrl}/services/auth/refresh";
         Map<String, String> headers = {
           'Content-Type': 'application/json'
@@ -1128,15 +1136,21 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
 
         if ((responseJson != null) && (responseToken != null) && responseToken.isValid) {
-          _log("Auth2: did refresh token: ${responseToken.refreshToken}\nSource Token: $refreshToken");
+          debugPrint("Auth2: did refresh token: ${response?.statusCode} ${response?.body}", wrapWidth: 512);
           _refreshTokenFailCounts.remove(refreshToken);
 
           if (token == _token) {
+            FirebaseCrashlytics().log("Auth2: <User> did refresh token: ${refreshToken.hashCode} => ${responseToken.refreshToken?.hashCode}");
             applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
           }
           else if (token == _anonymousToken) {
+            FirebaseCrashlytics().log("Auth2: <Anonymous> did refresh token: ${refreshToken.hashCode} => ${responseToken.refreshToken?.hashCode}");
             Storage().auth2AnonymousToken = _anonymousToken = responseToken;
           }
+          else {
+            FirebaseCrashlytics().log("Auth2: <Unknown> did refresh token: ${refreshToken.hashCode} => ${responseToken.refreshToken?.hashCode}");
+          }
+
           return responseToken;
         }
         else {
@@ -1146,25 +1160,26 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
             _refreshTokenFailCounts.remove(refreshToken);
 
             if (token == _token) {
-              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail & Logout");
+              FirebaseCrashlytics().recordError("Auth2: <User> failed to refresh token: ${refreshToken.hashCode} => Logout\n${response?.statusCode} ${response?.body}");
               logout(reason: logoutReasonToken);
             }
             else if (token == _anonymousToken) {
-              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail & Authenticate");
+              FirebaseCrashlytics().recordError("Auth2: <Anonymous> failed to refresh token: ${refreshToken.hashCode} => Authenticate\n${response?.statusCode} ${response?.body}");
               return await authenticateAnonymously();
             }
             else {
-              _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Fail");
+              FirebaseCrashlytics().recordError("Auth2: <Unknown> failed to refresh token:\n${refreshToken.hashCode} => NA\n${response?.statusCode} ${response?.body}");
             }
           }
           else {
-            _log("Auth2: failed to refresh token: ${response?.statusCode}\n${response?.body}\nSource Token: $refreshToken\nResolution: Try Again");
+            FirebaseCrashlytics().recordError("Auth2: failed to refresh token: ${refreshToken.hashCode} => Try Again\n${response?.statusCode} ${response?.body}");
             _refreshTokenFailCounts[refreshToken] = refreshTokenFailCount;
           }
         }
       }
       catch(e) {
-        debugPrint(e.toString());
+        FirebaseCrashlytics().recordError(e);
+        _refreshTokenFailCounts[refreshToken] = (_refreshTokenFailCounts[refreshToken] ?? 0) + 1;
       }
     }
     return null;
@@ -1182,7 +1197,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   static void _completeRefreshToken(_RefreshTokenCompleters refreshTokenCompleters, { Auth2Token? responseToken, required String refreshToken}) {
     for(_RefreshTokenCompleter completer in refreshTokenCompleters) {
-      _log("Auth2: did await refresh token: ${responseToken?.refreshToken}\nSource Token: $refreshToken");
+      FirebaseCrashlytics().log("Auth2: did await refresh token: ${refreshToken.hashCode} => ${responseToken?.refreshToken?.hashCode}");
       completer.complete(responseToken);
     }
   }
@@ -1451,14 +1466,9 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       }
     }
     catch(e) {
-      debugPrint(e.toString());
+      FirebaseCrashlytics().recordError(e);
     }
   }
-
-  static void _log(String message) {
-    Log.d(message);
-  }
-
 }
 
 typedef _OidcAuthCompleter = Completer<Auth2OidcAuthenticateResult?>;
