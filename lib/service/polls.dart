@@ -112,25 +112,20 @@ class Polls with Service, NotificationsListener {
   }
 
   Future<PollsChunk?>? getRecentPolls({PollsCursor? cursor}) async {
-    return getPolls(PollFilter(
-        limit: _getLimit(cursor?.limit), offset: cursor?.offset, respondedPolls: true));
+    return getPolls(PollFilter(respondedPolls: true, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
   Future<PollsChunk?>? getGroupPolls({Set<String>? groupIds, Set<String>? pollIds, Set<PollStatus>? pollStatuses, PollsCursor? cursor}) async {
     return getPolls(PollFilter(groupIds: groupIds, pollIds: pollIds, statuses: pollStatuses, limit: _getLimit(cursor?.limit), offset: cursor?.offset));
   }
 
-  Future<Response?> _getPollsResponse(PollFilter pollsFilter) async =>
-    enabled ? Network().post(
-      '${Config().quickPollsUrl}/polls/load',
-      body: JsonUtils.encode(pollsFilter.toJson()),
-      auth: Auth2()) : null;
-
   @protected
   Future<PollsChunk?> getPolls(PollFilter pollsFilter) async {
-    Response? response = await _getPollsResponse(pollsFilter);
-    if (response != null) {
-      if (response.statusCode == 200) {
+    if (enabled) {
+      String url = '${Config().quickPollsUrl}/polls';
+      String? body = JsonUtils.encode(pollsFilter.toJson());
+      Response? response = await Network().get(url, body: body, auth: Auth2());
+      if ((response != null) && (response.statusCode == 200)) {
         List<dynamic>? responseJson = JsonUtils.decode(response.body);
         if (responseJson != null) {
           PollsCursor? pollsCursor = _increaseNextCursor(offset: pollsFilter.offset, limit: pollsFilter.limit, resultsCount: responseJson.length);
@@ -141,10 +136,12 @@ class Polls with Service, NotificationsListener {
         }
       }
       else {
-        throw PollsException(PollsError.serverResponse, '${response.statusCode} ${response.body}');
+        throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
       }
     }
-    return null;
+    else {
+      throw PollsException(PollsError.internal);
+    }
   }
 
   Poll? getPoll({String? pollId}) {
@@ -165,6 +162,8 @@ class Polls with Service, NotificationsListener {
         String? pollId = (responseJson != null) ? responseJson['id'] : null;
         if (pollId != null) {
           poll.pollId = pollId;
+          poll.dateCreatedUtcString ??= DateTimeUtils.utcDateTimeToString(DateTime.now());
+          poll.dateUpdatedUtcString ??= DateTimeUtils.utcDateTimeToString(DateTime.now());
 
           NotificationService().notify(notifyLifecycleCreate, poll);
 
@@ -240,10 +239,14 @@ class Polls with Service, NotificationsListener {
           'answer': vote.toVotesJson(),
         };
         String voteString = json.encode(voteJson);
+        PollVote? pollResults1 = _pollChunks[pollId]?.poll?.results;
         Response? response = await Network().put(url, body: voteString, auth: Auth2());
         if ((response != null) && (response.statusCode == 200)) {
           NotificationService().notify(notifyLifecycleVote, getPoll(pollId: pollId));
-          updatePollVote(pollId, vote);
+
+          PollVote? pollResults2 = _pollChunks[pollId]?.poll?.results;
+          bool resultsNotUpdated = ((pollResults1 == null) && (pollResults2 == null)) || (pollResults1?.isEqual(pollResults2) == true);  
+          updatePollVote(pollId, vote, updateResults: resultsNotUpdated);
         }
         else {
           throw PollsException(PollsError.serverResponse, '${response?.statusCode} ${response?.body}');
@@ -432,25 +435,24 @@ class Polls with Service, NotificationsListener {
 
   @protected
   void updatePollResults(String? pollId, PollVote? pollResults) {
-    if (pollId != null) {
-      PollChunk? pollChunk = _pollChunks[pollId];
-      if (pollChunk != null) {
-        if ((pollChunk.poll!.results == null) || !pollChunk.poll!.results!.isEqual(pollResults)) {
-          pollChunk.poll!.results = pollResults;
-          NotificationService().notify(notifyResultsChanged, pollId);
-        }
-      }
+    Poll? poll = (pollId != null) ? _pollChunks[pollId]?.poll : null;
+    if ((poll != null) && ((poll.results == null) || (poll.results?.isEqual(pollResults) != true))) {
+      poll.results = pollResults;
+      // poll.uniqueVotersCount = ... ??;
+      poll.dateUpdatedUtcString = DateTimeUtils.utcDateTimeToString(DateTime.now());
+      poll.dateCreatedUtcString ??= DateTimeUtils.utcDateTimeToString(DateTime.now());
+      NotificationService().notify(notifyResultsChanged, pollId);
     }
   }
 
   @protected
-  void updatePollVote(String? pollId, PollVote pollVote) {
-    if (pollId != null) {
-      PollChunk? pollChunk = _pollChunks[pollId];
-      if (pollChunk != null) {
-        pollChunk.poll!.apply(pollVote);
-        NotificationService().notify(notifyVoteChanged, pollId);
-      }
+  void updatePollVote(String? pollId, PollVote pollVote, { bool updateResults = true}) {
+    Poll? poll = (pollId != null) ? _pollChunks[pollId]?.poll : null;
+    if (poll != null) {
+      poll.apply(pollVote, updateResults: updateResults);
+      poll.dateUpdatedUtcString = DateTimeUtils.utcDateTimeToString(DateTime.now());
+      poll.dateCreatedUtcString ??= DateTimeUtils.utcDateTimeToString(DateTime.now());
+      NotificationService().notify(notifyVoteChanged, pollId);
     }
   }
 
