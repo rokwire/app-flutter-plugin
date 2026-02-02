@@ -578,7 +578,7 @@ class Social extends Service with NotificationsListener {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({Iterable<String>? ids, int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({Iterable<String>? ids, int? limit, int? offset, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -587,8 +587,10 @@ class Social extends Service with NotificationsListener {
     }
 
     Map<String, String> queryParams = {
-      'limit': limit.toString(),
-      'offset': offset.toString(),
+      if (limit != null)
+        'limit': limit.toString(),
+      if (offset != null)
+        'offset': offset.toString(),
     };
     if ((ids != null) && ids.isNotEmpty) {
       queryParams['ids'] = ids.join(',');
