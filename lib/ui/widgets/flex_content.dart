@@ -26,7 +26,7 @@ import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:collection/collection.dart';
-import 'package:url_launcher/url_launcher_string.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /*
   "emergency": {
@@ -184,7 +184,7 @@ class FlexContent extends StatefulWidget {
     Map<String, dynamic>? linkJson = JsonUtils.mapValue(button['link']);
     if (linkJson != null) {
       String? url = JsonUtils.stringValue(linkJson['url']);
-      if (StringUtils.isNotEmpty(url)) {
+      if ((url != null) && url.isNotEmpty) {
         Map<String, dynamic>? options = JsonUtils.mapValue(linkJson['options']);
         dynamic target = (options != null) ? options['target'] : 'internal';
         if (target is Map) {
@@ -192,28 +192,40 @@ class FlexContent extends StatefulWidget {
         }
 
         if (target == 'external') {
-          launchExternal(context, url!);
+          launch(context, url, tryInternal: false);
         }
         else {
-          launchInternal(context, url!, title: (options != null) ? JsonUtils.stringValue(options['title']) : null);
+          launch(context, url, tryInternal: true,
+            title: (options != null) ? JsonUtils.stringValue(options['title']) : null
+          );
         }
       }
     }
   }
 
   @protected
-  void launchExternal(BuildContext context, String url) {
-    launchUrlString(url);
+  void launch(BuildContext context, String url, { bool tryInternal = false, String? title }) async {
+    Uri? uri = UriExt.tryParse(url);
+    uri = uri?.fix() ?? uri;
+    if (uri != null) {
+      if (uri.isWebScheme) {
+        bool trackingAllowed = await TrackingServices.isAllowed();
+        if (tryInternal && trackingAllowed) {
+          launchWebPanel(context, uri, title: title);
+        }
+        else {
+          launchUrl(uri, mode: trackingAllowed ? LaunchMode.platformDefault : LaunchMode.externalApplication).catchError((e) => false);
+        }
+      }
+      else {
+        launchUrl(uri, mode: LaunchMode.platformDefault).catchError((e) => false);
+      }
+    }
   }
 
   @protected
-  void launchInternal(BuildContext context, String url, { String? title }) async {
-    if (await TrackingServices.isAllowed()) {
-      Navigator.of(context).push(CupertinoPageRoute(builder: (context) => WebPanel(url: url, title: title)));
-    } else {
-      launchUrlString(url);
-    }
-  }
+  void launchWebPanel(BuildContext context, Uri uri, { String? title }) =>
+    Navigator.of(context).push(CupertinoPageRoute(builder: (context) => WebPanel(uri: uri, title: title)));
 
   @protected
   void onTapClose(FlexContentWidgetState state) {
