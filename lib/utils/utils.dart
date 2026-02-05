@@ -24,8 +24,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:path/path.dart' as path_package;
 import 'package:rokwire_plugin/service/network.dart';
+import 'package:rokwire_plugin/service/tracking_services.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_io/io.dart';
@@ -686,13 +686,11 @@ class AppVersion {
 
 class UrlUtils {
 
-  static bool isPdf(String? url) => (UriExt.tryParse(url)?.isPdf ?? false);
-
   static bool isWebScheme(String? url) => (UriExt.tryParse(url)?.isWebScheme ?? false);
 
-  static bool canLaunchInternal(String? url) => (UriExt.tryParse(url)?.canLaunchInternal ?? false);
+  static bool canLaunchInternal(String? url) => isWebScheme(url);
 
-  static Future<bool?> launchExternal(String? url, {LaunchMode? mode}) async =>
+  static Future<bool?> launchExternal(String? url, { LaunchMode mode = LaunchMode.platformDefault }) async =>
     ((url != null) && url.isNotEmpty) ? UriExt.launchExternal(UriExt.tryParse(url), mode: mode) : null;
 
   static String addQueryParameters(String url, Map<String, String> queryParameters) {
@@ -809,14 +807,6 @@ extension UriExt on Uri {
     return null;
   }
 
-  bool get isPdf {
-    String? extension;
-    if (path.isNotEmpty) {
-      extension = path_package.extension(path);
-    }
-    return (extension == '.pdf');
-  }
-
   bool get isWebScheme => ((scheme == 'http') || (scheme == 'https'));
 
   bool get isValid => StringUtils.isNotEmpty(scheme) && (StringUtils.isNotEmpty(host) || StringUtils.isNotEmpty(path));
@@ -825,8 +815,6 @@ extension UriExt on Uri {
     try { return queryParameters.cast<String, dynamic>(); }
     catch (e) { debugPrint(e.toString()); return null; }
   }
-
-  bool get canLaunchInternal => isWebScheme && !(Platform.isAndroid && isPdf);
 
   static Uri? tryParse(String? url) => (url != null) ? Uri.tryParse(url) : null;
 
@@ -873,10 +861,26 @@ extension UriExt on Uri {
     return uri;
   }
 
-  static Future<bool?> launchExternal(Uri? uri, {LaunchMode? mode}) async =>
-    (uri != null) ? launchUrl(uri.fix() ?? uri, mode: mode ?? defaultLaunchMode) : null;
-
-  static LaunchMode get defaultLaunchMode => Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault;
+  static Future<bool?> launchExternal(Uri? uri, { LaunchMode mode = LaunchMode.platformDefault }) async {
+    if (uri != null) {
+      try {
+        if (mode.isExternal == false) {
+          bool trackingAllowed = await TrackingServices.isAllowed();
+          if (trackingAllowed == false) {
+            mode = LaunchMode.externalApplication;
+          }
+        }
+        return launchUrl(uri.fix() ?? uri, mode: mode).catchError((e) => false);
+      }
+      catch(e) {
+        debugPrint(e.toString());
+        return false;
+      }
+    }
+    else {
+      return null;
+    }
+  }
 }
 
 class JsonUtils {
@@ -1523,6 +1527,12 @@ extension GlobalKeyUtils on GlobalKey {
 extension DoubleUtils on double {
   bool get isNotEmpty => (this != 0);
   bool get isEmpty => (this == 0);
+}
+
+extension LaunchModeImpl on LaunchMode {
+  bool get isExternal => (this == LaunchMode.externalApplication) || (this == LaunchMode.externalNonBrowserApplication);
+  bool get isInApp => (this == LaunchMode.inAppWebView) || (this == LaunchMode.inAppBrowserView);
+  //NB: LaunchMode.platformDefault is undetermined
 }
 
 enum DayPart { morning, afternoon, evening, night }

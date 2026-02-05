@@ -109,7 +109,7 @@ class ActionBuilder {
       } else {
         Uri? parsedUri = Uri.tryParse(uri!);
         if (parsedUri != null) {
-          launchUrl(parsedUri, mode: LaunchMode.externalApplication);
+          launchUrl(parsedUri, mode: LaunchMode.externalApplication).catchError((e) => false);
         }
       }
     }

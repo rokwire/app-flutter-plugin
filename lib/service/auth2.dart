@@ -1520,7 +1520,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
             onDeepLinkUri(Uri.tryParse(url));
           });
         } else if (await canLaunchUrlString(urlStr)) {
-          await launchUrlString(urlStr, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
+          await launchUrlString(urlStr, mode: LaunchMode.platformDefault).catchError((e) { debugPrint(e.toString()); });
         }
       }
     }
