@@ -1388,14 +1388,12 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     return loginUrl;
   }
 
-  static Future<void> _launchUrl(String? urlStr) async {
-    try {
-      if ((urlStr != null) && await canLaunchUrlString(urlStr)) {
-        await launchUrlString(urlStr, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-      }
+  static Future<bool> _launchUrl(String? urlStr) async {
+    if ((urlStr != null) && await canLaunchUrlString(urlStr)) {
+      return launchUrlString(urlStr, mode: LaunchMode.platformDefault).catchError((e) { debugPrint(e.toString()); return false; });
     }
-    catch(e) {
-      debugPrint(e.toString());
+    else {
+      return false;
     }
   }
 
