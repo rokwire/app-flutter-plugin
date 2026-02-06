@@ -128,7 +128,7 @@ class WebPanel extends StatefulWidget {
   void onTapStatusLink(String? url) {
     Uri? uri = (url != null) ? Uri.tryParse(url) : null;
     if (uri != null) {
-      launchUrl(uri);
+      launchUrl(uri, mode: LaunchMode.externalApplication).catchError((e) => false);
     }
   }
 
@@ -315,7 +315,7 @@ class WebPanelState extends State<WebPanel> with NotificationsListener {
       return flutter_webview.NavigationDecision.navigate;
     }
     else {
-      launchUrlString(url);
+      launchUrlString(url, mode: LaunchMode.externalApplication).catchError((e) => false);
       return flutter_webview.NavigationDecision.prevent;
     }
   }
