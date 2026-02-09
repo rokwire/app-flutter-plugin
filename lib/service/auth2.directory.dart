@@ -20,7 +20,7 @@ extension Auh2Directory on Auth2 {
     Content().contentAttributes(attributesScope);
 
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
-    String? userName, String? firstName, String? lastName,
+    String? index, String? userName, String? firstName, String? lastName,
     Iterable<String>? ids, String? followingId, String? followerId,
     Map<String, dynamic>? attriutes,
     int? offset, int? limit}) async {
@@ -65,6 +65,15 @@ extension Auh2Directory on Auth2 {
       return (response?.statusCode == 200) ? Auth2PublicAccount.listFromJson(JsonUtils.decodeList(response?.body)) : null;
     }
     return null;
+  }
+
+  Future<List<String>?> loadDirectoryAccountsIndexes() async {
+    //TBD hook when API developed
+    return loadSampleDirectoryAccountsIndexes();
+  }
+
+  Future<List<String>?> loadSampleDirectoryAccountsIndexes() async {
+    return ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
   }
 
   // ignore: unused_element
