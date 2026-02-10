@@ -250,7 +250,13 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  String get oidcRedirectUrl => '${DeepLink().appUrl}/oidc-auth';
+  String get oidcRedirectUrl {
+    if (kIsWeb) {
+      // On web, use the current origin + /auth/callback
+      return '${Uri.base.origin}/auth/callback';
+    }
+    return '${DeepLink().appUrl}/oidc-auth';
+  }
 
   @protected
   void onDeepLinkUri(Uri? uri) {
@@ -403,7 +409,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   // Overrides
   @protected
-  String get oidcAuthType => Auth2Type.typeOidcIllinois;
+  String get oidcAuthType => 'conde_oidc';  // Using conde_oidc for Condé Nast authentication
 
   @protected
   Auth2UserPrefs get defaultAnonymousPrefs => Auth2UserPrefs.empty();
@@ -742,9 +748,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   // OIDC Authentication
 
+  /// Getter for the current OIDC login URL (for web manual flow)
+  String? get oidcLoginUrl => _oidcLogin?.loginUrl;
+
+  /// Authenticate with OIDC
+  /// Set skipUrlLaunch=true for web manual flow (sets up state without launching browser)
   Future<Auth2OidcAuthenticateResult?> authenticateWithOidc({
     Auth2AccountScope? scope = defaultLoginScope, bool? link,
-    bool useExternalBrowser = false}) async {
+    bool useExternalBrowser = false,
+    bool skipUrlLaunch = false}) async {
     if (Config().authBaseUrl != null) {
       String? loginUrl = _oidcLogin?.loginUrl;
       if (_oidcAuthenticationCompleters == null) {
@@ -769,6 +781,15 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
       }
 
       _oidcLoginInProgress = true;
+      
+      // For web manual flow: skip URL launch, just return success with URL ready
+      if (skipUrlLaunch) {
+        return Auth2OidcAuthenticateResult(
+          Auth2OidcAuthenticateResultStatus.failed,
+          message: 'skipUrlLaunch - use oidcLoginUrl getter to get the URL',
+        );
+      }
+      
       Completer<Auth2OidcAuthenticateResult?> completer = Completer<Auth2OidcAuthenticateResult?>();
       _oidcAuthenticationCompleters?.add(completer);
 
@@ -785,7 +806,8 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
         error: "auth url is null");
   }
 
-  @protected
+  /// Handle OIDC authentication callback with redirect URI
+  /// Can be called directly for web manual flow after authenticateWithOidc(skipUrlLaunch: true)
   Future<Auth2OidcAuthenticateResult?> handleOidcAuthentication(Uri uri) async {
     
     RokwirePlugin.dismissSafariVC();

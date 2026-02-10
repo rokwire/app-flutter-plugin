@@ -58,9 +58,16 @@ class AppDateTime with Service {
       debugPrint('AppDateTime: Timezone database initializiation omitted.');
     }
 
-    _localTimeZone = await FlutterTimezone.getLocalTimezone();
-    timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
-    timezone.setLocalLocation(deviceLocation);
+    try {
+      _localTimeZone = await FlutterTimezone.getLocalTimezone();
+      timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
+      timezone.setLocalLocation(deviceLocation);
+    } catch (e) {
+      // On web or if timezone fails, use UTC as fallback
+      debugPrint('AppDateTime: Failed to get local timezone, using UTC: $e');
+      _localTimeZone = 'UTC';
+      timezone.setLocalLocation(timezone.UTC);
+    }
 
     await super.initService();
   }
