@@ -822,7 +822,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.12.6"
+    version: "1.12.7"
   shared_preferences:
     dependency: transitive
     description:

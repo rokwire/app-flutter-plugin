@@ -73,7 +73,7 @@ class Auth2Token {
 
 enum Auth2LoginType { anonymous, apiKey, email, phone, username, phoneTwilio, oidc, oidcIllinois }
 
-String? auth2LoginTypeToString(Auth2LoginType value) {
+String auth2LoginTypeToString(Auth2LoginType value) {
   switch (value) {
     case Auth2LoginType.anonymous: return 'anonymous';
     case Auth2LoginType.apiKey: return 'api_key';
