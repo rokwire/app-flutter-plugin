@@ -102,7 +102,7 @@ class Network  {
       }
     } catch (e) { 
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
     return null;
   }
@@ -134,7 +134,7 @@ class Network  {
         }
       } catch (e) { 
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -152,7 +152,7 @@ class Network  {
       }
     } catch (e) { 
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -176,7 +176,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -194,7 +194,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -218,7 +218,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -236,7 +236,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -256,7 +256,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -274,7 +274,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -294,7 +294,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseTimeoutHandler) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -311,7 +311,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -331,7 +331,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout)) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -343,7 +343,7 @@ class Network  {
     }
     catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
     return null;
   }
@@ -356,7 +356,7 @@ class Network  {
         return ((response != null) && (timeout != null)) ? response.timeout(Duration(seconds: timeout), onTimeout: _responseBytesHandler) : response;
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -378,7 +378,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
@@ -414,7 +414,7 @@ class Network  {
         }
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -434,7 +434,7 @@ class Network  {
         }
       } catch (e) {
         Log.d(e.toString());
-        FirebaseCrashlytics().recordError(e, null);
+        FirebaseCrashlytics().recordError(e);
       }
     }
     return null;
@@ -452,7 +452,7 @@ class Network  {
       }
     } catch (e) {
       Log.d(e.toString());
-      FirebaseCrashlytics().recordError(e, null);
+      FirebaseCrashlytics().recordError(e);
     }
 
     if (sendAnalytics) {
