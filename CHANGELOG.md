@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Added
 - Added SetUtils.set helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
+### Changed
+- Apply default font family, if omitted, to material image spec.
 
 ## [1.12.7] - 2026-02-12
 ### Changed
