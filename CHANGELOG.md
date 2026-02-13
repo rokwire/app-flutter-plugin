@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Changed
+- Apply default font family, if omitted, to material image spec.
 
 ## [1.12.7] - 2026-02-12
 ### Changed
