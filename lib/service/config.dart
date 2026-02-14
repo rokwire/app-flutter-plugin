@@ -350,12 +350,12 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // App Id & Version
 
-  String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem;
+  String get operatingSystem => kIsWeb ? 'web' : Platform.operatingSystem.toLowerCase();
   String get localeName => kIsWeb ? 'unknown' : Platform.localeName;
 
-  String? get appId {
-    return _packageInfo?.packageName;
-  }
+  String? get packageName => _packageInfo?.packageName;
+
+  String? get appId => packageName;
 
   String? get appCanonicalId {
     if (_appCanonicalId == null) {
@@ -369,14 +369,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return _appCanonicalId;
   }
 
-  String? get defaultAppId => null;
   String? get appPlatformId {
-    if (kIsWeb) {
-      return isReleaseWeb ? releaseWebAuthBaseUrl : defaultAppId;
-    } else if (_appPlatformId == null) {
+    if (_appPlatformId == null) {
       _appPlatformId = appId;
 
-      String platformSuffix = ".${operatingSystem.toLowerCase()}";
+      String platformSuffix = ".$operatingSystem";
       if ((_appPlatformId != null) && !_appPlatformId!.endsWith(platformSuffix)) {
         _appPlatformId = _appPlatformId! + platformSuffix;
       }
@@ -402,13 +399,11 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
     return ((uri != null) && uri.pathSegments.isNotEmpty) ? uri.pathSegments.last : null;
   }
 
-  String? get webServiceId => null;
-
   // Getters: Config Asset Acknowledgement
 
   String? get appConfigUrl {
     if (isReleaseWeb) {
-      return "$authBaseUrl/application/configs";
+      return "$authBaseUrl/app-configs";
     }
     String? assetUrl = (_configAsset != null) ? JsonUtils.stringValue(_configAsset!['config_url'])  : null;
     return assetUrl ?? JsonUtils.stringValue(platformBuildingBlocks['appconfig_url']);
@@ -550,10 +545,9 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   // Getters: web
   String? get webIdentifierOrigin => html.window.location.origin;
-  String? get releaseWebAuthBaseUrl => '${html.window.location.origin}/$webServiceId';
   String? get authBaseUrl {
     if (isReleaseWeb) {
-      return releaseWebAuthBaseUrl;
+      return '$webIdentifierOrigin/$packageName';
     } else if (isAdmin) {
       return coreUrl != null ? '$coreUrl/admin': null;
     }

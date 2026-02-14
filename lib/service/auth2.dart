@@ -409,7 +409,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   
   // Overrides
   @protected
-  String get oidcAuthType => 'conde_oidc';  // Using conde_oidc for Condé Nast authentication
+  String get oidcAuthType => 'conde_okta_oidc';  // Using conde_oidc for Condé Nast authentication
 
   @protected
   Auth2UserPrefs get defaultAnonymousPrefs => Auth2UserPrefs.empty();
