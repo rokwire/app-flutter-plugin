@@ -1593,6 +1593,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           FirebaseCrashlytics().recordError(e);
           return false;
         });
+      } else {
+        return false;
       }
     } else {
       return false;
