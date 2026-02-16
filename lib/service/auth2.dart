@@ -1580,20 +1580,22 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     return loginUrl;
   }
 
-  Future<void> _launchUrl(String? urlStr) async {
-    try {
-      if ((urlStr != null)) {
-        if (kIsWeb) {
-          FlutterWebAuth2.authenticate(url: urlStr, callbackUrlScheme: Uri.tryParse(oidcRedirectUrl)?.scheme ?? '').then((String url) {
-            onDeepLinkUri(Uri.tryParse(url));
-          });
-        } else if (await canLaunchUrlString(urlStr)) {
-          await launchUrlString(urlStr, mode: Platform.isAndroid ? LaunchMode.externalApplication : LaunchMode.platformDefault);
-        }
+  Future<bool> _launchUrl(String? urlStr) async {
+    if ((urlStr != null)) {
+      if (kIsWeb) {
+        FlutterWebAuth2.authenticate(url: urlStr, callbackUrlScheme: Uri.tryParse(oidcRedirectUrl)?.scheme ?? '').then((String url) {
+          onDeepLinkUri(Uri.tryParse(url));
+        });
+        return true;
+      } else if (await canLaunchUrlString(urlStr)) {
+        return launchUrlString(urlStr, mode: LaunchMode.platformDefault).catchError((e) {
+          debugPrint(e.toString());
+          FirebaseCrashlytics().recordError(e);
+          return false;
+        });
       }
-    }
-    catch(e) {
-      FirebaseCrashlytics().recordError(e);
+    } else {
+      return false;
     }
   }
 
