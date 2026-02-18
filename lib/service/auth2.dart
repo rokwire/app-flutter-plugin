@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -842,6 +843,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   @protected
   Future<String?> processOidcAuthentication(Uri? uri) async {
     if (Config().authBaseUrl != null) {
+      // check state
+      String redirectState = uri?.queryParameters['state'] ?? '';
+      if (redirectState.isEmpty || redirectState != (_oidcLogin?.state ?? '')) {
+        return 'invalid state';
+      }
+
       String url = "${Config().authBaseUrl}/auth/login";
       Map<String, String> headers = {
         'Content-Type': 'application/json',
@@ -2056,15 +2063,27 @@ typedef OidcLogin = _OidcLogin;
 class _OidcLogin {
   final String? loginUrl;
   final Map<String, dynamic>? params;
+  final String? state;
   final String? error;
 
-  _OidcLogin({this.loginUrl, this.params, this.error});
+  _OidcLogin({this.loginUrl, this.params, this.state, this.error});
 
   static _OidcLogin? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? _OidcLogin(
-      loginUrl: JsonUtils.stringValue(json['login_url']),
-      params: JsonUtils.mapValue(json['params'])
-    ) : null;
+    if (json != null) {
+      String state = StringUtils.generatePassword(isSpecial: false, length: 32);
+      String encodedState = StringUtils.base64UrlEncode(state).replaceAll('=', '');
+      String loginUrl = JsonUtils.stringValue(json['login_url']) ?? '';
+      loginUrl = UrlUtils.addQueryParameters(loginUrl, {
+        'state': encodedState,
+      });
+
+      return _OidcLogin(
+          loginUrl: loginUrl,
+          params: JsonUtils.mapValue(json['params']),
+          state: encodedState,
+      );
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
