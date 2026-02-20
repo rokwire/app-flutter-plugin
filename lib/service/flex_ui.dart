@@ -801,6 +801,16 @@ class FlexUI with Service, NotificationsListener {
     return null;
   }
 
+  @protected
+  dynamic localeEvalParam(dynamic param, { FlexUiBuildContext? buildContext }) {
+    if ((param is String) && (RegExp(r"\${.+}").hasMatch(param))) {
+      String stringRef = param.substring(2, param.length - 1);
+      return localeEvalStringReference(stringRef, buildContext: buildContext);
+    } else {
+      return param;
+    }
+  }
+
 }
 
 class FlexUiBuildContext {
