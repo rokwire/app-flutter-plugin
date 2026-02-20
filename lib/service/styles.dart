@@ -775,7 +775,7 @@ class UiImages {
     opticalSize ??= imageSpec.opticalSize;
     
     color ??= imageSpec.color;
-    fontFamily ??= imageSpec.fontFamily;
+    fontFamily ??= imageSpec.safeFontFamily;
     fontPackage ??= imageSpec.fontPackage;
     textDirection ??= imageSpec.textDirection;
     matchTextDirection = imageSpec.matchTextDirection ?? false;
@@ -938,6 +938,9 @@ class MaterialIconImageSpec extends ImageSpec {
       matchTextDirection: JsonUtils.boolValue(json['match_text_direction'])
     );
   }
+
+  String get safeFontFamily => fontFamily ?? defaultFontFamily;
+  static const String defaultFontFamily = 'MaterialIcons';
 }
 
 class _ImageUtils {
