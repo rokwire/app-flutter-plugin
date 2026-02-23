@@ -1205,15 +1205,15 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         Future<Response?>? refreshTokenFuture = token?.refreshToken != null ? _refreshTokenFutures[token!.refreshToken] : null;
 
         if (refreshTokenFuture != null) {
-          debugLog('will await refresh token', token: token.refreshTokenMnemo);
+          debugLog('will await refresh token', token: token?.refreshTokenMnemo);
           Response? response = await refreshTokenFuture;
           Map<String, dynamic>? responseJson = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
           Auth2Token? responseToken = (responseJson != null) ? Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token'])) : null;
-          debugLog('did await refresh token', token: token.refreshTokenMnemo, token2: responseToken?.refreshTokenMnemo ?? '');
+          debugLog('did await refresh token', token: token?.refreshTokenMnemo, token2: responseToken?.refreshTokenMnemo ?? '');
           return ((responseToken != null) && responseToken.isValid) ? responseToken : null;
         }
         else {
-          debugLog('will refresh token', token: token.refreshTokenMnemo);
+          debugLog('will refresh token', token: token?.refreshTokenMnemo);
           refreshTokenFuture = _refreshToken(token?.refreshToken);
           if (token?.refreshToken != null) {
             _refreshTokenFutures[token!.refreshToken!];
@@ -1225,7 +1225,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           if (responseJson != null) {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
-              debugLog('did refresh token', token: token.refreshTokenMnemo, token2: responseToken.refreshTokenMnemo);
+              debugLog('did refresh token', token: token?.refreshTokenMnemo, token2: responseToken.refreshTokenMnemo);
               _refreshTokenFailCounts.remove(token?.refreshToken);
 
               if (token == _token) {
@@ -1247,7 +1247,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           int refreshTokenRetriesCount = Config().refreshTokenRetriesCount;
           String countsDescription = '$refreshTokenFailCount / $refreshTokenRetriesCount';
           if (((responseCode == 400) || (!ignoreUnauthorized && responseCode == 401)) || (refreshTokenRetriesCount <= refreshTokenFailCount)) {
-            debugError('failed to refresh token [$responseCode | $countsDescription : logout]', token: token.refreshTokenMnemo, response: response);
+            debugError('failed to refresh token [$responseCode | $countsDescription : logout]', token: token?.refreshTokenMnemo, response: response);
             if (token == _token) {
               logout(reason: logoutReasonToken);
             }
@@ -1262,7 +1262,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         }
       }
       catch(e) {
-        debugException('e.toString()', token: token.refreshTokenMnemo);
+        debugException('e.toString()', token: token?.refreshTokenMnemo);
         _refreshTokenFutures.remove(token?.refreshToken); // make sure to clear this in case something went wrong.
       }
     }
