@@ -251,13 +251,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   }
 
   @protected
-  String get oidcRedirectUrl {
-    if (kIsWeb) {
-      // On web, use the current origin + /auth/callback
-      return '${Uri.base.origin}/auth/callback';
-    }
-    return '${DeepLink().appUrl}/oidc-auth';
-  }
+  String get oidcRedirectUrl => kIsWeb ? '${Config().authBaseUrl}/auth/redirect' : '${DeepLink().appUrl}/oidc-auth';
 
   @protected
   void onDeepLinkUri(Uri? uri) {
