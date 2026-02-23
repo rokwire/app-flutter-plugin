@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added FlexUI.localeEvalParam helper [#5637](https://github.com/rokwire/illinois-app/issues/5637).
 ### Changed
 - Apply default font family, if omitted, to material image spec.
+- Extend Auth2 refresh token logging [#5405](https://github.com/rokwire/illinois-app/issues/5405).
 
 ## [1.12.8] - 2026-02-18
 ### Changed
