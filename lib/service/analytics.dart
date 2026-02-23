@@ -326,8 +326,7 @@ class Analytics with Service, NotificationsListener {
   // Public Accessories
 
   void logEvent(Map<String, dynamic> event, { int? timestamp }) {
-    String packet = json.encode(event);
-    debugPrint('Analytics: $packet');
-    savePacket(packet, timestamp);
+    try { savePacket(json.encode(event), timestamp); }
+    catch(e) { debugPrint('Analytics.logEvent: ${e.toString()}'); }
   }
 }
