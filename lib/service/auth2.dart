@@ -1250,7 +1250,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           int refreshTokenRetriesCount = Config().refreshTokenRetriesCount;
           String countsDescription = '$refreshTokenFailCount / $refreshTokenRetriesCount';
           if (((responseCode == 400) || (!ignoreUnauthorized && responseCode == 401)) || (refreshTokenRetriesCount <= refreshTokenFailCount)) {
-            debugError('failed to refresh token [$responseCode | $countsDescription : logout]', token: token.refreshTokenMnemo, response: response);
+            debugError('failed to refresh token [$responseCode | $countsDescription : logout]', token: token?.refreshTokenMnemo, response: response);
 
             if (token == _token) {
               logout(reason: logoutReasonToken);
