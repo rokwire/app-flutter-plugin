@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Apply default font family, if omitted, to material image spec.
 - Extend Auth2 refresh token logging [#5405](https://github.com/rokwire/illinois-app/issues/5405).
+- Use a more meaningfull name for PlatformDispatcher.instance.onError handler in Firebase Crashlytics.
 
 ## [1.12.8] - 2026-02-18
 ### Changed
