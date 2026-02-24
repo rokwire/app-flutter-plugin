@@ -75,7 +75,7 @@ class FirebaseCrashlytics with Service {
     if (kIsWeb) {
       return false;
     } else {
-      debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+      debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
       google.FirebaseCrashlytics.instance.recordError(exception, stackTrace, fatal: true);
       return true;
     }
@@ -83,7 +83,7 @@ class FirebaseCrashlytics with Service {
 
   void handleZoneError(dynamic exception, StackTrace stackTrace) {
     if (!kIsWeb) {
-      debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+      debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
       google.FirebaseCrashlytics.instance.recordError(exception, stackTrace);
     }
   }
@@ -91,13 +91,13 @@ class FirebaseCrashlytics with Service {
   void recordError(dynamic exception, [StackTrace? stackTrace]) {
     if (!kIsWeb) {
       stackTrace ??= StackTrace.current;
-      debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+      debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
       google.FirebaseCrashlytics.instance.recordError(exception, stackTrace);
     }
   }
 
   void log(String message) {
-    debugPrint(message, wrapWidth: 512);
+    debugPrint(message);
     if (!kIsWeb) {
       google.FirebaseCrashlytics.instance.log(message);
     }
