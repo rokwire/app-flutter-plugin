@@ -55,7 +55,7 @@ class FirebaseCrashlytics with Service {
 
       // Pass all uncaught errors to Firebase.Crashlytics.
       FlutterError.onError = handleFlutterFatalError;
-      PlatformDispatcher.instance.onError = handleFlutterError;
+      PlatformDispatcher.instance.onError = handlePlatformFatalError;
     }
 
     await super.initService();
@@ -71,7 +71,7 @@ class FirebaseCrashlytics with Service {
     }
   }
 
-  bool handleFlutterError(Object exception, StackTrace stackTrace) {
+  bool handlePlatformFatalError(Object exception, StackTrace stackTrace) {
     if (kIsWeb) {
       return false;
     } else {
