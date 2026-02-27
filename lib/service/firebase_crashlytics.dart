@@ -52,7 +52,7 @@ class FirebaseCrashlytics with Service {
 
     // Pass all uncaught errors to Firebase.Crashlytics.
     FlutterError.onError = handleFlutterFatalError;
-    PlatformDispatcher.instance.onError = handleFlutterError;
+    PlatformDispatcher.instance.onError = handlePlatformFatalError;
 
     await super.initService();
   }
@@ -65,25 +65,25 @@ class FirebaseCrashlytics with Service {
     google.FirebaseCrashlytics.instance.recordFlutterError(details, fatal: true);
   }
 
-  bool handleFlutterError(Object exception, StackTrace stackTrace) {
-    debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+  bool handlePlatformFatalError(Object exception, StackTrace stackTrace) {
+    debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
     google.FirebaseCrashlytics.instance.recordError(exception, stackTrace, fatal: true);
     return true;
   }
 
   void handleZoneError(dynamic exception, StackTrace stackTrace) {
-    debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+    debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
     google.FirebaseCrashlytics.instance.recordError(exception, stackTrace);
   }
 
   void recordError(dynamic exception, [StackTrace? stackTrace]) {
     stackTrace ??= StackTrace.current;
-    debugPrintStack(stackTrace: stackTrace, label: exception.toString());
+    debugPrintStack(label: exception.toString(), stackTrace: stackTrace);
     google.FirebaseCrashlytics.instance.recordError(exception, stackTrace);
   }
 
   void log(String message) {
-    debugPrint(message, wrapWidth: 512);
+    debugPrint(message);
     google.FirebaseCrashlytics.instance.log(message);
   }
 

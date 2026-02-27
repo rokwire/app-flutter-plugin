@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.12.9] - 2026-02-27
+### Added
+- Added FlexUI.localeEvalParam helper [#5637](https://github.com/rokwire/illinois-app/issues/5637).
+### Changed
+- Apply default font family, if omitted, to material image spec.
+- Extend Auth2 refresh token logging [#5405](https://github.com/rokwire/illinois-app/issues/5405).
+- Use a more meaningfull name for PlatformDispatcher.instance.onError handler in Firebase Crashlytics.
+
 ## [1.12.8] - 2026-02-18
 ### Changed
 - Undo reworked refresh token processing in Auth2 [#5405](https://github.com/rokwire/illinois-app/issues/5405).
