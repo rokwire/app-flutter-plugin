@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve services failure processing [#408](https://github.com/rokwire/app-flutter-plugin/issues/408)
 - Update Naming for Notifications Disabled Flag [#654](https://github.com/rokwire/app-flutter-plugin/issues/654)
 - Upgrade to Flutter 3.38.6 [#677](https://github.com/rokwire/app-flutter-plugin/issues/677)
+- Improve service initialization efficiency [#692](https://github.com/rokwire/app-flutter-plugin/issues/692)
 
 ### Fixed
 - Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
