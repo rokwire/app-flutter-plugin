@@ -90,12 +90,13 @@ class Localization with Service implements NotificationsListener {
   @override
   Future<void> initService() async {
 
+    // Ensure assets directory exists before loading any cached/net strings.
     _assetsDir = await getAssetsDir();
     
     String defaultLanguage = supportedLanguages[0];
     _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
-    await initDefaultStirngs(defaultLanguage);
 
+    // Determine system and selected locales synchronously from Storage.
     String? systemLanguage = Storage().systemLanguage;
     _systemLocale = (systemLanguage != null) ? Locale(systemLanguage) : null;
 
@@ -103,10 +104,17 @@ class Localization with Service implements NotificationsListener {
     _selectedLocale = (selectedLanguage != null) ? Locale(selectedLanguage) : null;
 
     String? currentLanguage = selectedLanguage ?? systemLanguage;
+
+    // Load default strings (and, if needed, locale strings) in parallel.
+    List<Future<void>> futures = <Future<void>>[];
+    futures.add(initDefaultStrings(defaultLanguage));
+
     if ((currentLanguage != null) && (currentLanguage != defaultLanguage)) {
       _currentLocale = Locale(currentLanguage);
-      await initLocaleStirngs(currentLanguage);
+      futures.add(initLocaleStrings(currentLanguage));
     }
+
+    await Future.wait(futures);
 
     await super.initService();
   }
@@ -157,7 +165,7 @@ class Localization with Service implements NotificationsListener {
     else if (_currentLocale?.languageCode != value.languageCode) {
       // use value
       _currentLocale = value;
-      await initLocaleStirngs(value.languageCode);
+      await initLocaleStrings(value.languageCode);
       // Notyfy when we change the locale (valid change)
       NotificationService().notify(notifyLocaleChanged, null);
     }
@@ -175,20 +183,52 @@ class Localization with Service implements NotificationsListener {
   }
 
   @protected
-  Future<void> initDefaultStirngs(String language) async {
+  Future<void> initDefaultStrings(String language) async {
+    // Load base assets, app assets (if any), and cached net strings in parallel.
+    final assetFuture = loadAssetsStrings(language);
+    final appAssetFuture = kIsWeb ? Future<Map<String, dynamic>?>.value(null) : loadAssetsStrings(language, app: true);
+    final netFuture = loadNetStringsFromCache(language);
+
+    final results = await Future.wait(<Future<Map<String, dynamic>?>>[
+      assetFuture,
+      appAssetFuture,
+      netFuture,
+    ]);
+
+    _defaultAssetsStrings = results[0];
+    _defaultAppAssetsStrings = results[1];
+    _defaultNetStrings = results[2];
+
     _defaultStrings = _buildStrings(
-      asset: _defaultAssetsStrings = await loadAssetsStrings(language),
-      appAsset: _defaultAppAssetsStrings = kIsWeb ? null : await loadAssetsStrings(language, app: true),
-      net: _defaultNetStrings = await loadNetStringsFromCache(language));
+      asset: _defaultAssetsStrings,
+      appAsset: _defaultAppAssetsStrings,
+      net: _defaultNetStrings,
+    );
     updateDefaultStrings();
   }
 
   @protected
-  Future<void> initLocaleStirngs(String language) async {
+  Future<void> initLocaleStrings(String language) async {
+    // Load locale-specific assets, app assets (if any), and cached net strings in parallel.
+    final assetFuture = loadAssetsStrings(language);
+    final appAssetFuture = kIsWeb ? Future<Map<String, dynamic>?>.value(null) : loadAssetsStrings(language, app: true);
+    final netFuture = loadNetStringsFromCache(language);
+
+    final results = await Future.wait(<Future<Map<String, dynamic>?>>[
+      assetFuture,
+      appAssetFuture,
+      netFuture,
+    ]);
+
+    _localeAssetsStrings = results[0];
+    _localeAppAssetsStrings = results[1];
+    _localeNetStrings = results[2];
+
     _localeStrings = _buildStrings(
-      asset: _localeAssetsStrings = await loadAssetsStrings(language),
-      appAsset: _localeAppAssetsStrings = kIsWeb ? null : await loadAssetsStrings(language, app: true),
-      net: _localeNetStrings = await loadNetStringsFromCache(language));
+      asset: _localeAssetsStrings,
+      appAsset: _localeAppAssetsStrings,
+      net: _localeNetStrings,
+    );
     updateLocaleStrings();
   }
 
@@ -309,12 +349,12 @@ class Localization with Service implements NotificationsListener {
         String defaultLanguage = supportedLanguages[0];
         if (_defaultLocale?.languageCode != defaultLanguage) {
           _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
-          await initDefaultStirngs(defaultLanguage);
+          await initDefaultStrings(defaultLanguage);
         }
 
         String? currentLanguage = _currentLocale?.languageCode;
         if (currentLanguage != null) {
-          await initLocaleStirngs(currentLanguage);
+          await initLocaleStrings(currentLanguage);
         }
       }
     }

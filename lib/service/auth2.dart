@@ -2052,6 +2052,13 @@ class _OidcLogin {
     };
   }  
 
+  String? get clientId {
+    if (loginUrl?.isNotEmpty ?? false) {
+      Uri? uri = Uri.tryParse(loginUrl ?? '');
+      return uri?.queryParameters['client_id'];
+    }
+    return null;
+  }
 }
 
 class Auth2Csrf with NetworkAuthProvider {

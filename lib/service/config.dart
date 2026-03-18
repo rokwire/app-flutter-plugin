@@ -94,14 +94,34 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
     _configEnvironment = _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
-    _packageInfo = await PackageInfo.fromPlatform();
+    // Load package info, app documents directory, and encryption keys in parallel
+    final List<Future<dynamic>> initFutures = <Future<dynamic>>[];
+
+    final packageInfoFuture = PackageInfo.fromPlatform();
+    initFutures.add(packageInfoFuture);
+
+    // getApplicationDocumentsDirectory (non-web)
     if (!kIsWeb) {
-      _appDocumentsDir = await getApplicationDocumentsDirectory();
+      initFutures.add(getApplicationDocumentsDirectory());
+    }
+
+    // loadEncryptionKeysFromAssets (non-release web)
+    if (!isReleaseWeb) {
+      initFutures.add(loadEncryptionKeysFromAssets());
+    }
+
+    final results = await Future.wait(initFutures);
+
+    int resultIndex = 0;
+    _packageInfo = results[resultIndex++] as PackageInfo;
+
+    if (!kIsWeb) {
+      _appDocumentsDir = results[resultIndex++] as Directory;
       Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
     }
 
     if (!isReleaseWeb) {
-      _encryptionKeys = await loadEncryptionKeysFromAssets();
+      _encryptionKeys = results[resultIndex++] as Map<String, dynamic>?;
       if (_encryptionKeys == null) {
         throw ServiceError(
           source: this,
