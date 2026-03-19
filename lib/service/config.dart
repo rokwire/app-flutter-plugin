@@ -112,15 +112,16 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
     final results = await Future.wait(initFutures);
 
-    _packageInfo = results[0] as PackageInfo;
+    int resultIndex = 0;
+    _packageInfo = results[resultIndex++] as PackageInfo;
 
     if (!kIsWeb) {
-      _appDocumentsDir = results[1] as Directory;
+      _appDocumentsDir = results[resultIndex++] as Directory;
       Log.d('Application Documents Directory: ${_appDocumentsDir!.path}');
     }
 
     if (!isReleaseWeb) {
-      _encryptionKeys = results[2] as Map<String, dynamic>?;
+      _encryptionKeys = results[resultIndex++] as Map<String, dynamic>?;
       if (_encryptionKeys == null) {
         throw ServiceError(
           source: this,
