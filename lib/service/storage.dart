@@ -65,8 +65,6 @@ class Storage with Service {
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
 
-    _encryptionKey = await RokwirePlugin.getEncryptionKey(identifier: _encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128);
-    _encryptionIV = await RokwirePlugin.getEncryptionKey(identifier: _encryptionIVId, size: AESCrypt.kCCBlockSizeAES128);
     if (_sharedPreferences == null) {
       throw ServiceError(
         source: this,
@@ -97,8 +95,19 @@ class Storage with Service {
 
   @protected
   Future<void> migrateEncryptedToSecureStorage() async {
-    if (encryptedMigratedToSecureStorage == true || _encryptionKey == null ||
-        _encryptionIV == null) {
+    if (encryptedMigratedToSecureStorage == true) {
+      return;
+    }
+
+    // Load encryption key and IV in parallel
+    final keyResults = await Future.wait([
+      RokwirePlugin.getEncryptionKey(identifier: _encryptionKeyId, size: AESCrypt.kCCBlockSizeAES128),
+      RokwirePlugin.getEncryptionKey(identifier: _encryptionIVId, size: AESCrypt.kCCBlockSizeAES128),
+    ]);
+
+    _encryptionKey = keyResults[0];
+    _encryptionIV = keyResults[1];
+    if (_encryptionKey == null || _encryptionIV == null) {
       return;
     }
 

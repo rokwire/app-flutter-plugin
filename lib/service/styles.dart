@@ -411,21 +411,13 @@ class UiTheme {
   UiTheme({this.colors, this.fontFamilies, this.textStyles, this.images});
 
   static Future<UiTheme> fromJson(Map<String, dynamic> styles, String Function(Uri)? assetPathResolver) async {
-    List<Future<dynamic>> futures = [
-      compute(UiColors.fromJson, JsonUtils.mapValue(styles['color'])),
-      compute(UiFontFamilies.fromJson, JsonUtils.mapValue(styles['font_family'])),
-    ];
-    List<dynamic> results = await Future.wait(futures);
-    UiColors? colors = results[0];
-    UiFontFamilies? fontFamilies = results[1];
+    UiColors? colors = UiColors.fromJson(JsonUtils.mapValue(styles['color']));
+    UiFontFamilies? fontFamilies = UiFontFamilies.fromJson(JsonUtils.mapValue(styles['font_family']));
 
-    futures = [
-      compute(UiTextStyles.fromCreationParam, _UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies)),
-      compute(UiImages.fromCreationParam, _UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver)),
-    ];
-    results = await Future.wait(futures);
+    UiTextStyles textStyles = UiTextStyles.fromCreationParam(_UiTextStylesCreationParam(JsonUtils.mapValue(styles['text_style']), colors: colors, fontFamilies: fontFamilies));
+    UiImages images = UiImages.fromCreationParam(_UiImagesCreationParam(JsonUtils.mapValue(styles['image']), colors: colors, assetPathResolver: assetPathResolver));
 
-    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: results[0], images: results[1]);
+    return UiTheme(colors: colors, fontFamilies: fontFamilies, textStyles: textStyles, images: images);
   }
 }
 
