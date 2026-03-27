@@ -160,6 +160,50 @@ class Storage with Service {
     return await _secureStorage?.read(key: name) ?? defaultValue;
   }
 
+  /// Returns all secure storage key-value pairs currently stored, with
+  /// auth-related entries decoded into their model types.
+  ///
+  /// Non-auth keys remain as raw String values.
+  Future<Map<String, dynamic>> getAllSecureStrings() async {
+    final Map<String, String>? allRaw = await _secureStorage?.readAll();
+    final Map<String, dynamic> result = <String, dynamic>{};
+
+    if (allRaw != null) {
+      allRaw.forEach((String key, String value) {
+        try {
+          if (key == auth2TokenKey) {
+            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
+          }
+          else if (key == auth2AccountKey) {
+            result[key] = Auth2Account.fromJson(JsonUtils.decodeMap(value));
+          }
+          else if (key == auth2OidcTokenKey) {
+            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
+          }
+          else if (key == auth2AnonymousTokenKey) {
+            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
+          }
+          else if (key == auth2AnonymousPrefsKey) {
+            result[key] = Auth2UserPrefs.fromJson(JsonUtils.decodeMap(value));
+          }
+          else if (key == auth2AnonymousProfileKey) {
+            result[key] = Auth2UserProfile.fromJson(JsonUtils.decodeMap(value));
+          }
+          else {
+            // Keep non-auth values as raw strings.
+            result[key] = value;
+          }
+        }
+        catch (e) {
+          debugPrint('Storage.getAllSecureStrings: failed to decode key "$key": $e');
+          result[key] = value; // fall back to raw string on error
+        }
+      });
+    }
+
+    return result;
+  }
+
   Future<void> setSecureStringWithName(String name, String? value, {bool removeFirst = false}) async {
     if (value != null) {
       if (removeFirst) {

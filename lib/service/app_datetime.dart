@@ -49,16 +49,20 @@ class AppDateTime with Service {
 
   @override
   Future<void> initService() async {
+    // Load timezone database and local timezone in parallel
+    final results = await Future.wait([
+      timezoneDatabase,
+      FlutterTimezone.getLocalTimezone(),
+    ]);
 
-    Uint8List? rawData = await timezoneDatabase;
+    final Uint8List? rawData = results[0] as Uint8List?;
     if (rawData != null) {
       timezone.initializeDatabase(rawData);
-    }
-    else {
-      debugPrint('AppDateTime: Timezone database initializiation omitted.');
+    } else {
+      debugPrint('AppDateTime: Timezone database initialization omitted.');
     }
 
-    _localTimeZone = await FlutterTimezone.getLocalTimezone();
+    _localTimeZone = results[1] as String;
     timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
     timezone.setLocalLocation(deviceLocation);
 

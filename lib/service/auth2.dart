@@ -128,32 +128,24 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> initService() async {
     _anonymousId = Storage().auth2AnonymousId;
 
-    List<Future<dynamic>> futures = [
+    final List<Future<dynamic>> futures = [
       RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
-
-      Storage().getAuth2Token(),
-      Storage().getAuth2Account(),
-      Storage().getAuth2OidcToken(),
+      Storage().getAllSecureStrings(),
     ];
+    final List<dynamic> results = await Future.wait(futures);
 
-    if (isAnonymousAuthenticationSupported) {
-      futures.addAll([
-        Storage().getAuth2AnonymousToken(),
-        Storage().getAuth2AnonymousPrefs(),
-        Storage().getAuth2AnonymousProfile(),
-      ]);
-    }
-
-    List<dynamic> results = await Future.wait(futures);
     _deviceId = results[0];
-    _token = results[1];
-    _account = results[2];
-    _oidcToken = results[3];
+    final Map<String, dynamic> secureValues = (results[1] as Map).cast<String, dynamic>();
+
+    // Core auth2 values are already decoded inside Storage.getAllSecureStrings.
+    _token = secureValues[Storage().auth2TokenKey] as Auth2Token?;
+    _account = secureValues[Storage().auth2AccountKey] as Auth2Account?;
+    _oidcToken = secureValues[Storage().auth2OidcTokenKey] as Auth2Token?;
 
     if (isAnonymousAuthenticationSupported) {
-      _anonymousToken = results[4];
-      _anonymousPrefs = results[5];
-      _anonymousProfile = results[6];
+      _anonymousToken = secureValues[Storage().auth2AnonymousTokenKey] as Auth2Token?;
+      _anonymousPrefs = secureValues[Storage().auth2AnonymousPrefsKey] as Auth2UserPrefs?;
+      _anonymousProfile = secureValues[Storage().auth2AnonymousProfileKey] as Auth2UserProfile?;
     }
 
     futures.clear();
@@ -168,6 +160,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
+
+    // Ensure Config has completed initialization before using any of its values.
+    await Config().ensureInitialized();
 
     if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
       if (!await authenticateAnonymously()) {
@@ -205,7 +200,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Set<Service> get serviceDependsOn {
-    return { Storage(), Config() };
+    return { Storage() };
   }
 
   // NotificationsListener
