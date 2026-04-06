@@ -438,8 +438,8 @@ class MapUtils {
 
   static Map<String, dynamic> mergeToNew(Map<String, dynamic> dest, Map<String, dynamic>? src, { int? level }) {
     Map<String, dynamic> out = {};
-    out.addAll(dest);
-    merge(dest, src, level: level);
+    out.addAll(_mergeClone(dest) as Map<String, dynamic>);
+    merge(out, src, level: level);
     return out;
   }
 
