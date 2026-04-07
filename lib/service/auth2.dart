@@ -206,11 +206,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     await super.initService();
   }
 
-  // @override
-  // Set<Service> get serviceDependsOn {
-  //   return { Storage() };
-  // }
-
   // NotificationsListener
 
   @override
