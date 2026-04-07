@@ -89,7 +89,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2UserProfile? _anonymousProfile;
   
   String? _deviceId;
-  
+
   DateTime? _pausedDateTime;
 
   // Singletone Factory
@@ -126,26 +126,34 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
+    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+
+    await Storage().ensureInitialized();
     _anonymousId = Storage().auth2AnonymousId;
 
-    final List<Future<dynamic>> futures = [
-      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
-      Storage().getAllSecureStrings(),
+    List<Future<dynamic>> futures = [
+      Storage().getAuth2Token(),
+      Storage().getAuth2Account(),
+      Storage().getAuth2OidcToken(),
     ];
-    final List<dynamic> results = await Future.wait(futures);
-
-    _deviceId = results[0];
-    final Map<String, dynamic> secureValues = (results[1] as Map).cast<String, dynamic>();
-
-    // Core auth2 values are already decoded inside Storage.getAllSecureStrings.
-    _token = secureValues[Storage().auth2TokenKey] as Auth2Token?;
-    _account = secureValues[Storage().auth2AccountKey] as Auth2Account?;
-    _oidcToken = secureValues[Storage().auth2OidcTokenKey] as Auth2Token?;
 
     if (isAnonymousAuthenticationSupported) {
-      _anonymousToken = secureValues[Storage().auth2AnonymousTokenKey] as Auth2Token?;
-      _anonymousPrefs = secureValues[Storage().auth2AnonymousPrefsKey] as Auth2UserPrefs?;
-      _anonymousProfile = secureValues[Storage().auth2AnonymousProfileKey] as Auth2UserProfile?;
+      futures.addAll([
+        Storage().getAuth2AnonymousToken(),
+        Storage().getAuth2AnonymousPrefs(),
+        Storage().getAuth2AnonymousProfile(),
+      ]);
+    }
+
+    List<dynamic> results = await Future.wait(futures);
+    _token = results[0];
+    _account = results[1];
+    _oidcToken = results[2];
+
+    if (isAnonymousAuthenticationSupported) {
+      _anonymousToken = results[3];
+      _anonymousPrefs = results[4];
+      _anonymousProfile = results[5];
     }
 
     futures.clear();
@@ -198,10 +206,10 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     await super.initService();
   }
 
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage() };
-  }
+  // @override
+  // Set<Service> get serviceDependsOn {
+  //   return { Storage() };
+  // }
 
   // NotificationsListener
 

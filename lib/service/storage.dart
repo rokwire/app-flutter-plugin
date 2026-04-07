@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -35,6 +38,9 @@ class Storage with Service {
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
+  Map<String, String>? _rawSecureStringsCache;
+  Future<void>? _preloadFuture;
+  Completer<void>? _initCompleter;
 
   String? _encryptionKey;
   String? _encryptionIV;
@@ -55,15 +61,29 @@ class Storage with Service {
 
   // Service 
 
+  /// Returns after this Storage service has finished initializing.
+  Future<void> ensureInitialized() async {
+    if (isInitialized) return;
+    if (_initCompleter != null) {
+      await _initCompleter!.future;
+    }
+  }
+
   @override
   Future<void> initService() async {
-    _sharedPreferences = await SharedPreferences.getInstance();
+    _initCompleter = Completer<void>();
 
     AndroidOptions _getAndroidOptions() => const AndroidOptions(
       encryptedSharedPreferences: true,
     );
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
+
+    final results = await Future.wait([
+      _preloadSecureStrings(),
+      SharedPreferences.getInstance(),
+    ]);
+    _sharedPreferences = results[1] as SharedPreferences?;
 
     if (_sharedPreferences == null) {
       throw ServiceError(
@@ -83,6 +103,7 @@ class Storage with Service {
     // }
     migrateEncryptedToSecureStorage();
     await super.initService();
+    _initCompleter!.complete();
   }
 
   // Encryption
@@ -156,52 +177,19 @@ class Storage with Service {
     NotificationService().notify(notifySettingChanged, name);
   }
 
-  Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
-    return await _secureStorage?.read(key: name) ?? defaultValue;
+  @protected
+  Future<void> _preloadSecureStrings() async {
+    _rawSecureStringsCache = await _secureStorage?.readAll();
+    final int bytes = _rawSecureStringsCache?.entries.fold(0, (sum, e) =>
+      sum! + utf8.encode(e.key).length + utf8.encode(e.value).length) ?? 0;
+    debugPrint('Storage._preloadSecureStrings: loaded ${_rawSecureStringsCache?.length ?? 0} entries ($bytes bytes)');
   }
 
-  /// Returns all secure storage key-value pairs currently stored, with
-  /// auth-related entries decoded into their model types.
-  ///
-  /// Non-auth keys remain as raw String values.
-  Future<Map<String, dynamic>> getAllSecureStrings() async {
-    final Map<String, String>? allRaw = await _secureStorage?.readAll();
-    final Map<String, dynamic> result = <String, dynamic>{};
-
-    if (allRaw != null) {
-      allRaw.forEach((String key, String value) {
-        try {
-          if (key == auth2TokenKey) {
-            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
-          }
-          else if (key == auth2AccountKey) {
-            result[key] = Auth2Account.fromJson(JsonUtils.decodeMap(value));
-          }
-          else if (key == auth2OidcTokenKey) {
-            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
-          }
-          else if (key == auth2AnonymousTokenKey) {
-            result[key] = Auth2Token.fromJson(JsonUtils.decodeMap(value));
-          }
-          else if (key == auth2AnonymousPrefsKey) {
-            result[key] = Auth2UserPrefs.fromJson(JsonUtils.decodeMap(value));
-          }
-          else if (key == auth2AnonymousProfileKey) {
-            result[key] = Auth2UserProfile.fromJson(JsonUtils.decodeMap(value));
-          }
-          else {
-            // Keep non-auth values as raw strings.
-            result[key] = value;
-          }
-        }
-        catch (e) {
-          debugPrint('Storage.getAllSecureStrings: failed to decode key "$key": $e');
-          result[key] = value; // fall back to raw string on error
-        }
-      });
+  Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
+    if (_rawSecureStringsCache == null) {
+      await _preloadFuture;
     }
-
-    return result;
+    return _rawSecureStringsCache?[name] ?? defaultValue;
   }
 
   Future<void> setSecureStringWithName(String name, String? value, {bool removeFirst = false}) async {
@@ -220,8 +208,10 @@ class Storage with Service {
           rethrow;
         }
       }
+      _rawSecureStringsCache?[name] = value;
     } else {
       await _secureStorage?.delete(key: name);
+      _rawSecureStringsCache?.remove(name);
     }
     NotificationService().notify(notifySettingChanged, name);
   }

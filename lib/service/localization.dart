@@ -97,6 +97,7 @@ class Localization with Service implements NotificationsListener {
     _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
 
     // Determine system and selected locales synchronously from Storage.
+    await Storage().ensureInitialized();
     String? systemLanguage = Storage().systemLanguage;
     _systemLocale = (systemLanguage != null) ? Locale(systemLanguage) : null;
 
@@ -117,11 +118,6 @@ class Localization with Service implements NotificationsListener {
     await Future.wait(futures);
 
     await super.initService();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage() };
   }
 
   // Locale

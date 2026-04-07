@@ -84,11 +84,6 @@ class Styles extends Service implements NotificationsListener{
   // Initialization
 
   @override
-  Set<Service> get serviceDependsOn {
-    return { Storage() };
-  }
-
-  @override
   void createService() {
     NotificationService().subscribe(this, [
       Service.notifyInitialized,
@@ -316,8 +311,8 @@ class Styles extends Service implements NotificationsListener{
     _applySelectedTheme();
   }
 
-  void _applySelectedTheme() {
-    String? selectedTheme = _getSelectedTheme();
+  Future<void> _applySelectedTheme() async {
+    String? selectedTheme = await _getSelectedTheme();
     UiTheme? themeData = _themes[selectedTheme ?? 'default'];
     if (themeData != null) {
       _theme = themeData;
@@ -325,18 +320,21 @@ class Styles extends Service implements NotificationsListener{
   }
 
   Future<void> applyTheme(String? theme) async {
+    await Storage().ensureInitialized();
     Storage().selectedTheme = theme;
-    _applySelectedTheme();
+    await _applySelectedTheme();
     NotificationService().notify(notifyChanged, null);
   }
 
   Future<void> updateSystemTheme() async {
+    await Storage().ensureInitialized();
     if (Storage().selectedTheme == AppThemes.system) {
       Styles().applyTheme(AppThemes.system);
     }
   }
 
-  String? _getSelectedTheme() {
+  Future<String?> _getSelectedTheme() async {
+    await Storage().ensureInitialized();
     String? selectedTheme = Storage().selectedTheme;
     if (selectedTheme == null) {
       Storage().selectedTheme = AppThemes.system;
