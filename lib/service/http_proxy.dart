@@ -43,9 +43,11 @@ class HttpProxy extends Service {
 
   @override
   Future<void> initService() async {
-    await Storage().ensureNonSecureInitialized();
-    _handleChanged();
-    await applySystemProxy();
+    if (Config().isDev) {
+      await Storage().ensureNonSecureInitialized();
+      _handleChanged();
+      await applySystemProxy();
+    }
     await super.initService();
   }
 
