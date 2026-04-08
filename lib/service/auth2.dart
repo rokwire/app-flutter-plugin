@@ -128,7 +128,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Future<void> initService() async {
     _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
 
-    await Storage().ensureInitialized();
+    await Storage().ensureSecureInitialized();
     _anonymousId = Storage().auth2AnonymousId;
 
     List<Future<dynamic>> futures = [

@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -41,6 +40,7 @@ class Storage with Service {
   Map<String, String>? _rawSecureStringsCache;
   Future<void>? _preloadFuture;
   Completer<void>? _initCompleter;
+  Completer<void>? _sharedPrefsCompleter;
 
   String? _encryptionKey;
   String? _encryptionIV;
@@ -61,17 +61,27 @@ class Storage with Service {
 
   // Service 
 
-  /// Returns after this Storage service has finished initializing.
-  Future<void> ensureInitialized() async {
+  /// Returns after both SharedPreferences and secure storage are ready.
+  Future<void> ensureSecureInitialized() async {
     if (isInitialized) return;
     if (_initCompleter != null) {
       await _initCompleter!.future;
     }
   }
 
+  /// Returns after SharedPreferences is ready. Services that only need
+  /// non-secure storage can await this instead of ensureSecureInitialized().
+  Future<void> ensureNonSecureInitialized() async {
+    if (_sharedPreferences != null) return;
+    if (_sharedPrefsCompleter != null) {
+      await _sharedPrefsCompleter!.future;
+    }
+  }
+
   @override
   Future<void> initService() async {
     _initCompleter = Completer<void>();
+    _sharedPrefsCompleter = Completer<void>();
 
     AndroidOptions _getAndroidOptions() => const AndroidOptions(
       encryptedSharedPreferences: true,
@@ -79,11 +89,13 @@ class Storage with Service {
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
 
-    final results = await Future.wait([
+    await Future.wait([
       _preloadSecureStrings(),
-      SharedPreferences.getInstance(),
+      SharedPreferences.getInstance().then((prefs) {
+        _sharedPreferences = prefs;
+        _sharedPrefsCompleter!.complete();
+      }),
     ]);
-    _sharedPreferences = results[1] as SharedPreferences?;
 
     if (_sharedPreferences == null) {
       throw ServiceError(
@@ -180,9 +192,6 @@ class Storage with Service {
   @protected
   Future<void> _preloadSecureStrings() async {
     _rawSecureStringsCache = await _secureStorage?.readAll();
-    final int bytes = _rawSecureStringsCache?.entries.fold(0, (sum, e) =>
-      sum! + utf8.encode(e.key).length + utf8.encode(e.value).length) ?? 0;
-    debugPrint('Storage._preloadSecureStrings: loaded ${_rawSecureStringsCache?.length ?? 0} entries ($bytes bytes)');
   }
 
   Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {

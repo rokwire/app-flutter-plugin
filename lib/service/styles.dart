@@ -320,21 +320,21 @@ class Styles extends Service implements NotificationsListener{
   }
 
   Future<void> applyTheme(String? theme) async {
-    await Storage().ensureInitialized();
+    await Storage().ensureNonSecureInitialized();
     Storage().selectedTheme = theme;
     await _applySelectedTheme();
     NotificationService().notify(notifyChanged, null);
   }
 
   Future<void> updateSystemTheme() async {
-    await Storage().ensureInitialized();
+    await Storage().ensureNonSecureInitialized();
     if (Storage().selectedTheme == AppThemes.system) {
       Styles().applyTheme(AppThemes.system);
     }
   }
 
   Future<String?> _getSelectedTheme() async {
-    await Storage().ensureInitialized();
+    await Storage().ensureNonSecureInitialized();
     String? selectedTheme = Storage().selectedTheme;
     if (selectedTheme == null) {
       Storage().selectedTheme = AppThemes.system;
