@@ -42,6 +42,11 @@ class HttpProxy extends Service {
   // Service
 
   @override
+  Set<Service> get serviceDependsOn {
+    return { Config() };
+  }
+
+  @override
   Future<void> initService() async {
     if (Config().isDev) {
       await Storage().ensureNonSecureInitialized();
