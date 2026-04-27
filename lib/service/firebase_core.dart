@@ -48,7 +48,7 @@ class FirebaseCore extends Service {
   @override
   Future<void> initService() async{
     await initFirebase();
-    
+
     if (_firebaseApp != null) {
       await super.initService();
     }

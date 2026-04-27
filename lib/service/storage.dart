@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -35,6 +37,10 @@ class Storage with Service {
 
   SharedPreferences? _sharedPreferences;
   FlutterSecureStorage? _secureStorage;
+  Map<String, String>? _rawSecureStringsCache;
+  Future<void>? _preloadFuture;
+  Completer<void>? _initCompleter;
+  Completer<void>? _sharedPrefsCompleter;
 
   String? _encryptionKey;
   String? _encryptionIV;
@@ -55,15 +61,41 @@ class Storage with Service {
 
   // Service 
 
+  /// Returns after both SharedPreferences and secure storage are ready.
+  Future<void> ensureSecureInitialized() async {
+    if (isInitialized) return;
+    if (_initCompleter != null) {
+      await _initCompleter!.future;
+    }
+  }
+
+  /// Returns after SharedPreferences is ready. Services that only need
+  /// non-secure storage can await this instead of ensureSecureInitialized().
+  Future<void> ensureNonSecureInitialized() async {
+    if (_sharedPreferences != null) return;
+    if (_sharedPrefsCompleter != null) {
+      await _sharedPrefsCompleter!.future;
+    }
+  }
+
   @override
   Future<void> initService() async {
-    _sharedPreferences = await SharedPreferences.getInstance();
+    _initCompleter = Completer<void>();
+    _sharedPrefsCompleter = Completer<void>();
 
     AndroidOptions _getAndroidOptions() => const AndroidOptions(
       encryptedSharedPreferences: true,
     );
     IOSOptions _getIOSOptions() => const IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device);
     _secureStorage = FlutterSecureStorage(aOptions: _getAndroidOptions(), iOptions: _getIOSOptions());
+
+    await Future.wait([
+      _preloadSecureStrings(),
+      SharedPreferences.getInstance().then((prefs) {
+        _sharedPreferences = prefs;
+        _sharedPrefsCompleter!.complete();
+      }),
+    ]);
 
     if (_sharedPreferences == null) {
       throw ServiceError(
@@ -83,6 +115,7 @@ class Storage with Service {
     // }
     migrateEncryptedToSecureStorage();
     await super.initService();
+    _initCompleter!.complete();
   }
 
   // Encryption
@@ -156,8 +189,16 @@ class Storage with Service {
     NotificationService().notify(notifySettingChanged, name);
   }
 
+  @protected
+  Future<void> _preloadSecureStrings() async {
+    _rawSecureStringsCache = await _secureStorage?.readAll();
+  }
+
   Future<String?> getSecureStringWithName(String name, {String? defaultValue}) async {
-    return await _secureStorage?.read(key: name) ?? defaultValue;
+    if (_rawSecureStringsCache == null) {
+      await _preloadFuture;
+    }
+    return _rawSecureStringsCache?[name] ?? defaultValue;
   }
 
   Future<void> setSecureStringWithName(String name, String? value, {bool removeFirst = false}) async {
@@ -176,8 +217,10 @@ class Storage with Service {
           rethrow;
         }
       }
+      _rawSecureStringsCache?[name] = value;
     } else {
       await _secureStorage?.delete(key: name);
+      _rawSecureStringsCache?.remove(name);
     }
     NotificationService().notify(notifySettingChanged, name);
   }

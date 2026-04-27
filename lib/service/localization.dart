@@ -89,39 +89,29 @@ class Localization with Service implements NotificationsListener {
 
   @override
   Future<void> initService() async {
-
     // Ensure assets directory exists before loading any cached/net strings.
     _assetsDir = await getAssetsDir();
-    
+
     String defaultLanguage = supportedLanguages[0];
     _defaultLocale = Locale.fromSubtags(languageCode : defaultLanguage);
 
+    // Load default strings (and, if needed, locale strings) in parallel.
+    await initDefaultStrings(defaultLanguage);
+
     // Determine system and selected locales synchronously from Storage.
+    await Storage().ensureNonSecureInitialized();
     String? systemLanguage = Storage().systemLanguage;
     _systemLocale = (systemLanguage != null) ? Locale(systemLanguage) : null;
-
     String? selectedLanguage = Storage().selectedLanguage;
     _selectedLocale = (selectedLanguage != null) ? Locale(selectedLanguage) : null;
 
     String? currentLanguage = selectedLanguage ?? systemLanguage;
-
-    // Load default strings (and, if needed, locale strings) in parallel.
-    List<Future<void>> futures = <Future<void>>[];
-    futures.add(initDefaultStrings(defaultLanguage));
-
     if ((currentLanguage != null) && (currentLanguage != defaultLanguage)) {
       _currentLocale = Locale(currentLanguage);
-      futures.add(initLocaleStrings(currentLanguage));
+      await initLocaleStrings(currentLanguage);
     }
 
-    await Future.wait(futures);
-
     await super.initService();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage() };
   }
 
   // Locale

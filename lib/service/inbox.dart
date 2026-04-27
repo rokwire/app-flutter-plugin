@@ -68,7 +68,7 @@ class Inbox with Service implements NotificationsListener {
     _isServiceInitialized = true;
     processDeviceToken();
     getCachedUserInfoFuture(reload: true);
-    _loadUnreadMessagesCount();
+    loadUnreadMessagesCount();
     await super.initService();
   }
 
@@ -87,7 +87,7 @@ class Inbox with Service implements NotificationsListener {
     else if (name == Auth2.notifyLoginChanged) {
       processDeviceToken();
       getCachedUserInfoFuture(reload: true);
-      _loadUnreadMessagesCount();
+      loadUnreadMessagesCount();
     }
     else if (name == AppLifecycle.notifyStateChanged) {
       _onAppLifecycleStateChanged(param);
@@ -106,7 +106,7 @@ class Inbox with Service implements NotificationsListener {
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
           processDeviceToken();
           getCachedUserInfoFuture(reload: true);
-          _loadUnreadMessagesCount();
+          loadUnreadMessagesCount();
         }
       }
     }
@@ -205,7 +205,7 @@ class Inbox with Service implements NotificationsListener {
     Response? response = await Network().put(url, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      _loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
+      loadUnreadMessagesCount(); // Reload unread messages count when a message is marked as read.
       NotificationService().notify(notifyInboxMessageRead);
       return true;
     } else {
@@ -220,7 +220,7 @@ class Inbox with Service implements NotificationsListener {
     Response? response = await Network().put(url, body: body, auth: Auth2());
     int? responseCode = response?.statusCode;
     if (responseCode == 200) {
-      _loadUnreadMessagesCount(); // Reload unread messages count when all messages are read.
+      loadUnreadMessagesCount(); // Reload unread messages count when all messages are read.
       NotificationService().notify(notifyInboxMessageRead);
       return true;
     } else {
@@ -264,7 +264,7 @@ class Inbox with Service implements NotificationsListener {
         });
       }
       Response? response = await Network().post(url, body: body, auth: Auth2());
-      String? responseBody = response?.body;
+      // String? responseBody = response?.body;
       //Log.d("FCMTopic_$action($topic) => ${(response?.statusCode == 200) ? 'Yes' : 'No'}");
       return (response?.statusCode == 200);
     }
@@ -413,7 +413,8 @@ class Inbox with Service implements NotificationsListener {
   }
 
   // Unread Messages Count
-  Future<void> _loadUnreadMessagesCount() async {
+  @protected
+  Future<void> loadUnreadMessagesCount() async {
     if (Auth2().isLoggedIn && (Config().notificationsUrl != null)) {
       String url = "${Config().notificationsUrl}/api/messages/stats";
       Response? response = await Network().get(url, auth: Auth2());

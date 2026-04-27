@@ -89,7 +89,7 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
   Auth2UserProfile? _anonymousProfile;
   
   String? _deviceId;
-  
+
   DateTime? _pausedDateTime;
 
   // Singletone Factory
@@ -126,11 +126,12 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @override
   Future<void> initService() async {
+    _deviceId = await RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2);
+
+    await Storage().ensureSecureInitialized();
     _anonymousId = Storage().auth2AnonymousId;
 
     List<Future<dynamic>> futures = [
-      RokwirePlugin.getDeviceId(deviceIdIdentifier, deviceIdIdentifier2),
-
       Storage().getAuth2Token(),
       Storage().getAuth2Account(),
       Storage().getAuth2OidcToken(),
@@ -145,15 +146,14 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     List<dynamic> results = await Future.wait(futures);
-    _deviceId = results[0];
-    _token = results[1];
-    _account = results[2];
-    _oidcToken = results[3];
+    _token = results[0];
+    _account = results[1];
+    _oidcToken = results[2];
 
     if (isAnonymousAuthenticationSupported) {
-      _anonymousToken = results[4];
-      _anonymousPrefs = results[5];
-      _anonymousProfile = results[6];
+      _anonymousToken = results[3];
+      _anonymousPrefs = results[4];
+      _anonymousProfile = results[5];
     }
 
     futures.clear();
@@ -168,6 +168,9 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
+
+    // Ensure Config has completed initialization before using any of its values.
+    await Config().ensureInitialized();
 
     if (isAnonymousAuthenticationSupported && ((_anonymousId == null) || (_anonymousToken == null) || !_anonymousToken!.isValid)) {
       if (!await authenticateAnonymously()) {
@@ -201,11 +204,6 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
     }
 
     await super.initService();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage(), Config() };
   }
 
   // NotificationsListener

@@ -42,25 +42,18 @@ class HttpProxy extends Service {
   // Service
 
   @override
-  void createService() {
-    super.createService();
+  Set<Service> get serviceDependsOn {
+    return { Config() };
   }
 
   @override
   Future<void> initService() async {
-    _handleChanged();
-    await applySystemProxy();
+    if (Config().isDev) {
+      await Storage().ensureNonSecureInitialized();
+      _handleChanged();
+      await applySystemProxy();
+    }
     await super.initService();
-  }
-
-  @override
-  void destroyService() {
-    super.destroyService();
-  }
-
-  @override
-  Set<Service> get serviceDependsOn {
-    return { Storage(), Config() };
   }
 
   Future<void> applySystemProxy() async {
@@ -128,7 +121,7 @@ class HttpProxy extends Service {
     if((httpProxyEnabled == true) &&
         StringUtils.isNotEmpty(httpProxyHost) &&
         StringUtils.isNotEmpty(httpProxyPort) &&
-        Config().configEnvironment == ConfigEnvironment.dev
+        Config().isDev
     ){
       HttpOverrides.global = _MyHttpOverrides(host: httpProxyHost, port: httpProxyPort);
     }

@@ -58,6 +58,7 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   
   final Set<String>        _reportedUpgradeVersions = <String>{};
   final ConfigEnvironment? _defaultConfigEnvironment;
+  Future<void>?             _initFuture;
 
   // Singletone Factory
 
@@ -90,7 +91,13 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @override
-  Future<void> initService() async {
+  Future<void> initService() {
+    // Ensure we only run the initialization logic once and share the same
+    // Future with any concurrent callers.
+    return _initFuture ??= _initService();
+  }
+
+  Future<void> _initService() async {
 
     _configEnvironment = _defaultConfigEnvironment ?? defaultConfigEnvironment;
 
@@ -606,6 +613,29 @@ class Config with Service, NetworkAuthProvider, NotificationsListener {
 
   bool get isAdmin => false;
   bool get isReleaseWeb => kIsWeb && !kDebugMode;
+
+  /// Returns after this Config service has finished initializing.
+  Future<void> ensureInitialized() async {
+    if (isInitialized) {
+      return;
+    }
+
+    // If Services() has already kicked off initialization, _initFuture will
+    // be non-null and we can just await it. Otherwise, start initialization
+    // ourselves.
+    if (_initFuture != null) {
+      await _initFuture;
+    }
+    else {
+      // update this error if introducing a dependency to serviceDependsOn
+      throw ServiceError(
+        source: this,
+        severity: ServiceErrorSeverity.fatal,
+        title: 'Config Initialization Failed',
+        description: 'No dependencies but not initialized and initialization not started.',
+      );
+    }
+  }
 }
 
 enum ConfigEnvironment { production, test, dev }
