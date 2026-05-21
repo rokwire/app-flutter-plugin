@@ -785,8 +785,11 @@ class Auth2 with Service, NetworkAuthProvider implements NotificationsListener {
 
   @protected
   Future<Auth2OidcAuthenticateResult?> handleOidcAuthentication(Uri uri) async {
-    
-    RokwirePlugin.dismissSafariVC();
+
+    // Wait for SFSafariViewController to be off-screen before mutating post-
+    // login state; timeout guards against the platform side never completing.
+    await RokwirePlugin.dismissSafariVC()
+        .timeout(const Duration(seconds: 2), onTimeout: () => false);
 
     if (!_oidcLoginInProgress) {
       NotificationService().notify(notifyLoginError, 'no login in progress');
