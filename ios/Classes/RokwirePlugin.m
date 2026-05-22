@@ -11,6 +11,7 @@
 
 @interface RokwirePlugin()
 @property (nonatomic, strong) FlutterMethodChannel* channel;
+- (UIWindow *)activeKeyWindow;
 @end
 
 @implementation RokwirePlugin
@@ -151,16 +152,38 @@ static RokwirePlugin *_sharedInstance = nil;
 
 #pragma mark SFSafariViewController
 
+// Scene-aware key-window lookup; UIApplication.keyWindow is deprecated and
+// returns nil on multi-scene apps.
+- (UIWindow *)activeKeyWindow {
+	if (@available(iOS 13.0, *)) {
+		for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+			if (scene.activationState != UISceneActivationStateForegroundActive) continue;
+			if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+			for (UIWindow *w in ((UIWindowScene *)scene).windows) {
+				if (w.isKeyWindow) return w;
+			}
+		}
+	}
+	return UIApplication.sharedApplication.keyWindow;
+}
+
 - (void)dismissSafariViewControllerWithParameters:(NSDictionary*)parameters result:(FlutterResult)result {
-	UIViewController *presentedController = UIApplication.sharedApplication.keyWindow.rootViewController.presentedViewController;
-	if ([presentedController isKindOfClass:[SFSafariViewController class]]) {
-		[presentedController dismissViewControllerAnimated:YES completion:^{
-			result(@(YES));
-		}];
+	NSAssert(NSThread.isMainThread, @"dismissSafariVC must be called on the main thread");
+
+	UIViewController *top = [self activeKeyWindow].rootViewController;
+	while (top.presentedViewController) {
+		top = top.presentedViewController;
+		if ([top isKindOfClass:[SFSafariViewController class]]) break;
 	}
-	else {
+
+	if (![top isKindOfClass:[SFSafariViewController class]] || top.isBeingDismissed) {
 		result(@(NO));
+		return;
 	}
+
+	[top dismissViewControllerAnimated:YES completion:^{
+		result(@(YES));
+	}];
 }
 
 - (void)clearSafariViewControllerWithParameters:(NSDictionary*)parameters result:(FlutterResult)result {
