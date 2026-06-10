@@ -1119,6 +1119,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
               _refreshTokenFailCounts.remove(token.refreshToken);
 
               if (token == _token) {
+                debugError('refresh token success branch hit for current token: apply token | _token: ${_token?.refreshTokenMnemo} | responseToken: ${responseToken.refreshTokenMnemo}', token: token.refreshTokenMnemo, response: response);
                 applyToken(responseToken, params: JsonUtils.mapValue(responseJson['params']));
               }
               else if (token == _anonymousToken) {
@@ -1136,6 +1137,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
           if (((responseCode == 400) || (responseCode == 401)) || (refreshTokenRetriesCount <= refreshTokenFailCount)) {
             debugError('failed to refresh token [$responseCode | $countsDescription : logout]', token: token.refreshTokenMnemo, response: response);
             if (token == _token) {
+              debugError('refresh token failure branch hit for current token: logout | _token: ${_token?.refreshTokenMnemo}', token: token.refreshTokenMnemo, response: response);
               logout(reason: logoutReasonToken);
             }
             else if (token == _anonymousToken) {
