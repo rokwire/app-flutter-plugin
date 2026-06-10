@@ -1095,6 +1095,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     if ((Config().coreUrl != null) && (token.refreshToken != null)) {
       try {
         Future<Response?>? refreshTokenFuture = _refreshTokenFutures[token.refreshToken];
+        debugLog('refresh token future lookup | token: ${token.refreshTokenMnemo} | current _token: ${_token?.refreshTokenMnemo}');
 
         if (refreshTokenFuture != null) {
           debugLog('will await refresh token', token: token.refreshTokenMnemo);
