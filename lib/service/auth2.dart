@@ -1288,6 +1288,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 
   @protected
   void applyToken(Auth2Token token, { Map<String, dynamic>? params }) {
+    debugError('applyToken called | current _token: ${_token?.refreshTokenMnemo} | new token: ${token.refreshTokenMnemo}');
     Storage().auth2Token = _token = token;
   }
 
