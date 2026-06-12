@@ -337,7 +337,7 @@ class Styles extends Service implements NotificationsListener{
     await Storage().ensureNonSecureInitialized();
     String? selectedTheme = Storage().selectedTheme;
     if (selectedTheme == null) {
-      Storage().selectedTheme = AppThemes.system;
+      selectedTheme = Storage().selectedTheme = AppThemes.system;
     }
 
     if (selectedTheme == AppThemes.system) {

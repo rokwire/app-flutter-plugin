@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve service initialization efficiency [#692](https://github.com/rokwire/app-flutter-plugin/issues/692)
 
 ### Fixed
+- Wrong theme applied on first app launch until backgrounded [#699](https://github.com/rokwire/app-flutter-plugin/issues/699)
 - Improve exception handling for passkeys [#396](https://github.com/rokwire/app-flutter-plugin/issues/396)
 - Improve error handling and logging for OIDC login url launcher
 
