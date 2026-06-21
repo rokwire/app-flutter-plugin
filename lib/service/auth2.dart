@@ -111,6 +111,9 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     _anonymousPrefs = Storage().auth2AnonymousPrefs;
     _anonymousProfile = Storage().auth2AnonymousProfile;
 
+    _logTokenState('init service rehydrate user token', memoryToken: _token, persistentToken: Storage().auth2Token);
+    _logTokenState('init service rehydrate anonymous token', memoryToken: _anonymousToken, persistentToken: Storage().auth2AnonymousToken);
+
     _deviceId = await getDeviceId();
 
     if ((_account == null) && (_anonymousPrefs == null)) {
@@ -1096,6 +1099,12 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       try {
         Future<Response?>? refreshTokenFuture = _refreshTokenFutures[token.refreshToken];
         debugLog('refresh token future lookup | token: ${token.refreshTokenMnemo} | current _token: ${_token?.refreshTokenMnemo}');
+        _logTokenState(
+          'before refresh starts',
+          memoryToken: (token == _anonymousToken) ? _anonymousToken : _token,
+          persistentToken: (token == _anonymousToken) ? Storage().auth2AnonymousToken : Storage().auth2Token,
+          requestToken: token,
+        );
 
         if (refreshTokenFuture != null) {
           debugLog('will await refresh token', token: token.refreshTokenMnemo);
@@ -1117,6 +1126,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
             Auth2Token? responseToken = Auth2Token.fromJson(JsonUtils.mapValue(responseJson['token']));
             if ((responseToken != null) && responseToken.isValid) {
               debugLog('did refresh token', token: token.refreshTokenMnemo, token2: responseToken.refreshTokenMnemo);
+              _logTokenState(
+                'after backend returns new token',
+                memoryToken: (token == _anonymousToken) ? _anonymousToken : _token,
+                persistentToken: (token == _anonymousToken) ? Storage().auth2AnonymousToken : Storage().auth2Token,
+                requestToken: token,
+                responseToken: responseToken,
+              );
               _refreshTokenFailCounts.remove(token.refreshToken);
 
               if (token == _token) {
@@ -1125,6 +1141,13 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
               }
               else if (token == _anonymousToken) {
                 Storage().auth2AnonymousToken = _anonymousToken = responseToken;
+                _logTokenState(
+                  'after anonymous token persistence update',
+                  memoryToken: _anonymousToken,
+                  persistentToken: Storage().auth2AnonymousToken,
+                  requestToken: token,
+                  responseToken: responseToken,
+                );
               }
               return responseToken;
             }
@@ -1291,6 +1314,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   void applyToken(Auth2Token token, { Map<String, dynamic>? params }) {
     debugError('applyToken called | current _token: ${_token?.refreshTokenMnemo} | new token: ${token.refreshTokenMnemo}');
     Storage().auth2Token = _token = token;
+    _logTokenState('right after applyToken', memoryToken: _token, persistentToken: Storage().auth2Token, responseToken: token);
   }
 
   // User Prefs
@@ -1527,6 +1551,14 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   // Debug Logging
+
+  void _logTokenState(String event, { Auth2Token? memoryToken, Auth2Token? persistentToken, Auth2Token? requestToken, Auth2Token? responseToken }) {
+    debugLog(
+      '$event | memory: ${memoryToken?.refreshTokenMnemo ?? 'null'} | persistent: ${persistentToken?.refreshTokenMnemo ?? 'null'}',
+      token: requestToken?.refreshTokenMnemo,
+      token2: responseToken?.refreshTokenMnemo,
+    );
+  }
 
   @protected
   void debugLog(String event, { String? token, String? token2 }) {
