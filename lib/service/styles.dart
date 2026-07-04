@@ -712,7 +712,7 @@ class UiImages {
 
         IconData? iconData = _ImageUtils.faIconDataValue(weight, codePoint: _ImageUtils.faCodePointValue(source));
         return (iconData != null) ? ExcludeSemantics(excluding: excludeFromSemantics, child:
-          FaIcon(iconData, key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
+          FaIcon(FaIconData(iconData), key: key, size: size, color: color, semanticLabel: semanticLabel, textDirection: textDirection,)
         ) : null;
     }}
     catch (e) {
@@ -1026,13 +1026,13 @@ class _ImageUtils {
     }
     else if ((value is String) && (codePoint != null)) {
       switch(value) {
-        case 'solid': return IconDataSolid(codePoint);
-        case 'regular': return IconDataRegular(codePoint);
-        case 'brands': return IconDataBrands(codePoint);
+        case 'solid': return IconData(codePoint, fontFamily: 'FontAwesomeSolid', fontPackage: 'font_awesome_flutter'); // IconDataSolid(codePoint);
+        case 'regular': return IconData(codePoint, fontFamily: 'FontAwesomeRegular', fontPackage: 'font_awesome_flutter'); // IconDataRegular(codePoint);
+        case 'brands': return IconData(codePoint, fontFamily: 'FontAwesomeBrands', fontPackage: 'font_awesome_flutter'); // IconDataBrands(codePoint);
         // Duotone icons are not supported in flutter. Ref: https://github.com/fluttercommunity/font_awesome_flutter/issues/192
         // case 'duotone': return IconDataDuotone(codePoint);
-        case 'thin': return IconDataThin(codePoint);
-        case 'light': return IconDataLight(codePoint);
+        case 'thin': return IconData(codePoint, fontFamily: 'FontAwesomeThin', fontPackage: 'font_awesome_flutter'); // IconDataThin(codePoint);
+        case 'light': return IconData(codePoint, fontFamily: 'FontAwesomeLight', fontPackage: 'font_awesome_flutter'); // IconDataLight(codePoint);
         default: return null;
       }
     }
