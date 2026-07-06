@@ -61,9 +61,9 @@ dev_dependencies:
   build_runner: ^2.4.11
 
 # comment the override below if published plugin is used
-#dependency_overrides:
-#  font_awesome_flutter:
-#    path: plugins/font_awesome_flutter
+dependency_overrides:
+  font_awesome_flutter:
+    path: plugins/font_awesome_flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
