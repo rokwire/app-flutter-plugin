@@ -31,7 +31,7 @@ import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+// ignore_for_file: non_const_argument_for_const_parameter
 
 class Styles extends Service with NotificationsListener{
   
