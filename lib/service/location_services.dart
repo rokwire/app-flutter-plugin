@@ -118,7 +118,7 @@ class LocationServices with Service, NotificationsListener {
 
   Future<Position?> get location async {
     if (await status == LocationServicesStatus.permissionAllowed) {
-      try { return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high); }
+      try { return await Geolocator.getCurrentPosition(locationSettings: LocationSettings(accuracy: LocationAccuracy.high)); }
       catch(e) { debugPrint(e.toString()); }
     }
     return null;
