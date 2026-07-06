@@ -13,8 +13,8 @@ Rokwire Flutter plugin
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'University of Illinois at Urbana-Champaign' => 'rokwire@illinois.edu' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/*.h'
+  s.source_files = 'rokwire_plugin/Sources/rokwire_plugin/**/*.{h,m}'
+  s.public_header_files = 'rokwire_plugin/Sources/rokwire_plugin/include/**/*.h'
   s.dependency 'Flutter'
   s.platform = :ios, '12.0'
 
