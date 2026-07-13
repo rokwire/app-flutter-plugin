@@ -1,4 +1,4 @@
-#import "RokwirePlugin.h"
+#import "./include/rokwire_plugin/RokwirePlugin.h"
 #import "LocationServices.h"
 #import "TrackingServices.h"
 #import "RegionMonitor.h"

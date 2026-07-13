@@ -57,7 +57,8 @@ class AppDateTime with Service {
       debugPrint('AppDateTime: Timezone database initializiation omitted.');
     }
 
-    _localTimeZone = await FlutterTimezone.getLocalTimezone();
+    TimezoneInfo timezoneInfo = await FlutterTimezone.getLocalTimezone();
+    _localTimeZone = timezoneInfo.identifier;
     timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
     timezone.setLocalLocation(deviceLocation);
 
