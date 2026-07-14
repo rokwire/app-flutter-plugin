@@ -878,7 +878,7 @@ class SocialStats {
   int get hashCode => (posts?.hashCode ?? 0) ^ (comments?.hashCode ?? 0) ^ (reactions?.hashCode ?? 0);
 }
 
-enum SocialEntityType { post, comment }
+enum SocialEntityType { post, comment, message }
 
 String? socialEntityTypeToString(SocialEntityType? type) {
   switch (type) {
@@ -886,6 +886,8 @@ String? socialEntityTypeToString(SocialEntityType? type) {
       return 'comment';
     case SocialEntityType.post:
       return 'post';
+    case SocialEntityType.message:
+      return 'message';
     default:
       return null;
   }
@@ -897,6 +899,8 @@ SocialEntityType? socialEntityTypeFromString(String? value) {
       return SocialEntityType.comment;
     case 'post':
       return SocialEntityType.post;
+    case 'message':
+      return SocialEntityType.message;
     default:
       return null;
   }
