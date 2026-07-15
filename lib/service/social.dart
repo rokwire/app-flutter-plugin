@@ -709,6 +709,12 @@ class Social extends Service with NotificationsListener {
     }
   }
 
+  Future<bool?> deleteConverstions({required List<String> conversationIds}) async {
+    //TBD: Messages
+    await Future.delayed(Duration(milliseconds: 500));
+    return false;
+  }
+
   Future<List<Message>?> loadConversationMessages({required String conversationId,
     int offset = 0, int limit = 100,
     String? extendLimitToMessageId, String? extendLimitToGlobalMessageId}) async
