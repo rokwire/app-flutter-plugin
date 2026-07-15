@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade to Flutter 3.44.4 [#5869](https://github.com/rokwire/illinois-app/issues/5869).
 ### Added
 - Added SetUtils.set helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
+- Added entity caching feature in Content service [#5889](https://github.com/rokwire/illinois-app/issues/5889).
 
 ## [1.12.9] - 2026-02-27
 ### Added
