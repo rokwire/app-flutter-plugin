@@ -578,7 +578,12 @@ class Social extends Service with NotificationsListener {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({Iterable<String>? ids, int? limit, int? offset, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({
+    String? contextId, ConversationType? type,
+    Iterable<String>? ids, String? name, bool? mute,
+    DateTime? fromTime, DateTime? toTime,
+    int? limit, int? offset,
+  }) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -586,33 +591,31 @@ class Social extends Service with NotificationsListener {
       return null;
     }
 
+    String? fromTimeStr = (fromTime != null) ? DateTimeUtils.utcDateTimeToString(fromTime) : null;
+    String? toTimeStr = (toTime != null) ? DateTimeUtils.utcDateTimeToString(toTime) : null;
     Map<String, String> queryParams = {
+      if (contextId != null)
+        'context-identifier': contextId,
+      if (type != null)
+        'type': type.toJsonString(),
+
+      if ((ids != null) && ids.isNotEmpty)
+        'ids': ids.join(','),
+      if ((name != null) && name.isNotEmpty)
+        'name': name,
+      if (mute != null)
+        'mute': mute.toString(),
+
+      if ((fromTimeStr != null) && fromTimeStr.isNotEmpty)
+        'from-time': fromTimeStr,
+      if ((toTimeStr != null) && toTimeStr.isNotEmpty)
+        'to-time': toTimeStr,
+
       if (limit != null)
         'limit': limit.toString(),
       if (offset != null)
         'offset': offset.toString(),
     };
-    if ((ids != null) && ids.isNotEmpty) {
-      queryParams['ids'] = ids.join(',');
-    }
-    if (StringUtils.isNotEmpty(name)) {
-      queryParams['name'] = name!;
-    }
-    if (mute != null) {
-      queryParams['mute'] = mute.toString();
-    }
-    if (fromTime != null) {
-      String? fromTimeStr = DateTimeUtils.utcDateTimeToString(fromTime);
-      if (fromTimeStr != null) {
-        queryParams['from-time'] = fromTimeStr;
-      }
-    }
-    if (toTime != null) {
-      String? toTimeStr = DateTimeUtils.utcDateTimeToString(toTime);
-      if (toTimeStr != null) {
-        queryParams['to-time'] = toTimeStr;
-      }
-    }
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations', queryParams);
 
@@ -636,18 +639,16 @@ class Social extends Service with NotificationsListener {
     return ((conversations != null) && conversations.isNotEmpty) ? conversations.first : null;
   }
 
-  Future<Conversation?> createConversation({required List<String> memberIds}) async {
+  Future<Conversation?> createConversation({ ConversationType? type, ContextItem? context, List<String>? memberIds,}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create conversation. Reason: missing social url.');
       return null;
     }
-    if (memberIds.isEmpty) {
-      Log.e('Failed to create conversation. Reason: missing members.');
-      return null;
-    }
     String? requestBody = JsonUtils.encode({
+      'type': type?.toJsonString(),
+      'context': context?.toJson(),
       'members': memberIds
     });
     Response? response = await Network().post('$socialUrl/conversations', auth: Auth2(), body: requestBody);
