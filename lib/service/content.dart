@@ -66,8 +66,12 @@ class Content with Service, NotificationsListener implements ContentItemCategory
 
   ContentAttributes? _contentAttributes;
   final Map<String, ContentAttributes> _contentAttributesByScope = <String, ContentAttributes>{};
+
   Map<String, Uint8List?> _fileContentCache = {};
   Map<String, Future<Response?>?> _fileContentFutures = {};
+
+  Map<String, _Entity> _entityCache = <String, _Entity>{};
+  Map<String, Set<Completer<Uint8List?>>> _loadEntityCompleters = <String, Set<Completer<Uint8List?>>>{};
 
   // Singletone Factory
 
@@ -967,6 +971,40 @@ class Content with Service, NotificationsListener implements ContentItemCategory
 
     return response;
   }
+
+  Future<Uint8List?> loadEntity(String url, { Map<String, String?>? headers }) async {
+    _Entity? cachedEntity = _entityCache[url];
+    if (cachedEntity != null) {
+      if (cachedEntity.isAlive) {
+        return cachedEntity.data;
+      } else {
+        _entityCache.remove(url);
+      }
+    }
+
+    Set<Completer<Uint8List?>>? loadCompleters = _loadEntityCompleters[url];
+    if (loadCompleters != null) {
+      Completer<Uint8List?> loadCompleter = Completer<Uint8List?>();
+      loadCompleters.add(loadCompleter);
+      return loadCompleter.future;
+    }
+    else {
+      _loadEntityCompleters[url] = loadCompleters = <Completer<Uint8List?>>{};
+
+      Response? response = await Network().get(url, headers: headers);
+      int? responseCode = response?.statusCode;
+      Uint8List? responseData = ((responseCode != null) && (responseCode >= 200) && (responseCode <= 301)) ? response?.bodyBytes : null;
+      if (responseData != null) {
+        _entityCache[url] = _Entity(responseData);
+      }
+
+      _loadEntityCompleters.remove(url);
+      for (Completer<Uint8List?> loadCompleter in loadCompleters) {
+        loadCompleter.complete(responseData);
+      }
+      return responseData;
+    }
+  }
 }
 
 abstract class ContentItemCategoryClient {
@@ -1105,4 +1143,18 @@ class MetaDataResult {
 
 extension ImageMetaDataResultExt on MetaDataResult{
   ImageMetaData? get imageMetaData => metaData is ImageMetaData ? metaData : null;
+}
+
+class _Entity {
+  final Uint8List data;
+  final DateTime timestamp;
+
+  _Entity(this.data, { DateTime? timestamp }) :
+    this.timestamp = timestamp ?? DateTime.now().toUtc();
+
+  bool get isExpired => timestamp.add(lifeTime).isBefore(DateTime.now().toUtc());
+  bool get isAlive => timestamp.add(lifeTime).isAfter(DateTime.now().toUtc());
+
+  static const Duration lifeTime = const Duration(seconds: 3600 * 24);
+
 }

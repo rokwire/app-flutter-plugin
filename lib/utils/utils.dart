@@ -396,6 +396,17 @@ class SetUtils {
       }
     }
   }
+
+  static void set<T>(Set<T>? set, T? entry, bool value) {
+    if ((set != null) && (entry != null)) {
+      if (value) {
+        set.add(entry);
+      }
+      else {
+        set.remove(entry);
+      }
+    }
+  }
 }
 
 class LinkedHashMapUtils {
