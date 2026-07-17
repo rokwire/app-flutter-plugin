@@ -1172,6 +1172,8 @@ enum ConversationType { direct, groupSubset, groupAll }
 
 extension ConversationTypeImpl on ConversationType {
 
+  bool get isGroup => ((this == ConversationType.groupSubset) || (this == ConversationType.groupAll));
+
   static ConversationType? fromJsonString(String? value) {
     switch (value?.toLowerCase()) {
       case 'direct': return ConversationType.direct;
