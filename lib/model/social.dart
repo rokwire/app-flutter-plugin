@@ -368,7 +368,7 @@ class ContextItem {
 
   ContextItem({this.name, this.members, this.identifier});
 
-  factory ContextItem.fromGroup(String? groupId, { ContextItemMembers? members }) =>
+  factory ContextItem.group(String? groupId, { ContextItemMembers? members }) =>
     ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: members);
 
   static ContextItem? fromJson(Map<String, dynamic>? json) {
@@ -383,6 +383,10 @@ class ContextItem {
 
   Map<String, dynamic> toJson() =>
       {'name': contextItemNameToString(name), 'members': members?.toJson(), 'identifier': StringUtils.ensureNotEmpty(identifier)};
+
+  @override
+  String toString() =>
+    '[${contextItemNameToString(name)}:$identifier:$members}]';
 
   @override
   bool operator ==(other) =>
@@ -442,6 +446,10 @@ class ContextItemMembers {
 
   @override
   int get hashCode => (type?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(members));
+
+  @override
+  String toString() =>
+    '[${contextItemMembersTypeToString(type)}:${members?.join(',')}]';
 }
 
 enum ContextItemMembersType { all, listed_accounts }
