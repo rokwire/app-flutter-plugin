@@ -821,7 +821,7 @@ class Social extends Service with NotificationsListener {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
       return null;
     }
-    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+    if (message.isEmpty && fileAttachments?.isNotEmpty != true) {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing message and attachment.');
       return null;
     }
@@ -838,6 +838,36 @@ class Social extends Service with NotificationsListener {
       return messages;
     } else {
       Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  Future<List<Conversation>?> broadcastIndividualMessage({required ContextItem context, required String message, List<FileAttachment>? fileAttachments, Map<String, dynamic>? extraParams }) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to broadcast individual message for context ${context}. Reason: missing social url.');
+      return null;
+    }
+    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+      Log.e('Failed to broadcast individual message for context ${context}. Reason: missing message and attachment.');
+      return null;
+    }
+    String? requestBody = JsonUtils.encode({
+      'context': context.toJson(),
+      'message': message,
+      'file_attachments': FileAttachment.listToJson(fileAttachments),
+      if (extraParams != null)
+        ...extraParams,
+    });
+    Response? response = await Network().post('$socialUrl/conversations/broadcast-individual', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      List<Conversation>? conversations = Conversation.listFromJson(JsonUtils.decodeList(responseBody));
+      NotificationService().notify(notifyConversationsUpdated);
+      return conversations;
+    } else {
+      Log.e('Failed to create broadcast message for context $context. Reason: $responseCode, $responseBody');
       return null;
     }
   }
