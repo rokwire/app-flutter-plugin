@@ -691,29 +691,36 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<bool?> deleteConverstion({required String conversationId}) async {
+  Future<bool?> deleteConverstion(String conversationId) async =>
+      deleteConverstions(<String>[conversationId]);
+
+  Future<bool?> deleteConverstions(List<String> conversationIds) async {
     //TBD: Messages
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
-      Log.e('Failed to delete conversation $conversationId. Reason: missing social url.');
+      Log.e('Failed to delete conversations $conversationIds. Reason: missing social url.');
       return null;
     }
-    Response? response = await Network().delete('$socialUrl/conversations/$conversationId', auth: Auth2());
+
+    if (conversationIds.isEmpty) {
+      Log.e('Failed to delete conversations. Reason: empty IDs list.');
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode({
+      'ids': conversationIds
+    });
+
+    Response? response = await Network().put('$socialUrl/conversations/delete', body: requestBody, auth: Auth2());
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
       NotificationService().notify(notifyConversationsUpdated);
       return true;
     } else {
-      Log.e('Failed to delete conversation $conversationId. Reason: $responseCode, $responseBody');
+      Log.e('Failed to delete conversations $conversationIds. Reason: $responseCode, $responseBody');
       return false;
     }
-  }
-
-  Future<bool?> deleteConverstions({required List<String> conversationIds}) async {
-    //TBD: Messages
-    await Future.delayed(Duration(milliseconds: 500));
-    return false;
   }
 
   Future<List<Message>?> loadConversationMessages({required String conversationId,
