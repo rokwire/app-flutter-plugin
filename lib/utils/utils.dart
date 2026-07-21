@@ -1558,8 +1558,12 @@ DayPart? dayPartFromString(String? value) {
   }
 }
 
+// Generic, settings-agnostic date/time helpers - parsing, formatting, epoch
+// conversion, and calendar-day comparison, with no knowledge of app settings such as
+// useDeviceLocalTimeZone. For display that should respect the user's timezone setting,
+// use AppDateTime() instead (see app_datetime.dart).
 class DateTimeUtils {
-  
+
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
       return null;
@@ -1608,6 +1612,9 @@ class DateTimeUtils {
     }
   }
 
+  // Pure "which part of the day is this" computation. For the localized greeting text
+  // built on top of this (e.g. "Good morning"), see AppDateTimeUtils.getDayPartGreeting
+  // (lib/utils/AppUtils.dart) - it needs no timezone-setting awareness, only Localization.
   static DayPart getDayPart({DateTime? dateTime}) {
     int hour = (dateTime ?? DateTime.now()).hour;
     if (hour < 6) {
