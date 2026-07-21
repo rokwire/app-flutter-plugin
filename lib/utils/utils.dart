@@ -1695,23 +1695,6 @@ class DateTimeUtils {
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
-  static DateTime? parseDateTime(String dateTimeString, {String? format, bool isUtc = false}) {
-    if (StringUtils.isNotEmpty(dateTimeString)) {
-      if (StringUtils.isNotEmpty(format)) {
-        try {
-          return DateFormat(format).parse(dateTimeString, isUtc);
-        }
-        catch (e) {
-          debugPrint(e.toString());
-        }
-      }
-      else {
-        return DateTime.tryParse(dateTimeString);
-      }
-    }
-    return null;
-  }
-
   static Duration? parseDelimitedDurationString(String durationString, Pattern delimiter) {
     List<String> durationParts = durationString.split(delimiter);
     if (CollectionUtils.isEmpty(durationParts)) {

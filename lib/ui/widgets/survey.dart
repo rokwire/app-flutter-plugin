@@ -567,7 +567,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   String? _validateDate(String? dateStr, {String? format}) {
     format ??= "MM-dd-yyyy";
     if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+      if (DateTimeUtils.dateTimeFromString(dateStr, format: format) == null) {
         return "Invalid format: must be $format";
       }
     }
