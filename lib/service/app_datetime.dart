@@ -35,8 +35,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 //     getDeviceTimeFromUtcTime, getUniLocalTimeFromUtcTime) - building blocks, NOT
 //     setting-aware by themselves.
 //  2. Setting-aware display API (formatDateTime, getDisplayDay/Time/DateTime,
-//     getDateTimeToCompare) - branches on useDeviceLocalTimeZone; call these for any
-//     setting-respecting display.
+//     getDateTimeToCompare, displayLocation) - branches on useDeviceLocalTimeZone;
+//     call these for any setting-respecting display.
 //  3. Fixed-zone / local-storage helpers (formatUniLocalTimeFromUtcTime,
 //     dateTimeLocalFromJson/ToJson) - deliberately ignore the setting for a narrow,
 //     documented reason; not for general display use.
@@ -240,6 +240,13 @@ class AppDateTime with Service {
     }
     return timeToString;
   }
+
+  // The Location the user's chosen setting resolves to for display purposes. Use this
+  // when code needs a raw timezone.Location (e.g. to build a TZDateTime directly from
+  // epoch millis) rather than a converted DateTime value - for the latter, use
+  // getDateTimeToCompare below instead.
+  timezone.Location get displayLocation =>
+    useDeviceLocalTimeZone ? timezone.local : (universityLocation ?? timezone.local);
 
   // Canonical conversion entry point: turns a UTC instant into the DateTime the user
   // should see, per the useDeviceLocalTimeZone setting. Any code that needs a raw
