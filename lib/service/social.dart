@@ -871,7 +871,8 @@ class Social extends Service with NotificationsListener {
     int? responseCode = response?.statusCode;
     String? responseBody = response?.body;
     if (responseCode == 200) {
-      List<Conversation>? conversations = Conversation.listFromJson(JsonUtils.decodeList(responseBody));
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(responseBody);
+      List<Conversation>? conversations = Conversation.listFromJson(JsonUtils.listValue(responseJson?['conversations']));
       NotificationService().notify(notifyConversationsUpdated);
       return conversations;
     } else {
