@@ -35,8 +35,9 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 //     getDeviceTimeFromUtcTime, getUniLocalTimeFromUtcTime) - building blocks, NOT
 //     setting-aware by themselves.
 //  2. Setting-aware display API (formatDateTime, getDisplayDay/Time/DateTime,
-//     getDateTimeToCompare, displayLocation) - branches on useDeviceLocalTimeZone;
-//     call these for any setting-respecting display.
+//     getDateTimeToCompare, getDisplayTZDateTime/getDisplayNowTZDateTime,
+//     displayLocation) - branches on useDeviceLocalTimeZone; call these for any
+//     setting-respecting display.
 //  3. Fixed-zone / local-storage helpers (formatUniLocalTimeFromUtcTime,
 //     dateTimeLocalFromJson/ToJson) - deliberately ignore the setting for a narrow,
 //     documented reason; not for general display use.
@@ -265,6 +266,18 @@ class AppDateTime with Service {
     }
     return dateTimeToCompare;
   }
+
+  // Same as getDateTimeToCompare, but guaranteed non-null: falls back to device-local
+  // zone if the setting-aware conversion can't resolve (e.g. universityLocation not yet
+  // configured). Use this when feature display code needs a TZDateTime it can format
+  // directly, instead of each caller re-implementing its own "?? some fallback" - that
+  // duplication is exactly how the Event2/Survey/Appointment display helpers diverged
+  // before being consolidated here.
+  timezone.TZDateTime getDisplayTZDateTime(DateTime dateTimeUtc) =>
+    (getDateTimeToCompare(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
+      timezone.TZDateTime.from(dateTimeUtc, timezone.local);
+
+  timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
 }
 
 // DateTimeUni / DateTimeLocal are low-level, fixed-zone conversions - each always
