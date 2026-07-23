@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Upgrade to Flutter 3.44.4 [#5869](https://github.com/rokwire/illinois-app/issues/5869).
 - Conversation APIs in Social service extended to support group messaged [#5581](https://github.com/rokwire/illinois-app/issues/5581).
+- Implemented deleteConversation(s) APIs in Social BB  [#5581](https://github.com/rokwire/illinois-app/issues/5581).
 ### Added
 - Added SetUtils.set helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
+- Added ListUtils.remove helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
 - Added entity caching feature in Content service [#5889](https://github.com/rokwire/illinois-app/issues/5889).
+- Created broadcastIndividualMessage API in Socail service, added minor helpers [#5767](https://github.com/rokwire/illinois-app/issues/5767).
+### Fixed
+- Fixed broadcastIndividualMessage response processing [#5767](https://github.com/rokwire/illinois-app/issues/5767).
 
 ## [1.12.9] - 2026-02-27
 ### Added
