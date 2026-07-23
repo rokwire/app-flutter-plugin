@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented deleteConversation(s) APIs in Social BB  [#5581](https://github.com/rokwire/illinois-app/issues/5581).
 ### Added
 - Added SetUtils.set helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
+- Added ListUtils.remove helper [#5581](https://github.com/rokwire/illinois-app/issues/5581).
 - Added entity caching feature in Content service [#5889](https://github.com/rokwire/illinois-app/issues/5889).
 - Created broadcastIndividualMessage API in Socail service, added minor helpers [#5767](https://github.com/rokwire/illinois-app/issues/5767).
 ### Fixed

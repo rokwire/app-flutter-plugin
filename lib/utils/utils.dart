@@ -371,6 +371,9 @@ class ListUtils {
     }
     return result;
   }
+
+  static T? remove<T>(List<T>? list, int index) =>
+    ((list != null) && (0 <= index) && (index < list.length)) ? list.removeAt(index) : null;
 }
 
 class SetUtils {
