@@ -123,8 +123,8 @@ class Event2 with Explore implements Favorite {
       eventUrl: JsonUtils.stringValue(json['event_url']),
 
       timezone: JsonUtils.stringValue(json['timezone']),
-      startTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start'])),
-      endTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end'])),
+      startTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start']), isUtc: true),
+      endTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end']), isUtc: true),
       allDay: JsonUtils.boolValue(json['all_day']),
 
       eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
