@@ -35,7 +35,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 //     getDeviceTimeFromUtcTime, getUniLocalTimeFromUtcTime) - building blocks, NOT
 //     setting-aware by themselves.
 //  2. Setting-aware display API (formatDateTime, getDisplayDay/Time/DateTime,
-//     getDateTimeToCompare, getDisplayTZDateTime/getDisplayNowTZDateTime,
+//     getDisplayZonedDateTime, getDisplayTZDateTime/getDisplayNowTZDateTime,
 //     displayLocation, showTimeZoneSuffix) - branches on useDeviceLocalTimeZone; call
 //     these for any setting-respecting display.
 //  3. Fixed-zone / local-storage helpers (formatUniLocalTimeFromUtcTime,
@@ -103,7 +103,7 @@ class AppDateTime with Service {
   // Raw building block - always device<->UTC, unconditionally. NOT setting-aware by
   // itself; do not call directly for a setting-respecting display (that exact mistake
   // caused the Poll/InboxMessage/Social bugs this project fixed). Use
-  // getDateTimeToCompare / formatDateTime / getDisplayDay / getDisplayTime /
+  // getDisplayZonedDateTime / formatDateTime / getDisplayDay / getDisplayTime /
   // getDisplayDateTime instead, which choose the right conversion per the setting.
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
@@ -146,7 +146,7 @@ class AppDateTime with Service {
   }
 
   // ---- Setting-aware display API from here down: these branch on
-  // useDeviceLocalTimeZone (directly, or via getDateTimeToCompare) and are what
+  // useDeviceLocalTimeZone (directly, or via getDisplayZonedDateTime) and are what
   // feature code should call for anything that should follow the user's timezone
   // preference. ----
   String? formatDateTime(DateTime? dateTime,
@@ -193,8 +193,8 @@ class AppDateTime with Service {
 
   String getDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
     if (format != null) {
-      DateTime dateTimeToCompare = getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      return formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
+      DateTime zonedDateTime = getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      return formatDateTime(zonedDateTime, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
     }
     
     String? timePrefix = getDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime, includeAtSuffix: includeAtSuffix);
@@ -205,28 +205,28 @@ class AppDateTime with Service {
   String? getDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
     String? displayDay = '';
     if (dateTimeUtc != null) {
-      DateTime dateTimeToCompare = getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      DateTime zonedDateTime = getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
       timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
 
-      if (DateTimeUtils.isToday(dateTimeToCompare, location: location)) {
+      if (DateTimeUtils.isToday(zonedDateTime, location: location)) {
         displayDay = Localization().getStringEx('model.explore.date_time.today', 'Today');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
-      } else if (DateTimeUtils.isTomorrow(dateTimeToCompare, location: location)) {
+      } else if (DateTimeUtils.isTomorrow(zonedDateTime, location: location)) {
         displayDay = Localization().getStringEx('model.explore.date_time.tomorrow', 'Tomorrow');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
-      } else if (DateTimeUtils.isYesterday(dateTimeToCompare, location: location)) {
+      } else if (DateTimeUtils.isYesterday(zonedDateTime, location: location)) {
         displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
         if (!allDay && includeAtSuffix) {
           displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
         }
-      } else if (DateTimeUtils.isThisWeek(dateTimeToCompare, location: location)) {
-        displayDay = formatDateTime(dateTimeToCompare, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
+      } else if (DateTimeUtils.isThisWeek(zonedDateTime, location: location)) {
+        displayDay = formatDateTime(zonedDateTime, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
       } else {
-        displayDay = formatDateTime(dateTimeToCompare, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
+        displayDay = formatDateTime(zonedDateTime, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
       }
     }
     return displayDay;
@@ -235,9 +235,9 @@ class AppDateTime with Service {
   String? getDisplayTime({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true}) {
     String? timeToString = '';
     if (dateTimeUtc != null && !allDay) {
-      DateTime dateTimeToCompare = getDateTimeToCompare(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      String format = (dateTimeToCompare.minute == 0) ? 'ha' : 'h:mma';
-      timeToString = formatDateTime(dateTimeToCompare, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTimeZone);
+      DateTime zonedDateTime = getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      String format = (zonedDateTime.minute == 0) ? 'ha' : 'h:mma';
+      timeToString = formatDateTime(zonedDateTime, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTimeZone);
     }
     return timeToString;
   }
@@ -245,7 +245,7 @@ class AppDateTime with Service {
   // The Location the user's chosen setting resolves to for display purposes. Use this
   // when code needs a raw timezone.Location (e.g. to build a TZDateTime directly from
   // epoch millis) rather than a converted DateTime value - for the latter, use
-  // getDateTimeToCompare below instead.
+  // getDisplayZonedDateTime below instead.
   timezone.Location get displayLocation =>
     useDeviceLocalTimeZone ? timezone.local : (universityLocation ?? timezone.local);
 
@@ -260,27 +260,27 @@ class AppDateTime with Service {
   // DateTime value (not just a formatted string) for a setting-aware display should
   // call this instead of getDeviceTimeFromUtcTime/getUniLocalTimeFromUtcTime directly
   // or DateTimeUni/DateTimeLocal, both of which are fixed-zone and ignore the setting.
-  DateTime? getDateTimeToCompare({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
+  DateTime? getDisplayZonedDateTime({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
     if (dateTimeUtc == null) {
       return null;
     }
-    DateTime? dateTimeToCompare;
+    DateTime? zonedDateTime;
     if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
-      dateTimeToCompare = getDeviceTimeFromUtcTime(dateTimeUtc);
+      zonedDateTime = getDeviceTimeFromUtcTime(dateTimeUtc);
     } else {
-      dateTimeToCompare = getUniLocalTimeFromUtcTime(dateTimeUtc);
+      zonedDateTime = getUniLocalTimeFromUtcTime(dateTimeUtc);
     }
-    return dateTimeToCompare;
+    return zonedDateTime;
   }
 
-  // Same as getDateTimeToCompare, but guaranteed non-null: falls back to device-local
+  // Same as getDisplayZonedDateTime, but guaranteed non-null: falls back to device-local
   // zone if the setting-aware conversion can't resolve (e.g. universityLocation not yet
   // configured). Use this when feature display code needs a TZDateTime it can format
   // directly, instead of each caller re-implementing its own "?? some fallback" - that
   // duplication is exactly how the Event2/Survey/Appointment display helpers diverged
   // before being consolidated here.
   timezone.TZDateTime getDisplayTZDateTime(DateTime dateTimeUtc) =>
-    (getDateTimeToCompare(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
+    (getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
       timezone.TZDateTime.from(dateTimeUtc, timezone.local);
 
   timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
@@ -291,7 +291,7 @@ class AppDateTime with Service {
 // the useDeviceLocalTimeZone setting. Only use these for genuinely fixed-zone needs
 // (e.g. a "now" indicator that must always read the university's local time). For any
 // display that should follow the user's timezone setting, call
-// AppDateTime().getDateTimeToCompare(...) (or formatDateTime/getDisplayDay/
+// AppDateTime().getDisplayZonedDateTime(...) (or formatDateTime/getDisplayDay/
 // getDisplayTime/getDisplayDateTime) instead.
 extension DateTimeUni on DateTime {
 
