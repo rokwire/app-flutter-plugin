@@ -1180,7 +1180,8 @@ enum ConversationType { direct, groupSubset, groupAll }
 
 extension ConversationTypeImpl on ConversationType {
 
-  bool get isGroup => ((this == ConversationType.groupSubset) || (this == ConversationType.groupAll));
+  bool get isGroup => groupTypes.contains(this);
+  static const Set<ConversationType> groupTypes = const <ConversationType>{ ConversationType.groupSubset, ConversationType.groupAll };
 
   static ConversationType? fromJsonString(String? value) {
     switch (value?.toLowerCase()) {
