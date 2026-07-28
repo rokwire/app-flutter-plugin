@@ -578,7 +578,12 @@ class Social extends Service with NotificationsListener {
 
   // Conversations
 
-  Future<List<Conversation>?> loadConversations({Iterable<String>? ids, int limit = 20, int offset = 0, String? name, bool? mute, DateTime? fromTime, DateTime? toTime}) async {
+  Future<List<Conversation>?> loadConversations({
+    String? contextId, Set<ConversationType>? types,
+    Iterable<String>? ids, String? name, bool? mute,
+    DateTime? fromTime, DateTime? toTime,
+    int? limit, int? offset,
+  }) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
@@ -586,31 +591,31 @@ class Social extends Service with NotificationsListener {
       return null;
     }
 
+    String? fromTimeStr = (fromTime != null) ? DateTimeUtils.utcDateTimeToString(fromTime) : null;
+    String? toTimeStr = (toTime != null) ? DateTimeUtils.utcDateTimeToString(toTime) : null;
     Map<String, String> queryParams = {
-      'limit': limit.toString(),
-      'offset': offset.toString(),
+      if (contextId != null)
+        'context-identifier': contextId,
+      if (types != null)
+        'types': types.map((type) => type.toJsonString()).toList().join(','),
+
+      if ((ids != null) && ids.isNotEmpty)
+        'ids': ids.join(','),
+      if ((name != null) && name.isNotEmpty)
+        'name': name,
+      if (mute != null)
+        'mute': mute.toString(),
+
+      if ((fromTimeStr != null) && fromTimeStr.isNotEmpty)
+        'from-time': fromTimeStr,
+      if ((toTimeStr != null) && toTimeStr.isNotEmpty)
+        'to-time': toTimeStr,
+
+      if (limit != null)
+        'limit': limit.toString(),
+      if (offset != null)
+        'offset': offset.toString(),
     };
-    if ((ids != null) && ids.isNotEmpty) {
-      queryParams['ids'] = ids.join(',');
-    }
-    if (StringUtils.isNotEmpty(name)) {
-      queryParams['name'] = name!;
-    }
-    if (mute != null) {
-      queryParams['mute'] = mute.toString();
-    }
-    if (fromTime != null) {
-      String? fromTimeStr = DateTimeUtils.utcDateTimeToString(fromTime);
-      if (fromTimeStr != null) {
-        queryParams['from-time'] = fromTimeStr;
-      }
-    }
-    if (toTime != null) {
-      String? toTimeStr = DateTimeUtils.utcDateTimeToString(toTime);
-      if (toTimeStr != null) {
-        queryParams['to-time'] = toTimeStr;
-      }
-    }
 
     socialUrl = UrlUtils.addQueryParameters('$socialUrl/conversations', queryParams);
 
@@ -634,18 +639,16 @@ class Social extends Service with NotificationsListener {
     return ((conversations != null) && conversations.isNotEmpty) ? conversations.first : null;
   }
 
-  Future<Conversation?> createConversation({required List<String> memberIds}) async {
+  Future<Conversation?> createConversation({ ConversationType? type, ContextItem? context, List<String>? memberIds,}) async {
     String accountId = Auth2().accountId ?? '';
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to create conversation. Reason: missing social url.');
       return null;
     }
-    if (memberIds.isEmpty) {
-      Log.e('Failed to create conversation. Reason: missing members.');
-      return null;
-    }
     String? requestBody = JsonUtils.encode({
+      'type': type?.toJsonString(),
+      'context': context?.toJson(),
       'members': memberIds
     });
     Response? response = await Network().post('$socialUrl/conversations', auth: Auth2(), body: requestBody);
@@ -685,6 +688,38 @@ class Social extends Service with NotificationsListener {
     } else {
       Log.e('Failed to update conversation $conversationId. Reason: $responseCode, $responseBody');
       return null;
+    }
+  }
+
+  Future<bool?> deleteConverstion(String conversationId) async =>
+      deleteConverstions(<String>[conversationId]);
+
+  Future<bool?> deleteConverstions(List<String> conversationIds) async {
+    //TBD: Messages
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to delete conversations $conversationIds. Reason: missing social url.');
+      return null;
+    }
+
+    if (conversationIds.isEmpty) {
+      Log.e('Failed to delete conversations. Reason: empty IDs list.');
+      return null;
+    }
+
+    String? requestBody = JsonUtils.encode({
+      'ids': conversationIds
+    });
+
+    Response? response = await Network().put('$socialUrl/conversations/delete', body: requestBody, auth: Auth2());
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      NotificationService().notify(notifyConversationsUpdated);
+      return true;
+    } else {
+      Log.e('Failed to delete conversations $conversationIds. Reason: $responseCode, $responseBody');
+      return false;
     }
   }
 
@@ -793,7 +828,7 @@ class Social extends Service with NotificationsListener {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing social url.');
       return null;
     }
-    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+    if (message.isEmpty && fileAttachments?.isNotEmpty != true) {
       Log.e('Failed to create message for conversation $conversationId. Reason: missing message and attachment.');
       return null;
     }
@@ -810,6 +845,37 @@ class Social extends Service with NotificationsListener {
       return messages;
     } else {
       Log.e('Failed to create message for conversation $conversationId. Reason: $responseCode, $responseBody');
+      return null;
+    }
+  }
+
+  Future<List<Conversation>?> broadcastIndividualMessage({required ContextItem context, required String message, List<FileAttachment>? fileAttachments, Map<String, dynamic>? extraParams }) async {
+    String? socialUrl = Config().socialUrl;
+    if (StringUtils.isEmpty(socialUrl)) {
+      Log.e('Failed to broadcast individual message for context ${context}. Reason: missing social url.');
+      return null;
+    }
+    if (message.isEmpty && fileAttachments?.isEmpty == true) {
+      Log.e('Failed to broadcast individual message for context ${context}. Reason: missing message and attachment.');
+      return null;
+    }
+    String? requestBody = JsonUtils.encode({
+      'context': context.toJson(),
+      'message': message,
+      'file_attachments': FileAttachment.listToJson(fileAttachments),
+      if (extraParams != null)
+        ...extraParams,
+    });
+    Response? response = await Network().post('$socialUrl/conversations/broadcast-individual', auth: Auth2(), body: requestBody);
+    int? responseCode = response?.statusCode;
+    String? responseBody = response?.body;
+    if (responseCode == 200) {
+      Map<String, dynamic>? responseJson = JsonUtils.decodeMap(responseBody);
+      List<Conversation>? conversations = Conversation.listFromJson(JsonUtils.listValue(responseJson?['conversations']));
+      NotificationService().notify(notifyConversationsUpdated);
+      return conversations;
+    } else {
+      Log.e('Failed to create broadcast message for context $context. Reason: $responseCode, $responseBody');
       return null;
     }
   }

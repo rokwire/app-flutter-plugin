@@ -371,6 +371,9 @@ class ListUtils {
     }
     return result;
   }
+
+  static T? remove<T>(List<T>? list, int index) =>
+    ((list != null) && (0 <= index) && (index < list.length)) ? list.removeAt(index) : null;
 }
 
 class SetUtils {
@@ -391,6 +394,17 @@ class SetUtils {
       }
       else {
         set.add(entry);
+      }
+    }
+  }
+
+  static void set<T>(Set<T>? set, T? entry, bool value) {
+    if ((set != null) && (entry != null)) {
+      if (value) {
+        set.add(entry);
+      }
+      else {
+        set.remove(entry);
       }
     }
   }

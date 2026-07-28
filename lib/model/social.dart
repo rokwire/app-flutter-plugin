@@ -368,6 +368,9 @@ class ContextItem {
 
   ContextItem({this.name, this.members, this.identifier});
 
+  factory ContextItem.group(String? groupId, { ContextItemMembers? members }) =>
+    ContextItem(name: ContextItemName.groups_bb_group, identifier: groupId, members: members);
+
   static ContextItem? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
@@ -380,6 +383,10 @@ class ContextItem {
 
   Map<String, dynamic> toJson() =>
       {'name': contextItemNameToString(name), 'members': members?.toJson(), 'identifier': StringUtils.ensureNotEmpty(identifier)};
+
+  @override
+  String toString() =>
+    '[${contextItemNameToString(name)}:$identifier:$members}]';
 
   @override
   bool operator ==(other) =>
@@ -439,6 +446,10 @@ class ContextItemMembers {
 
   @override
   int get hashCode => (type?.hashCode ?? 0) ^ (const DeepCollectionEquality().hash(members));
+
+  @override
+  String toString() =>
+    '[${contextItemMembersTypeToString(type)}:${members?.join(',')}]';
 }
 
 enum ContextItemMembersType { all, listed_accounts }
@@ -878,7 +889,7 @@ class SocialStats {
   int get hashCode => (posts?.hashCode ?? 0) ^ (comments?.hashCode ?? 0) ^ (reactions?.hashCode ?? 0);
 }
 
-enum SocialEntityType { post, comment }
+enum SocialEntityType { post, comment, message }
 
 String? socialEntityTypeToString(SocialEntityType? type) {
   switch (type) {
@@ -886,6 +897,8 @@ String? socialEntityTypeToString(SocialEntityType? type) {
       return 'comment';
     case SocialEntityType.post:
       return 'post';
+    case SocialEntityType.message:
+      return 'message';
     default:
       return null;
   }
@@ -897,6 +910,8 @@ SocialEntityType? socialEntityTypeFromString(String? value) {
       return SocialEntityType.comment;
     case 'post':
       return SocialEntityType.post;
+    case 'message':
+      return SocialEntityType.message;
     default:
       return null;
   }
@@ -1079,40 +1094,49 @@ class FileAttachment {
 
 class Conversation {
   final String? id;
-  final String? lastMessageText;
-  final Message? lastMessage;
-  final DateTime? lastActivityTimeUtc;
-  final bool? mute;
-  final List<ConversationMember>? members;
+  ConversationType? type;
+  ContextItem? context;
   final DateTime? dateCreatedUtc;
 
-  Conversation({this.id, this.lastMessageText, this.lastMessage, this.lastActivityTimeUtc, this.mute, this.members, this.dateCreatedUtc });
+  final List<ConversationMember>? members;
+  final bool? mute;
 
-  static Conversation? fromJson(Map<String, dynamic>? json) {
-    if (json == null) {
-      return null;
-    }
+  final Message? lastMessage;
+  final String? lastMessageText;
+  final DateTime? lastActivityTimeUtc;
 
-    return Conversation(
-      id: JsonUtils.stringValue(json['id']),
-      lastMessageText: JsonUtils.stringValue(json['info']),
-      lastMessage: Message.fromJson(json['last_message']),
-      lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
-      mute: JsonUtils.boolValue(json['mute']),
-      members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
-    );
-  }
+  Conversation({
+    this.id, this.type, this.context, this.dateCreatedUtc,
+    this.members, this.mute,
+    this.lastMessage, this.lastMessageText, this.lastActivityTimeUtc,  });
+
+  static Conversation? fromJson(Map<String, dynamic>? json) => (json != null) ? Conversation(
+    id: JsonUtils.stringValue(json['id']),
+    type: ConversationTypeImpl.fromJsonString(JsonUtils.stringValue(json['type'])),
+    context: ContextItem.fromJson(JsonUtils.mapValue(json['context'])),
+    dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']), isUtc: true),
+
+    members: ConversationMember.listFromJson(JsonUtils.listValue(json['members'])),
+    mute: JsonUtils.boolValue(json['mute']),
+
+    lastMessage: Message.fromJson(json['last_message']),
+    lastMessageText: JsonUtils.stringValue(json['info']),
+    lastActivityTimeUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['last_activity_time']), isUtc: true),
+  ) : null;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'info': lastMessageText,
-      'last_message': lastMessage,
-      'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
-      'mute': mute,
-      'members': ConversationMember.listToJson(members),
+      'type': type?.toJsonString(),
+      'context': context?.toJson(),
       'date_created': DateTimeUtils.utcDateTimeToString(dateCreatedUtc),
+
+      'members': ConversationMember.listToJson(members),
+      'mute': mute,
+
+      'last_message': lastMessage,
+      'info': lastMessageText,
+      'last_activity_time': DateTimeUtils.utcDateTimeToString(lastActivityTimeUtc),
     };
   }
 
@@ -1151,6 +1175,33 @@ class Conversation {
   String? get membersString => List.generate(members?.length ?? 0, (index) => members?[index].name ?? '').join(', ');
   List<String>? get memberIds => List.generate(members?.length ?? 0, (index) => members?[index].accountId ?? '');
 }
+
+enum ConversationType { direct, groupSubset, groupAll }
+
+extension ConversationTypeImpl on ConversationType {
+
+  bool get isGroup => groupTypes.contains(this);
+  static const Set<ConversationType> groupTypes = const <ConversationType>{ ConversationType.groupSubset, ConversationType.groupAll };
+
+  static ConversationType? fromJsonString(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'direct': return ConversationType.direct;
+      case 'group-subset': return ConversationType.groupSubset;
+      case 'group-all': return ConversationType.groupAll;
+      default: return null;
+    }
+  }
+  
+  String toJsonString() {
+    switch (this) {
+      case ConversationType.direct: return 'direct';
+      case ConversationType.groupSubset: return 'group-subset';
+      case ConversationType.groupAll: return 'group-all';
+    }
+  }
+}
+
+
 
 class ConversationMember {
   final String? accountId;
