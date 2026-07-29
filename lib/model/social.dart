@@ -1183,6 +1183,9 @@ extension ConversationTypeImpl on ConversationType {
   bool get isGroup => groupTypes.contains(this);
   static const Set<ConversationType> groupTypes = const <ConversationType>{ ConversationType.groupSubset, ConversationType.groupAll };
 
+  bool get isDirect => directTypes.contains(this);
+  static const Set<ConversationType> directTypes = const <ConversationType>{ ConversationType.direct };
+
   static ConversationType? fromJsonString(String? value) {
     switch (value?.toLowerCase()) {
       case 'direct': return ConversationType.direct;
