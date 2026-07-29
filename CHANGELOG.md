@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.13.2] - 2026-07-29
+### Added
+- Added direct type helpers in ConversationTypeImpl [#5919](https://github.com/rokwire/illinois-app/issues/5919).
+
 ## [1.13.1] - 2026-07-28
 ### Changed
 - Acknowledge new "types" paramter in loadConversations API from Social BB [#5912](https://github.com/rokwire/illinois-app/issues/5912).
