@@ -580,7 +580,7 @@ class Social extends Service with NotificationsListener {
   // Conversations
 
   Future<List<Conversation>?> loadConversations({
-    String? contextId, ConversationType? type,
+    String? contextId, Set<ConversationType>? types,
     Iterable<String>? ids, String? name, bool? mute,
     DateTime? fromTime, DateTime? toTime,
     int? limit, int? offset,
@@ -597,8 +597,8 @@ class Social extends Service with NotificationsListener {
     Map<String, String> queryParams = {
       if (contextId != null)
         'context-identifier': contextId,
-      if (type != null)
-        'type': type.toJsonString(),
+      if (types != null)
+        'types': types.map((type) => type.toJsonString()).toList().join(','),
 
       if ((ids != null) && ids.isNotEmpty)
         'ids': ids.join(','),
@@ -850,7 +850,7 @@ class Social extends Service with NotificationsListener {
     }
   }
 
-  Future<List<Conversation>?> broadcastIndividualMessage({required ContextItem context, required String message, List<FileAttachment>? fileAttachments, Map<String, dynamic>? extraParams }) async {
+  Future<List<Conversation>?> broadcastIndividualMessage({required ContextItem context, required String message, List<FileAttachment>? fileAttachments, List<String>? recepientIds }) async {
     String? socialUrl = Config().socialUrl;
     if (StringUtils.isEmpty(socialUrl)) {
       Log.e('Failed to broadcast individual message for context ${context}. Reason: missing social url.');
@@ -864,8 +864,10 @@ class Social extends Service with NotificationsListener {
       'context': context.toJson(),
       'message': message,
       'file_attachments': FileAttachment.listToJson(fileAttachments),
-      if (extraParams != null)
-        ...extraParams,
+      if (recepientIds?.isNotEmpty == true)
+        'recipients' : recepientIds,
+      if (recepientIds?.isNotEmpty != true)
+        'all_group_members': true,
     });
     Response? response = await Network().post('$socialUrl/conversations/broadcast-individual', auth: Auth2(), body: requestBody);
     int? responseCode = response?.statusCode;
