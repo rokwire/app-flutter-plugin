@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+
+## [1.13.3] - 2026-07-30
 ### Added
 - Added ability to message specific set of recipients in Social.broadcastIndividualMessage API [#5767](https://github.com/rokwire/illinois-app/issues/5767).
 
