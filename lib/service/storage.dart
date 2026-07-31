@@ -302,6 +302,10 @@ class Storage with Service {
   Auth2Account? get auth2Account => Auth2Account.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2AccountKey)));
   set auth2Account(Auth2Account? value) => setEncryptedStringWithName(auth2AccountKey, JsonUtils.encode(value?.toJson()));
 
+  String get auth2OidcLoginKey => 'edu.illinois.rokwire.auth2.oidc.login';
+  Auth2OidcLogin? get auth2OidcLogin => Auth2OidcLogin.fromJson(JsonUtils.decodeMap(getEncryptedStringWithName(auth2OidcLoginKey)));
+  set auth2OidcLogin(Auth2OidcLogin? value) => setEncryptedStringWithName(auth2OidcLoginKey, JsonUtils.encode(value?.toJson()));
+
   // Http Proxy
   String get httpProxyEnabledKey =>  'edu.illinois.rokwire.http_proxy.enabled';
   bool? get httpProxyEnabled => getBoolWithName(httpProxyEnabledKey);
