@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.13.4] - 2026-07-31
+### Changed
+- Preserve OIDC login info across app instances, make sure to process OIDC auth deep links on fresh app launches [#5932](https://github.com/rokwire/illinois-app/issues/5932).
+
+## [1.13.3] - 2026-07-30
+### Added
+- Added ability to message specific set of recipients in Social.broadcastIndividualMessage API [#5767](https://github.com/rokwire/illinois-app/issues/5767).
+
 ## [1.13.2] - 2026-07-29
 ### Added
 - Added direct type helpers in ConversationTypeImpl [#5919](https://github.com/rokwire/illinois-app/issues/5919).

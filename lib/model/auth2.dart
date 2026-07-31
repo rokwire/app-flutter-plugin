@@ -115,6 +115,54 @@ Auth2LoginType? auth2LoginTypeFromString(String? value) {
 }
 
 ////////////////////////////////
+// Auth2OidcLoginData
+
+class Auth2OidcLoginData {
+  final String? loginUrl;
+  final Map<String, dynamic>? params;
+
+  Auth2OidcLoginData({this.loginUrl, this.params});
+
+  static Auth2OidcLoginData? fromJson(Map<String, dynamic>? json) {
+    return (json != null) ? Auth2OidcLoginData(
+      loginUrl: JsonUtils.stringValue(json['login_url']),
+      params: JsonUtils.mapValue(json['params'])
+    ) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'login_url' : loginUrl,
+      'params': params
+    };
+  }
+}
+
+////////////////////////////////
+// Auth2OidcLogin
+
+class Auth2OidcLogin {
+  Auth2OidcLoginData? data;
+  Auth2AccountScope? scope;
+  bool? link;
+
+  Auth2OidcLogin({ this.data, this.scope, this.link });
+
+  static Auth2OidcLogin? fromJson(Map<String, dynamic>? json) => (json != null) ?
+    Auth2OidcLogin(
+      data: Auth2OidcLoginData.fromJson(JsonUtils.mapValue(json['data'])),
+      scope: Auth2AccountScope.fromJson(JsonUtils.mapValue(json['scope'])),
+      link: JsonUtils.boolValue(json['link']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'data': data?.toJson(),
+    'scope': scope?.toJson(),
+    'link': link,
+  };
+}
+
+////////////////////////////////
 // Auth2Account
 
 class Auth2Account {
@@ -353,6 +401,18 @@ class Auth2AccountScope {
   final Set<Auth2UserProfileScope>? profile;
 
   const Auth2AccountScope({this.prefs, this.profile});
+
+  static Auth2AccountScope? fromJson(Map<String, dynamic>? json) => (json != null) ?
+    Auth2AccountScope(
+      prefs: Auth2UserPrefsScopeImpl.setFromJson(JsonUtils.listValue(json['prefs'])),
+      profile: Auth2UserProfileScopeImpl.setFromJson(JsonUtils.listValue(json['profile'])),
+    ) : null;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'prefs': Auth2UserPrefsScopeImpl.setToJson(prefs),
+    'profile': Auth2UserProfileScopeImpl.setToJson(profile),
+  };
+
 }
 
 ////////////////////////////////
@@ -1333,8 +1393,6 @@ enum Auth2UserProfileScope {
 
 extension Auth2UserProfileScopeImpl on Auth2UserProfileScope {
 
-  static Auth2UserProfileScope? fromString(String value) => Auth2UserProfileScope.values.firstWhereOrNull((field) => (field.toString() == value));
-
   static Set<Auth2UserProfileScope> get fullScope => Set<Auth2UserProfileScope>.from(Auth2UserProfileScope.values);
 
   T? pick<T>(T? v, T? d, { Set<Auth2UserProfileScope>? scope }) =>
@@ -1345,6 +1403,85 @@ extension Auth2UserProfileScopeImpl on Auth2UserProfileScope {
 
   int? pickInt(int? v, int? d, { Set<Auth2UserProfileScope>? scope }) =>
     (scope != null) ? (scope.contains(this) ? v : d) : (((v ?? 0) != 0) ? v : d);
+
+  static Auth2UserProfileScope? fromJson(String? value) {
+    switch (value) {
+      case 'firstName': return Auth2UserProfileScope.firstName;
+      case 'middleName': return Auth2UserProfileScope.middleName;
+      case 'lastName': return Auth2UserProfileScope.lastName;
+      case 'pronouns': return Auth2UserProfileScope.pronouns;
+
+      case 'birthYear': return Auth2UserProfileScope.birthYear;
+      case 'photoUrl': return Auth2UserProfileScope.photoUrl;
+      case 'pronunciationUrl': return Auth2UserProfileScope.pronunciationUrl;
+
+      case 'email': return Auth2UserProfileScope.email;
+      case 'phone': return Auth2UserProfileScope.phone;
+      case 'website': return Auth2UserProfileScope.website;
+
+      case 'address': return Auth2UserProfileScope.address;
+      case 'address2': return Auth2UserProfileScope.address2;
+      case 'poBox': return Auth2UserProfileScope.poBox;
+      case 'city': return Auth2UserProfileScope.city;
+      case 'zip': return Auth2UserProfileScope.zip;
+      case 'state': return Auth2UserProfileScope.state;
+      case 'country': return Auth2UserProfileScope.country;
+      default: return null;
+    }
+  }
+
+  String toJson() {
+    switch (this) {
+      case Auth2UserProfileScope.firstName: return 'firstName';
+      case Auth2UserProfileScope.middleName: return 'middleName';
+      case Auth2UserProfileScope.lastName: return 'lastName';
+      case Auth2UserProfileScope.pronouns: return 'pronouns';
+
+      case Auth2UserProfileScope.birthYear: return 'birthYear';
+      case Auth2UserProfileScope.photoUrl: return 'photoUrl';
+      case Auth2UserProfileScope.pronunciationUrl: return 'pronunciationUrl';
+
+      case Auth2UserProfileScope.email: return 'email';
+      case Auth2UserProfileScope.phone: return 'phone';
+      case Auth2UserProfileScope.website: return 'website';
+
+      case Auth2UserProfileScope.address: return 'address';
+      case Auth2UserProfileScope.address2: return 'address2';
+      case Auth2UserProfileScope.poBox: return 'poBox';
+      case Auth2UserProfileScope.city: return 'city';
+      case Auth2UserProfileScope.zip: return 'zip';
+      case Auth2UserProfileScope.state: return 'state';
+      case Auth2UserProfileScope.country: return 'country';
+    }
+  }
+
+  static List<Auth2UserProfileScope>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2UserProfileScope>? values;
+    if (jsonList != null) {
+      values = <Auth2UserProfileScope>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(values, Auth2UserProfileScopeImpl.fromJson(JsonUtils.stringValue(jsonEntry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2UserProfileScope>? values) {
+    List<dynamic>? jsonList;
+    if (values != null) {
+      jsonList = <dynamic>[];
+      for (Auth2UserProfileScope value in values) {
+        ListUtils.add(jsonList, value.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static Set<Auth2UserProfileScope>? setFromJson(List<dynamic>? jsonList) =>
+    SetUtils.from(listFromJson(jsonList));
+
+  static List<dynamic>? setToJson(Set<Auth2UserProfileScope>? values) =>
+    listToJson(values?.toList());
 }
 
 ////////////////////////////////
@@ -2504,6 +2641,61 @@ enum Auth2UserPrefsScope { privacyLevel, roles, favorites, interests, foodFilter
 
 extension Auth2UserPrefsScopeImpl on Auth2UserPrefsScope {
   static Set<Auth2UserPrefsScope> get fullScope => Set<Auth2UserPrefsScope>.from(Auth2UserPrefsScope.values);
+
+  static Auth2UserPrefsScope? fromJson(String? value) {
+    switch (value) {
+      case 'privacyLevel': return Auth2UserPrefsScope.privacyLevel;
+      case 'roles': return Auth2UserPrefsScope.roles;
+      case 'favorites': return Auth2UserPrefsScope.favorites;
+      case 'interests': return Auth2UserPrefsScope.interests;
+      case 'foodFilters': return Auth2UserPrefsScope.foodFilters;
+      case 'tags': return Auth2UserPrefsScope.tags;
+      case 'settings': return Auth2UserPrefsScope.settings;
+      case 'voter': return Auth2UserPrefsScope.voter;
+      default: return null;
+    }
+  }
+
+  String toJson() {
+    switch (this) {
+      case Auth2UserPrefsScope.privacyLevel: return 'privacyLevel';
+      case Auth2UserPrefsScope.roles: return 'roles';
+      case Auth2UserPrefsScope.favorites: return 'favorites';
+      case Auth2UserPrefsScope.interests: return 'interests';
+      case Auth2UserPrefsScope.foodFilters: return 'foodFilters';
+      case Auth2UserPrefsScope.tags: return 'tags';
+      case Auth2UserPrefsScope.settings: return 'settings';
+      case Auth2UserPrefsScope.voter: return 'voter';
+    }
+  }
+
+  static List<Auth2UserPrefsScope>? listFromJson(List<dynamic>? jsonList) {
+    List<Auth2UserPrefsScope>? values;
+    if (jsonList != null) {
+      values = <Auth2UserPrefsScope>[];
+      for (dynamic jsonEntry in jsonList) {
+        ListUtils.add(values, Auth2UserPrefsScopeImpl.fromJson(JsonUtils.stringValue(jsonEntry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2UserPrefsScope>? values) {
+    List<dynamic>? jsonList;
+    if (values != null) {
+      jsonList = <dynamic>[];
+      for (Auth2UserPrefsScope value in values) {
+        ListUtils.add(jsonList, value.toJson());
+      }
+    }
+    return jsonList;
+  }
+
+  static Set<Auth2UserPrefsScope>? setFromJson(List<dynamic>? jsonList) =>
+    SetUtils.from(listFromJson(jsonList));
+
+  static List<dynamic>? setToJson(Set<Auth2UserPrefsScope>? values) =>
+    listToJson(values?.toList());
 }
 
 class Auth2VoterPrefs {
