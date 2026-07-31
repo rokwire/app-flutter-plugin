@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Changed
+- Preserve OIDC login info across app instances, make sure to process OIDC auth deep links on fresh app launches [#5932](https://github.com/rokwire/illinois-app/issues/5932).
 
 ## [1.13.3] - 2026-07-30
 ### Added
