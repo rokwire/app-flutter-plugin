@@ -42,10 +42,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   );
 
 
-  _OidcLogin? _oidcLogin;
-  Auth2AccountScope? _oidcScope;
-  bool? _oidcLink;
-  bool? _processingOidcAuthentication;
+  Auth2OidcLogin? _oidcLogin;
   Timer? _oidcAuthenticationTimer;
   _OidcAuthCompleters? _oidcAuthCompleters;
 
@@ -111,6 +108,8 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     _anonymousPrefs = Storage().auth2AnonymousPrefs;
     _anonymousProfile = Storage().auth2AnonymousProfile;
 
+    _oidcLogin = Storage().auth2OidcLogin;
+
     _deviceId = await getDeviceId();
 
     if ((_account == null) && (_anonymousPrefs == null)) {
@@ -135,6 +134,11 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     _refreshAccount();
 
     await super.initService();
+  }
+
+  @override
+  void initServiceUI() {
+    createOidcAuthenticationTimerIfNeeded();
   }
 
   @override
@@ -350,14 +354,12 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         _oidcAuthCompleters = <_OidcAuthCompleter>{};
         NotificationService().notify(notifyLoginStarted, oidcLoginType);
 
-        _OidcLogin? oidcLogin = await getOidcData();
-        if (oidcLogin?.loginUrl != null) {
-          _oidcLogin = oidcLogin;
-          _oidcScope = scope;
-          _oidcLink = link;
+        Auth2OidcLoginData? loginData = await getOidcLoginData();
+        if ((loginData != null) && (loginData.loginUrl != null)) {
+          Storage().auth2OidcLogin = _oidcLogin = Auth2OidcLogin(data: loginData, scope: scope, link: link);
 
           //await RokwirePlugin.clearSafariVC();
-          await _launchUrl(_preprocessOidcLoginUrl(_oidcLogin?.loginUrl));
+          await _launchUrl(_preprocessOidcLoginUrl(loginData.loginUrl));
         }
         else {
           completeOidcAuthentication(Auth2OidcAuthenticateResult.failed);
@@ -374,30 +376,32 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Future<Auth2OidcAuthenticateResult> handleOidcAuthentication(Uri uri) async {
-    
-    await RokwirePlugin.dismissSafariVC();
+  Future<Auth2OidcAuthenticateResult?> handleOidcAuthentication(Uri uri) async {
     
     cancelOidcAuthenticationTimer();
 
-    _processingOidcAuthentication = true;
-    Auth2OidcAuthenticateResult result;
-    if (_oidcLink == true) {
-      Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), _oidcLogin?.params);
-      result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
-    }
-    else {
-      bool processResult = await processOidcAuthentication(uri);
-      result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
-    }
-    _processingOidcAuthentication = false;
+    RokwirePlugin.dismissSafariVC();
+    
+    Auth2OidcAuthenticateResult? result;
+    Auth2OidcLogin? oidcLogin = _oidcLogin;
+    if (oidcLogin != null) {
+      Storage().auth2OidcLogin = _oidcLogin = null;
+      if (oidcLogin.link == true) {
+        Auth2LinkResult linkResult = await linkAccountAuthType(oidcLoginType, uri.toString(), oidcLogin.data?.params);
+        result = auth2OidcAuthenticateResultFromAuth2LinkResult(linkResult);
+      }
+      else {
+        bool processResult = await processOidcAuthentication(uri, params: oidcLogin.data?.params, scope: oidcLogin.scope);
+        result = processResult ? Auth2OidcAuthenticateResult.succeeded : Auth2OidcAuthenticateResult.failed;
+      }
 
-    completeOidcAuthentication(result);
+      completeOidcAuthentication(result);
+    }
     return result;
   }
 
   @protected
-  Future<bool> processOidcAuthentication(Uri? uri) async {
+  Future<bool> processOidcAuthentication(Uri? uri, { Map<String, dynamic>? params, Auth2AccountScope? scope } ) async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
       String url = "${Config().coreUrl}/services/auth/login";
       Map<String, String> headers = {
@@ -409,16 +413,14 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         'api_key': Config().rokwireApiKey,
         'org_id': Config().coreOrgId,
         'creds': uri?.toString(),
-        'params': _oidcLogin?.params,
+        'params': params,
         'profile': _anonymousProfile?.toJson(),
         'preferences': _anonymousPrefs?.toJson(),
         'device': deviceInfo,
       });
-      _oidcLogin = null;
 
       Response? response = await Network().post(url, headers: headers, body: post);
-      bool result = await processLoginResponse(response, scope: _oidcScope, loginType: oidcLoginType);
-      _oidcScope = null;
+      bool result = await processLoginResponse(response, scope: scope, loginType: oidcLoginType);
       return result;
     }
     return false;
@@ -474,7 +476,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
   }
 
   @protected
-  Future<_OidcLogin?> getOidcData() async {
+  Future<Auth2OidcLoginData?> getOidcLoginData() async {
     if ((Config().coreUrl != null) && (Config().appPlatformId != null) && (Config().coreOrgId != null)) {
 
       String url = "${Config().coreUrl}/services/auth/login-url";
@@ -489,19 +491,21 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         'redirect_uri': oidcRedirectUrl,
       });
       Response? response = await Network().post(url, headers: headers, body: post);
-      return _OidcLogin.fromJson(JsonUtils.decodeMap(response?.body));
+      return Auth2OidcLoginData.fromJson(JsonUtils.decodeMap(response?.body));
     }
     return null;
   }
 
   @protected
   void createOidcAuthenticationTimerIfNeeded() {
-    if ((_oidcAuthCompleters != null) && (_processingOidcAuthentication != true)) {
+    if (_oidcLogin != null) {
       if (_oidcAuthenticationTimer != null) {
         _oidcAuthenticationTimer?.cancel();
       }
       _oidcAuthenticationTimer = Timer(const Duration(milliseconds: 100), () {
-        completeOidcAuthentication(null);
+        if (_oidcLogin != null) {
+          completeOidcAuthentication(null);
+        }
         _oidcAuthenticationTimer = null;
       });
     }
@@ -520,9 +524,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     
     _notifyLogin(oidcLoginType, result == Auth2OidcAuthenticateResult.succeeded);
 
-    _oidcLogin = null;
-    _oidcScope = null;
-    _oidcLink = null;
+    Storage().auth2OidcLogin = _oidcLogin = null;
 
     _OidcAuthCompleters? loginCompleters = _oidcAuthCompleters;
     if (loginCompleters != null) {
@@ -940,7 +942,6 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
         'creds': creds,
         'params': params,
       });
-      _oidcLink = null;
 
       Response? response = await Network().post(url, headers: headers, body: post, auth: Auth2());
       if (response?.statusCode == 200) {
@@ -1598,27 +1599,6 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
 typedef _OidcAuthCompleter = Completer<Auth2OidcAuthenticateResult?>;
 typedef _OidcAuthCompleters = Set<_OidcAuthCompleter>;
 
-class _OidcLogin {
-  final String? loginUrl;
-  final Map<String, dynamic>? params;
-  
-  _OidcLogin({this.loginUrl, this.params});
-
-  static _OidcLogin? fromJson(Map<String, dynamic>? json) {
-    return (json != null) ? _OidcLogin(
-      loginUrl: JsonUtils.stringValue(json['login_url']),
-      params: JsonUtils.mapValue(json['params'])
-    ) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'login_url' : loginUrl,
-      'params': params
-    };
-  }  
-
-}
 
 // Auth2TokenNetworkAuthProvider
 
