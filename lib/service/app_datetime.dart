@@ -30,7 +30,7 @@ class AppDateTime with Service {
   late String _localTimeZone;
   String get localTimeZone => _localTimeZone;
 
-  // Singletone Factory
+  // Singleton Factory
 
   static AppDateTime? _instance;
 
@@ -67,9 +67,7 @@ class AppDateTime with Service {
 
   // Implementation
 
-  DateTime get now {
-    return DateTime.now();
-  }
+  DateTime get now => DateTime.now();
 
   Future<Uint8List?> get timezoneDatabase async => null;
 
@@ -84,6 +82,8 @@ class AppDateTime with Service {
 
   timezone.Location get displayLocation =>
       useDeviceLocalTimeZone ? deviceLocation : (universityLocation ?? deviceLocation);
+
+  timezone.Location get universityOrDeviceLocation => universityLocation ?? deviceLocation;
 
   bool get useDeviceLocalTimeZone => false;
 
@@ -230,14 +230,10 @@ class AppDateTime with Service {
       timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
 
   timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
-}
 
-extension DateTimeUni on DateTime {
+  timezone.TZDateTime getUniversityOrDeviceTZDateTime(DateTime dateTimeUtc) =>
+    (getUniLocalTimeFromUtcTime(dateTimeUtc) as timezone.TZDateTime?) ??
+      timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
 
-  timezone.TZDateTime? toUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(this, AppDateTime().universityLocation!) : null;
-  static timezone.TZDateTime? nowUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(DateTime.now(), AppDateTime().universityLocation!) : null;
-
-  timezone.TZDateTime  toUniOrLocal() => timezone.TZDateTime.from(this, timezoneUniOrLocal);
-  static timezone.TZDateTime  nowUniOrLocal() => timezone.TZDateTime.from(DateTime.now(), timezoneUniOrLocal);
-  static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? AppDateTime().deviceLocation;
+  timezone.TZDateTime getUniversityOrDeviceNowTZDateTime() => getUniversityOrDeviceTZDateTime(now.toUtc());
 }
