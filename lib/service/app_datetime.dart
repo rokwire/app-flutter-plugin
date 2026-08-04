@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import 'package:flutter/foundation.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/service.dart';
@@ -24,23 +23,6 @@ import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
-// AppDateTime is the single entry point for anything that needs to respect the
-// user's timezone display setting (useDeviceLocalTimeZone / universityLocation).
-// For pure, settings-agnostic date/time parsing, formatting, or calendar-day
-// comparison, use DateTimeUtils / TZDateTimeUtils in utils.dart instead - AppDateTime
-// builds on top of those, it does not duplicate them.
-//
-// Methods on this class fall into three groups (each tagged inline below):
-//  1. Raw, single-target conversion primitives (getUtcTimeFromDeviceTime,
-//     getDeviceTimeFromUtcTime, getUniLocalTimeFromUtcTime) - building blocks, NOT
-//     setting-aware by themselves.
-//  2. Setting-aware display API (formatDateTime, getDisplayDay/Time/DateTime,
-//     getDisplayZonedDateTime, getDisplayTZDateTime/getDisplayNowTZDateTime,
-//     displayLocation, showTimeZoneSuffix) - branches on useDeviceLocalTimeZone; call
-//     these for any setting-respecting display.
-//  3. Fixed-zone / local-storage helpers (formatUniLocalTimeFromUtcTime,
-//     dateTimeLocalFromJson/ToJson) - deliberately ignore the setting for a narrow,
-//     documented reason; not for general display use.
 class AppDateTime with Service {
 
   static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
@@ -72,13 +54,13 @@ class AppDateTime with Service {
       timezone.initializeDatabase(rawData);
     }
     else {
-      debugPrint('AppDateTime: Timezone database initializiation omitted.');
+      debugPrint('AppDateTime: Timezone database initialization omitted.');
     }
 
     TimezoneInfo timezoneInfo = await FlutterTimezone.getLocalTimezone();
     _localTimeZone = timezoneInfo.identifier;
-    timezone.Location deviceLocation = timezone.getLocation(_localTimeZone);
-    timezone.setLocalLocation(deviceLocation);
+    timezone.Location deviceTimezoneLocation = timezone.getLocation(_localTimeZone);
+    timezone.setLocalLocation(deviceTimezoneLocation);
 
     await super.initService();
   }
@@ -98,13 +80,15 @@ class AppDateTime with Service {
     return (locationName != null) ? timezone.getLocation(locationName) : null;
   }
 
+  timezone.Location get deviceLocation => timezone.local;
+
+  timezone.Location get displayLocation =>
+      useDeviceLocalTimeZone ? deviceLocation : (universityLocation ?? deviceLocation);
+
   bool get useDeviceLocalTimeZone => false;
 
-  // Raw building block - always device<->UTC, unconditionally. NOT setting-aware by
-  // itself; do not call directly for a setting-respecting display (that exact mistake
-  // caused the Poll/InboxMessage/Social bugs this project fixed). Use
-  // getDisplayZonedDateTime / formatDateTime / getDisplayDay / getDisplayTime /
-  // getDisplayDateTime instead, which choose the right conversion per the setting.
+  bool get showTimeZoneSuffix => !useDeviceLocalTimeZone;
+
   DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
     if (dateTime == null) {
       return null;
@@ -113,18 +97,14 @@ class AppDateTime with Service {
     return dtUtc;
   }
 
-  // Raw building block - always UTC->device, unconditionally. Same caveat as
-  // getUtcTimeFromDeviceTime above: not setting-aware by itself.
   DateTime? getDeviceTimeFromUtcTime(DateTime? dateTimeUtc) {
     if (dateTimeUtc == null) {
       return null;
     }
-    timezone.TZDateTime deviceDateTime = timezone.TZDateTime.from(dateTimeUtc, timezone.local);
+    timezone.TZDateTime deviceDateTime = timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
     return deviceDateTime;
   }
 
-  // Raw building block - always UTC->university zone, unconditionally. Same caveat as
-  // getUtcTimeFromDeviceTime above: not setting-aware by itself.
   DateTime? getUniLocalTimeFromUtcTime(DateTime? dateTimeUtc) {
     timezone.Location? uniLocation = universityLocation;
     if ((dateTimeUtc == null) || (uniLocation == null)) {
@@ -134,9 +114,6 @@ class AppDateTime with Service {
     return tzDateTimeUni;
   }
 
-  // Fixed-zone helper - always university zone, deliberately ignores
-  // useDeviceLocalTimeZone. Narrow use only (e.g. Wallet bus pass verification clock,
-  // which must always read campus time regardless of the display setting).
   String? formatUniLocalTimeFromUtcTime(DateTime? dateTimeUtc, String? format) {
     if(dateTimeUtc != null && format != null){
       DateTime uniTime = getUniLocalTimeFromUtcTime(dateTimeUtc)!;
@@ -145,10 +122,6 @@ class AppDateTime with Service {
     return null;
   }
 
-  // ---- Setting-aware display API from here down: these branch on
-  // useDeviceLocalTimeZone (directly, or via getDisplayZonedDateTime) and are what
-  // feature code should call for anything that should follow the user's timezone
-  // preference. ----
   String? formatDateTime(DateTime? dateTime,
       {String? format, String? locale, bool? ignoreTimeZone = false, bool showTzSuffix = false}) {
     if (dateTime == null) {
@@ -180,9 +153,6 @@ class AppDateTime with Service {
     return formattedDateTime;
   }
 
-  // Fixed-zone helpers - always device zone, deliberately ignore the setting. For
-  // personal, locally-stored values (e.g. a user-picked reminder date) where "device
-  // local" is the correct semantic regardless of the display-timezone preference.
   DateTime? dateTimeLocalFromJson(dynamic json) {
     return getDeviceTimeFromUtcTime(DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json)));
   }
@@ -242,24 +212,6 @@ class AppDateTime with Service {
     return timeToString;
   }
 
-  // The Location the user's chosen setting resolves to for display purposes. Use this
-  // when code needs a raw timezone.Location (e.g. to build a TZDateTime directly from
-  // epoch millis) rather than a converted DateTime value - for the latter, use
-  // getDisplayZonedDateTime below instead.
-  timezone.Location get displayLocation =>
-    useDeviceLocalTimeZone ? timezone.local : (universityLocation ?? timezone.local);
-
-  // True when the display setting resolves to something other than the device's own
-  // zone (i.e. showing university/Central time) - mirrors formatDateTime's own
-  // showTzSuffix logic. External callers should use this instead of reading
-  // useDeviceLocalTimeZone directly, which subclasses may mark @protected.
-  bool get showTimeZoneSuffix => !useDeviceLocalTimeZone;
-
-  // Canonical conversion entry point: turns a UTC instant into the DateTime the user
-  // should see, per the useDeviceLocalTimeZone setting. Any code that needs a raw
-  // DateTime value (not just a formatted string) for a setting-aware display should
-  // call this instead of getDeviceTimeFromUtcTime/getUniLocalTimeFromUtcTime directly
-  // or DateTimeUni/DateTimeLocal, both of which are fixed-zone and ignore the setting.
   DateTime? getDisplayZonedDateTime({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
     if (dateTimeUtc == null) {
       return null;
@@ -273,26 +225,13 @@ class AppDateTime with Service {
     return zonedDateTime;
   }
 
-  // Same as getDisplayZonedDateTime, but guaranteed non-null: falls back to device-local
-  // zone if the setting-aware conversion can't resolve (e.g. universityLocation not yet
-  // configured). Use this when feature display code needs a TZDateTime it can format
-  // directly, instead of each caller re-implementing its own "?? some fallback" - that
-  // duplication is exactly how the Event2/Survey/Appointment display helpers diverged
-  // before being consolidated here.
   timezone.TZDateTime getDisplayTZDateTime(DateTime dateTimeUtc) =>
     (getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
-      timezone.TZDateTime.from(dateTimeUtc, timezone.local);
+      timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
 
   timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
 }
 
-// DateTimeUni / DateTimeLocal are low-level, fixed-zone conversions - each always
-// resolves to one specific zone (university location or device local) regardless of
-// the useDeviceLocalTimeZone setting. Only use these for genuinely fixed-zone needs
-// (e.g. a "now" indicator that must always read the university's local time). For any
-// display that should follow the user's timezone setting, call
-// AppDateTime().getDisplayZonedDateTime(...) (or formatDateTime/getDisplayDay/
-// getDisplayTime/getDisplayDateTime) instead.
 extension DateTimeUni on DateTime {
 
   timezone.TZDateTime? toUni() => (AppDateTime().universityLocation != null) ? timezone.TZDateTime.from(this, AppDateTime().universityLocation!) : null;
@@ -300,12 +239,5 @@ extension DateTimeUni on DateTime {
 
   timezone.TZDateTime  toUniOrLocal() => timezone.TZDateTime.from(this, timezoneUniOrLocal);
   static timezone.TZDateTime  nowUniOrLocal() => timezone.TZDateTime.from(DateTime.now(), timezoneUniOrLocal);
-  static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? timezone.local;
-}
-
-extension DateTimeLocal on DateTime {
-
-  timezone.TZDateTime  toLocalTZ() => timezone.TZDateTime.from(this.toLocal(), timezoneLocal);
-  static timezone.TZDateTime  nowLocalTZ() => timezone.TZDateTime.from(DateTime.now(), timezoneLocal);
-  static timezone.Location get timezoneLocal => timezone.local;
+  static timezone.Location get timezoneUniOrLocal => AppDateTime().universityLocation ?? AppDateTime().deviceLocation;
 }
