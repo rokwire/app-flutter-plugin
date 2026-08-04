@@ -255,7 +255,3 @@ extension TZDateTimeExt on timezone.TZDateTime {
     return null;
   }
 }
-
-extension DateTimeExt on DateTime {
-  int get secondsSinceEpoch => millisecondsSinceEpoch ~/ 1000;
-}

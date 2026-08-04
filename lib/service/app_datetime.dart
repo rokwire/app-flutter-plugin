@@ -89,14 +89,6 @@ class AppDateTime with Service {
 
   bool get showTimeZoneSuffix => !useDeviceLocalTimeZone;
 
-  DateTime? getUtcTimeFromDeviceTime(DateTime? dateTime) {
-    if (dateTime == null) {
-      return null;
-    }
-    DateTime dtUtc = dateTime.toUtc();
-    return dtUtc;
-  }
-
   DateTime? getDeviceTimeFromUtcTime(DateTime? dateTimeUtc) {
     if (dateTimeUtc == null) {
       return null;
@@ -112,14 +104,6 @@ class AppDateTime with Service {
     }
     timezone.TZDateTime tzDateTimeUni = timezone.TZDateTime.from(dateTimeUtc, uniLocation);
     return tzDateTimeUni;
-  }
-
-  String? formatUniLocalTimeFromUtcTime(DateTime? dateTimeUtc, String? format) {
-    if(dateTimeUtc != null && format != null){
-      DateTime uniTime = getUniLocalTimeFromUtcTime(dateTimeUtc)!;
-      return DateFormat(format).format(uniTime);
-    }
-    return null;
   }
 
   String? formatDateTime(DateTime? dateTime,
@@ -158,7 +142,7 @@ class AppDateTime with Service {
   }
 
   String? dateTimeLocalToJson(DateTime? dateTime) {
-    return DateTimeUtils.utcDateTimeToString(getUtcTimeFromDeviceTime(dateTime));
+    return DateTimeUtils.utcDateTimeToString(dateTime?.toUtc());
   }
 
   String getDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
