@@ -39,9 +39,9 @@ class SurveyBuilder {
 
     String? date;
     if (showTimeOnly) {
-      date = AppDateTime().getDisplayTime(dateTimeUtc: response.dateTaken);
+      date = AppDateTime().formatDisplayTime(dateTimeUtc: response.dateTaken);
     } else {
-      date = AppDateTime().getDisplayDateTime(response.dateTaken);
+      date = AppDateTime().formatDisplayDateTime(response.dateTaken);
     }
 
     widgets.addAll([

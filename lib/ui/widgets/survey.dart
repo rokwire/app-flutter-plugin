@@ -176,7 +176,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
+      child: Text(AppDateTime().formatDisplayDateTime(dateTaken), style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
     );
   }
 

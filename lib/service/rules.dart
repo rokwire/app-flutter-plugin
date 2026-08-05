@@ -216,7 +216,7 @@ class Rules {
   String _getDisplayVal(RuleEngine engine, String key, String? param) {
     dynamic val = _getEngineVal(engine, key, param);
     if (val is DateTime) {
-      return AppDateTime().getDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
+      return AppDateTime().formatDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
     }
     return val.toString();
   }
