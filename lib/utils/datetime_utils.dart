@@ -62,19 +62,6 @@ class DateTimeUtils {
     (dateTime != null) ? (dateTime.millisecondsSinceEpoch ~/ 1000) : null;
 
 
-  static int getWeekDayFromString(String weekDayName){
-    switch (weekDayName){
-      case "monday"   : return 1;
-      case "tuesday"  : return 2;
-      case "wednesday": return 3;
-      case "thursday" : return 4;
-      case "friday"   : return 5;
-      case "saturday" : return 6;
-      case "sunday"   : return 7;
-      default: return 0;
-    }
-  }
-
   static DayPart getDayPart({DateTime? dateTime}) {
     int hour = (dateTime ?? DateTime.now()).hour;
     if (hour < 6) {
@@ -100,16 +87,6 @@ class DateTimeUtils {
       case DayPart.afternoon: return "afternoon";
       case DayPart.evening: return "evening";
       case DayPart.night: return "night";
-      default: return null;
-    }
-  }
-
-  static DayPart? dayPartFromString(String? value) {
-    switch(value) {
-      case "morning": return DayPart.morning;
-      case "afternoon": return DayPart.afternoon;
-      case "evening": return DayPart.evening;
-      case "night": return DayPart.night;
       default: return null;
     }
   }
@@ -182,21 +159,6 @@ class DateTimeUtils {
     return DateTime(date.year, date.month, date.day, date.hour, date.minute, date.second);
   }
 
-  static Duration? parseDelimitedDurationString(String durationString, Pattern delimiter) {
-    List<String> durationParts = durationString.split(delimiter);
-    if (CollectionUtils.isEmpty(durationParts)) {
-      return null;
-    }
-
-    int days = int.tryParse(durationParts[0]) ?? 0;
-    int hours = durationParts.length > 1 ? int.tryParse(durationParts[1]) ?? 0 : 0;
-    int minutes = durationParts.length > 2 ? int.tryParse(durationParts[2]) ?? 0 : 0;
-    int seconds = durationParts.length > 3 ? int.tryParse(durationParts[3]) ?? 0 : 0;
-    int milliseconds = durationParts.length > 4 ? int.tryParse(durationParts[4]) ?? 0 : 0;
-    int microseconds = durationParts.length > 5 ? int.tryParse(durationParts[5]) ?? 0 : 0;
-    return Duration(days: days, hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds, microseconds: microseconds);
-  }
-
   static DateTime min(DateTime v1, DateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static DateTime max(DateTime v1, DateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
@@ -213,17 +175,9 @@ class TZDateTimeUtils {
   static timezone.TZDateTime endOfThisMonth(timezone.TZDateTime dateTime, { timezone.Location? location }) =>
     dateTime.endOfThisMonth(location: location);
 
-  static dynamic toJson(timezone.TZDateTime? dateTime) =>
-    dateTime?.toJson;
-
-  static timezone.TZDateTime? fromJson(dynamic json) =>
-    TZDateTimeExt.fromJson(json);
-
   static timezone.TZDateTime? copyFromDateTime(DateTime? time, timezone.Location location) =>
     (time != null) ? timezone.TZDateTime.from(time, location) : null;
 
-
-  static timezone.TZDateTime min(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isBefore(v2)) ? v1 : v2;
   static timezone.TZDateTime max(timezone.TZDateTime v1, timezone.TZDateTime v2) => (v1.isAfter(v2)) ? v1 : v2;
 }
 
