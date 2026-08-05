@@ -43,8 +43,8 @@ class SurveyResponse {
     return {
       'id': id,
       'survey': survey.toJson(),
-      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
-      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
+      'date_created': DateTimeUtils.utcDateTimeToString(dateCreated),
+      'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdated),
     };
   }
 
@@ -177,8 +177,8 @@ class Survey extends RuleEngine {
       'sub_rules': RuleEngine.subRulesToJson(subRules),
       'start_date': DateTimeUtils.utcDateTimeToString(startDate),
       'end_date': DateTimeUtils.utcDateTimeToString(endDate),
-      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
-      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
+      'date_created': DateTimeUtils.utcDateTimeToString(dateCreated),
+      'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdated),
       'stats': stats?.toJson(),
       'calendar_event_id': calendarEventId,
     };
@@ -720,8 +720,8 @@ class SurveyQuestionDateTime extends SurveyData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['start_time'] = AppDateTime().dateTimeLocalToJson(startTime);
-    json['end_time'] = AppDateTime().dateTimeLocalToJson(endTime);
+    json['start_time'] = DateTimeUtils.utcDateTimeToString(startTime);
+    json['end_time'] = DateTimeUtils.utcDateTimeToString(endTime);
     json['ask_time'] = askTime;
     json['type'] = type;
     return json;

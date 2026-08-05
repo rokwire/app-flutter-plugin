@@ -22,13 +22,13 @@ import 'package:rokwire_plugin/ext/network.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/auth2.dart';
 import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/rules.dart';
 import 'package:rokwire_plugin/service/storage.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 // Surveys service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
@@ -442,12 +442,12 @@ class Surveys /* with Service */ {
     if (enabled) {
       Map<String, String> queryParams = {};
       if (startDate != null) {
-        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(
+        String? startDateFormatted = DateTimeUtils.utcDateTimeToString(
             startDate);
         queryParams['start_date'] = startDateFormatted!;
       }
       if (endDate != null) {
-        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        String? endDateFormatted = DateTimeUtils.utcDateTimeToString(endDate);
         queryParams['end_date'] = endDateFormatted!;
       }
       if (limit != null) {
@@ -486,12 +486,12 @@ class Surveys /* with Service */ {
         queryParams['survey_types'] = surveyTypes!.join(',');
       }
       if (startDate != null) {
-        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(
+        String? startDateFormatted = DateTimeUtils.utcDateTimeToString(
             startDate);
         queryParams['start_date'] = startDateFormatted!;
       }
       if (endDate != null) {
-        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        String? endDateFormatted = DateTimeUtils.utcDateTimeToString(endDate);
         queryParams['end_date'] = endDateFormatted!;
       }
       if (limit != null) {
@@ -534,12 +534,12 @@ class Surveys /* with Service */ {
         queryParams['survey_types'] = surveyTypes!.join(',');
       }
       if (startDate != null) {
-        String? startDateFormatted = AppDateTime().dateTimeLocalToJson(
+        String? startDateFormatted = DateTimeUtils.utcDateTimeToString(
             startDate);
         queryParams['start_date'] = startDateFormatted!;
       }
       if (endDate != null) {
-        String? endDateFormatted = AppDateTime().dateTimeLocalToJson(endDate);
+        String? endDateFormatted = DateTimeUtils.utcDateTimeToString(endDate);
         queryParams['end_date'] = endDateFormatted!;
       }
 

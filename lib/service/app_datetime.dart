@@ -165,10 +165,6 @@ class AppDateTime with Service {
     return formattedDateTime;
   }
 
-  String? dateTimeLocalToJson(DateTime? dateTime) {
-    return DateTimeUtils.utcDateTimeToString(dateTime?.toUtc());
-  }
-
   String formatDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
     if (format != null) {
       DateTime zonedDateTime = getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
