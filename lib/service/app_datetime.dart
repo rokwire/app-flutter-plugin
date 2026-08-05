@@ -131,6 +131,9 @@ class AppDateTime with Service {
     return tzDateTimeUni;
   }
 
+  DateTime? getDeviceDateTimeFromJson(dynamic json) =>
+      DateTimeUtils.zonedDateTimeFromJson(json, location: deviceLocation);
+
   String? formatDateTime(DateTime? dateTime,
       {String? format, String? locale, bool? ignoreTimeZone = false, bool showTzSuffix = false}) {
     if (dateTime == null) {
@@ -160,10 +163,6 @@ class AppDateTime with Service {
       debugPrint(e.toString());
     }
     return formattedDateTime;
-  }
-
-  DateTime? dateTimeLocalFromJson(dynamic json) {
-    return getDeviceTimeFromUtcTime(DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json)));
   }
 
   String? dateTimeLocalToJson(DateTime? dateTime) {

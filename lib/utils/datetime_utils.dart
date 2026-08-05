@@ -43,6 +43,14 @@ class DateTimeUtils {
     return dateTime;
   }
 
+  static DateTime? zonedDateTimeFromJson(dynamic json, {timezone.Location? location}) {
+    DateTime? parsedDateTime = dateTimeFromString(JsonUtils.stringValue(json));
+    if ((parsedDateTime == null) || (location == null)) {
+      return parsedDateTime;
+    }
+    return timezone.TZDateTime.from(parsedDateTime, location);
+  }
+
   static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
   }
