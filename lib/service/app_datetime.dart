@@ -89,6 +89,31 @@ class AppDateTime with Service {
 
   bool get showTimeZoneSuffix => !useDeviceLocalTimeZone;
 
+  DateTime? getDisplayZonedDateTime({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
+    if (dateTimeUtc == null) {
+      return null;
+    }
+    DateTime? zonedDateTime;
+    if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
+      zonedDateTime = getDeviceTimeFromUtcTime(dateTimeUtc);
+    } else {
+      zonedDateTime = getUniLocalTimeFromUtcTime(dateTimeUtc);
+    }
+    return zonedDateTime;
+  }
+
+  timezone.TZDateTime getDisplayTZDateTime(DateTime dateTimeUtc) =>
+      (getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
+          timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
+
+  timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
+
+  timezone.TZDateTime getUniversityOrDeviceTZDateTime(DateTime dateTimeUtc) =>
+      (getUniLocalTimeFromUtcTime(dateTimeUtc) as timezone.TZDateTime?) ??
+          timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
+
+  timezone.TZDateTime getUniversityOrDeviceNowTZDateTime() => getUniversityOrDeviceTZDateTime(now.toUtc());
+
   DateTime? getDeviceTimeFromUtcTime(DateTime? dateTimeUtc) {
     if (dateTimeUtc == null) {
       return null;
@@ -195,29 +220,4 @@ class AppDateTime with Service {
     }
     return timeToString;
   }
-
-  DateTime? getDisplayZonedDateTime({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
-    if (dateTimeUtc == null) {
-      return null;
-    }
-    DateTime? zonedDateTime;
-    if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
-      zonedDateTime = getDeviceTimeFromUtcTime(dateTimeUtc);
-    } else {
-      zonedDateTime = getUniLocalTimeFromUtcTime(dateTimeUtc);
-    }
-    return zonedDateTime;
-  }
-
-  timezone.TZDateTime getDisplayTZDateTime(DateTime dateTimeUtc) =>
-    (getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc) as timezone.TZDateTime?) ??
-      timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
-
-  timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
-
-  timezone.TZDateTime getUniversityOrDeviceTZDateTime(DateTime dateTimeUtc) =>
-    (getUniLocalTimeFromUtcTime(dateTimeUtc) as timezone.TZDateTime?) ??
-      timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
-
-  timezone.TZDateTime getUniversityOrDeviceNowTZDateTime() => getUniversityOrDeviceTZDateTime(now.toUtc());
 }
