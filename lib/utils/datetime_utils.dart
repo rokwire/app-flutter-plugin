@@ -19,12 +19,6 @@ import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
-///
-/// Generic, settings-agnostic date/time helpers - parsing, formatting, epoch
-/// conversion, and calendar-day comparison, with no knowledge of app settings such as
-/// useDeviceLocalTimeZone. For display that should respect the user's timezone setting,
-/// use AppDateTime() instead (see service/app_datetime.dart).
-///
 class DateTimeUtils {
 
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {

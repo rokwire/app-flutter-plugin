@@ -81,13 +81,13 @@ class AppDateTime with Service {
   timezone.Location get deviceLocation => timezone.local;
 
   timezone.Location get zonedLocation =>
-      useDeviceLocalTimeZone ? deviceLocation : (universityLocation ?? deviceLocation);
+      useUniversityTimeZone ? (universityLocation ?? deviceLocation) : deviceLocation;
 
   timezone.Location get universityOrDeviceLocation => universityLocation ?? deviceLocation;
 
-  bool get useDeviceLocalTimeZone => false;
+  bool get useUniversityTimeZone => false;
 
-  bool get showTimeZoneSuffix => !useDeviceLocalTimeZone;
+  bool get showTimeZoneSuffix => useUniversityTimeZone;
 
   DateTime? getDeviceTimeFromUtc(DateTime? dateTimeUtc) {
     if (dateTimeUtc == null) {
@@ -111,7 +111,7 @@ class AppDateTime with Service {
       return null;
     }
     DateTime? zonedDateTime;
-    if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
+    if (!useUniversityTimeZone && considerSettingsDisplayTime) {
       zonedDateTime = getDeviceTimeFromUtc(dateTimeUtc);
     } else {
       zonedDateTime = getUniversityTimeFromUtc(dateTimeUtc);
@@ -144,13 +144,13 @@ class AppDateTime with Service {
       DateFormat dateFormat = DateFormat(format, locale);
       if (ignoreTimeZone!) {
           formattedDateTime = dateFormat.format(dateTime);
-      } else if (useDeviceLocalTimeZone) {
+      } else if (useUniversityTimeZone) {
+        timezone.Location? uniLocation = universityLocation;
+        timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
+        formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
+      } else {
         DateTime? dt = (dateTime.isUtc) ? getDeviceTimeFromUtc(dateTime) : dateTime;
         formattedDateTime = (dt != null) ? dateFormat.format(dt) : null;
-      } else {
-          timezone.Location? uniLocation = universityLocation;
-          timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
-          formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
       }
       if (showTzSuffix && (formattedDateTime != null)) {
         formattedDateTime = '$formattedDateTime CT';
@@ -177,7 +177,7 @@ class AppDateTime with Service {
     String? displayDay = '';
     if (dateTimeUtc != null) {
       DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
-      timezone.Location? location = useDeviceLocalTimeZone ? null : universityLocation;
+      timezone.Location? location = useUniversityTimeZone ? universityLocation : null;
 
       if (DateTimeUtils.isToday(zonedDateTime, location: location)) {
         displayDay = Localization().getStringEx('model.explore.date_time.today', 'Today');
