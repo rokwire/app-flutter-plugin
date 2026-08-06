@@ -818,7 +818,7 @@ class Events2Query {
   }
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
-    TZDateTime nowLocal = AppDateTime().getDisplayNowTZDateTime();
+    TZDateTime nowLocal = AppDateTime().getZonedNowTZTime();
 
     if (timeFilter == Event2TimeFilter.past) {
       options['start_time_before'] = nowLocal.millisecondsSinceEpoch ~/ 1000;

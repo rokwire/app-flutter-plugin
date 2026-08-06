@@ -34,8 +34,8 @@ class SurveyResponse {
     return SurveyResponse(
       JsonUtils.stringValue(json["id"]) ?? "",
       Survey.fromJson(json['survey']),
-      AppDateTime().getDeviceDateTimeFromJson(json['date_created']) ?? DateTime.now(),
-      AppDateTime().getDeviceDateTimeFromJson(json['date_updated']),
+      AppDateTime().getDeviceTimeFromJson(json['date_created']) ?? DateTime.now(),
+      AppDateTime().getDeviceTimeFromJson(json['date_updated']),
     );
   }
 
@@ -145,8 +145,8 @@ class Survey extends RuleEngine {
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
       startDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start_date']))?.toUtc(),
       endDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end_date']))?.toUtc(),
-      dateCreated: AppDateTime().getDeviceDateTimeFromJson(json['date_created']) ?? DateTime.now(),
-      dateUpdated: AppDateTime().getDeviceDateTimeFromJson(json['date_updated']),
+      dateCreated: AppDateTime().getDeviceTimeFromJson(json['date_created']) ?? DateTime.now(),
+      dateUpdated: AppDateTime().getDeviceTimeFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
@@ -674,8 +674,8 @@ class SurveyQuestionDateTime extends SurveyData {
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionDateTime(
-      startTime: AppDateTime().getDeviceDateTimeFromJson(json['start_time']),
-      endTime: AppDateTime().getDeviceDateTimeFromJson(json['end_time']),
+      startTime: AppDateTime().getDeviceTimeFromJson(json['start_time']),
+      endTime: AppDateTime().getDeviceTimeFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 
       text: json['text'],
