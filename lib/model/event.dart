@@ -687,8 +687,8 @@ class Event with Explore implements Favorite {
   @override String?   get exploreImageURL         { return StringUtils.isNotEmpty(imageURL) ? imageURL : randomImageURL; }
   @override ExploreLocation? get exploreLocation  { return location; }
 
-  DateTime? get startDateLocal     { return AppDateTime().getUniLocalTimeFromUtcTime(startDateGmt); }
-  DateTime? get endDateLocal       { return AppDateTime().getUniLocalTimeFromUtcTime(endDateGmt); }
+  DateTime? get startDateLocal     { return AppDateTime().getUniversityLocalTimeFromUtcTime(startDateGmt); }
+  DateTime? get endDateLocal       { return AppDateTime().getUniversityLocalTimeFromUtcTime(endDateGmt); }
 
   // Favorite
   static const String favoriteKeyName = "eventIds";

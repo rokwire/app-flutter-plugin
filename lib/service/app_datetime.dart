@@ -97,7 +97,7 @@ class AppDateTime with Service {
     if (useDeviceLocalTimeZone && considerSettingsDisplayTime) {
       zonedDateTime = getDeviceTimeFromUtcTime(dateTimeUtc);
     } else {
-      zonedDateTime = getUniLocalTimeFromUtcTime(dateTimeUtc);
+      zonedDateTime = getUniversityLocalTimeFromUtcTime(dateTimeUtc);
     }
     return zonedDateTime;
   }
@@ -109,7 +109,7 @@ class AppDateTime with Service {
   timezone.TZDateTime getDisplayNowTZDateTime() => getDisplayTZDateTime(now.toUtc());
 
   timezone.TZDateTime getUniversityOrDeviceTZDateTime(DateTime dateTimeUtc) =>
-      (getUniLocalTimeFromUtcTime(dateTimeUtc) as timezone.TZDateTime?) ??
+      (getUniversityLocalTimeFromUtcTime(dateTimeUtc) as timezone.TZDateTime?) ??
           timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
 
   timezone.TZDateTime getUniversityOrDeviceNowTZDateTime() => getUniversityOrDeviceTZDateTime(now.toUtc());
@@ -122,7 +122,7 @@ class AppDateTime with Service {
     return deviceDateTime;
   }
 
-  DateTime? getUniLocalTimeFromUtcTime(DateTime? dateTimeUtc) {
+  DateTime? getUniversityLocalTimeFromUtcTime(DateTime? dateTimeUtc) {
     timezone.Location? uniLocation = universityLocation;
     if ((dateTimeUtc == null) || (uniLocation == null)) {
       return null;
@@ -211,7 +211,7 @@ class AppDateTime with Service {
     if (dateTimeUtc != null && !allDay) {
       DateTime zonedDateTime = getDisplayZonedDateTime(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
       String format = (zonedDateTime.minute == 0) ? 'ha' : 'h:mma';
-      timeToString = formatDateTime(zonedDateTime, format: format, ignoreTimeZone: true, showTzSuffix: !useDeviceLocalTimeZone);
+      timeToString = formatDateTime(zonedDateTime, format: format, ignoreTimeZone: true, showTzSuffix: showTimeZoneSuffix);
     }
     return timeToString;
   }

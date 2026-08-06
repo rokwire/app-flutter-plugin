@@ -391,7 +391,7 @@ class Events with Service, NotificationsListener {
 
   @protected
   String? constructEventTimeFilterParams(EventTimeFilter? eventFilter){
-    DateTime? nowUni = AppDateTime().getUniLocalTimeFromUtcTime(AppDateTime().now.toUtc());
+    DateTime? nowUni = AppDateTime().getUniversityLocalTimeFromUtcTime(AppDateTime().now.toUtc());
 
     switch (eventFilter) {
       case EventTimeFilter.today:{
