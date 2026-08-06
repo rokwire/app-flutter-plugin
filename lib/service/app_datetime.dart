@@ -106,15 +106,15 @@ class AppDateTime with Service {
     return tzDateTimeUni;
   }
 
-  DateTime? getZonedTimeFromUtc({DateTime? dateTimeUtc, bool considerSettingsDisplayTime = true}) {
+  DateTime? getZonedTimeFromUtc({DateTime? dateTimeUtc}) {
     if (dateTimeUtc == null) {
       return null;
     }
     DateTime? zonedDateTime;
-    if (!useUniversityTimeZone && considerSettingsDisplayTime) {
-      zonedDateTime = getDeviceTimeFromUtc(dateTimeUtc);
-    } else {
+    if (useUniversityTimeZone) {
       zonedDateTime = getUniversityTimeFromUtc(dateTimeUtc);
+    } else {
+      zonedDateTime = getDeviceTimeFromUtc(dateTimeUtc);
     }
     return zonedDateTime;
   }
@@ -162,21 +162,21 @@ class AppDateTime with Service {
     return formattedDateTime;
   }
 
-  String formatDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
+  String formatDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool includeAtSuffix = false}) {
     if (format != null) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
       return formatDateTime(zonedDateTime, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
     }
     
-    String? timePrefix = formatDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime, includeAtSuffix: includeAtSuffix);
-    String? timeSuffix = formatDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay, considerSettingsDisplayTime: considerSettingsDisplayTime);
+    String? timePrefix = formatDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, includeAtSuffix: includeAtSuffix);
+    String? timeSuffix = formatDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay);
     return '$timePrefix $timeSuffix';
   }
 
-  String? formatDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true, bool includeAtSuffix = false}) {
+  String? formatDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool includeAtSuffix = false}) {
     String? displayDay = '';
     if (dateTimeUtc != null) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
       timezone.Location? location = useUniversityTimeZone ? universityLocation : null;
 
       if (DateTimeUtils.isToday(zonedDateTime, location: location)) {
@@ -203,10 +203,10 @@ class AppDateTime with Service {
     return displayDay;
   }
 
-  String? formatDisplayTime({DateTime? dateTimeUtc, bool allDay = false, bool considerSettingsDisplayTime = true}) {
+  String? formatDisplayTime({DateTime? dateTimeUtc, bool allDay = false}) {
     String? timeToString = '';
     if (dateTimeUtc != null && !allDay) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc, considerSettingsDisplayTime: considerSettingsDisplayTime)!;
+      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
       String format = (zonedDateTime.minute == 0) ? 'ha' : 'h:mma';
       timeToString = formatDateTime(zonedDateTime, format: format, ignoreTimeZone: true, showTzSuffix: showTimeZoneSuffix);
     }

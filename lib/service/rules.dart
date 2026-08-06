@@ -216,7 +216,8 @@ class Rules {
   String _getDisplayVal(RuleEngine engine, String key, String? param) {
     dynamic val = _getEngineVal(engine, key, param);
     if (val is DateTime) {
-      return AppDateTime().formatDisplayDateTime(val, format: param, considerSettingsDisplayTime: false);
+      DateTime? universityTime = AppDateTime().getUniversityTimeFromUtc(val.toUtc());
+      return AppDateTime().formatDateTime(universityTime, format: param, ignoreTimeZone: true, showTzSuffix: true) ?? '';
     }
     return val.toString();
   }
