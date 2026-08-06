@@ -19,6 +19,43 @@ extension Auh2Directory on Auth2 {
   ContentAttributes? get directoryAttributes =>
     Content().contentAttributes(attributesScope);
 
+  Future<List<Auth2PublicAccountSection>?> loadDirectoryAccountSections({String? search,
+    String? userName, String? firstName, String? lastName,
+    Iterable<String>? ids, String? followingId, String? followerId,
+    Map<String, dynamic>? attriutes,
+  }) async {
+
+    if (Config().coreUrl != null) {
+      String url = UrlUtils.addQueryParameters("${Config().coreUrl}/services/accounts/public/index", <String, String>{
+        if (search != null)
+          'search': search,
+
+        if (userName != null)
+          'username': userName,
+        if (firstName != null)
+          'firstname': firstName,
+        if (lastName != null)
+          'lastname': lastName,
+
+        if ((ids != null) && ids.isNotEmpty)
+          'ids': ids.join(','),
+
+        if (followingId != null)
+          'following-id': followingId,
+        if (followerId != null)
+          'follower-id': followerId,
+
+        if (attriutes != null)
+          ...attriutes.map((k, v) => MapEntry(k, (v is List) ? v.join(',') : v.toString()))
+      });
+
+      Response? response = await Network().get(url, auth: Auth2());
+      Map<String, dynamic>? responseData = (response?.statusCode == 200) ? JsonUtils.decodeMap(response?.body) : null;
+      return (responseData != null) ? Auth2PublicAccountSection.listFromJson(JsonUtils.listValue(responseData['letters'])) : null;
+    }
+    return null;
+  }
+
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
     String? userName, String? firstName, String? lastName,
     Iterable<String>? ids, String? followingId, String? followerId,
