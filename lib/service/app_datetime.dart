@@ -80,7 +80,7 @@ class AppDateTime with Service {
 
   timezone.Location get deviceLocation => timezone.local;
 
-  timezone.Location get displayLocation =>
+  timezone.Location get zonedLocation =>
       useDeviceLocalTimeZone ? deviceLocation : (universityLocation ?? deviceLocation);
 
   timezone.Location get universityOrDeviceLocation => universityLocation ?? deviceLocation;
