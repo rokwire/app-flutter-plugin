@@ -57,7 +57,7 @@ extension Auh2Directory on Auth2 {
   }
 
   Future<List<Auth2PublicAccount>?> loadDirectoryAccounts({String? search,
-    String? userName, String? firstName, String? lastName,
+    String? userName, String? firstName, String? lastName, String? section,
     Iterable<String>? ids, String? followingId, String? followerId,
     Map<String, dynamic>? attriutes,
     int? offset, int? limit}) async {
@@ -80,6 +80,9 @@ extension Auh2Directory on Auth2 {
           'firstname': firstName,
         if (lastName != null)
           'lastname': lastName,
+
+        if (section != null)
+          'letter': section,
 
         if ((ids != null) && ids.isNotEmpty)
           'ids': ids.join(','),
