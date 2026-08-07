@@ -70,8 +70,7 @@ class DateTimeUtils {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
   }
 
-  static String? utcTimeToString(DateTime? dateTimeUtc, timezone.Location location, {String? timeZoneSuffix}) {
-    DateTime? dateTime = TZDateTimeUtils.copyFromDateTime(dateTimeUtc, location);
+  static String? timeToString(DateTime? dateTime, {String? timeZoneSuffix}) {
     if (dateTime == null) {
       return null;
     }
