@@ -321,13 +321,9 @@ class Event with Explore implements Favorite {
 
       "eventId" : eventId,
       "startDate": startDateString,
-      "startDateLocal": AppDateTime().formatDateTime(
-          startDateLocal, format: AppDateTime.iso8601DateTimeFormat,
-          ignoreTimeZone: true),
+      "startDateLocal": DateTimeUtils.dateTimeToString(startDateLocal),
       "endDate": endDateString,
-      "endDateLocal": AppDateTime().formatDateTime(
-          endDateLocal, format: AppDateTime.iso8601DateTimeFormat,
-          ignoreTimeZone: true),
+      "endDateLocal": DateTimeUtils.dateTimeToString(endDateLocal),
       "category": category,
       "subCategory": subCategory,
       "sponsor": sponsor??"", // Required for CreateEvent
@@ -341,7 +337,7 @@ class Event with Explore implements Favorite {
       "cost": cost,
       "contacts": _encodeContacts(),
       "tags": tags,
-      "modifiedDate": AppDateTime().formatDateTime(modifiedDate, ignoreTimeZone: true),
+      "modifiedDate": DateTimeUtils.dateTimeToString(modifiedDate),
       "submissionResult": submissionResult,
       "allDay": allDay,
       "recurringFlag": recurringFlag,
@@ -423,17 +419,13 @@ class Event with Explore implements Favorite {
       result["startDate"] = startDateString;
     }
     if(startDateLocal!=null) {
-      result["startDateLocal"] = AppDateTime().formatDateTime(
-          startDateLocal, format: AppDateTime.iso8601DateTimeFormat,
-          ignoreTimeZone: true);
+      result["startDateLocal"] = DateTimeUtils.dateTimeToString(startDateLocal);
     }
     if(endDateString!=null) {
       result["endDate"] = endDateString;
     }
     if(endDateLocal!=null) {
-      result["endDateLocal"] = AppDateTime().formatDateTime(
-          endDateLocal, format: AppDateTime.iso8601DateTimeFormat,
-          ignoreTimeZone: true);
+      result["endDateLocal"] = DateTimeUtils.dateTimeToString(endDateLocal);
     }
     if(category!=null) {
       result["category"] = category;
@@ -476,7 +468,7 @@ class Event with Explore implements Favorite {
       result["tags"] = tags;
     }
     if(modifiedDate!=null) {
-      result["modifiedDate"] = AppDateTime().formatDateTime(modifiedDate, ignoreTimeZone: true);
+      result["modifiedDate"] = DateTimeUtils.dateTimeToString(modifiedDate);
     }
     if(submissionResult!=null) {
       result["submissionResult"] = submissionResult;

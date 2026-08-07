@@ -15,17 +15,12 @@
  */
 
 import 'package:flutter/foundation.dart';
-import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/utils/datetime_utils.dart';
-import 'package:rokwire_plugin/utils/utils.dart';
-import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as timezone;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
 class AppDateTime with Service {
-
-  static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
 
   late String _localTimeZone;
   String get localTimeZone => _localTimeZone;
@@ -69,9 +64,14 @@ class AppDateTime with Service {
 
   DateTime get now => DateTime.now();
 
+
+  @protected
   Future<Uint8List?> get timezoneDatabase async => null;
 
-  String? get universityLocationName  => null;
+  @protected
+  String? get universityLocationName => null;
+
+  String? get timeZoneSuffix => null;
 
   timezone.Location? get universityLocation {
     String? locationName = universityLocationName;
@@ -130,86 +130,4 @@ class AppDateTime with Service {
       (getUniversityTimeFromUtc(dateTimeUtc) as timezone.TZDateTime?) ?? timezone.TZDateTime.from(dateTimeUtc, deviceLocation);
 
   timezone.TZDateTime getUniversityOrDeviceNowTZTime() => getUniversityOrDeviceTZTimeFromUtc(now.toUtc());
-
-  String? formatDateTime(DateTime? dateTime,
-      {String? format, String? locale, bool? ignoreTimeZone = false, bool showTzSuffix = false}) {
-    if (dateTime == null) {
-      return null;
-    }
-    String? formattedDateTime;
-    try {
-      if (StringUtils.isEmpty(format)) {
-        format = iso8601DateTimeFormat;
-      }
-      DateFormat dateFormat = DateFormat(format, locale);
-      if (ignoreTimeZone!) {
-          formattedDateTime = dateFormat.format(dateTime);
-      } else if (useUniversityTimeZone) {
-        timezone.Location? uniLocation = universityLocation;
-        timezone.TZDateTime? tzDateTime = (uniLocation != null) ? timezone.TZDateTime.from(dateTime, uniLocation) : null;
-        formattedDateTime = (tzDateTime != null) ? dateFormat.format(tzDateTime) : null;
-      } else {
-        DateTime? dt = (dateTime.isUtc) ? getDeviceTimeFromUtc(dateTime) : dateTime;
-        formattedDateTime = (dt != null) ? dateFormat.format(dt) : null;
-      }
-      if (showTzSuffix && (formattedDateTime != null)) {
-        formattedDateTime = '$formattedDateTime CT';
-      }
-    }
-    catch (e) {
-      debugPrint(e.toString());
-    }
-    return formattedDateTime;
-  }
-
-  String formatDisplayDateTime(DateTime dateTimeUtc, {String? format, bool allDay = false, bool includeAtSuffix = false}) {
-    if (format != null) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
-      return formatDateTime(zonedDateTime, format: format, ignoreTimeZone: false, showTzSuffix: true) ?? '';
-    }
-    
-    String? timePrefix = formatDisplayDay(dateTimeUtc: dateTimeUtc, allDay: allDay, includeAtSuffix: includeAtSuffix);
-    String? timeSuffix = formatDisplayTime(dateTimeUtc: dateTimeUtc, allDay: allDay);
-    return '$timePrefix $timeSuffix';
-  }
-
-  String? formatDisplayDay({DateTime? dateTimeUtc, bool allDay = false, bool includeAtSuffix = false}) {
-    String? displayDay = '';
-    if (dateTimeUtc != null) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
-      timezone.Location? location = useUniversityTimeZone ? universityLocation : null;
-
-      if (DateTimeUtils.isToday(zonedDateTime, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.date_time.today', 'Today');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
-        }
-      } else if (DateTimeUtils.isTomorrow(zonedDateTime, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.date_time.tomorrow', 'Tomorrow');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
-        }
-      } else if (DateTimeUtils.isYesterday(zonedDateTime, location: location)) {
-        displayDay = Localization().getStringEx('model.explore.time.yesterday', 'Yesterday');
-        if (!allDay && includeAtSuffix) {
-          displayDay += " ${Localization().getStringEx('model.explore.date_time.at', 'at')}";
-        }
-      } else if (DateTimeUtils.isThisWeek(zonedDateTime, location: location)) {
-        displayDay = formatDateTime(zonedDateTime, format: "EE", ignoreTimeZone: true, showTzSuffix: false);
-      } else {
-        displayDay = formatDateTime(zonedDateTime, format: "MMM dd", ignoreTimeZone: true, showTzSuffix: false);
-      }
-    }
-    return displayDay;
-  }
-
-  String? formatDisplayTime({DateTime? dateTimeUtc, bool allDay = false}) {
-    String? timeToString = '';
-    if (dateTimeUtc != null && !allDay) {
-      DateTime zonedDateTime = getZonedTimeFromUtc(dateTimeUtc: dateTimeUtc)!;
-      String format = (zonedDateTime.minute == 0) ? 'ha' : 'h:mma';
-      timeToString = formatDateTime(zonedDateTime, format: format, ignoreTimeZone: true, showTzSuffix: showTimeZoneSuffix);
-    }
-    return timeToString;
-  }
 }

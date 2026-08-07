@@ -21,6 +21,8 @@ import 'package:timezone/timezone.dart' as timezone;
 
 class DateTimeUtils {
 
+  static const String iso8601DateTimeFormat = 'yyyy-MM-ddTHH:mm:ss';
+
   static DateTime? dateTimeFromString(String? dateTimeString, {String? format, bool isUtc = false}) {
     if (StringUtils.isEmpty(dateTimeString)) {
       return null;
@@ -45,6 +47,17 @@ class DateTimeUtils {
     return timezone.TZDateTime.from(parsedDateTime, location);
   }
 
+  static String? dateTimeToString(DateTime? dateTime, {String format = iso8601DateTimeFormat, String? timeZoneSuffix}) {
+    if (dateTime == null) {
+      return null;
+    }
+    String formattedDateTime = DateFormat(format).format(dateTime);
+    if (StringUtils.isNotEmpty(timeZoneSuffix)) {
+      formattedDateTime = '$formattedDateTime $timeZoneSuffix';
+    }
+    return formattedDateTime;
+  }
+
   static String? utcDateTimeToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH:mm:ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.isUtc ? dateTime : dateTime.toUtc()) + 'Z') : null;
   }
@@ -55,6 +68,20 @@ class DateTimeUtils {
 
   static String? localDateTimeFileStampToString(DateTime? dateTime, { String format  = 'yyyy-MM-ddTHH_mm_ss.SSS'  }) {
     return (dateTime != null) ? (DateFormat(format).format(dateTime.toLocal())) : null;
+  }
+
+  static String? utcTimeToString(DateTime? dateTimeUtc, timezone.Location location, {String? timeZoneSuffix}) {
+    DateTime? dateTime = TZDateTimeUtils.copyFromDateTime(dateTimeUtc, location);
+    if (dateTime == null) {
+      return null;
+    }
+
+    String format = (dateTime.minute == 0) ? 'ha' : 'h:mma';
+    String formattedTime = DateFormat(format).format(dateTime);
+    if (StringUtils.isNotEmpty(timeZoneSuffix)) {
+      formattedTime = '$formattedTime $timeZoneSuffix';
+    }
+    return formattedTime;
   }
 
   static DateTime? dateTimeFromSecondsSinceEpoch(int? seconds, {bool isUtc = false}) =>

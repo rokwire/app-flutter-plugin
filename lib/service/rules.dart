@@ -25,6 +25,7 @@ import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/surveys.dart';
 import 'package:rokwire_plugin/ui/popups/alerts.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 // Rules service does rely on Service initialization API so it does not override service interfaces and is not registered in Services.
@@ -217,7 +218,7 @@ class Rules {
     dynamic val = _getEngineVal(engine, key, param);
     if (val is DateTime) {
       DateTime? universityTime = AppDateTime().getUniversityTimeFromUtc(val.toUtc());
-      return AppDateTime().formatDateTime(universityTime, format: param, ignoreTimeZone: true, showTzSuffix: true) ?? '';
+      return DateTimeUtils.dateTimeToString(universityTime, format: param ?? DateTimeUtils.iso8601DateTimeFormat, timeZoneSuffix: AppDateTime().timeZoneSuffix) ?? '';
     }
     return val.toString();
   }
