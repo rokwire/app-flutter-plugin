@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Added
 - Display dates based on a selected time zone [#5859](https://github.com/rokwire/illinois-app/issues/5859).
+### Fixed
+- Prevent a crash when an image fails to load from the internet [#5951](https://github.com/rokwire/illinois-app/issues/5951).
 
 ## [1.13.4] - 2026-07-31
 ### Changed
