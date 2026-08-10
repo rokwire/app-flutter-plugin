@@ -5,6 +5,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/modal_image_holder.dart';
 import 'package:rokwire_plugin/ui/widgets/accessible_image_holder.dart';
+import 'package:rokwire_plugin/ui/widgets/image_error_builder.dart';
 import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 
 class TriangleHeaderImage extends StatelessWidget {
@@ -34,7 +35,7 @@ class TriangleHeaderImage extends StatelessWidget {
   Widget buildFlexibleInterior(BuildContext context) {
     Widget? image;
     if (flexImageUrl != null) {
-      image = Image.network(Config().wrapWebProxyUrl(sourceUrl: flexImageUrl) ?? '', fit: BoxFit.cover, headers: kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders, excludeFromSemantics: true);
+      image = Image.network(Config().wrapWebProxyUrl(sourceUrl: flexImageUrl) ?? '', fit: BoxFit.cover, headers: kIsWeb ? Auth2Csrf().networkAuthHeaders : Config().networkAuthHeaders, excludeFromSemantics: true, errorBuilder: ImageErrorBuilder.defaultBuilder);
     } else if (flexImageKey != null) {
       image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
     }

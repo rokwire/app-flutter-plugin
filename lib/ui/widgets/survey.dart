@@ -19,7 +19,6 @@ import 'package:intl/intl.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/connectivity.dart';
 import 'package:rokwire_plugin/service/rules.dart';
 import 'package:rokwire_plugin/service/styles.dart';
@@ -30,6 +29,7 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/radio_button.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/service/localization.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyWidgetController {
@@ -52,7 +52,7 @@ class SurveyWidget extends StatefulWidget {
   final String? surveyDataKey;
   final SurveyData? mainSurveyData;
   final bool inputEnabled;
-  final DateTime? dateTaken;
+  final String? dateTakenFormatted;
   final bool showResult;
   final bool internalContinueButton;
   final Map<String, dynamic>? defaultResponses;
@@ -62,7 +62,7 @@ class SurveyWidget extends StatefulWidget {
 
   late final SurveyWidgetController controller;
 
-  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTaken, this.showResult = false, this.internalContinueButton = true,
+  SurveyWidget({Key? key, required this.survey, this.inputEnabled = true, this.dateTakenFormatted, this.showResult = false, this.internalContinueButton = true,
     this.surveyDataKey, this.mainSurveyData, this.defaultResponses, this.offlineWidget, this.summarizeResultRules = false, this.summarizeResultRulesWidget,
     SurveyWidgetController? controller}) : super(key: key) {
     this.controller = controller ?? SurveyWidgetController();
@@ -158,7 +158,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Visibility(visible: widget.dateTaken != null, child: _buildDateTaken()),
+            Visibility(visible: widget.dateTakenFormatted != null, child: _buildDateTaken()),
             Visibility(visible: StringUtils.isNotEmpty(_survey?.moreInfo), child: _buildMoreInfo()),
             _buildContent(),
             Visibility(visible: widget.showResult, child: _buildResult() ?? Container()),
@@ -169,13 +169,12 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   }
 
   Widget _buildDateTaken() {
-    DateTime? dateTaken = widget.dateTaken;
-    if (dateTaken == null) {
+    if (widget.dateTakenFormatted == null) {
       return Container();
     }
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(AppDateTime().getDisplayDateTime(dateTaken), style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
+      child: Text(widget.dateTakenFormatted!, style: Styles().textStyles.getTextStyle('widget.detail.regular'),),
     );
   }
 
@@ -567,7 +566,7 @@ class _SurveyWidgetState extends State<SurveyWidget> {
   String? _validateDate(String? dateStr, {String? format}) {
     format ??= "MM-dd-yyyy";
     if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+      if (DateTimeUtils.dateTimeFromString(dateStr, format: format) == null) {
         return "Invalid format: must be $format";
       }
     }

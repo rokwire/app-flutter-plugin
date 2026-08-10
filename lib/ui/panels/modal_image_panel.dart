@@ -21,6 +21,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/widgets/web_network_image.dart';
 import 'package:rokwire_plugin/ui/widgets/accessible_image_holder.dart';
+import 'package:rokwire_plugin/ui/widgets/image_error_builder.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:pinch_zoom/pinch_zoom.dart';
 
@@ -100,15 +101,15 @@ class ModalPinchZoomImagePanel extends StatelessWidget {
 
   Widget? get _imageWidget {
     if(image != null){
-      return Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
+      return Image(image: image!, loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder, errorBuilder: ImageErrorBuilder.defaultBuilder);
     }
     else if (StringUtils.isNotEmpty(imageKey)) {
       return Styles().images.getImage(imageKey!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
-        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder);
+        networkHeaders: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget, frameBuilder: _imageFrameBuilder, errorBuilder: ImageErrorBuilder.defaultBuilder);
     }
     else if (StringUtils.isNotEmpty(imageUrl)) {
       return Image.network(imageUrl!, excludeFromSemantics: true, fit: BoxFit.fitWidth,
-        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder);
+        headers: (networkImageHeaders ?? Config().networkAuthHeaders), loadingBuilder: _imageLoadingWidget,  frameBuilder: _imageFrameBuilder, errorBuilder: ImageErrorBuilder.defaultBuilder);
     }
     else {
       return null;
