@@ -29,6 +29,7 @@ import 'package:rokwire_plugin/service/service.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/log.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 import 'package:geolocator/geolocator.dart' as core;
@@ -391,13 +392,13 @@ class Events with Service, NotificationsListener {
 
   @protected
   String? constructEventTimeFilterParams(EventTimeFilter? eventFilter){
-    DateTime? nowUni = AppDateTime().getUniLocalTimeFromUtcTime(AppDateTime().now.toUtc());
+    DateTime? nowUni = AppDateTime().getUniversityTimeFromUtc(AppDateTime().now.toUtc());
 
     switch (eventFilter) {
       case EventTimeFilter.today:{
           DateTime endDate = DateTime(nowUni!.year, nowUni.month, nowUni.day, 23, 59, 59);
-          String? formattedStartDate = AppDateTime().formatDateTime(nowUni, ignoreTimeZone: true);
-          String? formattedEndDate = AppDateTime().formatDateTime(endDate, ignoreTimeZone: true);
+          String? formattedStartDate = DateTimeUtils.dateTimeToString(nowUni);
+          String? formattedEndDate = DateTimeUtils.dateTimeToString(endDate);
           return "startDate.lte=$formattedEndDate&endDate.gte=$formattedStartDate";
         }
       case EventTimeFilter.thisWeekend:{
@@ -406,25 +407,25 @@ class Events with Service, NotificationsListener {
         DateTime? startDate = nowUni.isBefore(weekendStartDateTime) ? weekendStartDateTime : nowUni;
         DateTime endDate = DateTime(nowUni.year, nowUni.month, nowUni.day, 23, 59, 59)
             .add(Duration(days: (7 - currentWeekDay)));
-        String? formattedStartDate = AppDateTime().formatDateTime(startDate, ignoreTimeZone: true);
-        String? formattedEndDate = AppDateTime().formatDateTime(endDate, ignoreTimeZone: true);
+        String? formattedStartDate = DateTimeUtils.dateTimeToString(startDate);
+        String? formattedEndDate = DateTimeUtils.dateTimeToString(endDate);
         return "startDate.lte=$formattedEndDate&endDate.gte=$formattedStartDate";
       }
       case EventTimeFilter.next7Day:{
         DateTime endDate = nowUni!.add(const Duration(days: 6));
-        String? formattedStartDate = AppDateTime().formatDateTime(nowUni, ignoreTimeZone: true);
-        String? formattedEndDate = AppDateTime().formatDateTime(endDate, ignoreTimeZone: true);
+        String? formattedStartDate = DateTimeUtils.dateTimeToString(nowUni);
+        String? formattedEndDate = DateTimeUtils.dateTimeToString(endDate);
         return "startDate.lte=$formattedEndDate&endDate.gte=$formattedStartDate";
       }
       case EventTimeFilter.next30Days:{
         DateTime next = nowUni!.add(const Duration(days: 30));
         DateTime endDate = DateTime(next.year, next.month, next.day, 23, 59, 59);
-        String? formattedStartDate = AppDateTime().formatDateTime(nowUni, ignoreTimeZone: true);
-        String? formattedEndDate = AppDateTime().formatDateTime(endDate, ignoreTimeZone: true);
+        String? formattedStartDate = DateTimeUtils.dateTimeToString(nowUni);
+        String? formattedEndDate = DateTimeUtils.dateTimeToString(endDate);
         return "startDate.lte=$formattedEndDate&endDate.gte=$formattedStartDate";
       }
       case EventTimeFilter.upcoming:{
-        String? formattedStartDate = AppDateTime().formatDateTime(nowUni, ignoreTimeZone: true);
+        String? formattedStartDate = DateTimeUtils.dateTimeToString(nowUni);
         return "endDate.gte=$formattedStartDate";
       }
       default:

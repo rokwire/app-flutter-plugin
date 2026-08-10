@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:rokwire_plugin/model/survey.dart';
-import 'package:rokwire_plugin/service/app_datetime.dart';
 import 'package:rokwire_plugin/service/localization.dart';
 import 'package:rokwire_plugin/service/styles.dart';
 import 'package:rokwire_plugin/ui/panels/survey_panel.dart';
@@ -34,15 +33,8 @@ class SurveyBuilder {
     return ActionBuilder.actionButtons(ActionBuilder.actionTypeButtonActions(context, survey?.actions, dismissContext: context));
   }
 
-  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, bool showTimeOnly = false, void Function()? onTap}) {
+  static Widget surveyResponseCard(BuildContext context, SurveyResponse response, {String? title, String? dateTakenFormatted, void Function()? onTap}) {
     List<Widget> widgets = [];
-
-    String? date;
-    if (showTimeOnly) {
-      date = AppDateTime().getDisplayTime(dateTimeUtc: response.dateTaken);
-    } else {
-      date = AppDateTime().getDisplayDateTime(response.dateTaken);
-    }
 
     widgets.addAll([
       Row(
@@ -53,7 +45,7 @@ class SurveyBuilder {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(date ?? '', style: Styles().textStyles.getTextStyle('widget.detail.small')),
+              Text(dateTakenFormatted ?? '', style: Styles().textStyles.getTextStyle('widget.detail.small')),
               Container(width: 8.0),
               Styles().images.getImage('chevron-right-bold', excludeFromSemantics: true) ?? Container()
               // UIIcon(IconAssets.chevronRight, size: 14.0, color: Styles().colors.headlineText),
@@ -95,7 +87,7 @@ class SurveyBuilder {
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: () => (onTap != null) ? onTap() : Navigator.push(context, CupertinoPageRoute(builder: (context) =>
-          SurveyPanel(survey: response.survey, inputEnabled: false, dateTaken: response.dateTaken, showResult: true)
+          SurveyPanel(survey: response.survey, inputEnabled: false, dateTakenFormatted: dateTakenFormatted, showResult: true)
         )),
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),

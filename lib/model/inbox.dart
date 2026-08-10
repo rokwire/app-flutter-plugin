@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class InboxMessage {
@@ -33,9 +34,9 @@ class InboxMessage {
       priority: JsonUtils.intValue(json['priority']),
       topic: JsonUtils.stringValue(json['topic']),
 
-      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created'])),
-      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated'])),
-      dateTimeSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['time'])),
+      dateCreatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_created']))?.toUtc(),
+      dateUpdatedUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['date_updated']))?.toUtc(),
+      dateTimeSentUtc: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['time']))?.toUtc(),
 
       subject: JsonUtils.stringValue(json['subject']),
       body: JsonUtils.stringValue(json['body']),

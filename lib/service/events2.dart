@@ -17,6 +17,7 @@ import 'package:rokwire_plugin/service/groups.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:timezone/timezone.dart';
 
@@ -817,7 +818,7 @@ class Events2Query {
   }
 
   static void buildTimeLoadOptions(Map<String, dynamic> options, Event2TimeFilter? timeFilter, { DateTime? customStartTimeUtc, DateTime? customEndTimeUtc }) {
-    TZDateTime nowLocal = DateTimeLocal.nowLocalTZ();
+    TZDateTime nowLocal = AppDateTime().getZonedNowTZTime();
 
     if (timeFilter == Event2TimeFilter.past) {
       options['start_time_before'] = nowLocal.millisecondsSinceEpoch ~/ 1000;
