@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:rokwire_plugin/model/auth2.dart';
 import 'package:rokwire_plugin/model/content_attributes.dart';
 import 'package:rokwire_plugin/model/explore.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Event2 with Explore implements Favorite {
@@ -122,8 +123,8 @@ class Event2 with Explore implements Favorite {
       eventUrl: JsonUtils.stringValue(json['event_url']),
 
       timezone: JsonUtils.stringValue(json['timezone']),
-      startTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start'])),
-      endTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end'])),
+      startTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['start']), isUtc: true),
+      endTimeUtc: DateTimeUtils.dateTimeFromSecondsSinceEpoch(JsonUtils.intValue(json['end']), isUtc: true),
       allDay: JsonUtils.boolValue(json['all_day']),
 
       eventType: event2TypeFromString(JsonUtils.stringValue(json['event_type'])),
