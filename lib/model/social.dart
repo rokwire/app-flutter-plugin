@@ -15,6 +15,7 @@
  */
 
 import 'package:collection/collection.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class Post {
