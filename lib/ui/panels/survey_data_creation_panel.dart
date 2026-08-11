@@ -30,6 +30,7 @@ import 'package:rokwire_plugin/ui/widgets/form_field.dart';
 import 'package:rokwire_plugin/ui/widgets/header_bar.dart';
 import 'package:rokwire_plugin/ui/widgets/rounded_button.dart';
 import 'package:rokwire_plugin/ui/widgets/survey_creation.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyDataCreationPanel extends StatefulWidget {
@@ -649,7 +650,7 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
   String? _validateDate(String? dateStr, {String? format}) {
     format ??= "MM-dd-yyyy";
     if (dateStr != null) {
-      if (DateTimeUtils.parseDateTime(dateStr, format: format) == null) {
+      if (DateTimeUtils.dateTimeFromString(dateStr, format: format) == null) {
         return "Invalid format: must be $format";
       }
     }
@@ -675,8 +676,8 @@ class _SurveyDataCreationPanelState extends State<SurveyDataCreationPanel> {
         }
       }
     } else if (_data is SurveyQuestionDateTime) {
-      (_data as SurveyQuestionDateTime).startTime = DateTimeUtils.parseDateTime(_textControllers["start_time"]!.text, format: "MM-dd-yyyy");
-      (_data as SurveyQuestionDateTime).endTime = DateTimeUtils.parseDateTime(_textControllers["end_time"]!.text, format: "MM-dd-yyyy");
+      (_data as SurveyQuestionDateTime).startTime = DateTimeUtils.dateTimeFromString(_textControllers["start_time"]!.text, format: "MM-dd-yyyy");
+      (_data as SurveyQuestionDateTime).endTime = DateTimeUtils.dateTimeFromString(_textControllers["end_time"]!.text, format: "MM-dd-yyyy");
     } else if (_data is SurveyQuestionNumeric) {
       (_data as SurveyQuestionNumeric).minimum = double.tryParse(_textControllers["minimum"]!.text);
       (_data as SurveyQuestionNumeric).maximum = double.tryParse(_textControllers["maximum"]!.text);

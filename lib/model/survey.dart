@@ -17,6 +17,7 @@ import 'package:rokwire_plugin/model/actions.dart';
 import 'package:rokwire_plugin/model/options.dart';
 import 'package:rokwire_plugin/model/rules.dart';
 import 'package:rokwire_plugin/service/app_datetime.dart';
+import 'package:rokwire_plugin/utils/datetime_utils.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 
 class SurveyResponse {
@@ -35,8 +36,8 @@ class SurveyResponse {
       id: JsonUtils.stringValue(json["id"]) ?? "",
       userId: JsonUtils.stringValue(json["user_id"]),
       survey: Survey.fromJson(json['survey']),
-      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
-      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
+      dateCreated: AppDateTime().getDeviceTimeFromJson(json['date_created']) ?? DateTime.now(),
+      dateUpdated: AppDateTime().getDeviceTimeFromJson(json['date_updated']),
     );
   }
 
@@ -44,8 +45,8 @@ class SurveyResponse {
     return {
       'id': id,
       'survey': survey.toJson(),
-      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
-      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
+      'date_created': DateTimeUtils.utcDateTimeToString(dateCreated),
+      'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdated),
     };
   }
 
@@ -146,8 +147,8 @@ class Survey extends RuleEngine {
       responseKeys: JsonUtils.listStringsValue(json['response_keys']),
       startDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['start_date']))?.toUtc(),
       endDate: DateTimeUtils.dateTimeFromString(JsonUtils.stringValue(json['end_date']))?.toUtc(),
-      dateCreated: AppDateTime().dateTimeLocalFromJson(json['date_created']) ?? DateTime.now(),
-      dateUpdated: AppDateTime().dateTimeLocalFromJson(json['date_updated']),
+      dateCreated: AppDateTime().getDeviceTimeFromJson(json['date_created']) ?? DateTime.now(),
+      dateUpdated: AppDateTime().getDeviceTimeFromJson(json['date_updated']),
       constants: RuleEngine.constantsFromJson(json),
       strings: RuleEngine.stringsFromJson(json),
       subRules: RuleEngine.subRulesFromJson(json),
@@ -178,8 +179,8 @@ class Survey extends RuleEngine {
       'sub_rules': RuleEngine.subRulesToJson(subRules),
       'start_date': DateTimeUtils.utcDateTimeToString(startDate),
       'end_date': DateTimeUtils.utcDateTimeToString(endDate),
-      'date_created': AppDateTime().dateTimeLocalToJson(dateCreated),
-      'date_updated': AppDateTime().dateTimeLocalToJson(dateUpdated),
+      'date_created': DateTimeUtils.utcDateTimeToString(dateCreated),
+      'date_updated': DateTimeUtils.utcDateTimeToString(dateUpdated),
       'stats': stats?.toJson(),
       'calendar_event_id': calendarEventId,
     };
@@ -675,8 +676,8 @@ class SurveyQuestionDateTime extends SurveyData {
 
   factory SurveyQuestionDateTime.fromJson(String key, Map<String, dynamic> json) {
     return SurveyQuestionDateTime(
-      startTime: AppDateTime().dateTimeLocalFromJson(json['start_time']),
-      endTime: AppDateTime().dateTimeLocalFromJson(json['end_time']),
+      startTime: AppDateTime().getDeviceTimeFromJson(json['start_time']),
+      endTime: AppDateTime().getDeviceTimeFromJson(json['end_time']),
       askTime: JsonUtils.boolValue(json['ask_time']) ?? true,
 
       text: json['text'],
@@ -721,8 +722,8 @@ class SurveyQuestionDateTime extends SurveyData {
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> json = baseJson();
-    json['start_time'] = AppDateTime().dateTimeLocalToJson(startTime);
-    json['end_time'] = AppDateTime().dateTimeLocalToJson(endTime);
+    json['start_time'] = DateTimeUtils.utcDateTimeToString(startTime);
+    json['end_time'] = DateTimeUtils.utcDateTimeToString(endTime);
     json['ask_time'] = askTime;
     json['type'] = type;
     return json;

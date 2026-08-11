@@ -28,6 +28,7 @@ import 'package:rokwire_plugin/service/config.dart';
 import 'package:rokwire_plugin/service/network.dart';
 import 'package:rokwire_plugin/service/notification_service.dart';
 import 'package:rokwire_plugin/service/service.dart';
+import 'package:rokwire_plugin/ui/widgets/image_error_builder.dart';
 import 'package:rokwire_plugin/utils/utils.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
@@ -566,6 +567,7 @@ class UiImages {
     Widget Function(BuildContext, Widget, ImageChunkEvent?)? loadingBuilder,
     Widget Function(BuildContext, Object, StackTrace?)? errorBuilder}
   ) {
+    errorBuilder ??= ImageErrorBuilder.defaultBuilder;
 
     Map<String, dynamic> imageJson = (imageMap != null && imageKey != null) ? JsonUtils.mapValue(imageMap![imageKey]) ?? {} : {};
     ImageSpec? imageSpec = ImageSpec.fromJson(imageJson) ?? defaultSpec;
