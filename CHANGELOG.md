@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Display dates based on a selected time zone [#5859](https://github.com/rokwire/illinois-app/issues/5859).
 ### Fixed
 - Prevent a crash when an image fails to load from the internet [#5951](https://github.com/rokwire/illinois-app/issues/5951).
+- Loading favorite events for anonymous users [#5964](https://github.com/rokwire/illinois-app/issues/5964).
 
 ## [1.13.4] - 2026-07-31
 ### Changed
