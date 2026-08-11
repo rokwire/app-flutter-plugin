@@ -848,7 +848,7 @@ class Events2Query {
     }
 
     if (types.contains(Event2TypeFilter.favorite)) {
-      LinkedHashSet<String>? favoriteIds = Auth2().account?.prefs?.getFavorites(Event2.favoriteKeyName);
+      LinkedHashSet<String>? favoriteIds = Auth2().prefs?.getFavorites(Event2.favoriteKeyName);
       if ((favoriteIds != null) && favoriteIds.isNotEmpty) {
         List<String>? filterIds = JsonUtils.listStringsValue(options['ids']);
         options['ids'] = ((filterIds != null) && filterIds.isNotEmpty) ?
