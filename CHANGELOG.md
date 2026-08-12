@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
+### Fixed
+- Fixed crash in ExpansionTile widget [#5969](https://github.com/rokwire/illinois-app/issues/5969).
 
 ## [1.13.5] - 2026-08-11
 ### Added
