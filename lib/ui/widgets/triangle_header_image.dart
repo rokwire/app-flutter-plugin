@@ -9,12 +9,13 @@ import 'package:rokwire_plugin/ui/widgets/triangle_painter.dart';
 class TriangleHeaderImage extends StatelessWidget {
   final Color?  flexBackColor;
   final String? flexImageUrl;
+  final Map<String, String>? flexImageAuthHeaders;
   final String? flexImageKey;
   final Color?  flexLeftToRightTriangleColor;
   final double? flexLeftToRightTriangleHeight;
   final Color?  flexRightToLeftTriangleColor;
   final double? flexRightToLeftTriangleHeight;
-  const TriangleHeaderImage({super.key, this.flexBackColor, this.flexImageUrl, this.flexImageKey, this.flexLeftToRightTriangleColor,
+  const TriangleHeaderImage({super.key, this.flexBackColor, this.flexImageUrl, this.flexImageAuthHeaders, this.flexImageKey, this.flexLeftToRightTriangleColor,
     this.flexLeftToRightTriangleHeight, this.flexRightToLeftTriangleColor, this.flexRightToLeftTriangleHeight
   });
 
@@ -33,7 +34,7 @@ class TriangleHeaderImage extends StatelessWidget {
   Widget buildFlexibleInterior(BuildContext context) {
     Widget? image;
     if (flexImageUrl != null) {
-      image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: Config().networkAuthHeaders, excludeFromSemantics: true,
+      image = Image.network(flexImageUrl!, fit: BoxFit.cover, headers: flexImageAuthHeaders ?? Config().networkAuthHeaders, excludeFromSemantics: true,
         errorBuilder: ImageErrorBuilder.defaultBuilder);
     } else if (flexImageKey != null) {
       image = Styles().images.getImage(flexImageKey, fit: BoxFit.cover, excludeFromSemantics: true);
