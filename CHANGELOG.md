@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- The next version number should be the version already set in pubspec.yaml -->
 ### Added
 - Added support for sections/indexes to directory accounts APIs [#5701](https://github.com/rokwire/illinois-app/issues/5701).
+- Allow custom image auth headers for triangle header bar [#5863](https://github.com/rokwire/illinois-app/issues/5863).
 ### Fixed
 - Fixed crash in ExpansionTile widget [#5969](https://github.com/rokwire/illinois-app/issues/5969).
 
