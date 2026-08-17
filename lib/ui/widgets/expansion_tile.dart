@@ -211,26 +211,33 @@ class _ExpansionTileState extends State<ExpansionTile> with SingleTickerProvider
             bottom: BorderSide(color: Colors.transparent),
           );
     final Clip clipBehavior = widget.clipBehavior ?? expansionTileTheme.clipBehavior ?? Clip.none;
+    final Color? backColor = _backgroundColor.value ?? expansionTileTheme.backgroundColor ?? Colors.transparent;
+
 
     return Container(
       clipBehavior: clipBehavior,
       decoration: ShapeDecoration(
-        color: _backgroundColor.value ?? expansionTileTheme.backgroundColor ?? Colors.transparent,
+        color: backColor,
         shape: expansionTileBorder,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          ListTileTheme.merge(
-            iconColor: _iconColor.value ?? expansionTileTheme.iconColor,
-            textColor: _headerColor.value,
-            child: ListTile(
-              onTap: _handleTap,
-              contentPadding: widget.tilePadding ?? expansionTileTheme.tilePadding,
-              leading: widget.leading ?? _buildLeadingIcon(context),
-              title: widget.title,
-              subtitle: widget.subtitle,
-              trailing: widget.trailing ?? _buildTrailingIcon(context),
+          Material(
+            color: backColor,
+            clipBehavior: Clip.hardEdge,
+            elevation: 1.0,
+            child: ListTileTheme.merge(
+              iconColor: _iconColor.value ?? expansionTileTheme.iconColor,
+              textColor: _headerColor.value,
+              child: ListTile(
+                onTap: _handleTap,
+                contentPadding: widget.tilePadding ?? expansionTileTheme.tilePadding,
+                leading: widget.leading ?? _buildLeadingIcon(context),
+                title: widget.title,
+                subtitle: widget.subtitle,
+                trailing: widget.trailing ?? _buildTrailingIcon(context),
+              ),
             ),
           ),
           ClipRect(

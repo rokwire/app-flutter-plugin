@@ -1,4 +1,5 @@
 
+
 import 'package:collection/collection.dart';
 
 import 'package:rokwire_plugin/model/auth2.dart';
@@ -151,4 +152,63 @@ class Auth2PublicAccountIdentifier {
     }
     return json;
   }
+}
+
+//////////////////////////////////////////
+// Auth2PublicAccountIndex
+
+class Auth2PublicAccountSection {
+  final String? name;
+  final int? accountsCount;
+
+  Auth2PublicAccountSection({this.name, this.accountsCount});
+
+  static Auth2PublicAccountSection? fromJson(Map<String, dynamic>? json) => (json != null) ?
+  Auth2PublicAccountSection(
+      name: JsonUtils.stringValue(json['letter']),
+      accountsCount: JsonUtils.intValue(json['count']),
+    ) : null;
+
+  Map<String, dynamic> toJson() => {
+    'letter' : name,
+    'count' : accountsCount,
+  };
+
+  // Equality
+
+  @override
+  bool operator==(Object other) =>
+    (other is Auth2PublicAccountSection) &&
+    (name == other.name) &&
+    (accountsCount == other.accountsCount);
+
+  @override
+  int get hashCode =>
+    (name?.hashCode ?? 0) ^
+    (accountsCount?.hashCode ?? 0);
+
+  // JSON List Serialization
+
+  static List<Auth2PublicAccountSection>? listFromJson(List<dynamic>? json) {
+    List<Auth2PublicAccountSection>? values;
+    if (json != null) {
+      values = <Auth2PublicAccountSection>[];
+      for (dynamic entry in json) {
+        ListUtils.add(values, Auth2PublicAccountSection.fromJson(JsonUtils.mapValue(entry)));
+      }
+    }
+    return values;
+  }
+
+  static List<dynamic>? listToJson(List<Auth2PublicAccountSection>? values) {
+    List<dynamic>? json;
+    if (values != null) {
+      json = [];
+      for (Auth2PublicAccountSection value in values) {
+        json.add(value.toJson());
+      }
+    }
+    return json;
+  }
+
 }

@@ -135,6 +135,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   final Widget? flexWidget;
   final String? flexImageKey;
   final String? flexImageUrl;
+  final Map<String, String>? flexImageAuthHeaders;
   final Color?  flexBackColor;
   final Color?  flexRightToLeftTriangleColor;
   final double? flexRightToLeftTriangleHeight;
@@ -171,6 +172,7 @@ class SliverToutHeaderBar extends StatelessWidget {
     this.flexWidget,
     this.flexImageKey,
     this.flexImageUrl,
+    this.flexImageAuthHeaders,
     this.flexBackColor,
     this.flexRightToLeftTriangleColor,
     this.flexRightToLeftTriangleHeight,
@@ -218,7 +220,7 @@ class SliverToutHeaderBar extends StatelessWidget {
   Widget? buildFlexibleSpace(BuildContext context) =>
     Semantics(container: true, child:
       FlexibleSpaceBar(background:
-        TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl,
+        TriangleHeaderImage(key: key, flexBackColor: flexBackColor, flexImageKey: flexImageKey, flexImageUrl: flexImageUrl, flexImageAuthHeaders: flexImageAuthHeaders,
           flexLeftToRightTriangleColor: flexLeftToRightTriangleColor, flexLeftToRightTriangleHeight: flexLeftToRightTriangleHeight,
           flexRightToLeftTriangleColor: flexRightToLeftTriangleColor, flexRightToLeftTriangleHeight: flexRightToLeftTriangleHeight,
         ),
