@@ -374,6 +374,10 @@ class ListUtils {
     ((list != null) && (0 <= index) && (index < list.length)) ? list.removeAt(index) : null;
 }
 
+extension ListEx<T> on List<T> {
+  T get second => this[2];
+}
+
 class SetUtils {
   static Set<T>? from<T>(Iterable<T>? elements) {
     return (elements != null) ? Set<T>.from(elements) : null;
