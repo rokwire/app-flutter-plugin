@@ -373,7 +373,7 @@ class ListUtils {
 }
 
 extension ListEx<T> on List<T> {
-  T get second => this[2];
+  T get second => this[1];
 }
 
 class SetUtils {
