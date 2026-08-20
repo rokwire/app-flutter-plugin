@@ -61,8 +61,22 @@ class FirebaseCrashlytics with Service {
   Set<Service> get serviceDependsOn => { FirebaseCore() };
 
   void handleFlutterFatalError(FlutterErrorDetails details) {
+    ///
+    /// Temporary workaround for not recording image exceptions as fatal errors.
+    ///
+    /// Flutter reports fatal errors for images even though the images has errorBuilders.
+    /// So, to prevent reporting these exceptions as fatal errors, we filter the errors.
+    /// The problem is fixed in flutter 3.47, so until then - leave this workaround.
+    ///
+    /// TBD: Remove this filter after upgrading to flutter 3.47 or above.
+    ///
+    /// Issue: https://github.com/flutter/flutter/issues/107416
+    /// Resolution: https://github.com/flutter/flutter/pull/180327
+    /// Flutter 3.47.0 release notes: https://docs.flutter.dev/release/release-notes/release-notes-3.47.0
+    ///
+    bool logFatalError = (details.library != 'image resource service');
     FlutterError.dumpErrorToConsole(details);
-    google.FirebaseCrashlytics.instance.recordFlutterError(details, fatal: true);
+    google.FirebaseCrashlytics.instance.recordFlutterError(details, fatal: logFatalError);
   }
 
   bool handlePlatformFatalError(Object exception, StackTrace stackTrace) {
