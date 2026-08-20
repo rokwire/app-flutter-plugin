@@ -74,11 +74,9 @@ class FirebaseCrashlytics with Service {
     /// Resolution: https://github.com/flutter/flutter/pull/180327
     /// Flutter 3.47.0 release notes: https://docs.flutter.dev/release/release-notes/release-notes-3.47.0
     ///
-    if (details.library == 'image resource service') {
-      return;
-    }
+    bool logFatalError = (details.library != 'image resource service');
     FlutterError.dumpErrorToConsole(details);
-    google.FirebaseCrashlytics.instance.recordFlutterError(details, fatal: true);
+    google.FirebaseCrashlytics.instance.recordFlutterError(details, fatal: logFatalError);
   }
 
   bool handlePlatformFatalError(Object exception, StackTrace stackTrace) {
