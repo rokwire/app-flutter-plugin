@@ -131,7 +131,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       }
     }
 
-    refreshAccount();
+    _refreshAccount();
 
     await super.initService();
   }
@@ -175,7 +175,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
       if (_pausedDateTime != null) {
         Duration pausedDuration = DateTime.now().difference(_pausedDateTime!);
         if (Config().refreshTimeout < pausedDuration.inSeconds) {
-          refreshAccount();
+          _refreshAccount();
         }
       }
     }
@@ -1493,7 +1493,7 @@ class Auth2 with Service, NetworkAuthProvider, NotificationsListener {
     return (response?.statusCode == 200) ? Auth2Account.fromJson(JsonUtils.decodeMap(response?.body)) : null;
   }
 
-  Future<void> refreshAccount() async {
+  Future<void> _refreshAccount() async {
     Auth2Account? account = await _loadAccount();
     if ((account != null) && (account != _account)) {
       
