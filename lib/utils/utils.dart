@@ -90,6 +90,9 @@ class StringUtils {
     return value.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll(RegExp(r'&[^;]+;'), ' ');
   }
 
+  static bool containsHtmlTags(String value) =>
+      value.contains(RegExp(r'<[A-Za-z][A-Za-z0-9]*>'));
+
   static String? fullName(List<String?> names, { String delimiter = ' '}) {
     String? fullName;
     for (String? name in names) {
