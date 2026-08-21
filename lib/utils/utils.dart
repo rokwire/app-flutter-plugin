@@ -92,6 +92,9 @@ class StringUtils {
     return value.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll(RegExp(r'&[^;]+;'), ' ');
   }
 
+  static bool containsHtmlTags(String value) =>
+      value.contains(RegExp(r'<[A-Za-z][A-Za-z0-9]*>'));
+
   static String? fullName(List<String?> names, { String delimiter = ' '}) {
     String? fullName;
     for (String? name in names) {
@@ -372,6 +375,10 @@ class ListUtils {
 
   static T? remove<T>(List<T>? list, int index) =>
     ((list != null) && (0 <= index) && (index < list.length)) ? list.removeAt(index) : null;
+}
+
+extension ListEx<T> on List<T> {
+  T get second => this[1];
 }
 
 class SetUtils {
