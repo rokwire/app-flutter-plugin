@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed crash in ExpansionTile widget [#5969](https://github.com/rokwire/illinois-app/issues/5969).
 - Fixed crash when truncating strings [#5988](https://github.com/rokwire/illinois-app/issues/5988).
 - Do not log images exceptions as fatal errors [#722](https://github.com/rokwire/app-flutter-plugin/issues/722).
+- Fixed crash in SwipeDetector widget [#725](https://github.com/rokwire/app-flutter-plugin/issues/725).
 
 ## [1.13.5] - 2026-08-11
 ### Added

@@ -57,12 +57,12 @@ class SwipeDetector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //Vertical drag details
-    late DragStartDetails startVerticalDragDetails;
-    late DragUpdateDetails updateVerticalDragDetails;
+    DragStartDetails? startVerticalDragDetails;
+    DragUpdateDetails? updateVerticalDragDetails;
 
     //Horizontal drag details
-    late DragStartDetails startHorizontalDragDetails;
-    late DragUpdateDetails updateHorizontalDragDetails;
+    DragStartDetails? startHorizontalDragDetails;
+    DragUpdateDetails? updateHorizontalDragDetails;
 
     return GestureDetector(
       child: child,
@@ -74,10 +74,13 @@ class SwipeDetector extends StatelessWidget {
         updateVerticalDragDetails = dragDetails;
       },
       onVerticalDragEnd: (endDetails) {
-        double dx = updateVerticalDragDetails.globalPosition.dx -
-            startVerticalDragDetails.globalPosition.dx;
-        double dy = updateVerticalDragDetails.globalPosition.dy -
-            startVerticalDragDetails.globalPosition.dy;
+        if ((startVerticalDragDetails == null) || (updateVerticalDragDetails == null)) {
+          return;
+        }
+        double dx = updateVerticalDragDetails!.globalPosition.dx -
+            startVerticalDragDetails!.globalPosition.dx;
+        double dy = updateVerticalDragDetails!.globalPosition.dy -
+            startVerticalDragDetails!.globalPosition.dy;
         double velocity = endDetails.primaryVelocity!;
 
         //Convert values to be positive
@@ -110,10 +113,13 @@ class SwipeDetector extends StatelessWidget {
         updateHorizontalDragDetails = dragDetails;
       },
       onHorizontalDragEnd: (endDetails) {
-        double dx = updateHorizontalDragDetails.globalPosition.dx -
-            startHorizontalDragDetails.globalPosition.dx;
-        double dy = updateHorizontalDragDetails.globalPosition.dy -
-            startHorizontalDragDetails.globalPosition.dy;
+        if ((startHorizontalDragDetails == null) || (updateHorizontalDragDetails == null)) {
+          return;
+        }
+        double dx = updateHorizontalDragDetails!.globalPosition.dx -
+            startHorizontalDragDetails!.globalPosition.dx;
+        double dy = updateHorizontalDragDetails!.globalPosition.dy -
+            startHorizontalDragDetails!.globalPosition.dy;
         double velocity = endDetails.primaryVelocity!;
 
         if (dx < 0) dx = -dx;
