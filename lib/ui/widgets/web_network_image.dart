@@ -86,6 +86,18 @@ class _WebNetworkImageState extends State<WebNetworkImage> {
   }
 
   @override
+  void didUpdateWidget(WebNetworkImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageUrl != oldWidget.imageUrl) {
+      setState(() {
+        _imageBytes = null;
+        _loading = false;
+      });
+      _loadImage();
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
   }
