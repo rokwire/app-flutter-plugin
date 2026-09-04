@@ -78,11 +78,9 @@ class StringUtils {
       if (value.isEmpty) {
         return '';
       }
-      else if (value.length == 1) {
-        return value[0].toUpperCase();
-      }
       else {
-        return "${value[0].toUpperCase()}${value.substring(1).toLowerCase()}";
+        final characters = value.characters;
+        return characters.first.toUpperCase() + characters.skip(1).string.toLowerCase();
       }
     }
 
@@ -91,6 +89,9 @@ class StringUtils {
   static String stripHtmlTags(String value) {
     return value.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll(RegExp(r'&[^;]+;'), ' ');
   }
+
+  static bool containsHtmlTags(String value) =>
+      value.contains(RegExp(r'<[A-Za-z][A-Za-z0-9]*>'));
 
   static String? fullName(List<String?> names, { String delimiter = ' '}) {
     String? fullName;
@@ -108,9 +109,9 @@ class StringUtils {
   }
 
   static String truncate({required String value, required int atLength}) {
-    int valueLength = value.length;
-    if ((atLength > 0) && (valueLength > atLength)) {
-      String truncatedValue = value.substring(0, atLength);
+    final characters = value.characters;
+    if ((atLength > 0) && (characters.length > atLength)) {
+      String truncatedValue = characters.take(atLength).string;
       int lastSpaceIndex = truncatedValue.lastIndexOf(' ');
       return '${(lastSpaceIndex > 0) ? truncatedValue.substring(0, lastSpaceIndex) : truncatedValue} ...';
     } else {
@@ -372,6 +373,10 @@ class ListUtils {
 
   static T? remove<T>(List<T>? list, int index) =>
     ((list != null) && (0 <= index) && (index < list.length)) ? list.removeAt(index) : null;
+}
+
+extension ListEx<T> on List<T> {
+  T get second => this[1];
 }
 
 class SetUtils {

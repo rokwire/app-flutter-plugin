@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 <!-- The next version number should be the version already set in pubspec.yaml -->
 
+## [1.14.0] - 2026-09-04
+### Added
+- Added support for sections/indexes to directory accounts APIs [#5701](https://github.com/rokwire/illinois-app/issues/5701).
+- Allow custom image auth headers for triangle header bar [#5863](https://github.com/rokwire/illinois-app/issues/5863).
+- Added ListEx extension helper [#5873](https://github.com/rokwire/illinois-app/issues/5873).
+- Added StringUtils.containsHtmlTags helper [#5873](https://github.com/rokwire/illinois-app/issues/5873).
+### Fixed
+- Fixed crash in ExpansionTile widget [#5969](https://github.com/rokwire/illinois-app/issues/5969).
+- Fixed crash when truncating strings [#5988](https://github.com/rokwire/illinois-app/issues/5988).
+- Do not log images exceptions as fatal errors [#722](https://github.com/rokwire/app-flutter-plugin/issues/722).
+- Fixed crash in SwipeDetector widget [#725](https://github.com/rokwire/app-flutter-plugin/issues/725).
+### Changed
+- Rework refresh token processing [#5836](https://github.com/rokwire/illinois-app/issues/5836).
+
 ## [1.13.5] - 2026-08-11
 ### Added
 - Display dates based on a selected time zone [#5859](https://github.com/rokwire/illinois-app/issues/5859).
